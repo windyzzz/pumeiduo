@@ -1,0 +1,444 @@
+<include file="public/layout" />
+<style>
+	.err{color:#F00; display:none;}
+</style>
+<script src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
+<body style="background-color: #FFF; overflow: auto;">
+<div id="toolTipLayer" style="position: absolute; z-index: 9999; display: none; visibility: visible; left: 95px; top: 573px;"></div>
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+	<div class="fixed-bar">
+		<div class="item-title"><a class="back" href="javascript:history.back();" title="返回列表"><i class="fa fa-arrow-circle-o-left"></i></a>
+			<div class="subject">
+				<h3>促销管理 - 编辑赠品活动</h3>
+				<h5>网站系统赠品活动详情页</h5>
+			</div>
+		</div>
+	</div>
+	<form class="form-horizontal" id="handleposition" method="post" onsubmit="return false;">
+		<input type="hidden" name="id" value="{$info.id}">
+		<input type="hidden" name="is_open" value="{$info.is_open}">
+		<div class="ncap-form-default">
+			<dl class="row">
+				<dt class="tit">
+					<label><em>*</em>标题</label>
+				</dt>
+				<dd class="opt">
+					<input type="text" name="title"  class="input-txt" value="{$info.title}">
+					<span class="err" id="err_title"></span>
+					<p class="notic">请填写赠品标题</p>
+				</dd>
+			</dl>
+			<dl class="row">
+				<dt class="tit">
+					<label><em>*</em>选择商品</label>
+				</dt>
+				<dd class="opt">
+					<input type="text" readonly  id="goods_name" name="goods_name" value="{$info.goods_name}" class="input-txt">
+					<div style="overflow: hidden" id="selected_group_goods">
+						<if condition="$info['goods_id'] gt 0">
+							<div style="float: left;margin-right: 10px" class="selected-group-goods">
+								<div class="goods-thumb"><img style="width: 162px;height: 162px"  <notempty name="info['specGoodsPrice']">src="{$info['specGoodsPrice']['spec_img']}"<else/>src="{$info['goods_id']|goods_thum_images=162,162}"</notempty>/></div>
+								<div class="goods-name">
+									<a target="_blank" href="{:U('Home/Goods/goodsInfo',array('id'=>$info['goods_id']))}">{$info.goods_name}</a>
+								</div>
+								<div class="goods-price">
+									<notempty name="info['specGoodsPrice']">
+										商城价：￥{$info['specGoodsPrice']['price']}库存:{$info['specGoodsPrice']['store_count']}
+										<else/>
+										商城价：￥{$info['goods']['shop_price']}库存:{$info['goods']['store_count']}
+									</notempty>
+								</div>
+							</div>
+						</if>
+					</div>
+					<span class="err" id="err_goods_name"></span>
+					<p class="notic">
+						<a onclick="selectGoods()" class="ncap-btn"><i class="fa fa-search"></i>选择商品</a>
+					</p>
+				</dd>
+			</dl>
+			<input type="hidden" id="goods_id" name="goods_id" value="{$info.goods_id}">
+			<input type="hidden" name="item_id" value="{$info.item_id}">
+			<dl class="row timed">
+				<dt class="tit">
+					<label><em>*</em>开始日期</label>
+				</dt>
+				<dd class="opt">
+					<input type="text" id="start_time" name="start_time"   class="input-txt" autocomplete="off" value="{$info.start_time|date='Y-m-d H:i:s',###}">
+					<span class="err" id="err_start_time"></span>
+					<p class="notic">开始日期  <span class="red"> 活动开始后，不能更改奖励规则</span></p>
+				</dd>
+			</dl>
+			<dl class="row timed">
+				<dt class="tit">
+					<label><em>*</em>结束日期</label>
+				</dt>
+				<dd class="opt">
+					<input type="text" id="end_time" name="end_time"  class="input-txt" autocomplete="off" value="{$info.end_time|date='Y-m-d H:i:s',###}">
+					<span class="err" id="err_end_time"></span>
+					<p class="notic">结束日期</p>
+				</dd>
+			</dl>
+			<dl class="row">
+				<dt class="tit">
+					<label for="cat_ids">选择商品分类</label>
+				</dt>
+				<dd class="opt">
+					<select name="type" id="cat_ids">
+						<option value="0" {$info.type==0?'selected':''}>全场</option>
+						<option value="1" {$info.type==1?'selected':''}>自定义</option>
+					</select>
+				</dd>
+			</dl>
+			<input type="hidden" name="index1" id="index1" value="{$info.category|count}" disabled>
+			<foreach name="info.category" item="cv" key="ck">
+				<dl class="row category">
+					<dt class="tit">
+						<label>商品分类</label>
+					</dt>
+					<dd class="opt">
+						<select name="cat_id[]" id="cat_id_{$ck}" class="small form-control cat_id" data-index="{$ck}">
+							<option value="0">请选择商品分类</option>
+							<foreach name="cat_list" item="v" key="k" >
+								<option value="{$v['id']}" <if condition="$v['id'] eq $cv">selected="selected"</if> >
+								{$v['name']}
+								</option>
+							</foreach>
+						</select>
+						<select name="cat_id_2[]" id="cat_id_2_{$ck}" onChange="get_category(this.value,'cat_id_3_{$ck}','0');getCategoryBindList(this.value)" onclick="get_category(this.value,'cat_id_3_{$ck}','0');getCategoryBindList(this.value)" class="small form-control">
+							<option value="0">请选择商品分类</option>
+						</select>
+						<select name="cat_id_3[]" id="cat_id_3_{$ck}" class="small form-control" >
+							<option value="0">请选择商品分类</option>
+						</select>
+						<a href="javascript:;" class="ncap-btn-mini ncap-btn-red delete">删除</a>
+						<if condition="count($info.category)-1 == $ck">
+							<a onclick="addCategory(this)" class="ncap-btn-mini ncap-btn-green">添加商品分类</a>
+						</if>
+
+
+						<span class="err" id="err_cat_id" style="color:#F00; display:none;"></span>
+					</dd>
+				</dl>
+			</foreach>
+			<hr>
+			<dl class="row">
+				<dt >
+				<h2>规则设置</h2>
+				</dt>
+			</dl>
+			<hr>
+
+			<table class="reward_table" style="width: 80%; margin: 0 auto;" border="1">
+				<tr>
+					<th>序号</th>
+					<th>满多少(订单金额（不含运费）)</th>
+					<th>赠送数量</th>
+					<th>结算页提示</th>
+					<th>操作</th>
+				</tr>
+
+				<volist name="info.reward" id="item" key="k">
+					<tr>
+						<input type="hidden" name="reward[{$k}][reward_id]" value="{$item.reward_id}">
+						<td>{$k}</td>
+						<td>
+							<input type="text" name="reward[{$k}][money]" value="{$item.money}" placeholder="满多少">
+						</td>
+						<td>
+							<input type="text" name="reward[{$k}][reward_num]" value="{$item.reward_num}" placeholder="送多少">
+						</td>
+						<td><textarea name="reward[{$k}][description]" rows="30" cols="20">{$item.description}</textarea></td>
+						<td><a href="javascript:;" class="ncap-btn-mini ncap-btn-red delete">删除</a></td>
+					</tr>
+				</volist>
+				<span id="index" style="display: none;">{$info.reward|count}</span>
+
+			</table>
+			<div><a onclick="addSetting()" class="ncap-btn-big ncap-btn-blue">添加奖励设置</a></div>
+			<div class="bot"><a onclick="verifyForm()" class="ncap-btn-big ncap-btn-green">确认提交</a></div>
+		</div>
+	</form>
+</div>
+<script type="text/javascript">
+
+    var index = parseInt($('#index').text()) + 1;
+
+    $(function () {
+        // 自定义商品分类、全场
+        if($('#cat_ids').val() == 0){
+            $('.category').hide();
+        }else{
+            $('.category').show();
+        }
+
+        $(document).on("change",'#cat_ids',function(){
+            if($(this).val() == 0){
+                $('.category').hide();
+            }else{
+                $('.category').show();
+            }
+        })
+    });
+    /** 以下是编辑时默认选中某个商品分类*/
+    $(document).ready(function(){
+
+        <foreach name="info.category" item="cv" key="ck">
+            <if condition="$info.category2[$ck] gt 0">
+            // 商品分类第二个下拉菜单
+            get_category('{$cv}','cat_id_2_{$ck}','{$info.category2[$ck]}');
+        </if>
+        <if condition="$info.category3[$ck] gt 0">
+            // 商品分类第二个下拉菜单
+            get_category('{$info.category2[$ck]}','cat_id_3_{$ck}','{$info.category3[$ck]}');
+        </if>
+        </foreach>
+
+    });
+    //选择分类
+    $(function(){
+        $(document).on("change",'.cat_id',function(){
+            get_category($(this).val(),'cat_id_2_'+$(this).data('index'),'0');
+            $('#cat_id_3_'+$(this).data('index')).empty().html("<option value='0'>请选择商品分类</option>");
+        });
+        $(document).on("click",'.cat_id',function(){
+            get_category($(this).val(),'cat_id_2_'+$(this).data('index'),'0');
+            $('#cat_id_3_'+$(this).data('index')).empty().html("<option value='0'>请选择商品分类</option>");
+        })
+
+        $(document).on("click", '.delete', function (e) {
+            $(this).parent().parent().remove();
+        })
+    });
+    var indexs = parseInt($('#index1').val());
+    function addCategory(btn)
+    {
+        var options = {$cat_list|json_encode};
+        var vab = '';
+        var option;
+        for (option in options){
+            vab += '<option value="'+options[option].id+'">'+options[option].name+'</option>'
+        }
+        var html = '<dl class="row">'
+                + '<dt class="tit">'
+                + '<label>商品分类</label>'
+                + '</dt>'
+                + '<dd class="opt">'
+                + '<select name="cat_id[]" id="cat_id_'+ indexs +'" class="small form-control cat_id" data-index="'+indexs+'">'
+                + '<option value="0">请选择商品分类</option>'
+                + vab
+                + '</select>'
+                + '<select name="cat_id_2[]" id="cat_id_2_'+ indexs +'" onChange="get_category(this.value,\'cat_id_3_'+ indexs +'\',\'0\');getCategoryBindList(this.value)" onclick="get_category(this.value,\'cat_id_3_'+ indexs +'\',\'0\');getCategoryBindList(this.value)" class="small form-control">'
+                + '<option value="0">请选择商品分类</option>'
+                + '</select>'
+                + '<select name="cat_id_3[]" id="cat_id_3_'+ indexs +'" class="small form-control" >'
+                + '<option value="0">请选择商品分类</option>'
+                + '</select>'
+                + '<a href="javascript:;" class="ncap-btn-mini ncap-btn-red delete">删除</a>'
+                + '</dd>'
+                + '</dl>'
+            ;
+        $(btn).parent().parent().append(html);
+        indexs++;
+    }
+
+    function getCategoryBindList(val){
+        $.ajax({
+            'url':"{:U('goods/getCategoryBindList')}",
+            'data':{cart_id:val},
+            'dataType':'json',
+            success:function(data){
+                if(data.status == 1){
+                    var html = '<option value="">所有品牌</option>'
+                    for (var i=0 ;i<data.result.length;i++){
+                        html += '<option value="'+data.result[i].id+'">'+data.result[i].name+'</option>'
+                    }
+                    $('#brand_id').html('');
+                    $('#brand_id').html(html);
+                }
+            }
+        })
+    }
+    function selectGoods(){
+        var url = "{:U('Promotion/search_goods',array('tpl'=>'select_goods','prom_type'=>2,'prom_id'=>$info[id]))}";
+        layer.open({
+            type: 2,
+            title: '选择商品',
+            shadeClose: true,
+            shade: 0.2,
+            area: ['75%', '75%'],
+            content: url,
+        });
+    }
+
+    function selGoodsCallBack(goodsItem){
+        $('#goods_id').val(goodsItem.goods_id);
+        var html = '';
+        if(goodsItem.spec != null){
+            //有规格
+            html = '<div style="float: left;margin: 10px auto;" class="selected-group-goods"><div class="goods-thumb">' +
+                '<img style="width: 162px;height: 162px" src="'+goodsItem.spec.spec_img+'"/></div> <div class="goods-name"> ' +
+                '<a target="_blank" href="/index.php?m=Home&c=Goods&a=goodsInfo&id='+goodsItem.goods_id+'">'+goodsItem.goods_name+goodsItem.spec.key_name+'</a> </div>' +
+                ' <div class="goods-price">商城价：￥'+goodsItem.spec.price+'库存:'+goodsItem.spec.store_count+'</div> </div>';
+            $('input[name=item_id]').val(goodsItem.spec.item_id)
+            $('input[name=goods_name]').val(goodsItem.goods_name + goodsItem.spec.key_name);
+        }else{
+            html = '<div style="float: left;margin: 10px auto;" class="selected-group-goods"><div class="goods-thumb">' +
+                '<img style="width: 162px;height: 162px" src="'+goodsItem.goods_image+'"/></div> <div class="goods-name"> ' +
+                '<a target="_blank" href="/index.php?m=Home&c=Goods&a=goodsInfo&id='+goodsItem.goods_id+'">'+goodsItem.goods_name+'</a> </div>' +
+                ' <div class="goods-price">商城价：￥'+goodsItem.goods_price+'库存:'+goodsItem.store_count+'</div> </div>';
+            $('input[name=goods_name]').val(goodsItem.goods_name);
+            $('input[name=item_id]').val(0)
+        }
+        $('#select_goods_button').attr('data-goods-id',goodsItem.goods_id);
+        $('#selected_group_goods').empty().html(html);
+        $('.selected-group-goods').show();
+        layer.closeAll('iframe');
+    }
+
+    function addSetting()
+    {
+        var html = repalceHtml(index);
+
+        $('.reward_table').append(html);
+
+        index++;
+    }
+
+    function repalceHtml(index)
+    {
+        var html = '<tr>' +
+            '<td>\\index\\</td>' +
+            '<td><input type="text" name="reward[\\index\\][money]" value="" placeholder="满多少"></td>' +
+            '<td><input type="text" name="reward[\\index\\][reward_num]" value="" placeholder="送多少"></td>' +
+            '<td><textarea name="reward[\\index\\][description]" rows="30" cols="20" ></textarea></td>' +
+            '<td><a href="javascript:;" class="ncap-btn-mini ncap-btn-red delete">删除</a></td>';
+        var h = /\\index\\/g;
+        html = html.replace(h, index);
+        return html;
+    }
+
+
+    $(function () {
+        $('#start_time').layDate();
+        $('#end_time').layDate();
+
+
+        $(document).on("click", '.delete', function (e) {
+            $(this).parent().parent().remove();
+        })
+
+        $(document).on("click", '#submit', function (e) {
+            $('#submit').attr('disabled',true);
+            verifyForm();
+        })
+    })
+    $(document).ready(function(){
+        initType();
+    });
+    $(function () {
+        $(document).on("click", ".team_type", function (e) {
+            initType();
+        })
+    })
+    function initType(){
+        var type = $("input[name='team_type']:checked").val();
+        var commission = $('.commission');
+        var luck = $('.luck');
+        switch(parseInt(type))
+        {
+            case 0:
+                commission.hide();
+                luck.hide();
+                break;
+            case 1:
+                commission.show();
+                luck.hide();
+                break;
+            case 2:
+                commission.hide();
+                $("input[name='buy_limit']").val(1);
+                luck.show();
+                break;
+            default:
+                commission.hide();
+                luck.hide();
+        }
+    }
+    function verifyForm(){
+        $('span.err').hide();
+        $.ajax({
+            type: "POST",
+            url: "{:U('Promotion/gift_update')}",
+            data: $('#handleposition').serialize(),
+            dataType: "json",
+            error: function () {
+                layer.alert("服务器繁忙, 请联系管理员!");
+            },
+            success: function (data) {
+                if (data.status == 1) {
+                    layer.msg(data.msg, {
+                        icon: 1,
+                        time: 1000
+                    }, function(){
+                        window.location.href = "{:U('Promotion/gift')}";
+                    });
+                } else {
+                    layer.msg(data.msg, {icon: 2,time: 1000});
+                    $.each(data.result, function (index, item) {
+                        $('#err_' + index).text(item).show();
+                    });
+                }
+            }
+        });
+    }
+    function selectGoods(){
+        var url = "{:U('Promotion/search_goods',array('tpl'=>'select_goods','prom_type'=>6))}";
+        layer.open({
+            type: 2,
+            title: '选择商品',
+            shadeClose: true,
+            shade: 0.2,
+            area: ['75%', '75%'],
+            content: url,
+        });
+    }
+    function call_back(goodsItem){
+        $('#goods_id').val(goodsItem.goods_id);
+        var html = '';
+        if(goodsItem.spec != null){
+            //有规格
+            html = '<input type="hidden" id="goods_id" name="goods_id" value="'+goodsItem.goods_id+'">' +
+                '<input type="hidden" id="goods_name" name="goods_name" value="'+goodsItem.goods_name+goodsItem.spec.key_name+'">' +
+                '<input type="hidden" name="item_id" value="'+goodsItem.spec.item_id+'">' +
+                '<div style="float: left;margin: 10px auto;" class="selected-group-goods"><div class="goods-thumb">' +
+                '<img style="width: 162px;height: 162px" src="'+goodsItem.spec.spec_img+'"/></div> <div class="goods-name"> ' +
+                '<a  href="/index.php?m=Home&c=Goods&a=goodsInfo&id='+goodsItem.goods_id+'">'+goodsItem.goods_name+goodsItem.spec.key_name+'</a> </div>' +
+                ' <div class="goods-price">商城价：￥'+goodsItem.spec.price+'周期:'+goodsItem.spec.cycle+'</div> </div>';
+            $('#goods_name').val(goodsItem.goods_name+goodsItem.spec.key_name);
+        }else{
+            html =  '<input type="hidden" id="goods_id" name="goods_id" value="'+goodsItem.goods_id+'">' +
+                '<input type="hidden" id="goods_name" name="goods_name" value="'+goodsItem.goods_name+'"> ' +
+                '<div style="float: left;margin: 10px auto;" class="selected-group-goods"><div class="goods-thumb">' +
+                '<img style="width: 162px;height: 162px" src="'+goodsItem.goods_image+'"/></div> <div class="goods-name"> ' +
+                '<a  href="/index.php?m=Home&c=Goods&a=goodsInfo&id='+goodsItem.goods_id+'">'+goodsItem.goods_name+'</a> </div>' +
+                ' <div class="goods-price">商城价：￥'+goodsItem.goods_price+'周期:'+goodsItem.cycle+'</div> </div>';
+            $('#goods_name').val(goodsItem.goods_name);
+        }
+        $('#select_goods_button').attr('data-goods-id',goodsItem.goods_id);
+        $('#selected_group_goods').empty().html(html);
+        $('.selected-group-goods').show();
+        layer.closeAll('iframe');
+    }
+    function img_call_back(fileurl_tmp)
+    {
+        $("#imagetext").val(fileurl_tmp);
+        $("#img_a").attr('href', fileurl_tmp);
+        $("#img_i").attr('onmouseover', "layer.tips('<img src="+fileurl_tmp+">',this,{tips: [1, '#fff']});");
+    }
+
+</script>
+</body>
+</html>

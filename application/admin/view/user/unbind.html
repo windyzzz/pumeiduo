@@ -1,0 +1,139 @@
+<include file="public/layout" />
+<style>
+    td{height:40px;line-height:40px; padding-left:20px;}
+    .span_1{
+        float:left;
+        margin-left:0px;
+        height:130px;
+        line-height:130px;
+    }
+    .span_1 ul{list-style:none;padding:0px;}
+    .span_1 ul li{
+        border:1px solid #CCC;
+        height:40px;
+        padding:0px 10px;
+        margin-left:-1px;
+        margin-top:-1px;
+        line-height:40px;
+    }
+</style>
+<body style="background-color: #FFF; overflow: auto;">
+<div id="toolTipLayer" style="position: absolute; z-index: 9999; display: none; visibility: visible; left: 95px; top: 573px;"></div>
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title"><a class="back" href="javascript:history.back();" title="返回列表"><i class="fa fa-arrow-circle-o-left"></i></a>
+            <div class="subject">
+                <h3>会员管理 - 解绑会员信息</h3>
+                <h5>网站系统会员解绑会员信息</h5>
+            </div>
+        </div>
+    </div>
+    <!-- 操作说明 -->
+    <div id="explanation" class="explanation" style="color: rgb(44, 188, 163); background-color: rgb(237, 251, 248); width: 99%; height: 100%;">
+        <div id="checkZoom" class="title"><i class="fa fa-lightbulb-o"></i>
+            <h4 title="提示相关设置操作时应注意的要点">操作提示</h4>
+            <span title="收起提示" id="explanationZoom" style="display: block;"></span>
+        </div>
+        <ul>
+            <li>会员解绑会将解绑用户的第三方来源（微信，微博，等等）信息，（头像，昵称）数据都会全部清空.</li>
+            <li>如果解绑用户之前被新用户绑定过老会员，那么该绑定记录也会清空.</li>
+            <li>解绑成功后，如果用户登录显示的还是原来的账号请让会员退出登录一下.这是由于缓存导致的.</li>
+        </ul>
+    </div>
+    <form class="form-horizontal" id="user_form" method="post">
+        <div class="ncap-form-default">
+
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>用户ID：</label>
+                </dt>
+                <dd class="opt">
+                    <input id="id" name="id"  class="input-txt" type="text" autocomplete="off">
+                </dd>
+                <dt class="tit">
+                    <label>用户名：</label>
+                </dt>
+                <dd class="opt">
+                    <p id="username"></p>
+                </dd>
+                <dt class="tit">
+                    <label>用户昵称：</label>
+                </dt>
+                <dd class="opt">
+                    <p id="nickname"></p>
+                </dd>
+                <dt class="tit">
+                    <label>头像信息：</label>
+                </dt>
+                <dd class="opt">
+                    <p id="head_img"></p>
+                </dd>
+            </dl>
+
+            <div class="bot"><a href="JavaScript:void(0);" onclick="checkUserUpdate();" class="ncap-btn-big ncap-btn-green">确认提交</a></div>
+        </div>
+    </form>
+</div>
+
+<script type="text/javascript">
+    function checkUserUpdate()
+    {
+        var id = $('#id').val();
+        var merge_uid = $('#merge_uid').val();
+        var user_name = $('#user_name').val();
+        var error ='';
+        if(id == '')
+        {
+            error += "用户ID不能为空<br>";
+        }
+        if(error){
+            layer.alert(error, {icon: 2});  //alert(error);
+            return false;
+        }
+
+        layer.confirm('你真的要将id为 '+merge_uid+' 的用户解绑吗？<br><span style="color:red">一旦解绑成功，数据将不可逆，请谨慎选择！</span>',function(){
+            $('#user_form').submit();
+            layer.closeAll();
+        },function(){
+            layer.closeAll();
+        });
+    }
+
+    $(function () {
+        $('input[name=id]').blur(function () {
+            $('#head_img').html('');
+            $('#nickname').text('');
+            $('#username').html('');
+            var load = layer.load(1,{
+                shade: 0.3
+            });
+            $.ajax({
+                url:'{:U("Admin/User/getUserInfo")}',
+                type:"GET",
+                data:{'user_id':$(this).val()},
+                success:function($res){
+                    layer.close(load);
+                    if($res.status == 1){
+                        if($res.result.nickname) {
+                            $('#nickname').text($res.result.nickname);
+                        }
+                        if($res.result.head_pic){
+                            $('#head_img').html('<img style="width: 100px" src="'+$res.result.head_pic+'"/>');
+                        }
+                        if($res.result.user_name) {
+                            $('#username').html($res.result.user_name);
+                        }
+                    }
+                }
+            })
+
+
+        })
+    })
+
+</script>
+</body>
+</html>

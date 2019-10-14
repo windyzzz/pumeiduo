@@ -1,0 +1,197 @@
+<include file="public/layout" />
+<body style="background-color: rgb(255, 255, 255); overflow: auto; cursor: default; -moz-user-select: inherit;">
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title"><a class="back" href="javascript:history.back();" title="返回列表"><i class="fa fa-arrow-circle-o-left"></i></a>
+            <div class="subject">
+                <h3>赠品活动管理 - 查看赠品活动详情</h3>
+                <h5>网站系统赠品活动活动详情页</h5>
+            </div>
+        </div>
+    </div>
+	<div class="flexigrid">
+		<div class="mDiv">
+			<div class="ftitle">
+				<h3>赠品活动活动详情列表</h3>
+
+			</div>
+			<div title="刷新数据" class="pReload"><i class="fa fa-refresh"></i></div>
+		</div>
+		<div class="hDiv">
+			<div class="hDivBox">
+				<table cellspacing="0" cellpadding="0">
+					<thead>
+					<tr>
+						<th class="sign" axis="col0">
+							<div style="width: 24px;"><i class="ico-check"></i></div>
+						</th>
+						<th align="left" abbr="article_title" axis="col3" class="">
+							<div style="text-align: center; width: 80px;" class="">序号</div>
+						</th>
+						<th align="left" abbr="ac_id" axis="col4" class="">
+							<div style="text-align: center; width: 180px;" class="">订单编号</div>
+						</th>
+						<th align="left" abbr="ac_id" axis="col4" class="">
+							<div style="text-align: center; width: 360px;" class="">奖励赠品信息</div>
+						</th>
+						<th align="left" abbr="ac_id" axis="col4" class="">
+							<div style="text-align: center; width: 240px;" class="">奖励规则</div>
+						</th>
+						<th align="left" abbr="ac_id" axis="col4" class="">
+							<div style="text-align: center; width: 80px;" class="">奖励数量</div>
+						</th>
+						<th align="center" abbr="article_show" axis="col5" class="">
+							<div style="text-align: center; width: 80px;" class="">状态</div>
+						</th>
+						<th align="center" abbr="article_show" axis="col5" class="">
+							<div style="text-align: center; width: 120px;" class="">记录时间</div>
+						</th>
+						<th style="width:100%" axis="col7">
+							<div></div>
+						</th>
+					</tr>
+					</thead>
+				</table>
+			</div>
+		</div>
+		<div class="tDiv">
+			<div class="tDiv2">
+<!-- 				<a href="{:U('Promotion/group_buy')}">
+					<div class="fbutton">
+						<div title="添加赠品活动" class="add">
+							<span><i class="fa fa-plus"></i>添加赠品活动</span>
+						</div>
+					</div>
+				</a> -->
+			</div>
+			<div style="clear:both"></div>
+		</div>
+		<div class="bDiv" style="height: auto;">
+			<div id="flexigrid" cellpadding="0" cellspacing="0" border="0">
+				<table>
+					<tbody>
+					<foreach name="detail" item="vo" key="k" >
+						<tr>
+							<td class="sign">
+								<div style="width: 24px;"><i class="ico-check"></i></div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 80px;">{$k}</div>
+							</td>
+							<php>
+								$order_id = M('order')->where('order_sn', $vo['order_sn'])->getField('order_id');
+							</php>
+							<td align="left" class="">
+								<div style="text-align: center; width: 180px;"><a target='_blank' href='{:U("Order/detail",["order_id"=>$order_id])}'>{$vo.order_sn}</a></div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 360px;">{$vo.goods_name}</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 240px;">{$vo.gift_reward_desc}</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 80px;">{$vo.reward_num}</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 80px;">{$vo.type == 1 ? '下单赠送' : '撤单扣除'}</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 120px;">{$vo.created_at|date='Y-m-d H:i:s',###}</div>
+							</td>
+
+							<td align="" class="" style="width: 100%;">
+								<div>&nbsp;</div>
+							</td>
+						</tr>
+					</foreach>
+					</tbody>
+				</table>
+			</div>
+			<div class="iDiv" style="display: none;"></div>
+		</div>
+		<!--分页位置-->
+		 </div>
+</div>
+<script>
+	$(document).ready(function(){
+		// 表格行点击选中切换
+		$('#flexigrid > table>tbody >tr').click(function(){
+			$(this).toggleClass('trSelected');
+		});
+
+		// 点击刷新数据
+		$('.fa-refresh').click(function(){
+			location.href = location.href;
+		});
+	});
+
+	function changeStatus(status,id,tab){
+		if(status>1){
+			layer.confirm('确认删除？', {btn: ['确定','取消']}, function(){
+				$.ajax({
+					type : 'GET',
+					url : "{:U('Promotion/activity_handle')}",
+					data : {'id':id,'tab':tab,'status':status},
+					dataType :'JSON',
+					success : function(res){
+						layer.closeAll();
+						if(res == 1){
+							layer.msg('操作成功', {icon: 1});
+							window.location.reload();
+						}else{
+							layer.msg('操作失败', {icon: 2,time: 2000});
+						}
+					}
+				});
+			}, function(index){
+				layer.close(index);
+				return false;// 取消
+			});
+		}else{
+			$.ajax({
+				type : 'GET',
+				url : "{:U('Promotion/activity_handle')}",
+				data : {'id':id,'tab':tab,'status':status},
+				dataType :'JSON',
+				success : function(res){
+					if(res == 1){
+						layer.msg('操作成功', {icon: 1});
+						window.location.reload();
+					}else{
+						layer.msg('操作失败', {icon: 2,time: 2000});
+					}
+					layer.closeAll();
+				}
+			});
+		}
+	}
+
+	function delfun(obj) {
+		// 删除按钮
+		layer.confirm('确认删除？', {
+			btn: ['确定', '取消'] //按钮
+		}, function () {
+			$.ajax({
+				type: 'post',
+				url: $(obj).attr('data-url'),
+				data : {act:'del',id:$(obj).attr('data-id')},
+				dataType: 'json',
+				success: function (data) {
+					layer.closeAll();
+					if (data == 1) {
+						$(obj).parent().parent().parent().remove();
+					} else {
+						layer.alert('删除失败', {icon: 2});  //alert('删除失败');
+					}
+				}
+			})
+		}, function () {
+			layer.closeAll();
+		});
+	}
+</script>
+</body>
+</html>

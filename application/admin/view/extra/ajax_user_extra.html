@@ -1,0 +1,81 @@
+<table>
+ 	<tbody>
+        <if condition="empty($extra_log) eq true">
+            <tr data-id="0">
+                <td class="no-data" align="center" axis="col0" colspan="50">
+                    <i class="fa fa-exclamation-circle"></i>没有符合条件的记录
+                </td>
+             </tr>
+        <else/>
+        <volist name="extra_log" key="key" id="vo">
+            <tr data-order-id="{$vo.id}" id="{$vo.id}">
+                <td class="sign" rowspan="{$vo.goods_count}">
+                    <div style="width: 24px;"><i class="ico-check"></i></div>
+                </td>
+                <td align="left" class="" rowspan="{$vo.goods_count}">
+                    <div style="text-align: center; width: 80px;">{$key}</div>
+                </td>
+                <php>
+                    $order_id = M('order')->where('order_sn', $vo['order_sn'])->getField('order_id');
+                </php>
+                <td align="left" class="" rowspan="{$vo.goods_count}">
+                    <div style="text-align: center; width: 180px;"><a target='_blank' href='{:U("Order/detail",["order_id"=>$order_id])}'>{$vo.order_sn}</a></div>
+                </td>
+
+
+                <volist name="$vo.goods_list" key="k" id="item">
+                    <if condition="$k lt 2">
+                        <td align="left" class="">
+                            <div style="text-align: center; width: 360px;">商品名称：{$item.goods_name} 购买数量：{$item.goods_num}</div>
+                        </td>
+
+                        <php>
+                            unset($vo['goods_list'][$k-1]);
+                        </php>
+                    </if>
+
+                </volist>
+
+                <td align="left" class="" rowspan="{$vo.goods_count}">
+                    <div style="text-align: center; width: 240px;">{$vo.user_id}</div>
+                </td>
+
+                <td align="left" class="" rowspan="{$vo.goods_count}">
+                    <div style="text-align: center; width: 80px;">{$status[$vo.status]}</div>
+                </td>
+                <td align="left" class="" rowspan="{$vo.goods_count}">
+                    <div style="text-align: center; width: 120px;">{$vo.created_at|date='Y-m-d H:i:s',###}</div>
+                </td>
+
+                <td align="" class="" style="width: 100%;" rowspan="{$vo.goods_count}">
+                    <div>&nbsp;</div>
+                </td>
+
+            </tr>
+
+            <volist name="$vo.goods_list" id="item">
+                <tr>
+                    <td align="left" class="">
+                        <div style="text-align: center; width: 360px;">商品名称：{$item.goods_name} 购买数量：{$item.goods_num}</div>
+                    </td>
+                </tr>
+            </volist>
+        </volist>
+        </if>
+    </tbody>
+</table>
+
+<div class="row">
+    <div class="col-sm-6 text-left"></div>
+    <div class="col-sm-6 text-right">{$page}</div>
+</div>
+<script>
+    $(".pagination  a").click(function(){
+        var page = $(this).data('p');
+        ajax_get_table('search-form2',page);
+    });
+
+
+
+    $('.ftitle>h5').empty().html("(共{$pager->totalRows}条记录)");
+</script>

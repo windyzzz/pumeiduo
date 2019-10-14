@@ -1,0 +1,282 @@
+<include file="public/layout" />
+<script src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
+<body style="background-color: rgb(255, 255, 255); overflow: auto; cursor: default; -moz-user-select: inherit;">
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title">
+            <div class="subject">
+                <h3>会员金卡审核</h3>
+                <h5>网站系统会员金卡审核索引与管理</h5>
+            </div>
+        </div>
+    </div>
+    <!-- 操作说明 -->
+    <div id="explanation" class="explanation" style="color: rgb(44, 188, 163); background-color: rgb(237, 251, 248); width: 99%; height: 100%;">
+        <div id="checkZoom" class="title"><i class="fa fa-lightbulb-o"></i>
+            <h4 title="提示相关设置操作时应注意的要点">操作提示</h4>
+            <span title="收起提示" id="explanationZoom" style="display: block;"></span>
+        </div>
+
+    </div>
+    <style>
+        .flexigrid .hDiv th, .flexigrid .bDiv td {
+            vertical-align:middle !important;
+            padding:15px 10px;
+            font-size:12px;
+        }
+    </style>
+    <div class="flexigrid">
+        <div class="mDiv">
+            <div class="ftitle">
+                <h3>会员金卡审核列表</h3>
+
+            </div>
+            <div title="刷新数据" class="pReload"><a href=""><i class="fa fa-refresh"></i></a></div>
+        </div>
+        <form class="navbar-form form-inline" id="search-form" method="get" action="{:U('apply_customs')}" >
+            <input type="hidden" name="create_time" id="create_time" value="{$create_time}">
+            <div class="sDiv">
+                <div class="sDiv2" style="margin-right: 10px;">
+                    <select name="field2">
+                        <option value="add_time" <if condition="$field2 eq 'add_time'">selected</if>>申请时间</option>
+                        <option value="success_time" <if condition="$field2 eq 'success_time'">selected</if>>完成时间</option>
+                        <option value="cancel_time" <if condition="$field2 eq 'cancel_time'">selected</if>>取消时间</option>
+                    </select>
+                </div>
+                <div class="sDiv2" style="margin-right: 10px;">
+                    <input type="text" size="30" id="from_time" value="{$from_time}" name="from_time" placeholder="起始时间" class="qsbox">
+                </div>
+                <div class="sDiv2" style="margin-right: 10px;">
+                    <input type="text" size="30" id="to_time" value="{$to_time}" name="to_time" placeholder="截止时间" class="qsbox">
+                </div>
+                <div class="sDiv2" style="margin-right: 10px;border: none;">
+                    <select id="status" name="status" class="form-control">
+                        <option value="">状态</option>
+                        <volist name="status_arr" id="v">
+                            <option value="{$key}" <if condition="$status eq $key">selected</if>>{$v}</option>
+                        </volist>
+                    </select>
+                </div>
+                <div class="sDiv2" style="margin-right: 10px;">
+                    <input size="30" id="user_id" name="user_id" value="{$user_id}" placeholder="商城会员id" class="qsbox" type="text">
+                </div>
+
+                <div class="sDiv2" style="margin-right: 10px;">
+                    <input size="30" placeholder="姓名" value="{$bank_true_name}" name="bank_true_name" id="bank_true_name" class="qsbox" type="text">
+                </div>
+                <div class="sDiv2" style="margin-right: 10px;">
+                    <input size="30" value="{$id_card}" name="id_card" id="id_card" placeholder="身份证" class="qsbox" type="text">
+                </div>
+                <div class="sDiv2" style="margin-right: 10px;">
+                    <input size="30" value="{$mobile}" name="mobile" id="mobile" placeholder="手机号" class="qsbox" type="text">
+                </div>
+                <div class="sDiv2" style="margin-right: 10px;">
+                    <input type="text" id="page_num" name="page_num" style="width:30px;" class="qsbox" placeholder="" value="{$page_num}">
+                </div>
+                <div class="sDiv2">
+                    <input class="btn" value="搜索" type="submit">
+
+                </div>
+            </div>
+        </form>
+
+        <div class="hDiv">
+            <div class="hDivBox">
+                <table cellspacing="0" cellpadding="0" style="width:100%;">
+                    <thead>
+                    <tr>
+
+
+                        <th align="center" abbr="article_show" axis="col5" class="">
+                            商城用户id
+                        </th>
+
+                        <th align="center" abbr="article_time" axis="col6" class="">
+                            时间
+                        </th>
+                        <th align="center" abbr="article_time" axis="col6" class="">
+                            推荐人
+                        </th>
+
+                        <th align="center" abbr="article_time" axis="col6" class="">
+                            姓名
+                        </th>
+                        <th align="center" abbr="article_time" axis="col6" class="">
+                           手机号
+                        </th>
+                        <th align="center" abbr="article_time" axis="col6" class="">
+                            身份证
+                        </th>
+                        <th align="center" abbr="article_time" axis="col6" class="">
+                            状态
+                        </th>
+
+
+                    </tr>
+                    </thead>
+
+                    <tbody class="bDiv">
+                    <if condition="empty($list) eq true">
+				 		<tr data-id="0">
+					        <td class="no-data" align="center" axis="col0" colspan="50">
+					        	<i class="fa fa-exclamation-circle"></i>没有符合条件的记录
+					        </td>
+					     </tr>
+					<else/>
+                    <volist name="list" id="v">
+                        <tr>
+                            <td align="center" class="">
+                                {$v['user_id']}
+                            </td>
+                            <td align="center" class="">
+                                申请：{$v.add_time_show}<br />
+                                完成：{$v.success_time_show}<br />
+                                撤销：{$v.cancel_time_show}
+                            </td>
+                            <td align="center" class="">
+                                {$v.referee_user_id}
+                            </td>
+                            <td align="center" class="">
+                                {$v.true_name}
+                            </td>
+                            <td align="center" class="">
+                                {$v.mobile}
+                            </td>
+                            <td align="center" class="">
+                                {$v.id_card}<br />
+                            </td>
+                            <td align="center" class="">
+                                {$v['status_show']}
+                            </td>
+                        </tr>
+                    </volist>
+                    </if>
+                    </tbody>
+                </table>
+            </div>
+            <div class="iDiv" style="display: none;"></div>
+        </div>
+        <!--分页位置-->
+        {$show} </div>
+</div>
+<script>
+    $(document).ready(function(){
+        // 表格行点击选中切换
+        $('#flexigrid > table>tbody >tr').click(function(){
+            $(this).toggleClass('trSelected');
+        });
+        // 点击刷新数据
+        $('.fa-refresh').click(function(){
+            location.href = location.href;
+        });
+
+        $('#from_time').layDate(1);
+        $('#to_time').layDate(1);
+    });
+    
+
+    //批量操作提交
+    function check(wst,id) {
+        var remark = "";
+        if(wst==-1){
+            layer.prompt({title: '请填写备注', formType: 2}, function(text, index){
+                layer.close(index);
+                remark = text;
+                audit(id , wst ,  remark);
+            });
+        }else{
+            audit(id , wst ,  remark);
+        }
+    }
+
+    function audit(chks , wst ,  remark){
+        $.ajax({
+            type: "POST",
+            url: window.parent.SITEURL+"/Finance/withdrawals_update.html",//+tab,
+            data: {id:chks,status:wst,remark:remark},
+            dataType: 'json',
+            success: function (data) {
+                if(data.status == 1){
+                    layer.alert(data.msg, {
+                        icon: 1,
+                        closeBtn: 0
+                    }, function(){
+                        window.location.reload();
+                    });
+                }else{
+                    layer.alert(data.msg, {icon: 2,time: 3000});
+                }
+            },
+            error:function(){
+                layer.alert('网络异常', {icon: 2,time: 3000});
+            }
+        });
+    }
+
+    //批量操作提交
+    function pay(wst,id) {
+        var remark = "";
+        if(wst==3 ){
+            layer.prompt({title: '请填写备注', formType: 2}, function(text, index){
+                layer.close(index);
+                remark = text;
+                audit2(id , wst ,  remark);
+            });
+        }else{
+            audit2(id , wst ,  remark);
+        }
+    }
+
+    function audit2(chks , wst ,  remark){
+        $.ajax({
+            type: "POST",
+            url: window.parent.SITEURL+"/Finance/withdrawals_pay.html",//+tab,
+            data: {id:chks,status:wst,remark:remark},
+            dataType: 'json',
+            success: function (data) {
+                if(data.status == 1){
+                    layer.alert(data.msg, {
+                        icon: 1,
+                        closeBtn: 0
+                    }, function(){
+                        window.location.reload();
+                    });
+                }else{
+                    layer.alert(data.msg, {icon: 2,time: 3000});
+                }
+            },
+            error:function(){
+                layer.alert('网络异常', {icon: 2,time: 3000});
+            }
+        });
+    }
+
+    //下载 download
+    function download1(){
+        var param = $("#search-form").serialize();
+        var host = window.location.host;
+        var url = parent.window.SITEURL+'/Finance/export_withdraw.html?'+param;
+        location.href = url;
+        return false;
+    };
+
+    function download2(){
+        var ids = '';
+        $("input[name='selected[]']:checked").each(function(){
+            var value = $(this).val();
+            ids += value + ',';
+        });
+        if(ids == ''){
+            alert('请选择要导出的选项');
+            return false;
+        }
+        var host = window.location.host;
+        var url = parent.window.SITEURL+'/Finance/export_withdraw/ids/'+ ids +'.html';
+        location.href = url;
+        return false;
+    }
+</script>
+</body>
+</html>

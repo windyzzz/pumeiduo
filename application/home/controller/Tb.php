@@ -1,0 +1,565 @@
+<?php
+/**
+ * 公共
+ */
+
+namespace app\home\controller;
+use think\Controller;
+use think\Db;
+use think\Session;
+use app\common\logic\UsersLogic;
+use app\admin\logic\OrderLogic;
+use think\Verify;
+use think\Cookie;
+
+class Tb   extends Controller
+{
+
+    function __construct(){
+        parent::__construct();
+    }
+
+    /**
+     * 发送给erp系统
+     */
+    function send_system(){
+
+        $where = array(
+            'status'=>0
+        );
+        $tb = M('tb')->where($where)->order('add_time asc')->limit(10)->select();
+
+        if($tb){
+            include_once "plugins/Tb.php";
+            $Tb = new \Tb();
+
+            foreach($tb as $k=>$v){
+                $tb_data  =  array();
+                $tb_data['type'] = $v['type'];
+                $tb_data['system'] = $v['from_system'];
+                $tb_data['tb_sn'] = $v['tb_sn'];
+                if($v['type']==6){//订单
+                    $order_add_time = M('order')->where(array('order_id'=>$v['from_id']))->getField('add_time');
+                    if($order_add_time<1561910400){
+                        M('tb')->where(array('id'=>$v['id']))->data(array('tb_time'=>NOW_TIME,'status'=>1))->save();
+                        continue;
+                    }
+                    $tb_data['data'] = $this->send_order($v['from_id']);
+                }else if($v['type']==8){//申请代理
+                    $tb_data['data'] = $this->send_apply_customs($v['from_id']);
+                }else if($v['type']==9){//退还库存
+                    $tb_data['data'] = $this->send_order_refund($v['from_id']);
+                }/*else if($v['type']==11){//退还库存
+                    $v['type'] = 9;
+                    $tb_data['type'] = 9;
+                    $tb_data['data'] = $this->send_order_refund1($v['from_id']);
+                }*/
+
+                $request_send = $Tb->tb_now($v['system'],$tb_data);
+
+                if($request_send['status']==1){//同步成功  改变状态
+                    M('tb')->where(array('id'=>$v['id']))->data(array('tb_time'=>NOW_TIME,'status'=>1,'msg'=>''))->save();
+                }else{
+                    M('tb')->where(array('id'=>$v['id']))->data(array('tb_time'=>NOW_TIME,'status'=>0,'msg'=>$request_send['msg']))->save();
+                }
+            }
+        }
+    }
+
+    /*function send_order_refund1($return_id){
+        $arr = array(
+            78=>'2019-09-24 14:43:56',
+            80=>'2019-09-24 15:00:06',
+            81=>'2019-09-24 14:59:43',
+            82=>'2019-09-24 14:58:48',
+            83=>'2019-09-24 14:59:22'
+        );
+
+        $return_goods = Db::name('return_goods')->where(['id' => $return_id])->find();
+        $order_goods = Db::name('order_goods')->where(['rec_id' => $return_goods['rec_id']])->find();
+        $goods_sn = M('goods')->where(array('goods_id'=>$return_goods['goods_id']))->getField('goods_sn');
+
+        $return_goods_data = array(
+            'order_sn'=>$return_goods['order_sn'],
+            'goods_sn'=>$goods_sn,
+            'goods_num'=>$return_goods['goods_num'],
+            'spec_key'=>$return_goods['spec_key'],
+            'is_send'=>$order_goods['is_send'],
+            'add_time'=>strtotime($arr[$return_id]),
+
+        );
+        return $return_goods_data;
+    }
+
+    function bu(){
+        $arr = array(
+            78,
+            80,
+            81,
+            82,
+            83
+        );
+        foreach($arr as $k=>$v){
+            include_once "plugins/Tb.php";
+            $TbLogic = new \Tb();
+            $badd_tb_zx = $TbLogic->add_tb(3,11,$v,0);
+        }
+
+
+    }*/
+
+    /**
+     * 退还库存
+     */
+    function send_order_refund($return_id){
+        $return_goods = Db::name('return_goods')->where(['id' => $return_id])->find();
+        $order_goods = Db::name('order_goods')->where(['rec_id' => $return_goods['rec_id']])->find();
+        $goods_sn = M('goods')->where(array('goods_id'=>$return_goods['goods_id']))->getField('goods_sn');
+        $return_goods_data = array(
+            'order_sn'=>$return_goods['order_sn'],
+            'goods_sn'=>$goods_sn,
+            'goods_num'=>$return_goods['goods_num'],
+            'spec_key'=>$return_goods['spec_key'],
+            'is_send'=>$order_goods['is_send']
+        );
+
+        return $return_goods_data;
+    }
+
+    /**
+     * 发送申请
+     * @param $apply_id
+     * @return mixed
+     */
+    function send_apply_customs($apply_id){
+        $apply_customs = M('apply_customs')->where(array('id'=>$apply_id))->find();
+
+        $referee_user_name = '';
+        if($apply_customs['referee_user_id']){
+            $referee_user_name = M('users')->where(array('user_id'=>$apply_customs['referee_user_id']))->getField('user_name');
+        }
+
+        $apply_customs_data = array(
+            'user_id'=>$apply_customs['user_id'],
+            'referee_user_name'=>$referee_user_name,
+            'true_name'=>$apply_customs['true_name'],
+            'id_card'=>$apply_customs['id_card'],
+            'mobile'=>$apply_customs['mobile'],
+            'add_time'=>$apply_customs['add_time'],
+            'cancel_time'=>$apply_customs['cancel_time'],
+            'status'=>$apply_customs['status'],
+        );
+
+        return $apply_customs_data;
+    }
+
+    function send_order($order_id){
+        $orderModel = new \app\common\model\Order();
+        $orderObj = $orderModel::get(['order_id' => $order_id]);
+        $order = $orderObj->append(['full_address', 'orderGoods', 'adminOrderButton'])->toArray();
+        $orderGoods = $order['orderGoods'];
+
+        //获取套组商品
+        //$order_goods_tao = M('order_goods_tao')->where(array('order_id'=>$order_id))->select();
+        //$this->assign('order_goods_tao',$order_goods_tao);
+        $data = array();
+        $data['order'] = array(
+            'order_sn'=>$order['order_sn'],
+            'order_status'=>$order['order_status'],
+            'shipping_status'=>$order['shipping_status'],
+            'pay_status'=>$order['pay_status'],
+            'consignee'=>$order['consignee'],
+            'country'=>$order['country'],
+            'province'=>$order['province'],
+            'city'=>$order['city'],
+            'district'=>$order['district'],
+            'address'=>$order['full_address'],
+            'mobile'=>$order['mobile'],
+            'shipping_code'=>$order['shipping_code'],
+            'shipping_name'=>$order['shipping_name'],
+            'pay_code'=>$order['pay_code'],
+
+            'goods_price'=>$order['goods_price'],
+            'shipping_price'=>$order['shipping_price'],
+            'order_amount'=>$order['order_amount'],
+            'total_amount'=>$order['total_amount'],
+            'add_time'=>$order['add_time'],
+            'shipping_time'=>$order['shipping_time'],
+            'confirm_time'=>$order['confirm_time'],
+            'pay_time'=>$order['pay_time'],
+            'user_note'=>$order['user_note'],
+            'goods_area'=>3,
+
+        );
+        //$user = get_user_info($order['user_id'],0,'','user_name,true_name,mobile');
+        $delivery_record = M('delivery_doc')->where('order_id='.$order_id)->order('id desc')->limit(1)->find();
+        $data['order']['invoice_no'] = $delivery_record?$delivery_record['invoice_no']:'';
+
+        $data['order_goods'] = array();
+        foreach($orderGoods as $k=>$v){
+            $data['order_goods'][] = array(
+                'goods_sn'=>$v['goods_sn'],
+                'goods_name'=>$v['goods_name'],
+                'goods_num'=>$v['goods_num'],
+                'goods_price'=>$v['goods_price'],
+                'member_goods_price'=>$v['member_goods_price'],
+                'spec_key'=>$v['spec_key'],
+                'spec_key_name'=>$v['spec_key_name'],
+            );
+        }
+
+        return $data;
+    }
+
+    /**
+     * ===================================================================
+     * 接受仓储系统的更新
+     * @return string
+     */
+    function get_system()
+    {
+        $tb_data = $_POST['result'];
+        if($tb_data){
+
+            $tb_data = json_decode($tb_data, true);
+            $type = $tb_data['type'];
+            $data = $tb_data['data'];
+            $tb_sn = $tb_data['tb_sn'];
+
+            $get_id = M('tb_get')->data(array('tb_sn'=>$tb_sn,'data'=>json_encode($tb_data)))->add();
+
+            if ($type == 1) {//更新商品
+                $back = $this->save_goods($data);
+            } else if ($type == 2) {//更新品牌
+                $back = $this->save_brand($data);
+            } else if ($type == 3) {//更新供货商
+                $back = $this->save_suppliers($data);
+            } else if ($type == 4) {//更新供货商
+                $back = $this->save_type($data);
+            } else if ($type == 5) {//更新库存
+                $back = $this->save_stock($data);
+            } else if ($type == 6) {//更新库存
+                $back = $this->save_order($data);
+            } else if ($type == 7) {//更新快递
+                $back = $this->save_logistics($data);
+            } else if ($type == 8) {//更新申请代理
+                $back = $this->save_apply_customs($data);
+            }
+
+            if($back!==true){
+                M('tb_get')->where(array('id'=>$get_id))->data(array('msg'=>$back,'status'=>0))->save();
+                return json_encode(array('status' => 0, 'msg' => $back));
+            }else{
+                M('tb_get')->where(array('id'=>$get_id))->data(array('msg'=>'success','status'=>1))->save();
+                return json_encode(array('status' => 1, 'msg' => 'success'));
+            }
+
+        }
+    }
+
+    /**
+     * 更新代理
+     */
+    function save_apply_customs($apply_data){
+
+        Db::startTrans();
+        $save_data = array(
+            'status'=>1,
+            'success_time'=>$apply_data['success_time']
+        );
+
+        $user_info = get_user_info($apply_data['user_id'],0,'');
+
+        $apply_customs = M('apply_customs')->where(array('user_id'=>$apply_data['user_id'],'status'=>array('neq',1)))->data($save_data)->save();
+        $busers = M('users')->where(array('user_id'=>$apply_data['user_id'],'distribut_level'=>array('neq',3)))->data(array('distribut_level'=>3,'user_name'=>$apply_data['bind_user_name'],'bind_uid'=>$apply_data['user_id'],'bind_time'=>NOW_TIME))->save();
+
+        //级别记录
+        $logDistribut = logDistribut('', $apply_data['user_id'], 3, $user_info['distribut_level'], 1);
+
+        if($apply_customs && $busers && $logDistribut){
+            Db::commit();
+        }else{
+            Db::rollback();
+        }
+        return true;
+    }
+
+    /**
+     * 更新订单状态和快递信息
+     * @param $order
+     */
+    function save_order($order_data){
+        $order = $order_data['order'];
+        $data = array(
+            'shipping_status'=>$order['shipping_status'],
+            'shipping_code'=>$order['shipping_code'],
+            'shipping_name'=>$order['shipping_name'],
+            'shipping_time'=>$order['shipping_time'],
+        );
+        M('order')->where(array('order_sn'=>$order['order_sn']))->data($data)->save();
+        $order_id = M('order')->where(array('order_sn'=>$order['order_sn']))->getField('order_id');
+        $delivery_doc = $order_data['delivery_doc'];
+        unset($delivery_doc['id']);
+        $delivery_doc['order_id'] = $order_id;
+
+        M('order_goods')->where(array('order_id'=>$order_id,'is_send'=>0))->data(array('is_send'=>1))->save();
+
+        M('delivery_doc')->data($delivery_doc)->add();
+        return true;
+    }
+
+    function save_stock($goods)
+    {
+        $spec_goods_price = $goods['spec_goods_price'];
+
+        //更新主商品库存
+        M('goods')->where(array('goods_sn' => $goods['goods_sn']))->data(array('store_count'=>$goods['stock']))->save();
+
+
+        if ($spec_goods_price) {
+            //获取旧规格
+            foreach ($spec_goods_price as $key => $val) {
+                M('spec_goods_price')->where(array('item_sn' => $key))->data(array('store_count'=>$val))->save();
+            }
+        }else{
+            //一键代发产品  获取子规格
+            $goods_info = M('goods')->field('trade_type,goods_id')->where(array('goods_sn' => $goods['goods_sn']))->find();
+
+            if($goods_info['trade_type']==2){
+                $spec_goods_price = M('spec_goods_price')->where(array('goods_id' => $goods_info['goods_id']))->field('item_id')->order('item_id asc')->select();
+
+                if($spec_goods_price){
+                    $count = count($spec_goods_price);
+                    $yushu = $goods['stock']%$count;
+                    $stock = ($goods['stock']-$yushu)/$count;
+
+                    foreach($spec_goods_price as $k=>$v){
+                        if($k==0){
+                            $my_stock = $stock+$yushu;
+                        }else{
+                            $my_stock = $stock;
+                        }
+                        M('spec_goods_price')->where(array('goods_id' => $goods_info['goods_id'],'item_id'=>$v['item_id']))->data(array('store_count'=>$my_stock))->save();
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    function ceshi_stock(){
+        $str = '{"type":"5","tb_sn":"7731901562284061","data":{"goods_sn":"K217156","stock":119}}';
+        $arr = json_decode($str,true);
+        $this->save_stock($arr['data']);
+    }
+
+    function save_type($data)
+    { //更新模型与规格
+        //模型  删除后 添加
+        M('goods_type')->where('1=1')->delete();
+        if ($data['type']) {
+            foreach ($data['type'] as $k => $v) {
+                $save_data = array(
+                    'id' => $v['id'],
+                    'name' => $v['name']
+                );
+                M('goods_type')->data($save_data)->add();
+            }
+        }
+
+        //规格  删除后 添加
+        M('spec')->where('1=1')->delete();
+        if ($data['spec']) {
+            foreach ($data['spec'] as $k => $v) {
+                $save_data = array(
+                    'id' => $v['id'],
+                    'name' => $v['name'],
+                    'type_id' => $v['type_id'],
+                    'order' => $v['order'],
+                    'search_index' => $v['search_index']
+                );
+                M('spec')->data($save_data)->add();
+            }
+        }
+
+        //规格明细 删除后 添加
+        M('spec_item')->where('1=1')->delete();
+        if ($data['spec_item']) {
+            foreach ($data['spec_item'] as $k => $v) {
+                $save_data = array(
+                    'id' => $v['id'],
+                    'spec_id' => $v['spec_id'],
+                    'item' => $v['item']
+                );
+                M('spec_item')->data($save_data)->add();
+            }
+        }
+        return true;
+    }
+
+    function save_suppliers($suppliers)
+    {
+        $suppliers_old = M('suppliers')->getField('suppliers_id,suppliers_name,is_check');
+        foreach ($suppliers as $k => $v) {
+            if (isset($suppliers_old[$v['id']])) {
+                unset($suppliers_old[$v['id']]);//
+                M('suppliers')->where(array('suppliers_id' => $v['id']))->data(array('suppliers_name' => $v['name']))->save(); //更新
+            } else {
+                M('suppliers')->data(array('suppliers_name' => $v['name'], 'suppliers_id' => $v['id']))->add();//新增
+            }
+        }
+        if ($suppliers_old) {//如果还有则删除
+            foreach ($suppliers_old as $k => $v) {
+                M('suppliers')->where(array('suppliers_id' => $v['id']))->delete();//删除
+            }
+        }
+        return true;
+    }
+
+    function save_brand($brand)
+    {
+        $brand_old = M('brand')->getField('id,name,cat_id');
+        foreach ($brand as $k => $v) {
+            if (isset($brand_old[$v['id']])) {
+                unset($brand_old[$v['id']]);//
+                M('brand')->where(array('id' => $v['id']))->data(array('name' => $v['name']))->save(); //更新
+            } else {
+                M('brand')->data(array('name' => $v['name'], 'id' => $v['id']))->add();//新增
+            }
+        }
+        if ($brand_old) {//如果还有则删除
+            foreach ($brand_old as $k => $v) {
+                M('brand')->where(array('id' => $v['id']))->delete();//删除
+            }
+        }
+        return true;
+    }
+
+    function save_goods($goods)
+    {
+
+        $area3 = $goods['area3'];
+
+        $goods_data = array(
+            'goods_sn' => $goods['goods_sn'],
+            'goods_name' => $goods['goods_name'],
+            'brand_id' => $goods['brand_id'],//品牌id
+            'suppliers_id' => $goods['suppliers_id'],//供应商id
+            'cost_price' => $goods['cost_price'],//成本价
+            'weight' => $goods['weight'],//重量 - 克
+            'on_time'=>$goods['on_time'],//上架时间戳
+            'out_time'=>$goods['out_time'],//下架时间戳
+            'trade_type'=>$goods['is_one_send']==1?2:1
+        );
+
+        if($goods['is_one_send']==0){
+            $goods_data['goods_type'] = $goods['goods_type'];//模型
+        }
+
+        $spec_goods_price = $goods['spec_goods_price'];
+        $tao_arr = $goods['tao_arr'];//套组商品
+
+        //检查该商品为新商品
+        $agoods = M('goods')->where(array('goods_sn' => $goods_data['goods_sn']))->field('goods_id')->find();
+
+        $goods_data['is_area_show'] = $area3==1?1:0; //是否可以显示在本区
+
+        if ($agoods) {//存在于重销区
+            if ($area3 == 0) { //不显示本区 直接下架
+                $goods_data['is_on_sale'] = 0;
+            }
+            unset($goods_data['goods_name']);
+            M('goods')->where(array('goods_id' => $agoods['goods_id']))->data($goods_data)->save();
+            $goods_id = $agoods['goods_id'];
+        } else {//不存在于重销区 可以显示在重销区 则新增
+
+            if($goods_data['is_area_show']==0){  //之前没有、现在也不在本区  则不导入
+                return true;
+            }
+            $goods_data['commission'] = tpCache('distribut.default_rate');//新增商品  默认分成
+            $goods_data['is_on_sale'] = 0;//新增商品  默认下架
+            $goods_id = M('goods')->data($goods_data)->add();
+        }
+
+        //规格
+        $spec_goods_price_old = M('spec_goods_price')->where(array('goods_id' => $goods_id))->getField('key,key_name,item_sn');
+
+        if ($spec_goods_price) {
+            //获取旧规格
+            foreach ($spec_goods_price as $key => $val) {
+
+                $save_data = array(
+                    'goods_id' => $goods_id,
+                    'item_sn' => $val['item_sn'],
+                    'key' => $val['key'],
+                    'key_name' => $val['key_name']
+                );
+
+                if (isset($spec_goods_price_old[$val['key']])) {
+                    //更新
+                    M('spec_goods_price')->where(array('goods_id' => $goods_id, 'key' => $val['key']))->data($save_data)->save();
+                    unset($spec_goods_price_old[$val['key']]);
+                } else {
+                    //新增
+                    M('spec_goods_price')->data($save_data)->add();
+                }
+            }
+        }
+
+        //删除
+        if ($spec_goods_price_old && $goods_data['trade_type']==1) {//一键待发 不要删除规格
+            foreach ($spec_goods_price_old as $key => $val) {
+                M('spec_goods_price')->where(array('goods_id' => $goods_id, 'key' => $val['key']))->delete();
+            }
+        }
+
+        //删除旧套组
+
+        M('goods_series')->where(array('goods_id' => $goods_id))->delete();
+
+        if ($tao_arr) {
+            foreach ($tao_arr as $key => $val) {
+
+                //获取商品id  规格id
+                $goods_sn = $val['goods_sn'];
+                $child_goods_id = M('goods')->where(array('goods_sn' => $goods_sn))->getField('goods_id');
+                $item_sn = $val['item_sn'];
+                $item_id = 0;
+                if ($item_sn) {
+                    $item_id = M('spec_goods_price')->where(array('goods_id' => $child_goods_id, 'item_sn' => $item_sn))->getField('item_id');
+                }
+                $save_data = array(
+                    'g_id' => $child_goods_id,
+                    'goods_id' => $goods_id,
+                    'item_id' => $item_id,
+                    'g_number' => $val['stock']
+                );
+
+                M('goods_series')->data($save_data)->add();
+            }
+        }
+
+        return true;
+
+    }
+
+    function save_logistics($logistics){
+        $logistics_old = M('Shipping')->getField('shipping_code,shipping_name,shipping_id');
+        foreach ($logistics as $k => $v) {
+            if (isset($logistics_old[$v['code']])) {
+                unset($logistics_old[$v['code']]);//
+                M('Shipping')->where(array('shipping_code' => $v['code']))->data(array('shipping_name' => $v['name']))->save(); //更新
+            } else {
+                M('Shipping')->data(array('shipping_code' => $v['code'], 'shipping_name' => $v['name']))->add();//新增
+            }
+        }
+        if ($logistics_old) {//如果还有则删除
+            foreach ($logistics_old as $k => $v) {
+                M('Shipping')->where(array('shipping_code' => $v['shipping_code']))->delete();//删除
+            }
+        }
+        return true;
+    }
+
+
+}

@@ -1,0 +1,33 @@
+<?php
+
+/*
+ * This file is part of the J project.
+ *
+ * (c) J <775893055@qq.com>
+ *
+ * This source file is subject to the MIT license that is bundled
+ * with this source code in the file LICENSE.
+ */
+
+namespace app\common\model;
+
+use think\Model;
+
+class GroupBuy extends Model
+{
+    public function goods()
+    {
+        return $this->hasOne('goods', 'goods_id', 'goods_id');
+    }
+
+    public function specGoodsPrice()
+    {
+        return $this->hasOne('specGoodsPrice', 'item_id', 'item_id');
+    }
+
+    //剩余团购库存
+    public function getStoreCountAttr($value, $data)
+    {
+        return $data['goods_num'] - $data['buy_num'];
+    }
+}

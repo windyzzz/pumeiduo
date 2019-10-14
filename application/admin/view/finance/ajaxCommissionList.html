@@ -1,0 +1,77 @@
+<table>
+       <tbody>
+            <volist name="list" id="list">
+              <tr data-id="{$list[id]}">
+                <td class="sign" axis="col6">
+                  <div style="width: 24px;"><i class="ico-check"></i></div>
+                </td>
+
+                <td align="center" axis="col0">
+                  <div style="text-align: center; width: 100px;">{$list.create_time|exchangeDate}</div>
+                </td>
+                <td align="center" axis="col0">
+                  <div style="text-align: left; width: 100px;">{$list.total_amount}</div>
+                </td>
+                <td align="center" axis="col0">
+                  <div style="text-align: center; width: 100px;">{$list.real_amount}</div>
+                </td>
+                <td align="center" axis="col0">
+                  <div style="text-align: center; width: 100px;">{$list.status|commission_type}</div>
+                </td>
+
+                <td align="center" axis="col0">
+                  <div style="text-align: center; width: 100px;">{$list.order_num}</div>
+                </td>
+                <td align="center" axis="col0">
+                  <div style="text-align: center; width: 100px;">{$list.sale_free}</div>
+                </td>
+                <td align="center" axis="col0">
+                  <div style="text-align: center; width: 100px;">{$list.shop_free}</div>
+                </td>
+
+
+
+              </tr>
+            </volist>
+          </tbody>
+        </table>
+        <!--分页位置--> {$page}
+		<script>
+            // 点击分页触发的事件
+            $(".pagination  a").click(function(){
+                cur_page = $(this).data('p');
+                ajax_get_table('search-form2',cur_page);
+            });
+
+			/*
+			 * 清除静态页面缓存
+			 */
+			function ClearGoodsHtml(goods_id)
+			{
+				$.ajax({
+						type:'GET',
+						url:"{:U('Admin/System/ClearGoodsHtml')}",
+						data:{goods_id:goods_id},
+						dataType:'json',
+						success:function(data){
+							layer.alert(data.msg, {icon: 2});
+						}
+				});
+			}
+			/*
+			 * 清除商品缩列图缓存
+			 */
+			function ClearGoodsThumb(goods_id)
+			{
+				$.ajax({
+						type:'GET',
+						url:"{:U('Admin/System/ClearGoodsThumb')}",
+						data:{goods_id:goods_id},
+						dataType:'json',
+						success:function(data){
+							layer.alert(data.msg, {icon: 2});
+						}
+				});
+			}
+
+        </script>

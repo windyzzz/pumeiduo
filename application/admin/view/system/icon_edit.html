@@ -1,0 +1,514 @@
+<include file="public/layout" />
+<load href="__ROOT__/public/plugins/Ueditor/ueditor.config.js"/>
+<load href="__ROOT__/public/plugins/Ueditor/ueditor.all.min.js"/>
+<script type="text/javascript" charset="utf-8" src="__ROOT__/public/plugins/Ueditor/lang/zh-cn/zh-cn.js"></script>
+<script src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
+<style>
+    .system_img_location{text-align: center; width: 120px;position:absolute;top:15px; margin-left:265px;}
+</style>
+<body style="background-color: #FFF; overflow: auto;">
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title">
+            <div class="subject">
+                <h3>商城设置</h3>
+            </div>
+        </div>
+    </div>
+    <!-- 操作说明 -->
+    <div class="explanation" id="explanation">
+        <div class="title" id="checkZoom"><i class="fa fa-lightbulb-o"></i>
+            <h4 title="提示相关设置操作时应注意的要点">操作提示</h4>
+            <span id="explanationZoom" title="收起提示"></span> </div>
+        <ul>
+            <li>鼠标移到图标LOGO右侧 <a title="图片所在位置" class="pic-thumb-tip" ><i class="fa fa-picture-o"></i></a>会显示该图片大概所在位置</li>
+        </ul>
+    </div>
+    <form method="post" id="handlepost" action="{:U('System/icon_edit')}" enctype="multipart/form-data" name="form1">
+        <input type="hidden" name="id" value="{$id}" />
+        <div class="ncap-form-default">
+            <dl class="row">
+                <dt class="tit">
+                    <label for="record_no">名称</label>
+                </dt>
+                <dd class="opt">
+                    <input id="record_no" name="name" value="{$config.name}" class="input-txt" type="text" />
+                    <p class="notic"></p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label for="articleForm">开始时间</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" class="input-txt" id="from_time" name="from_time"  value="{$config.from_time}">
+                    <span class="add-on input-group-addon">
+                        <i class="glyphicon glyphicon-calendar fa fa-calendar"></i>
+                    </span>
+                    <span class="err"></span>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label for="articleForm">结束时间</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" class="input-txt" id="to_time" name="to_time"  value="{$config.to_time}">
+                    <span class="add-on input-group-addon">
+                        <i class="glyphicon glyphicon-calendar fa fa-calendar"></i>
+                    </span>
+                    <span class="err"></span>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label for="store_logo">所有商品</label>
+                </dt>
+                <dd class="opt">
+                    <div class="input-file-show">
+                        <span class="show">
+                            <a id="top1_a" target="_blank" class="nyroModal" rel="gal" href="{$config.top1}">
+                                <i id="top1_i" class="fa fa-picture-o" onmouseover="layer.tips('<img src={$config.top1}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();"></i>
+                            </a>
+                        </span>
+           	            <span class="type-file-box">
+                            <input type="text" id="top1" name="top1" value="{$config.top1}" class="type-file-text">
+                            <input type="button" name="button" value="选择上传..." class="type-file-button">
+                            <input class="type-file-file" onClick="GetUploadify(1,'top1','logo','img_call_back')" size="30" hidefocus="true" nc_type="change_site_logo" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">
+                        </span>
+                    </div>
+                    <div class="system_img_location">
+
+                    </div>
+                    <span class="err"></span>
+                    <p class="notic">66*66像素</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label for="store_logo">促销商品</label>
+                </dt>
+                <dd class="opt">
+                    <div class="input-file-show">
+                        <span class="show">
+                            <a id="top2_a" target="_blank" class="nyroModal" rel="gal" href="{$config.top2}">
+                                <i id="top2_i" class="fa fa-picture-o" onmouseover="layer.tips('<img src={$config.top2}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();"></i>
+                            </a>
+                        </span>
+                        <span class="type-file-box">
+                            <input type="text" id="top2" name="top2" value="{$config.top2}" class="type-file-text">
+                            <input type="button" name="button" value="选择上传..." class="type-file-button">
+                            <input class="type-file-file" onClick="GetUploadify(1,'top2','logo','img_call_back')" size="30" hidefocus="true" nc_type="change_site_logo" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">
+                        </span>
+                    </div>
+                    <div class="system_img_location">
+
+                    </div>
+                    <span class="err"></span>
+                    <p class="notic">66*66像素</p>
+                </dd>
+            </dl>
+
+            <dl class="row">
+                <dt class="tit">
+                    <label for="store_logo">特惠团购</label>
+                </dt>
+                <dd class="opt">
+                    <div class="input-file-show">
+                        <span class="show">
+                            <a id="top3_a" target="_blank" class="nyroModal" rel="gal" href="{$config.top3}">
+                                <i id="top3_i" class="fa fa-picture-o" onmouseover="layer.tips('<img src={$config.top3}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();"></i>
+                            </a>
+                        </span>
+                        <span class="type-file-box">
+                            <input type="text" id="top3" name="top3" value="{$config.top3}" class="type-file-text">
+                            <input type="button" name="button" value="选择上传..." class="type-file-button">
+                            <input class="type-file-file" onClick="GetUploadify(1,'top3','logo','img_call_back')" size="30" hidefocus="true" nc_type="change_site_logo" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">
+                        </span>
+                    </div>
+                    <div class="system_img_location">
+
+                    </div>
+                    <span class="err"></span>
+                    <p class="notic">66*66像素</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label for="store_logo">超值套餐</label>
+                </dt>
+                <dd class="opt">
+                    <div class="input-file-show">
+                        <span class="show">
+                            <a id="top4_a" target="_blank" class="nyroModal" rel="gal" href="{$config.top4}">
+                                <i id="top4_i" class="fa fa-picture-o" onmouseover="layer.tips('<img src={$config.top4}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();"></i>
+                            </a>
+                        </span>
+                        <span class="type-file-box">
+                            <input type="text" id="top4" name="top4" value="{$config.top4}" class="type-file-text">
+                            <input type="button" name="button" value="选择上传..." class="type-file-button">
+                            <input class="type-file-file" onClick="GetUploadify(1,'top4','logo','img_call_back')" size="30" hidefocus="true" nc_type="change_site_logo" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">
+                        </span>
+                    </div>
+                    <div class="system_img_location">
+
+                    </div>
+                    <span class="err"></span>
+                    <p class="notic">66*66像素</p>
+                </dd>
+            </dl>
+
+            <dl class="row">
+                <dt class="tit">
+                    <label for="store_logo">店主专区</label>
+                </dt>
+                <dd class="opt">
+                    <div class="input-file-show">
+                        <span class="show">
+                            <a id="top5_a" target="_blank" class="nyroModal" rel="gal" href="{$config.top5}">
+                                <i id="top5_i" class="fa fa-picture-o" onmouseover="layer.tips('<img src={$config.top5}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();"></i>
+                            </a>
+                        </span>
+                        <span class="type-file-box">
+                            <input type="text" id="top5" name="top5" value="{$config.top5}" class="type-file-text">
+                            <input type="button" name="button" value="选择上传..." class="type-file-button">
+                            <input class="type-file-file" onClick="GetUploadify(1,'top5','logo','img_call_back')" size="30" hidefocus="true" nc_type="change_site_logo" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">
+                        </span>
+                    </div>
+                    <div class="system_img_location">
+
+                    </div>
+                    <span class="err"></span>
+                    <p class="notic">66*66像素</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label for="store_logo">VIP申请</label>
+                </dt>
+                <dd class="opt">
+                    <div class="input-file-show">
+                        <span class="show">
+                            <a id="top6_a" target="_blank" class="nyroModal" rel="gal" href="{$config.top6}">
+                                <i id="top6_i" class="fa fa-picture-o" onmouseover="layer.tips('<img src={$config.top6}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();"></i>
+                            </a>
+                        </span>
+                        <span class="type-file-box">
+                            <input type="text" id="top6" name="top6" value="{$config.top6}" class="type-file-text">
+                            <input type="button" name="button" value="选择上传..." class="type-file-button">
+                            <input class="type-file-file" onClick="GetUploadify(1,'top6','logo','img_call_back')" size="30" hidefocus="true" nc_type="change_site_logo" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">
+                        </span>
+                    </div>
+                    <div class="system_img_location">
+
+                    </div>
+                    <span class="err"></span>
+                    <p class="notic">66*66像素</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label for="store_logo">会员中心</label>
+                </dt>
+                <dd class="opt">
+                    <div class="input-file-show">
+                        <span class="show">
+                            <a id="top7_a" target="_blank" class="nyroModal" rel="gal" href="{$config.top7}">
+                                <i id="top7_i" class="fa fa-picture-o" onmouseover="layer.tips('<img src={$config.top7}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();"></i>
+                            </a>
+                        </span>
+                        <span class="type-file-box">
+                            <input type="text" id="top7" name="top7" value="{$config.top7}" class="type-file-text">
+                            <input type="button" name="button" value="选择上传..." class="type-file-button">
+                            <input class="type-file-file" onClick="GetUploadify(1,'top7','logo','img_call_back')" size="30" hidefocus="true" nc_type="change_site_logo" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">
+                        </span>
+                    </div>
+                    <div class="system_img_location">
+
+                    </div>
+                    <span class="err"></span>
+                    <p class="notic">66*66像素</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label for="store_logo">公司资讯</label>
+                </dt>
+                <dd class="opt">
+                    <div class="input-file-show">
+                        <span class="show">
+                            <a id="top8_a" target="_blank" class="nyroModal" rel="gal" href="{$config.top8}">
+                                <i id="top8_i" class="fa fa-picture-o" onmouseover="layer.tips('<img src={$config.top8}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();"></i>
+                            </a>
+                        </span>
+                        <span class="type-file-box">
+                            <input type="text" id="top8" name="top8" value="{$config.top8}" class="type-file-text">
+                            <input type="button" name="button" value="选择上传..." class="type-file-button">
+                            <input class="type-file-file" onClick="GetUploadify(1,'top8','logo','img_call_back')" size="30" hidefocus="true" nc_type="change_site_logo" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">
+                        </span>
+                    </div>
+                    <div class="system_img_location">
+
+                    </div>
+                    <span class="err"></span>
+                    <p class="notic">66*66像素</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label for="store_logo">首页</label>
+                </dt>
+                <dd class="opt">
+                    <div class="input-file-show">
+                        <span class="show">
+                            <a id="footer1_a" target="_blank" class="nyroModal" rel="gal" href="{$config.footer1}">
+                                <i id="footer1_i" class="fa fa-picture-o" onmouseover="layer.tips('<img src={$config.footer1}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();"></i>
+                            </a>
+                        </span>
+                        <span class="type-file-box">
+                            <input type="text" id="footer1" name="footer1" value="{$config.footer1}" class="type-file-text">
+                            <input type="button" name="button" value="选择上传..." class="type-file-button">
+                            <input class="type-file-file" onClick="GetUploadify(1,'footer1','logo','img_call_back')" size="30" hidefocus="true" nc_type="change_site_logo" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">
+                        </span>
+                    </div>
+                    <div class="system_img_location">
+
+                    </div>
+                    <span class="err"></span>
+                    <p class="notic">132*132像素</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label for="store_logo">分类</label>
+                </dt>
+                <dd class="opt">
+                    <div class="input-file-show">
+                        <span class="show">
+                            <a id="footer2_a" target="_blank" class="nyroModal" rel="gal" href="{$config.footer2}">
+                                <i id="footer2_i" class="fa fa-picture-o" onmouseover="layer.tips('<img src={$config.footer2}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();"></i>
+                            </a>
+                        </span>
+                        <span class="type-file-box">
+                            <input type="text" id="footer2" name="footer2" value="{$config.footer2}" class="type-file-text">
+                            <input type="button" name="button" value="选择上传..." class="type-file-button">
+                            <input class="type-file-file" onClick="GetUploadify(1,'footer2','logo','img_call_back')" size="30" hidefocus="true" nc_type="change_site_logo" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">
+                        </span>
+                    </div>
+                    <div class="system_img_location">
+
+                    </div>
+                    <span class="err"></span>
+                    <p class="notic">132*132像素</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label for="store_logo">购物车</label>
+                </dt>
+                <dd class="opt">
+                    <div class="input-file-show">
+                        <span class="show">
+                            <a id="footer3_a" target="_blank" class="nyroModal" rel="gal" href="{$config.footer3}">
+                                <i id="footer3_i" class="fa fa-picture-o" onmouseover="layer.tips('<img src={$config.footer3}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();"></i>
+                            </a>
+                        </span>
+                        <span class="type-file-box">
+                            <input type="text" id="footer3" name="footer3" value="{$config.footer3}" class="type-file-text">
+                            <input type="button" name="button" value="选择上传..." class="type-file-button">
+                            <input class="type-file-file" onClick="GetUploadify(1,'footer3','logo','img_call_back')" size="30" hidefocus="true" nc_type="change_site_logo" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">
+                        </span>
+                    </div>
+                    <div class="system_img_location">
+
+                    </div>
+                    <span class="err"></span>
+                    <p class="notic">132*132像素</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label for="store_logo">我的</label>
+                </dt>
+                <dd class="opt">
+                    <div class="input-file-show">
+                        <span class="show">
+                            <a id="footer4_a" target="_blank" class="nyroModal" rel="gal" href="{$config.footer4}">
+                                <i id="footer4_i" class="fa fa-picture-o" onmouseover="layer.tips('<img src={$config.footer4}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();"></i>
+                            </a>
+                        </span>
+                        <span class="type-file-box">
+                            <input type="text" id="footer4" name="footer4" value="{$config.footer4}" class="type-file-text">
+                            <input type="button" name="button" value="选择上传..." class="type-file-button">
+                            <input class="type-file-file" onClick="GetUploadify(1,'footer4','logo','img_call_back')" size="30" hidefocus="true" nc_type="change_site_logo" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">
+                        </span>
+                    </div>
+                    <div class="system_img_location">
+
+                    </div>
+                    <span class="err"></span>
+                    <p class="notic">132*132像素</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label for="store_logo">首页-选中</label>
+                </dt>
+                <dd class="opt">
+                    <div class="input-file-show">
+                        <span class="show">
+                            <a id="footer5_a" target="_blank" class="nyroModal" rel="gal" href="{$config.footer5}">
+                                <i id="footer5_i" class="fa fa-picture-o" onmouseover="layer.tips('<img src={$config.footer5}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();"></i>
+                            </a>
+                        </span>
+                        <span class="type-file-box">
+                            <input type="text" id="footer5" name="footer5" value="{$config.footer5}" class="type-file-text">
+                            <input type="button" name="button" value="选择上传..." class="type-file-button">
+                            <input class="type-file-file" onClick="GetUploadify(1,'footer5','logo','img_call_back')" size="30" hidefocus="true" nc_type="change_site_logo" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">
+                        </span>
+                    </div>
+                    <div class="system_img_location">
+
+                    </div>
+                    <span class="err"></span>
+                    <p class="notic">132*132像素</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label for="store_logo">分类-选中</label>
+                </dt>
+                <dd class="opt">
+                    <div class="input-file-show">
+                        <span class="show">
+                            <a id="footer6_a" target="_blank" class="nyroModal" rel="gal" href="{$config.footer6}">
+                                <i id="footer6_i" class="fa fa-picture-o" onmouseover="layer.tips('<img src={$config.footer6}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();"></i>
+                            </a>
+                        </span>
+                        <span class="type-file-box">
+                            <input type="text" id="footer6" name="footer6" value="{$config.footer6}" class="type-file-text">
+                            <input type="button" name="button" value="选择上传..." class="type-file-button">
+                            <input class="type-file-file" onClick="GetUploadify(1,'footer6','logo','img_call_back')" size="30" hidefocus="true" nc_type="change_site_logo" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">
+                        </span>
+                    </div>
+                    <div class="system_img_location">
+
+                    </div>
+                    <span class="err"></span>
+                    <p class="notic">132*132像素</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label for="store_logo">购物车-选中</label>
+                </dt>
+                <dd class="opt">
+                    <div class="input-file-show">
+                        <span class="show">
+                            <a id="footer7_a" target="_blank" class="nyroModal" rel="gal" href="{$config.footer7}">
+                                <i id="footer7_i" class="fa fa-picture-o" onmouseover="layer.tips('<img src={$config.footer7}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();"></i>
+                            </a>
+                        </span>
+                        <span class="type-file-box">
+                            <input type="text" id="footer7" name="footer7" value="{$config.footer7}" class="type-file-text">
+                            <input type="button" name="button" value="选择上传..." class="type-file-button">
+                            <input class="type-file-file" onClick="GetUploadify(1,'footer7','logo','img_call_back')" size="30" hidefocus="true" nc_type="change_site_logo" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">
+                        </span>
+                    </div>
+                    <div class="system_img_location">
+
+                    </div>
+                    <span class="err"></span>
+                    <p class="notic">132*132像素</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label for="store_logo">我的-选中</label>
+                </dt>
+                <dd class="opt">
+                    <div class="input-file-show">
+                        <span class="show">
+                            <a id="footer8_a" target="_blank" class="nyroModal" rel="gal" href="{$config.footer8}">
+                                <i id="footer8_i" class="fa fa-picture-o" onmouseover="layer.tips('<img src={$config.footer8}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();"></i>
+                            </a>
+                        </span>
+                        <span class="type-file-box">
+                            <input type="text" id="footer8" name="footer8" value="{$config.footer8}" class="type-file-text">
+                            <input type="button" name="button" value="选择上传..." class="type-file-button">
+                            <input class="type-file-file" onClick="GetUploadify(1,'footer8','logo','img_call_back')" size="30" hidefocus="true" nc_type="change_site_logo" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">
+                        </span>
+                    </div>
+                    <div class="system_img_location">
+
+                    </div>
+                    <span class="err"></span>
+                    <p class="notic">132*132像素</p>
+                </dd>
+            </dl>
+
+            <dl class="row">
+                <dt class="tit">
+                    <label for="store_logo">背景框</label>
+                </dt>
+                <dd class="opt">
+                    <div class="input-file-show">
+                        <span class="show">
+                            <a id="bg1_a" target="_blank" class="nyroModal" rel="gal" href="{$config.bg1}">
+                                <i id="bg1_i" class="fa fa-picture-o" onmouseover="layer.tips('<img src={$config.bg1}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();"></i>
+                            </a>
+                        </span>
+                        <span class="type-file-box">
+                            <input type="text" id="bg1" name="bg1" value="{$config.bg1}" class="type-file-text">
+                            <input type="button" name="button" value="选择上传..." class="type-file-button">
+                            <input class="type-file-file" onClick="GetUploadify(1,'bg1','logo','img_call_back')" size="30" hidefocus="true" nc_type="change_site_logo" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">
+                        </span>
+                    </div>
+                    <div class="system_img_location">
+
+                    </div>
+                    <span class="err"></span>
+                    <p class="notic">750像素</p>
+                </dd>
+            </dl>
+
+            <div class="bot">
+                <a href="JavaScript:void(0);" class="ncap-btn-big ncap-btn-green" onclick="document.form1.submit()">确认提交</a>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="goTop"> <a href="JavaScript:void(0);" id="btntop"><i class="fa fa-angle-up"></i></a><a href="JavaScript:void(0);" id="btnbottom"><i class="fa fa-angle-down"></i></a></div>
+</body>
+<script type="text/javascript">
+
+
+    //网站图标
+    function img_call_back(fileurl_tmp , elementid)
+    {
+        $("#"+elementid).val(fileurl_tmp);
+        $("#"+elementid+'_a').attr('href', fileurl_tmp);
+        $("#"+elementid+'_i').attr('onmouseover', "layer.tips('<img src="+fileurl_tmp+">',this,{tips: [1, '#fff']});");
+    }
+    //网站用户中心logo
+    function user_img_call_back(fileurl_tmp)
+    {
+        $("#store_user_logo").val(fileurl_tmp);
+        $("#userimg_a").attr('href', fileurl_tmp);
+        $("#userimg_i").attr('onmouseover', "layer.tips('<img src="+fileurl_tmp+">',this,{tips: [1, '#fff']});");
+    }
+    //网站图标
+    function store_ico_call_back(fileurl_tmp)
+    {
+        $("#store_ico").val(fileurl_tmp);
+        $("#storeico_a").attr('href', fileurl_tmp);
+        $("#storeico_i").attr('onmouseover', "layer.tips('<img src="+fileurl_tmp+">',this,{tips: [1, '#fff']});");
+    }  $(function () {
+        $('#from_time').layDate();
+        $('#to_time').layDate();
+    });
+
+</script>
+</html>

@@ -1,0 +1,289 @@
+<include file="public/layout" />
+<script src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
+<body style="background-color: rgb(255, 255, 255); overflow: auto; cursor: default; -moz-user-select: inherit;">
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title">
+            <div class="subject">
+                <h3>账户信息 - 多账户流水</h3>
+                <h5>网站系统流水日志</h5>
+            </div>
+        </div>
+    </div>
+    <!-- 操作说明 -->
+    <div class="explanation">
+        <div id="checkZoom" class="title"><i class="fa fa-lightbulb-o"></i>
+            <h4 title="提示相关设置操作时应注意的要点">操作提示</h4>
+            <span title="收起提示" id="explanationZoom" style="display: block;"></span>
+        </div>
+    </div>
+    <div class="flexigrid">
+        <div class="mDiv">
+            <div class="ftitle">
+                <h3>多账户流水</h3>
+                <h5>(共{$pager->totalRows}条记录)</h5>
+            </div>
+            <div title="刷新数据" class="pReload"><i class="fa fa-refresh"></i></div>
+            <form class="navbar-form form-inline" id="search-form" method="get" action="{:U('Finance/account_list')}" onsubmit="return check_form();">
+                <input type="hidden" name="ctime" id="ctime" value="{$ctime}">
+                <input type="hidden" name="ids" id="ids">
+                <input type="hidden" name="is_export" id="is_export" value="0">
+                <div class="sDiv">
+                    <div class="sDiv2" style="margin-right: 10px;">
+                        <input type="text" size="30" id="start_time" value="{$start_time}" name="start_time" placeholder="起始时间" class="qsbox">
+                        <input type="button" class="btn" value="起始时间">
+                    </div>
+                    <div class="sDiv2" style="margin-right: 10px;">
+                        <input type="text" size="30" id="end_time" value="{$end_time}" name="end_time"  placeholder="截止时间" class="qsbox">
+                        <input type="button" class="btn" value="截止时间">
+                    </div>
+
+                    <div class="sDiv2" style="margin-right: 10px;">
+                        <select class="form-control" id="type" name="type" style="border: none;">
+                            <option value="sss">分类</option>
+                            <volist name="account_type" id="item" key="k">
+                                <option value="{$key}" <if condition="$type != 'sss' && $type == $key">selected</if>>{$item} </option>
+                            </volist>
+                        </select>
+                    </div>
+                    <div class="sDiv2" style="margin-right: 10px;">
+                        <select class="form-control" id="status" name="status" style="border: none;">
+                            <option value="">收入/支出</option>
+                            <option value="1" <if condition="$status eq 1">selected</if>>收入</option>
+                            <option value="-1" <if condition="$status eq -1">selected</if>>支出</option>
+                        </select>
+                    </div>
+                    <div class="sDiv2">
+                        <input size="30" placeholder="用户ID" value="{$Think.get.user_id}" name="user_id" class="qsbox" type="text">
+                        <input class="btn" value="搜索" onclick="javascript:document.getElementById('is_export').value = 0" type="submit">
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="hDiv">
+            <div class="hDivBox">
+                <table>
+                    <thead>
+                        <tr>
+                            <th><div style="text-align: center; width: 150px;" class="">类型</div></th>
+                            <th><div style="text-align: center; width: 150px;" class="">奖金账户</div></th>
+                            <th><div style="text-align: center; width: 150px;" class="">电子币</div></th>
+                            <th><div style="text-align: center; width: 150px;" class="">积分</div></th>
+              <!--               <th><div style="text-align: center; width: 150px;" class="">商城积分账户</div></th>
+                            <th><div style="text-align: center; width: 150px;" class="">车房资金</div></th>
+                            <th><div style="text-align: center; width: 150px;" class="">管理费</div></th> -->
+                            <th><div style="text-align: center; width: 150px;" class="">总放</div></th>
+                        </tr>
+                    </thead>
+
+                </table>
+            </div>
+        </div>
+        <div class="bDiv" style="height: auto;min-height:100px">
+            <div cellpadding="0" cellspacing="0" border="0">
+                <table>
+                    <tbody>
+                        <tr>
+                            <td><div style="text-align: center; width: 150px;" class="">转入</div></td>
+                            <td><div style="text-align: center; width: 150px;" class="">{$up_data.user_money}</div></td>
+                            <td><div style="text-align: center; width: 150px;" class="">{$up_data.user_electronic}</div></td>
+                            <td><div style="text-align: center; width: 150px;" class="">{$up_data.pay_points}</div></td>
+                        <!--     <td><div style="text-align: center; width: 150px;" class="">转入</div></td>
+                            <td><div style="text-align: center; width: 150px;" class="">转入</div></td>
+                            <td><div style="text-align: center; width: 150px;" class="">转入</div></td> -->
+                            <td><div style="text-align: center; width: 150px;" class="">{$up_data.total}</div></td>
+                            <td align="" class="" style="width: 100%;">
+                                <div>&nbsp;</div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><div style="text-align: center; width: 150px;" class="">转出</div></td>
+                            <td><div style="text-align: center; width: 150px;" class="">{$down_data.user_money}</div></td>
+                            <td><div style="text-align: center; width: 150px;" class="">{$down_data.user_electronic}</div></td>
+                            <td><div style="text-align: center; width: 150px;" class="">{$down_data.pay_points}</div></td>
+                            <!--<td>< div style="text-align: center; width: 150px;" class="">转出</div></td>
+                            <td><div style="text-align: center; width: 150px;" class="">转出</div></td>
+                            <td><div style="text-align: center; width: 150px;" class="">转出</div></td> -->
+                            <td><div style="text-align: center; width: 150px;" class="">{$down_data.total}</div></td>
+                            <td align="" class="" style="width: 100%;">
+                                <div>&nbsp;</div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="hDiv">
+            <div class="hDivBox">
+
+
+                <table cellspacing="0" cellpadding="0">
+                    <thead>
+                    <tr>
+                        <th class="sign" axis="col0">
+                            <div style="width: 24px;"><i class="ico-check"></i></div>
+                        </th>
+                        <th align="center" abbr="ac_id" axis="col4" class="">
+                            <div style="text-align: center; width: 100px;" class="">会员id</div>
+                        </th>
+                        <th align="center" abbr="ac_id" axis="col4" class="">
+                            <div style="text-align: center; width: 100px;" class="">用户名</div>
+                        </th>
+                        <th align="center" abbr="article_show" axis="col5" class="">
+                            <div style="text-align: center; width: 200px;" class="">描述</div>
+                        </th>
+                        <th align="center" abbr="article_time" axis="col6" class="">
+                            <div style="text-align: center; width: 150px;" class="">奖励金额</div>
+                        </th>
+                        <th align="center" abbr="article_time" axis="col6" class="">
+                            <div style="text-align: center; width: 100px;" class="">奖励积分</div>
+                        </th>
+                        <th align="center" abbr="article_time" axis="col6" class="">
+                            <div style="text-align: center; width: 150px;" class="">奖励电子币</div>
+                        </th>
+
+                        <th align="center" abbr="article_time" axis="col6" class="">
+                            <div style="text-align: center; width: 160px;" class="">相关订单</div>
+                        </th>
+                        <th align="center" abbr="article_title" axis="col3" class="">
+                            <div style="text-align: center; width: 150px;" class="">变动时间</div>
+                        </th>
+                        <th style="width:100%" axis="col7">
+                            <div></div>
+                        </th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+            <div class="tDiv">
+              <div class="tDiv2">
+                <div class="fbutton">
+                    <a href="javascript:exportReport()">
+                        <div class="add" title="选定行数据导出excel文件,如果不选中行，将导出列表所有数据">
+                            <span><i class="fa fa-plus"></i>导出数据</span>
+                        </div>
+                    </a>
+                  </div>
+                  <div class="fbutton">
+                    <!--<a href="/index.php?m=Admin&c=Order&a=add_order">
+                        <div class="add" title="添加订单">
+                            <span><i class="fa fa-plus"></i>添加订单</span>
+                        </div>
+                    </a> -->
+                  </div>
+              </div>
+              <div style="clear:both"></div>
+            </div>
+        <div class="bDiv" style="height: auto;">
+            <div id="flexigrid" cellpadding="0" cellspacing="0" border="0">
+                <table>
+                    <tbody>
+                    <volist name="account_list" id="v">
+                        <tr data-id="{$v.log_id}">
+                            <td class="sign">
+                                <div style="width: 24px;"><i class="ico-check"></i></div>
+                            </td>
+                            <td align="center" class="">
+                                <div style="text-align: center; width: 100px;">{$v.user_id}</div>
+                            </td>
+                            <td align="center" class="">
+                                <div style="text-align: center; width: 100px;">{$v.user_name}</div>
+                            </td>
+                            <td align="center" class="">
+
+                                <div style="text-align: center; width: 200px;">{$v.desc}</div>
+                            </td>
+                            <td align="center" class="">
+                                <div style="text-align: center; width: 150px;">{$v.user_money}</div>
+                            </td>
+                            <td align="center" class="">
+                                <div style="text-align: center; width: 100px;">{$v.pay_points}</div>
+                            </td>
+                            <td align="center" class="">
+                                <div style="text-align: center; width: 150px;">{$v.user_electronic}</div>
+                            </td>
+                            <php>
+                                $html = '';
+                                if($v['order_id'] && $v['order_sn'])
+                                {
+                                    $url = url('Admin/order/detail',['order_id'=>$v['order_id']]);
+                                    $html = "<a target='_blank' href=$url>$v[order_sn]</a> ";
+                                }
+                            </php>
+                            <td align="center" class="">
+                                <!-- <div style="text-align: center; width: 160px;">{$v.order_sn|default="N/A"}</div> -->
+                                <div style="text-align: center; width: 160px;">{$html}</div>
+                            </td>
+                            <td align="center" class="">
+                                <div style="text-align: center; width: 150px;">{$v.change_time|date="Y-m-d H:i:s",###}</div>
+                            </td>
+                            <td align="" class="" style="width: 100%;">
+                                <div>&nbsp;</div>
+                            </td>
+                        </tr>
+                    </volist>
+                    </tbody>
+                </table>
+            </div>
+            <div class="iDiv" style="display: none;"></div>
+        </div>
+        <!--分页位置-->
+        {$page} </div>
+</div>
+<script>
+    $(document).ready(function(){
+        // 表格行点击选中切换
+        $('#flexigrid > table>tbody >tr').click(function(){
+            $(this).toggleClass('trSelected');
+        });
+
+        // 点击刷新数据
+        $('.fa-refresh').click(function(){
+            location.href = location.href;
+        });
+        laydate.skin('molv');//选择肤色
+        laydate({
+           elem: '#start_time',
+           format: 'YYYY-MM-DD', // 分隔符可以任意定义，该例子表示只显示年月
+        });
+        laydate({
+           elem: '#end_time',
+           format: 'YYYY-MM-DD', // 分隔符可以任意定义，该例子表示只显示年月
+        });
+    });
+
+    function check_form(){
+        var start_time = $.trim($('#start_time').val());
+        var end_time =  $.trim($('#end_time').val());
+        if(start_time == '' ^ end_time == ''){
+            layer.alert('请选择完整的时间间隔', {icon: 2});
+            return false;
+        }
+        if(start_time !== '' && end_time !== ''){
+            $('#ctime').val(start_time+" - "+end_time);
+        }
+        if(start_time == '' && end_time == ''){
+            $('#ctime').val('');
+        }
+
+        return true;
+    }
+    function exportReport(){
+        var selected_ids = '';
+        $('.trSelected' , '#flexigrid').each(function(i){
+            selected_ids += $(this).data('id')+',';
+        });
+        if(selected_ids != ''){
+            $('input[name="ids"]').val(selected_ids.substring(0,selected_ids.length-1));
+        }
+        $('input[name="is_export"]').val(1);
+
+        $('#search-form').submit();
+    }
+</script>
+</body>
+</html>

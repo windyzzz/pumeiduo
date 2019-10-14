@@ -1,0 +1,358 @@
+<include file="public/layout" />
+<style>
+    .err{color:#F00; display:none;}
+    th,td{padding: 10px; text-align: center}
+</style>
+<script src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
+<body style="background-color: #FFF; overflow: auto;">
+<div id="toolTipLayer" style="position: absolute; z-index: 9999; display: none; visibility: visible; left: 95px; top: 573px;"></div>
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title"><a class="back" href="javascript:history.back();" title="返回列表"><i class="fa fa-arrow-circle-o-left"></i></a>
+            <div class="subject">
+                <h3>促销管理 - 编辑加价购活动</h3>
+                <h5>网站系统加价购活动活动详情页</h5>
+            </div>
+        </div>
+    </div>
+    <form class="form-horizontal" id="handleposition" method="post" onsubmit="return false;">
+        <input type="hidden" name="id"  value="{$info.id}">
+        <div class="ncap-form-default">
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>活动标题</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="title" value="{$info.title}" class="input-txt">
+                    <span class="err" id="err_title"></span>
+                    <p class="notic">请填写加价购活动标题</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>活动参与金额</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="price" value="{$info.price}" class="input-txt">
+                    <span class="err" id="err_price"></span>
+                    <p class="notic">请填写加价购活动参与金额</p>
+                </dd>
+            </dl>
+            <dl class="row timed">
+                <dt class="tit">
+                    <label><em>*</em>开始日期</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" id="start_time" name="start_time" value="{$info.start_time|date='Y-m-d H:i:s',###}" class="input-txt" autocomplete="off">
+                    <span class="err" id="err_start_time"></span>
+                    <p class="notic">活动开始日期</p>
+                </dd>
+            </dl>
+            <dl class="row timed">
+                <dt class="tit">
+                    <label><em>*</em>结束日期</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" id="end_time" name="end_time" value="{$info.end_time|date='Y-m-d H:i:s',###}" class="input-txt" autocomplete="off">
+                    <span class="err" id="err_end_time"></span>
+                    <p class="notic">活动结束日期</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label for="cat_ids">选择商品分类</label>
+                </dt>
+                <dd class="opt">
+                    <select name="type" id="cat_ids">
+                        <option value="0" {$info.type==0?'selected':''}>全场</option>
+                        <option value="1" {$info.type==1?'selected':''}>自定义</option>
+                    </select>
+                </dd>
+            </dl>
+            <input type="hidden" name="index1" id="index1" value="{$info.category|count}" disabled>
+            <foreach name="info.category" item="cv" key="ck">
+                <dl class="row category">
+                    <dt class="tit">
+                        <label>商品分类</label>
+                    </dt>
+                    <dd class="opt">
+                        <select name="cat_id[]" id="cat_id_{$ck}" class="small form-control cat_id" data-index="{$ck}">
+                            <option value="0">请选择商品分类</option>
+                            <foreach name="cat_list" item="v" key="k" >
+                                <option value="{$v['id']}" <if condition="$v['id'] eq $cv">selected="selected"</if> >
+                                {$v['name']}
+                                </option>
+                            </foreach>
+                        </select>
+                        <select name="cat_id_2[]" id="cat_id_2_{$ck}" onChange="get_category(this.value,'cat_id_3_{$ck}','0');getCategoryBindList(this.value)" onclick="get_category(this.value,'cat_id_3_{$ck}','0');getCategoryBindList(this.value)" class="small form-control">
+                            <option value="0">请选择商品分类</option>
+                        </select>
+                        <select name="cat_id_3[]" id="cat_id_3_{$ck}" class="small form-control" >
+                            <option value="0">请选择商品分类</option>
+                        </select>
+                        <a href="javascript:;" class="ncap-btn-mini ncap-btn-red delete">删除</a>
+                        <if condition="count($info.category)-1 == $ck">
+                            <a onclick="addCategory(this)" class="ncap-btn-mini ncap-btn-green">添加商品分类</a>
+                        </if>
+
+
+                        <span class="err" id="err_cat_id" style="color:#F00; display:none;"></span>
+                    </dd>
+                </dl>
+            </foreach>
+
+            <hr>
+            <dl class="row">
+                <dt >
+                <h2>奖励设置</h2>
+                </dt>
+            </dl>
+            <hr>
+            <table class="reward_table" style="width: 80%; margin: 0 auto;" border="1">
+                <tr>
+                    <th>序号</th>
+                    <th>商品id</th>
+                    <th>商品数量</th>
+                    <th>操作</th>
+                    <!-- <th>奖励数量</th>
+                    <th>奖励金额</th>
+                    <th>奖励商品id</th>
+
+                    <th>奖励概率</th>-->
+                </tr>
+                <span id="index" style="display: none;">{$info.extra_reward|count}</span>
+                <volist name="info.extra_reward" id="item" key="k">
+                    <tr>
+                        <td>{$k}</td>
+                        <input type="hidden" name="reward[{$k}][reward_id]" value="{$item.reward_id}">
+                        <td>
+                            <div style="display: table;">
+                                <div style="display: table-cell;vertical-align: middle;">
+                                    <input type="number" class="goods_id" style="margin: 0 20px;" name="reward[{$k}][goods_id]" value="{$item.goods_id}">
+                                </div>
+                                <div style='display: table-cell; text-align:left;margin-left: 20px;'>
+                                    <span>商品名称：{$item[goods_name]}</span><br>
+                                    <span>商品价格：{$item[shop_price]}元</span><br>
+                                    <span>商品积分：{$item[exchange_integral]}</span><br>
+                                    <span>商品数量：{$item[store_count]}</span><br>
+                                </div>
+                            </div>
+                        </td>
+
+                        <td><input type="number" name="reward[{$k}][goods_num]" value="{$item.goods_num}"></td>
+
+                        <td><a href="javascript:;" class="ncap-btn-mini ncap-btn-red delete">删除</a></td>
+                    </tr>
+                </volist>
+                <!-- <tr>
+                    <td>1</td>
+                    <td><input type="number" name="reward[reward_count]" value="100"></td>
+                    <td><input type="text" name="reward[reward_interval]" value="0.01-999"></td>
+                    <td>
+                        <select name="reward[reward_type]">
+                            <option value="1">积分</option>
+                            <option value="2">电子币</option>
+                        </select>
+                    </td>
+                    <td>1</td>
+                    <td>1.00</td>
+                    <td>386</td>
+                    <td>100%</td>
+                </tr>-->
+            </table>
+
+
+            <div><a onclick="addSetting()" class="ncap-btn-big ncap-btn-blue">添加奖励设置</a></div>
+            <div class="bot"><a onclick="verifyForm()" class="ncap-btn-big ncap-btn-green">确认提交</a></div>
+        </div>
+    </form>
+</div>
+<script type="text/javascript">
+    $(function () {
+        $('#start_time').layDate();
+        $('#end_time').layDate();
+
+        // 自定义商品分类、全场
+        if($('#cat_ids').val() == 0){
+            $('.category').hide();
+        }else{
+            $('.category').show();
+        }
+
+        $(document).on("change",'#cat_ids',function(){
+            if($(this).val() == 0){
+                $('.category').hide();
+            }else{
+                $('.category').show();
+            }
+        })
+    });
+    var index = parseInt($('#index').text()) + 1;
+
+    function addSetting()
+    {
+        var html = repalceHtml(index);
+
+        $('.reward_table').append(html);
+
+        index++;
+    }
+
+    function repalceHtml(index)
+    {
+        var html = '<tr>' +
+            '<td>\\index\\</td>' +
+            '<td><div style="display: table;"><div style="display: table-cell;vertical-align: middle;">' +
+            '<input type="number" style="margin: 0 20px;" name="reward[\\index\\][goods_id]" class="goods_id" value=""></div></div></td>' +
+            '<td><input type="number" name="reward[\\index\\][goods_num]" value=""></td>' +
+            '<td><a href="javascript:;" class="ncap-btn-mini ncap-btn-red delete">删除</a></td>';
+        var h = /\\index\\/g;
+        html = html.replace(h, index);
+        return html;
+    }
+
+    $(document).on('blur','.goods_id',function () {
+        $(this).parent().next().remove();
+        if($(this).parent().next().length == 0 && $(this).val())
+        {
+            $(this).parent().after("<p class='load'>loading...</p>");
+            var that = $(this);
+            $.ajax({
+                url:"{:U('Goods/getGoodsInfo')}",
+                data:{goods_id:$(this).val()},
+                type:"get",
+                success:function (res) {
+                    that.parent().next().remove();
+                    if(res.status == 1){
+                        that.parent().after(
+                            "<div style='display: table-cell; text-align:left;margin-left: 20px;'>" +
+                            "<span>商品名称："+res.result.goods_name+"</span><br>" +
+                            "<span>商品价格："+res.result.shop_price+"元</span><br>" +
+                            "<span>商品积分："+res.result.exchange_integral+"</span><br>" +
+                            "<span>商品数量："+res.result.store_count+"</span><br>" +
+                            "</div>");
+                    }else{
+                        that.parent().next().remove();
+                        that.parent().after("<span style='color: red'>没有对应商品信息!</span>");
+                    }
+                },error:function (xhr) {
+
+                }
+            });
+
+        }
+    })
+    function verifyForm(){
+        $('span.err').hide();
+        $.ajax({
+            type: "POST",
+            url: "{:U('Extra/update')}",
+            data: $('#handleposition').serialize(),
+            dataType: "json",
+            error: function () {
+                layer.alert("服务器繁忙, 请联系管理员!");
+            },
+            success: function (data) {
+                if (data.status == 1) {
+                    layer.msg(data.msg, {
+                        icon: 1,
+                        time: 1000
+                    }, function(){
+                        window.location.href = "{:U('Admin/Extra/index')}";
+                    });
+                } else {
+                    layer.msg(data.msg, {icon: 2,time: 3000});
+                    $.each(data.result, function (index, item) {
+                        $('#err_' + index).text(item).show();
+                    });
+                }
+            }
+        });
+    }
+
+    /** 以下是编辑时默认选中某个商品分类*/
+    $(document).ready(function(){
+
+        <foreach name="info.category" item="cv" key="ck">
+            <if condition="$info.category2[$ck] gt 0">
+                // 商品分类第二个下拉菜单
+                get_category('{$cv}','cat_id_2_{$ck}','{$info.category2[$ck]}');
+            </if>
+            <if condition="$info.category3[$ck] gt 0">
+                // 商品分类第二个下拉菜单
+                get_category('{$info.category2[$ck]}','cat_id_3_{$ck}','{$info.category3[$ck]}');
+            </if>
+        </foreach>
+
+    });
+    //选择分类
+    $(function(){
+        $(document).on("change",'.cat_id',function(){
+            get_category($(this).val(),'cat_id_2_'+$(this).data('index'),'0');
+            $('#cat_id_3_'+$(this).data('index')).empty().html("<option value='0'>请选择商品分类</option>");
+        });
+        $(document).on("click",'.cat_id',function(){
+            get_category($(this).val(),'cat_id_2_'+$(this).data('index'),'0');
+            $('#cat_id_3_'+$(this).data('index')).empty().html("<option value='0'>请选择商品分类</option>");
+        })
+
+        $(document).on("click", '.delete', function (e) {
+            $(this).parent().parent().remove();
+        })
+    });
+    var indexs = parseInt($('#index1').val());
+    function addCategory(btn)
+    {
+        var options = {$cat_list|json_encode};
+        var vab = '';
+        var option;
+        for (option in options){
+            vab += '<option value="'+options[option].id+'">'+options[option].name+'</option>'
+        }
+        var html = '<dl class="row">'
+                + '<dt class="tit">'
+                + '<label>商品分类</label>'
+                + '</dt>'
+                + '<dd class="opt">'
+                + '<select name="cat_id[]" id="cat_id_'+ indexs +'" class="small form-control cat_id" data-index="'+indexs+'">'
+                + '<option value="0">请选择商品分类</option>'
+                + vab
+                + '</select>'
+                + '<select name="cat_id_2[]" id="cat_id_2_'+ indexs +'" onChange="get_category(this.value,\'cat_id_3_'+ indexs +'\',\'0\');getCategoryBindList(this.value)" onclick="get_category(this.value,\'cat_id_3_'+ indexs +'\',\'0\');getCategoryBindList(this.value)" class="small form-control">'
+                + '<option value="0">请选择商品分类</option>'
+                + '</select>'
+                + '<select name="cat_id_3[]" id="cat_id_3_'+ indexs +'" class="small form-control" >'
+                + '<option value="0">请选择商品分类</option>'
+                + '</select>'
+                + '<a href="javascript:;" class="ncap-btn-mini ncap-btn-red delete">删除</a>'
+                + '</dd>'
+                + '</dl>'
+            ;
+        $(btn).parent().parent().append(html);
+        indexs++;
+    }
+
+    function getCategoryBindList(val){
+        $.ajax({
+            'url':"{:U('goods/getCategoryBindList')}",
+            'data':{cart_id:val},
+            'dataType':'json',
+            success:function(data){
+                if(data.status == 1){
+                    var html = '<option value="">所有品牌</option>'
+                    for (var i=0 ;i<data.result.length;i++){
+                        html += '<option value="'+data.result[i].id+'">'+data.result[i].name+'</option>'
+                    }
+                    $('#brand_id').html('');
+                    $('#brand_id').html(html);
+                }
+            }
+        })
+    }
+
+
+</script>
+</body>
+</html>

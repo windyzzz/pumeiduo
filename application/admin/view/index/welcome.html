@@ -1,0 +1,118 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="__PUBLIC__/static/css/index.css" rel="stylesheet" type="text/css">
+    <link href="__PUBLIC__/static/css/perfect-scrollbar.min.css" rel="stylesheet" type="text/css">
+    <link href="__PUBLIC__/static/css/purebox.css" rel="stylesheet" type="text/css">
+    <link href="__PUBLIC__/static/js/jquery-ui/jquery-ui.min.css" rel="stylesheet" type="text/css">
+    <script type="text/javascript" src="__PUBLIC__/static/js/jquery.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/static/js/jquery-ui/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/static/js/jquery.cookie.js"></script>
+    <style>
+        .contentWarp_item .section_select .item_comment{
+            padding: 83px 0 31px 38px;
+        }
+        .contentWarp_item .section_select .item {
+            padding: 83px 0 38px 38px;
+        }
+        .contentWarp_item .section_order_select li{
+            width: 23%;
+        }
+    </style>
+</head>
+<body class="iframe_body">
+<div class="warpper">
+    <div class="title">管理中心</div>
+    <div class="content start_content">
+        <div class="contentWarp">
+            <div class="contentWarp_item clearfix">
+                <div class="section_select">
+                    <div class="item item_price">
+                        <i class="icon"><img src="__PUBLIC__/static/images/1.png" width="71" height="74"></i>
+                        <div class="desc">
+                            <div class="tit">{$count.new_order}</div>
+                            <span>今日订单总数</span>
+                        </div>
+                    </div>
+                    <div class="item item_order">
+                        <i class="icon"><img src="__PUBLIC__/static/images/2.png"></i>
+                        <div class="desc">
+                            <div class="tit">{$count.new_users}</div>
+                            <span>今日注册会员总数</span>
+                        </div>
+                        <i class="icon"></i>
+                    </div>
+                    <div class="item item_comment">
+                        <i class="icon"><img src="__PUBLIC__/static/images/3.png" width="90" height="86"></i>
+                        <div class="desc">
+                            <div class="tit">{$count.comment}</div>
+                            <span>今日待审评论数</span>
+                        </div>
+                    </div>
+                    <div class="item item_flow">
+                        <i class="icon"><img src="__PUBLIC__/static/images/4.png" width="86"></i>
+                        <div class="desc">
+                            <div class="tit">{$count.today_login}</div>
+                            <span>今日访问量</span>
+                        </div>
+                        <i class="icon"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="contentWarp_item clearfix">
+                <div class="section_order_select">
+                    <ul>
+                        <li>
+                            <a href="{:U('Admin/Order/index',array('order_status'=>0))}">
+                                <i class="ice ice_w"></i>
+                                <div class="t">待处理订单</div>
+                                <span class="number">{$count.handle_order}</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a  href="{:U('Admin/Goods/goodsList')}">
+                                <i class="ice ice_y"></i>
+                                <div class="t">商品数量</div>
+                                <span class="number">{$count.goods}</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{:U('Admin/Article/articleList')}">
+                                <i class="ice ice_f"></i>
+                                <div class="t">文章数量</div>
+                                <span class="number">{$count.article}</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{:U('Admin/User/index')}">
+                                <i class="ice ice_n"></i>
+                                <div class="t">会员总数</div>
+                                <span class="number">{$count.users}</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script type="text/javascript">
+    $(function(){
+        $("*[data-toggle='tooltip']").tooltip({
+            position: {
+                my: "left top+5",
+                at: "left bottom"
+            }
+        });
+    });
+</script>
+<script type="text/javascript" src="__PUBLIC__/static/js/jquery.purebox.js"></script>
+<script type="text/javascript" src="__PUBLIC__/static/js/echart/echarts.min.js"></script>
+
+</body>
+
+</html>

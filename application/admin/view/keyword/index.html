@@ -1,0 +1,173 @@
+<include file="public/layout" />
+<body style="background-color: rgb(255, 255, 255); overflow: auto; cursor: default; -moz-user-select: inherit;">
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+	<div class="fixed-bar">
+		<div class="item-title">
+			<div class="subject">
+				<h3>关键词管理</h3>
+				<h5>网站系统关键词活动审核与管理</h5>
+			</div>
+		</div>
+	</div>
+	<!-- 操作说明 -->
+	<div id="explanation" class="explanation" style="color: rgb(44, 188, 163); background-color: rgb(237, 251, 248); width: 99%; height: 100%;">
+		<div id="checkZoom" class="title"><i class="fa fa-lightbulb-o"></i>
+			<h4 title="提示相关设置操作时应注意的要点">操作提示</h4>
+			<span title="收起提示" id="explanationZoom" style="display: block;"></span>
+		</div>
+		<ul>
+			<li>关键词管理, 由平台设置管理.</li>
+		</ul>
+	</div>
+	<div class="flexigrid">
+		<div class="mDiv">
+			<div class="ftitle">
+				<h3>关键词活动列表</h3>
+				<h5>(共{$page->totalRows}条记录)</h5>
+			</div>
+			<div title="刷新数据" class="pReload"><i class="fa fa-refresh"></i></div>
+		</div>
+		<div class="hDiv">
+			<div class="hDivBox">
+				<table cellspacing="0" cellpadding="0">
+					<thead>
+					<tr>
+						<th class="sign" axis="col0">
+							<div style="width: 24px;"><i class="ico-check"></i></div>
+						</th>
+						<th align="left" abbr="article_title" axis="col3" class="">
+							<div style="text-align: center; width: 100px;" class="">ID</div>
+						</th>
+						<th align="left" abbr="ac_id" axis="col4" class="">
+							<div style="text-align: center; width: 290px;" class="">关键词</div>
+						</th>
+
+						<th align="left" abbr="ac_id" axis="col4" class="">
+							<div style="text-align: center; width: 80px;" class="">点击数</div>
+						</th>
+						<th align="center" abbr="article_show" axis="col5" class="">
+							<div style="text-align: center; width: 80px;" class="">状态</div>
+						</th>
+						<th align="center" abbr="article_time" axis="col6" class="">
+							<div style="text-align: center; width: 170px;" class="">排序</div>
+						</th>
+						<th align="center" abbr="article_time" axis="col6" class="">
+							<div style="text-align: center; width: 170px;" class="">创建时间</div>
+						</th>
+						<th align="left" axis="col1" class="handle">
+							<div style="text-align: center; width: 290px;">操作</div>
+						</th>
+						<th style="width:100%" axis="col7">
+							<div></div>
+						</th>
+					</tr>
+					</thead>
+				</table>
+			</div>
+		</div>
+		<div class="tDiv">
+			<div class="tDiv2">
+				<div class="fbutton">
+					<a href="{:U('Admin/KeyWord/add')}">
+						<div class="add" title="添加热门关键词">
+							<span><i class="fa fa-plus"></i>添加热门关键词</span>
+						</div>
+					</a>
+				</div>
+			</div>
+			<div style="clear:both"></div>
+		</div>
+		<div class="bDiv" style="height: auto;">
+			<div id="flexigrid" cellpadding="0" cellspacing="0" border="0">
+				<table>
+					<tbody>
+					<volist name="list" id="team">
+						<tr>
+							<td class="sign">
+								<div style="width: 24px;"><i class="ico-check"></i></div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 100px;">{$team.id}</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 290px;">
+									{$team.name}
+								</div>
+							</td>
+
+							<td align="left" class="">
+								<div style="text-align: center; width: 80px;">
+									{$team.click_num}
+								</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 80px;">
+									<if condition='$team[status] eq 1'>
+										<span class="yes" onClick="changeTableVal('key_word','id','{$team.id}','status',this)" ><i class="fa fa-check-circle"></i>开启</span>
+										<else />
+										<span class="no" onClick="changeTableVal('key_word','id','{$team.id}','status',this)" ><i class="fa fa-ban"></i>关闭</span>
+									</if>
+								</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 170px;">{$team.sort_order}</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 170px;">{$team.create_time}</div>
+							</td>
+
+
+							<td align="left" class="handle">
+								<div style="text-align: left; width: 80px; max-width:290px;">
+									<a class="btn blue" href="{:U('KeyWord/info',array('id'=>$team['id']))}"><i class="fa fa-pencil-square-o"></i>编辑</a>
+									<a class="btn red" href="javascript:void(0)" data-url="{:U('KeyWord/delete',array('id'=>$team['id']))}" onclick="delfun(this)"><i class="fa fa-trash-o"></i>删除</a>
+
+								</div>
+							</td>
+							<td align="" class="" style="width: 100%;">
+								<div>&nbsp;</div>
+							</td>
+						</tr>
+					</volist>
+					</tbody>
+				</table>
+			</div>
+			<div class="iDiv" style="display: none;"></div>
+		</div>
+		<!--分页位置-->
+		{$page->show()} </div>
+</div>
+<script>
+    function delfun(obj){
+        layer.confirm('确认删除？', {
+                btn: ['确定','取消'] //按钮
+            }, function(){
+                // 确定
+                $.ajax({
+                    type : 'post',
+                    url : $(obj).attr('data-url'),
+                    dataType : 'json',
+                    success : function(data){
+                        layer.closeAll();
+                        if(data.status == 1){
+                            layer.alert(data.msg, {icon: 1});
+                            $(obj).parent().parent().parent().remove();
+                        }else{
+                            layer.alert(data.msg, {icon: 2});  //alert('删除失败');
+                        }
+                    },
+                    error : function() {
+                        layer.closeAll();
+                        layer.alert('网络请求出错', {icon: 2});
+                    }
+                })
+            }, function(index){
+                layer.close(index);
+            }
+        );
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+<include file="public/layout" />
+<body style="background-color: rgb(255, 255, 255); overflow: auto; cursor: default; -moz-user-select: inherit;">
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+<div class="fixed-bar">
+        <div class="item-title"><a class="back" href="javascript:history.back();" title="返回列表"><i class="fa fa-arrow-circle-o-left"></i></a>
+            <div class="subject">
+                <h3>任务 - 任务详情</h3>
+                <h5>网站系统任务活动详情页</h5>
+            </div>
+        </div>
+    </div>
+    <div class="flexigrid">
+
+        <div class="hDiv">
+            <div class="hDivBox">
+                <table cellspacing="0" cellpadding="0">
+                    <thead>
+                    <tr>
+                        <th class="sign" axis="col0">
+                            <div style="width: 24px;"><i class="ico-check"></i></div>
+                        </th>
+                        <th align="left" abbr="article_title" axis="col3" class="">
+                            <div style="text-align: left; width: 100px;" class="">编号</div>
+                        </th>
+                        <th align="left" abbr="article_title" axis="col3" class="">
+                            <div style="text-align: left; width: 100px;" class="">获得会员ID</div>
+                        </th>
+                        <th align="left" abbr="ac_id" axis="col4" class="">
+                            <div style="text-align: center; width: 300px;" class="">订单编号</div>
+                        </th>
+                        <th align="left" abbr="ac_id" axis="col4" class="">
+                            <div style="text-align: center; width: 100px;" class="">获得积分</div>
+                        </th>
+                        <th align="left" abbr="ac_id" axis="col4" class="">
+                            <div style="text-align: center; width: 100px;" class="">获得电子币</div>
+                        </th>
+                        <th align="left" abbr="ac_id" axis="col4" class="">
+                            <div style="text-align: center; width: 150px;" class="">获得时间</div>
+                        </th>
+                        <th style="width:100%" axis="col7">
+                            <div></div>
+                        </th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+            <div class="tDiv">
+              <div class="tDiv2">
+                <div class="fbutton">
+                    <a href="{:U('Admin/task/export_order_list',['reward_id'=>$reward_id])}">
+                        <div class="add" title="选定行数据导出excel文件,如果不选中行，将导出列表所有数据">
+                            <span><i class="fa fa-plus"></i>导出数据</span>
+                        </div>
+                    </a>
+                  </div>
+                  <div class="fbutton">
+                    <!--<a href="/index.php?m=Admin&c=Order&a=add_order">
+                        <div class="add" title="添加订单">
+                            <span><i class="fa fa-plus"></i>添加订单</span>
+                        </div>
+                    </a> -->
+                  </div>
+              </div>
+              <div style="clear:both"></div>
+            </div>
+        <div class="bDiv" style="height: auto;">
+            <div id="flexigrid" cellpadding="0" cellspacing="0" border="0">
+                <table>
+                    <tbody>
+                    <volist name="list" id="team" key="k">
+                        <tr>
+                            <td class="sign">
+                                <div style="width: 24px;"><i class="ico-check"></i></div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: left; width: 100px;">{$k}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: left; width: 100px;">{$team.user_id}</div>
+                            </td>
+                            <php>
+                                $order_id = M('order')->where('order_sn',$team['order_sn'])->getField('order_id');
+                            </php>
+                            <td align="left" class="">
+                                <div style="text-align: left; width: 300px;"><a target="_blank" href="{:U('Admin/order/detail',['order_id'=>$order_id])}">{$team.order_sn}</a></div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: left; width: 100px;">{$team.reward_integral}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: left; width: 100px;">{$team.reward_electronic}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: left; width: 150px;">{$team.created_at|date='Y-m-d H:i:s',###}</div>
+                            </td>
+
+                            <td align="" class="" style="width: 100%;">
+                                <div>&nbsp;</div>
+                            </td>
+                        </tr>
+                    </volist>
+                    </tbody>
+                </table>
+            </div>
+            <div class="iDiv" style="display: none;"></div>
+        </div>
+        <!--分页位置-->
+       </div>
+</div>
+
+</body>
+</html>
