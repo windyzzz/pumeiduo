@@ -29,6 +29,7 @@ class UpdateUsers extends Migrator
     public function change()
     {
         $this->table('users')
+            ->changeColumn('token', 'string', ['limit' => 64, 'null' => true, 'comment' => '用户token', 'after' => 'third_leader'])
             ->addColumn('time_out', 'integer', ['default' => 0, 'signed' => false, 'comment' => 'token过期时间', 'after' => 'token'])
             ->update();
     }
