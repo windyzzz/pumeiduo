@@ -26,8 +26,8 @@ use think\Verify;
 
 class User extends Base
 {
-//    public $user_id = 0;
-//    public $user = [];
+    public $user_id = 0;
+    public $user = [];
 
     public function __construct()
     {
@@ -157,7 +157,6 @@ class User extends Base
      */
     public function account()
     {
-        $user = session('user');
         $type = I('type');
         $order_sn = I('order_sn');
         $logic = new UsersLogic();
@@ -168,7 +167,7 @@ class User extends Base
         //     $account_log[$k]['date'] = date('m',$v['change_time']);
         // }
         $return = [];
-        $return['user'] = $user;
+        $return['user'] = $this->user;
         $return['account_log'] = $account_log;
         $return['page'] = $data['show'];
         $return['active'] = 'account';
@@ -1346,9 +1345,8 @@ class User extends Base
     public function recharge(Request $request)
     {
         if ($request->isPost()) {
-            $user = session('user');
             $data['user_id'] = $this->user_id;
-            $data['nickname'] = $user['nickname'];
+            $data['nickname'] = $this->user['nickname'];
             $data['account'] = I('account');
             $data['order_sn'] = 'recharge'.get_rand_str(10, 0, 1);
             $data['ctime'] = time();

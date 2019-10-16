@@ -35,7 +35,7 @@ class CheckAuth
         $invite = I('invite', 0);
         if ($invite > 0) {
             // 是否是邀请
-//            session('invite', $invite);
+            session('invite', $invite);
             $this->redis->set('invite_' . $params['user_token'], $invite, 180);
             $file = 'invite.txt';
             file_put_contents($file, '['. date('Y-m-d H:i:s').']  设置新用户邀请人Session：'.$invite."\n", FILE_APPEND | LOCK_EX);

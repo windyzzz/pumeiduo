@@ -11,19 +11,14 @@
 
 namespace app\home\behavior;
 
-use think\cache\driver\Redis;
+use app\common\logic\Token as TokenLogic;
 
 class CheckValid
 {
     public function run(&$params)
     {
-        if (session('user')) {
-            $user = session('user');
-        } elseif ((new Redis())->has('user_' . $params['user_token'])) {
-            $user = (new Redis())->get('user_' . $params['user_token']);
-        } else {
-            exit(json_encode(['status' => -1, 'msg' => '请先登录', 'result' => null]));
-        }
+        $user = TokenLogic::getValue('user', $params['user_token']);
+        if (!$user) exit(json_encode(['status' => -1, 'msg' => '请先登录', 'result' => null]));
         if (0 == $user['type']) {
             exit(json_encode(['status' => -1, 'msg' => '你还没选择你的用户类型呢，不能进行该操作', 'result' => null]));
         }

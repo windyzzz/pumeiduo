@@ -11,20 +11,23 @@
 
 namespace app\home\controller;
 
+use app\common\logic\Token as TokenLogic;
 use think\Controller;
+use think\Request;
 use think\Session;
 
 class Base extends Controller
 {
     public $session_id;
     public $cateTrre = [];
+    protected $user;
+    protected $user_id;
 
     /*
      * 初始化操作
      */
     public function _initialize()
     {
-
         if (input('unique_id')) {           // 兼容手机app
             session_id(input('unique_id'));
             Session::start();
@@ -41,6 +44,16 @@ class Base extends Controller
         }
 
         $this->public_assign();
+
+        // APP请求接口处理
+        $token = Request::instance()->header('user-token', null);
+        if ($token) {
+            // 验证token
+            $res = TokenLogic::checkToken($token);
+            if ($res['status'] == 0) die(json_encode(['status' => 0, 'msg' => $res['msg']]));
+            $this->user = $res['user'];
+            $this->user_id = $res['user']['user_id'];
+        }
     }
 
     /**

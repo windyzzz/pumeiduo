@@ -59,9 +59,10 @@ class Uploadify extends Base
         $filename = str_replace('../', '', $filename);
         $filename = trim($filename, '.');
         $filename = trim($filename, '/');
+        $user_id = cookie('user_id') ? cookie('user_id') : $this->user_id;
         if ('del' == $action && !empty($filename) && file_exists($filename)) {
             $fileArr = explode('/', $filename);
-            if ($fileArr[3] != cookie('user_id')) {
+            if ($fileArr[3] != $user_id) {
                 return false;
             }
             $size = getimagesize($filename);
@@ -90,7 +91,8 @@ class Uploadify extends Base
             default: $allowFiles = '.+';
         }
 
-        $path = UPLOAD_PATH.'user/'.cookie('user_id').'/'.I('path', 'temp');
+        $user_id = cookie('user_id') ? cookie('user_id') : $this->user_id;
+        $path = UPLOAD_PATH.'user/'.$user_id.'/'.I('path', 'temp');
         $listSize = 100000;
         $key = empty($_GET['key']) ? '' : $_GET['key'];
 
@@ -283,7 +285,8 @@ class Uploadify extends Base
             return json_encode(['state' => $state]);
         }
         // 移动到框架应用根目录/public/uploads/ 目录下
-        $savePath = 'user/'.cookie('user_id').'/'.$this->savePath.'/';
+        $user_id = cookie('user_id') ? cookie('user_id') : $this->user_id;
+        $savePath = 'user/'.$user_id.'/'.$this->savePath.'/';
         // 使用自定义的文件保存规则
         $info = $file->rule(function ($file) {
             return  md5(mt_rand());
@@ -317,7 +320,8 @@ class Uploadify extends Base
             default: $allowFiles = '.+';
         }
 
-        $path = UPLOAD_PATH.'user/'.cookie('user_id').'/'.$this->savePath;
+        $user_id = cookie('user_id') ? cookie('user_id') : $this->user_id;
+        $path = UPLOAD_PATH.'user/'.$user_id.'/'.$this->savePath;
         $listSize = 100000;
         $key = empty($_GET['key']) ? '' : $_GET['key'];
         /* 获取参数 */
@@ -535,7 +539,8 @@ class Uploadify extends Base
         if (true !== $result || !$file) {
             $state = 'ERROR'.$result;
         } else {
-            $savePath = 'user/'.cookie('user_id').'/'.$this->savePath.'/';
+            $user_id = cookie('user_id') ? cookie('user_id') : $this->user_id;
+            $savePath = 'user/'.$user_id.'/'.$this->savePath.'/';
             $ossConfig = tpCache('oss');
             $ossSupportPath = ['comment', 'photo'];
             if (in_array(I('savepath'), $ossSupportPath) && $ossConfig['oss_switch']) {

@@ -33,7 +33,7 @@ class Login extends Base
         // header('Access-Control-Allow-Method:POST,GET');
         $user = session('user');
         if ($user) {
-            $this->user = $user;
+            $this->user = 111;
             $this->user_id = $user ? $user['user_id'] : 0;
         }
     }
@@ -67,6 +67,8 @@ class Login extends Base
      */
     public function do_login()
     {
+        var_dump($this->user);
+        exit();
         $username = trim(I('post.username'));
         $password = trim(I('post.password'));
         //验证码验证
@@ -113,7 +115,7 @@ class Login extends Base
         Hook::exec('app\\home\\behavior\\CheckAuth', 'run', $params);
         Url::root('/');
         $return['baseUrl'] = url('/', '', '', true);
-//        session('invite', I('invite', 0));
+        session('invite', I('invite', 0));
         $this->redis->set('invite_' . $this->userToken, I('invite', 0), 180);
 
         return json(['status' => 1, 'msg' => '已经登录', 'result' => $return]);
