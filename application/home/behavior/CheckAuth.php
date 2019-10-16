@@ -11,6 +11,7 @@
 
 namespace app\home\behavior;
 
+use app\common\logic\Token as TokenLogic;
 use app\common\logic\UsersLogic;
 use app\common\logic\wechat\WechatUtil;
 use think\cache\driver\Redis;
@@ -46,11 +47,7 @@ class CheckAuth
         // 行为逻辑
         if (session('user') || (isset($params['user_token']) && $this->redis->has('user_' . $params['user_token']))) {
             // 原系统进入 或者 APP进入
-            if (session('user')) {
-                $session_user = session('user');
-            } else {
-                $session_user = $this->redis->get('user_' . $params['user_token']);
-            }
+            $session_user = TokenLogic::getValue('user', $params['user_token']);
             if (!$session_user) exit(json_encode(['status' => -1, 'msg' => '你还没有登录呢', 'result' => $return]));
             $select_user = Db::name('users')->where('user_id', $session_user['user_id'])->find();
             $oauth_users = Db::name('oauth_users')->where(['user_id' => $session_user['user_id']])->find();
@@ -58,7 +55,7 @@ class CheckAuth
             if (empty($select_user)) {
                 session('user', null);
                 $this->redis->rm('user_' . $params['user_token']);
-//                $_SESSION['openid'] = 0;
+                $_SESSION['openid'] = 0;
                 $this->redis->rm('user_' . $params['user_token'] . '_openid');
 
                 if ('weixin' == I('web')) {
@@ -76,7 +73,7 @@ class CheckAuth
 
             $user = array_merge($select_user, $oauth_users);
             session('user', $user);
-            $this->redis->set('user_' . $params['user_token'], $user, 86400 * 5);
+            $this->redis->set('user_' . $params['user_token'], $user, config('redis_time'));
         } else {
             // $nologin = array(
             //         'login','pop_login','do_login','logout','verify','set_pwd','finished',
@@ -95,8 +92,7 @@ class CheckAuth
             if ('weixin' == $params['web']) {
                 $this->weixin_config = M('wx_user')->find(); //取微获信配置
                 // $this->assign('wechat_config', $this->weixin_config);
-//                $user_temp = session('user');
-                $user_temp = $this->redis->get('user_' . $params['user_token']);
+                $user_temp = TokenLogic::getValue('user', $params['user_token']);
                 if (isset($user_temp['user_id']) && $user_temp['user_id']) {
                     $user = M('users')->where('user_id', $user_temp['user_id'])->find();
                     if (!$user) {
@@ -166,6 +162,7 @@ class CheckAuth
         $data['oauth_child'] = 'mp';
         $_SESSION['openid'] = $data['openid'];
         $data['oauth'] = 'weixin';
+        $data['token'] = $userToken;
         if (isset($data2['unionid'])) {
             $data['unionid'] = $data2['unionid'];
         }

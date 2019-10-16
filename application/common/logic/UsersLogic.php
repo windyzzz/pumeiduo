@@ -11,6 +11,7 @@
 
 namespace app\common\logic;
 
+use app\common\logic\Token as TokenLogic;
 use app\common\model\UserAddress;
 use think\Cache;
 use think\cache\driver\Redis;
@@ -191,30 +192,32 @@ class UsersLogic extends Model
      * */
     public function afterLogin($data)
     {
+        $redis = new Redis();
 //        define('SESSION_ID', session_id()); //将当前的session_id保存为常量，供其它方法调用
 
         session('user', $data);
+        $redis->set('user_' . $data['token'], $data, config('redis_time'));
         session('server', $_SERVER);
+        $redis->set('server_' . $data['token'], $data, config('redis_time'));
         setcookie('user_id', $data['user_id'], null, '/');
         setcookie('is_distribut', $data['is_distribut'], null, '/');
         setcookie('uname', $data['nickname'], null, '/');
 
 //        // 登录后将购物车的商品的 user_id 改为当前登录的id
-//        M('cart')->where('session_id', SESSION_ID)->save(['user_id' => $data['user_id']]);
-        M('cart')->where('token', USER_TOKEN)->save(['user_id' => $data['user_id']]);
+        M('cart')->where('session_id', $data['token'])->save(['user_id' => $data['user_id']]);
         $cartLogic = new CartLogic();
         $cartLogic->setUserId($data['user_id']);
+        $cartLogic->setUserToken($data['token']);
         $cartLogic->doUserLoginHandle();  //用户登录后 需要对购物车 一些操作
 
-        $token = md5(time().mt_rand(1, 999999999));
-        $update_data = ['token' => $token, 'last_login' => time()];
+        $update_data = ['token' => $data['token'], 'time_out' => strtotime('+' . config('redis_days') . ' days'), 'last_login' => time()];
         M('users')->where('user_id', $data['user_id'])->save($update_data);
     }
 
     /*
      * App 登录
      * */
-    public function handleAppLogin($data)
+    public function handleAppLogin($data, $userToken)
     {
         // 1.判断是否需要注册新用户,先找到第三方登录数据，再判断用户状态是否正常
         $need_reg = true;
@@ -248,11 +251,14 @@ class UsersLogic extends Model
             $map['head_pic'] = !empty($data['head_pic']) ? $data['head_pic'] : '/public/images/default_head.png';
             $map['sex'] = null === $data['sex'] ? 0 : $data['sex'];
             $map['type'] = 0;
+            $map['token'] = $userToken;
+            $map['time_out'] = strtotime('+' . config('redis_days') . ' days');
             $row_id1 = Db::name('users')->add($map);
             $data['user_id'] = $row_id1;
             $row_id2 = Db::name('OauthUsers')->data($data)->add();
             $user_info = M('users')->where('user_id', $row_id1)->find();
             session('is_new', 1);
+            (new Redis())->set('is_new_' . $userToken, 1, config('redis_time'));
         }
 
         if (!$row_id0 || !$row_id1 || !$row_id2) {
@@ -262,6 +268,7 @@ class UsersLogic extends Model
             Db::commit();
             $this->afterLogin($user_info);
             session('is_app', 1);
+            (new Redis())->set('is_app_' . $userToken, 1, config('redis_time'));
             $result = ['status' => 1, 'msg' => '登录成功'];
         }
 
@@ -277,7 +284,7 @@ class UsersLogic extends Model
             return ['status' => 0, 'msg' => '请填写账号或密码'];
         }
 
-        $user = Db::name('users')->where('mobile', $username)->whereOr('email', $username)->field('password, user_id, mobile, nickname, user_name, is_distribut, is_lock, level, token')->find();
+        $user = Db::name('users')->where('mobile', $username)->whereOr('email', $username)->field('password, user_id, mobile, nickname, user_name, is_distribut, is_lock, level, token, type')->find();
         if (!$user) {
             $result = ['status' => -1, 'msg' => '账号不存在!'];
         } elseif (encrypt($password) != $user['password']) {
@@ -291,8 +298,9 @@ class UsersLogic extends Model
             $levelName = Db::name('user_level')->where('level_id', $levelId)->getField('level_name');
             $user['level_name'] = $levelName;
             // 更新用户token
-            if (!$userToken) $userToken = Token::setToken();
-            Db::name('users')->where('mobile', $username)->whereOr('email', $username)->save(['token' => $userToken, 'time_out' => strtotime("+5 days")]);
+            if (!$userToken) $userToken = TokenLogic::setToken();
+            Db::name('users')->where('mobile', $username)->whereOr('email', $username)->save(['token' => $userToken, 'time_out' => strtotime('+' . config('redis_days') . ' days')]);
+            $user['token'] = $userToken;
             $result = ['status' => 1, 'msg' => '登录成功', 'result' => $user];
         }
 
@@ -544,11 +552,12 @@ class UsersLogic extends Model
     {
         // Log::record('微信登录：第三方返回来的数据：'.json_encode($data));
         if (!$data['openid'] || !$data['oauth']) {
-            return ['status' => -1, 'msg' => '参数有误', 'result' => 'aaa'];
+            return ['status' => -1, 'msg' => '参数有误', 'result' => null];
         }
 
         $data['push_id'] && $map['push_id'] = $data['push_id'];
-        $map['token'] = md5(time().mt_rand(1, 999999999));
+        $map['token'] = isset($data['token']) ? $data['token'] : TokenLogic::setToken();
+        $map['time_out'] = strtotime('+' . config('redis_days') . ' days');
         $map['last_login'] = time();
 
         $user = $this->getThirdUser($data);
@@ -567,7 +576,7 @@ class UsersLogic extends Model
             // $map['first_leader'] = cookie('first_leader'); // 推荐人id
             // if($_GET['invite'])
             //     $map['first_leader'] = $_GET['invite']; // 微信授权登录返回时 get 带着参数的
-            $invite = session('invite');
+            $invite = TokenLogic::getValue('invite', $data['token']);
             $file = 'invite.txt';
             file_put_contents($file, '['. date('Y-m-d H:i:s').']  把邀请人设置到待邀请人字段：'.$invite."\n", FILE_APPEND | LOCK_EX);
             $map['invite_uid'] = $map['first_leader'] = 0;
@@ -605,6 +614,7 @@ class UsersLogic extends Model
             // }
             $user = Db::name('users')->where(['user_id' => $row_id])->find();
             session('is_new', 1);
+            (new Redis())->set('is_new_' . $data['token'], 1, 86400);
             if (!isset($data['oauth_child'])) {
                 $data['oauth_child'] = '';
             }
@@ -760,7 +770,7 @@ class UsersLogic extends Model
         // if($pay_points > 0){
         //     accountLog($user_id, 0,$pay_points, '会员注册赠送积分'); // 记录日志流水
         // }
-        $user = M('users')->where('user_id', $user_id)->field('user_id, mobile, nickname, user_name, is_distribut, is_lock, level, token')->find();
+        $user = M('users')->where('user_id', $user_id)->field('user_id, mobile, nickname, user_name, is_distribut, is_lock, level, token, type')->find();
 
         return ['status' => 1, 'msg' => '注册成功', 'result' => $user];
     }
@@ -775,7 +785,7 @@ class UsersLogic extends Model
         }
 
         $user = M('users')
-            ->field('user_id,sex,real_name,id_cart,birthday,mobile,head_pic,is_not_show_jk')
+            ->field('user_id,sex,real_name,id_cart,birthday,mobile,head_pic,is_not_show_jk,type')
             ->where('user_id', $user_id)
             ->find();
         if (!$user) {

@@ -83,7 +83,7 @@ class Login extends Base
         if (1 == $res['status']) {
             $res['url'] = htmlspecialchars_decode(I('post.referurl'));
             session('user', $res['result']);    // 保留session记录用户信息
-            $this->redis->set('user_' . $this->userToken, $res['result'], 86400 * 5);
+            $this->redis->set('user_' . $this->userToken, $res['result'], config('redis_time'));
             setcookie('user_id', $res['result']['user_id'], null, '/');
             setcookie('is_distribut', $res['result']['is_distribut'], null, '/');
             $nickname = empty($res['result']['nickname']) ? $username : $res['result']['nickname'];
@@ -91,6 +91,7 @@ class Login extends Base
             setcookie('cn', 0, time() - 3600, '/');
             $cartLogic = new CartLogic();
             $cartLogic->setUserId($res['result']['user_id']);
+            $cartLogic->setUserToken($this->userToken);
             $cartLogic->doUserLoginHandle(); // 用户登录后 需要对购物车 一些操作
             $orderLogic = new OrderLogic();
             $orderLogic->setUserId($res['result']['user_id']); //登录后将超时未支付订单给取消掉
@@ -214,7 +215,7 @@ class Login extends Base
             return json($data);
         }
         session('user', $data['result']);
-        $this->redis->set('user_' . $this->userToken, $data['result'], 86400 * 5);
+        $this->redis->set('user_' . $this->userToken, $data['result'], config('redis_time'));
         setcookie('user_id', $data['result']['user_id'], null, '/');
         setcookie('is_distribut', $data['result']['is_distribut'], null, '/');
         $nickname = empty($data['result']['nickname']) ? $username : $data['result']['nickname'];
@@ -245,7 +246,7 @@ class Login extends Base
     }
 
     /*
-     * app 登录
+     * 微信授权登录
      * */
     public function app_login(UserAppLogin $validate)
     {
@@ -260,7 +261,7 @@ class Login extends Base
 
         $logic = new UsersLogic();
 
-        $result = $logic->handleAppLogin($data);
+        $result = $logic->handleAppLogin($data, $params['user_token']);
 
         return json($result);
     }

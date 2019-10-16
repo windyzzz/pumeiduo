@@ -67,7 +67,9 @@ class LoginApi
         M('cart')->where('session_id', $this->session_id)->save(['user_id' => $data['result']['user_id']]);
 
         $cartLogic = new CartLogic();
-        $cartLogic->doUserLoginHandle($this->session_id, $data['result']['user_id']);  //用户登录后 需要对购物车 一些操作
+        $cartLogic->setUserId($data['result']['user_id']);
+        $cartLogic->setUserToken($this->session_id);
+        $cartLogic->doUserLoginHandle();  //用户登录后 需要对购物车 一些操作
 
         if (isMobile()) {
             $this->success('登陆成功', U('Home/index/index'));

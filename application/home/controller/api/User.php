@@ -1033,10 +1033,10 @@ class User extends Base
     public function password(Request $request)
     {
         //检查是否第三方登录用户
-        $logic = new UsersLogic();
-        $data = $logic->get_info($this->user_id);
-        $user = $data['result'];
-        if ('' == $user['mobile'] && '' == $user['email']) {
+//        $logic = new UsersLogic();
+//        $data = $logic->get_info($this->user_id);
+//        $user = $data['result'];
+        if ('' == $this->user['mobile'] && '' == $this->user['email']) {
             return json(['status' => 0, 'msg' => '请先绑定手机或邮箱', 'result' => null]);
         }
         if ($request->isPost()) {

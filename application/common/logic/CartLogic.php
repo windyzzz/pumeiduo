@@ -40,7 +40,7 @@ class CartLogic extends Model
     public function __construct()
     {
         parent::__construct();
-//        $this->session_id = session_id();
+        $this->session_id = session_id();
     }
 
     public function setCartId($cart_id)
