@@ -29,12 +29,18 @@ class ArticleLogic extends Model
      *
      * @return array
      */
-    public function getUserArticleCount()
+    public function getUserArticleCount($userToken = null)
     {
-        $user_info = session('user');
+        if (session('user')) {
+            $userId = session('user')['user_id'];
+        } elseif ($userToken) {
+            $userId = Db::name('users')->where('token', $userToken)->value('user_id');
+        } else {
+            return [];
+        }
         $this->checkPublicArticle();
         $user_system_article_no_read_where = [
-            'um.user_id' => $user_info['user_id'],
+            'um.user_id' => $userId,
             'um.status' => 0,
             'm.is_open' => 1,
         ];
