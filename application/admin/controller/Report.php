@@ -321,12 +321,30 @@ class Report extends Base
             $end = $this->end;
         }
 
+        // dump(date('Y-m-d',$this->begin));
+        // dump(date('Y-m-d',$this->end));
+
+        $now = strtotime(date('Y-m-d'));
+        $today['today_amount'] = M('order')->where("add_time>$now AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4)")->sum('total_amount'); //今日销售总额
+        $today['today_order'] = M('order')->where("add_time>$now and (pay_status=1 or pay_code='cod')")->count(); //今日订单数
+        $today['cancel_order'] = M('order')->where("add_time>$now AND order_status=3")->count(); //今日取消订单
+        if (0 == $today['today_order']) {
+            $today['sign'] = round(0, 2);
+        } else {
+            $today['sign'] = round($today['today_amount'] / $today['today_order'], 2);
+        }
+        $this->assign('today', $today);
         $select_year = $this->select_year;
         $res = Db::name('order'.$select_year)
             ->field(" COUNT(*) as tnum,sum(total_amount) as amount, FROM_UNIXTIME(add_time,'%Y-%m') as gap ")
             ->where(" add_time >$this->begin and add_time < $this->end AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4) ")
             ->group('gap')
+            // ->fetchSql(1)
             ->select();
+        // dump($res);
+        // dump($this->begin);
+        // dump($this->end);
+        // exit;
         foreach ($res as $val) {
             $arr[$val['gap']] = $val['tnum'];
             $brr[$val['gap']] = $val['amount'];
@@ -335,8 +353,8 @@ class Report extends Base
         }
 
         for ($i = $this->begin; $i <= $this->end;) {
-            $year = date('Y', $this->begin);
-            $m = date('m', $this->begin);
+            $year = date('Y', $i);
+            $m = date('m', $i);
             $day_num = date('t', strtotime("$year-$m"));
 
             $tmp_num = empty($arr[date('Y-m', $i)]) ? 0 : $arr[date('Y-m', $i)];
@@ -345,12 +363,12 @@ class Report extends Base
             $order_arr[] = $tmp_num;
             $amount_arr[] = $tmp_amount;
             $sign_arr[] = $tmp_sign;
-            $date = date('Y,m', $i);
+            $date = date('Y-m', $i);
             $j = $i + $day_num * 24 * 3600;
             //销售不含税价
             $tmp_c_amout = 0;
             $result = Db::name('order')
-                ->field('oi.order_id,og.rec_id,og.use_integral,og.member_goods_price as prom_goods_price,og.use_integral as prom_use_integra,og.goods_num,g.goods_id,g.goods_name,g.ctax_price,g.stax_price,og.re_id,g.zone')
+                ->field('oi.order_id,og.rec_id,og.use_integral,og.member_goods_price as prom_goods_price,og.use_integral as prom_use_integral,og.prom_id,og.goods_num,g.goods_id,g.goods_name,g.ctax_price,g.stax_price,FROM_UNIXTIME(oi.add_time,"%Y-%m-%d") as time,og.re_id,g.zone')
                 ->alias('oi')
                 ->join('order_goods og', 'og.order_id = oi.order_id', 'left')
                 ->join('goods g', 'og.goods_id = g.goods_id', 'left')
@@ -360,13 +378,16 @@ class Report extends Base
                 $vip_order_num = 0;
                 foreach ($result as $k => $v) {
                     if($v['re_id']==0) {
-                        if ($v['prom_goods_price'] > 0 || $v['prom_use_integral'] > 0) {
+
+                        if ($v['prom_goods_price'] > 0 || $v['prom_use_integral'] > 0 ){
                             if ($v['use_integral'] > 0) {
                                 $tmp_c_amout += $v['ctax_price'] * $v['goods_num'];
                             } else {
                                 $tmp_c_amout += $v['stax_price'] * $v['goods_num'];
                             }
                         }
+
+
                     }
                     if($v['zone']==3){
                         $vip_order_num++;
