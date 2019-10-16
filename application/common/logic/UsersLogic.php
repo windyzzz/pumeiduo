@@ -12,6 +12,8 @@
 namespace app\common\logic;
 
 use app\common\model\UserAddress;
+use think\Cache;
+use think\cache\driver\Redis;
 use think\Db;
 use think\Log;
 use think\Model;
@@ -189,7 +191,7 @@ class UsersLogic extends Model
      * */
     public function afterLogin($data)
     {
-        define('SESSION_ID', session_id()); //将当前的session_id保存为常量，供其它方法调用
+//        define('SESSION_ID', session_id()); //将当前的session_id保存为常量，供其它方法调用
 
         session('user', $data);
         session('server', $_SERVER);
@@ -197,8 +199,9 @@ class UsersLogic extends Model
         setcookie('is_distribut', $data['is_distribut'], null, '/');
         setcookie('uname', $data['nickname'], null, '/');
 
-        // 登录后将购物车的商品的 user_id 改为当前登录的id
-        M('cart')->where('session_id', SESSION_ID)->save(['user_id' => $data['user_id']]);
+//        // 登录后将购物车的商品的 user_id 改为当前登录的id
+//        M('cart')->where('session_id', SESSION_ID)->save(['user_id' => $data['user_id']]);
+        M('cart')->where('token', USER_TOKEN)->save(['user_id' => $data['user_id']]);
         $cartLogic = new CartLogic();
         $cartLogic->setUserId($data['user_id']);
         $cartLogic->doUserLoginHandle();  //用户登录后 需要对购物车 一些操作
@@ -227,7 +230,7 @@ class UsersLogic extends Model
             } else {
                 $need_reg = false;
                 if (1 == $user_info['is_lock']) {
-                    $result = ['status' => -1, 'msg' => '账号异常已被冻结，无法登录'];
+                    return ['status' => -1, 'msg' => '账号异常已被冻结，无法登录'];
                 }
             }
         }
@@ -268,13 +271,13 @@ class UsersLogic extends Model
     /*
      * 登陆
      */
-    public function login($username, $password)
+    public function login($username, $password, $userToken = '')
     {
         if (!$username || !$password) {
             return ['status' => 0, 'msg' => '请填写账号或密码'];
         }
 
-        $user = Db::name('users')->where('mobile', $username)->whereOr('email', $username)->find();
+        $user = Db::name('users')->where('mobile', $username)->whereOr('email', $username)->field('password, user_id, mobile, nickname, user_name, is_distribut, is_lock, level, token')->find();
         if (!$user) {
             $result = ['status' => -1, 'msg' => '账号不存在!'];
         } elseif (encrypt($password) != $user['password']) {
@@ -282,15 +285,29 @@ class UsersLogic extends Model
         } elseif (1 == $user['is_lock']) {
             $result = ['status' => -3, 'msg' => '账号异常已被锁定！！！'];
         } else {
+            unset($user['password']);
             //查询用户信息之后, 查询用户的登记昵称
             $levelId = $user['level'];
             $levelName = Db::name('user_level')->where('level_id', $levelId)->getField('level_name');
             $user['level_name'] = $levelName;
-
+            // 更新用户token
+            if (!$userToken) $userToken = Token::setToken();
+            Db::name('users')->where('mobile', $username)->whereOr('email', $username)->save(['token' => $userToken, 'time_out' => strtotime("+5 days")]);
             $result = ['status' => 1, 'msg' => '登录成功', 'result' => $user];
         }
 
         return $result;
+    }
+
+    /**
+     * 退出登录
+     * @param $userToken
+     * @return bool
+     */
+    public function logout($userToken)
+    {
+        Db::name('users')->where('token', $userToken)->setField('time_out', time());
+        return true;
     }
 
     public function login_ip($username, $password)
@@ -640,7 +657,7 @@ class UsersLogic extends Model
      *
      * @return array
      */
-    public function reg($username, $password, $password2, $push_id = 0, $invite = [], $nickname = '', $head_pic = '')
+    public function reg($username, $password, $password2, $push_id = 0, $invite = [], $nickname = '', $head_pic = '', $userToken)
     {
         $is_validated = 0;
         if (check_email($username)) {
@@ -692,7 +709,7 @@ class UsersLogic extends Model
         $map['reg_time'] = time();
         $map['invite_uid'] = $map['will_invite_uid'] = $map['first_leader'] = 0;
 
-        $invite = session('invite');
+        $invite = (new Redis())->get('invite_' . $userToken);
 
         // 如果找到他老爸还要找他爷爷他祖父等
         if ($invite > 0) {
@@ -738,12 +755,12 @@ class UsersLogic extends Model
         if (false === $user_id) {
             return ['status' => -1, 'msg' => '注册失败'];
         }
-        session('is_new', 1);
+        (new Redis())->set('is_new_' . $userToken, 1, 180);
         // $pay_points = tpCache('basic.reg_integral'); // 会员注册赠送积分
         // if($pay_points > 0){
         //     accountLog($user_id, 0,$pay_points, '会员注册赠送积分'); // 记录日志流水
         // }
-        $user = M('users')->where('user_id', $user_id)->find();
+        $user = M('users')->where('user_id', $user_id)->field('user_id, mobile, nickname, user_name, is_distribut, is_lock, level, token')->find();
 
         return ['status' => 1, 'msg' => '注册成功', 'result' => $user];
     }
@@ -1859,7 +1876,7 @@ class UsersLogic extends Model
         $sms_time_out = tpCache('sms.sms_time_out');
         $sms_time_out = $sms_time_out ? $sms_time_out : 180;
         //获取上一次的发送时间
-        $send = session('validate_code');
+        $send = Cache::get('validate_code_' . $sender);
         if (!empty($send) && $send['time'] > time() && $send['sender'] == $sender) {
             //在有效期范围内 相同号码不再发送
             $res = ['status' => -1, 'msg' => '规定时间内,不要重复发送验证码'];
@@ -1879,7 +1896,7 @@ class UsersLogic extends Model
             $info['sender'] = $sender;
             $info['is_check'] = 0;
             $info['time'] = time() + $sms_time_out; //有效验证时间
-            session('validate_code', $info);
+            Cache::set('validate_code_' . $sender, $info, 180);
             $res = ['status' => 1, 'msg' => '验证码已发送，请注意查收'];
         } else {
             $res = $send;
@@ -1920,10 +1937,12 @@ class UsersLogic extends Model
 
         if ('email' == $type) {
             if (!$reg_smtp_enable) {//发生邮件功能关闭
-                $validate_code = session('validate_code');
+//                $validate_code = session('validate_code');
+                $validate_code = Cache::get('validate_code_' . $sender);
                 $validate_code['sender'] = $sender;
                 $validate_code['is_check'] = 1; //标示验证通过
-                session('validate_code', $validate_code);
+//                session('validate_code', $validate_code);
+                Cache::set('validate_code_' . $sender, $validate_code, 180);
 
                 return ['status' => 1, 'msg' => '邮件验证码功能关闭, 无需校验验证码'];
             }
@@ -1931,7 +1950,7 @@ class UsersLogic extends Model
                 return ['status' => -1, 'msg' => '请输入邮件验证码'];
             }
             //邮件
-            $data = session('validate_code');
+            $data = Cache::get('validate_code_' . $sender);
             $timeOut = $data['time'];
             if ($data['code'] != $code || $data['sender'] != $sender) {
                 $inValid = false;
@@ -1942,7 +1961,8 @@ class UsersLogic extends Model
             } elseif (0 == $sms_status['status']) {
                 $data['sender'] = $sender;
                 $data['is_check'] = 1; //标示验证通过
-                session('validate_code', $data);
+//                session('validate_code', $data);
+                Cache::set('validate_code_' . $sender, $data, 180);
 
                 return ['status' => 1, 'msg' => '短信验证码功能关闭, 无需校验验证码'];
             }
@@ -1971,7 +1991,8 @@ class UsersLogic extends Model
             $res = ['status' => -1, 'msg' => '验证失败,验证码有误'];
         } else {
             $data['is_check'] = 1; //标示验证通过
-            session('validate_code', $data);
+//            session('validate_code', $data);
+            Cache::set('validate_code_' . $sender, $data, 180);
             $res = ['status' => 1, 'msg' => '验证成功'];
         }
 

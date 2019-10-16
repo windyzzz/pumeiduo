@@ -15,6 +15,7 @@ use app\common\logic\ArticleLogic;
 use app\common\logic\CartLogic;
 use app\common\logic\GoodsLogic;
 use app\common\logic\MessageLogic;
+use app\common\logic\Token;
 use app\common\logic\UsersLogic;
 use think\Db;
 use think\Hook;

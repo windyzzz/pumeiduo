@@ -31,6 +31,7 @@ class CartLogic extends Model
     protected $type = 1; //结算类型
     protected $cartType = 1; //加入购物车类型
     protected $session_id; //session_id
+    protected $user_token; //用户token
     protected $user_id = 0; //user_id
     protected $userGoodsTypeCount = 0; //用户购物车的全部商品种类
     protected $userCouponNumArr; //用户符合购物车店铺可用优惠券数量
@@ -39,7 +40,7 @@ class CartLogic extends Model
     public function __construct()
     {
         parent::__construct();
-        $this->session_id = session_id();
+//        $this->session_id = session_id();
     }
 
     public function setCartId($cart_id)
@@ -113,6 +114,16 @@ class CartLogic extends Model
     public function setUserId($user_id)
     {
         $this->user_id = $user_id;
+    }
+
+    /**
+     * 设置用户Token.
+     *
+     * @param $user_token
+     */
+    public function setUserToken($user_token)
+    {
+        $this->user_token = $user_token;
     }
 
     /**
@@ -819,12 +830,12 @@ class CartLogic extends Model
      */
     public function doUserLoginHandle()
     {
-        if (empty($this->session_id) || empty($this->user_id)) {
+        if (empty($this->user_id) || empty($this->user_token)) {
             return;
         }
         //登录后将购物车的商品的 user_id 改为当前登录的id
         $cart = new Cart();
-        $cart->save(['user_id' => $this->user_id], ['session_id' => $this->session_id, 'user_id' => 0]);
+        $cart->save(['user_id' => $this->user_id], ['session_id' => $this->user_token, 'user_id' => 0]);
         // 查找购物车两件完全相同的商品
         $cart_id_arr = $cart->field('id')->where(['user_id' => $this->user_id])->group('goods_id,spec_key')->having('count(goods_id) > 1')->select();
         if (!empty($cart_id_arr)) {

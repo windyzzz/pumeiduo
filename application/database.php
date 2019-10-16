@@ -22,15 +22,15 @@ return [
     // 数据库类型
     'type' => 'mysql',
     // 服务器地址
-    'hostname' => 'localhost',
+    'hostname' => '61.238.101.139',
     // 数据库名
-    'database' => 'pmd',
+    'database' => 'shop_ceshi',
     // 用户名
-    'username' => 'root',
+    'username' => 'pmdycdb',
     // 密码
-    'password' => 'root',
+    'password' => '#!IskpAE#hmd$r5nNulCapcBDt#x!lpn',
     // 端口
-    'hostport' => '3306',
+    'hostport' => '59899',
     // 连接dsn
     'dsn' => '',
     // 数据库连接参数

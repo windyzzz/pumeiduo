@@ -21,6 +21,7 @@ use app\common\model\Goods as GoodsModel;
 use app\common\model\GroupBuy;
 use app\common\model\SpecGoodsPrice;
 use think\AjaxPage;
+use think\cache\driver\Redis;
 use think\Cookie;
 use think\Db;
 use think\Hook;

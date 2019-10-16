@@ -21,18 +21,21 @@ use think\Hook;
 use think\Request;
 use think\Url;
 
-class Login
+class Login extends Base
 {
     public $user_id = 0;
     public $user = [];
 
     public function __construct()
     {
+        parent::__construct();
         // header('Access-Control-Allow-Origin:*');
         // header('Access-Control-Allow-Method:POST,GET');
         $user = session('user');
-        $this->user = $user;
-        $this->user_id = $user ? $user['user_id'] : 0;
+        if ($user) {
+            $this->user = $user;
+            $this->user_id = $user ? $user['user_id'] : 0;
+        }
     }
 
     public function getWeChatConfig()
@@ -76,10 +79,11 @@ class Login
         //     }
         // }
         $logic = new UsersLogic();
-        $res = $logic->login($username, $password);
+        $res = $logic->login($username, $password, $this->userToken);
         if (1 == $res['status']) {
             $res['url'] = htmlspecialchars_decode(I('post.referurl'));
-            session('user', $res['result']);
+            session('user', $res['result']);    // 保留session记录用户信息
+            $this->redis->set('user_' . $this->userToken, $res['result'], 86400 * 5);
             setcookie('user_id', $res['result']['user_id'], null, '/');
             setcookie('is_distribut', $res['result']['is_distribut'], null, '/');
             $nickname = empty($res['result']['nickname']) ? $username : $res['result']['nickname'];
@@ -103,11 +107,13 @@ class Login
     {
         // session_destroy();
         $params = I('get.');
+        $params['user_token'] = isset($this->userToken) ? $this->userToken : null;
         // 1. 检查登陆
         Hook::exec('app\\home\\behavior\\CheckAuth', 'run', $params);
         Url::root('/');
         $return['baseUrl'] = url('/', '', '', true);
-        session('invite', I('invite', 0));
+//        session('invite', I('invite', 0));
+        $this->redis->set('invite_' . $this->userToken, I('invite', 0), 180);
 
         return json(['status' => 1, 'msg' => '已经登录', 'result' => $return]);
     }
@@ -147,6 +153,9 @@ class Login
      */
     public function reg(Request $request)
     {
+        if (session_id()) {
+            $this->userToken = session_id();
+        }
         if ($this->user_id > 0) {
             // return json(['status'=>0, 'msg'=>'你已经登录过了', 'result'=>null]);
         }
@@ -163,7 +172,7 @@ class Login
         $password2 = I('post.password2', '');
         $code = I('post.code', '');
         $scene = I('post.scene', 1);
-        $session_id = session_id();
+        $session_id = $this->userToken;
 
         // 手机/邮箱验证码检查，如果没以上两种功能默认是图片验证码检查
         if (check_mobile($username)) {
@@ -200,17 +209,19 @@ class Login
         if (!empty($invite)) {
             $invite = get_user_info($invite); //根据user_id查找邀请人
         }
-        $data = $logic->reg($username, $password, $password2, 0, $invite);
+        $data = $logic->reg($username, $password, $password2, 0, $invite, '', '', $this->userToken);
         if (1 != $data['status']) {
             return json($data);
         }
         session('user', $data['result']);
+        $this->redis->set('user_' . $this->userToken, $data['result'], 86400 * 5);
         setcookie('user_id', $data['result']['user_id'], null, '/');
         setcookie('is_distribut', $data['result']['is_distribut'], null, '/');
         $nickname = empty($data['result']['nickname']) ? $username : $data['result']['nickname'];
         setcookie('uname', $nickname, null, '/');
         $cartLogic = new CartLogic();
         $cartLogic->setUserId($data['result']['user_id']);
+        $cartLogic->setUserToken($this->userToken);
         $cartLogic->doUserLoginHandle(); // 用户登录后 需要对购物车 一些操作
         return json($data);
     }
@@ -225,8 +236,11 @@ class Login
         setcookie('user_id', '', time() - 3600, '/');
         setcookie('PHPSESSID', '', time() - 3600, '/');
         session_unset();
-        session_destroy();
+//        session_destroy();
         //$this->success("退出成功",U('Home/Index/index'));
+        if ($userToken = Request::instance()->header('user-token', null)) {
+            (new UsersLogic())->logout($userToken);
+        }
         return json(['status' => 1, 'msg' => '退出登录成功', 'result' => null]);
     }
 
@@ -235,6 +249,7 @@ class Login
      * */
     public function app_login(UserAppLogin $validate)
     {
+        $params['user_token'] = isset($this->userToken) ? $this->userToken : null;
         Hook::exec('app\\home\\behavior\\CheckGuest', 'run', $params);
 
         $data = input('post.');

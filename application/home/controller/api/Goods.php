@@ -29,10 +29,11 @@ use think\Verify;
 use think\Loader;
 use think\Url;
 
-class Goods
+class Goods extends Base
 {
     public function __construct()
     {
+        parent::__construct();
         // header('Access-Control-Allow-Origin:*');
         // header('Access-Control-Allow-Method:POST,GET');
     }

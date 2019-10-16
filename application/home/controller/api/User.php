@@ -24,18 +24,22 @@ use think\Request;
 use think\Url;
 use think\Verify;
 
-class User
+class User extends Base
 {
-    public $user_id = 0;
-    public $user = [];
+//    public $user_id = 0;
+//    public $user = [];
 
     public function __construct()
     {
+        parent::__construct();
         // 1. 检查登陆
+        $params['user_token'] = isset($this->userToken) ? $this->userToken : null;
         Hook::exec('app\\home\\behavior\\CheckAuth', 'run', $params);
         $user = session('user');
-        $this->user = $user;
-        $this->user_id = $user['user_id'];
+        if ($user) {
+            $this->user = $user;
+            $this->user_id = $user['user_id'];
+        }
     }
     /**
      * 获取注册赠送积分
@@ -675,21 +679,31 @@ class User
     public function info(Request $request)
     {
         // 获取用户信息
-        $userLogic = new UsersLogic();
-        $user_info = $userLogic->get_info($this->user_id);
-        $user_info = $user_info['result'];
+//        $userLogic = new UsersLogic();
+//        $user_info = $userLogic->get_info($this->user_id);
+//        $user_info = $user_info['result'];
+        $user_info = [
+            'user_id' => $this->user['user_id'],
+            'sex' => $this->user['sex'],
+            'real_name' => $this->user['real_name'],
+            'id_cart' => $this->user['id_cart'],
+            'birthday' => $this->user['birthday'],
+            'mobile' => $this->user['mobile'],
+            'head_pic' => $this->user['head_pic'],
+            'is_not_show_jk' => $this->user['is_not_show_jk']
+        ];
 
         $data = [];
 
         //获取用户信息的数量
         $messageLogic = new MessageLogic();
-        $user_message_count = $messageLogic->getUserMessageCount();
+        $user_message_count = $messageLogic->getUserMessageCount($this->userToken);
         $data['user_message_count'] = $user_message_count;
 
         //获取用户活动信息的数量
 
         $articleLogic = new ArticleLogic();
-        $user_article_count = $articleLogic->getUserArticleCount();
+        $user_article_count = $articleLogic->getUserArticleCount($this->userToken);
         $data['user_article_count'] = $user_article_count;
 
         //用户中心面包屑导航
@@ -704,6 +718,7 @@ class User
             I('post.id_cart') ? $post['id_cart'] = I('post.id_cart') : false;  // 身份证
             I('post.real_name') ? $post['real_name'] = I('post.real_name') : false;  // 真实姓名
 
+            $userLogic = new UsersLogic();
             if (!$userLogic->update_info($this->user_id, $post)) {
                 return json(['status' => 0, 'msg' => '操作失败', 'result' => null]);
             }
@@ -1105,6 +1120,7 @@ class User
     // 获取我的邀请码
     public function invite()
     {
+        $params['user_token'] = isset($this->userToken) ? $this->userToken : null;
         Hook::exec('app\\home\\behavior\\CheckValid', 'run', $params);
         Url::root('/');
         $baseUrl = url('/', '', '', true);

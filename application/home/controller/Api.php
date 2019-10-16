@@ -11,9 +11,12 @@
 
 namespace app\home\controller;
 
+use app\common\logic\Token;
 use app\common\logic\UsersLogic;
+use think\Cache;
 use think\Cookie;
 use think\Db;
+use think\Request;
 use think\Session;
 use think\Verify;
 
@@ -24,7 +27,7 @@ class Api extends Base
     public function _initialize()
     {
         parent::_initialize();
-        session('user');
+//        session('user');
     }
 
     /*
@@ -114,8 +117,13 @@ class Api extends Base
         $sender = I('send');
         $verify_code = I('verify_code');
         $mobile = !empty($mobile) ? $mobile : $sender;
-        $session_id = I('unique_id', session_id());
-        session('scene', $scene);
+        if (session_id()) {
+            $session_id = session_id();
+        } else {
+            $session_id = Token::setToken();
+        }
+        $session_id = I('unique_id', $session_id);
+        Cache::set('scene_' .$scene . '_' . $session_id, $scene, 180);
 
 //        $exist = M('users')->where(['mobile'=>$mobile,'is_lock'=>0])->find();
 //        if(!$exist){
@@ -142,13 +150,13 @@ class Api extends Base
             if (1 != $res['status']) {
                 ajaxReturn($res);
             }
-            //判断是否存在验证码
+            /*//判断是否存在验证码
             $data = M('sms_log')->where(['mobile' => $mobile, 'session_id' => $session_id, 'status' => 1])->order('id DESC')->find();
             //获取时间配置
             $sms_time_out = tpCache('sms.sms_time_out');
             $sms_time_out = $sms_time_out ? $sms_time_out : 120;
             //120秒以内不可重复发送
-            /*if ($data && (time() - $data['add_time']) < $sms_time_out) {
+            if ($data && (time() - $data['add_time']) < $sms_time_out) {
                 $return_arr = ['status' => -1, 'msg' => $sms_time_out.'秒内不允许重复发送'];
                 ajaxReturn($return_arr);
             }*/
@@ -180,7 +188,12 @@ class Api extends Base
         $send = I('send');
         $sender = empty($mobile) ? $send : $mobile;
         $type = I('type');
-        $session_id = I('unique_id', session_id());
+        if (session_id()) {
+            $session_id = session_id();
+        } else {
+            $session_id = Request::instance()->header('user-token', null);
+        }
+        $session_id = I('unique_id', $session_id);
         $scene = I('scene', -1);
 
         $logic = new UsersLogic();
