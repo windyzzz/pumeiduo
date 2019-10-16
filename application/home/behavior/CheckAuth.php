@@ -13,6 +13,7 @@ namespace app\home\behavior;
 
 use app\common\logic\UsersLogic;
 use app\common\logic\wechat\WechatUtil;
+use think\cache\driver\Redis;
 use think\Db;
 use think\Url;
 
@@ -20,34 +21,49 @@ class CheckAuth
 {
     private $weixin_config;
     private $site_url;
+    protected $redis;
+
+    public function __construct()
+    {
+        $this->redis = new Redis();
+    }
 
     public function run(&$params)
     {
         Url::root('/');
         $invite = I('invite', 0);
         if ($invite > 0) {
-            session('invite', $invite);
+            // 是否是邀请
+//            session('invite', $invite);
+            $this->redis->set('invite_' . $params['user_token'], $invite, 180);
             $file = 'invite.txt';
             file_put_contents($file, '['. date('Y-m-d H:i:s').']  设置新用户邀请人Session：'.$invite."\n", FILE_APPEND | LOCK_EX);
         }
-
 
         $this->site_url = url('/', '', '', true);
         $return['baseUrl'] = $this->site_url;
         $return['result'] = $this->site_url;
         // 行为逻辑
-        if (session('?user')) {
-            $session_user = session('user');
+        if (session('user') || (isset($params['user_token']) && $this->redis->has('user_' . $params['user_token']))) {
+            // 原系统进入 或者 APP进入
+            if (session('user')) {
+                $session_user = session('user');
+            } else {
+                $session_user = $this->redis->get('user_' . $params['user_token']);
+            }
+            if (!$session_user) exit(json_encode(['status' => -1, 'msg' => '你还没有登录呢', 'result' => $return]));
             $select_user = Db::name('users')->where('user_id', $session_user['user_id'])->find();
             $oauth_users = Db::name('oauth_users')->where(['user_id' => $session_user['user_id']])->find();
             empty($oauth_users) && $oauth_users = [];
             if (empty($select_user)) {
                 session('user', null);
-                $_SESSION['openid'] = 0;
+                $this->redis->rm('user_' . $params['user_token']);
+//                $_SESSION['openid'] = 0;
+                $this->redis->rm('user_' . $params['user_token'] . '_openid');
 
                 if ('weixin' == I('web')) {
                     if (is_array($this->weixin_config)) {
-                        $wxuser = $this->GetOpenid(); //授权获取openid以及微信用户信息
+                        $wxuser = $this->GetOpenid($params['user_token']); //授权获取openid以及微信用户信息
 
                         if (1 == $wxuser['type']) {
                             exit(json_encode(['status' => -1, 'msg' => '你还没有登录呢', 'result' => $wxuser]));
@@ -57,8 +73,10 @@ class CheckAuth
 
                 exit(json_encode(['status' => -1, 'msg' => '你还没有登录呢', 'result' => $return]));
             }
+
             $user = array_merge($select_user, $oauth_users);
             session('user', $user);
+            $this->redis->set('user_' . $params['user_token'], $user, 86400 * 5);
         } else {
             // $nologin = array(
             //         'login','pop_login','do_login','logout','verify','set_pwd','finished',
@@ -77,17 +95,19 @@ class CheckAuth
             if ('weixin' == $params['web']) {
                 $this->weixin_config = M('wx_user')->find(); //取微获信配置
                 // $this->assign('wechat_config', $this->weixin_config);
-                $user_temp = session('user');
+//                $user_temp = session('user');
+                $user_temp = $this->redis->get('user_' . $params['user_token']);
                 if (isset($user_temp['user_id']) && $user_temp['user_id']) {
                     $user = M('users')->where('user_id', $user_temp['user_id'])->find();
                     if (!$user) {
                         $_SESSION['openid'] = 0;
                         session('user', null);
+                        $this->redis->rm('user_' . $params['user_token']);
                     }
                 }
 
                 if (is_array($this->weixin_config)) {
-                    $wxuser = $this->GetOpenid(); //授权获取openid以及微信用户信息
+                    $wxuser = $this->GetOpenid($params['user_token']); //授权获取openid以及微信用户信息
 
                     if (1 == $wxuser['type']) {
                         exit(json_encode(['status' => -1, 'msg' => '你还没有登录呢', 'result' => $wxuser]));
@@ -114,7 +134,7 @@ class CheckAuth
         }
     }
 
-    public function GetOpenid()
+    public function GetOpenid($userToken)
     {
         // if($_SESSION['openid'])
         //     return ['type'=>2, 'result'=>$_SESSION['data']];
@@ -123,7 +143,7 @@ class CheckAuth
             //触发微信返回code码
             //$baseUrl = urlencode('http://'.$_SERVER['HTTP_HOST'].$_SERVER['PHP_SELF'].'?'.$_SERVER['QUERY_STRING']);
             // $baseUrl = urlencode($this->get_url());
-            $invite = session('invite');
+            $invite = $this->redis->get('invite_' . $userToken);
             $file = 'invite.txt';
             file_put_contents($file, '['. date('Y-m-d H:i:s').']  把邀请人信息添加到授权回调地址：'.$invite."\n", FILE_APPEND | LOCK_EX);
             $baseUrl = urlencode($this->site_url."/index.php?m=Home&c=api.Login&a=callback&invite=$invite");
@@ -132,7 +152,7 @@ class CheckAuth
             // exit();
             return ['type' => 1, 'result' => $url, 'baseUrl' => $this->site_url];
         }
-        $invite = session('invite');
+        $invite = $this->redis->get('invite_' . $userToken);
         $file = 'invite.txt';
         file_put_contents($file, '['. date('Y-m-d H:i:s').']  授权回来，获取邀请人Session：'.$invite."\n", FILE_APPEND | LOCK_EX);
         //上面获取到code后这里跳转回来

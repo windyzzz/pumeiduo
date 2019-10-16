@@ -11,13 +11,21 @@
 
 namespace app\home\behavior;
 
+use think\cache\driver\Redis;
+
 class CheckValid
 {
     public function run(&$params)
     {
-        $user = session('user');
+        if (session('user')) {
+            $user = session('user');
+        } elseif ((new Redis())->has('user_' . $params['user_token'])) {
+            $user = (new Redis())->get('user_' . $params['user_token']);
+        } else {
+            exit(json_encode(['status' => -1, 'msg' => '请先登录', 'result' => null]));
+        }
         if (0 == $user['type']) {
-            exit(json_encode(['status' => -1, 'msg' => '你还没选择你的用户类型呢，不能进行该操作', 'result' => $wxuser]));
+            exit(json_encode(['status' => -1, 'msg' => '你还没选择你的用户类型呢，不能进行该操作', 'result' => null]));
         }
     }
 }
