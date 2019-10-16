@@ -67,8 +67,6 @@ class Login extends Base
      */
     public function do_login()
     {
-        var_dump($this->user);
-        exit();
         $username = trim(I('post.username'));
         $password = trim(I('post.password'));
         //验证码验证

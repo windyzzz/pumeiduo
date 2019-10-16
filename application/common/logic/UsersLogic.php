@@ -1971,7 +1971,7 @@ class UsersLogic extends Model
             } elseif (0 == $sms_status['status']) {
                 $data['sender'] = $sender;
                 $data['is_check'] = 1; //标示验证通过
-//                session('validate_code', $data);
+                session('validate_code', $data);
                 Cache::set('validate_code_' . $sender, $data, 180);
 
                 return ['status' => 1, 'msg' => '短信验证码功能关闭, 无需校验验证码'];
@@ -2001,7 +2001,7 @@ class UsersLogic extends Model
             $res = ['status' => -1, 'msg' => '验证失败,验证码有误'];
         } else {
             $data['is_check'] = 1; //标示验证通过
-//            session('validate_code', $data);
+            session('validate_code', $data);
             Cache::set('validate_code_' . $sender, $data, 180);
             $res = ['status' => 1, 'msg' => '验证成功'];
         }

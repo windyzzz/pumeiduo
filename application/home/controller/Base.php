@@ -22,6 +22,7 @@ class Base extends Controller
     public $cateTrre = [];
     protected $user;
     protected $user_id;
+    protected $userToken;
 
     /*
      * 初始化操作
@@ -53,6 +54,7 @@ class Base extends Controller
             if ($res['status'] == 0) die(json_encode(['status' => 0, 'msg' => $res['msg']]));
             $this->user = $res['user'];
             $this->user_id = $res['user']['user_id'];
+            $this->userToken = $token;
         }
     }
 

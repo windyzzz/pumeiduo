@@ -15,6 +15,7 @@ use app\common\logic\ArticleLogic;
 use app\common\logic\CartLogic;
 use app\common\logic\GoodsLogic;
 use app\common\logic\MessageLogic;
+use app\common\logic\Token as TokenLogic;
 use app\common\logic\UsersLogic;
 use think\Db;
 use think\Hook;
@@ -727,7 +728,6 @@ class User extends Base
             if($is_consummate!==false){
                 return json(['status' => 1, 'msg' => '操作成功', 'result' => array('point'=>$is_consummate,'is_get_point'=>1)]);
             }else{
-                // setcookie('uname',urlencode($post['nickname']),null,'/');
                 return json(['status' => 1, 'msg' => '操作成功', 'result' => null]);
             }
 
@@ -907,7 +907,12 @@ class User extends Base
             $confirm_mobile = I('post.confirm_mobile');
             $code = I('post.code');
             $scene = I('post.scene', 6);
-            $session_id = I('unique_id', session_id());
+            if (session_id()) {
+                $session_id = session_id();
+            } else {
+                $session_id = $this->userToken;
+            }
+            $session_id = I('unique_id', $session_id);
             $step = I('step', 1);
             $logic = new UsersLogic();
             if (1 == $step) {
@@ -927,7 +932,7 @@ class User extends Base
 
                 return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
             } elseif (2 == $step) {
-                $check = session('validate_code');
+                $check = TokenLogic::getValue('validate_code', $this->user['mobile']);
                 if (empty($check)) {
                     return json(['status' => 0, 'msg' => '验证码还未验证通过', 'result' => null]);
                 }

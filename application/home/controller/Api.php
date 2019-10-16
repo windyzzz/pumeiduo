@@ -120,7 +120,7 @@ class Api extends Base
         if (session_id()) {
             $session_id = session_id();
         } else {
-            $session_id = Token::setToken();
+            $session_id = $this->userToken;
         }
         $session_id = I('unique_id', $session_id);
         Cache::set('scene_' .$scene . '_' . $session_id, $scene, 180);
@@ -145,8 +145,7 @@ class Api extends Base
             ajaxReturn($res);
         } else {
             //发送短信验证码
-            $res = checkEnableSendSms($scene);
-
+            $res = checkEnableSendSms($scene);  // 检查是否能够发短信
             if (1 != $res['status']) {
                 ajaxReturn($res);
             }
@@ -191,7 +190,7 @@ class Api extends Base
         if (session_id()) {
             $session_id = session_id();
         } else {
-            $session_id = Request::instance()->header('user-token', null);
+            $session_id = $this->userToken;
         }
         $session_id = I('unique_id', $session_id);
         $scene = I('scene', -1);
