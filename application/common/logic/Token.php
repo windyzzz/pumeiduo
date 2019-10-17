@@ -54,12 +54,12 @@ class Token
      */
     public static function getValue($name, $token)
     {
-        if (session($name)) {
-            return session($name);
-        }
         $redis = new Redis();
         if ($redis->has($name . '_' . $token)) {
             return $redis->get($name . '_' . $token);
+        }
+        if (session($name)) {
+            return session($name);
         }
         return null;
     }
@@ -72,11 +72,11 @@ class Token
      */
     public static function getCache($name, $token)
     {
-        if (session($name)) {
-            return session($name);
-        }
         if (S($name . '_' . $token)) {
             return S($name . '_' . $token);
+        }
+        if (session($name)) {
+            return session($name);
         }
         return null;
     }

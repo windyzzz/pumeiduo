@@ -17,7 +17,6 @@ use app\common\logic\GoodsLogic;
 use app\common\logic\MessageLogic;
 use app\common\logic\Token as TokenLogic;
 use app\common\logic\UsersLogic;
-use think\Cache;
 use think\Db;
 use think\Hook;
 use think\Loader;
@@ -37,11 +36,11 @@ class User extends Base
         // 1. 检查登陆
         $params['user_token'] = isset($this->userToken) ? $this->userToken : null;
         Hook::exec('app\\home\\behavior\\CheckAuth', 'run', $params);
-        $user = session('user');
-        if ($user) {
-            $this->user = $user;
-            $this->user_id = $user['user_id'];
-        }
+//        $user = session('user');
+//        if ($user) {
+//            $this->user = $user;
+//            $this->user_id = $user['user_id'];
+//        }
     }
     /**
      * 获取注册赠送积分
@@ -1431,7 +1430,7 @@ class User extends Base
 
             //验证成功
             $user = M('Users')
-             ->where('user_name', $username)
+             ->where('user_name', $username)  //
              ->where('password', encrypt($password))
              // ->where('is_zhixiao',1)
              // ->where('is_lock',0)

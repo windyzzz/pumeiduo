@@ -13,7 +13,6 @@ namespace app\common\logic;
 
 use app\common\logic\Token as TokenLogic;
 use app\common\model\UserAddress;
-use think\Cache;
 use think\cache\driver\Redis;
 use think\Db;
 use think\Log;

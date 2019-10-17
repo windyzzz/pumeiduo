@@ -14,7 +14,6 @@ namespace app\home\behavior;
 use app\common\logic\Token as TokenLogic;
 use app\common\logic\UsersLogic;
 use app\common\logic\wechat\WechatUtil;
-use think\Cache;
 use think\cache\driver\Redis;
 use think\Db;
 use think\Url;
@@ -50,7 +49,7 @@ class CheckAuth
             // 原系统进入 或者 APP进入
             $session_user = TokenLogic::getValue('user', $params['user_token']);
             if (!$session_user) exit(json_encode(['status' => -1, 'msg' => '你还没有登录呢', 'result' => $return]));
-            if ($session_user['is_lock'] == 1) exit(json_encode(['status' => -3, 'msg' => '账号异常已被锁定！！！', 'result' => $return]));
+            if ($session_user['is_lock'] == 1) exit(json_encode(['status' => -1, 'msg' => '账号异常已被锁定！！！', 'result' => $return]));
             $select_user = Db::name('users')->where('user_id', $session_user['user_id'])->find();
             $oauth_users = Db::name('oauth_users')->where(['user_id' => $session_user['user_id']])->find();
             empty($oauth_users) && $oauth_users = [];

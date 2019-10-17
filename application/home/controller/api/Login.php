@@ -16,7 +16,6 @@ use app\common\logic\OrderLogic;
 use app\common\logic\UsersLogic;
 use app\common\logic\wechat\WechatUtil;
 use app\home\validate\UserAppLogin;
-use think\Cache;
 use think\Loader;
 use think\Hook;
 use think\Request;
@@ -107,10 +106,9 @@ class Login extends Base
      */
     public function checkLogin()
     {
-        // session_destroy();
         $params = I('get.');
         $params['user_token'] = $this->userToken;
-        // 1. 检查登陆
+        // 检查登陆
         Hook::exec('app\\home\\behavior\\CheckAuth', 'run', $params);
         Url::root('/');
         $return['baseUrl'] = url('/', '', '', true);
