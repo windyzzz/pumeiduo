@@ -24,6 +24,14 @@ class Base extends Controller
     {
         parent::__construct();
         $this->redis = new Redis();
+
+        session_start();
+        if (session_id()) {
+            // 网页请求
+            $this->userToken = session_id();
+            return true;
+        }
+        // APP请求
         $token = Request::instance()->header('user-token', null);
         if (!$token) {
             $this->userToken = TokenLogic::setToken();

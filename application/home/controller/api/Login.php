@@ -33,7 +33,7 @@ class Login extends Base
         // header('Access-Control-Allow-Method:POST,GET');
         $user = session('user');
         if ($user) {
-            $this->user = 111;
+            $this->user = $user;
             $this->user_id = $user ? $user['user_id'] : 0;
         }
     }
@@ -108,7 +108,7 @@ class Login extends Base
     {
         // session_destroy();
         $params = I('get.');
-        $params['user_token'] = isset($this->userToken) ? $this->userToken : null;
+        $params['user_token'] = $this->userToken;
         // 1. 检查登陆
         Hook::exec('app\\home\\behavior\\CheckAuth', 'run', $params);
         Url::root('/');
@@ -157,12 +157,9 @@ class Login extends Base
         if ($this->user_id > 0) {
              return json(['status'=>0, 'msg'=>'你已经登录过了', 'result'=>null]);
         }
-        if (session_id()) {
-            $this->userToken = session_id();
-        }
 
         $reg_sms_enable = tpCache('sms.regis_sms_enable');
-        $reg_smtp_enable = tpCache('smtp.regis_smtp_enable');
+//        $reg_smtp_enable = tpCache('smtp.regis_smtp_enable');
         if (!$request->isPost()) {
             return json(['status' => 0, 'msg' => '请求方式出错', 'result' => null]);
         }

@@ -117,12 +117,7 @@ class Api extends Base
         $sender = I('send');
         $verify_code = I('verify_code');
         $mobile = !empty($mobile) ? $mobile : $sender;
-        if (session_id()) {
-            $session_id = session_id();
-        } else {
-            $session_id = $this->userToken;
-        }
-        $session_id = I('unique_id', $session_id);
+        $session_id = I('unique_id', $this->userToken);
         Cache::set('scene_' .$scene . '_' . $session_id, $scene, 180);
 
 //        $exist = M('users')->where(['mobile'=>$mobile,'is_lock'=>0])->find();
@@ -187,12 +182,7 @@ class Api extends Base
         $send = I('send');
         $sender = empty($mobile) ? $send : $mobile;
         $type = I('type');
-        if (session_id()) {
-            $session_id = session_id();
-        } else {
-            $session_id = $this->userToken;
-        }
-        $session_id = I('unique_id', $session_id);
+        $session_id = I('unique_id', $this->userToken);
         $scene = I('scene', -1);
 
         $logic = new UsersLogic();

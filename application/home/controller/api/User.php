@@ -908,12 +908,7 @@ class User extends Base
             $confirm_mobile = I('post.confirm_mobile');
             $code = I('post.code');
             $scene = I('post.scene', 6);
-            if (session_id()) {
-                $session_id = session_id();
-            } else {
-                $session_id = $this->userToken;
-            }
-            $session_id = I('unique_id', $session_id);
+            $session_id = I('unique_id', $this->userToken);
             $step = I('step', 1);
             $logic = new UsersLogic();
             if (1 == $step) {
@@ -1667,12 +1662,7 @@ class User extends Base
         $step = I('post.step', 1);
         $code = I('post.code');
         $scene = I('post.scene', 6);
-        if (session_id()) {
-            $session_id = session_id();
-        } else {
-            $session_id = $this->userToken;
-        }
-        $session_id = I('unique_id', $session_id);
+        $session_id = I('unique_id', $this->userToken);
 
         $logic = new UsersLogic();
         if (1 == $step) {
@@ -1719,12 +1709,7 @@ class User extends Base
         $step = I('step', 1);
         $code = I('post.code');
         $scene = I('post.scene', 6);
-        if (session_id()) {
-            $session_id = session_id();
-        } else {
-            $session_id = $this->userToken;
-        }
-        $session_id = I('unique_id', $session_id);
+        $session_id = I('unique_id', $this->userToken);
 
         $logic = new UsersLogic();
         $res = $logic->check_validate_code($code, $this->user['mobile'], 'phone', $session_id, $scene);
