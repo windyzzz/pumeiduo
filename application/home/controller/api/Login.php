@@ -82,7 +82,7 @@ class Login extends Base
         $res = $logic->login($username, $password, $this->userToken);
         if (1 == $res['status']) {
             $res['url'] = htmlspecialchars_decode(I('post.referurl'));
-            session('user', $res['result']);    // 保留session记录用户信息
+            session('user', $res['result']);
             $this->redis->set('user_' . $this->userToken, $res['result'], config('redis_time'));
             setcookie('user_id', $res['result']['user_id'], null, '/');
             setcookie('is_distribut', $res['result']['is_distribut'], null, '/');
@@ -154,11 +154,11 @@ class Login extends Base
      */
     public function reg(Request $request)
     {
+        if ($this->user_id > 0) {
+             return json(['status'=>0, 'msg'=>'你已经登录过了', 'result'=>null]);
+        }
         if (session_id()) {
             $this->userToken = session_id();
-        }
-        if ($this->user_id > 0) {
-            // return json(['status'=>0, 'msg'=>'你已经登录过了', 'result'=>null]);
         }
 
         $reg_sms_enable = tpCache('sms.regis_sms_enable');
@@ -239,8 +239,8 @@ class Login extends Base
         session_unset();
 //        session_destroy();
         //$this->success("退出成功",U('Home/Index/index'));
-        if ($userToken = Request::instance()->header('user-token', null)) {
-            (new UsersLogic())->logout($userToken);
+        if ($this->userToken) {
+            (new UsersLogic())->logout($this->userToken);
         }
         return json(['status' => 1, 'msg' => '退出登录成功', 'result' => null]);
     }

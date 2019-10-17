@@ -3,6 +3,7 @@
 namespace app\common\logic;
 
 
+use think\Cache;
 use think\cache\driver\Redis;
 use think\Db;
 
@@ -47,7 +48,7 @@ class Token
     }
 
     /**
-     * 判断是session取值还是redis取值
+     * 断是session取值还是redis取值判
      * @param $name
      * @param $token
      * @return mixed|null
@@ -60,6 +61,23 @@ class Token
         $redis = new Redis();
         if ($redis->has($name . '_' . $token)) {
             return $redis->get($name . '_' . $token);
+        }
+        return null;
+    }
+
+    /**
+     * 断是session取值还是缓存取值
+     * @param $name
+     * @param $token
+     * @return mixed|null
+     */
+    public static function getCache($name, $token)
+    {
+        if (session($name)) {
+            return session($name);
+        }
+        if (Cache::has($name . '_' . $token)) {
+            return Cache::get($name . '_' . $token);
         }
         return null;
     }

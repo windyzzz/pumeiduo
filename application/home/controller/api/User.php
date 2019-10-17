@@ -690,7 +690,8 @@ class User extends Base
             'birthday' => $this->user['birthday'],
             'mobile' => $this->user['mobile'],
             'head_pic' => $this->user['head_pic'],
-            'is_not_show_jk' => $this->user['is_not_show_jk']
+            'is_not_show_jk' => $this->user['is_not_show_jk'],
+            'type' => $this->user['type']
         ];
 
         $data = [];
@@ -932,7 +933,7 @@ class User extends Base
 
                 return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
             } elseif (2 == $step) {
-                $check = TokenLogic::getValue('validate_code', $this->user['mobile']);
+                $check = TokenLogic::getCache('validate_code', $this->user['mobile']);
                 if (empty($check)) {
                     return json(['status' => 0, 'msg' => '验证码还未验证通过', 'result' => null]);
                 }
@@ -1621,11 +1622,6 @@ class User extends Base
     // 设置支付密码
     public function setPayPwd()
     {
-        //检查是否第三方登录用户
-        $logic = new UsersLogic();
-
-        $user = $this->user;
-
         $new_password = I('post.new_password');
         $confirm_password = I('post.confirm_password');
 
@@ -1634,7 +1630,8 @@ class User extends Base
             return json(['status' => 0, 'msg' => '已经有支付密码，不能重新设置', 'result' => null]);
         }
 
-        $data = $logic->paypwd($this->user_id, $new_password, $confirm_password);
+        $logic = new UsersLogic();
+        $data = $logic->paypwd($this->user_id, $new_password, $confirm_password, $this->userToken);
         if (-1 == $data['status']) {
             return json(['status' => 0, 'msg' => $data['msg'], 'result' => null]);
         }
@@ -1645,22 +1642,17 @@ class User extends Base
     // 修改支付密码
     public function updatePayPwd()
     {
-        //检查是否第三方登录用户
-        $logic = new UsersLogic();
-
-        $user = $this->user;
-
         $old_password = I('post.old_password');
         $new_password = I('post.new_password');
         $confirm_password = I('post.confirm_password');
 
         $old_password = encrypt($old_password);
         $old_password_u = M('Users')->where('user_id', $this->user_id)->getField('paypwd');
-
         if ($old_password_u !== $old_password) {
             return json(['status' => 0, 'msg' => '输入原来的支付密码不正确', 'result' => null]);
         }
 
+        $logic = new UsersLogic();
         $data = $logic->paypwd($this->user_id, $new_password, $confirm_password);
         if (-1 == $data['status']) {
             return json(['status' => 0, 'msg' => $data['msg'], 'result' => null]);
@@ -1672,30 +1664,31 @@ class User extends Base
     // 忘记支付密码，重新找回
     public function forgetPayPwd()
     {
-        //检查是否第三方登录用户
-        $logic = new UsersLogic();
-
-        $user = $this->user;
-
         $step = I('post.step', 1);
         $code = I('post.code');
         $scene = I('post.scene', 6);
-        $session_id = I('unique_id', session_id());
+        if (session_id()) {
+            $session_id = session_id();
+        } else {
+            $session_id = $this->userToken;
+        }
+        $session_id = I('unique_id', $session_id);
 
+        $logic = new UsersLogic();
         if (1 == $step) {
-            $res = $logic->check_validate_code($code, $user['mobile'], 'phone', $session_id, $scene);
+            $res = $logic->check_validate_code($code, $this->user['mobile'], 'phone', $session_id, $scene);
             if (!$res && 1 != $res['status']) {
                 return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
             }
 
             return json(['status' => 1, 'msg' => '验证成功', 'result' => null]);
         } elseif ($step > 1) {
-            $check = session('validate_code');
+            $check = TokenLogic::getCache('validate_code', $this->user['mobile']);
             if (empty($check)) {
                 return json(['status' => 0, 'msg' => '验证码还未验证通过', 'result' => null]);
             }
 
-            $data = $logic->paypwd($this->user_id, I('post.new_password'), I('post.confirm_password'));
+            $data = $logic->paypwd($this->user_id, I('post.new_password'), I('post.confirm_password'), $this->userToken);
             if (-1 == $data['status']) {
                 return json(['status' => 0, 'msg' => $data['msg'], 'result' => null]);
             }
@@ -1711,37 +1704,44 @@ class User extends Base
      */
     public function paypwd(Request $request)
     {
-        //检查是否第三方登录用户
-        $logic = new UsersLogic();
-        $data = $logic->get_info($this->user_id);
-        $user = $data['result'];
+//        //检查是否第三方登录用户
+//        $logic = new UsersLogic();
+//        $data = $logic->get_info($this->user_id);
+//        $user = $data['result'];
         if ('/cart2.html' == strrchr($_SERVER['HTTP_REFERER'], '/')) {  //用户从提交订单页来的，后面设置完有要返回去
             session('payPriorUrl', U('Mobile/Cart/cart2'));
+        } else {
+            $this->redis->set('payPriorUrl_' . $this->userToken, U('Mobile/Cart/cart2'), 86400);
         }
-        if ('' == $user['mobile']) {
+        if ('' == $this->user['mobile']) {
             return json(['status' => 0, 'msg' => '请先绑定手机', 'result' => null]);
         }
         $step = I('step', 1);
         $code = I('post.code');
         $scene = I('post.scene', 6);
-        $session_id = I('unique_id', session_id());
+        if (session_id()) {
+            $session_id = session_id();
+        } else {
+            $session_id = $this->userToken;
+        }
+        $session_id = I('unique_id', $session_id);
 
         $logic = new UsersLogic();
-        $res = $logic->check_validate_code($code, $user['mobile'], 'phone', $session_id, $scene);
+        $res = $logic->check_validate_code($code, $this->user['mobile'], 'phone', $session_id, $scene);
         if (!$res && 1 != $res['status']) {
             return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
         }
 
         if ($step > 1) {
-            $check = session('validate_code');
+            $check = TokenLogic::getCache('validate_code', $this->user['mobile']);
             if (empty($check)) {
                 return json(['status' => 0, 'msg' => '验证码还未验证通过', 'result' => null]);
             }
         }
         if ($request->isPost() && 3 == $step) {
             $userLogic = new UsersLogic();
-            $data = I('post.');
-            $data = $userLogic->paypwd($this->user_id, I('new_password'), I('confirm_password'));
+//            $data = I('post.');
+            $data = $userLogic->paypwd($this->user_id, I('new_password'), I('confirm_password'), $this->userToken);
             if (-1 == $data['status']) {
                 return json(['status' => 0, 'msg' => $data['msg'], 'result' => null]);
             }

@@ -486,6 +486,35 @@ function check_mobile($mobile)
 
     return false;
 }
+
+/**
+ * 检查密码格式
+ * @param $password
+ * @param $type
+ * @return bool
+ */
+function check_password($password, $type = 'login')
+{
+    switch ($type){
+        case 'login':
+            // 登录密码 6-20位，要有数字+字母
+            $pattern = '/^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{6,20}$/';
+            if (preg_match($pattern, $password)) {
+                return true;
+            }
+            break;
+        case 'pay':
+            // 支付密码 6位，数字
+            $pattern = '/^\d{6}$/';
+            if (preg_match($pattern, $password)) {
+                return true;
+            }
+            break;
+        default:
+            return false;
+    }
+}
+
 function check_id_card($id)
 {
     $id = strtoupper($id);

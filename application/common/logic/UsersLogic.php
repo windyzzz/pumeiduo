@@ -278,7 +278,7 @@ class UsersLogic extends Model
     /*
      * 登陆
      */
-    public function login($username, $password, $userToken = '')
+    public function login($username, $password, $userToken = null)
     {
         if (!$username || !$password) {
             return ['status' => 0, 'msg' => '请填写账号或密码'];
@@ -667,15 +667,14 @@ class UsersLogic extends Model
      *
      * @return array
      */
-    public function reg($username, $password, $password2, $push_id = 0, $invite = [], $nickname = '', $head_pic = '', $userToken)
+    public function reg($username, $password, $password2, $push_id = 0, $invite = [], $nickname = '', $head_pic = '', $userToken = null)
     {
         $is_validated = 0;
-        if (check_email($username)) {
-            $is_validated = 1;
-            $map['email_validated'] = 1;
-            $map['nickname'] = $map['email'] = $username; //邮箱注册
-        }
-
+//        if (check_email($username)) {
+//            $is_validated = 1;
+//            $map['email_validated'] = 1;
+//            $map['nickname'] = $map['email'] = $username; //邮箱注册
+//        }
         if (check_mobile($username)) {
             $is_validated = 1;
             $map['mobile_validated'] = 1;
@@ -684,6 +683,10 @@ class UsersLogic extends Model
             if ($exists) {
                 return ['status' => -1, 'msg' => '手机号已经存在', 'result' => ''];
             }
+        }
+        $password = htmlspecialchars($password, ENT_NOQUOTES, 'UTF-8', false);
+        if (!check_password($password)) {
+//            return ['status' => -1, 'msg' => '密码格式为6-20位字母数字组合'];
         }
 
         if (!empty($nickname)) {
@@ -1718,8 +1721,9 @@ class UsersLogic extends Model
      */
     public function resetPassword($user_id, $new_password, $confirm_password)
     {
-        if (strlen($new_password) < 6) {
-            return ['status' => -1, 'msg' => '密码不能低于6位字符', 'result' => ''];
+        $new_password = htmlspecialchars($new_password, ENT_NOQUOTES, 'UTF-8', false);
+        if (!check_password($new_password)) {
+//            return ['status' => -1, 'msg' => '密码格式为6-20位字母数字组合', 'result' => ''];
         }
         if ($new_password != $confirm_password) {
             return ['status' => -1, 'msg' => '两次密码输入不一致', 'result' => ''];
@@ -1779,10 +1783,11 @@ class UsersLogic extends Model
     public function password($user_id, $old_password, $new_password, $confirm_password, $is_update = true)
     {
         $user = M('users')->where('user_id', $user_id)->find();
-        if (strlen($new_password) < 6) {
-            return ['status' => -1, 'msg' => '密码不能低于6位字符', 'result' => ''];
+        $new_password = htmlspecialchars($new_password, ENT_NOQUOTES, 'UTF-8', false);
+        if (!check_password($new_password)) {
+//            return ['status' => -1, 'msg' => '密码格式为6-20位字母数字组合', 'result' => ''];
         }
-        if ($new_password != $confirm_password) {
+        if ($new_password !== $confirm_password) {
             return ['status' => -1, 'msg' => '两次密码输入不一致', 'result' => ''];
         }
         //验证原密码
@@ -1833,10 +1838,10 @@ class UsersLogic extends Model
      * @param $new_password  新密码
      * @param $confirm_password 确认新 密码
      */
-    public function paypwd($user_id, $new_password, $confirm_password)
+    public function paypwd($user_id, $new_password, $confirm_password, $userToken = null)
     {
-        if (strlen($new_password) < 6) {
-            return ['status' => -1, 'msg' => '密码不能低于6位字符', 'result' => ''];
+        if (check_password($new_password, 'pay')) {
+            return ['status' => -1, 'msg' => '密码格式为6位数字', 'result' => ''];
         }
         if ($new_password != $confirm_password) {
             return ['status' => -1, 'msg' => '两次密码输入不一致', 'result' => ''];
@@ -1845,8 +1850,10 @@ class UsersLogic extends Model
         if (!$row) {
             return ['status' => -1, 'msg' => '修改失败', 'result' => ''];
         }
-        $url = session('payPriorUrl') ? session('payPriorUrl') : U('User/userinfo');
+        $url = TokenLogic::getValue('payPriorUrl', $userToken);
+        $url = $url ?? U('User/userinfo');
         session('payPriorUrl', null);
+        (new Redis)->rm('payPriorUrl_' . $userToken);
 
         return ['status' => 1, 'msg' => '修改成功', 'url' => $url];
     }
@@ -1947,11 +1954,14 @@ class UsersLogic extends Model
 
         if ('email' == $type) {
             if (!$reg_smtp_enable) {//发生邮件功能关闭
-//                $validate_code = session('validate_code');
-                $validate_code = Cache::get('validate_code_' . $sender);
+                if (session('validate_code')) {
+                    $validate_code = session('validate_code');
+                } else {
+                    $validate_code = Cache::get('validate_code_' . $sender);
+                }
                 $validate_code['sender'] = $sender;
                 $validate_code['is_check'] = 1; //标示验证通过
-//                session('validate_code', $validate_code);
+                session('validate_code', $validate_code);
                 Cache::set('validate_code_' . $sender, $validate_code, 180);
 
                 return ['status' => 1, 'msg' => '邮件验证码功能关闭, 无需校验验证码'];
