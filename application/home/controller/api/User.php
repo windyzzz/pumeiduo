@@ -17,6 +17,7 @@ use app\common\logic\GoodsLogic;
 use app\common\logic\MessageLogic;
 use app\common\logic\Token as TokenLogic;
 use app\common\logic\UsersLogic;
+use think\Cache;
 use think\Db;
 use think\Hook;
 use think\Loader;
@@ -1398,12 +1399,9 @@ class User extends Base
      * 微信登入的新用户绑定老用户，会把新用户的微信绑定切换到老用户上面，冻结新用户。
      * @return mixed
      */
-    public function bindOldUser(Request $request)
+    public function bindOldUser()
     {
-        //检查是否第三方登录用户
-        $logic = new UsersLogic();
-        // $data = $logic->get_info($this->user_id);
-        $session_id = session_id();
+        $session_id = $this->userToken;
         $username = I('post.username', '');
         $password = I('post.password', '');
         $mobile = I('post.mobile', '');
@@ -1412,11 +1410,9 @@ class User extends Base
         $type = I('post.type', 1);
 
         $current_user = M('Users')->find($this->user_id);
-
         if (0 != $current_user['type']) {
             return json(['status' => -1, 'msg' => '该用户已经选择类型，无法继续选定', 'result' => null]);
         }
-
         if ($current_user['bind_uid'] > 0) {
             return json(['status' => -1, 'msg' => '不能再绑定其他旧账号了']);
         }
@@ -1460,6 +1456,7 @@ class User extends Base
             }
 
             //验证手机和验证码
+            $logic = new UsersLogic();
             $res = $logic->check_validate_code($code, $mobile, 'phone', $session_id, $scene);
             if (1 != $res['status']) {
                 return json(['status' => -1, 'msg' => $res['msg']]);
@@ -1589,9 +1586,11 @@ class User extends Base
         setcookie('PHPSESSID', '', time() - 3600, '/');
         session_unset();
         session_destroy();
+        $this->redis->rm('user_' . $this->userToken);
 
         $user = M('Users')->where('user_id', $user['user_id'])->find();
         session('user', $user);
+        $this->redis->set('user_' . $this->userToken, $user, config('redis_time'));
         setcookie('user_id', $user['user_id'], null, '/');
         setcookie('is_distribut', $user['is_distribut'], null, '/');
         $nickname = empty($user['nickname']) ? '第三方用户' : $user['nickname'];
@@ -1601,7 +1600,9 @@ class User extends Base
         M('cart')->where('session_id', $session_id)->save(['user_id' => $user['user_id']]);
 
         $cartLogic = new CartLogic();
-        $cartLogic->doUserLoginHandle($session_id, $user['user_id']);  //用户登录后 需要对购物车 一些操作
+        $cartLogic->setUserId($user['user_id']);
+        $cartLogic->setUserToken($user['token']);
+        $cartLogic->doUserLoginHandle();  //用户登录后 需要对购物车 一些操作
 
         return json(['status' => 1, 'msg' => '绑定成功']);
     }
@@ -1701,7 +1702,7 @@ class User extends Base
         if ('/cart2.html' == strrchr($_SERVER['HTTP_REFERER'], '/')) {  //用户从提交订单页来的，后面设置完有要返回去
             session('payPriorUrl', U('Mobile/Cart/cart2'));
         } else {
-            $this->redis->set('payPriorUrl_' . $this->userToken, U('Mobile/Cart/cart2'), 86400);
+            S('payPriorUrl_' . $this->userToken, U('Mobile/Cart/cart2'), 86400);
         }
         if ('' == $this->user['mobile']) {
             return json(['status' => 0, 'msg' => '请先绑定手机', 'result' => null]);

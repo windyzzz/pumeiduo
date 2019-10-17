@@ -16,6 +16,7 @@ use app\common\logic\OrderLogic;
 use app\common\logic\UsersLogic;
 use app\common\logic\wechat\WechatUtil;
 use app\home\validate\UserAppLogin;
+use think\Cache;
 use think\Loader;
 use think\Hook;
 use think\Request;
@@ -114,7 +115,7 @@ class Login extends Base
         Url::root('/');
         $return['baseUrl'] = url('/', '', '', true);
         session('invite', I('invite', 0));
-        $this->redis->set('invite_' . $this->userToken, I('invite', 0), 180);
+        S('invite_' . $this->userToken, I('invite', 0), 180);
 
         return json(['status' => 1, 'msg' => '已经登录', 'result' => $return]);
     }
@@ -164,7 +165,6 @@ class Login extends Base
             return json(['status' => 0, 'msg' => '请求方式出错', 'result' => null]);
         }
 
-        $logic = new UsersLogic();
         $username = I('post.username', '');
         $password = I('post.password', '');
         $password2 = I('post.password2', '');
@@ -173,6 +173,7 @@ class Login extends Base
         $session_id = $this->userToken;
 
         // 手机/邮箱验证码检查，如果没以上两种功能默认是图片验证码检查
+        $logic = new UsersLogic();
         if (check_mobile($username)) {
             if ($reg_sms_enable) {   //是否开启注册验证码机制
                 //手机功能没关闭

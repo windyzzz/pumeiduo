@@ -14,6 +14,7 @@ namespace app\home\behavior;
 use app\common\logic\Token as TokenLogic;
 use app\common\logic\UsersLogic;
 use app\common\logic\wechat\WechatUtil;
+use think\Cache;
 use think\cache\driver\Redis;
 use think\Db;
 use think\Url;
@@ -36,7 +37,7 @@ class CheckAuth
         if ($invite > 0) {
             // 是否是邀请
             session('invite', $invite);
-            $this->redis->set('invite_' . $params['user_token'], $invite, 180);
+            S('invite_' . $params['user_token'], $invite, 180);
             $file = 'invite.txt';
             file_put_contents($file, '['. date('Y-m-d H:i:s').']  设置新用户邀请人Session：'.$invite."\n", FILE_APPEND | LOCK_EX);
         }
@@ -49,6 +50,7 @@ class CheckAuth
             // 原系统进入 或者 APP进入
             $session_user = TokenLogic::getValue('user', $params['user_token']);
             if (!$session_user) exit(json_encode(['status' => -1, 'msg' => '你还没有登录呢', 'result' => $return]));
+            if ($session_user['is_lock'] == 1) exit(json_encode(['status' => -3, 'msg' => '账号异常已被锁定！！！', 'result' => $return]));
             $select_user = Db::name('users')->where('user_id', $session_user['user_id'])->find();
             $oauth_users = Db::name('oauth_users')->where(['user_id' => $session_user['user_id']])->find();
             empty($oauth_users) && $oauth_users = [];
@@ -139,7 +141,7 @@ class CheckAuth
             //触发微信返回code码
             //$baseUrl = urlencode('http://'.$_SERVER['HTTP_HOST'].$_SERVER['PHP_SELF'].'?'.$_SERVER['QUERY_STRING']);
             // $baseUrl = urlencode($this->get_url());
-            $invite = $this->redis->get('invite_' . $userToken);
+            S('invite_' . $userToken);
             $file = 'invite.txt';
             file_put_contents($file, '['. date('Y-m-d H:i:s').']  把邀请人信息添加到授权回调地址：'.$invite."\n", FILE_APPEND | LOCK_EX);
             $baseUrl = urlencode($this->site_url."/index.php?m=Home&c=api.Login&a=callback&invite=$invite");
@@ -148,7 +150,7 @@ class CheckAuth
             // exit();
             return ['type' => 1, 'result' => $url, 'baseUrl' => $this->site_url];
         }
-        $invite = $this->redis->get('invite_' . $userToken);
+        S('invite_' . $userToken);
         $file = 'invite.txt';
         file_put_contents($file, '['. date('Y-m-d H:i:s').']  授权回来，获取邀请人Session：'.$invite."\n", FILE_APPEND | LOCK_EX);
         //上面获取到code后这里跳转回来

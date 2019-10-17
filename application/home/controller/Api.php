@@ -118,7 +118,7 @@ class Api extends Base
         $verify_code = I('verify_code');
         $mobile = !empty($mobile) ? $mobile : $sender;
         $session_id = I('unique_id', $this->userToken);
-        Cache::set('scene_' .$scene . '_' . $session_id, $scene, 180);
+        S('scene_' . $scene . '_' . $session_id, $scene, 180);
 
 //        $exist = M('users')->where(['mobile'=>$mobile,'is_lock'=>0])->find();
 //        if(!$exist){

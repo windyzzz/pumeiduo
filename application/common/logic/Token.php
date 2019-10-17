@@ -3,7 +3,6 @@
 namespace app\common\logic;
 
 
-use think\Cache;
 use think\cache\driver\Redis;
 use think\Db;
 
@@ -76,8 +75,8 @@ class Token
         if (session($name)) {
             return session($name);
         }
-        if (Cache::has($name . '_' . $token)) {
-            return Cache::get($name . '_' . $token);
+        if (S($name . '_' . $token)) {
+            return S($name . '_' . $token);
         }
         return null;
     }

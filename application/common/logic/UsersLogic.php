@@ -710,7 +710,7 @@ class UsersLogic extends Model
         }
 
         //验证两次密码是否匹配
-        if ($password2 != $password) {
+        if ($password2 != '' && $password2 != $password) {
             return ['status' => -1, 'msg' => '两次输入密码不一致', 'result' => ''];
         }
         //验证是否存在用户名
@@ -760,7 +760,8 @@ class UsersLogic extends Model
         //     $map['is_distribut']  = 1;
 
         $map['push_id'] = $push_id; //推送id
-        $map['token'] = md5(time().mt_rand(1, 999999999));
+        $map['token'] = $userToken;
+        $map['time_out'] = strtotime('+' . config('redis_days') . ' days');
         $map['last_login'] = time();
         // $user_level =Db::name('user_level')->where('amount = 0')->find(); //折扣
         // $map['discount'] = !empty($user_level) ? $user_level['discount']/100 : 1;  //新注册的会员都不打折
@@ -1893,7 +1894,7 @@ class UsersLogic extends Model
         $sms_time_out = tpCache('sms.sms_time_out');
         $sms_time_out = $sms_time_out ? $sms_time_out : 180;
         //获取上一次的发送时间
-        $send = Cache::get('validate_code_' . $sender);
+        $send = S('validate_code_' . $sender);
         if (!empty($send) && $send['time'] > time() && $send['sender'] == $sender) {
             //在有效期范围内 相同号码不再发送
             $res = ['status' => -1, 'msg' => '规定时间内,不要重复发送验证码'];
@@ -1913,7 +1914,7 @@ class UsersLogic extends Model
             $info['sender'] = $sender;
             $info['is_check'] = 0;
             $info['time'] = time() + $sms_time_out; //有效验证时间
-            Cache::set('validate_code_' . $sender, $info, 180);
+            S('validate_code_' . $sender, $info, 180);
             $res = ['status' => 1, 'msg' => '验证码已发送，请注意查收'];
         } else {
             $res = $send;
@@ -1954,15 +1955,11 @@ class UsersLogic extends Model
 
         if ('email' == $type) {
             if (!$reg_smtp_enable) {//发生邮件功能关闭
-                if (session('validate_code')) {
-                    $validate_code = session('validate_code');
-                } else {
-                    $validate_code = Cache::get('validate_code_' . $sender);
-                }
+                $validate_code = TokenLogic::getCache('validate_code', $sender);
                 $validate_code['sender'] = $sender;
                 $validate_code['is_check'] = 1; //标示验证通过
                 session('validate_code', $validate_code);
-                Cache::set('validate_code_' . $sender, $validate_code, 180);
+                S('validate_code_' . $sender, $validate_code, 180);
 
                 return ['status' => 1, 'msg' => '邮件验证码功能关闭, 无需校验验证码'];
             }
@@ -1970,7 +1967,7 @@ class UsersLogic extends Model
                 return ['status' => -1, 'msg' => '请输入邮件验证码'];
             }
             //邮件
-            $data = Cache::get('validate_code_' . $sender);
+            $data = S('validate_code_' . $sender);
             $timeOut = $data['time'];
             if ($data['code'] != $code || $data['sender'] != $sender) {
                 $inValid = false;
@@ -1982,7 +1979,7 @@ class UsersLogic extends Model
                 $data['sender'] = $sender;
                 $data['is_check'] = 1; //标示验证通过
                 session('validate_code', $data);
-                Cache::set('validate_code_' . $sender, $data, 180);
+                S('validate_code_' . $sender, $data, 180);
 
                 return ['status' => 1, 'msg' => '短信验证码功能关闭, 无需校验验证码'];
             }
@@ -2012,7 +2009,7 @@ class UsersLogic extends Model
         } else {
             $data['is_check'] = 1; //标示验证通过
             session('validate_code', $data);
-            Cache::set('validate_code_' . $sender, $data, 180);
+            S('validate_code_' . $sender, $data, 180);
             $res = ['status' => 1, 'msg' => '验证成功'];
         }
 
