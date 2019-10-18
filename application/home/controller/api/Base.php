@@ -25,23 +25,19 @@ class Base extends Controller
         parent::__construct();
         $this->redis = new Redis();
 
-//        session_start();
-//        if (session_id()) {
-//            // 网页请求
-//            $this->userToken = session_id();
-//            return true;
-//        }
-        // APP请求
         $token = Request::instance()->header('user-token', null);
-        if (!$token) {
-            $this->userToken = TokenLogic::setToken();
-            return true;
+        if ($token) {
+            // APP请求
+            // 验证token
+            $res = TokenLogic::checkToken($token);
+            if ($res['status'] == 0) die(json_encode(['status' => 0, 'msg' => $res['msg']]));
+            $this->user = $res['user'];
+            $this->user_id = $res['user']['user_id'];
+            $this->userToken = $token;
+        } else {
+            // 网页请求
+            session_start();
+            $this->userToken = session_id();
         }
-        // 验证token
-        $res = TokenLogic::checkToken($token);
-        if ($res['status'] == 0) die(json_encode(['status' => 0, 'msg' => $res['msg']]));
-        $this->user = $res['user'];
-        $this->user_id = $res['user']['user_id'];
-        $this->userToken = $token;
     }
 }

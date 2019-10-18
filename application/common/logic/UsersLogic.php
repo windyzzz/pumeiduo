@@ -685,7 +685,7 @@ class UsersLogic extends Model
         }
         $password = htmlspecialchars($password, ENT_NOQUOTES, 'UTF-8', false);
         if (!check_password($password)) {
-//            return ['status' => -1, 'msg' => '密码格式为6-20位字母数字组合'];
+            return ['status' => -1, 'msg' => '密码格式为6-20位字母数字组合'];
         }
 
         if (!empty($nickname)) {
@@ -1476,8 +1476,7 @@ class UsersLogic extends Model
             $field = 'mobile';
         }
 
-        $current_user = M('users')->find(session('user')['user_id']);
-
+        $current_user = M('users')->find($user_id);
         if ($current_user['mobile'] == $email_mobile) {
             return false;
         }
@@ -1716,16 +1715,17 @@ class UsersLogic extends Model
      * @param $user_id
      * @param $new_password
      * @param $confirm_password
+     * @param $isApp
      *
      * @return array
      */
-    public function resetPassword($user_id, $new_password, $confirm_password)
+    public function resetPassword($user_id, $new_password, $confirm_password, $isApp = false)
     {
         $new_password = htmlspecialchars($new_password, ENT_NOQUOTES, 'UTF-8', false);
         if (!check_password($new_password)) {
-//            return ['status' => -1, 'msg' => '密码格式为6-20位字母数字组合', 'result' => ''];
+            return ['status' => -1, 'msg' => '密码格式为6-20位字母数字组合', 'result' => ''];
         }
-        if ($new_password != $confirm_password) {
+        if (!$isApp && $new_password != $confirm_password) {
             return ['status' => -1, 'msg' => '两次密码输入不一致', 'result' => ''];
         }
         $old_password = M('users')->where('user_id', $user_id)->getField('password');
@@ -1736,7 +1736,6 @@ class UsersLogic extends Model
         if (!$row) {
             return ['status' => -1, 'msg' => '设置失败', 'result' => ''];
         }
-
         return ['status' => 1, 'msg' => '设置成功', 'result' => ''];
     }
 
@@ -1785,7 +1784,7 @@ class UsersLogic extends Model
         $user = M('users')->where('user_id', $user_id)->find();
         $new_password = htmlspecialchars($new_password, ENT_NOQUOTES, 'UTF-8', false);
         if (!check_password($new_password)) {
-//            return ['status' => -1, 'msg' => '密码格式为6-20位字母数字组合', 'result' => ''];
+            return ['status' => -1, 'msg' => '密码格式为6-20位字母数字组合', 'result' => ''];
         }
         if ($new_password !== $confirm_password) {
             return ['status' => -1, 'msg' => '两次密码输入不一致', 'result' => ''];
@@ -1840,7 +1839,8 @@ class UsersLogic extends Model
      */
     public function paypwd($user_id, $new_password, $confirm_password, $userToken = null)
     {
-        if (check_password($new_password, 'pay')) {
+        $new_password = htmlspecialchars($new_password, ENT_NOQUOTES, 'UTF-8', false);
+        if (!check_password($new_password, 'pay')) {
             return ['status' => -1, 'msg' => '密码格式为6位数字', 'result' => ''];
         }
         if ($new_password != $confirm_password) {

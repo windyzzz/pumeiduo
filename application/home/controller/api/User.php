@@ -36,11 +36,11 @@ class User extends Base
         // 1. 检查登陆
         $params['user_token'] = isset($this->userToken) ? $this->userToken : null;
         Hook::exec('app\\home\\behavior\\CheckAuth', 'run', $params);
-//        $user = session('user');
-//        if ($user) {
-//            $this->user = $user;
-//            $this->user_id = $user['user_id'];
-//        }
+        $user = session('user');
+        if ($user) {
+            $this->user = $user;
+            $this->user_id = $user['user_id'];
+        }
     }
     /**
      * 获取注册赠送积分
@@ -1050,6 +1050,29 @@ class User extends Base
         }
 
         return json(['status' => 0, 'msg' => '请求方式出错', 'result' => null]);
+    }
+
+    /**
+     * 找回密码
+     * @return \think\response\Json
+     */
+    public function findPassword()
+    {
+        $code = I('code', '');
+        $session_id = I('unique_id', $this->userToken);
+
+        $userLogic = new UsersLogic();
+        // 验证验证码
+        $res = $userLogic->check_validate_code($code, $this->user['mobile'], 'phone', $session_id, 6);
+        if (!$res && 1 != $res['status']) {
+            return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
+        }
+        // 重置密码
+        $data = $userLogic->resetPassword($this->user_id, I('post.password'), null, true);
+        if (-1 == $data['status']) {
+            return json(['status' => 0, 'msg' => $data['msg'], 'result' => $data['result']]);
+        }
+        return json(['status' => 1, 'msg' => '恭喜！已修改完成', 'result' => null]);
     }
 
     public function changeType()

@@ -135,6 +135,7 @@ class CheckAuth
     {
         // if($_SESSION['openid'])
         //     return ['type'=>2, 'result'=>$_SESSION['data']];
+        $invite = TokenLogic::getCache('invite', $userToken);
         //通过code获得openid
         if (!isset($_GET['code'])) {
             //触发微信返回code码

@@ -32,7 +32,7 @@ class SmsLogic
      */
     public function sendSms($scene, $sender, $params, $unique_id = 0)
     {
-        $smsTemp = M('sms_template')->where('send_scene', $scene)->find();    //用户注册.
+        $smsTemp = M('sms_template')->where('send_scene', $scene)->find();
 
         $code = !empty($params['code']) ? $params['code'] : false;
         $consignee = !empty($params['consignee']) ? $params['consignee'] : false;
@@ -85,8 +85,6 @@ class SmsLogic
 
     private function realSendSms($mobile, $smsSign, $smsParam, $templateCode)
     {
-
-
         $Content = implode('||',$smsParam);
         $data = array(
             'Account'=>'pumeiduo',
