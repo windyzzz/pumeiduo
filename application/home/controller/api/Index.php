@@ -91,7 +91,7 @@ class Index
         // 添加 is_enshrine  是否收藏字段 && 添加 tabs  商品标签字段 BY J
         foreach ($getHotGoods as $k => $v) {
             $getHotGoods[$k]['is_enshrine'] = 0;
-            $getHotGoods[$k]['tabs'] = M('GoodsTab')->where('goods_id', $v['goods_id'])->select();
+            $getHotGoods[$k]['tabs'] = M('GoodsTab')->where(array('goods_id'=>$v['goods_id'],'title'=>array('neq','')))->select();
         }
 
 
