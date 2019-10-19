@@ -48,12 +48,9 @@ class CheckAuth
         if (session('user') || (isset($params['user_token']) && $this->redis->has('user_' . $params['user_token']))) {
             // 原系统进入 或者 APP进入
             $session_user = TokenLogic::getValue('user', $params['user_token']);
-            if (!$session_user) exit(json_encode(['status' => -1, 'msg' => '你还没有登录呢', 'result' => $return]));
             if ($session_user['is_lock'] == 1) exit(json_encode(['status' => -1, 'msg' => '账号异常已被锁定！！！', 'result' => $return]));
-            $select_user = Db::name('users')->where('user_id', $session_user['user_id'])->find();
-            $oauth_users = Db::name('oauth_users')->where(['user_id' => $session_user['user_id']])->find();
-            empty($oauth_users) && $oauth_users = [];
-            if (empty($select_user)) {
+//            $select_user = Db::name('users')->where('user_id', $session_user['user_id'])->find();
+            if (empty($session_user)) {
                 session('user', null);
                 $this->redis->rm('user_' . $params['user_token']);
                 $_SESSION['openid'] = 0;
@@ -71,8 +68,11 @@ class CheckAuth
 
                 exit(json_encode(['status' => -1, 'msg' => '你还没有登录呢', 'result' => $return]));
             }
-
-            $user = array_merge($select_user, $oauth_users);
+            // 公众号用户
+            $oauth_users = Db::name('oauth_users')->where(['user_id' => $session_user['user_id']])->find();
+            empty($oauth_users) && $oauth_users = [];
+            // 合并信息
+            $user = array_merge($session_user, $oauth_users);
             session('user', $user);
             $this->redis->set('user_' . $params['user_token'], $user, config('redis_time'));
         } else {

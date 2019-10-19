@@ -42,31 +42,34 @@ class User extends Base
             $this->user_id = $user['user_id'];
         }
     }
+
     /**
      * 获取注册赠送积分
      * @return \think\response\Json
      */
-    function user_reg_point(){
+    function user_reg_point()
+    {
         $pay_points = tpCache('basic.reg_integral'); // 会员注册赠送积分
-        return json(['status' => 1, 'msg' => 'success', 'result' => ['user_reg_point'=>$pay_points]]);
+        return json(['status' => 1, 'msg' => 'success', 'result' => ['user_reg_point' => $pay_points]]);
     }
 
-    function check_user_customs(){
+    function check_user_customs()
+    {
         $Users = M('Users')->where('user_id', $this->user_id)->field('user_name,distribut_level')->find();
-        if($Users['distribut_level']>=3) {//直接显示 用户名
-            return json(['status' => 1, 'msg' => 'success', 'result' => ['show_status'=>2,'show_detail'=>$Users['user_name']]]);//已经是金卡
+        if ($Users['distribut_level'] >= 3) {//直接显示 用户名
+            return json(['status' => 1, 'msg' => 'success', 'result' => ['show_status' => 2, 'show_detail' => $Users['user_name']]]);//已经是金卡
         }
 
-        $count = M('users')->where(array('first_leader'=>$this->user_id,'distribut_level'=>array('egt',2)))->count();
+        $count = M('users')->where(array('first_leader' => $this->user_id, 'distribut_level' => array('egt', 2)))->count();
         $apply_check_num = tpCache('basic.apply_check_num');
-        if($Users['distribut_level']<2) {
+        if ($Users['distribut_level'] < 2) {
             $error = '您尚未有资格开通金卡会员';
-            return json(['status' => 1, 'msg' => 'success', 'result' => ['show_status'=>0,'show_detail'=>$error]]);//已经是金卡
-        }else if($count < $apply_check_num){
+            return json(['status' => 1, 'msg' => 'success', 'result' => ['show_status' => 0, 'show_detail' => $error]]);//已经是金卡
+        } else if ($count < $apply_check_num) {
             $error = '您尚未有资格开通金卡会员';
-            return json(['status' => 1, 'msg' => 'success', 'result' => ['show_status'=>0,'show_detail'=>$error]]);//已经是金卡
+            return json(['status' => 1, 'msg' => 'success', 'result' => ['show_status' => 0, 'show_detail' => $error]]);//已经是金卡
         }
-        return json(['status' => 1, 'msg' => 'success', 'result' => ['show_status'=>1,'show_detail'=>'可以申请']]);//已经是金卡
+        return json(['status' => 1, 'msg' => 'success', 'result' => ['show_status' => 1, 'show_detail' => '可以申请']]);//已经是金卡
     }
 
     /**
@@ -75,37 +78,37 @@ class User extends Base
     function apply_customs()
     {
         $Users = M('Users')->where('user_id', $this->user_id)->field('user_name,distribut_level')->find();
-        if($Users['distribut_level']>=3){//直接显示 用户名
+        if ($Users['distribut_level'] >= 3) {//直接显示 用户名
             $result = array(
-                'show'=>2,
-                'user_name'=>$Users['user_name']
+                'show' => 2,
+                'user_name' => $Users['user_name']
             );
             return json(['status' => 1, 'msg' => 'success', 'result' => $result]);
-        }else{
+        } else {
 
-            $apply_customs = M('apply_customs')->where(array('user_id'=>$this->user_id))->find();
+            $apply_customs = M('apply_customs')->where(array('user_id' => $this->user_id))->find();
             $result = array(
-                'show'=>1,
-                'true_name'=>$apply_customs?$apply_customs['true_name']:'',
-                'id_card'=>$apply_customs?$apply_customs['id_card']:'',
-                'mobile'=>$apply_customs?$apply_customs['mobile']:'',
-                'is_can_cancel'=>$apply_customs && $apply_customs['status']==0?1:0
+                'show' => 1,
+                'true_name' => $apply_customs ? $apply_customs['true_name'] : '',
+                'id_card' => $apply_customs ? $apply_customs['id_card'] : '',
+                'mobile' => $apply_customs ? $apply_customs['mobile'] : '',
+                'is_can_cancel' => $apply_customs && $apply_customs['status'] == 0 ? 1 : 0
             );
             $invite_uid = M('Users')->where('user_id', $this->user_id)->getField('invite_uid');
 
             $logic = new UsersLogic();
             $referee_user_id = $logic->nk($invite_uid, 3);
-            if($referee_user_id){
-                $result['referee_show'] = '推荐金卡会员号：'.$referee_user_id;
-            }else{
+            if ($referee_user_id) {
+                $result['referee_show'] = '推荐金卡会员号：' . $referee_user_id;
+            } else {
                 $result['referee_show'] = '无';
             }
 
-            $article = M('article')->where(array('article_id'=>104))->field('title,content')->find();
+            $article = M('article')->where(array('article_id' => 104))->field('title,content')->find();
             $result['is_alert_title'] = $article['title'];
             $result['is_alert_content'] = $article['content'];
 
-            $result['apply_content'] = M('article')->where(array('article_id'=>105))->getField('content');
+            $result['apply_content'] = M('article')->where(array('article_id' => 105))->getField('content');
 
             return json(['status' => 1, 'msg' => 'success', 'result' => $result]);
         }
@@ -114,22 +117,24 @@ class User extends Base
     /**
      * 撤销申请
      */
-    function apply_customs_cancel(){
+    function apply_customs_cancel()
+    {
         $logic = new UsersLogic();
         $apply_customs_cancel = $logic->apply_customs_cancel($this->user_id);
-        if($apply_customs_cancel){
+        if ($apply_customs_cancel) {
             return json(['status' => 1, 'msg' => $logic->getError()]);
-        }else{
+        } else {
             return json(['status' => 0, 'msg' => $logic->getError()]);
         }
     }
 
-    function apply_customs_add(){
+    function apply_customs_add()
+    {
         $logic = new UsersLogic();
-        $apply_customs = $logic->apply_customs($this->user_id,I('request.'));
-        if($apply_customs){
+        $apply_customs = $logic->apply_customs($this->user_id, I('request.'));
+        if ($apply_customs) {
             return json(['status' => 1, 'msg' => $logic->getError()]);
-        }else{
+        } else {
             return json(['status' => 0, 'msg' => $logic->getError()]);
         }
     }
@@ -179,8 +184,7 @@ class User extends Base
     // 获取用户财富
     public function userWealth()
     {
-        $user = session('user');
-        $user = M('Users')->where('user_id', $user['user_id'])->find();
+        $user = $this->user;
         $will_distribut_money = M('RebateLog')->field('SUM(money) as money')->where('user_id', $user['user_id'])->where('status', 'in', [1, 2])->find();
         $return = [];
         $return['user_id'] = $user['user_id'];
@@ -204,18 +208,18 @@ class User extends Base
 
         $return['distribut_level'] = M('DistributLevel')->where('level_id', $user['distribut_level'])->getField('level_name');
         $return['has_pay_pwd'] = $user['paypwd'] ? 1 : 0;
-        $return['is_app'] = session('is_app') ? 1 : 0;
-
+        $return['is_app'] = TokenLogic::getValue('is_app', $this->userToken) ? 1 : 0;
 
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
     }
 
-    function off_show_jk(){
+    function off_show_jk()
+    {
         $user = session('user');
         $logic = new UsersLogic();
         $check_apply_customs = $logic->check_apply_customs($user['user_id']);
-        if($check_apply_customs){
-            M('users')->where(array('user_id'=>$user['user_id']))->data(array('is_not_show_jk'=>1))->save();
+        if ($check_apply_customs) {
+            M('users')->where(array('user_id' => $user['user_id']))->data(array('is_not_show_jk' => 1))->save();
             return json(['status' => 1, 'msg' => '关闭成功']);
         }
         return json(['status' => 0, 'msg' => '关闭失败']);
@@ -253,11 +257,11 @@ class User extends Base
             $coupon_list[$key]['use_start_time'] = date('Y-m-d', $coupon_list[$key]['use_start_time']);
             $coupon_list[$key]['use_end_time'] = date('Y-m-d', $coupon_list[$key]['use_end_time']);
 
-            if($value['use_type']==4){
+            if ($value['use_type'] == 4) {
                 $coupon_money = $value['money'];
-                $coupon_money = bcadd($coupon_money,0,1);
-                $coupon_money = str_replace('.0','',$coupon_money);
-                $coupon_list[$key]['money'] = $coupon_money.'折';
+                $coupon_money = bcadd($coupon_money, 0, 1);
+                $coupon_money = str_replace('.0', '', $coupon_money);
+                $coupon_list[$key]['money'] = $coupon_money . '折';
             }
 
 
@@ -275,32 +279,33 @@ class User extends Base
     /**
      * 领用券列表
      */
-    function couponReceiveList(){
+    function couponReceiveList()
+    {
         $where = array(
-            'send_start_time'=>array('elt',NOW_TIME),
-            'send_end_time'=>array('egt',NOW_TIME),
-            'use_type'=>5
+            'send_start_time' => array('elt', NOW_TIME),
+            'send_end_time' => array('egt', NOW_TIME),
+            'use_type' => 5
         );
         $field = 'id,name,condition,content,createnum,send_num,use_end_time';
         $coupon = M('coupon')->field($field)->where($where)->order('id desc')->select();
-        if($coupon){
-            foreach($coupon as $k=>$v){
-                $coupon[$k]['use_end_time'] = date('Y-m-d',$v['use_end_time']);
+        if ($coupon) {
+            foreach ($coupon as $k => $v) {
+                $coupon[$k]['use_end_time'] = date('Y-m-d', $v['use_end_time']);
                 //检查是否已经领取
-                $is_has_coupon = M('coupon_list')->where(array('cid'=>$v['id'],'uid'=>$this->user_id))->field('id')->find();
-                if($is_has_coupon){
+                $is_has_coupon = M('coupon_list')->where(array('cid' => $v['id'], 'uid' => $this->user_id))->field('id')->find();
+                if ($is_has_coupon) {
                     $coupon[$k]['is_has'] = 1;
-                }else{
+                } else {
                     $coupon[$k]['is_has'] = 0;
                 }
                 $coupon[$k]['content'] = htmlspecialchars_decode($coupon[$k]['content']);
                 if ($v['createnum'] > 0) {
-                    if($v['send_num'] >= $v['createnum']){
+                    if ($v['send_num'] >= $v['createnum']) {
                         $coupon[$k]['is_has_num'] = 0;
-                    }else{
+                    } else {
                         $coupon[$k]['is_has_num'] = 1;
                     }
-                }else{
+                } else {
                     $coupon[$k]['is_has_num'] = 1;
                 }
 
@@ -309,23 +314,24 @@ class User extends Base
         return json(['status' => 1, 'msg' => 'success', 'result' => $coupon]);
     }
 
-    function couponReceive(){
-        $re_id = I('re_id',0);
-        if(!$re_id){
+    function couponReceive()
+    {
+        $re_id = I('re_id', 0);
+        if (!$re_id) {
             return json(['status' => 0, 'msg' => '操作有误']);
         }
 
         Db::startTrans();
         $where = array(
-            'send_start_time'=>array('elt',NOW_TIME),
-            'send_end_time'=>array('egt',NOW_TIME),
-            'use_type'=>5,
-            'id'=>$re_id
+            'send_start_time' => array('elt', NOW_TIME),
+            'send_end_time' => array('egt', NOW_TIME),
+            'use_type' => 5,
+            'id' => $re_id
         );
 
         $coupon = M('coupon')->where($where)->find();
 
-        if(!$coupon){
+        if (!$coupon) {
             Db::rollback();
             return json(['status' => 0, 'msg' => '该券不可领取']);
         }
@@ -338,9 +344,9 @@ class User extends Base
 
         //检查是否已经领取
 
-        $is_has_coupon = M('coupon_list')->where(array('cid'=>$re_id,'uid'=>$this->user_id))->field('id')->find();
+        $is_has_coupon = M('coupon_list')->where(array('cid' => $re_id, 'uid' => $this->user_id))->field('id')->find();
 
-        if($is_has_coupon){
+        if ($is_has_coupon) {
             Db::rollback();
             return json(['status' => 0, 'msg' => '您已领取，不能重复领取']);
         }
@@ -361,11 +367,11 @@ class User extends Base
 
         $bcoupon_list = M('coupon_list')->add($add);
 
-        $bcoupon = M('coupon')->where(array('id'=>$re_id))->setInc('send_num', 1);
-        if($bcoupon_list && $bcoupon){
+        $bcoupon = M('coupon')->where(array('id' => $re_id))->setInc('send_num', 1);
+        if ($bcoupon_list && $bcoupon) {
             Db::commit();
             return json(['status' => 1, 'msg' => '领取成功']);
-        }else{
+        } else {
             Db::rollback();
             return json(['status' => 0, 'msg' => '领取失败']);
         }
@@ -380,12 +386,12 @@ class User extends Base
 
         $type = I('type', 0);
         $logic = new UsersLogic();
-        $data = $logic->get_coupons($this->user_id, I('type'),null, 0,100,true);
+        $data = $logic->get_coupons($this->user_id, I('type'), null, 0, 100, true);
         foreach ($data['result'] as $k => $v) {
 
             $user_type = $v['use_type'];
             $data['result'][$k]['use_scope'] = C('COUPON_USER_TYPE')["$user_type"];
-            if (1 == $user_type || $user_type==4) { //指定商品
+            if (1 == $user_type || $user_type == 4) { //指定商品
                 $data['result'][$k]['goods_id'] = M('goods_coupon')->field('goods_id')->where(['coupon_id' => $v['cid']])->getField('goods_id');
             }
             if (2 == $user_type) { //指定分类
@@ -393,11 +399,11 @@ class User extends Base
             }
 
             //折扣券
-            if($user_type==4){
+            if ($user_type == 4) {
                 $coupon_money = $v['money'];
-                $coupon_money = bcadd($coupon_money,0,1);
-                $coupon_money = str_replace('.0','',$coupon_money);
-                $data['result'][$k]['money'] = $coupon_money.'折';
+                $coupon_money = bcadd($coupon_money, 0, 1);
+                $coupon_money = str_replace('.0', '', $coupon_money);
+                $data['result'][$k]['money'] = $coupon_money . '折';
             }
 
 
@@ -416,12 +422,12 @@ class User extends Base
     {
         $type = I('type', 0);
         $logic = new UsersLogic();
-        $data = $logic->get_coupons($this->user_id, I('type'),null, 0,100,false);
+        $data = $logic->get_coupons($this->user_id, I('type'), null, 0, 100, false);
         foreach ($data['result'] as $k => $v) {
 
             $user_type = $v['use_type'];
             $data['result'][$k]['use_scope'] = C('COUPON_USER_TYPE')["$user_type"];
-            if (1 == $user_type || $user_type==4) { //指定商品
+            if (1 == $user_type || $user_type == 4) { //指定商品
                 $data['result'][$k]['goods_id'] = M('goods_coupon')->field('goods_id')->where(['coupon_id' => $v['cid']])->getField('goods_id');
             }
             if (2 == $user_type) { //指定分类
@@ -484,9 +490,9 @@ class User extends Base
                 return json(['status' => -1, 'msg' => '手机号码已存在！不能绑定该手机号码']);
             }
             $is_consummate = $logic->is_consummate($this->user_id);
-            if($is_consummate){
+            if ($is_consummate) {
                 return json(['status' => 1, 'msg' => $is_consummate, 'result' => null]);
-            }else{
+            } else {
                 // setcookie('uname',urlencode($post['nickname']),null,'/');
                 return json(['status' => 1, 'msg' => '设置成功', 'result' => null]);
             }
@@ -506,8 +512,7 @@ class User extends Base
             if ($invite_uid == $this->user_id) {
                 return true;
             }
-
-            return $this->_hasRelationship($invite_uid);
+//            return $this->_hasRelationship($invite_uid);
         }
 
         return false;
@@ -611,7 +616,7 @@ class User extends Base
         $logic = new UsersLogic();
         $data = $logic->add_address($this->user_id, 0, I('post.'));
         if (1 != $data['status']) {
-            return json(['status' => 0, 'msg' => '添加地址失败,'.$data['msg'], 'result' => null]);
+            return json(['status' => 0, 'msg' => '添加地址失败,' . $data['msg'], 'result' => null]);
         }
 
         return json(['status' => 1, 'msg' => '添加地址成功', 'result' => null]);
@@ -633,7 +638,7 @@ class User extends Base
         $logic = new UsersLogic();
         $data = $logic->add_address($this->user_id, $id, I('post.'));
         if (1 != $data['status']) {
-            return json(['status' => 0, 'msg' => '修改地址失败,'.$data['msg'], 'result' => null]);
+            return json(['status' => 0, 'msg' => '修改地址失败,' . $data['msg'], 'result' => null]);
         }
 
         return json(['status' => 1, 'msg' => '修改地址成功', 'result' => null]);
@@ -726,9 +731,9 @@ class User extends Base
             setcookie('uname', urlencode($post['nickname']), null, '/');
 
             $is_consummate = $userLogic->is_consummate($this->user_id);
-            if($is_consummate!==false){
-                return json(['status' => 1, 'msg' => '操作成功', 'result' => array('point'=>$is_consummate,'is_get_point'=>1)]);
-            }else{
+            if ($is_consummate !== false) {
+                return json(['status' => 1, 'msg' => '操作成功', 'result' => array('point' => $is_consummate, 'is_get_point' => 1)]);
+            } else {
                 return json(['status' => 1, 'msg' => '操作成功', 'result' => null]);
             }
 
@@ -751,10 +756,10 @@ class User extends Base
 
         //是否弹出金卡提示框
         $data['is_show_apply_jk'] = 0;
-        if($user_info['is_not_show_jk']==0){
+        if ($user_info['is_not_show_jk'] == 0) {
             $logic = new UsersLogic();
             $check_apply_customs = $logic->check_apply_customs($user_info['user_id']);
-            if($check_apply_customs){
+            if ($check_apply_customs) {
                 $data['is_show_apply_jk'] = 1;
             }
         }
@@ -773,7 +778,7 @@ class User extends Base
             if (!$verify->check($verify_code, 'update_cart')) {
                 $res = ['status' => 0, 'msg' => '验证码错误'];
 
-                return  json($res);
+                return json($res);
             }
 
             I('post.id_cart') ? $post['id_cart'] = I('post.id_cart') : false;  // 身份证
@@ -790,12 +795,11 @@ class User extends Base
             }
 
 
-
             // setcookie('uname',urlencode($post['nickname']),null,'/');
             $is_consummate = $userLogic->is_consummate($this->user_id);
-            if($is_consummate!==false){
-                return json(['status' => 1, 'msg' => '操作成功', 'result' => array('point'=>$is_consummate,'is_get_point'=>1)]);
-            }else{
+            if ($is_consummate !== false) {
+                return json(['status' => 1, 'msg' => '操作成功', 'result' => array('point' => $is_consummate, 'is_get_point' => 1)]);
+            } else {
                 // setcookie('uname',urlencode($post['nickname']),null,'/');
                 return json(['status' => 1, 'msg' => '操作成功', 'result' => null]);
             }
@@ -913,7 +917,6 @@ class User extends Base
             $logic = new UsersLogic();
             if (1 == $step) {
                 $res = $logic->check_validate_code($code, $old_mobile, 'phone', $session_id, $scene);
-
                 if (!$res && 1 != $res['status']) {
                     return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
                 }
@@ -1148,7 +1151,7 @@ class User extends Base
         Url::root('/');
         $baseUrl = url('/', '', '', true);
 
-        $filename = 'public/images/qrcode/user/user_'.$this->user_id.'.png';
+        $filename = 'public/images/qrcode/user/user_' . $this->user_id . '.png';
 
         $return['qr_img'] = $filename;
         $return['user_id'] = $this->user_id;
@@ -1168,7 +1171,7 @@ class User extends Base
         Url::root('/');
         $baseUrl = url('/', '', '', true);
 
-        $url = $baseUrl.'/#/register?invite='.$user_id;
+        $url = $baseUrl . '/#/register?invite=' . $user_id;
 
         $value = $url;                  //二维码内容
 
@@ -1176,7 +1179,7 @@ class User extends Base
         $matrixPointSize = 10;           //生成图片大小
 
         //生成二维码图片
-        $filename = 'public/images/qrcode/user/user_'.$user_id.'.png';
+        $filename = 'public/images/qrcode/user/user_' . $user_id . '.png';
 
         \QRcode::png($value, $filename, $errorCorrectionLevel, $matrixPointSize, 2);
 
@@ -1223,7 +1226,7 @@ class User extends Base
         $visit_list = Db::name('goods_visit a')->field('a.*,g.goods_name,g.shop_price,g.exchange_integral,g.original_img, g.shop_price - g.exchange_integral as point_price')
             ->join('__GOODS__ g', 'a.goods_id = g.goods_id', 'LEFT')
             ->where($map)
-            ->limit($Page->firstRow.','.$Page->listRows)
+            ->limit($Page->firstRow . ',' . $Page->listRows)
             ->order('a.visittime desc')
             ->select();
         $visit_log = $cates = [];
@@ -1238,9 +1241,9 @@ class User extends Base
                         $val['date'] = '今天';
                     } else {
                         if ($val['visittime'] < $endLastweek) {
-                            $val['date'] = '上周'.$weekarray[date('w', $val['visittime'])];
+                            $val['date'] = '上周' . $weekarray[date('w', $val['visittime'])];
                         } else {
-                            $val['date'] = '周'.$weekarray[date('w', $val['visittime'])];
+                            $val['date'] = '周' . $weekarray[date('w', $val['visittime'])];
                         }
                     }
                 } else {
@@ -1301,7 +1304,7 @@ class User extends Base
         $user_money = M('Users')->where('user_id', $user['user_id'])->getField('user_money');
 
         if ($user_money < $electronic) {
-            return json(['status' => 0, 'msg' => '你的余额不够'.$electronic, 'result' => null]);
+            return json(['status' => 0, 'msg' => '你的余额不够' . $electronic, 'result' => null]);
         }
         accountLog($user['user_id'], 0, 0, '用户余额转电子币', 0, 0, '', $electronic, 13);
         accountLog($user['user_id'], -$electronic, 0, '电子币充值（余额转）', 0, 0, '', 0, 13);
@@ -1328,7 +1331,7 @@ class User extends Base
         $user_electronic = M('Users')->where('user_id', $user['user_id'])->getField('user_electronic');
 
         if ($user_electronic < $electronic) {
-            return json(['status' => 0, 'msg' => '你的电子币不够'.$electronic, 'result' => null]);
+            return json(['status' => 0, 'msg' => '你的电子币不够' . $electronic, 'result' => null]);
         }
         accountLog($user['user_id'], 0, 0, "转出电子币给用户$to_user_id", 0, 0, '', -$electronic, 13);
 
@@ -1356,7 +1359,7 @@ class User extends Base
         $user_pay_points = M('Users')->where('user_id', $user['user_id'])->getField('pay_points');
 
         if ($user_pay_points < $pay_points) {
-            return json(['status' => 0, 'msg' => '你的积分不够'.$pay_points, 'result' => null]);
+            return json(['status' => 0, 'msg' => '你的积分不够' . $pay_points, 'result' => null]);
         }
 
         accountLog($user['user_id'], 0, -$pay_points, "转出积分给用户$to_user_id", 0, 0, '', 0, 12);
@@ -1372,7 +1375,7 @@ class User extends Base
             $data['user_id'] = $this->user_id;
             $data['nickname'] = $this->user['nickname'];
             $data['account'] = I('account');
-            $data['order_sn'] = 'recharge'.get_rand_str(10, 0, 1);
+            $data['order_sn'] = 'recharge' . get_rand_str(10, 0, 1);
             $data['ctime'] = time();
             $order_id = M('recharge')->add($data);
             if ($order_id) {
@@ -1393,7 +1396,7 @@ class User extends Base
                 $bankCodeList[$val['code']] = unserialize($val['bank_code']);
             }
         }
-        $bank_img = include APP_PATH.'home/bank.php'; // 银行对应图片
+        $bank_img = include APP_PATH . 'home/bank.php'; // 银行对应图片
         $return['paymentList'] = $paymentList;
         $return['bank_img'] = $bank_img;
         $return['bankCodeList'] = $bankCodeList;
@@ -1431,15 +1434,16 @@ class User extends Base
         $scene = I('post.scene', 6);
         $type = I('post.type', 1);
 
-        $current_user = M('Users')->find($this->user_id);
-        if (0 != $current_user['type']) {
-            return json(['status' => -1, 'msg' => '该用户已经选择类型，无法继续选定', 'result' => null]);
+//        $current_user = M('Users')->find($this->user_id);
+        $current_user = $this->user;
+        if (2 == $current_user['type']) {
+            return json(['status' => -1, 'msg' => '老用户无法继续绑定', 'result' => null]);
         }
         if ($current_user['bind_uid'] > 0) {
             return json(['status' => -1, 'msg' => '不能再绑定其他旧账号了']);
         }
-        $apply_customs = M('apply_customs')->where(['user_id' => $this->user_id,'status'=>0])->find();
-        if($apply_customs){
+        $apply_customs = M('apply_customs')->where(['user_id' => $this->user_id, 'status' => 0])->find();
+        if ($apply_customs) {
             return json(['status' => -1, 'msg' => '您正在申请金卡，不能进行合并操作']);
         }
         // 账号密码绑定方式
@@ -1453,12 +1457,11 @@ class User extends Base
 
             //验证成功
             $user = M('Users')
-             ->where('user_name', $username)  //
-             ->where('password', encrypt($password))
-             // ->where('is_zhixiao',1)
-             // ->where('is_lock',0)
-             ->find();
-
+                ->where('user_name', $username)//
+                ->where('password', encrypt($password))
+                // ->where('is_zhixiao',1)
+                // ->where('is_lock',0)
+                ->find();
             if (!$user) {
                 return json(['status' => -1, 'msg' => '账号密码错误']);
             }
@@ -1486,11 +1489,11 @@ class User extends Base
 
             //验证成功
             $user = M('Users')
-             ->where('user_name', $username)
-             ->where('mobile', $mobile)
-             // ->where('is_zhixiao',1)
-             // ->where('is_lock',0)
-             ->find();
+                ->where('user_name', $username)
+                ->where('mobile', $mobile)
+                // ->where('is_zhixiao',1)
+                // ->where('is_lock',0)
+                ->find();
 
             if (!$user) {
                 return json(['status' => -1, 'msg' => '账号不存在，不能绑定']);
@@ -1629,9 +1632,10 @@ class User extends Base
         return json(['status' => 1, 'msg' => '绑定成功']);
     }
 
-    function bindOldUserInfo(){
+    function bindOldUserInfo()
+    {
         $data['is_alert'] = 1;
-        $article = M('article')->where(array('article_id'=>104))->field('title,content')->find();
+        $article = M('article')->where(array('article_id' => 104))->field('title,content')->find();
         $data['is_alert_title'] = $article['title'];
         $data['is_alert_content'] = $article['content'];
         return json(['status' => 1, 'msg' => '设置成功', 'result' => $data]);
@@ -1842,10 +1846,10 @@ class User extends Base
             $distribut_min = tpCache('basic.min'); // 最少提现额度
             $distribut_need = tpCache('basic.need'); // 满多少才能提现
             if ($this->user['user_money'] < $distribut_need) {
-                return json(['status' => 0, 'msg' => '账户余额最少达到'.$distribut_need.'多少才能提现']);
+                return json(['status' => 0, 'msg' => '账户余额最少达到' . $distribut_need . '多少才能提现']);
             }
             if ($data['money'] < $distribut_min) {
-                return json(['status' => 0, 'msg' => '每次最少提现额度'.$distribut_min]);
+                return json(['status' => 0, 'msg' => '每次最少提现额度' . $distribut_min]);
             }
             if ($data['money'] > $this->user['user_money']) {
                 return json(['status' => 0, 'msg' => "你最多可提现{$this->user['user_money']}账户余额."]);
@@ -1870,13 +1874,13 @@ class User extends Base
     public function getWithdrawals()
     {
         $list = M('Withdrawals')
-        ->field('*,
+            ->field('*,
             CASE create_time  WHEN  0 THEN "0" ELSE FROM_UNIXTIME(create_time,"%Y-%m-%d %H:%i:%s") END as create_time,
             CASE check_time  WHEN  0 THEN "0" ELSE FROM_UNIXTIME(check_time,"%Y-%m-%d %H:%i:%s") END as check_time,
             CASE pay_time  WHEN  0 THEN "0" ELSE FROM_UNIXTIME(pay_time,"%Y-%m-%d %H:%i:%s") END as pay_time,
             CASE refuse_time  WHEN  0 THEN "0" ELSE FROM_UNIXTIME(refuse_time,"%Y-%m-%d %H:%i:%s") END as refuse_time
         ')
-        ->where('user_id', $this->user_id)->select();
+            ->where('user_id', $this->user_id)->select();
         $WITHDRAW_STATUS = C('WITHDRAW_STATUS');
         $return['list'] = $list;
         $return['WITHDRAW_STATUS'] = $WITHDRAW_STATUS;
@@ -1968,9 +1972,9 @@ class User extends Base
                         $val['date'] = '今天';
                     } else {
                         if ($val['send_time'] < $endLastweek) {
-                            $val['date'] = '上周'.$weekarray[date('w', $val['send_time'])];
+                            $val['date'] = '上周' . $weekarray[date('w', $val['send_time'])];
                         } else {
-                            $val['date'] = '周'.$weekarray[date('w', $val['send_time'])];
+                            $val['date'] = '周' . $weekarray[date('w', $val['send_time'])];
                         }
                     }
                 } else {
@@ -1979,7 +1983,7 @@ class User extends Base
 
                 if ('今天' == $val['date']) {
                     $date_time = date('H:i', $val['send_time']);
-                    $message_log[$val['date'].$date_time][] = $val;
+                    $message_log[$val['date'] . $date_time][] = $val;
                 } else {
                     $message_log[$val['date']][] = $val;
                 }
@@ -2054,9 +2058,9 @@ class User extends Base
                         $val['date'] = '今天';
                     } else {
                         if ($val['publish_time'] < $endLastweek) {
-                            $val['date'] = '上周'.$weekarray[date('w', $val['publish_time'])];
+                            $val['date'] = '上周' . $weekarray[date('w', $val['publish_time'])];
                         } else {
-                            $val['date'] = '周'.$weekarray[date('w', $val['publish_time'])];
+                            $val['date'] = '周' . $weekarray[date('w', $val['publish_time'])];
                         }
                     }
                 } else {
@@ -2066,7 +2070,7 @@ class User extends Base
                 if ('今天' == $val['date']) {
                     $date_time = date('H:i', $val['publish_time']);
                     $val['publish_time'] = date('Y-m-d H:i:s', $val['publish_time']);
-                    $article_log[$val['date'].$date_time][] = $val;
+                    $article_log[$val['date'] . $date_time][] = $val;
                 } else {
                     $val['publish_time'] = date('Y-m-d H:i:s', $val['publish_time']);
                     $article_log[$val['date']][] = $val;
@@ -2141,11 +2145,11 @@ class User extends Base
             }
 
             $list[$k]['user_can_get'] = M('task_log')
-            ->where('user_id', $this->user_id)
-            ->where('task_reward_id', $v['reward_id'])
-            ->where('type', 1)
-            ->where('status', 0)
-            ->find() ? 1 : 0;
+                ->where('user_id', $this->user_id)
+                ->where('task_reward_id', $v['reward_id'])
+                ->where('type', 1)
+                ->where('status', 0)
+                ->find() ? 1 : 0;
 
             $list[$k]['have_get'] = 0;
             if (1 == $data['status'] && 0 == $v['cycle']) {
@@ -2174,7 +2178,7 @@ class User extends Base
             //     $list[$k]['have_get'] = $have_get;
             // }
 
-      
+
         }
         // exit;
         $return['list'] = $list;
@@ -2209,15 +2213,15 @@ class User extends Base
             $return['reward_integral'] = $reward['reward_integral'];
             $return['reward_electronic'] = $reward['reward_electronic'];
 
-      if($reward['reward_coupon_id']){
+            if ($reward['reward_coupon_id']) {
                 $coupon_info = M('coupon')->where(['id' => $reward['reward_coupon_id']])->find();
-                if($coupon_info['use_type']==4 || $coupon_info['use_type']==5){
+                if ($coupon_info['use_type'] == 4 || $coupon_info['use_type'] == 5) {
                     $return['coupon_name_is_show'] = 1;
                     $return['coupon_name'] = $coupon_info['name'];
-                }else{
+                } else {
                     $return['coupon_name_is_show'] = 0;
                 }
-            }else{
+            } else {
                 $return['coupon_name_is_show'] = 0;
             }
 
@@ -2233,8 +2237,6 @@ class User extends Base
             M('task_log')->where('id', $reward['id'])->update(['status' => 1, 'finished_at' => time()]);
 
 
-
-
             return json(['status' => 1, 'msg' => '用户领取奖励成功', 'result' => $return]);
         }
 
@@ -2248,13 +2250,13 @@ class User extends Base
         $list = [];
         foreach ($task_cate as $k => $v) {
             $task_list = M('task_reward')
-            ->alias('tr')
-            ->join('__TASK__ t', 't.id=tr.task_id')
-            ->where('tr.task_cate', $k)
-            ->where('t.is_open', 1)
-            ->where('t.start_time', 'lt', time())
-            ->where('t.end_time', 'gt', time())
-            ->select();
+                ->alias('tr')
+                ->join('__TASK__ t', 't.id=tr.task_id')
+                ->where('tr.task_cate', $k)
+                ->where('t.is_open', 1)
+                ->where('t.start_time', 'lt', time())
+                ->where('t.end_time', 'gt', time())
+                ->select();
 
             $data = [];
             $data['name'] = $v;
@@ -2266,11 +2268,11 @@ class User extends Base
             if ($task_list) {
                 foreach ($task_list as $key => $value) {
                     $have_get = M('task_log')
-                    ->where('user_id', $this->user_id)
-                    ->where('task_reward_id', $value['reward_id'])
-                    ->where('type', 1)
-                    ->where('status', 1)
-                    ->find() ? 1 : 0;
+                        ->where('user_id', $this->user_id)
+                        ->where('task_reward_id', $value['reward_id'])
+                        ->where('type', 1)
+                        ->where('status', 1)
+                        ->find() ? 1 : 0;
                     if (1 == $have_get) {
                         ++$finish_count;
                     }
@@ -2308,5 +2310,90 @@ class User extends Base
         }
 
         return json(['status' => 1, 'msg' => 'ok', 'result' => $check_user_info]);
+    }
+
+    /**
+     * （新）获取用户信息
+     * @param Request $request
+     * @return \think\response\Json
+     */
+    public function userInfo(Request $request)
+    {
+        if ($request->isPost()) {
+            // 修改用户信息
+            I('post.head_pic') ? $post['head_pic'] = I('post.head_pic') : false; //头像地址
+            I('post.sex') ? $post['sex'] = I('post.sex') : $post['sex'] = 0;  // 性别
+            I('post.real_name') ? $post['real_name'] = I('post.real_name') : false;  // 真实姓名
+            I('post.id_cart') ? $post['id_cart'] = I('post.id_cart') : false;  // 身份证
+            I('post.birthday') ? $post['birthday'] = I('post.birthday') : false;  // 生日
+            $userLogic = new UsersLogic();
+            if (!$userLogic->update_info($this->user_id, $post)) {
+                return json(['status' => 0, 'msg' => '操作失败', 'result' => null]);
+            }
+            setcookie('uname', urlencode($this->user['nickname']), null, '/');
+            // 完善资料获得积分
+            $is_consummate = $userLogic->is_consummate($this->user_id, $this->user);
+            if ($is_consummate !== false) {
+                return json(['status' => 1, 'msg' => '操作成功', 'result' => ['point' => $is_consummate]]);
+            } else {
+                return json(['status' => 1, 'msg' => '操作成功', 'result' => null]);
+            }
+        }
+        $data = [];
+        // 用户信息
+        $data['user'] = [
+            'user_id' => $this->user['user_id'],
+            'sex' => $this->user['sex'],
+            'real_name' => $this->user['real_name'],
+            'id_cart' => $this->user['id_cart'],
+            'birthday' => $this->user['birthday'],
+            'mobile' => $this->user['mobile'],
+            'head_pic' => $this->user['head_pic'],
+            'type' => $this->user['type'],
+            'will_invite_uid' => $this->user['will_invite_uid'],
+            'is_not_show_jk' => $this->user['is_not_show_jk'],  // 是否提示加入金卡弹窗
+            'has_pay_pwd' => $this->user['paypwd'] ? 1 : 0,
+            'is_app' => TokenLogic::getValue('is_app', $this->userToken) ? 1 : 0
+        ];
+        if (I('get.is_wealth', null)) {
+            // 输出资金信息
+            $will_distribut_money = M('RebateLog')->field('SUM(money) as money')->where('user_id', $this->user_id)->where('status', 'in', [1, 2])->find();
+            $data['user']['wealth'] = [
+                'user_money' => $this->user['user_money'],
+                'frozen_money' => $this->user['frozen_money'],
+                'user_electronic' => $this->user['user_electronic'],
+                'frozen_electronic' => $this->user['frozen_electronic'],
+                'pay_points' => $this->user['pay_points'],
+                'distribut_number' => $this->user['distribut_level'],
+                'distribut_level' => M('DistributLevel')->where('level_id', $this->user['distribut_level'])->getField('level_name'),
+                'distribut_money' => $this->user['distribut_money'],
+                'will_distribut_money' => isset($will_distribut_money['money']) ? $will_distribut_money['money'] : '0.00'
+            ];
+        }
+        if (I('get.is_invite', null)) {
+            // 输出邀请码
+            $baseUrl = url('/', '', '', true);
+            $filename = 'public/images/qrcode/user/user_' . $this->user_id . '.png';
+            $return['qr_img'] = $filename;
+            $return['user_id'] = $this->user_id;
+            $return['basic_url'] = $baseUrl;
+            if (!file_exists($filename)) {
+                // 生成二维码
+                $this->scerweima($this->user_id);
+            }
+            $data['user']['invite'] = $return;
+        }
+        // 获取用户信息的数量
+        $messageLogic = new MessageLogic();
+        $user_message_count = $messageLogic->getUserMessageCount($this->userToken);
+        $data['user_message_count'] = $user_message_count;
+        // 获取用户活动信息的数量
+        $articleLogic = new ArticleLogic();
+        $user_article_count = $articleLogic->getUserArticleCount($this->userToken);
+        $data['user_article_count'] = $user_article_count;
+
+        $data['sex'] = C('SEX');
+
+        return json(['status' => 1, 'msg' => 'success', 'result' => $data]);
     }
 }

@@ -1573,15 +1573,20 @@ class UsersLogic extends Model
         return true;
     }
 
-    function is_consummate($user_id){
-        //完善资料获得积分
-        $user_info = get_user_info($user_id,0);
-        if($user_info['birthday'] && $user_info['id_cart'] && $user_info['real_name'] && $user_info['mobile'] && $user_info['is_consummate']==0){
+    function is_consummate($user_id, $user = [])
+    {
+        // 完善资料获得积分
+        if ($user) {
+            $user_info = $user;
+        } else {
+            $user_info = get_user_info($user_id, 0);
+        }
+        if ($user_info['birthday'] && $user_info['id_cart'] && $user_info['real_name'] && $user_info['mobile'] && $user_info['is_consummate'] == 0) {
             $pay_points = tpCache('basic.user_confirm_integral'); // 完善资料赠送积分
             if ($pay_points > 0) {
                 accountLog($user_id, 0, $pay_points, '完善资料赠送积分', 0, 0, '', 0, 21); // 记录日志流水
 
-                M('users')->where(array('user_id'=>$user_id))->data(array('is_consummate'=>1))->save();
+                M('users')->where(array('user_id' => $user_id))->data(array('is_consummate' => 1))->save();
 
                 return $pay_points;
             }
