@@ -476,31 +476,32 @@ class User extends Base
      */
     public function set_mobile()
     {
-        $userLogic = new UsersLogic();
         $mobile = I('post.mobile');
         $code = I('post.code');
         $scene = I('post.scene', 6);
-        $session_id = I('unique_id', session_id());
+        $session_id = I('unique_id', $this->userToken);
         $logic = new UsersLogic();
         $res = $logic->check_validate_code($code, $mobile, 'phone', $session_id, $scene);
+        $res['status'] = 1;
         //验证手机和验证码
         if (1 == $res['status']) {
-            //验证有效期
+            // 验证手机格式
+            if (!check_mobile($mobile)) {
+                return json(['status' => -1, 'msg' => '手机号填写错误']);
+            }
+            // 验证有效性
+            $userLogic = new UsersLogic();
             if (!$userLogic->update_email_mobile($mobile, $this->user_id, 2)) {
                 return json(['status' => -1, 'msg' => '手机号码已存在！不能绑定该手机号码']);
             }
-            $is_consummate = $logic->is_consummate($this->user_id);
+            $is_consummate = $logic->is_consummate($this->user_id, $this->user);
             if ($is_consummate) {
-                return json(['status' => 1, 'msg' => $is_consummate, 'result' => null]);
+                return json(['status' => 1, 'msg' => '设置成功', 'result' => ['point' => $is_consummate]]);
             } else {
                 // setcookie('uname',urlencode($post['nickname']),null,'/');
                 return json(['status' => 1, 'msg' => '设置成功', 'result' => null]);
             }
-
-
-            exit;
         }
-
         return json(['status' => -1, 'msg' => $res['msg']]);
     }
 

@@ -1585,9 +1585,7 @@ class UsersLogic extends Model
             $pay_points = tpCache('basic.user_confirm_integral'); // 完善资料赠送积分
             if ($pay_points > 0) {
                 accountLog($user_id, 0, $pay_points, '完善资料赠送积分', 0, 0, '', 0, 21); // 记录日志流水
-
                 M('users')->where(array('user_id' => $user_id))->data(array('is_consummate' => 1))->save();
-
                 return $pay_points;
             }
         }

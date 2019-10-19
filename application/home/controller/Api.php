@@ -139,6 +139,10 @@ class Api extends Base
             $res = $logic->send_email_code($sender);
             ajaxReturn($res);
         } else {
+            //验证手机格式
+            if (!check_mobile($mobile)) {
+                ajaxReturn(['status' => -1, 'msg' => '手机号填写错误']);
+            }
             //发送短信验证码
             $res = checkEnableSendSms($scene);  // 检查是否能够发短信
             if (1 != $res['status']) {

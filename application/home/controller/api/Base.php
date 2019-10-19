@@ -26,13 +26,14 @@ class Base extends Controller
         $isApp = Request::instance()->header('is-app', null);
         if ($isApp == 1) {
             // APP请求
+            session_start();
+            session_destroy();
             $token = Request::instance()->header('user-token', null);
             // 处理url
             if (in_array(self::getUrl(), self::specialPath()) && !$token) {
                 $this->userToken = TokenLogic::setToken();
                 return true;
             }
-            C();
             // 验证token
             $res = TokenLogic::checkToken($token);
             if ($res['status'] == 0) die(json_encode(['status' => 0, 'msg' => $res['msg']]));
