@@ -1569,6 +1569,11 @@ class UsersLogic extends Model
         if (false === $row) {
             return false;
         }
+        $user = M('users')->where('user_id', $user_id)->find();
+        // 更新缓存
+        session('user', $user);
+        $redis = new Redis();
+        $redis->set('user_' . $user['token'], $user, $user['time_out'] - time());
 
         return true;
     }
@@ -2285,7 +2290,7 @@ class UsersLogic extends Model
      */
     public function updateUserSign($userInfo, $date)
     {
-        $config = tpCache('sign');
+        $config = tpCache('sign');  // 默认2
         $update_data = [
             'sign_total' => ['exp', 'sign_total+'. 1],                                     //累计签到天数
             'sign_last' => ['exp', "'$date'"],                                             //最后签到时间
@@ -2299,12 +2304,12 @@ class UsersLogic extends Model
         if ($daya != $dayb) {                                                               //不是连续签
             $update_data['sign_count'] = ['exp', 1];
         }
-        $mb = date('m', strtotime($date));
-        // if (intval($mb) != intval(date("m", strtotime($daya)))) {                            //不是本月签到
-        //     $update_data['sign_count'] = ['exp', 1];
-        //     $update_data['sign_time']  = ['exp', "'$date'"];
-        //     $update_data['this_month'] = ['exp', $config['sign_integral']];
-        // }
+//        $mb = date('m', strtotime($date));
+//        if (intval($mb) != intval(date("m", strtotime($daya)))) {                            //不是本月签到
+//            $update_data['sign_count'] = ['exp', 1];
+//            $update_data['sign_time']  = ['exp', "'$date'"];
+//            $update_data['this_month'] = ['exp', $config['sign_integral']];
+//        }
         $update = Db::name('user_sign')->where(['user_id' => $userInfo['user_id']])->update($update_data);
         $result['status'] = false;
         $result['msg'] = '签到失败!';
