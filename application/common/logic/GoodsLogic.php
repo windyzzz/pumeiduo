@@ -80,7 +80,7 @@ class GoodsLogic extends Model
         $list_spec = [];
         $old_spec = $filter_param['spec'];
         foreach ($spec_key as $k => $v) {
-            if (0 === strpos($old_spec, $spec_item[$v]['spec_id'].'_') || strpos($old_spec, '@'.$spec_item[$v]['spec_id'].'_') || '' == $spec_item[$v]['spec_id']) {
+            if (0 === strpos($old_spec, $spec_item[$v]['spec_id'] . '_') || strpos($old_spec, '@' . $spec_item[$v]['spec_id'] . '_') || '' == $spec_item[$v]['spec_id']) {
                 continue;
             }
             $list_spec[$spec_item[$v]['spec_id']]['spec_id'] = $spec_item[$v]['spec_id'];
@@ -89,9 +89,9 @@ class GoodsLogic extends Model
 
             // 帅选参数
             if (!empty($old_spec)) {
-                $filter_param['spec'] = $old_spec.'@'.$spec_item[$v]['spec_id'].'_'.$v;
+                $filter_param['spec'] = $old_spec . '@' . $spec_item[$v]['spec_id'] . '_' . $v;
             } else {
-                $filter_param['spec'] = $spec_item[$v]['spec_id'].'_'.$v;
+                $filter_param['spec'] = $spec_item[$v]['spec_id'] . '_' . $v;
             }
             $list_spec[$spec_item[$v]['spec_id']]['item'][] = ['key' => $spec_item[$v]['spec_id'], 'val' => $v, 'item' => $spec_item[$v]['item'], 'href' => urldecode(U("Goods/$action", $filter_param, ''))];
         }
@@ -130,7 +130,7 @@ class GoodsLogic extends Model
         $old_attr = $filter_param['attr'];
         foreach ($goods_attr as $k => $v) {
             // 存在的帅选不再显示
-            if (0 === strpos($old_attr, $v['attr_id'].'_') || strpos($old_attr, '@'.$v['attr_id'].'_')) {
+            if (0 === strpos($old_attr, $v['attr_id'] . '_') || strpos($old_attr, '@' . $v['attr_id'] . '_')) {
                 continue;
             }
             if (0 == $goods_attribute[$v['attr_id']]['attr_index']) {
@@ -138,19 +138,19 @@ class GoodsLogic extends Model
             }
             $v['attr_value'] = trim($v['attr_value']);
             // 如果同一个属性id 的属性值存储过了 就不再存贮
-            if (in_array($v['attr_id'].'_'.$v['attr_value'], (array) $attr_value_arr[$v['attr_id']])) {
+            if (in_array($v['attr_id'] . '_' . $v['attr_value'], (array)$attr_value_arr[$v['attr_id']])) {
                 continue;
             }
-            $attr_value_arr[$v['attr_id']][] = $v['attr_id'].'_'.$v['attr_value'];
+            $attr_value_arr[$v['attr_id']][] = $v['attr_id'] . '_' . $v['attr_value'];
 
             $list_attr[$v['attr_id']]['attr_id'] = $v['attr_id'];
             $list_attr[$v['attr_id']]['attr_name'] = $goods_attribute[$v['attr_id']]['attr_name'];
 
             // 帅选参数
             if (!empty($old_attr)) {
-                $filter_param['attr'] = $old_attr.'@'.$v['attr_id'].'_'.$v['attr_value'];
+                $filter_param['attr'] = $old_attr . '@' . $v['attr_id'] . '_' . $v['attr_value'];
             } else {
-                $filter_param['attr'] = $v['attr_id'].'_'.$v['attr_value'];
+                $filter_param['attr'] = $v['attr_id'] . '_' . $v['attr_value'];
             }
 
             $list_attr[$v['attr_id']]['attr_value'][] = ['key' => $v['attr_id'], 'val' => $v['attr_value'], 'attr_value' => $v['attr_value'], 'href' => U("Goods/$action", $filter_param, '')];
@@ -196,8 +196,8 @@ class GoodsLogic extends Model
     /**
      * 商品收藏.
      *
-     * @param $user_id|用户id
-     * @param $goods_id|商品id
+     * @param $user_id |用户id
+     * @param $goods_id |商品id
      *
      * @return array
      */
@@ -220,7 +220,7 @@ class GoodsLogic extends Model
     /**
      * 获取商品规格
      *
-     * @param $goods_id|商品id
+     * @param $goods_id |商品id
      *
      * @return array
      */
@@ -249,7 +249,7 @@ class GoodsLogic extends Model
     /**
      * 获取相关分类.
      *
-     * @param $cat_id|分类id
+     * @param $cat_id |分类id
      *
      * @return array|false|mixed|\PDOStatement|string|\think\Collection
      */
@@ -260,7 +260,7 @@ class GoodsLogic extends Model
         }
         $cate_info = M('goods_category')->where('id', $cat_id)->find();
         $siblings_cate = M('goods_category')->where(['id' => ['<>', $cat_id], 'parent_id' => $cate_info['parent_id']])
-        ->getField('parent_id_path,id,name,mobile_name,parent_id,parent_id_path,level,sort_order,is_show,image,is_hot,cat_group,commission_rate');
+            ->getField('parent_id_path,id,name,mobile_name,parent_id,parent_id_path,level,sort_order,is_show,image,is_hot,cat_group,commission_rate');
 
         return empty($siblings_cate) ? [] : $siblings_cate;
     }
@@ -276,14 +276,14 @@ class GoodsLogic extends Model
 
         if ($user_id) {
             $take_goods_list = M('goods')
-            ->field('g.*')
-            ->alias('g')
-            ->join('__GOODS_VISIT__ gv', 'gv.goods_id = g.goods_id')
-            ->where(['g.goods_id' => ['<>', $goods['goods_id']], 'is_on_sale' => 1])
-            ->where('gv.user_id', $user_id)
-            ->order('gv.visit_id desc')
-            ->limit(20)
-            ->select();
+                ->field('g.*')
+                ->alias('g')
+                ->join('__GOODS_VISIT__ gv', 'gv.goods_id = g.goods_id')
+                ->where(['g.goods_id' => ['<>', $goods['goods_id']], 'is_on_sale' => 1])
+                ->where('gv.user_id', $user_id)
+                ->order('gv.visit_id desc')
+                ->limit(20)
+                ->select();
             shuffle($take_goods_list);
             if (count($take_goods_list) > 4) {
                 for ($i = 0; $i < 4; ++$i) {
@@ -328,7 +328,7 @@ class GoodsLogic extends Model
     /**
      * 筛选的价格期间.
      *
-     * @param $goods_id_arr|帅选的分类id
+     * @param $goods_id_arr |帅选的分类id
      * @param $filter_param
      * @param $action
      * @param int $c 分几段 默认分5 段
@@ -345,7 +345,7 @@ class GoodsLogic extends Model
         $goods_id_str = $goods_id_str ? $goods_id_str : '0';
         $priceList = M('goods')->where('goods_id', 'in', $goods_id_str)->getField('shop_price', true);  //where("goods_id in($goods_id_str)")->select();
         rsort($priceList);
-        $max_price = (int) $priceList[0];
+        $max_price = (int)$priceList[0];
 
         $psize = ceil($max_price / $c); // 每一段累积的价钱
         $parr = [];
@@ -394,7 +394,7 @@ class GoodsLogic extends Model
             $brand_id = explode('_', $filter_param['brand_id']);
             $brand['text'] = '品牌:';
             foreach ($brand_id as $k => $v) {
-                $brand['text'] .= $brand_list[$v].',';
+                $brand['text'] .= $brand_list[$v] . ',';
             }
             $brand['text'] = substr($brand['text'], 0, -1);
             $tmp = $filter_param;
@@ -409,10 +409,10 @@ class GoodsLogic extends Model
             $spec_group = explode('@', $filter_param['spec']);
             foreach ($spec_group as $k => $v) {
                 $spec_group2 = explode('_', $v);
-                $spec_menu['text'] = $spec[$spec_group2[0]].':';
+                $spec_menu['text'] = $spec[$spec_group2[0]] . ':';
                 array_shift($spec_group2); // 弹出第一个规格名称
                 foreach ($spec_group2 as $k2 => $v2) {
-                    $spec_menu['text'] .= $spec_item[$v2].',';
+                    $spec_menu['text'] .= $spec_item[$v2] . ',';
                 }
                 $spec_menu['text'] = substr($spec_menu['text'], 0, -1);
 
@@ -430,10 +430,10 @@ class GoodsLogic extends Model
             $attr_group = explode('@', $filter_param['attr']);
             foreach ($attr_group as $k => $v) {
                 $attr_group2 = explode('_', $v);
-                $attr_menu['text'] = $goods_attribute[$attr_group2[0]].':';
+                $attr_menu['text'] = $goods_attribute[$attr_group2[0]] . ':';
                 array_shift($attr_group2); // 弹出第一个规格名称
                 foreach ($attr_group2 as $k2 => $v2) {
-                    $attr_menu['text'] .= $v2.',';
+                    $attr_menu['text'] .= $v2 . ',';
                 }
                 $attr_menu['text'] = substr($attr_menu['text'], 0, -1);
 
@@ -447,7 +447,7 @@ class GoodsLogic extends Model
         }
         // 价格
         if (!empty($filter_param['price'])) {
-            $price_menu['text'] = '价格:'.$filter_param['price'];
+            $price_menu['text'] = '价格:' . $filter_param['price'];
             unset($filter_param['price']);
             $price_menu['href'] = urldecode(U("Goods/$action", $filter_param, ''));
             $menu_list[] = $price_menu;
@@ -489,8 +489,8 @@ class GoodsLogic extends Model
     }
 
     /**
-     * @param  $brand_id|帅选品牌id
-     * @param  $price|帅选价格
+     * @param  $brand_id |帅选品牌id
+     * @param  $price |帅选价格
      *
      * @return array|mixed
      */
@@ -523,7 +523,7 @@ class GoodsLogic extends Model
     /**
      * 根据规格 查找 商品id.
      *
-     * @param $spec|规格
+     * @param $spec |规格
      *
      * @return array|\type
      */
@@ -543,7 +543,7 @@ class GoodsLogic extends Model
                 $v2 = addslashes($v2);
                 $like[] = " key2  like '%\_$v2\_%' ";
             }
-            $where .= ' and ('.implode('or', $like).') ';
+            $where .= ' and (' . implode('or', $like) . ') ';
         }
         $sql = "select * from (select *,concat('_',`key`,'_') as key2 from __PREFIX__spec_goods_price as a) b  $where";
         $result = Db::query($sql);
@@ -552,7 +552,7 @@ class GoodsLogic extends Model
     }
 
     /**
-     * @param $attr|属性
+     * @param $attr |属性
      *
      * @return array|mixed
      *                     根据属性 查找 商品id
@@ -702,7 +702,7 @@ class GoodsLogic extends Model
                 $temp['total_volume'] += $goodsVal['volume'] * $goodsVal['goods_num'];
                 $temp['total_weight'] += $goodsVal['weight'] * $goodsVal['goods_num'];
                 $temp['goods_num'] += $goodsVal['goods_num'];
-                if($goodsVal['is_free_shipping']==1){
+                if ($goodsVal['is_free_shipping'] == 1) {
                     $temp['is_free_shipping'] = 1;
                 }
             }
@@ -719,8 +719,8 @@ class GoodsLogic extends Model
     /**
      *网站自营,入驻商家,货到付款,仅看有货,促销商品
      *
-     * @param $sel|筛选条件
-     * @param array $cat_id|分类ID
+     * @param $sel |筛选条件
+     * @param array $cat_id |分类ID
      *
      * @return mixed
      */
@@ -790,9 +790,9 @@ class GoodsLogic extends Model
     /**
      * 在有价格阶梯的情况下，根据商品数量，获取商品价格
      *
-     * @param $goods_num|购买的商品数
-     * @param $goods_price|商品默认单价
-     * @param $price_ladder|价格阶梯数组
+     * @param $goods_num |购买的商品数
+     * @param $goods_price |商品默认单价
+     * @param $price_ladder |价格阶梯数组
      *
      * @return mixed
      */
@@ -811,6 +811,17 @@ class GoodsLogic extends Model
                 return $price_ladder[$i]['price'];
             }
         }
+    }
+
+    /**
+     * 获取用户收藏商品列表
+     * @param $userId
+     * @return array
+     */
+    public function getCollectGoods($userId)
+    {
+        $collect = M('goods_collect')->where(['user_id' => $userId])->select();
+        return $collect ? $collect : [];
     }
 
     /**
@@ -874,7 +885,7 @@ class GoodsLogic extends Model
      */
     public function getNewGoods()
     {
-        $goods_where = ['is_new' => 1,  'is_on_sale' => 1];
+        $goods_where = ['is_new' => 1, 'is_on_sale' => 1];
         $orderBy = ['sort' => 'desc'];
         $new_goods = M('goods')
             ->field('goods_id,goods_name,shop_price')
@@ -893,7 +904,7 @@ class GoodsLogic extends Model
      */
     public function getHotGood($is_brand = 0)
     {
-        $goods_where = ['is_hot' => 1,  'is_on_sale' => 1];
+        $goods_where = ['is_hot' => 1, 'is_on_sale' => 1];
         if ($is_brand) {
             $goods_where['brand_id'] = ['<>', 0];
         }
@@ -918,15 +929,15 @@ class GoodsLogic extends Model
         $start_time = strtotime(date('Y-m-d H:00:00'));
         $end_time = strtotime(date('Y-m-d H:00:00'));
         $adv = M('ad')->field(['ad_link', 'ad_name', 'ad_code'])
-        ->where("pid=9 and enabled=1 and start_time< $start_time and end_time > $end_time")
-        ->order('orderby desc')->cache(true, 3600)
-        ->limit(5)->select();
+            ->where("pid=9 and enabled=1 and start_time< $start_time and end_time > $end_time")
+            ->order('orderby desc')->cache(true, 3600)
+            ->limit(5)->select();
         //广告地址转换
         foreach ($adv as $k => $v) {
             if (!strstr($v['ad_link'], 'http')) {
-                $adv[$k]['ad_link'] = SITE_URL.$v['ad_link'];
+                $adv[$k]['ad_link'] = SITE_URL . $v['ad_link'];
             }
-            $adv[$k]['ad_code'] = SITE_URL.$v['ad_code'];
+            $adv[$k]['ad_code'] = SITE_URL . $v['ad_code'];
         }
 
         return $adv;
@@ -948,9 +959,9 @@ class GoodsLogic extends Model
         }
 
         $adv = M('ad')->field(['ad_link', 'ad_name', 'ad_code', 'media_type,pid'])
-        ->where(" enabled=1 and start_time< $start_time and end_time > $end_time")->where($where)
-        ->order('orderby desc')//->fetchSql(true)//->cache(true,3600)
-        ->limit(20)->select();
+            ->where(" enabled=1 and start_time< $start_time and end_time > $end_time")->where($where)
+            ->order('orderby desc')//->fetchSql(true)//->cache(true,3600)
+            ->limit(20)->select();
 
         return $adv;
     }
@@ -991,7 +1002,7 @@ class GoodsLogic extends Model
 
         $where = ['goods_id' => ['<>', $goods_id], 'cat_id' => $goods['cat_id']];
         $goods_list = M('goods')->field('goods_id,goods_name,shop_price,is_virtual')
-                ->where($where)->page($p, $count)->select();
+            ->where($where)->page($p, $count)->select();
 
         return $goods_list;
     }
@@ -1024,7 +1035,7 @@ class GoodsLogic extends Model
         $goods_where['exchange_integral'] = $exchange_integral_where_array;  //拼装条件
         $goods_list_count = M('goods')->where($goods_where)->count();   //总数
         $goods_list = M('goods')->field('goods_id,goods_name,shop_price,market_price,exchange_integral,is_virtual')
-                ->where($goods_where)->order($ranktype, 'desc')->page($p, 15)->select();
+            ->where($goods_where)->order($ranktype, 'desc')->page($p, 15)->select();
 
         $result = [
             'goods_list' => $goods_list,
@@ -1041,14 +1052,14 @@ class GoodsLogic extends Model
     public function getSortBrands()
     {
         $brandList = M('Brand')->select();
-        $brandIdArr = M('Brand')->where('name in (select `name` from `'.C('database.prefix').'brand` group by name having COUNT(id) > 1)')->getField('id,cat_id');
+        $brandIdArr = M('Brand')->where('name in (select `name` from `' . C('database.prefix') . 'brand` group by name having COUNT(id) > 1)')->getField('id,cat_id');
         $goodsCategoryArr = M('goodsCategory')->where('level = 1')->getField('id,name');
         $nameList = [];
         foreach ($brandList as $k => $v) {
-            $name = getFirstCharter($v['name']).'  --   '.$v['name']; // 前面加上拼音首字母
+            $name = getFirstCharter($v['name']) . '  --   ' . $v['name']; // 前面加上拼音首字母
 
             if (array_key_exists($v[id], $brandIdArr) && $v['cat_id']) { // 如果有双重品牌的 则加上分类名称
-                $name .= ' ( '.$goodsCategoryArr[$v['cat_id']].' ) ';
+                $name .= ' ( ' . $goodsCategoryArr[$v['cat_id']] . ' ) ';
             }
             $nameList[] = $v['name'] = $name;
             $brandList[$k] = $v;
@@ -1061,7 +1072,7 @@ class GoodsLogic extends Model
     /**
      * 获取活动简要信息.
      *
-     * @param array                                       $goods
+     * @param array $goods
      * @param FlashSaleLogic|GroupBuyLogic|PromGoodsLogic $goodsPromLogic
      *
      * @return array
@@ -1087,7 +1098,7 @@ class GoodsLogic extends Model
     /**
      * 获取商品促销简单信息.
      *
-     * @param array                                       $goods
+     * @param array $goods
      * @param FlashSaleLogic|GroupBuyLogic|PromGoodsLogic $goodsPromLogic
      *
      * @return array
@@ -1108,11 +1119,11 @@ class GoodsLogic extends Model
         if (in_array($goods['prom_type'], [1, 2])) {
             $info = $goodsPromLogic->getActivityGoodsInfo();
             $activity = [
-                    'prom_type' => $goods['prom_type'],
-                    'prom_price' => $prom['price'],
-                    'prom_store_count' => $info['store_count'],
-                    'virtual_num' => $info['virtual_num'],
-                ];
+                'prom_type' => $goods['prom_type'],
+                'prom_price' => $prom['price'],
+                'prom_store_count' => $info['store_count'],
+                'virtual_num' => $info['virtual_num'],
+            ];
             if ($prom['start_time']) {
                 $activity['prom_start_time'] = $prom['start_time'];
             }
@@ -1142,10 +1153,10 @@ class GoodsLogic extends Model
         if ($activityData) {
             $activityInfo = $goodsPromLogic->getActivityGoodsInfo();
             $activity = [
-                    'prom_type' => $goods['prom_type'],
-                    'prom_price' => $activityInfo['shop_price'],
-                    'data' => $activityData,
-                ];
+                'prom_type' => $goods['prom_type'],
+                'prom_price' => $activityInfo['shop_price'],
+                'data' => $activityData,
+            ];
             if ($prom['start_time']) {
                 $activity['prom_start_time'] = $prom['start_time'];
             }
@@ -1203,7 +1214,7 @@ class GoodsLogic extends Model
         $nameList = [];
         foreach ($categoryList as $k => $v) {
             //$str_pad = str_pad('',($v[level] * 5),'-',STR_PAD_LEFT);
-            $name = getFirstCharter($v['name']).' '.$v['name']; // 前面加上拼音首字母
+            $name = getFirstCharter($v['name']) . ' ' . $v['name']; // 前面加上拼音首字母
             //$name = getFirstCharter($v['name']) .' '. $v['name'].' '.$v['level']; // 前面加上拼音首字母
             /*
             // 找他老爸
