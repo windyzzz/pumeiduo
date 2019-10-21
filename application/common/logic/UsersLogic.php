@@ -1548,6 +1548,9 @@ class UsersLogic extends Model
         $condition['user_id'] = $user_id;
         $validate = $field.'_validated';
         M('users')->where($condition)->save([$field => $email_mobile, $validate => 1]);
+        // 更新缓存
+        $user = M('users')->where($condition)->find();
+        TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
 
         return true;
         // }
@@ -1569,11 +1572,9 @@ class UsersLogic extends Model
         if (false === $row) {
             return false;
         }
-        $user = M('users')->where('user_id', $user_id)->find();
         // 更新缓存
-        session('user', $user);
-        $redis = new Redis();
-        $redis->set('user_' . $user['token'], $user, $user['time_out'] - time());
+        $user = M('users')->where('user_id', $user_id)->find();
+        TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
 
         return true;
     }
@@ -1744,6 +1745,9 @@ class UsersLogic extends Model
         if (!$row) {
             return ['status' => -1, 'msg' => '设置失败', 'result' => ''];
         }
+        // 更新缓存
+        $user = M('users')->where('user_id', $user_id)->find();
+        TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
         return ['status' => 1, 'msg' => '设置成功', 'result' => ''];
     }
 
@@ -1805,6 +1809,9 @@ class UsersLogic extends Model
         if (!$row) {
             return ['status' => -1, 'msg' => '修改失败', 'result' => ''];
         }
+        // 更新缓存
+        $user = M('users')->where('user_id', $user_id)->find();
+        TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
 
         return ['status' => 1, 'msg' => '修改成功', 'result' => ''];
     }
@@ -1862,6 +1869,9 @@ class UsersLogic extends Model
         $url = $url ?? U('User/userinfo');
         session('payPriorUrl', null);
         (new Redis)->rm('payPriorUrl_' . $userToken);
+        // 更新缓存
+        $user = M('users')->where('user_id', $user_id)->find();
+        TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
 
         return ['status' => 1, 'msg' => '修改成功', 'url' => $url];
     }

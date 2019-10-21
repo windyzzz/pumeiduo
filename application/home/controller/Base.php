@@ -44,22 +44,28 @@ class Base extends Controller
 
         $this->public_assign();
 
-        if (session_id()) {
-            $this->session_id = session_id(); // 当前的 session_id
-            define('SESSION_ID', $this->session_id); //将当前的session_id保存为常量，供其它方法调用
-            $this->userToken = session_id();
-            return;
-        }
-
-        // APP请求接口处理
-        $token = Request::instance()->header('user-token', null);
-        if ($token) {
+        $isApp = Request::instance()->header('is-app', null);
+        if ($isApp == 1) {
+            // APP请求
+            session_start();
+            session_destroy();
+            $token = Request::instance()->header('user-token', null);
+            // 处理url
+            if (in_array(self::getUrl(), self::specialPath()) && !$token) {
+                $this->userToken = TokenLogic::setToken();
+                return true;
+            }
             // 验证token
             $res = TokenLogic::checkToken($token);
             if ($res['status'] == 0) die(json_encode(['status' => 0, 'msg' => $res['msg']]));
             $this->user = $res['user'];
             $this->user_id = $res['user']['user_id'];
             $this->userToken = $token;
+        } else {
+            // 网页请求
+            $this->session_id = session_id(); // 当前的 session_id
+            define('SESSION_ID', $this->session_id); //将当前的session_id保存为常量，供其它方法调用
+            $this->userToken = session_id();
         }
     }
 
@@ -100,5 +106,23 @@ class Base extends Controller
     public function ajaxReturn($data)
     {
         exit(json_encode($data));
+    }
+
+    /**
+     * 获取请求路径
+     * @return string
+     */
+    private function getUrl()
+    {
+        return $this->request->url();
+    }
+
+    /**
+     * 特别路径
+     * @return array
+     */
+    private function specialPath()
+    {
+        return [];
     }
 }

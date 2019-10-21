@@ -47,7 +47,7 @@ class Token
     }
 
     /**
-     * 断是session取值还是redis取值判
+     * 判断是session取值还是redis取值判
      * @param $name
      * @param $token
      * @return mixed|null
@@ -65,7 +65,25 @@ class Token
     }
 
     /**
-     * 断是session取值还是缓存取值
+     * 更新session缓存与redis缓存
+     * @param $name
+     * @param $token
+     * @param $value
+     * @param $time
+     * @return bool
+     */
+    public static function updateValue($name, $token, $value, $time)
+    {
+        // 更新session
+        session($name, $value);
+        // 更新redis
+        $redis = new Redis();
+        $redis->set($name . '_' . $token, $value, $time - time());
+        return true;
+    }
+
+    /**
+     * 判断是session取值还是缓存取值
      * @param $name
      * @param $token
      * @return mixed|null

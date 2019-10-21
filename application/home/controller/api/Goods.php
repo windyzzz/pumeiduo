@@ -21,7 +21,6 @@ use app\common\model\Goods as GoodsModel;
 use app\common\model\GroupBuy;
 use app\common\model\SpecGoodsPrice;
 use think\AjaxPage;
-use think\Cookie;
 use think\Db;
 use think\Hook;
 use think\Page;
@@ -51,8 +50,8 @@ class Goods extends Base
         //使用方法-------------------------------------------------
         //数据格式，如没有优惠券coupon_price值为0。
         $gData = [
-            'pic' => './'.$goods['original_img'],
-            'title' =>$goods['goods_name'],
+            'pic' => './' . $goods['original_img'],
+            'title' => $goods['goods_name'],
             'price' => $goods['shop_price'] - $goods['exchange_integral'],
             'point' => $goods['exchange_integral'],
             'original_price' => $goods['market_price'] == 0 ? $goods['shop_price'] : $goods['market_price'],
@@ -60,26 +59,26 @@ class Goods extends Base
             'user_name' => $user_id,
         ];
 
-        $filename = 'public/images/qrcode/goods/goods_'.$user_id.'_'.$goods_id.'.png';
+        $filename = 'public/images/qrcode/goods/goods_' . $user_id . '_' . $goods_id . '.png';
 
         if (!file_exists($filename)) {
-            $this->scerweima($user_id,$goods['goods_id']);
+            $this->scerweima($user_id, $goods['goods_id']);
         }
 
         //直接输出
-        createSharePng($gData,$filename);
+        createSharePng($gData, $filename);
         exit;
 
     }
 
-    private function scerweima($user_id,$goods_id)
+    private function scerweima($user_id, $goods_id)
     {
         Loader::import('phpqrcode', EXTEND_PATH);
 
         Url::root('/');
         $baseUrl = url('/', '', '', true);
 
-        $url = $baseUrl.'/#/goods/goods_details?goods_id='.$goods_id.'&cart_type=0&invite='.$user_id;
+        $url = $baseUrl . '/#/goods/goods_details?goods_id=' . $goods_id . '&cart_type=0&invite=' . $user_id;
 
         $value = $url;                  //二维码内容
 
@@ -87,7 +86,7 @@ class Goods extends Base
         $matrixPointSize = 10;           //生成图片大小
 
         //生成二维码图片
-        $filename = 'public/images/qrcode/goods/goods_'.$user_id.'_'.$goods_id.'.png';
+        $filename = 'public/images/qrcode/goods/goods_' . $user_id . '_' . $goods_id . '.png';
         \QRcode::png($value, $filename, $errorCorrectionLevel, $matrixPointSize, 2);
 
     }
@@ -144,7 +143,6 @@ class Goods extends Base
         }
 
 
-
         //输出到图片
 //        createSharePng($gData,'code_png/php_code.png','share.png');
 
@@ -162,14 +160,14 @@ class Goods extends Base
         $data['is_alert_content'] = '';
         $data['is_alert_referee'] = '';
 
-        if($data['goods']['zone']==3){
+        if ($data['goods']['zone'] == 3) {
             $data['is_alert'] = 1;
-            $article = M('article')->where(array('article_id'=>104))->field('title,content')->find();
+            $article = M('article')->where(array('article_id' => 104))->field('title,content')->find();
             $data['is_alert_title'] = $article['title'];
             $data['is_alert_content'] = $article['content'];
             $user = session('user');
-            $invite_uid = M('users')->where(array('user_id'=>$user['user_id']))->getField('invite_uid');
-            if($invite_uid) {
+            $invite_uid = M('users')->where(array('user_id' => $user['user_id']))->getField('invite_uid');
+            if ($invite_uid) {
                 $data['is_alert_referee'] = '推荐人会员号：' . $invite_uid;
             }
         }
@@ -177,15 +175,15 @@ class Goods extends Base
         $goods_tao_grade = M('goods_tao_grade')
             ->alias('g')
             ->field('pg.type,pg.title,pg.id')
-            ->where(array('g.goods_id'=>$goods_id))
-            ->join('prom_goods pg','g.promo_id = pg.id and pg.start_time <= '.NOW_TIME.' and pg.end_time >= '.NOW_TIME.' and pg.is_end = 0 and  pg.is_open =1 ')
+            ->where(array('g.goods_id' => $goods_id))
+            ->join('prom_goods pg', 'g.promo_id = pg.id and pg.start_time <= ' . NOW_TIME . ' and pg.end_time >= ' . NOW_TIME . ' and pg.is_end = 0 and  pg.is_open =1 ')
             ->select();
-        if($goods_tao_grade){
+        if ($goods_tao_grade) {
             $type_arr = array(
-                0=>'折扣',
-                1=>'立减'
+                0 => '折扣',
+                1 => '立减'
             );
-            foreach($goods_tao_grade as $k=>$v){
+            foreach ($goods_tao_grade as $k => $v) {
                 $goods_tao_grade[$k]['type_name'] = $type_arr[$v['type']];
             }
         }
@@ -244,12 +242,12 @@ class Goods extends Base
                 ->select();
         } else {
             $list = M('goods')->field('goods_name,goods_id,shop_price,exchange_integral,shop_price - exchange_integral as member_price,original_img')
-            ->where('is_recommend', 1)
-            ->where('is_on_sale', 1)
-            // ->where("goods_id", 'in', $goods_id)
-            // ->limit($page->firstRow.','.$page->listRows)
-            ->order('sort')
-            ->select();
+                ->where('is_recommend', 1)
+                ->where('is_on_sale', 1)
+                // ->where("goods_id", 'in', $goods_id)
+                // ->limit($page->firstRow.','.$page->listRows)
+                ->order('sort')
+                ->select();
         }
 
         $goodsLogic = new GoodsLogic();
@@ -312,7 +310,7 @@ class Goods extends Base
         $list = M('goods')->field('goods_name,goods_id,shop_price,exchange_integral,shop_price - exchange_integral as member_price,original_img,goods_remark')
             ->where('sale_type', 2)
             ->where('is_on_sale', 1)
-            ->limit($page->firstRow.','.$page->listRows)
+            ->limit($page->firstRow . ',' . $page->listRows)
             ->order('sort')
             ->select();
         $goodsLogic = new GoodsLogic();
@@ -341,7 +339,7 @@ class Goods extends Base
             ->where('zone', 3)
             ->where('distribut_id', $type)
             ->where('is_on_sale', 1)
-            ->limit($page->firstRow.','.$page->listRows)
+            ->limit($page->firstRow . ',' . $page->listRows)
             ->order('sort')
             ->select();
         $goodsLogic = new GoodsLogic();
@@ -448,7 +446,7 @@ class Goods extends Base
      */
     public function goodsList()
     {
-        $key = md5($_SERVER['REQUEST_URI'].I('start_price').'_'.I('end_price'));
+        $key = md5($_SERVER['REQUEST_URI'] . I('start_price') . '_' . I('end_price'));
         $html = S($key);
         if (!empty($html)) {
             json(['status' => 1, 'msg' => 'success', 'result' => $html]);
@@ -465,17 +463,17 @@ class Goods extends Base
         $start_price = trim(I('post.start_price', '0')); // 输入框价钱
         $end_price = trim(I('post.end_price', '0')); // 输入框价钱
         if ($start_price && $end_price) {
-            $price = $start_price.'-'.$end_price;
-        } // 如果输入框有价钱 则使用输入框的价钱
+            // 如果输入框有价钱 则使用输入框的价钱
+            $price = $start_price . '-' . $end_price;
+        }
 
-        $coupon_id = I('coupon_id',0,'int');
+        $coupon_id = I('coupon_id', 0, 'int');
 
         $filter_param['id'] = $id; //加入帅选条件中
         $filter_param['coupon_id'] = $coupon_id;
 
-        $prom_id = I('prom_id',0,'int');
+        $prom_id = I('prom_id', 0, 'int');
         $prom_id && ($filter_param['prom_id'] = $prom_id); //加入帅选条件中
-
 
         $brand_id && ($filter_param['brand_id'] = $brand_id); //加入帅选条件中
         $spec && ($filter_param['spec'] = $spec); //加入帅选条件中
@@ -512,14 +510,14 @@ class Goods extends Base
             $filter_goods_id = array_intersect($filter_goods_id, $goods_id_3); // 获取多个帅选条件的结果 的交集
         }
 
-        if($coupon_id){
-            $coupon_ids_list = M('goods_coupon')->field('goods_id')->where(['coupon_id' => $coupon_id])->getField('goods_id',true);
+        if ($coupon_id) {
+            $coupon_ids_list = M('goods_coupon')->field('goods_id')->where(['coupon_id' => $coupon_id])->getField('goods_id', true);
             $filter_goods_id = array_intersect($filter_goods_id, $coupon_ids_list); // 获取多个帅选条件的结果 的交集
         }
 
         //活动优惠
-        if($prom_id){
-            $prom_ids_list = M('goods_tao_grade')->field('goods_id')->where(['promo_id' => $prom_id])->getField('goods_id',true);
+        if ($prom_id) {
+            $prom_ids_list = M('goods_tao_grade')->field('goods_id')->where(['promo_id' => $prom_id])->getField('goods_id', true);
             $filter_goods_id = array_intersect($filter_goods_id, $prom_ids_list); // 获取多个帅选条件的结果 的交集
         }
 
@@ -532,7 +530,7 @@ class Goods extends Base
         $count = count($filter_goods_id);
         $page = new Page($count, 20);
         if ($count > 0) {
-            $goods_list = M('goods')->where('goods_id', 'in', implode(',', $filter_goods_id))->order([$sort => $sort_asc])->limit($page->firstRow.','.$page->listRows)->select();
+            $goods_list = M('goods')->where('goods_id', 'in', implode(',', $filter_goods_id))->order([$sort => $sort_asc])->limit($page->firstRow . ',' . $page->listRows)->select();
 
             // 添加 is_enshrine  是否收藏字段 && 添加 tabs  商品标签字段 BY J
             foreach ($goods_list as $k => $v) {
@@ -580,7 +578,7 @@ class Goods extends Base
      */
     public function getSeriesGoodsList()
     {
-        $key = md5($_SERVER['REQUEST_URI'].I('start_price').'_'.I('end_price'));
+        $key = md5($_SERVER['REQUEST_URI'] . I('start_price') . '_' . I('end_price'));
         $html = S($key);
         if (!empty($html)) {
             json(['status' => 1, 'msg' => 'success', 'result' => $html]);
@@ -597,7 +595,7 @@ class Goods extends Base
         $start_price = trim(I('post.start_price', '0')); // 输入框价钱
         $end_price = trim(I('post.end_price', '0')); // 输入框价钱
         if ($start_price && $end_price) {
-            $price = $start_price.'-'.$end_price;
+            $price = $start_price . '-' . $end_price;
         } // 如果输入框有价钱 则使用输入框的价钱
 
         $filter_param['id'] = $id; //加入帅选条件中
@@ -641,7 +639,7 @@ class Goods extends Base
         $count = count($filter_goods_id);
         $page = new Page($count, 20);
         if ($count > 0) {
-            $goods_list = M('goods')->where('goods_id', 'in', implode(',', $filter_goods_id))->order([$sort => $sort_asc])->limit($page->firstRow.','.$page->listRows)->select();
+            $goods_list = M('goods')->where('goods_id', 'in', implode(',', $filter_goods_id))->order([$sort => $sort_asc])->limit($page->firstRow . ',' . $page->listRows)->select();
 
             // 添加 is_enshrine  是否收藏字段 && 添加 tabs  商品标签字段 BY J
             foreach ($goods_list as $k => $v) {
@@ -689,7 +687,7 @@ class Goods extends Base
      */
     public function getGroupBuyGoodsList()
     {
-        $key = md5($_SERVER['REQUEST_URI'].I('start_price').'_'.I('end_price'));
+        $key = md5($_SERVER['REQUEST_URI'] . I('start_price') . '_' . I('end_price'));
         $html = S($key);
         if (!empty($html)) {
             json(['status' => 1, 'msg' => 'success', 'result' => $html]);
@@ -706,7 +704,7 @@ class Goods extends Base
         $start_price = trim(I('post.start_price', '0')); // 输入框价钱
         $end_price = trim(I('post.end_price', '0')); // 输入框价钱
         if ($start_price && $end_price) {
-            $price = $start_price.'-'.$end_price;
+            $price = $start_price . '-' . $end_price;
         } // 如果输入框有价钱 则使用输入框的价钱
 
         $filter_param['id'] = $id; //加入帅选条件中
@@ -772,10 +770,10 @@ class Goods extends Base
             $goods_list = $Goods->with(['GroupBuyDetail' => function ($query) use ($filter_goods_id) {
                 $query->alias('gb')->field('gb.*,FROM_UNIXTIME(start_time,"%Y-%m-%d") as start_time,FROM_UNIXTIME(end_time,"%Y-%m-%d") as end_time,(FORMAT(buy_num%group_goods_num/group_goods_num,2)) as percent,  goods_num - buy_num as store_count , CASE buy_num >= goods_num  WHEN 1 THEN 1 ELSE 0 END AS is_sale_out, group_goods_num - buy_num%group_goods_num as people_num');
             }])
-            ->where('goods_id', 'in', implode(',', $filter_goods_id))
-            ->order([$sort => $sort_asc])
-            ->limit($Page->firstRow.','.$Page->listRows)
-            ->select();
+                ->where('goods_id', 'in', implode(',', $filter_goods_id))
+                ->order([$sort => $sort_asc])
+                ->limit($Page->firstRow . ',' . $Page->listRows)
+                ->select();
 
             foreach ($goods_list as $k => $v) {
                 $goods_list[$k]['group_buy'] = $v['group_buy'] = $v['group_buy_detail'];
@@ -855,7 +853,7 @@ class Goods extends Base
      */
     public function getRecommendGoodsList()
     {
-        $key = md5($_SERVER['REQUEST_URI'].I('start_price').'_'.I('end_price'));
+        $key = md5($_SERVER['REQUEST_URI'] . I('start_price') . '_' . I('end_price'));
         $html = S($key);
         if (!empty($html)) {
             json(['status' => 1, 'msg' => 'success', 'result' => $html]);
@@ -872,7 +870,7 @@ class Goods extends Base
         $start_price = trim(I('post.start_price', '0')); // 输入框价钱
         $end_price = trim(I('post.end_price', '0')); // 输入框价钱
         if ($start_price && $end_price) {
-            $price = $start_price.'-'.$end_price;
+            $price = $start_price . '-' . $end_price;
         } // 如果输入框有价钱 则使用输入框的价钱
 
         $filter_param['id'] = $id; //加入帅选条件中
@@ -916,7 +914,7 @@ class Goods extends Base
         $count = count($filter_goods_id);
         $page = new Page($count, 20);
         if ($count > 0) {
-            $goods_list = M('goods')->where('goods_id', 'in', implode(',', $filter_goods_id))->order([$sort => $sort_asc])->limit($page->firstRow.','.$page->listRows)->select();
+            $goods_list = M('goods')->where('goods_id', 'in', implode(',', $filter_goods_id))->order([$sort => $sort_asc])->limit($page->firstRow . ',' . $page->listRows)->select();
 
             // 添加 is_enshrine  是否收藏字段 && 添加 tabs  商品标签字段 BY J
             foreach ($goods_list as $k => $v) {
@@ -968,7 +966,7 @@ class Goods extends Base
         $callback = I('callback');
         $parent_region = M('region2')->field('id,name')->where(['parent_id' => $fid])->cache(true)->select();
 
-        echo $callback.'('.json_encode($parent_region).')';
+        echo $callback . '(' . json_encode($parent_region) . ')';
         exit;
     }
 
@@ -1012,7 +1010,7 @@ class Goods extends Base
         $start_price = trim(I('start_price', '0')); // 输入框价钱
         $end_price = trim(I('end_price', '0')); // 输入框价钱
         if ($start_price && $end_price) {
-            $price = $start_price.'-'.$end_price;
+            $price = $start_price . '-' . $end_price;
         } // 如果输入框有价钱 则使用输入框的价钱
         $q = urldecode(trim(I('q', ''))); // 关键字搜索
         if (empty($q)) {
@@ -1072,7 +1070,7 @@ class Goods extends Base
         $count = count($filter_goods_id);
         $page = new Page($count, 20);
         if ($count > 0) {
-            $goods_list = M('goods')->where(['is_on_sale' => 1, 'goods_id' => ['in', implode(',', $filter_goods_id)]])->order([$sort => $sort_asc])->limit($page->firstRow.','.$page->listRows)->select();
+            $goods_list = M('goods')->where(['is_on_sale' => 1, 'goods_id' => ['in', implode(',', $filter_goods_id)]])->order([$sort => $sort_asc])->limit($page->firstRow . ',' . $page->listRows)->select();
             $filter_goods_id2 = get_arr_column($goods_list, 'goods_id');
             if ($filter_goods_id2) {
                 $goods_images = M('goods_images')->where('goods_id', 'in', implode(',', $filter_goods_id2))->select();
@@ -1120,7 +1118,7 @@ class Goods extends Base
         $count = M('GoodsConsult')->where($where)->count();
         $page = new AjaxPage($count, 5);
         $show = $page->show();
-        $consultList = M('GoodsConsult')->where($where)->order('id desc')->limit($page->firstRow.','.$page->listRows)->order('add_time desc')->select();
+        $consultList = M('GoodsConsult')->where($where)->order('id desc')->limit($page->firstRow . ',' . $page->listRows)->order('add_time desc')->select();
         foreach ($consultList as $key => $list) {
             $consultList[$key]['replyList'] = M('GoodsConsult')->where(['parent_id' => $list['id'], 'is_show' => 1])->order('add_time desc')->select();
         }
@@ -1149,7 +1147,7 @@ class Goods extends Base
         $page = new AjaxPage($count, 10);
         $show = $page->show();
 
-        $list = M('Comment')->alias('c')->join('__USERS__ u', 'u.user_id = c.user_id', 'LEFT')->where($where)->order('add_time desc')->limit($page->firstRow.','.$page->listRows)->select();
+        $list = M('Comment')->alias('c')->join('__USERS__ u', 'u.user_id = c.user_id', 'LEFT')->where($where)->order('add_time desc')->limit($page->firstRow . ',' . $page->listRows)->select();
 
 //        $replyList = M('Comment')->where(['is_show'=>1,'goods_id'=>$goods_id,'parent_id'=>['>',0]])->order("add_time desc")->select();
 
@@ -1235,11 +1233,11 @@ class Goods extends Base
         }
         //积分+金额
         if (1 == $brandType) {
-            array_push($exchange_integral_where_array, ['exp', ' < shop_price* '.$point_rate]);
+            array_push($exchange_integral_where_array, ['exp', ' < shop_price* ' . $point_rate]);
         }
         //全部积分
         if (2 == $brandType) {
-            array_push($exchange_integral_where_array, ['exp', ' = shop_price* '.$point_rate]);
+            array_push($exchange_integral_where_array, ['exp', ' = shop_price* ' . $point_rate]);
         }
         //新品
         if (1 == $is_new) {
@@ -1257,7 +1255,7 @@ class Goods extends Base
         $goods_where['exchange_integral'] = $exchange_integral_where_array;
         $goods_list_count = M('goods')->where($goods_where)->count();   //总页数
         $page = new Page($goods_list_count, 15);
-        $goods_list = M('goods')->where($goods_where)->limit($page->firstRow.','.$page->listRows)->select();
+        $goods_list = M('goods')->where($goods_where)->limit($page->firstRow . ',' . $page->listRows)->select();
         $goods_category = M('goods_category')->where(['level' => 1])->select();
 
         $return['goods_list'] = $goods_list;

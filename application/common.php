@@ -28,11 +28,13 @@ function is_login()
     return false;
 }
 
-function bonus_time(){
+function bonus_time()
+{
     return 1562083200;
 }
 
-function order_time(){
+function order_time()
+{
     return 1561910400;
 }
 
@@ -40,7 +42,7 @@ function order_time(){
  * 获取用户信息.
  *
  * @param $user_value  用户id 邮箱 手机 第三方id
- * @param int    $type  类型 0 user_id查找 1 邮箱查找 2 手机查找 3 第三方唯一标识查找
+ * @param int $type 类型 0 user_id查找 1 邮箱查找 2 手机查找 3 第三方唯一标识查找
  * @param string $oauth 第三方来源
  *
  * @return mixed
@@ -131,7 +133,7 @@ function update_user_distribut($user_id, $order_id)
         logDistribut($order['order_sn'], $user_id, $update['distribut_level'], $user_info['distribut_level'], 1);
 
         $CouponLogic = new \app\common\logic\CouponLogic();
-        $CouponLogic->sendNewVipUser($user_id,$order_id);
+        $CouponLogic->sendNewVipUser($user_id, $order_id);
 
     }
 }
@@ -241,7 +243,7 @@ function _getLevelIds($id)
 
     if ($users) {
         foreach ($users as $uk => $uv) {
-            $uids .= $uv['user_id'].','._getLevelIds($uv['user_id']);
+            $uids .= $uv['user_id'] . ',' . _getLevelIds($uv['user_id']);
         }
     }
 
@@ -300,7 +302,7 @@ function _getFirstLeaderId($id)
         foreach ($list as $key => $value) {
             if ($value['is_distribut'] > 0) {
                 $first_leader[] = $value['user_id'];
-            // return $first_leader ;
+                // return $first_leader ;
             } else {
                 $first_leader = _getFirstLeaderId($value['user_id']);
             }
@@ -309,12 +311,13 @@ function _getFirstLeaderId($id)
 
     return $first_leader;
 }
+
 /**
  *  商品缩略图 给于标签调用 拿出商品表的 original_img 原始图来裁切出来的.
  *
  * @param type $goods_id 商品id
- * @param type $width    生成缩略图的宽度
- * @param type $height   生成缩略图的高度
+ * @param type $width 生成缩略图的宽度
+ * @param type $height 生成缩略图的高度
  */
 function goods_thum_images($goods_id, $width, $height)
 {
@@ -323,21 +326,21 @@ function goods_thum_images($goods_id, $width, $height)
     }
 
     //判断缩略图是否存在
-    $path = UPLOAD_PATH."goods/thumb/$goods_id/";
+    $path = UPLOAD_PATH . "goods/thumb/$goods_id/";
     $goods_thumb_name = "goods_thumb_{$goods_id}_{$width}_{$height}";
 
     // 这个商品 已经生成过这个比例的图片就直接返回了
-    if (is_file($path.$goods_thumb_name.'.jpg')) {
-        return '/'.$path.$goods_thumb_name.'.jpg';
+    if (is_file($path . $goods_thumb_name . '.jpg')) {
+        return '/' . $path . $goods_thumb_name . '.jpg';
     }
-    if (is_file($path.$goods_thumb_name.'.jpeg')) {
-        return '/'.$path.$goods_thumb_name.'.jpeg';
+    if (is_file($path . $goods_thumb_name . '.jpeg')) {
+        return '/' . $path . $goods_thumb_name . '.jpeg';
     }
-    if (is_file($path.$goods_thumb_name.'.gif')) {
-        return '/'.$path.$goods_thumb_name.'.gif';
+    if (is_file($path . $goods_thumb_name . '.gif')) {
+        return '/' . $path . $goods_thumb_name . '.gif';
     }
-    if (is_file($path.$goods_thumb_name.'.png')) {
-        return '/'.$path.$goods_thumb_name.'.png';
+    if (is_file($path . $goods_thumb_name . '.png')) {
+        return '/' . $path . $goods_thumb_name . '.png';
     }
     $original_img = Db::name('goods')->where('goods_id', $goods_id)->cache(true, 30, 'original_img_cache')->value('original_img');
     if (empty($original_img)) {
@@ -349,7 +352,7 @@ function goods_thum_images($goods_id, $width, $height)
         return $ossUrl;
     }
 
-    $original_img = '.'.$original_img; // 相对路径
+    $original_img = '.' . $original_img; // 相对路径
     if (!is_file($original_img)) {
         return '/public/images/icon_goods_thumb_empty_300.png';
     }
@@ -364,12 +367,12 @@ function goods_thum_images($goods_id, $width, $height)
         }
         $image = \think\Image::open($original_img);
 
-        $goods_thumb_name = $goods_thumb_name.'.'.$image->type();
+        $goods_thumb_name = $goods_thumb_name . '.' . $image->type();
         // 生成缩略图
         !is_dir($path) && mkdir($path, 0777, true);
         // 参考文章 http://www.mb5u.com/biancheng/php/php_84533.html  改动参考 http://www.thinkphp.cn/topic/13542.html
-        $image->thumb($width, $height, 2)->save($path.$goods_thumb_name, null, 100); //按照原图的比例生成一个最大为$width*$height的缩略图并保存
-        $img_url = '/'.$path.$goods_thumb_name;
+        $image->thumb($width, $height, 2)->save($path . $goods_thumb_name, null, 100); //按照原图的比例生成一个最大为$width*$height的缩略图并保存
+        $img_url = '/' . $path . $goods_thumb_name;
 
         return $img_url;
     } catch (think\Exception $e) {
@@ -383,21 +386,21 @@ function goods_thum_images($goods_id, $width, $height)
 function get_sub_images($sub_img, $goods_id, $width, $height)
 {
     //判断缩略图是否存在
-    $path = UPLOAD_PATH."goods/thumb/$goods_id/";
+    $path = UPLOAD_PATH . "goods/thumb/$goods_id/";
     $goods_thumb_name = "goods_sub_thumb_{$sub_img['img_id']}_{$width}_{$height}";
 
     //这个缩略图 已经生成过这个比例的图片就直接返回了
-    if (is_file($path.$goods_thumb_name.'.jpg')) {
-        return '/'.$path.$goods_thumb_name.'.jpg';
+    if (is_file($path . $goods_thumb_name . '.jpg')) {
+        return '/' . $path . $goods_thumb_name . '.jpg';
     }
-    if (is_file($path.$goods_thumb_name.'.jpeg')) {
-        return '/'.$path.$goods_thumb_name.'.jpeg';
+    if (is_file($path . $goods_thumb_name . '.jpeg')) {
+        return '/' . $path . $goods_thumb_name . '.jpeg';
     }
-    if (is_file($path.$goods_thumb_name.'.gif')) {
-        return '/'.$path.$goods_thumb_name.'.gif';
+    if (is_file($path . $goods_thumb_name . '.gif')) {
+        return '/' . $path . $goods_thumb_name . '.gif';
     }
-    if (is_file($path.$goods_thumb_name.'.png')) {
-        return '/'.$path.$goods_thumb_name.'.png';
+    if (is_file($path . $goods_thumb_name . '.png')) {
+        return '/' . $path . $goods_thumb_name . '.png';
     }
 
     $ossClient = new \app\common\logic\OssLogic();
@@ -405,7 +408,7 @@ function get_sub_images($sub_img, $goods_id, $width, $height)
         return $ossUrl;
     }
 
-    $original_img = '.'.$sub_img['image_url']; //相对路径
+    $original_img = '.' . $sub_img['image_url']; //相对路径
     if (!is_file($original_img)) {
         return '/public/images/icon_goods_thumb_empty_300.png';
     }
@@ -420,12 +423,12 @@ function get_sub_images($sub_img, $goods_id, $width, $height)
         }
         $image = \think\Image::open($original_img);
 
-        $goods_thumb_name = $goods_thumb_name.'.'.$image->type();
+        $goods_thumb_name = $goods_thumb_name . '.' . $image->type();
         // 生成缩略图
         !is_dir($path) && mkdir($path, 0777, true);
         // 参考文章 http://www.mb5u.com/biancheng/php/php_84533.html  改动参考 http://www.thinkphp.cn/topic/13542.html
-        $image->thumb($width, $height, 2)->save($path.$goods_thumb_name, null, 100); //按照原图的比例生成一个最大为$width*$height的缩略图并保存
-        $img_url = '/'.$path.$goods_thumb_name;
+        $image->thumb($width, $height, 2)->save($path . $goods_thumb_name, null, 100); //按照原图的比例生成一个最大为$width*$height的缩略图并保存
+        $img_url = '/' . $path . $goods_thumb_name;
 
         return $img_url;
     } catch (think\Exception $e) {
@@ -452,7 +455,7 @@ function refresh_stock($goods_id)
 /**
  * 根据 order_goods 表扣除商品库存.
  *
- * @param $order|订单对象或者数组
+ * @param $order |订单对象或者数组
  *
  * @throws \think\Exception
  */
@@ -578,7 +581,7 @@ function send_email($to, $subject = '', $content = '')
     //$mail->addAttachment('images/phpmailer_mini.png');
     //send the message, check for errors
     if (!$mail->send()) {
-        return ['status' => -1, 'msg' => '发送失败: '.$mail->ErrorInfo];
+        return ['status' => -1, 'msg' => '发送失败: ' . $mail->ErrorInfo];
     }
 
     return ['status' => 1, 'msg' => '发送成功'];
@@ -637,7 +640,7 @@ function sendSms($scene, $sender, $params, $unique_id = 0)
  */
 function queryExpress($postcom, $getNu)
 {
-    $url = 'https://m.kuaidi100.com/query?type='.$postcom.'&postid='.$getNu.'&id=1&valicode=&temp=0.49738534969422676';
+    $url = 'https://m.kuaidi100.com/query?type=' . $postcom . '&postid=' . $getNu . '&id=1&valicode=&temp=0.49738534969422676';
     $resp = httpRequest($url, 'GET');
 
     return json_decode($resp, true);
@@ -748,15 +751,15 @@ function cart_goods_num($user_id = 0, $session_id = '')
  * 获取商品库存.
  *
  * @param type $goods_id 商品id
- * @param type $key      库存 key
+ * @param type $key 库存 key
  */
 function getGoodNum($goods_id, $key)
 {
     if (!empty($key)) {
         return M('SpecGoodsPrice')
-                        ->alias('s')
-                        ->join('_Goods_ g ', 's.goods_id = g.goods_id', 'LEFT')
-                        ->where(['g.goods_id' => $goods_id, 'key' => $key, 'is_on_sale' => 1])->getField('s.store_count');
+            ->alias('s')
+            ->join('_Goods_ g ', 's.goods_id = g.goods_id', 'LEFT')
+            ->where(['g.goods_id' => $goods_id, 'key' => $key, 'is_on_sale' => 1])->getField('s.store_count');
     }
 
     return M('Goods')->where(['goods_id' => $goods_id, 'is_on_sale' => 1])->getField('store_count');
@@ -766,7 +769,7 @@ function getGoodNum($goods_id, $key)
  * 获取缓存或者更新缓存.
  *
  * @param string $config_key 缓存文件名称
- * @param array  $data       缓存数据  array('k1'=>'v1','k2'=>'v3')
+ * @param array $data 缓存数据  array('k1'=>'v1','k2'=>'v3')
  *
  * @return array or string or bool
  */
@@ -877,13 +880,13 @@ function taskLog($user_id, $task, $reward, $order_sn = '', $reward_electronic = 
 /**
  * 记录帐户变动.
  *
- * @param int    $user_id                  用户id
- * @param float  $user_money               可用余额变动
- * @param int    $pay_points               消费积分变动
- * @param int    $user_electronic电子币
- * @param string $desc                     变动说明
+ * @param int $user_id 用户id
+ * @param float $user_money 可用余额变动
+ * @param int $pay_points 消费积分变动
+ * @param int $user_electronic电子币
+ * @param string $desc 变动说明
  * @param   float   distribut_money 分佣金额
- * @param int    $order_id 订单id
+ * @param int $order_id 订单id
  * @param string $order_sn 订单sn
  *
  * @return bool
@@ -906,10 +909,10 @@ function accountLog($user_id, $user_money = 0, $pay_points = 0, $desc = '', $dis
 //    $sql = "UPDATE __PREFIX__users SET user_money = user_money + $user_money," .
 //        " pay_points = pay_points + $pay_points, distribut_money = distribut_money + $distribut_money WHERE user_id = $user_id";
     $update_data = [
-        'user_money' => ['exp', 'user_money+'.$user_money],
-        'pay_points' => ['exp', 'pay_points+'.$pay_points],
-        'distribut_money' => ['exp', 'distribut_money+'.$distribut_money],
-        'user_electronic' => ['exp', 'user_electronic+'.$user_electronic],
+        'user_money' => ['exp', 'user_money+' . $user_money],
+        'pay_points' => ['exp', 'pay_points+' . $pay_points],
+        'distribut_money' => ['exp', 'distribut_money+' . $distribut_money],
+        'user_electronic' => ['exp', 'user_electronic+' . $user_electronic],
     ];
     if (0 == ($user_money + $pay_points + $distribut_money + $user_electronic)) {
         return false;
@@ -928,11 +931,11 @@ function accountLog($user_id, $user_money = 0, $pay_points = 0, $desc = '', $dis
  * 会员升级日志
  * 参数示例.
  *
- * @param type $order_sn  订单编号
- * @param type $user_id   用户ID
+ * @param type $order_sn 订单编号
+ * @param type $user_id 用户ID
  * @param type $new_level 升级的分销等级
  * @param type $old_level 之前的分销等级
- * @param type $type      用户id 升级类型
+ * @param type $type 用户id 升级类型
  *
  * @return bool
  */
@@ -954,10 +957,10 @@ function logDistribut($order_sn, $user_id, $new_level, $old_level, $type = 1)
  * 订单操作日志
  * 参数示例.
  *
- * @param type $order_id    订单id
+ * @param type $order_id 订单id
  * @param type $action_note 操作备注
  * @param type $status_desc 操作状态  提交订单, 付款成功, 取消, 等待收货, 完成
- * @param type $user_id     用户id 默认为管理员
+ * @param type $user_id 用户id 默认为管理员
  *
  * @return bool
  */
@@ -989,6 +992,7 @@ function get_region_list()
 {
     return M('region2')->cache(true)->getField('id,name');
 }
+
 /*
  * 获取用户地址列表
  */
@@ -1008,6 +1012,7 @@ function get_user_address_info($user_id, $address_id)
 
     return $data;
 }
+
 /*
  * 获取用户默认收货地址
  */
@@ -1017,11 +1022,12 @@ function get_user_default_address($user_id)
 
     return $data;
 }
+
 /**
  * 获取订单状态的 中文描述名称.
  *
  * @param type $order_id 订单id
- * @param type $order    订单数组
+ * @param type $order 订单数组
  *
  * @return string
  */
@@ -1040,7 +1046,7 @@ function orderStatusDesc($order_id = 0, $order = [])
         if (0 == $order['pay_status'] && 0 == $order['order_status']) {
             return 'WAITPAY';
         } //'待支付',
-        if (1 == $order['pay_status'] && in_array($order['order_status'], [0,1]) && 0 == $order['shipping_status']) {
+        if (1 == $order['pay_status'] && in_array($order['order_status'], [0, 1]) && 0 == $order['shipping_status']) {
             return 'WAITSEND';
         } //'待发货',
         if (1 == $order['pay_status'] && 2 == $order['shipping_status'] && 1 == $order['order_status']) {
@@ -1072,7 +1078,7 @@ function orderStatusDesc($order_id = 0, $order = [])
  * 获取订单状态的 显示按钮.
  *
  * @param type $order_id 订单id
- * @param type $order    订单数组
+ * @param type $order 订单数组
  *
  * @return array()
  */
@@ -1083,11 +1089,11 @@ function orderBtn($order_id = 0, $order = [])
     }
     /**
      *  订单用户端显示按钮.
-    去支付     AND pay_status=0 AND order_status=0 AND pay_code ! ="cod"
-    取消按钮  AND pay_status=0 AND shipping_status=0 AND order_status=0
-    确认收货  AND shipping_status=1 AND order_status=0
-    评价      AND order_status=1
-    查看物流  if(!empty(物流单号))
+     * 去支付     AND pay_status=0 AND order_status=0 AND pay_code ! ="cod"
+     * 取消按钮  AND pay_status=0 AND shipping_status=0 AND order_status=0
+     * 确认收货  AND shipping_status=1 AND order_status=0
+     * 评价      AND order_status=1
+     * 查看物流  if(!empty(物流单号))
      */
     $btn_arr = [
         'pay_btn' => 0, // 去支付按钮
@@ -1132,7 +1138,7 @@ function orderBtn($order_id = 0, $order = [])
     }
 
     if (1 == $order['pay_status'] && shipping_status && 4 == $order['order_status']) { // 已完成(已支付, 已发货 , 已完成)
-            $btn_arr['return_btn'] = 1; // 退货按钮
+        $btn_arr['return_btn'] = 1; // 退货按钮
     }
 
     if (3 == $order['order_status'] && (1 == $order['pay_status'] || 4 == $order['pay_status'])) {
@@ -1152,9 +1158,9 @@ function set_btn_order_status($order)
     $order_status_arr = C('ORDER_STATUS_DESC');
     $order['order_status_code'] = $order_status_code = orderStatusDesc(0, $order); // 订单状态显示给用户看的
 
-    if($order_status_code == 'WAITSEND' && $order['status'] == 1) {
+    if ($order_status_code == 'WAITSEND' && $order['status'] == 1) {
         $order['order_status_desc'] = '商家已确认，等待发货';
-    }else{
+    } else {
         $order['order_status_desc'] = $order_status_arr[$order_status_code];
     }
 
@@ -1180,7 +1186,7 @@ function rechargevip_rebate($order)
         $first_leader = Db::name('users')->where('user_id', $userid)->value('first_leader');
         if ($first_leader) {
             //变动上级资金，记录日志
-            $msg = '获取线下'.$userid.'充值VIP返利'.$tpshop_config['rechargevip_rebate'];
+            $msg = '获取线下' . $userid . '充值VIP返利' . $tpshop_config['rechargevip_rebate'];
             accountLog($first_leader, $tpshop_config['rechargevip_rebate'], 0, $msg, 0, 0, $order['order_sn']);
         }
     }
@@ -1273,7 +1279,7 @@ function update_pay_status($order_sn, $ext = [])
                     M('group_detail')->insert($data);
                 } else {
                     $data = [];
-                    $data['order_sn_list'] = $group['order_sn_list'].','.$order['order_sn'];
+                    $data['order_sn_list'] = $group['order_sn_list'] . ',' . $order['order_sn'];
                     $data['order_num'] = $group['order_num'] + 1;
                     $data['status'] = 1;
                     $data['time'] = $group['time'];
@@ -1300,7 +1306,7 @@ function update_pay_status($order_sn, $ext = [])
             // 预付款支付 有订金支付 修改支付状态  部分支付
             if ($order['total_amount'] != $order['order_amount'] && 0 == $order['pay_status']) {
                 //支付订金
-                M('order')->where('order_sn', $order_sn)->save(['order_sn' => date('YmdHis').mt_rand(1000, 9999), 'pay_status' => 2, 'pay_time' => $time, 'paid_money' => $order['order_amount']]);
+                M('order')->where('order_sn', $order_sn)->save(['order_sn' => date('YmdHis') . mt_rand(1000, 9999), 'pay_status' => 2, 'pay_time' => $time, 'paid_money' => $order['order_amount']]);
                 M('goods_activity')->where(['act_id' => $order['prom_id']])->setInc('act_count', $orderGoodsArr['goods_num']);
             } else {
                 //全额支付 无订金支付 支付尾款
@@ -1482,7 +1488,7 @@ function confirm_order($id, $user_id = 0)
 /**
  * 下单赠送活动：优惠券，积分.
  *
- * @param $order|订单数组
+ * @param $order |订单数组
  */
 function order_give($order)
 {
@@ -1502,8 +1508,8 @@ function order_give($order)
 //                if (in_array($user_level, explode(',', $prom_goods['group']))) {
                 //优惠券发放数量验证，0为无限制。发放数量-已领取数量>0
                 if (0 == $goods_coupon['createnum'] ||
-                            ($goods_coupon['createnum'] > 0 && ($goods_coupon['createnum'] - $goods_coupon['send_num']) > 0)
-                    ) {
+                    ($goods_coupon['createnum'] > 0 && ($goods_coupon['createnum'] - $goods_coupon['send_num']) > 0)
+                ) {
                     $data = ['cid' => $goods_coupon['id'], 'get_order_id' => $order['order_id'], 'type' => $goods_coupon['type'], 'uid' => $order['user_id'], 'send_time' => time()];
                     M('coupon_list')->add($data);
                     // 优惠券领取数量加一
@@ -1532,8 +1538,8 @@ function order_give($order)
             if ($order_coupon) {
                 //优惠券发放数量验证，0为无限制。发放数量-已领取数量>0
                 if (0 == $order_coupon['createnum'] ||
-                        ($order_coupon['createnum'] > 0 && ($order_coupon['createnum'] - $order_coupon['send_num']) > 0)
-                    ) {
+                    ($order_coupon['createnum'] > 0 && ($order_coupon['createnum'] - $order_coupon['send_num']) > 0)
+                ) {
                     $data = ['cid' => $order_coupon['id'], 'get_order_id' => $order['order_id'], 'type' => $order_coupon['type'], 'uid' => $order['user_id'], 'send_time' => time()];
                     M('coupon_list')->add($data);
                     M('Coupon')->where('id', $order_coupon['id'])->setInc('send_num'); // 优惠券领取数量加一
@@ -1554,20 +1560,21 @@ function order_give($order)
 /**
  * 获取商品一二三级分类.
  *
- * @return type
+ * @return array
  */
 function get_goods_category_tree()
 {
     $tree = $arr = $result = [];
     $cat_list = M('goods_category')
-    ->field('c.*,p.position_id')
-    ->alias('c')
-    ->join('__AD_POSITION__ p', 'c.id = p.category_id', 'LEFT')
-    // ->cache(true)
-    ->where(['is_show' => 1])
-    ->order('sort_order')
-    ->select(); //所有分类
+        ->alias('c')
+        ->field('c.*,p.position_id')
+        ->join('__AD_POSITION__ p', 'c.id = p.category_id', 'LEFT')
+        // ->cache(true)
+        ->where(['is_show' => 1])
+        ->order('sort_order desc')
+        ->select(); //所有分类
     if ($cat_list) {
+        // 分类广告
         foreach ($cat_list as $ck => $cv) {
             $cat_list[$ck]['ad_list'] = null;
             if ($cv['position_id'] > 0) {
@@ -1575,31 +1582,31 @@ function get_goods_category_tree()
                 $cat_list[$ck]['ad_list'] = $ad_list;
             }
         }
+        // 分类等级
         foreach ($cat_list as $val) {
+            if (1 == $val['level']) {
+                $tree[] = $val;
+            }
             if (2 == $val['level']) {
                 $arr[$val['parent_id']][] = $val;
             }
             if (3 == $val['level']) {
                 $crr[$val['parent_id']][] = $val;
             }
-            if (1 == $val['level']) {
-                $tree[] = $val;
-            }
         }
-
+        // 第三级分类
         foreach ($arr as $k => $v) {
             foreach ($v as $kk => $vv) {
                 $arr[$k][$kk]['sub_menu'] = empty($crr[$vv['id']]) ? [] : $crr[$vv['id']];
             }
         }
-
+        // 第二级分类
         foreach ($tree as $val) {
             $val['tmenu'] = empty($arr[$val['id']]) ? [] : $arr[$val['id']];
             $result[$val['id']] = $val;
         }
     }
-
-    return $result;
+    return array_values($result);
 }
 
 /**
@@ -1609,7 +1616,7 @@ function write_html_cache($html)
 {
     $html_cache_arr = C('HTML_CACHE_ARR');
     $request = think\Request::instance();
-    $m_c_a_str = $request->module().'_'.$request->controller().'_'.$request->action(); // 模块_控制器_方法
+    $m_c_a_str = $request->module() . '_' . $request->controller() . '_' . $request->action(); // 模块_控制器_方法
     $m_c_a_str = strtolower($m_c_a_str);
     //exit('write_html_cache写入缓存<br/>');
     foreach ($html_cache_arr as $key => $val) {
@@ -1625,7 +1632,7 @@ function write_html_cache($html)
         // 组合参数
         if (isset($val['p'])) {
             foreach ($val['p'] as $k => $v) {
-                $filename .= '_'.$_GET[$v];
+                $filename .= '_' . $_GET[$v];
             }
         }
         $filename .= '.html';
@@ -1641,7 +1648,7 @@ function read_html_cache()
 {
     $html_cache_arr = C('HTML_CACHE_ARR');
     $request = think\Request::instance();
-    $m_c_a_str = $request->module().'_'.$request->controller().'_'.$request->action(); // 模块_控制器_方法
+    $m_c_a_str = $request->module() . '_' . $request->controller() . '_' . $request->action(); // 模块_控制器_方法
     $m_c_a_str = strtolower($m_c_a_str);
     //exit('read_html_cache读取缓存<br/>');
     foreach ($html_cache_arr as $key => $val) {
@@ -1655,7 +1662,7 @@ function read_html_cache()
         // 组合参数
         if (isset($val['p'])) {
             foreach ($val['p'] as $k => $v) {
-                $filename .= '_'.$_GET[$v];
+                $filename .= '_' . $_GET[$v];
             }
         }
         $filename .= '.html';
@@ -1689,9 +1696,9 @@ function getTotalAddress($province_id, $city_id, $district_id, $twon_id, $addres
 /**
  * 商品库存操作日志.
  *
- * @param int    $muid     操作 用户ID
- * @param int    $stock    更改库存数
- * @param array  $goods    库存商品
+ * @param int $muid 操作 用户ID
+ * @param int $stock 更改库存数
+ * @param array $goods 库存商品
  * @param string $order_sn 订单编号
  */
 function update_stock_log($muid, $stock = 1, $goods, $order_sn = '')

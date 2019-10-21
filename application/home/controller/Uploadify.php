@@ -540,7 +540,7 @@ class Uploadify extends Base
             $state = 'ERROR'.$result;
         } else {
             $user_id = cookie('user_id') ? cookie('user_id') : $this->user_id;
-            $savePath = 'user/'.$user_id.'/'.$this->savePath.'/';
+            $savePath = 'user/'.$user_id.'/'.$this->savePath;
             $ossConfig = tpCache('oss');
             $ossSupportPath = ['comment', 'photo'];
             if (in_array(I('savepath'), $ossSupportPath) && $ossConfig['oss_switch']) {
