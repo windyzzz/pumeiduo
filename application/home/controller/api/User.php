@@ -1194,16 +1194,15 @@ class User extends Base
         // return '<img src="qrcode.png" alt="使用微信扫描支付">';
     }
 
+    /**
+     * 删除我的足迹
+     * @return \think\response\Json
+     */
     public function del_visit_log()
     {
         $id = I('id', '');
         $goodsLogic = new Goodslogic();
-        $id = explode(',', $id);
-        if ($id) {
-            foreach ($id as $v) {
-                $goodsLogic->del_visit_log($v);
-            }
-        }
+        $goodsLogic->del_visit_log($id);
 
         return json(['status' => 1, 'msg' => '删除用户足迹成功', 'result' => null]);
     }
@@ -1287,25 +1286,20 @@ class User extends Base
             ->select();
         // 处理数据
         $return = [];
-        $visitLog = [];
-        foreach ($visitList as $item) {
-            $visitTime = date('Y-m-d', $item['visittime']);
+        foreach ($visitList as $key => $value) {
+            $visitTime = date('Y-m-d', $value['visittime']);
             // 判断访问时间
             if ($visitTime == date('Y-m-d', time())) {
-                $key = '今天';
+                $visitList[$key]['date'] = '今天';
             } elseif ($visitTime == date('Y-m-d', time() - (86400))) {
-                $key = '昨天';
+                $visitList[$key]['date'] = '昨天';
             } elseif ($visitTime == date('Y-m-d', time() - (86400 * 2))) {
-                $key = '前天';
+                $visitList[$key]['date'] = '前天';
             } else {
-                $key = $visitTime;
+                $visitList[$key]['date'] = $visitTime;
             }
-            if (!isset($visitLog[$key]['date'])) {
-                $visitLog[$key]['date'] = $key;
-            }
-            $visitLog[$key]['data'][] = $item;
         }
-        $return['visit_log'] = array_values($visitLog);
+        $return['visit_log'] = $visitList;
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
     }
 

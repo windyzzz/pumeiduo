@@ -777,12 +777,9 @@ class GoodsLogic extends Model
      * @author lxl
      * @time  17-4-20
      */
-    public function del_visit_log($id)
+    public function del_visit_log($ids)
     {
-        $record = M('goods_visit')->where(['visit_id' => $id])->find();
-        if ($record) {
-            M('goods_visit')->where(['visit_id' => $id])->delete();
-        }
+        M('goods_visit')->where(['visit_id' => ['in', $ids]])->delete();
 
         return true;
     }
