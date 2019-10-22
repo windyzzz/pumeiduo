@@ -988,24 +988,22 @@ class User extends Base
     {
         $ids = I('get.ids', '');
         if (!$ids) {
-            return json(['status' => 0, 'msg' => '缺少IDS参数', 'result' => null]);
+            return json(['status' => 0, 'msg' => '请至少选择一个商品', 'result' => null]);
         }
         $collect_ids = explode(',', $ids);
-
         if (!$collect_ids) {
             return json(['status' => 0, 'msg' => 'IDS参数非法', 'result' => null]);
         }
         $row = Db::name('goods_collect')->where(['collect_id' => ['IN', $collect_ids], 'user_id' => $this->user_id])->delete();
-
         if (!$row) {
             return json(['status' => 0, 'msg' => '删除失败', 'result' => null]);
         }
-
         return json(['status' => 1, 'msg' => '删除成功', 'result' => null]);
     }
 
-    /*
-     * ajax更新一个收藏商品
+    /**
+     * （移除）收藏商品
+     * @return \think\response\Json
      */
     public function ajax_goods_collect()
     {
@@ -1014,21 +1012,21 @@ class User extends Base
             return json(['status' => 0, 'msg' => '缺少goods_id参数', 'result' => null]);
         }
         $status = I('get.status', 0);
-        $user_id = $this->user_id;
         if (0 == $status) {
-            M('GoodsCollect')->where(['user_id' => $user_id, 'goods_id' => $goods_id])->delete();
+            // 移除收藏
+            M('GoodsCollect')->where(['user_id' => $this->user_id, 'goods_id' => $goods_id])->delete();
+            $msg = '移除收藏商品成功';
         } else {
-            $exists = M('GoodsCollect')->where(['user_id' => $user_id, 'goods_id' => $goods_id])->find();
-            if (!$exists) {
-                $data = [];
-                $data['user_id'] = $user_id;
-                $data['goods_id'] = $goods_id;
-                $data['add_time'] = time();
-                M('GoodsCollect')->add($data);
+            // 添加收藏
+            $goodsLogic = new GoodsLogic();
+            $res = $goodsLogic->collect_goods($this->user_id, $goods_id);
+            if ($res['status'] !== 1) {
+                return json(['status' => $res['status'], 'msg' => $res['msg'], 'result' => null]);
             }
+            $msg = '添加收藏商品成功';
         }
 
-        return json(['status' => 1, 'msg' => '更改收藏商品成功', 'result' => null]);
+        return json(['status' => 1, 'msg' => $msg, 'result' => null]);
     }
 
     /*
@@ -1286,20 +1284,31 @@ class User extends Base
             ->select();
         // 处理数据
         $return = [];
-        foreach ($visitList as $key => $value) {
-            $visitTime = date('Y-m-d', $value['visittime']);
+        $visitLog = [];
+        foreach ($visitList as $k => $item) {
+            $visitTime = date('Y-m-d', $item['visittime']);
             // 判断访问时间
             if ($visitTime == date('Y-m-d', time())) {
-                $visitList[$key]['date'] = '今天';
+                $key = '今天';
             } elseif ($visitTime == date('Y-m-d', time() - (86400))) {
-                $visitList[$key]['date'] = '昨天';
+                $key = '昨天';
             } elseif ($visitTime == date('Y-m-d', time() - (86400 * 2))) {
-                $visitList[$key]['date'] = '前天';
+                $key = '前天';
             } else {
-                $visitList[$key]['date'] = $visitTime;
+                $key = $visitTime;
             }
+            if (!isset($visitLog[$key]['date'])) {
+                $visitLog[$key]['date'] = $key;
+            }
+            // 处理显示金额
+            if ($item['exchange_integral'] != 0) {
+                $visitList[$k]['exchange_price'] = bcdiv(bcsub(bcmul($item['shop_price'], 100), bcmul($item['exchange_integral'], 100)), 100 ,2);
+            } else {
+                $visitList[$k]['exchange_price'] = $item['shop_price'];
+            }
+            $visitLog[$key]['data'][] = $visitList[$k];
         }
-        $return['visit_log'] = $visitList;
+        $return['visit_log'] = array_values($visitLog);
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
     }
 

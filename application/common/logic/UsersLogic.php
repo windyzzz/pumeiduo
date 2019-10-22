@@ -38,29 +38,30 @@ class UsersLogic extends Model
         $this->user_id = $user_id;
     }
 
-    function apply_customs_cancel($user_id){
-        $apply_customs = M('apply_customs')->where(array('user_id'=>$user_id))->find();
-        if(!$apply_customs){
+    function apply_customs_cancel($user_id)
+    {
+        $apply_customs = M('apply_customs')->where(array('user_id' => $user_id))->find();
+        if (!$apply_customs) {
             $this->error = '撤销失败';
             return false;
-        }else if($apply_customs && $apply_customs['status']==2){
+        } else if ($apply_customs && $apply_customs['status'] == 2) {
             $this->error = '您的申请已撤销';
             return false;
-        }else if($apply_customs && $apply_customs['status']==1){
+        } else if ($apply_customs && $apply_customs['status'] == 1) {
             $this->error = '您的申请已完成，不能再撤销';
             return false;
         }
         Db::startTrans();
-        $bapply_customs = M('apply_customs')->where(array('user_id'=>$user_id))->data(array('status'=>2,'cancel_time'=>NOW_TIME))->save();
+        $bapply_customs = M('apply_customs')->where(array('user_id' => $user_id))->data(array('status' => 2, 'cancel_time' => NOW_TIME))->save();
 
         include_once "plugins/Tb.php";
         $TbLogic = new \Tb();
-        $badd_tb_zx = $TbLogic->add_tb(1,8,$apply_customs['id'],0);
-        if($bapply_customs && $badd_tb_zx){
+        $badd_tb_zx = $TbLogic->add_tb(1, 8, $apply_customs['id'], 0);
+        if ($bapply_customs && $badd_tb_zx) {
             Db::commit();
             $this->error = '撤销成功';
             return true;
-        }else{
+        } else {
             Db::rollback();
             $this->error = '撤销失败';
             return true;
@@ -69,29 +70,30 @@ class UsersLogic extends Model
 
     }
 
-    function check_apply_customs($user_id){
+    function check_apply_customs($user_id)
+    {
 
-        $apply_customs = M('apply_customs')->where(array('user_id'=>$user_id))->find();
-        if($apply_customs && $apply_customs['status']==0){
+        $apply_customs = M('apply_customs')->where(array('user_id' => $user_id))->find();
+        if ($apply_customs && $apply_customs['status'] == 0) {
             $this->error = '您的申请在审核中，请等待';
             return false;
-        }else if($apply_customs && $apply_customs['status']==1){
+        } else if ($apply_customs && $apply_customs['status'] == 1) {
             $this->error = '审核完成';
             return false;
         }
 
-        $distribut_level = M('users')->where(array('user_id'=>$user_id))->getField('distribut_level');
-        if($distribut_level>=3){
+        $distribut_level = M('users')->where(array('user_id' => $user_id))->getField('distribut_level');
+        if ($distribut_level >= 3) {
             $this->error = '您已经是金卡';
             return false;
         }
-        if($distribut_level<2){
+        if ($distribut_level < 2) {
             $this->error = '您尚未有资格开通金卡会员';
             return false;
         }
-        $count = M('users')->where(array('first_leader'=>$user_id,'distribut_level'=>array('egt',2)))->count();
+        $count = M('users')->where(array('first_leader' => $user_id, 'distribut_level' => array('egt', 2)))->count();
         $apply_check_num = tpCache('basic.apply_check_num');
-        if($count<$apply_check_num){
+        if ($count < $apply_check_num) {
             $this->error = '您尚未有资格开通金卡会员';
             return false;
         }
@@ -100,25 +102,26 @@ class UsersLogic extends Model
         return true;
     }
 
-    function apply_customs($user_id,$data){
+    function apply_customs($user_id, $data)
+    {
         Db::startTrans();
         $check_apply_customs = $this->check_apply_customs($user_id);
-        if(!$check_apply_customs){
+        if (!$check_apply_customs) {
             Db::rollback();
             $this->error = $this->getError();
             return false;
         }
-        if(!check_length($data['true_name'],1,12)){
+        if (!check_length($data['true_name'], 1, 12)) {
             Db::rollback();
             $this->error = '姓名填写错误';
             return false;
         }
-        if(!check_id_card($data['id_card'])){
+        if (!check_id_card($data['id_card'])) {
             Db::rollback();
             $this->error = '身份证填写错误';
             return false;
         }
-        if(!check_mobile($data['mobile'])){
+        if (!check_mobile($data['mobile'])) {
             Db::rollback();
             $this->error = '手机号填写错误';
             return false;
@@ -127,42 +130,43 @@ class UsersLogic extends Model
         $invite_uid = M('Users')->where('user_id', $user_id)->getField('invite_uid');
         $referee_user_id = $this->nk($invite_uid, 3);
 
-        $apply_customs = M('apply_customs')->where(array('user_id'=>$user_id))->find();
+        $apply_customs = M('apply_customs')->where(array('user_id' => $user_id))->find();
         $add_data = array(
-            'user_id'=>$user_id,
-            'true_name'=>$data['true_name'],
-            'id_card'=>$data['id_card'],
-            'mobile'=>$data['mobile'],
-            'add_time'=>NOW_TIME,
-            'referee_user_id'=>$referee_user_id,
-            'status'=>0,
-            'cancel_time'=>0,
+            'user_id' => $user_id,
+            'true_name' => $data['true_name'],
+            'id_card' => $data['id_card'],
+            'mobile' => $data['mobile'],
+            'add_time' => NOW_TIME,
+            'referee_user_id' => $referee_user_id,
+            'status' => 0,
+            'cancel_time' => 0,
         );
 
-        if($apply_customs){
-            $bapply_customs = M('apply_customs')->where(array('user_id'=>$user_id))->data($add_data)->save();
+        if ($apply_customs) {
+            $bapply_customs = M('apply_customs')->where(array('user_id' => $user_id))->data($add_data)->save();
             $id = $apply_customs['id'];
-        }else{
+        } else {
             $id = $bapply_customs = M('apply_customs')->data($add_data)->add();
         }
 
         //通知仓储系统
         include_once "plugins/Tb.php";
         $TbLogic = new \Tb();
-        $badd_tb_zx = $TbLogic->add_tb(1,8,$id,0);
+        $badd_tb_zx = $TbLogic->add_tb(1, 8, $id, 0);
 
-        if($bapply_customs && $badd_tb_zx){
+        if ($bapply_customs && $badd_tb_zx) {
             Db::commit();
             $this->error = '提交成功，等待审核';
             return true;
-        }else{
+        } else {
             Db::rollback();
             $this->error = '申请失败';
             return false;
         }
     }
 
-    function nk($uid, $level, $where = ''){
+    function nk($uid, $level, $where = '')
+    {
         if ($uid < 1) {
             return 0;
         }
@@ -363,7 +367,7 @@ class UsersLogic extends Model
             $levelId = $user['level'];
             $levelName = M('user_level')->where('level_id', $levelId)->getField('level_name');
             $user['level_name'] = $levelName;
-            $user['token'] = md5(time().mt_rand(1, 999999999));
+            $user['token'] = md5(time() . mt_rand(1, 999999999));
             $data = ['token' => $user['token'], 'last_login' => time()];
             $push_id && $data['push_id'] = $push_id;
             M('users')->where('user_id', $user['user_id'])->save($data);
@@ -450,7 +454,7 @@ class UsersLogic extends Model
         $oauth = $thirdOauth['oauth'];      //来源
         $oauthCN = $platform = $thirdName[$oauth];
         if ((empty($unionid) || empty($openid)) && empty($oauth)) {
-            return ['status' => -1, 'msg' => '第三方平台参数有误[openid:'.$openid.' , unionid:'.$unionid.', oauth:'.$oauth.']', 'result' => ''];
+            return ['status' => -1, 'msg' => '第三方平台参数有误[openid:' . $openid . ' , unionid:' . $unionid . ', oauth:' . $oauth . ']', 'result' => ''];
         }
 
         //3.检查当前当前账号是否绑定过开放平台账号
@@ -462,13 +466,13 @@ class UsersLogic extends Model
             //1.1此oauth是否已经绑定过其他账号
             $thirdUser = M('OauthUsers')->where(['unionid' => $unionid, 'oauth' => $oauth])->find();
             if ($thirdUser && $ruser['user_id'] != $thirdUser['user_id']) {
-                return ['status' => -1, 'msg' => '此'.$oauthCN.'已绑定其它账号', 'result' => ''];
+                return ['status' => -1, 'msg' => '此' . $oauthCN . '已绑定其它账号', 'result' => ''];
             }
 
             //1.2此账号是否已经绑定过其他oauth
             $thirdUser = M('OauthUsers')->where(['user_id' => $ruser['user_id'], 'oauth' => $oauth])->find();
             if ($thirdUser && $thirdUser['unionid'] != $unionid) {
-                return ['status' => -1, 'msg' => '此'.$oauthCN.'已绑定其它账号', 'result' => ''];
+                return ['status' => -1, 'msg' => '此' . $oauthCN . '已绑定其它账号', 'result' => ''];
             }
         } else {
             //如果没有unionid
@@ -476,13 +480,13 @@ class UsersLogic extends Model
             //2.1此oauth是否已经绑定过其他账号
             $thirdUser = M('OauthUsers')->where(['openid' => $openid, 'oauth' => $oauth])->find();
             if ($thirdUser) {
-                return ['status' => -1, 'msg' => '此'.$oauthCN.'已绑定其它账号', 'result' => ''];
+                return ['status' => -1, 'msg' => '此' . $oauthCN . '已绑定其它账号', 'result' => ''];
             }
 
             //2.2此账号是否已经绑定过其他oauth
             $thirdUser = M('OauthUsers')->where(['user_id' => $ruser['user_id'], 'oauth' => $oauth])->find();
             if ($thirdUser) {
-                return ['status' => -1, 'msg' => '此账号已绑定其它'.$oauthCN.'账号', 'result' => ''];
+                return ['status' => -1, 'msg' => '此账号已绑定其它' . $oauthCN . '账号', 'result' => ''];
             }
         }
 
@@ -491,7 +495,7 @@ class UsersLogic extends Model
         }
         //4.账号绑定
         M('OauthUsers')->save(['oauth' => $oauth, 'openid' => $openid, 'user_id' => $ruser['user_id'], 'unionid' => $unionid, 'oauth_child' => $thirdOauth['oauth_child']]);
-        $ruser['token'] = md5(time().mt_rand(1, 999999999));
+        $ruser['token'] = md5(time() . mt_rand(1, 999999999));
         $ruser['last_login'] = time();
 
         M('Users')->where('user_id', $ruser['user_id'])->save(['token' => $ruser['token'], 'last_login' => $ruser['last_login']]);
@@ -577,7 +581,7 @@ class UsersLogic extends Model
             //     $map['first_leader'] = $_GET['invite']; // 微信授权登录返回时 get 带着参数的
             $invite = TokenLogic::getValue('invite', $data['token']);
             $file = 'invite.txt';
-            file_put_contents($file, '['. date('Y-m-d H:i:s').']  把邀请人设置到待邀请人字段：'.$invite."\n", FILE_APPEND | LOCK_EX);
+            file_put_contents($file, '[' . date('Y-m-d H:i:s') . ']  把邀请人设置到待邀请人字段：' . $invite . "\n", FILE_APPEND | LOCK_EX);
             $map['invite_uid'] = $map['first_leader'] = 0;
 
             if ($invite > 0) {
@@ -647,7 +651,7 @@ class UsersLogic extends Model
         }
 
         $data['push_id'] && $map['push_id'] = $data['push_id'];
-        $map['token'] = md5(time().mt_rand(1, 999999999));
+        $map['token'] = md5(time() . mt_rand(1, 999999999));
         $map['last_login'] = time();
 
         Db::name('users')->where(['user_id' => $user['user_id']])->save($map);
@@ -692,7 +696,7 @@ class UsersLogic extends Model
             $map['nickname'] = $nickname;
         }
         Url::root('/');
-        $map['head_pic'] = url('/', '', '', true).'public/images/default_head.png';
+        $map['head_pic'] = url('/', '', '', true) . 'public/images/default_head.png';
 
         // if(!empty($head_pic)){
         //     $map['head_pic'] = $head_pic;
@@ -840,9 +844,9 @@ class UsersLogic extends Model
         $user['visit_count'] = M('goods_visit')->where('user_id', $user_id)->count();   //商品访问记录数
         $user['return_count'] = M('return_goods')->where("user_id=$user_id and status<2")->count();   //退换货数量
         $order_where = "deleted=0 AND order_status<>5 AND prom_type<5 AND user_id=$user_id ";
-        $user['waitPay'] = M('order')->where($order_where.C('WAITPAY'))->count(); //待付款数量
-        $user['waitSend'] = M('order')->where($order_where.C('WAITSEND'))->count(); //待发货数量
-        $user['waitReceive'] = M('order')->where($order_where.C('WAITRECEIVE'))->count(); //待收货数量
+        $user['waitPay'] = M('order')->where($order_where . C('WAITPAY'))->count(); //待付款数量
+        $user['waitSend'] = M('order')->where($order_where . C('WAITSEND'))->count(); //待发货数量
+        $user['waitReceive'] = M('order')->where($order_where . C('WAITRECEIVE'))->count(); //待收货数量
         $user['order_count'] = $user['waitPay'] + $user['waitSend'] + $user['waitReceive'];
 
         $messageLogic = new \app\common\logic\MessageLogic();
@@ -894,8 +898,8 @@ class UsersLogic extends Model
     /**
      * 获取账户资金记录.
      *
-     * @param $user_id|用户id
-     * @param int  $account_type|收入：1,支出:2 所有：0
+     * @param $user_id |用户id
+     * @param int $account_type |收入：1,支出:2 所有：0
      * @param null $order_sn
      *
      * @return array
@@ -916,7 +920,7 @@ class UsersLogic extends Model
             ->field('*,FROM_UNIXTIME(change_time,"%Y-%m-%d %H:%i:%s") as change_time')
             ->where($account_log_where)
             ->order('change_time desc')
-            ->limit($Page->firstRow.','.$Page->listRows)
+            ->limit($Page->firstRow . ',' . $Page->listRows)
             ->select();
 
         $list = [];
@@ -938,8 +942,8 @@ class UsersLogic extends Model
     /**
      * 获取账户资金记录(pc端).
      *
-     * @param $user_id|用户id
-     * @param int  $account_type|收入：1,支出:2 所有：0
+     * @param $user_id |用户id
+     * @param int $account_type |收入：1,支出:2 所有：0
      * @param null $order_sn
      *
      * @return array
@@ -967,7 +971,7 @@ class UsersLogic extends Model
             ->field('*,FROM_UNIXTIME(change_time,"%Y-%m-%d %H:%i:%s") as change_time , IF(pay_points > 0,"转入","转出") AS caozuo')
             ->where($account_log_where)
             ->order('change_time desc')
-            ->limit($Page->firstRow.','.$Page->listRows)
+            ->limit($Page->firstRow . ',' . $Page->listRows)
             ->select();
 
         $result['account_log'] = $account_log;
@@ -990,8 +994,8 @@ class UsersLogic extends Model
     /**
      * 获取账户电子币记录(pc端).
      *
-     * @param $user_id|用户id
-     * @param int  $account_type|收入：1,支出:2 所有：0
+     * @param $user_id |用户id
+     * @param int $account_type |收入：1,支出:2 所有：0
      * @param null $order_sn
      *
      * @return array
@@ -1020,7 +1024,7 @@ class UsersLogic extends Model
             ->field('*,FROM_UNIXTIME(change_time,"%Y-%m-%d %H:%i:%s") as change_time , IF(user_electronic > 0,"转入","转出") AS caozuo')
             ->where($account_log_where)
             ->order('change_time desc')
-            ->limit($Page->firstRow.','.$Page->listRows)
+            ->limit($Page->firstRow . ',' . $Page->listRows)
             ->select();
 
         $result['account_log'] = $account_log;
@@ -1043,8 +1047,8 @@ class UsersLogic extends Model
     /**
      * 获取账户余额记录(pc端).
      *
-     * @param $user_id|用户id
-     * @param int  $account_type|收入：1,支出:2 所有：0
+     * @param $user_id |用户id
+     * @param int $account_type |收入：1,支出:2 所有：0
      * @param null $order_sn
      *
      * @return array
@@ -1073,7 +1077,7 @@ class UsersLogic extends Model
             ->field('*,FROM_UNIXTIME(change_time,"%Y-%m-%d %H:%i:%s") as change_time , IF(user_money > 0,"转入","转出") AS caozuo')
             ->where($account_log_where)
             ->order('change_time desc')
-            ->limit($Page->firstRow.','.$Page->listRows)
+            ->limit($Page->firstRow . ',' . $Page->listRows)
             ->select();
 
         $result['account_log'] = $account_log;
@@ -1096,8 +1100,8 @@ class UsersLogic extends Model
     /**
      * 获取账户余额记录.
      *
-     * @param $user_id|用户id
-     * @param int  $account_type|收入：1,支出:2 所有：0
+     * @param $user_id |用户id
+     * @param int $account_type |收入：1,支出:2 所有：0
      * @param null $order_sn
      *
      * @return array
@@ -1118,7 +1122,7 @@ class UsersLogic extends Model
             ->field('*,FROM_UNIXTIME(change_time,"%Y-%m-%d %H:%i:%s") as change_time')
             ->where($account_log_where)
             ->order('change_time desc')
-            ->limit($Page->firstRow.','.$Page->listRows)
+            ->limit($Page->firstRow . ',' . $Page->listRows)
             ->select();
 
         $list = [];
@@ -1140,8 +1144,8 @@ class UsersLogic extends Model
     /**
      * 获取账户电子币记录.
      *
-     * @param $user_id|用户id
-     * @param int  $account_type|收入：1,支出:2 所有：0
+     * @param $user_id |用户id
+     * @param int $account_type |收入：1,支出:2 所有：0
      * @param null $order_sn
      *
      * @return array
@@ -1162,7 +1166,7 @@ class UsersLogic extends Model
             ->field('*,FROM_UNIXTIME(change_time,"%Y-%m-%d %H:%i:%s") as change_time')
             ->where($account_log_where)
             ->order('change_time desc')
-            ->limit($Page->firstRow.','.$Page->listRows)
+            ->limit($Page->firstRow . ',' . $Page->listRows)
             ->select();
 
         $list = [];
@@ -1200,10 +1204,9 @@ class UsersLogic extends Model
         $count = M('withdrawals')->where($withdrawals_log_where)->count();
         $Page = new Page($count, 15);
         $withdrawals_log = M('withdrawals')
-
             ->where($withdrawals_log_where)
             ->order('id desc')
-            ->limit($Page->firstRow.','.$Page->listRows)
+            ->limit($Page->firstRow . ',' . $Page->listRows)
             ->select();
         $return = [
             'status' => 1,
@@ -1234,7 +1237,7 @@ class UsersLogic extends Model
         $Page = new Page($count, 15);
         $recharge_log = M('recharge')->where($recharge_log_where)
             ->order('order_id desc')
-            ->limit($Page->firstRow.','.$Page->listRows)
+            ->limit($Page->firstRow . ',' . $Page->listRows)
             ->select();
         $return = [
             'status' => 1,
@@ -1268,13 +1271,13 @@ class UsersLogic extends Model
     /*
     * 获取优惠券
     */
-    public function get_coupons($user_id, $type = 0, $orderBy = null, $order_money = 0, $p = 100,$is_yhq=true)
+    public function get_coupons($user_id, $type = 0, $orderBy = null, $order_money = 0, $p = 100, $is_yhq = true)
     {
         $activityLogic = new \app\common\logic\ActivityLogic();
         $count = $activityLogic->getUserCouponNum($user_id, $type, $orderBy, $order_money);
 
         $page = new Page($count, $p);
-        $list = $activityLogic->getUserCouponList(0, 99999, $user_id, $type, $orderBy, $order_money,$is_yhq);
+        $list = $activityLogic->getUserCouponList(0, 99999, $user_id, $type, $orderBy, $order_money, $is_yhq);
 
         $return['status'] = 1;
         $return['msg'] = '获取成功';
@@ -1299,7 +1302,7 @@ class UsersLogic extends Model
         //获取我的收藏列表
         $result = M('goods_collect')->alias('c')
             ->field('c.collect_id,c.add_time,g.goods_id,g.goods_name,g.shop_price,g.is_on_sale,g.store_count,g.cat_id,g.is_virtual,g.original_img,
-                 c.goods_price - g.shop_price as low_price')
+                 c.goods_price - g.shop_price as low_price, g.exchange_integral')
             ->join('goods g', 'g.goods_id = c.goods_id', 'INNER')
             ->where("c.user_id = $user_id")
             ->limit($page->firstRow, $page->listRows)
@@ -1307,10 +1310,17 @@ class UsersLogic extends Model
             ->select();
 
         foreach ($result as $k => $v) {
+            // 比起原价的升降关系
             if ($v['low_price'] > 0) {
-                $result[$k]['type'] = 1;
+                $result[$k]['type'] = 1;    // 降价
             } else {
-                $result[$k]['type'] = 2;
+                $result[$k]['type'] = 2;    // 升价
+            }
+            // 处理显示金额
+            if ($v['exchange_integral'] != 0) {
+                $result[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100 ,2);
+            } else {
+                $result[$k]['exchange_price'] = $v['shop_price'];
             }
         }
 
@@ -1461,7 +1471,7 @@ class UsersLogic extends Model
      * 邮箱或手机绑定.
      *
      * @param $email_mobile  邮箱或者手机
-     * @param int $type    1 为更新邮箱模式  2 手机
+     * @param int $type 1 为更新邮箱模式  2 手机
      * @param int $user_id 用户id
      *
      * @return bool
@@ -1546,7 +1556,7 @@ class UsersLogic extends Model
         // }else{
 //            unset($condition[$field]);
         $condition['user_id'] = $user_id;
-        $validate = $field.'_validated';
+        $validate = $field . '_validated';
         M('users')->where($condition)->save([$field => $email_mobile, $validate => 1]);
         // 更新缓存
         $user = M('users')->where($condition)->find();
@@ -1925,7 +1935,7 @@ class UsersLogic extends Model
 
             return $res;
         }
-        $send = send_email($sender, '验证码', '您好，你的验证码是：'.$code);
+        $send = send_email($sender, '验证码', '您好，你的验证码是：' . $code);
         if (1 == $send['status']) {
             $info['code'] = $code;
             $info['sender'] = $sender;
@@ -1946,8 +1956,8 @@ class UsersLogic extends Model
      * @param $code
      * @param $sender
      * @param string $type
-     * @param int    $session_id
-     * @param int    $scene
+     * @param int $session_id
+     * @param int $scene
      *
      * @return array
      */
@@ -2198,14 +2208,14 @@ class UsersLogic extends Model
             $file = request()->file('head_pic');
             $image_upload_limit_size = config('image_upload_limit_size');
             $validate = ['size' => $image_upload_limit_size, 'ext' => 'jpg,png,gif,jpeg'];
-            $dir = UPLOAD_PATH.'head_pic/';
+            $dir = UPLOAD_PATH . 'head_pic/';
             if (!($_exists = file_exists($dir))) {
                 mkdir($dir);
             }
             $parentDir = date('Ymd');
             $info = $file->validate($validate)->move($dir, true);
             if ($info) {
-                $pic_path = '/'.$dir.$parentDir.'/'.$info->getFilename();
+                $pic_path = '/' . $dir . $parentDir . '/' . $info->getFilename();
             } else {
                 return ['status' => -1, 'msg' => $file->getError()];
             }
@@ -2222,16 +2232,16 @@ class UsersLogic extends Model
     public function account($user_id, $type = 'all')
     {
         if ('all' == $type) {
-            $count = M('account_log')->where('user_money!=0 and user_id='.$user_id)->count();
+            $count = M('account_log')->where('user_money!=0 and user_id=' . $user_id)->count();
             $page = new Page($count, 16);
-            $account_log = M('account_log')->field("*,from_unixtime(change_time,'%Y-%m-%d %H:%i:%s') AS change_data")->where('user_money!=0 and user_id='.$user_id)
-                ->order('log_id desc')->limit($page->firstRow.','.$page->listRows)->select();
+            $account_log = M('account_log')->field("*,from_unixtime(change_time,'%Y-%m-%d %H:%i:%s') AS change_data")->where('user_money!=0 and user_id=' . $user_id)
+                ->order('log_id desc')->limit($page->firstRow . ',' . $page->listRows)->select();
         } else {
             $where = 'plus' == $type ? ' and user_money>0 ' : ' and user_money<0 ';
-            $count = M('account_log')->where('user_id='.$user_id.$where)->count();
+            $count = M('account_log')->where('user_id=' . $user_id . $where)->count();
             $page = new Page($count, 16);
-            $account_log = Db::name('account_log')->field("*,from_unixtime(change_time,'%Y-%m-%d %H:%i:%s') AS change_data")->where('user_id='.$user_id.$where)
-                ->order('log_id desc')->limit($page->firstRow.','.$page->listRows)->select();
+            $account_log = Db::name('account_log')->field("*,from_unixtime(change_time,'%Y-%m-%d %H:%i:%s') AS change_data")->where('user_id=' . $user_id . $where)
+                ->order('log_id desc')->limit($page->firstRow . ',' . $page->listRows)->select();
         }
         $result['account_log'] = $account_log;
         $result['page'] = $page;
@@ -2245,14 +2255,14 @@ class UsersLogic extends Model
     public function points($user_id, $type = 'all')
     {
         if ('all' == $type) {
-            $count = M('account_log')->where('user_id='.$user_id.' and pay_points!=0 ')->count();
+            $count = M('account_log')->where('user_id=' . $user_id . ' and pay_points!=0 ')->count();
             $page = new Page($count, 16);
-            $account_log = M('account_log')->where('user_id='.$user_id.' and pay_points!=0 ')->order('log_id desc')->limit($page->firstRow.','.$page->listRows)->select();
+            $account_log = M('account_log')->where('user_id=' . $user_id . ' and pay_points!=0 ')->order('log_id desc')->limit($page->firstRow . ',' . $page->listRows)->select();
         } else {
             $where = 'plus' == $type ? ' and pay_points>0 ' : ' and pay_points<0 ';
-            $count = M('account_log')->where('user_id='.$user_id.$where)->count();
+            $count = M('account_log')->where('user_id=' . $user_id . $where)->count();
             $page = new Page($count, 16);
-            $account_log = M('account_log')->where('user_id='.$user_id.$where)->order('log_id desc')->limit($page->firstRow.','.$page->listRows)->select();
+            $account_log = M('account_log')->where('user_id=' . $user_id . $where)->order('log_id desc')->limit($page->firstRow . ',' . $page->listRows)->select();
         }
 
         $result['account_log'] = $account_log;
@@ -2284,7 +2294,7 @@ class UsersLogic extends Model
         if (Db::name('user_sign')->add($data)) {
             $result['status'] = true;
             $result['msg'] = $config['sign_integral'];
-            accountLog($user_id, 0, $config['sign_integral'], '第一次签到赠送'.$config['sign_integral'].'积分', 0, 0, '', 0, 8);
+            accountLog($user_id, 0, $config['sign_integral'], '第一次签到赠送' . $config['sign_integral'] . '积分', 0, 0, '', 0, 8);
         }
 
         return $result;
@@ -2302,12 +2312,12 @@ class UsersLogic extends Model
     {
         $config = tpCache('sign');  // 默认2
         $update_data = [
-            'sign_total' => ['exp', 'sign_total+'. 1],                                     //累计签到天数
+            'sign_total' => ['exp', 'sign_total+' . 1],                                     //累计签到天数
             'sign_last' => ['exp', "'$date'"],                                             //最后签到时间
-            'cumtrapz' => ['exp', 'cumtrapz+'.$config['sign_integral']],                //累计签到获取积分
+            'cumtrapz' => ['exp', 'cumtrapz+' . $config['sign_integral']],                //累计签到获取积分
             'sign_time' => ['exp', "CONCAT_WS(',',sign_time ,'$date')"],                   //历史签到记录
-            'sign_count' => ['exp', 'sign_count+'. 1],                                     //连续签到天数
-            'this_month' => ['exp', 'this_month+'.$config['sign_integral']],              //本月累计积分
+            'sign_count' => ['exp', 'sign_count+' . 1],                                     //连续签到天数
+            'this_month' => ['exp', 'this_month+' . $config['sign_integral']],              //本月累计积分
         ];
         $daya = $userInfo['sign_last'];
         $dayb = date('Y-n-j', strtotime($date) - 86400);
@@ -2324,7 +2334,7 @@ class UsersLogic extends Model
         $result['status'] = false;
         $result['msg'] = '签到失败!';
         if ($update > 0) {
-            accountLog($userInfo['user_id'], 0, $config['sign_integral'], '签到赠送'.$config['sign_integral'].'积分', 0, 0, '', 0, 8);
+            accountLog($userInfo['user_id'], 0, $config['sign_integral'], '签到赠送' . $config['sign_integral'] . '积分', 0, 0, '', 0, 8);
             $result['status'] = true;
             $result['msg'] = $config['sign_integral'];
             $userFind = Db::name('user_sign')->where(['user_id' => $userInfo['user_id']])->find();
@@ -2349,10 +2359,10 @@ class UsersLogic extends Model
         $config = tpCache('sign');
         //满足额外奖励
         Db::name('user_sign')->where(['user_id' => $userSingInfo['user_id']])->update([
-            'cumtrapz' => ['exp', 'cumtrapz+'.$config['sign_award']],
-            'this_month' => ['exp', 'this_month+'.$config['sign_award']],
+            'cumtrapz' => ['exp', 'cumtrapz+' . $config['sign_award']],
+            'this_month' => ['exp', 'this_month+' . $config['sign_award']],
         ]);
-        $msg = '连续签到奖励'.$config['sign_award'].'积分';
+        $msg = '连续签到奖励' . $config['sign_award'] . '积分';
         accountLog($userSingInfo['user_id'], 0, $config['sign_award'], $msg, 0, 0, '', 0, 8);
     }
 
@@ -2381,7 +2391,7 @@ class UsersLogic extends Model
         //是否标识历史签到
         if (date('m', strtotime($info['sign_last'])) == date('m', time())) {
             foreach ($signTime as $val) {
-                $str .= date('j', strtotime($val)).',';
+                $str .= date('j', strtotime($val)) . ',';
             }
         } else {
             $info['sign_count'] = 0; //不是本月清除连续签到
@@ -2440,7 +2450,7 @@ class UsersLogic extends Model
         //是否标识历史签到
         if (date('m', strtotime($info['sign_last'])) == date('m', time())) {
             foreach ($signTime as $val) {
-                $str .= date('j', strtotime($val)).',';
+                $str .= date('j', strtotime($val)) . ',';
             }
         } else {
             $info['sign_count'] = 0; //不是本月清除连续签到

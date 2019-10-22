@@ -365,16 +365,39 @@ class Goods extends Base
             return json(['status' => 0, 'msg' => '请至少选择一个商品', 'result' => '']);
         }
         $goodsLogic = new GoodsLogic();
-        $cartLogic = new CartLogic();
         $result = [];
-
-        $cartLogic->setUserId(cookie('user_id'));
-        $cartLogic->deleteByGoodsId($goods_ids);
         foreach ($goods_ids as $key => $val) {
-            $result[] = $goodsLogic->collect_goods(cookie('user_id'), $val);
+            $result[] = $goodsLogic->collect_goods($this->user_id, $val);
         }
+        $cartLogic = new CartLogic();
+        $cartLogic->setUserId($this->user_id);
+        $cartLogic->deleteByGoodsId($goods_ids);
 
         return json(['status' => 1, 'msg' => '已添加至我的收藏', 'result' => $result]);
+    }
+
+    /**
+     * 用户批量收藏商品（新）
+     * @return array|\think\response\Json
+     */
+    public function collect_goods_new()
+    {
+        $goodsIds = I('goods_ids', null);
+        if (!$goodsIds) {
+            return json(['status' => 0, 'msg' => '请至少选择一个商品', 'result' => '']);
+        }
+        // 收藏商品
+        $goodsLogic = new GoodsLogic();
+        $res = $goodsLogic->collect_goods_arr($this->user_id, $goodsIds);
+        if ($res['status'] !== 1) {
+            return json($res);
+        }
+        // 移除购物车
+        $cartLogic = new CartLogic();
+        $cartLogic->setUserId($this->user_id);
+        $cartLogic->deleteByGoodsId($goodsIds);
+
+        return json($res);
     }
 
     //查询商品是否参与活动

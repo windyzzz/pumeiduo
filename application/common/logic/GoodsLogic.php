@@ -211,10 +211,46 @@ class GoodsLogic extends Model
             return ['status' => -3, 'msg' => '商品已收藏', 'result' => []];
         }
         $goods_price = M('Goods')->where('goods_id', $goods_id)->getField('shop_price');
-        Db::name('goods')->where('goods_id', $goods_id)->setInc('collect_sum');
+//        Db::name('goods')->where('goods_id', $goods_id)->setInc('collect_sum');
         Db::name('goods_collect')->add(['goods_id' => $goods_id, 'user_id' => $user_id, 'add_time' => time(), 'goods_price' => $goods_price]);
 
         return ['status' => 1, 'msg' => '收藏成功!请到个人中心查看', 'result' => []];
+    }
+
+    /**
+     * 批量收藏商品
+     * @param $userId
+     * @param $goodsIds
+     * @return array
+     */
+    public function collect_goods_arr($userId, $goodsIds)
+    {
+        // 商品是否有收藏
+        $collected = Db::name('goods_collect')->alias('gc')->join('goods g', 'g.goods_id = gc.goods_id')
+            ->where(['gc.user_id' => $userId, 'gc.goods_id' => ['in', $goodsIds]])
+            ->field('g.goods_name')->select();
+        if (!empty($collected)) {
+            $collectedGoods = '';
+            foreach ($collected as $item) {
+                $collectedGoods .= $item['goods_name'] . ',';
+            }
+            return ['status' => -1, 'msg' => rtrim($collectedGoods, ',') . ' 已收藏', 'result' => ''];
+        }
+        // 收藏商品
+        $goodsPrice = Db::name('goods')->where(['goods_id' => ['in', $goodsIds]])->field('goods_id, shop_price')->select();
+        $data = [];
+        foreach ($goodsPrice as $item) {
+            $data[] = [
+                'goods_id' => $item['goods_id'],
+                'user_id' => $userId,
+                'add_time' => time(),
+                'goods_price' => $item['shop_price'],
+            ];
+        }
+        Db::name('goods_collect')->insertAll($data);
+//        // 商品被收藏次数+1
+//        Db::name('goods')->where(['goods_id' => ['in', $goodsIds]])->setInc('collect_sum');
+        return ['status' => 1, 'msg' => '收藏成功！', 'result' => ''];
     }
 
     /**
