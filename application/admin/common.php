@@ -319,7 +319,7 @@ function trade_type($type)
 {
     $trade_type = [
         '1' => '仓库自发',
-        '2' => '一件代发',
+        '2' => '一键代发',
     ];
 
     return $trade_type[$type];

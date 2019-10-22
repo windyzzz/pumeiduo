@@ -1269,6 +1269,46 @@ class User extends Base
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
     }
 
+    /**
+     * 获取我的足迹（新）
+     * @return \think\response\Json
+     */
+    public function visit_log_new()
+    {
+        $map = ['user_id' => $this->user_id];
+        $count = Db::name('goods_visit a')->where($map)->count();
+        $Page = new Page($count, 10);
+        $visitList = Db::name('goods_visit a')
+            ->join('__GOODS__ g', 'a.goods_id = g.goods_id', 'LEFT')
+            ->field('a.visit_id, a.visittime, g.goods_name, g.shop_price, g.exchange_integral, g.original_img, g.goods_remark')
+            ->where($map)
+            ->limit($Page->firstRow . ',' . $Page->listRows)
+            ->order('a.visittime desc')
+            ->select();
+        // 处理数据
+        $return = [];
+        $visitLog = [];
+        foreach ($visitList as $item) {
+            $visitTime = date('Y-m-d', $item['visittime']);
+            // 判断访问时间
+            if ($visitTime == date('Y-m-d', time())) {
+                $key = '今天';
+            } elseif ($visitTime == date('Y-m-d', time() - (86400))) {
+                $key = '昨天';
+            } elseif ($visitTime == date('Y-m-d', time() - (86400 * 2))) {
+                $key = '前天';
+            } else {
+                $key = $visitTime;
+            }
+            if (!isset($visitLog[$key]['date'])) {
+                $visitLog[$key]['date'] = $key;
+            }
+            $visitLog[$key]['data'][] = $item;
+        }
+        $return['visit_log'] = array_values($visitLog);
+        return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
+    }
+
     // 用户电子币明细
     public function electronic()
     {

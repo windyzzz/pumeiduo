@@ -30,7 +30,7 @@ class Base extends Controller
             session_destroy();
             $token = Request::instance()->header('user-token', null);
             // 处理url
-            if (in_array(self::getUrl(), self::specialPath()) && !$token) {
+            if (in_array(self::getUrl(), self::whiteListPath()) && !$token) {
                 $this->userToken = TokenLogic::setToken();
                 return true;
             }
@@ -57,10 +57,10 @@ class Base extends Controller
     }
 
     /**
-     * 特别路径
+     * 白名单路径
      * @return array
      */
-    private function specialPath()
+    private function whiteListPath()
     {
         return [
             '/index.php?m=Home&c=api.Login&a=reg', // 用户注册
