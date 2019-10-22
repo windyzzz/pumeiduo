@@ -1029,6 +1029,39 @@ class User extends Base
         return json(['status' => 1, 'msg' => $msg, 'result' => null]);
     }
 
+    /**
+     * 收藏商品添加到购物车
+     * @return \think\response\Json
+     */
+    public function collect_goods_cart()
+    {
+        $id = I('post.id', null);
+        if (!$id) {
+            return json(['status' => 0, 'msg' => '缺少id参数', 'result' => null]);
+        }
+        // 收藏信息
+        $collect = Db::name('goods_collect')->where(['collect_id' => $id, 'user_id' => $this->user_id])->find();
+        if (!$collect) {
+            return json(['status' => 0, 'msg' => '收藏信息已失效', 'result' => null]);
+        }
+        Db::startTrans();
+        try {
+            // 删除收藏
+            Db::name('goods_collect')->where(['collect_id' => $id, 'user_id' => $this->user_id])->delete();
+            // 添加到购物车
+            $cartLogic = new CartLogic();
+            $cartLogic->setUserId($this->user_id);
+            $cartLogic->setUserToken($this->userToken);
+            $cartLogic->setGoodsModel($collect['goods_id']);
+            $cartLogic->addGoodsToCart();
+            Db::commit();
+            return json(['status' => 1, 'msg' => '添加成功', 'result' => null]);
+        } catch (\Exception $e) {
+            Db::rollback();
+            return json(['status' => 0, 'msg' => $e->getMessage(), 'result' => null]);
+        }
+    }
+
     /*
      * 密码修改
      */
@@ -1302,7 +1335,7 @@ class User extends Base
             }
             // 处理显示金额
             if ($item['exchange_integral'] != 0) {
-                $visitList[$k]['exchange_price'] = bcdiv(bcsub(bcmul($item['shop_price'], 100), bcmul($item['exchange_integral'], 100)), 100 ,2);
+                $visitList[$k]['exchange_price'] = bcdiv(bcsub(bcmul($item['shop_price'], 100), bcmul($item['exchange_integral'], 100)), 100, 2);
             } else {
                 $visitList[$k]['exchange_price'] = $item['shop_price'];
             }

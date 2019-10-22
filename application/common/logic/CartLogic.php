@@ -40,7 +40,9 @@ class CartLogic extends Model
     public function __construct()
     {
         parent::__construct();
-        $this->session_id = session_id();
+        if (session_id()) {
+            $this->session_id = session_id();
+        }
     }
 
     public function setCartId($cart_id)
@@ -247,9 +249,9 @@ class CartLogic extends Model
         // if($this->goods['exchange_integral'] > 0){
         //     return ['status'=>0,'msg'=>'积分商品跳转','result'=>['url'=>U('Goods/goodsInfo',['id'=>$this->goods['goods_id'],'item_id'=>$this->specGoodsPrice['item_id']],'',true)]];
         // }
-        $userCartCount = Db::name('cart')->where(['user_id' => $this->user_id, 'session_id' => $this->session_id])->count(); //获取用户购物车的商品有多少种
-        if ($userCartCount >= 20) {
-            return ['status' => -9, 'msg' => '购物车最多只能放20种商品', 'result' => ''];
+        $userCartCount = Db::name('cart')->where(['user_id' => $this->user_id, 'session_id' => $this->session_id ? $this->session_id : $this->user_token])->count(); //获取用户购物车的商品有多少种
+        if ($userCartCount >= 50) {
+            return ['status' => -9, 'msg' => '购物车最多只能放50种商品', 'result' => ''];
         }
         $specGoodsPriceCount = Db::name('SpecGoodsPrice')->where('goods_id', $this->goods['goods_id'])->count('item_id');
         if (empty($this->specGoodsPrice) && !empty($specGoodsPriceCount)) {
