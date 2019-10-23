@@ -1310,7 +1310,7 @@ class User extends Base
         $Page = new Page($count, 10);
         $visitList = Db::name('goods_visit a')
             ->join('__GOODS__ g', 'a.goods_id = g.goods_id', 'LEFT')
-            ->field('a.visit_id, a.visittime, g.goods_name, g.shop_price, g.exchange_integral, g.original_img, g.goods_remark')
+            ->field('a.visit_id, a.visittime, g.goods_id, g.goods_name, g.shop_price, g.exchange_integral, g.original_img, g.goods_remark')
             ->where($map)
             ->limit($Page->firstRow . ',' . $Page->listRows)
             ->order('a.visittime desc')

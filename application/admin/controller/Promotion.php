@@ -386,6 +386,13 @@ class Promotion extends Base
         $data['start_time'] = strtotime($data['start_time']);
         $data['end_time'] = strtotime($data['end_time']);
 
+        switch ($data['type']) {
+            case 4: // 满打折
+                $data['goods_num'] = explode('/', $data['expression'])[0];
+                $data['expression'] = explode('/', $data['expression'])[1];
+                break;
+        }
+
         $data['group'] = ','.implode(',',$data['group']).',';
 
         if ($prom_id) {

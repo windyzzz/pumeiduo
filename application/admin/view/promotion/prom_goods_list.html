@@ -162,21 +162,29 @@
 			content: url,
 		});
 	});
-    $(document).on('click','.del',function () {
-        $.ajax({
-            url:"{:U('Promotion/prom_goods_del')}",
-            data:{id:$(this).data('id')},
-            dataType:'json',
-            success:function(data){
-                if(data.status == 1){
-                    layer.msg(data.msg,{icon:1},function () {
-                        location.href = '';
-                    });
-                }
-                layer.msg(data.msg,{icon:2})
-            }
-        })
-    })
+
+	$(document).on('click', '.del', function () {
+		var id = $(this).data('id');
+		layer.confirm('确认删除？', {btn: ['确定', '取消']}, function () {
+			// 确定
+			$.ajax({
+				url:"{:U('Promotion/prom_goods_del')}",
+				data:{id: id},
+				dataType: 'json',
+				success: function (data) {
+					if (data.status == 1) {
+						layer.msg(data.msg, {icon: 1}, function () {
+							location.href = '';
+						});
+					}
+					layer.msg(data.msg, {icon: 2})
+				}
+			})
+		}, function (index) {
+			// 取消
+			layer.close(index);
+		});
+	})
 </script>
 </body>
 </html>

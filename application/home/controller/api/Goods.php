@@ -568,8 +568,9 @@ class Goods extends Base
             $groupBuy = Db::name('group_buy')->where(['goods_id' => ['in', $filter_goods_id]])
                 ->where(['end_time' => ['>=', time()]])->where(['is_end' => 0])->field('goods_id')->select();
             // 促销商品
-            $promGoods = Db::name('prom_goods')->where(['type' => 4])->where(['goods_id' => ['in', $filter_goods_id]])
-                ->where(['end_time' => ['>=', time()]])->where(['is_end' => 0])->field('title, goods_id')->select();
+            $promGoods = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id', 'LEFT')
+                ->where(['pg.type' => 4, 'pg.end_time' => ['>=', time()], 'pg.is_end' => 0, 'gtg.goods_id' => ['in', $filter_goods_id]])
+                ->field('pg.title, gtg.goods_id')->select();
 
             // 循环处理数据
             foreach ($goods_list as $k => $v) {
