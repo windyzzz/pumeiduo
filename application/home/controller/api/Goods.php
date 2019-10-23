@@ -547,8 +547,9 @@ class Goods extends Base
         $count = count($filter_goods_id);
         $page = new Page($count, 20);
         if ($count > 0) {
+            $filter_goods_id = implode(',', $filter_goods_id);
             // 商品列表
-            $goods_list = Db::name('goods')->where('goods_id', 'in', implode(',', $filter_goods_id))
+            $goods_list = Db::name('goods')->where('goods_id', 'in', $filter_goods_id)
                 ->order([$sort => $sort_asc])->limit($page->firstRow . ',' . $page->listRows)
                 ->field('goods_id, cat_id, extend_cat_id, goods_sn, goods_name, goods_type, brand_id, store_count, comment_count,
                 market_price, shop_price, cost_price, give_integral, exchange_integral, original_img, limit_buy_num, trade_type,
@@ -559,12 +560,22 @@ class Goods extends Base
                 $goodsCollect = $goodsLogic->getCollectGoods($this->user_id);
             }
             // 商品标签
-            $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', implode(',', $filter_goods_id)], 'status' => 1])->select();
-            // 循环数据
+            $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->select();
+            // 秒杀商品
+            $flashSale = Db::name('flash_sale')->where(['goods_id' => ['in', $filter_goods_id]])
+                ->where(['end_time' => ['>=', time()]])->where(['is_end' => 0])->field('goods_id')->select();
+            // 团购商品
+            $groupBuy = Db::name('group_buy')->where(['goods_id' => ['in', $filter_goods_id]])
+                ->where(['end_time' => ['>=', time()]])->where(['is_end' => 0])->field('goods_id')->select();
+            // 促销商品
+            $promGoods = Db::name('prom_goods')->where(['type' => 4])->where(['goods_id' => ['in', $filter_goods_id]])
+                ->where(['end_time' => ['>=', time()]])->where(['is_end' => 0])->field('title, goods_id')->select();
+
+            // 循环处理数据
             foreach ($goods_list as $k => $v) {
-                $goods_list[$k]['is_enshrine'] = 0;     // 收藏
+                // 是否收藏
+                $goods_list[$k]['is_enshrine'] = 0;
                 if (!empty($goodsCollect)) {
-                    // 是否收藏
                     foreach ($goodsCollect as $value) {
                         if ($v['goods_id'] == $value['goods_id']) {
                             $goods_list[$k]['is_enshrine'] = 1;
@@ -572,9 +583,9 @@ class Goods extends Base
                         }
                     }
                 }
+                // 商品标签
                 $goods_list[$k]['tabs'] = [];
                 if (!empty($goodsTab)) {
-                    // 商品标签
                     foreach ($goodsTab as $value) {
                         if ($v['goods_id'] == $value['goods_id']) {
                             $goods_list[$k]['tabs'][] = [
@@ -585,9 +596,44 @@ class Goods extends Base
                         }
                     }
                 }
+                // 商品标识
+                $goods_list[$k]['tags'] = [];
+                // 第一类，活动类（优先级：秒杀” > ”团购“ > ”套组“ > “自营”）
+                $goods_list[$k]['tags'][0] = ['type' => 'activity', 'title' => '自营'];
+                if ($v['sale_type']) {
+                    $goods_list[$k]['tags'][0]['title'] = '套组';
+                }
+                if (!empty($groupBuy)) {
+                    foreach ($groupBuy as $value) {
+                        if ($v['goods_id'] == $value['goods_id']) {
+                            $goods_list[$k]['tags'][0]['title'] = '团购';
+                            break;
+                        }
+                    }
+                }
+                if (!empty($flashSale)) {
+                    foreach ($flashSale as $value) {
+                        if ($v['goods_id'] == $value['goods_id']) {
+                            $goods_list[$k]['tags'][0]['title'] = '秒杀';
+                            break;
+                        }
+                    }
+                }
+                // 第二类，促销类
+                if (!empty($promGoods)) {
+                    foreach ($promGoods as $value) {
+                        if ($v['goods_id'] == $value['goods_id']) {
+                            $goods_list[$k]['tags'][] = ['type' => 'promotion', 'title' => $value['title']];
+                            break;
+                        }
+                    }
+                }
+                // 第三类，默认
+                $goods_list[$k]['tags'][] = ['type' => 'default', 'title' => '品牌直营'];
+
                 // 处理显示金额
                 if ($v['exchange_integral'] != 0) {
-                    $goods_list[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100 ,2);
+                    $goods_list[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);
                 } else {
                     $goods_list[$k]['exchange_price'] = $v['shop_price'];
                 }
