@@ -267,7 +267,21 @@ class Goods extends Base
         $goods['freight_free'] = tpCache('shopping.freight_free'); // 全场满多少免运费
         // 组装数据
         $result['goods'] = $goods;
+        // 猜你喜欢
         $result['look_see'] = $goodsLogic->get_look_see($goods, $this->user_id); // 猜你喜欢
+        // 用户收藏
+        if ($this->user_id) {
+            $goodsCollect = $goodsLogic->getCollectGoods($this->user_id);
+        }
+        $result['is_enshrine'] = 0;
+        if (!empty($goodsCollect)) {
+            foreach ($goodsCollect as $value) {
+                if ($goods_id == $value['goods_id']) {
+                    $result['is_enshrine'] = 1;
+                    break;
+                }
+            }
+        }
 
         return json(['status' => 1, 'msg' => 'success', 'result' => $result]);
     }
