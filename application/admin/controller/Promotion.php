@@ -386,13 +386,6 @@ class Promotion extends Base
         $data['start_time'] = strtotime($data['start_time']);
         $data['end_time'] = strtotime($data['end_time']);
 
-        switch ($data['type']) {
-            case 4: // 满打折
-                $data['goods_num'] = explode('/', $data['expression'])[0];
-                $data['expression'] = explode('/', $data['expression'])[1];
-                break;
-        }
-
         $data['group'] = ','.implode(',',$data['group']).',';
 
         if ($prom_id) {
@@ -673,7 +666,7 @@ class Promotion extends Base
         $keywords = input('keywords');
         $prom_id = input('prom_id');
         $tpl = input('tpl', 'search_goods');
-        $where = ['store_count' => ['gt', 0], 'is_virtual' => 0,'is_area_show'=>1];
+        $where = ['is_on_sale' => 1, 'store_count' => ['gt', 0], 'is_virtual' => 0,'is_area_show'=>1];
         $prom_type = input('prom_type/d');
         if ($goods_id) {
             $where['goods_id'] = ['notin', trim($goods_id, ',')];

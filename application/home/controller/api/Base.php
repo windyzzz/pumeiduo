@@ -30,7 +30,7 @@ class Base extends Controller
             session_destroy();
             $token = Request::instance()->header('user-token', null);
             // 处理url
-            if (in_array(self::getUrl(), self::whiteListPath()) && !$token) {
+            if (in_array(self::getUrl(), self::whiteListPath()) || !$token) {
                 $this->userToken = TokenLogic::setToken();
                 return true;
             }

@@ -170,23 +170,31 @@
 
     function send(obj)
     {
-        $.ajax({
-            type : 'post',
-            url : $(obj).attr('data-url'),
-            dataType : 'json',
-            success : function(data){
-                layer.closeAll();
-                if(data.status == 1){
-                    layer.alert(data.msg, {icon: 1});
-                }else{
-                    layer.alert(data.msg, {icon: 2});  //alert('删除失败');
-                }
-            },
-            error : function() {
-                layer.closeAll();
-                layer.alert('网络请求出错', {icon: 2});
+        layer.confirm('确认发放？', {
+                btn: ['确定','取消'] //按钮
+            }, function(){
+                // 确定
+                $.ajax({
+                    type : 'post',
+                    url : $(obj).attr('data-url'),
+                    dataType : 'json',
+                    success : function(data){
+                        layer.closeAll();
+                        if(data.status == 1){
+                            layer.alert(data.msg, {icon: 1});
+                        }else{
+                            layer.alert(data.msg, {icon: 2});  //alert('删除失败');
+                        }
+                    },
+                    error : function() {
+                        layer.closeAll();
+                        layer.alert('网络请求出错', {icon: 2});
+                    }
+                })
+            }, function(index){
+                layer.close(index);
             }
-        })
+        );
     }
 
     $('.send_user').click(function(){

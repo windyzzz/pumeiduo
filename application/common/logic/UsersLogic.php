@@ -2018,6 +2018,7 @@ class UsersLogic extends Model
             $sms_time_out = tpCache('sms.sms_time_out');
             $sms_time_out = $sms_time_out ? $sms_time_out : 180;
             $data = M('sms_log')->where(['mobile' => $sender, 'session_id' => $session_id, 'status' => 1])->order('id DESC')->find();
+
             //file_put_contents('./test.log', json_encode(['mobile'=>$sender,'session_id'=>$session_id, 'data' => $data]));
             if (is_array($data) && $data['code'] == $code) {
                 $data['sender'] = $sender;

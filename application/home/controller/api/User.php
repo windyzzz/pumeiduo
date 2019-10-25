@@ -1692,21 +1692,33 @@ class User extends Base
 
         $user = M('Users')->where('user_id', $user['user_id'])->find();
         session('user', $user);
-        $this->redis->set('user_' . $this->userToken, $user, config('redis_time'));
+        $this->redis->set('user_' . $user['token'], $user, config('redis_time'));
         setcookie('user_id', $user['user_id'], null, '/');
         setcookie('is_distribut', $user['is_distribut'], null, '/');
         $nickname = empty($user['nickname']) ? '第三方用户' : $user['nickname'];
         setcookie('uname', urlencode($nickname), null, '/');
         setcookie('cn', 0, time() - 3600, '/');
         // 登录后将购物车的商品的 user_id 改为当前登录的id
-        M('cart')->where('session_id', $session_id)->save(['user_id' => $user['user_id']]);
+//        M('cart')->where('session_id', $session_id)->save(['user_id' => $user['user_id']]);
 
         $cartLogic = new CartLogic();
         $cartLogic->setUserId($user['user_id']);
         $cartLogic->setUserToken($user['token']);
         $cartLogic->doUserLoginHandle();  //用户登录后 需要对购物车 一些操作
+        // field('password, user_id, mobile, nickname, user_name, is_distribut, is_lock, level, token, type')
+        $returnUser = [
+            'user_id' => $user['user_id'],
+            'mobile' => $user['mobile'],
+            'nickname' => $user['nickname'],
+            'user_name' => $user['user_name'],
+            'is_distribut' => $user['is_distribut'],
+            'is_lock' => $user['is_lock'],
+            'level' => $user['level'],
+            'token' => $user['token'],
+            'type' => $user['type']
+        ];
 
-        return json(['status' => 1, 'msg' => '绑定成功']);
+        return json(['status' => 1, 'msg' => '绑定成功', 'result' => ['user' => $returnUser]]);
     }
 
     function bindOldUserInfo()

@@ -17,24 +17,24 @@ class Coupon extends Validate
 {
     // 验证规则
     protected $rule = [
-        ['name', 'require|unique:coupon,name^type'],
-        ['money', 'require'],
-        ['condition', 'require|checkCondition'],
-        ['createnum', 'require'],
         ['type', 'require'],
+        ['name', 'require|unique:coupon,name^type'],
+//        ['money', 'require'],
+//        ['condition', 'require|checkCondition'],
+        ['createnum', 'require'],
         ['send_start_time', 'require|checkSendTime'],
         ['send_end_time', 'require'],
         ['use_start_time', 'checkUserTime'],
     ];
     //错误信息
     protected $message = [
+        'type.require' => '请选择发放类型',
         'name.require' => '优惠券名称必须',
         'name.unique' => '已有相同类型的优惠券名称',
         'money.require' => '请填写优惠券面额',
         'condition.require' => '请填写消费金额',
         'condition.checkCondition' => '消费金额不能小于或等于优惠券金额',
         'createnum.require' => '请填写发放数量',
-        'type.require' => '请选择发放类型',
         'send_start_time.require' => '请选择发放开始日期',
         'send_start_time.checkSendTime' => '发放结束日期不得小于发放开始日期',
         'send_end_time.require' => '请选择发放结束日期',

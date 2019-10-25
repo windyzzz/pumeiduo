@@ -76,51 +76,18 @@
             </dl>
             <dl class="row">
                 <dt class="tit">
-                    <label><em>*</em>优惠券面额</label>
-                </dt>
-                <dd class="opt">
-                    <input type="text" id="money" name="money"  onpaste="this.value=this.value.replace(/[^\d.]/g,'')" onkeyup="this.value=this.value.replace(/[^\d.]/g,'')" value="{$coupon.money}" class="input-txt">
-                    <span class="err" id="err_money"></span>
-                    <p class="notic">优惠券可抵扣金额 下方如果选择了折扣商品，则为折扣数值  5折</p>
-                </dd>
-            </dl>
-            <dl class="row">
-                <dt class="tit">
-                    <label><em>*</em>消费金额</label>
-                </dt>
-                <dd class="opt">
-                    <input type="text" id="condition" name="condition" value="{$coupon.condition}" onpaste="this.value=this.value.replace(/[^\d.]/g,'')" onkeyup="this.value=this.value.replace(/[^\d.]/g,'')" class="input-txt">
-                    <span class="err" id="err_condition"></span>
-                    <p class="notic">订单需满足的最低消费金额(必需为整数)才能使用</p>
-                </dd>
-            </dl>
-            <dl class="row">
-                <dt class="tit">
-                    <label><em>*</em>发放数量</label>
-                </dt>
-                <dd class="opt">
-                    <input type="text" id="createnum" name="createnum" value="{$coupon.createnum}" onpaste="this.value=this.value.replace(/[^\d]/g,'')" onkeyup="this.value=this.value.replace(/[^\d]/g,'')" class="input-txt">
-                    <span class="err" id="err_createnum"></span>
-                    <p class="notic">发放数量限制(默认为0则无限制)</p>
-                </dd>
-            </dl>
-
-
-            <dl class="row">
-                <dt class="tit">
                     <label><em>*</em>发放类型</label>
                 </dt>
                 <dd class="opt ctype">
                     <!-- <input name="type" type="radio" value="0" <if condition="$coupon['type'] eq 0">checked</if> ><label>下单赠送</label> -->
-                    <input name="type" type="checkbox" value="1" onchange="test_type_value(this)" <if condition="$coupon['type'] eq 1">checked</if> ><label>指定发放</label>
+                    <input name="type" type="checkbox" value="1" checked disabled><label>指定发放</label>
                     <!-- <input name="type" type="radio" value="2" <if condition="$coupon['type'] eq 2">checked</if> ><label>免费领取</label> -->
                     <!-- <input name="type" type="radio" value="3" <if condition="$coupon['type'] eq 3">checked</if> ><label>线下发放</label> -->
                 </dd>
             </dl>
-
             <dl class="row" id="type_value">
                 <dt class="tit">
-                    <label><em>*</em>发放类型</label>
+                    <label><em>*</em>发放对象</label>
                 </dt>
                 <dd class="opt ctype">
                     <input name="type_value[]" type="checkbox" value="0" <if condition="in_array(0, $coupon['type_value_arr'])">checked</if> ><label>所有人</label>
@@ -132,7 +99,139 @@
 
                 </dd>
             </dl>
-
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>可使用商品：</label>
+                </dt>
+                <dd class="opt">
+                    <label>
+                        <input type="radio" value="0" name="use_type" onclick="use_type_tab(0)" <if condition="$coupon.use_type eq 0">checked</if>>全店通用</label>
+                    <label>
+                        <input type="radio" value="1" name="use_type" onclick="javascript:selectGoods();use_type_tab(1)" <if condition="$coupon.use_type eq 1">checked</if>>指定商品
+                    </label>
+                    <label>
+                        <input type="radio" value="2" name="use_type" onclick="use_type_tab(2)" <if condition="$coupon.use_type eq 2">checked</if>>指定分类
+                    </label>
+                    <label>
+                        <input type="radio" value="4" name="use_type" onclick="javascript:selectGoods();use_type_tab(4)" <if condition="$coupon.use_type eq 4">checked</if>>折扣券
+                    </label>
+                    <label>
+                        <input type="radio" value="5" name="use_type" onclick="javascript:selectGoods();use_type_tab(5)" <if condition="$coupon.use_type eq 5">checked</if>>兑换券
+                    </label>
+                </dd>
+            </dl>
+            <dl id="enable_goods" style="display:<if condition='$coupon[use_type] eq 1 || $coupon[use_type] eq 3  || $coupon[use_type] eq 4'>;<else/>none;</if>">
+                <dt class="tit">指定商品列表：</dt>
+                <dd class="opt">
+                    <table class="ncsc-default-table">
+                        <thead>
+                        <tr>
+                            <th class="w80">商品ID</th>
+                            <th class="w80">商品名称</th>
+                            <th class="w80">价格</th>
+                            <th class="w80">库存</th>
+                            <if condition="$coupon['use_type'] eq 5">
+                                <th class="w80">数量</th>
+                            </if>
+                            <th class="w80">操作</th>
+                        </tr>
+                        </thead>
+                        <tbody id="goods_list">
+                        <foreach name="enable_goods" item="vo">
+                            <tr>
+                                <td style="display:none"><input type="checkbox" name="goods_id[{$vo['goods_id']}][goods_id]" class="goods_id" checked="checked" value="{$vo.goods_id}"/></td>
+                                <td>{$vo.goods_id}</td>
+                                <td>{$vo.goods_name}</td>
+                                <td>{$vo.shop_price}</td>
+                                <td>{$vo.store_count}</td>
+                                <if condition="$coupon['use_type'] eq 5">
+                                    <td>
+                                        <input type="text" name="goods_id[{$vo['goods_id']}][number]" value="{$coupon_goods_list[$vo['goods_id']]['number']}" />
+                                    </td>
+                                </if>
+                                <td class="nscs-table-handle">
+                                    <span><a onclick="$(this).parent().parent().parent().remove();" class="btn-grapefruit"><i class="icon-trash"></i><p>删除</p></a></span>
+                                </td>
+                            </tr>
+                        </foreach>
+                        </tbody>
+                    </table>
+                    <span class="err" id="err_goods_id"></span>
+                </dd>
+            </dl>
+            <dl id="goods_all_cate" style="display:<if condition='$coupon[use_type] eq 2'>;<else/>none;</if>">
+                <dt class="tit"><em>*</em>限制商品分类使用：</dt>
+                <dd class="opt">
+                    <select name="cat_id1" id="cat_id1" onchange="get_category(this.value,'cat_id2','0');" class="valid">
+                        <option value="0">请选择商品分类</option>
+                        <foreach name="cat_list" item="v" key="k" >
+                            <option value="{$v['id']}" <if condition="$v['id'] eq $coupon['cat_id1']">selected="selected"</if> >
+                            {$v['name']}
+                            </option>
+                        </foreach>
+                    </select>
+                    <select name="cat_id2" id="cat_id2" onchange="get_category(this.value,'cat_id3','0');" class="valid">
+                        <option value="0">请选择商品分类</option>
+                    </select>
+                    <select name="cat_id3" id="cat_id3" class="valid">
+                        <option value="0">请选择商品分类</option>
+                    </select>
+                    <span class="err" id="err_cat_id1"></span>
+                    <span class="err" id="err_cat_id2"></span>
+                    <span class="err" id="err_cat_id3"></span>
+                    <p class="hint">若不选表示不限制，否则请选择到指定三级分类</p>
+                </dd>
+            </dl>
+            <dl class="row" id="money_row">
+                <dt class="tit">
+                    <label><em>*</em>优惠券面额</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" id="money" name="money"  onpaste="this.value=this.value.replace(/[^\d.]/g,'')" onkeyup="this.value=this.value.replace(/[^\d.]/g,'')" value="{$coupon.money}" class="input-txt">
+                    <span class="err" id="err_money"></span>
+                    <p class="notic">优惠券可抵扣金额 下方如果选择了折扣商品，则为折扣数值  5折</p>
+                </dd>
+            </dl>
+            <dl class="row" id="condition_row">
+                <dt class="tit">
+                    <label><em>*</em>消费金额</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" id="condition" name="condition" value="{$coupon.condition}" onpaste="this.value=this.value.replace(/[^\d.]/g,'')" onkeyup="this.value=this.value.replace(/[^\d.]/g,'')" class="input-txt">
+                    <span class="err" id="err_condition"></span>
+                    <p class="notic">订单需满足的最低消费金额(必需为整数)才能使用</p>
+                </dd>
+            </dl>
+            <dl class="row" id="goods_num_row" style="display:<if condition='$coupon[use_type] eq 4'>;<else/>none;</if>">
+                <dt class="tit">
+                    <label><em>*</em>商品数量</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" id="goods_num" name="goods_num" value="{$coupon.goods_num}" onpaste="this.value=this.value.replace(/[^\d]/g,'')" onkeyup="this.value=this.value.replace(/[^\d]/g,'')" class="input-txt">
+                    <span class="err" id="err_goods_num"></span>
+                    <p class="notic">打折需要购买的数量</p>
+                </dd>
+            </dl>
+            <dl class="row" id="discount_row" style="display:<if condition='$coupon[use_type] eq 4'>;<else/>none;</if>">>
+                <dt class="tit">
+                    <label><em>*</em>折扣</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" id="discount" name="discount" value="{$coupon.discount}" onpaste="this.value=this.value.replace(/[^\d.]/g,'')" onkeyup="this.value=this.value.replace(/[^\d.]/g,'')" class="input-txt">
+                    <span class="err" id="err_discount"></span>
+                    <p class="notic">优惠折扣</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>发放数量</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" id="createnum" name="createnum" value="<if condition='$coupon[createnum]'>$coupon[createnum]<else/>0</if>" onpaste="this.value=this.value.replace(/[^\d]/g,'')" onkeyup="this.value=this.value.replace(/[^\d]/g,'')" class="input-txt">
+                    <span class="err" id="err_createnum"></span>
+                    <p class="notic">发放数量限制(默认为0则无限制)</p>
+                </dd>
+            </dl>
             <dl class="row timed">
                 <dt class="tit">
                     <label><em>*</em>发放起始日期</label>
@@ -171,90 +270,6 @@
                     <p class="notic">使用结束日期</p>
                 </dd>
             </dl>
-            <dl class="row">
-                <dt class="tit">
-                    <label><em>*</em>可使用商品：</label>
-                </dt>
-                <dd class="opt">
-                    <label>
-                        <input type="radio" value="0" name="use_type" onclick="use_type_tab(0)" <if condition="$coupon.use_type eq 0">checked</if>>全店通用</label>
-                    <label>
-                        <input type="radio" value="1" name="use_type" onclick="javascript:selectGoods();" <if condition="$coupon.use_type eq 1">checked</if>>指定商品
-                    </label>
-                    <label>
-                        <input type="radio" value="2" name="use_type" onclick="use_type_tab(2)" <if condition="$coupon.use_type eq 2">checked</if>>指定分类
-                    </label>
-                    <label>
-                        <input type="radio" value="4" name="use_type" onclick="javascript:selectGoods1();" <if condition="$coupon.use_type eq 4">checked</if>>折扣商品
-                    </label>
-                    <label>
-                        <input type="radio" value="5" name="use_type" onclick="javascript:selectGoods2();" <if condition="$coupon.use_type eq 5">checked</if>>兑换商品
-                    </label>
-                </dd>
-            </dl>
-            <dl id="goods_all_cate" style="display:<if condition='$coupon[use_type] eq 2'>;<else/>none;</if>">
-                <dt class="tit"><em>*</em>限制商品分类使用：</dt>
-                <dd class="opt">
-                    <select name="cat_id1" id="cat_id1" onchange="get_category(this.value,'cat_id2','0');" class="valid">
-                        <option value="0">请选择商品分类</option>
-                        <foreach name="cat_list" item="v" key="k" >
-                            <option value="{$v['id']}" <if condition="$v['id'] eq $coupon['cat_id1']">selected="selected"</if> >
-                            {$v['name']}
-                            </option>
-                        </foreach>
-                    </select>
-                    <select name="cat_id2" id="cat_id2" onchange="get_category(this.value,'cat_id3','0');" class="valid">
-                        <option value="0">请选择商品分类</option>
-                    </select>
-                    <select name="cat_id3" id="cat_id3" class="valid">
-                        <option value="0">请选择商品分类</option>
-                    </select>
-                    <span class="err" id="err_cat_id1"></span>
-                    <span class="err" id="err_cat_id2"></span>
-                    <span class="err" id="err_cat_id3"></span>
-                    <p class="hint">若不选表示不限制，否则请选择到指定三级分类</p>
-                </dd>
-            </dl>
-            <dl id="enable_goods" style="display:<if condition='$coupon[use_type] eq 1 || $coupon[use_type] eq 4  || $coupon[use_type] eq 5'>;<else/>none;</if>">
-                <dt class="tit">指定商品列表：</dt>
-                <dd class="opt">
-                    <table class="ncsc-default-table">
-                        <thead>
-                        <tr>
-                            <th class="w80">商品ID</th>
-                            <th class="w80">商品名称</th>
-                            <th class="w80">价格</th>
-                            <th class="w80">库存</th>
-                            <if condition="$coupon['use_type'] eq 5">
-                            <th class="w80">数量</th>
-                            </if>
-                            <th class="w80">操作</th>
-                        </tr>
-                        </thead>
-                        <tbody id="goods_list">
-                        <foreach name="enable_goods" item="vo">
-                            <tr>
-                                <td style="display:none"><input type="checkbox" name="goods_id[{$vo['goods_id']}][goods_id]" class="goods_id" checked="checked" value="{$vo.goods_id}"/></td>
-                                <td>{$vo.goods_id}</td>
-                                <td>{$vo.goods_name}</td>
-                                <td>{$vo.shop_price}</td>
-                                <td>{$vo.store_count}</td>
-                                <if condition="$coupon['use_type'] eq 5">
-                                <td>
-                                    <input type="text" name="goods_id[{$vo['goods_id']}][number]" value="{$coupon_goods_list[$vo['goods_id']]['number']}" />
-                                </td>
-                                </if>
-                                <td class="nscs-table-handle">
-                                    <span><a onclick="$(this).parent().parent().parent().remove();" class="btn-grapefruit"><i class="icon-trash"></i><p>删除</p></a></span>
-                                </td>
-                            </tr>
-                        </foreach>
-                        </tbody>
-                    </table>
-                    <span class="err" id="err_goods_id"></span>
-                </dd>
-            </dl>
-
 
             <dl class="row">
                 <dt class="tit">
@@ -362,21 +377,53 @@
     function use_type_tab(v){
 
         lnln = v;
-        if(v == 0){
-            $('#goods_all_cate').hide();
-            $('#enable_goods').hide();
-            $('#goods_list').html('');
-        }
-        if(v == 1 || v==4 || v==5){
-            $('#enable_goods').show()
-            $('#goods_all_cate').hide();
-        }
-        if(v == 2){
-            $('#goods_all_cate').show();
-            $('#enable_goods').hide();
-            $('#goods_list').html('');
-        }
+        switch (v) {
+            case 0:
+                $('#enable_goods').hide();
+                $('#goods_all_cate').hide();
+                $('#goods_list').html('');
 
+                $('#money_row').show();
+                $('#condition_row').show();
+                $('#goods_num_row').hide();
+                $('#discount_row').hide();
+                break;
+            case 1:
+                $('#enable_goods').show();
+                $('#goods_all_cate').hide();
+
+                $('#money_row').show();
+                $('#condition_row').show();
+                $('#goods_num_row').hide();
+                $('#discount_row').hide();
+                break;
+            case 2:
+                $('#enable_goods').hide();
+                $('#goods_all_cate').show();
+                $('#goods_list').html('');
+
+                $('#money_row').show();
+                $('#condition_row').show();
+                $('#goods_num_row').hide();
+                $('#discount_row').hide();
+                break;
+            case 4:
+                $('#money_row').hide();
+                $('#condition_row').hide();
+                $('#goods_num_row').show();
+                $('#discount_row').show();
+                break;
+            case 5:
+                $('#enable_goods').show();
+                $('#goods_all_cate').hide();
+                $('#goods_list').html('');
+
+                $('#money_row').hide();
+                $('#condition_row').hide();
+                $('#goods_num_row').hide();
+                $('#discount_row').hide();
+                break;
+        }
     }
 
     function selectGoods(){

@@ -31,7 +31,7 @@ class Coupon extends Base
         $count = M('coupon')->count();
         $Page = new Page($count, 10);
         $show = $Page->show();
-        $lists = M('coupon')->order('add_time desc')->limit($Page->firstRow.','.$Page->listRows)->select();
+        $lists = M('coupon')->order('add_time desc')->limit($Page->firstRow . ',' . $Page->listRows)->select();
         $this->assign('lists', $lists);
         $this->assign('pager', $Page); // 赋值分页输出
         $this->assign('page', $show); // 赋值分页输出
@@ -61,10 +61,10 @@ class Coupon extends Base
                     $coupon['cat_id2'] = $cat_path[2];
                     $coupon['cat_id3'] = $goods_coupon['goods_category_id'];
                 }
-                if (in_array($coupon['use_type'],array(1,4,5)) ) {
-                    $coupon_goods_list = Db::name('goods_coupon')->where('coupon_id', $cid)->getField('goods_id,number,coupon_id',true);
-                    $this->assign('coupon_goods_list',$coupon_goods_list);
-                    $coupon_goods_ids = get_arr_column($coupon_goods_list,'goods_id');
+                if (in_array($coupon['use_type'], array(1, 4, 5))) {
+                    $coupon_goods_list = Db::name('goods_coupon')->where('coupon_id', $cid)->getField('goods_id,number,coupon_id', true);
+                    $this->assign('coupon_goods_list', $coupon_goods_list);
+                    $coupon_goods_ids = get_arr_column($coupon_goods_list, 'goods_id');
                     $enable_goods = M('goods')->where('goods_id', 'in', $coupon_goods_ids)->select();
 
                     $this->assign('enable_goods', $enable_goods);
@@ -94,6 +94,7 @@ class Coupon extends Base
     public function addEditCoupon()
     {
         $data = I('post.');
+        $data['type'] = 1;
 
         if ($data['type_value'] && isset($data['type'])) {
             $data['type_value'] = implode(',', $data['type_value']);
@@ -107,21 +108,22 @@ class Coupon extends Base
         $data['use_start_time'] = strtotime($data['use_start_time']);
         $couponValidate = Loader::validate('Coupon');
         if (!$couponValidate->batch()->check($data)) {
-            $this->ajaxReturn(['status' => 0, 'msg' => '操作失败', 'result' => $couponValidate->getError()]);
+            $this->ajaxReturn(['status' => 0, 'msg' => '操作失败，' . $couponValidate->getError(), 'result' => $couponValidate->getError()]);
         }
 
         if (empty($data['id'])) {
             $data['add_time'] = time();
             $row = Db::name('coupon')->insertGetId($data);
             //指定商品
-            if (1 == $data['use_type'] || 4 == $data['use_type']) {
+            if (in_array($data['use_type'], [1, 3, 4])) {
                 foreach ($data['goods_id'] as $value) {
                     Db::name('goods_coupon')->add(['coupon_id' => $row, 'goods_id' => $value['goods_id'], 'goods_category_id' => 0]);
                 }
             }
-            if(5 == $data['use_type']){
+            //兑换券
+            if (5 == $data['use_type']) {
                 foreach ($data['goods_id'] as $value) {
-                    Db::name('goods_coupon')->add(['coupon_id' => $row, 'goods_id' => $value['goods_id'], 'goods_category_id' => 0,'number'=>$value['number']]);
+                    Db::name('goods_coupon')->add(['coupon_id' => $row, 'goods_id' => $value['goods_id'], 'goods_category_id' => 0, 'number' => $value['number']]);
                 }
             }
             //指定商品分类id
@@ -132,14 +134,15 @@ class Coupon extends Base
             $row = M('coupon')->where(['id' => $data['id']])->save($data);
             Db::name('goods_coupon')->where(['coupon_id' => $data['id']])->delete(); //先删除后添加
             //指定商品
-            if (1 == $data['use_type'] || 4 == $data['use_type']) {
+            if (in_array($data['use_type'], [1, 3, 4])) {
                 foreach ($data['goods_id'] as $value) {
                     Db::name('goods_coupon')->add(['coupon_id' => $data['id'], 'goods_id' => $value['goods_id']]);
                 }
             }
+            //兑换券
             if (5 == $data['use_type']) {
                 foreach ($data['goods_id'] as $value) {
-                    Db::name('goods_coupon')->add(['coupon_id' => $data['id'], 'goods_id' => $value['goods_id'],'number'=>$value['number']]);
+                    Db::name('goods_coupon')->add(['coupon_id' => $data['id'], 'goods_id' => $value['goods_id'], 'number' => $value['number']]);
                 }
             }
             //指定商品分类id
@@ -166,7 +169,7 @@ class Coupon extends Base
         $data = M('coupon')->where(['id' => $cid])->find();
         $remain = $data['createnum'] - $data['send_num']; //剩余派发量
         if ($remain <= 0 && $data['createnum'] > 0) {
-            $this->error($data['name'].'已经发放完了');
+            $this->error($data['name'] . '已经发放完了');
         }
         if (!$data) {
             $this->error('优惠券类型不存在');
@@ -177,7 +180,7 @@ class Coupon extends Base
         if (IS_POST) {
             $num = I('post.num/d');
             if ($num > $remain && $data['createnum'] > 0) {
-                $this->error($data['name'].'发放量不够了');
+                $this->error($data['name'] . '发放量不够了');
             }
             if (!$num > 0) {
                 $this->error('发放数量不能小于0');
@@ -197,7 +200,7 @@ class Coupon extends Base
                 M('coupon_list')->add($add);
             }
             M('coupon')->where('id', $cid)->setInc('send_num', $num);
-            adminLog('发放'.$num.'张'.$data['name']);
+            adminLog('发放' . $num . '张' . $data['name']);
             $this->success('发放成功', U('Admin/Coupon/index'));
             exit;
         }
@@ -225,7 +228,7 @@ class Coupon extends Base
     		$Page->parameter[$key] = urlencode($val);
     	}*/
         $show = $Page->show();
-        $userList = Db::name('users')->whereNotIn('user_id', $issued_uids)->where($condition)->order('user_id desc')->limit($Page->firstRow.','.$Page->listRows)->select();
+        $userList = Db::name('users')->whereNotIn('user_id', $issued_uids)->where($condition)->order('user_id desc')->limit($Page->firstRow . ',' . $Page->listRows)->select();
 
         $user_level = M('user_level')->getField('level_id,level_name', true);
         $this->assign('user_level', $user_level);
@@ -244,44 +247,42 @@ class Coupon extends Base
             if ($coupon['createnum'] > 0) {
                 $remain = $coupon['createnum'] - $coupon['send_num']; //剩余派发量
                 if ($remain <= 0) {
-                    return json(['status' => -1, 'msg' => $coupon['name'].'已经发放完了', 'result' => null]);
+                    return json(['status' => -1, 'msg' => $coupon['name'] . '已经发放完了', 'result' => null]);
                 }
             }
             if ($coupon['send_num'] > 0) {
-                return json(['status' => -1, 'msg' => $coupon['name'].'已经发放过了', 'result' => null]);
+                return json(['status' => -1, 'msg' => $coupon['name'] . '已经发放过了', 'result' => null]);
             }
             $coupon['type_value'] = explode(',', $coupon['type_value']);
-
-            if(in_array(5, $coupon['type_value']) || in_array($coupon['use_type'],array(5))){
+            if (in_array(5, $coupon['type_value']) || in_array($coupon['use_type'], array(5))) {
                 return json(['status' => -1, 'msg' => '该优惠券不能发放', 'result' => null]);
-
             }
             if ($coupon['type_value']) {
                 if (in_array(0, $coupon['type_value'])) {
                     $user_id = M('users')->field('user_id')->where('is_lock', 'neq', 1)->select();
                 } else {
                     $user_id = M('users')->field('user_id')
-                    ->where('distribut_level', 'IN', $coupon['type_value'])
-                    ->where('is_lock', 'neq', 1)
-                    ->select();
+                        ->where('distribut_level', 'IN', $coupon['type_value'])// 分销商等级？？？
+                        ->where('is_lock', 'neq', 1)
+                        ->select();
                 }
             }
-
             if (!empty($user_id)) {
                 $able = count($user_id); //本次发送量
                 if ($coupon['createnum'] > 0 && $remain < $able) {
-                    return json(['status' => -1, 'msg' => $coupon['name'].'派发量只剩'.$remain.'张', 'result' => null]);
+                    return json(['status' => -1, 'msg' => $coupon['name'] . '派发量只剩' . $remain . '张', 'result' => null]);
                 }
                 foreach ($user_id as $k => $v) {
                     $time = time();
                     $insert[] = ['cid' => $cid, 'type' => 1, 'uid' => $v['user_id'], 'send_time' => $time];
                 }
-
                 DB::name('coupon_list')->insertAll($insert);
                 M('coupon')->where('id', $cid)->setInc('send_num', $able);
-                adminLog('发放'.$able.'张'.$coupon['name']);
+                adminLog('发放' . $able . '张' . $coupon['name']);
 
-                return json(['status' => 1, 'msg' => '发送成功', 'result' => null]);
+                return json(['status' => 1, 'msg' => '发放成功', 'result' => null]);
+            } else {
+                return json(['status' => -1, 'msg' => '选择的对象用户不存在', 'result' => null]);
             }
         }
     }
@@ -322,10 +323,10 @@ class Coupon extends Base
         }
 
         //查询该优惠券的列表的数量
-        $sql = 'SELECT count(1) as c FROM __PREFIX__coupon_list  l '.
-                'LEFT JOIN __PREFIX__coupon c ON c.id = l.cid '. //联合优惠券表查询名称
-                'LEFT JOIN __PREFIX__order o ON o.order_id = l.order_id '.     //联合订单表查询订单编号
-                'LEFT JOIN __PREFIX__users u ON u.user_id = l.uid WHERE l.cid = :cid';    //联合用户表去查询用户名
+        $sql = 'SELECT count(1) as c FROM __PREFIX__coupon_list  l ' .
+            'LEFT JOIN __PREFIX__coupon c ON c.id = l.cid ' . //联合优惠券表查询名称
+            'LEFT JOIN __PREFIX__order o ON o.order_id = l.order_id ' .     //联合订单表查询订单编号
+            'LEFT JOIN __PREFIX__users u ON u.user_id = l.uid WHERE l.cid = :cid';    //联合用户表去查询用户名
 
         $count = DB::query($sql, ['cid' => $cid]);
         $count = $count[0]['c'];
@@ -333,11 +334,11 @@ class Coupon extends Base
         $show = $Page->show();
 
         //查询该优惠券的列表
-        $sql = 'SELECT l.*,c.name,o.order_sn,u.nickname FROM __PREFIX__coupon_list  l '.
-                'LEFT JOIN __PREFIX__coupon c ON c.id = l.cid '. //联合优惠券表查询名称
-                'LEFT JOIN __PREFIX__order o ON o.order_id = l.order_id '.     //联合订单表查询订单编号
-                'LEFT JOIN __PREFIX__users u ON u.user_id = l.uid WHERE l.cid = :cid'.    //联合用户表去查询用户名
-                " limit {$Page->firstRow} , {$Page->listRows}";
+        $sql = 'SELECT l.*,c.name,o.order_sn,u.nickname FROM __PREFIX__coupon_list  l ' .
+            'LEFT JOIN __PREFIX__coupon c ON c.id = l.cid ' . //联合优惠券表查询名称
+            'LEFT JOIN __PREFIX__order o ON o.order_id = l.order_id ' .     //联合订单表查询订单编号
+            'LEFT JOIN __PREFIX__users u ON u.user_id = l.uid WHERE l.cid = :cid' .    //联合用户表去查询用户名
+            " limit {$Page->firstRow} , {$Page->listRows}";
         $coupon_list = DB::query($sql, ['cid' => $cid]);
         $this->assign('coupon_type', C('COUPON_TYPE'));
         $this->assign('type', $check_coupon['type']);

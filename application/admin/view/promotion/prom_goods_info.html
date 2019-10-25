@@ -81,7 +81,6 @@
                         <option value="1" <if condition="$info[type] eq 1">selected</if>>减价优惠</option>
                         <!--<option value="2" <if condition="$info[type] eq 2">selected</if>>固定金额出售</option>
                         <option value="3" <if condition="$info[type] eq 3">selected</if>>买就赠代金券</option>-->
-                        <option value="4" <if condition="$info[type] eq 4">selected</if>>满打折</option>
                     </select>
                     <p class="notic">促销活动类型</p>
                 </dd>
@@ -371,9 +370,6 @@
         $("#prom_type").trigger('change');
         var prom_type = parseInt($("#prom_type").val());
         switch (prom_type) {
-            case 4: // 满打折
-                $('input[name=expression]').val("{$info.goods_num}/{$info.expression}");
-                break;
             default:
                 $('input[name=expression]').val("{$info.expression}");
         }
