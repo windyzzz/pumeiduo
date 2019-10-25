@@ -203,7 +203,10 @@ class Goods extends Base
         return json(['status' => 1, 'msg' => 'success', 'result' => $data]);
     }
 
-
+    /**
+     * 商品详情（新）
+     * @return \think\response\Json
+     */
     public function goodsInfoNew()
     {
         $goods_id = I('goods_id/d');
@@ -218,6 +221,16 @@ class Goods extends Base
             // 用户浏览记录
             $goodsLogic->add_visit_log($this->user_id, $goods);
         }
+        // 处理商品详情（抽取图片）
+        $contentArr = explode('public', $goods['goods_content']);
+        $contentImgArr = [];
+        foreach ($contentArr as $key => $value) {
+            if ($key == 0) {
+                continue;
+            }
+            $contentImgArr[] = 'public' . explode('&quot;', $value)[0];
+        }
+        $goods['content_images_list'] = $contentImgArr;
         if ($goods['brand_id']) {
             // 品牌名称
             $goods['brand_name'] = M('brand')->where('id', $goods['brand_id'])->getField('name');
@@ -233,6 +246,7 @@ class Goods extends Base
         if ($goodsTab) {
             $goods['tabs'] = $goodsTab;
         }
+        $goods['goods_images_list'] = M('GoodsImages')->where('goods_id', $goods_id)->select(); //商品缩略图
         // 规格参数
         $goods['spec'] = $goodsLogic->get_spec($goods_id);
         // 规格参数价格
@@ -250,8 +264,11 @@ class Goods extends Base
         }
         $couponCate = $couponLogic->getCoupon(null, '', $goods['cat_id'], $couponIds);    // 指定分类优惠券
         $goods['coupon'] = array_merge_recursive($couponCurrency, $couponGoods, $couponCate);
-
+        $goods['freight_free'] = tpCache('shopping.freight_free'); // 全场满多少免运费
+        // 组装数据
         $result['goods'] = $goods;
+        $result['look_see'] = $goodsLogic->get_look_see($goods, $this->user_id); // 猜你喜欢
+
         return json(['status' => 1, 'msg' => 'success', 'result' => $result]);
     }
 

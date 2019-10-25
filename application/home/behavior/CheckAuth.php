@@ -38,27 +38,32 @@ class CheckAuth
             session('invite', $invite);
             S('invite_' . $params['user_token'], $invite, 180);
             $file = 'invite.txt';
-            file_put_contents($file, '['. date('Y-m-d H:i:s').']  设置新用户邀请人Session：'.$invite."\n", FILE_APPEND | LOCK_EX);
+            file_put_contents($file, '[' . date('Y-m-d H:i:s') . ']  设置新用户邀请人Session：' . $invite . "\n", FILE_APPEND | LOCK_EX);
         }
 
         $this->site_url = url('/', '', '', true);
         $return['baseUrl'] = $this->site_url;
         $return['result'] = $this->site_url;
         // 行为逻辑
-        if (session('user') || (isset($params['user_token']) && $this->redis->has('user_' . $params['user_token']))) {
+        if (session('user')) {
+            $session_user = session('user');
+        } elseif ((isset($params['user_token']) && $this->redis->has('user_' . $params['user_token']))) {
+            $session_user = $this->redis->get('user_' . $params['user_token']);
+        }
+        if (isset($session_user)) {
             // 原系统进入 或者 APP进入
-            $session_user = TokenLogic::getValue('user', $params['user_token']);
             if ($session_user['is_lock'] == 1) exit(json_encode(['status' => -1, 'msg' => '账号异常已被锁定！！！', 'result' => $return]));
-//            $select_user = Db::name('users')->where('user_id', $session_user['user_id'])->find();
-            if (empty($session_user)) {
+            $select_user = Db::name('users')->where('user_id', $session_user['user_id'])->find();
+            if (empty($select_user)) {
+                // 系统注册用户
                 session('user', null);
-                $this->redis->rm('user_' . $params['user_token']);
+                $this->redis->rm('user_' . $select_user['token']);
                 $_SESSION['openid'] = 0;
-                $this->redis->rm('user_' . $params['user_token'] . '_openid');
+                $this->redis->rm('user_' . $select_user['token'] . '_openid');
 
                 if ('weixin' == I('web')) {
                     if (is_array($this->weixin_config)) {
-                        $wxuser = $this->GetOpenid($params['user_token']); //授权获取openid以及微信用户信息
+                        $wxuser = $this->GetOpenid($select_user['token']); //授权获取openid以及微信用户信息
 
                         if (1 == $wxuser['type']) {
                             exit(json_encode(['status' => -1, 'msg' => '你还没有登录呢', 'result' => $wxuser]));
@@ -74,7 +79,7 @@ class CheckAuth
             // 合并信息
             $user = array_merge($session_user, $oauth_users);
             session('user', $user);
-            $this->redis->set('user_' . $params['user_token'], $user, config('redis_time'));
+            $this->redis->set('user_' . $session_user['user_token'], $user, config('redis_time'));
         } else {
             // $nologin = array(
             //         'login','pop_login','do_login','logout','verify','set_pwd','finished',
@@ -93,18 +98,17 @@ class CheckAuth
             if ('weixin' == $params['web']) {
                 $this->weixin_config = M('wx_user')->find(); //取微获信配置
                 // $this->assign('wechat_config', $this->weixin_config);
-                $user_temp = TokenLogic::getValue('user', $params['user_token']);
+                $user_temp = session('user');
                 if (isset($user_temp['user_id']) && $user_temp['user_id']) {
                     $user = M('users')->where('user_id', $user_temp['user_id'])->find();
                     if (!$user) {
                         $_SESSION['openid'] = 0;
                         session('user', null);
-                        $this->redis->rm('user_' . $params['user_token']);
                     }
                 }
 
                 if (is_array($this->weixin_config)) {
-                    $wxuser = $this->GetOpenid($params['user_token']); //授权获取openid以及微信用户信息
+                    $wxuser = $this->GetOpenid(session_id()); //授权获取openid以及微信用户信息
 
                     if (1 == $wxuser['type']) {
                         exit(json_encode(['status' => -1, 'msg' => '你还没有登录呢', 'result' => $wxuser]));
@@ -143,8 +147,8 @@ class CheckAuth
             // $baseUrl = urlencode($this->get_url());
             S('invite_' . $userToken);
             $file = 'invite.txt';
-            file_put_contents($file, '['. date('Y-m-d H:i:s').']  把邀请人信息添加到授权回调地址：'.$invite."\n", FILE_APPEND | LOCK_EX);
-            $baseUrl = urlencode($this->site_url."/index.php?m=Home&c=api.Login&a=callback&invite=$invite");
+            file_put_contents($file, '[' . date('Y-m-d H:i:s') . ']  把邀请人信息添加到授权回调地址：' . $invite . "\n", FILE_APPEND | LOCK_EX);
+            $baseUrl = urlencode($this->site_url . "/index.php?m=Home&c=api.Login&a=callback&invite=$invite");
             $url = $this->__CreateOauthUrlForCode($baseUrl); // 获取 code地址
             // Header("Location: $url"); // 跳转到微信授权页面 需要用户确认登录的页面
             // exit();
@@ -152,12 +156,12 @@ class CheckAuth
         }
         S('invite_' . $userToken);
         $file = 'invite.txt';
-        file_put_contents($file, '['. date('Y-m-d H:i:s').']  授权回来，获取邀请人Session：'.$invite."\n", FILE_APPEND | LOCK_EX);
+        file_put_contents($file, '[' . date('Y-m-d H:i:s') . ']  授权回来，获取邀请人Session：' . $invite . "\n", FILE_APPEND | LOCK_EX);
         //上面获取到code后这里跳转回来
         $code = $_GET['code'];
         $data = $this->getOpenidFromMp($code); //获取网页授权access_token和用户openid
-            $data2 = $this->GetUserInfo($data['access_token'], $data['openid']); //获取微信用户信息
-            $data['nickname'] = empty($data2['nickname']) ? '微信用户' : trim($data2['nickname']);
+        $data2 = $this->GetUserInfo($data['access_token'], $data['openid']); //获取微信用户信息
+        $data['nickname'] = empty($data2['nickname']) ? '微信用户' : trim($data2['nickname']);
         $data['sex'] = $data2['sex'];
         $data['head_pic'] = $data2['headimgurl'];
         $data['subscribe'] = $data2['subscribe'];
@@ -216,7 +220,7 @@ class CheckAuth
         $urlObj['lang'] = 'zh_CN';
         $bizString = $this->ToUrlParams($urlObj);
 
-        return 'https://api.weixin.qq.com/sns/userinfo?'.$bizString;
+        return 'https://api.weixin.qq.com/sns/userinfo?' . $bizString;
     }
 
     /**
@@ -261,7 +265,7 @@ class CheckAuth
         $urlObj['grant_type'] = 'authorization_code';
         $bizString = $this->ToUrlParams($urlObj);
 
-        return 'https://api.weixin.qq.com/sns/oauth2/access_token?'.$bizString;
+        return 'https://api.weixin.qq.com/sns/oauth2/access_token?' . $bizString;
     }
 
     /**
@@ -274,9 +278,9 @@ class CheckAuth
         $sys_protocal = isset($_SERVER['SERVER_PORT']) && '443' == $_SERVER['SERVER_PORT'] ? 'https://' : 'http://';
         $php_self = $_SERVER['PHP_SELF'] ? $_SERVER['PHP_SELF'] : $_SERVER['SCRIPT_NAME'];
         $path_info = isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : '';
-        $relate_url = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : $php_self.(isset($_SERVER['QUERY_STRING']) ? '?'.$_SERVER['QUERY_STRING'] : $path_info);
+        $relate_url = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : $php_self . (isset($_SERVER['QUERY_STRING']) ? '?' . $_SERVER['QUERY_STRING'] : $path_info);
 
-        return $sys_protocal.(isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '').$relate_url;
+        return $sys_protocal . (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '') . $relate_url;
     }
 
     /**
@@ -293,10 +297,10 @@ class CheckAuth
         $urlObj['response_type'] = 'code';
         //        $urlObj["scope"] = "snsapi_base";
         $urlObj['scope'] = 'snsapi_userinfo';
-        $urlObj['state'] = 'STATE'.'#wechat_redirect';
+        $urlObj['state'] = 'STATE' . '#wechat_redirect';
         $bizString = $this->ToUrlParams($urlObj);
 
-        return 'https://open.weixin.qq.com/connect/oauth2/authorize?'.$bizString;
+        return 'https://open.weixin.qq.com/connect/oauth2/authorize?' . $bizString;
     }
 
     /**
@@ -311,7 +315,7 @@ class CheckAuth
         $buff = '';
         foreach ($urlObj as $k => $v) {
             if ('sign' != $k) {
-                $buff .= $k.'='.$v.'&';
+                $buff .= $k . '=' . $v . '&';
             }
         }
 

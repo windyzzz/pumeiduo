@@ -28,17 +28,19 @@ use think\Db;
 use think\Hook;
 use think\Request;
 
-class Cart
+class Cart extends Base
 {
     public $cartLogic; // 购物车逻辑操作类
     public $user_id = 0;
     public $user = [];
+    public $user_token = 0;
 
     /**
      * 初始化函数.
      */
     public function __construct()
     {
+        parent::__construct();
         $this->cartLogic = new CartLogic();
         if (session('?user')) {
             $user = session('user');
@@ -46,13 +48,14 @@ class Cart
             session('user', $user);  //覆盖session 中的 user
             $this->user = $user;
             $this->user_id = $user['user_id'];
+            $this->user_token = session_id();
 
             // 给用户计算会员价 登录前后不一样
             if ($user) {
                 $user['discount'] = (empty($user['discount'])) ? 1 : $user['discount'];
                 if (1 != $user['discount']) {
                     $c = Db::name('cart')->where(['user_id' => $user['user_id'], 'prom_type' => 0])->where('member_goods_price = goods_price')->count();
-                    $c && Db::name('cart')->where(['user_id' => $user['user_id'], 'prom_type' => 0])->update(['member_goods_price' => ['exp', 'goods_price*'.$user['discount']]]);
+                    $c && Db::name('cart')->where(['user_id' => $user['user_id'], 'prom_type' => 0])->update(['member_goods_price' => ['exp', 'goods_price*' . $user['discount']]]);
                 }
             }
         }
@@ -64,18 +67,17 @@ class Cart
         $cartLogic->setUserId($this->user_id);
         $cartList = $cartLogic->getCartList(); //用户购物车
         $userCartGoodsTypeNum = $cartLogic->getUserCartGoodsTypeNum(); //获取用户购物车商品总数
-$prom_list = array();
-        if($cartList){
+        $prom_list = array();
+        if ($cartList) {
 
             $goods_tao_grade = M('goods_tao_grade')
                 ->alias('g')
-
-                ->join('prom_goods pg',"g.promo_id = pg.id and pg.group like '%".$this->user['distribut_level']."%' and pg.start_time <= ".NOW_TIME." and pg.end_time >= ".NOW_TIME." and pg.is_end = 0 and is_open = 1")
-                ->getField('g.goods_id,pg.type,pg.id,pg.title,pg.expression,pg.min_num',true);
+                ->join('prom_goods pg', "g.promo_id = pg.id and pg.group like '%" . $this->user['distribut_level'] . "%' and pg.start_time <= " . NOW_TIME . " and pg.end_time >= " . NOW_TIME . " and pg.is_end = 0 and is_open = 1")
+                ->getField('g.goods_id,pg.type,pg.id,pg.title,pg.expression,pg.min_num', true);
 
             $type_arr = array(
-                0=>'折扣',
-                1=>'立减'
+                0 => '折扣',
+                1 => '立减'
             );
             $cartList = collection($cartList)->toArray();
 
@@ -83,9 +85,8 @@ $prom_list = array();
             $cartList = $Pay->activity2_goods($cartList);
 
 
-
-            foreach($cartList as $k=>$v){
-                if($goods_tao_grade[$v['goods_id']]){
+            foreach ($cartList as $k => $v) {
+                if ($goods_tao_grade[$v['goods_id']]) {
                     $prom_list[$goods_tao_grade[$v['goods_id']]['id']]['list'][$k] = $v;
                     $prom_list[$goods_tao_grade[$v['goods_id']]['id']]['prom']['is_prom_goods_type'] = $goods_tao_grade[$v['goods_id']]['type'];
                     $prom_list[$goods_tao_grade[$v['goods_id']]['id']]['prom']['is_prom_goods_expression'] = $goods_tao_grade[$v['goods_id']]['expression'];
@@ -93,7 +94,7 @@ $prom_list = array();
                     $prom_list[$goods_tao_grade[$v['goods_id']]['id']]['prom']['is_prom_goods_title'] = $goods_tao_grade[$v['goods_id']]['title'];
                     $prom_list[$goods_tao_grade[$v['goods_id']]['id']]['prom']['is_prom_goods_id'] = $goods_tao_grade[$v['goods_id']]['id'];
 
- $prom_list[$goods_tao_grade[$v['goods_id']]['id']]['prom']['is_prom_goods_min_num'] = $goods_tao_grade[$v['goods_id']]['min_num'];
+                    $prom_list[$goods_tao_grade[$v['goods_id']]['id']]['prom']['is_prom_goods_min_num'] = $goods_tao_grade[$v['goods_id']]['min_num'];
 
                     unset($cartList[$k]);
                 }
@@ -474,13 +475,14 @@ $prom_list = array();
      */
     public function cart3()
     {
-        Hook::exec('app\\home\\behavior\\CheckAuth', 'run', $params);
-        Hook::exec('app\\home\\behavior\\CheckValid', 'run', $params);
+//        $params['user_token'] = $this->userToken;
+//        Hook::exec('app\\home\\behavior\\CheckAuth', 'run', $params);
+//        Hook::exec('app\\home\\behavior\\CheckValid', 'run', $params);
         $address_id = input('address_id/d'); //  收货地址id
         $invoice_title = input('invoice_title');  // 发票
         $taxpayer = input('taxpayer');       // 纳税人识别号
         $coupon_id = input('coupon_id/d'); //  优惠券id
-        $re_id = input('re_id',''); //  优惠券id
+        $re_id = input('re_id', ''); //  优惠券id
 
         // $pay_points         = input("pay_points/d",0); //  使用积分
         $user_electronic = input('user_electronic/f', 0); //  使用电子币
@@ -523,7 +525,6 @@ $prom_list = array();
             }
 
 
-
             list($prom_type, $prom_id) = $pay->getPromInfo();
 
             $pay->check(); // 加价购活动
@@ -531,9 +532,9 @@ $prom_list = array();
 
             $pay->orderPromotion();
             $pay->goodsPromotion();
-            $pay->delivery($address['district']);
+            $pay->delivery($address['district']);   // 配送物流
 
-            $pay->useCouponById($coupon_id,$pay->getPayList());
+            $pay->useCouponById($coupon_id, $pay->getPayList());
 
             $pay->useCouponByIdRe($re_id);
             $pay_points = $pay->getUsePoint();
@@ -624,10 +625,10 @@ $prom_list = array();
             $pre_sell_info = M('goods_activity')->where(['act_id' => $order['order_prom_id']])->find();
             $pre_sell_info = array_merge($pre_sell_info, unserialize($pre_sell_info['ext_info']));
             if ($pre_sell_info['retainage_start'] > time()) {
-                return json(['status' => 0, 'msg' => '还未到支付尾款时间'.date('Y-m-d H:i:s', $pre_sell_info['retainage_start']), 'result' => null]);
+                return json(['status' => 0, 'msg' => '还未到支付尾款时间' . date('Y-m-d H:i:s', $pre_sell_info['retainage_start']), 'result' => null]);
             }
             if ($pre_sell_info['retainage_end'] < time()) {
-                return json(['status' => 0, 'msg' => '对不起，该预售商品已过尾款支付时间'.date('Y-m-d H:i:s', $pre_sell_info['retainage_start']), 'result' => null]);
+                return json(['status' => 0, 'msg' => '对不起，该预售商品已过尾款支付时间' . date('Y-m-d H:i:s', $pre_sell_info['retainage_start']), 'result' => null]);
             }
         }
         $payment_where = [
@@ -649,10 +650,10 @@ $prom_list = array();
             if (2 == $val['config_value']['is_bank']) {
                 $bankCodeList[$val['code']] = unserialize($val['bank_code']);
             }
-            $paymentList[$key]['icon'] = '/plugins/payment/'.$val['code'].'/logo.jpg';
+            $paymentList[$key]['icon'] = '/plugins/payment/' . $val['code'] . '/logo.jpg';
         }
 
-        $bank_img = include APP_PATH.'home/bank.php'; // 银行对应图片
+        $bank_img = include APP_PATH . 'home/bank.php'; // 银行对应图片
         $return['paymentList'] = $paymentList;
         $return['bank_img'] = $bank_img;
         $return['order'] = $order;
@@ -701,7 +702,7 @@ $prom_list = array();
         if ($pre_sell_info['act_count'] + $goods_num > $pre_sell_info['restrict_amount']) {
             $buy_num = $pre_sell_info['restrict_amount'] - $pre_sell_info['act_count'];
 
-            return json(['status' => 0, 'msg' => '预售商品库存不足，还剩下'.$buy_num.'件',  'result' => null]);
+            return json(['status' => 0, 'msg' => '预售商品库存不足，还剩下' . $buy_num . '件', 'result' => null]);
         }
         $goodsActivityLogic = new GoodsActivityLogic();
         $pre_count_info = $goodsActivityLogic->getPreCountInfo($pre_sell_info['act_id'], $pre_sell_info['goods_id']); //预售商品的订购数量和订单数量
@@ -782,12 +783,12 @@ $prom_list = array();
                 return json(['status' => 0, 'msg' => '请传递规格参数', 'result' => null]);
             }
             $goods_price = $goods['shop_price'];
-        //没有规格
+            //没有规格
         } else {
             //有规格
             $specGoodsPrice = SpecGoodsPrice::get(['item_id' => $item_id, 'goods_id' => $goods_id]);
             if ($goods_num > $specGoodsPrice['store_count']) {
-                return json(['status' => 0, 'msg' => '该商品规格库存不足，剩余'.$specGoodsPrice['store_count'].'份', 'result' => null]);
+                return json(['status' => 0, 'msg' => '该商品规格库存不足，剩余' . $specGoodsPrice['store_count'] . '份', 'result' => null]);
             }
             $goods_price = $specGoodsPrice['price'];
             $return['specGoodsPrice'] = $specGoodsPrice;
@@ -905,10 +906,10 @@ $prom_list = array();
             if (empty($info)) {
                 $data['user_id'] = $this->user_id;
                 (M('user_extend')->add($data)) ?
-                $status = 1 : $status = -1;
+                    $status = 1 : $status = -1;
             } else {
                 (M('user_extend')->where($map)->save($data)) ?
-                $status = 1 : $status = -1;
+                    $status = 1 : $status = -1;
             }
             $result = ['status' => $status, 'msg' => '', 'result' => ''];
 
