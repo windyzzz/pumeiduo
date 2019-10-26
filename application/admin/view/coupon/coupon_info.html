@@ -202,16 +202,6 @@
                     <p class="notic">订单需满足的最低消费金额(必需为整数)才能使用</p>
                 </dd>
             </dl>
-            <dl class="row" id="goods_num_row" style="display:<if condition='$coupon[use_type] eq 4'>;<else/>none;</if>">
-                <dt class="tit">
-                    <label><em>*</em>商品数量</label>
-                </dt>
-                <dd class="opt">
-                    <input type="text" id="goods_num" name="goods_num" value="{$coupon.goods_num}" onpaste="this.value=this.value.replace(/[^\d]/g,'')" onkeyup="this.value=this.value.replace(/[^\d]/g,'')" class="input-txt">
-                    <span class="err" id="err_goods_num"></span>
-                    <p class="notic">打折需要购买的数量</p>
-                </dd>
-            </dl>
             <dl class="row" id="discount_row" style="display:<if condition='$coupon[use_type] eq 4'>;<else/>none;</if>">>
                 <dt class="tit">
                     <label><em>*</em>折扣</label>
@@ -385,7 +375,6 @@
 
                 $('#money_row').show();
                 $('#condition_row').show();
-                $('#goods_num_row').hide();
                 $('#discount_row').hide();
                 break;
             case 1:
@@ -394,7 +383,6 @@
 
                 $('#money_row').show();
                 $('#condition_row').show();
-                $('#goods_num_row').hide();
                 $('#discount_row').hide();
                 break;
             case 2:
@@ -404,13 +392,11 @@
 
                 $('#money_row').show();
                 $('#condition_row').show();
-                $('#goods_num_row').hide();
                 $('#discount_row').hide();
                 break;
             case 4:
                 $('#money_row').hide();
                 $('#condition_row').hide();
-                $('#goods_num_row').show();
                 $('#discount_row').show();
                 break;
             case 5:
@@ -420,7 +406,6 @@
 
                 $('#money_row').hide();
                 $('#condition_row').hide();
-                $('#goods_num_row').hide();
                 $('#discount_row').hide();
                 break;
         }

@@ -221,6 +221,34 @@ class Goods extends Base
             // 用户浏览记录
             $goodsLogic->add_visit_log($this->user_id, $goods);
         }
+        // 判断商品性质
+        $flashSale = Db::name('flash_sale')->where(['goods_id' => $goods_id])
+            ->where(['is_end' => 0, 'end_time' => ['>=', time()]])->find();     // 秒杀商品
+        if (!empty($flashSale)) {
+            $goods['nature'] = [
+                'type' => 'flash_sale',
+                'price' => $flashSale['price'],
+                'limit_num' => $flashSale['goods_num'],
+                'start_time' => $flashSale['start_time'],
+                'end_time' => $flashSale['end_time']
+            ];
+        }
+        else {
+            $groupBuy = Db::name('group_buy')->where(['goods_id' => $goods_id])
+                ->where(['is_end' => 0, 'end_time' => ['>=', time()]])->find();     // 团购商品
+            if (!empty($groupBuy)) {
+                $goods['nature'] = [
+                    'type' => 'group_buy',
+                    'price' => $groupBuy['price'],
+                    'group_goods_num' => $groupBuy['group_goods_num'],
+                    'limit_num' => bcdiv($groupBuy['goods_num'], $groupBuy['group_goods_num']),
+                    'start_time' => $groupBuy['start_time'],
+                    'end_time' => $groupBuy['end_time']
+                ];
+            } else {
+                $goods['nature'] = [];
+            }
+        }
         // 处理商品详情（抽取图片）
         $contentArr = explode('public', $goods['goods_content']);
         $contentImgArr = [];
@@ -248,9 +276,13 @@ class Goods extends Base
         }
         $goods['goods_images_list'] = M('GoodsImages')->where('goods_id', $goods_id)->select(); //商品缩略图
         // 规格参数
-        $goods['spec'] = $goodsLogic->get_spec($goods_id);
+        $goods['spec'] = $goodsLogic->get_spec_new($goods_id);
         // 规格参数价格
-        $goods['spec_rice'] = $goodsLogic->get_spec_price($goods_id);
+        $goods['spec_price'] = $goodsLogic->get_spec_price($goods_id);
+        // 促销
+        $goods['promotion'] = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
+            ->where(['gtg.goods_id' => $goods_id, 'pg.is_end' => 0, 'pg.end_time' => ['>=', time()]])
+            ->field('pg.id prom_id, pg.type, pg.title')->select();    // 促销活动
         // 优惠券
         $couponLogic = new CouponLogic();
         $couponCurrency = $couponLogic->getCoupon(0);    // 通用优惠券
@@ -832,6 +864,9 @@ class Goods extends Base
         if (!empty($html)) {
             json(['status' => 1, 'msg' => 'success', 'result' => $html]);
         }
+
+        $promId = I('get.prom_id', null);
+
         $sort = I('get.sort', 'goods_id'); // 排序
         $sort_asc = I('get.sort_asc', 'asc'); // 排序
         $filter_param = []; // 筛选数组
@@ -845,9 +880,22 @@ class Goods extends Base
         //($goodsCate['level'] == 1) && header('Location:'.U('Home/Channel/index',array('cat_id'=>$id))); //一级分类跳转至大分类馆
         $cateArr = $goodsLogic->get_goods_cate($goodsCate);
         // 筛选 品牌 规格 属性 价格
-        $cat_id_arr = getCatGrandson($id);
-        $goods_where = ['is_on_sale' => 1, 'is_recommend' => 1, 'cat_id' => ['in', $cat_id_arr]];
-        $filter_goods_id = Db::name('goods')->where($goods_where)->cache(true)->getField('goods_id', true);
+//        $cat_id_arr = getCatGrandson($id);
+//        $goods_where = ['is_on_sale' => 1, 'is_recommend' => 1, 'cat_id' => ['in', $cat_id_arr]];
+//        $filter_goods_id = Db::name('goods')->where($goods_where)->cache(true)->getField('goods_id', true);
+        $where = [
+            'pg.is_end' => 0,
+            'pg.end_time' => ['>=', time()]
+        ];
+        if ($promId) {
+            $where['pg.id'] = $promId;
+            $return['prom_title'] = Db::name('prom_goods')->where(['id' => $promId])->value('title');
+        } else {
+            $return['prom_title'] = '';
+        }
+        $filter_goods_id = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
+            ->where($where)->getField('gtg.goods_id', true);
+        $filter_goods_id = array_unique($filter_goods_id);
 
         $count = count($filter_goods_id);
         $page = new Page($count, 20);

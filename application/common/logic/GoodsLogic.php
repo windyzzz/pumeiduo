@@ -283,6 +283,31 @@ class GoodsLogic extends Model
     }
 
     /**
+     * 获取商品规格（新）
+     * @param $goods_id
+     * @return array
+     */
+    public function get_spec_new($goods_id)
+    {
+        $keys =  Db::name('spec_goods_price')->where('goods_id', $goods_id)->getField("GROUP_CONCAT(`key` ORDER BY store_count desc SEPARATOR '_') ");;
+        $keys = array_unique(explode('_', $keys));
+        $specItem = Db::name('spec_item')->alias('si')->join('spec s', 's.id = si.spec_id')
+            ->where(['si.id' => ['in', $keys]])->field('si.id, si.item, si.spec_id, s.name')->select();
+        $specImage = M('SpecImage')->where(['goods_id' => $goods_id, 'src' => ['<>', '']])->getField('spec_image_id,src');
+        // 处理数据
+        $specData = [];
+        foreach ($specItem as $value) {
+            $specData[$value['spec_id']]['type'] = $value['name'];
+            $specData[$value['spec_id']]['type_value'][] = [
+                'item_id' => $value['id'],
+                'item' => $value['item'],
+                'src' => $specImage[$value['id']]
+            ];
+        }
+        return array_values($specData);
+    }
+
+    /**
      * 获取商品规格价格
      * @param $goods_id
      * @return mixed
@@ -896,10 +921,6 @@ class GoodsLogic extends Model
                 market_price, shop_price, cost_price, give_integral, exchange_integral, original_img, limit_buy_num, trade_type,
                 is_on_sale, is_free_shipping, is_recommend, is_new, is_hot')
             ->select();
-//        $filter_goods_id2 = get_arr_column($goods_list, 'goods_id');
-//        if ($filter_goods_id2) {
-//            $goods_images = M('goods_images')->where('goods_id', 'in', implode(',', $filter_goods_id2))->select();
-//        }
         // 用户收藏
         if ($userId) {
             $goodsCollect = $this->getCollectGoods($userId);
@@ -908,21 +929,24 @@ class GoodsLogic extends Model
         $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->select();
         // 秒杀商品
         $flashSale = Db::name('flash_sale')->where(['goods_id' => ['in', $filter_goods_id]])
-            ->where(['end_time' => ['>=', time()]])->where(['is_end' => 0])->field('goods_id')->select();
+            ->where(['is_end' => 0, 'end_time' => ['>=', time()]])->field('goods_id')->select();
         // 团购商品
         $groupBuy = Db::name('group_buy')->where(['goods_id' => ['in', $filter_goods_id]])
-            ->where(['end_time' => ['>=', time()]])->where(['is_end' => 0])->field('goods_id')->select();
+            ->where(['is_end' => 0, 'end_time' => ['>=', time()]])->field('goods_id')->select();
         // 促销商品
+        $promGoods = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
+            ->where(['gtg.goods_id' => ['in', $filter_goods_id], 'pg.is_end' => 0, 'pg.end_time' => ['>=', time()]])
+            ->field('pg.title, gtg.goods_id')->select();    // 促销活动
         $couponLogic = new CouponLogic();
-        $coupon = $couponLogic->getCoupon(0);    // 通用优惠券
+        $couponCurrency = $couponLogic->getCoupon(0);    // 通用优惠券
+        $couponGoods = [];
+        $couponCate = [];
         if (empty($coupon)) {
-            $coupon = $couponLogic->getCoupon(null, $filter_goods_id);    // 指定商品优惠券
-            if (empty($coupon)) {
-                $filter_cat_id = Db::name('goods')->where(['goods_id' => ['in', $filter_goods_id]])->getField('cat_id', true);
-                $coupon = $couponLogic->getCoupon(null, '', $filter_cat_id, null);    // 指定分类优惠券
-            }
+            $couponGoods = $couponLogic->getCoupon(null, $filter_goods_id);    // 指定商品优惠券
+            $filter_cat_id = Db::name('goods')->where(['goods_id' => ['in', $filter_goods_id]])->getField('cat_id', true);
+            $couponCate = $couponLogic->getCoupon(null, '', $filter_cat_id, null);    // 指定分类优惠券
         }
-
+        $promGoods = array_merge_recursive($promGoods, $couponCurrency, $couponGoods, $couponCate);
         // 循环处理数据
         foreach ($goods_list as $k => $v) {
             // 是否收藏
@@ -972,14 +996,29 @@ class GoodsLogic extends Model
                 }
             }
             // 第二类，促销类
-            if (!empty($coupon)) {
-                foreach ($coupon as $value) {
-                    if ($value['use_type'] == 0) {
-                        $goods_list[$k]['tags'][] = ['type' => 'promotion', 'title' => $value['name']];
-                        break;
-                    } elseif ($v['goods_id'] == $value['goods_id']) {
-                        $goods_list[$k]['tags'][] = ['type' => 'promotion', 'title' => $value['title']];
-                        break;
+            if (!empty($promGoods)) {
+                foreach ($promGoods as $value) {
+                    if (!isset($value['use_type'])) {
+                        // 促销活动类
+                        if ($v['goods_id'] == $value['goods_id']) {
+                            $goods_list[$k]['tags'][] = ['type' => 'promotion', 'title' => $value['title']];
+                            break;
+                        }
+                    } else {
+                        // 优惠券类
+                        if ($value['use_type'] == 0) {
+                            // 通用券
+                            $goods_list[$k]['tags'][] = ['type' => 'promotion', 'title' => $value['name']];
+                            break;
+                        } elseif ($v['goods_id'] == $value['goods_id']) {
+                            // 指定商品
+                            $goods_list[$k]['tags'][] = ['type' => 'promotion', 'title' => $value['name']];
+                            break;
+                        } elseif ($v['cat_id'] == $value['cat_id']) {
+                            // 指定分类
+                            $goods_list[$k]['tags'][] = ['type' => 'promotion', 'title' => $value['name']];
+                            break;
+                        }
                     }
                 }
             }

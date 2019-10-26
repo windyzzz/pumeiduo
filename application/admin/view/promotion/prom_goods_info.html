@@ -81,6 +81,7 @@
                         <option value="1" <if condition="$info[type] eq 1">selected</if>>减价优惠</option>
                         <!--<option value="2" <if condition="$info[type] eq 2">selected</if>>固定金额出售</option>
                         <option value="3" <if condition="$info[type] eq 3">selected</if>>买就赠代金券</option>-->
+                        <option value="4" <if condition="$info[type] eq 4">selected</if>>满打折</option>
                     </select>
                     <p class="notic">促销活动类型</p>
                 </dd>
@@ -115,14 +116,13 @@
             </dl>
 
             <dl class="row">
-            <dt class="tit">适合用户范围</dt>
-            <dd class="opt">
-                <volist name="level" id="vo">
-                    <input type="checkbox" name="group[]" value="{$vo['level_id']}" <if condition="in_array($vo['level_id'],$info['group'])">checked</if> /> {$vo['level_name']}
-                </volist>
-
-                <p class="notic">最右侧“VIP会员”为原来“优选店长”级别。</p>
-            </dd>
+                <dt class="tit">适合用户范围</dt>
+                <dd class="opt">
+                    <volist name="level" id="vo">
+                        <input type="checkbox" name="group[]" value="{$vo['level_id']}" <if condition="in_array($vo['level_id'],$info['group'])">checked</if> /> {$vo['level_name']}
+                    </volist>
+                    <p class="notic">最右侧“VIP会员”为原来“优选店长”级别。</p>
+                </dd>
             </dl>
             <dl class="row">
                 <dt class="tit">
@@ -153,7 +153,7 @@
                                 <i id="img_i" class="fa fa-picture-o" onmouseover="layer.tips('<img src={$info.prom_img}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();"></i>
                             </a>
                         </span>
-           	            <span class="type-file-box">
+                        <span class="type-file-box">
                             <input type="text" id="prom_img" name="prom_img" value="{$info.prom_img}" class="type-file-text">
                             <input type="button" name="button" id="button1" value="选择上传..." class="type-file-button">
                             <input class="type-file-file" onClick="GetUploadify(1,'','activity','img_call_back')" size="30" hidefocus="true" nc_type="change_site_logo" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">
@@ -272,22 +272,22 @@
                     //有规格
                     $.each(item.spec, function (i, o) {
                         html += '<div style="float: left;margin-right: 20px"><div class="ys-btn-close" style="top: 15px;left: 172px;">×</div>' +
-                                '<input type="hidden" name="goods[' + item.goods_id + '][goods_id]" value="' + item.goods_id + '"/>' +
-                                '<input type="hidden" name="goods[' + item.goods_id + '][item_id][' + i + ']" value="' + o.item_id + '"/>' +
-                                '<div class="selected-group-goods"><div class="goods-thumb">' +
-                                '<img style="width: 162px;height: 162px" src="' + o.spec_img + '"/></div> <div class="goods-name"> ' +
-                                '<a target="_blank" href="/index.php?m=Home&c=Goods&a=goodsInfo&id=' + item.goods_id + '">' + item.goods_name + o.key_name + '</a> </div>' +
-                                '<input type="hidden" name="store_count[]" value="'+o.store_count+'"/>' +
-                                ' <div class="goods-price">商城价：￥' + o.price + '库存:' + o.store_count + '</div> </div></div>';
+                            '<input type="hidden" name="goods[' + item.goods_id + '][goods_id]" value="' + item.goods_id + '"/>' +
+                            '<input type="hidden" name="goods[' + item.goods_id + '][item_id][' + i + ']" value="' + o.item_id + '"/>' +
+                            '<div class="selected-group-goods"><div class="goods-thumb">' +
+                            '<img style="width: 162px;height: 162px" src="' + o.spec_img + '"/></div> <div class="goods-name"> ' +
+                            '<a target="_blank" href="/index.php?m=Home&c=Goods&a=goodsInfo&id=' + item.goods_id + '">' + item.goods_name + o.key_name + '</a> </div>' +
+                            '<input type="hidden" name="store_count[]" value="'+o.store_count+'"/>' +
+                            ' <div class="goods-price">商城价：￥' + o.price + '库存:' + o.store_count + '</div> </div></div>';
                     });
                 } else {
                     html += '<div style="float: left;margin-right: 20px"><div class="ys-btn-close" style="top: 15px;left: 172px;">×</div>' +
-                            '<input type="hidden" name="goods[' + item.goods_id + '][goods_id]" value="' + item.goods_id + '"/>' +
-                            '<div class="selected-group-goods"><div class="goods-thumb">' +
-                            '<img style="width: 162px;height: 162px" src="' + item.goods_image + '"/></div> <div class="goods-name"> ' +
-                            '<a target="_blank" href="/index.php?m=Home&c=Goods&a=goodsInfo&id=' + item.goods_id + '">' + item.goods_name + '</a> </div>' +
-                            '<input type="hidden" name="store_count[]" value="'+item.store_count+'"/>' +
-                            ' <div class="goods-price">商城价：￥' + item.goods_price + '库存:' + item.store_count + '</div> </div></div>';
+                        '<input type="hidden" name="goods[' + item.goods_id + '][goods_id]" value="' + item.goods_id + '"/>' +
+                        '<div class="selected-group-goods"><div class="goods-thumb">' +
+                        '<img style="width: 162px;height: 162px" src="' + item.goods_image + '"/></div> <div class="goods-name"> ' +
+                        '<a target="_blank" href="/index.php?m=Home&c=Goods&a=goodsInfo&id=' + item.goods_id + '">' + item.goods_name + '</a> </div>' +
+                        '<input type="hidden" name="store_count[]" value="'+item.store_count+'"/>' +
+                        ' <div class="goods-price">商城价：￥' + item.goods_price + '库存:' + item.store_count + '</div> </div></div>';
                 }
             }
         });
@@ -334,32 +334,32 @@
         switch(type){
             case 0:{
                 expression = '<dt class="tit"><label><em>*</em>折扣</label></dt>'
-                        + '<dd class="opt"><input type="text" name="expression" pattern="^\\d+$" value="" class="input-txt">'
-                        + '<span class="err" id="err_expression"></span><p class="notic">% 折扣值(1-100 如果打9折，请输入90)</p></dd>';
+                    + '<dd class="opt"><input type="text" name="expression" pattern="^\\d+$" value="" class="input-txt">'
+                    + '<span class="err" id="err_expression"></span><p class="notic">% 折扣值(1-100 如果打9折，请输入90)</p></dd>';
                 break;
             }
             case 1:{
                 expression = '<dt class="tit"><label><em>*</em>立减金额</label></dt>'
-                        + '<dd class="opt"><input type="text" name="expression" pattern="^\\d+(\\.\\d+)?$" value="" class="input-txt">'
-                        + '<span class="err" id="err_expression"></span><p class="notic">立减金额（元）</p></dd>';
+                    + '<dd class="opt"><input type="text" name="expression" pattern="^\\d+(\\.\\d+)?$" value="" class="input-txt">'
+                    + '<span class="err" id="err_expression"></span><p class="notic">立减金额（元）</p></dd>';
                 break;
             }
             case 2:{
                 expression = '<dt class="tit"><label><em>*</em>出售金额</label></dt>'
-                        + '<dd class="opt"><input type="text" name="expression" pattern="^\\d+(\\.\\d+)?$" value="" class="input-txt">'
-                        + '<span class="err" id="err_expression"></span><p class="notic">出售金额（元）</p></dd>';
+                    + '<dd class="opt"><input type="text" name="expression" pattern="^\\d+(\\.\\d+)?$" value="" class="input-txt">'
+                    + '<span class="err" id="err_expression"></span><p class="notic">出售金额（元）</p></dd>';
                 break;
             }
             case 3:{
                 expression = '<dt class="tit"><label><em>*</em>代金券</label></dt><dd class="opt"><select name="expression"><option value="0">请选择</option>'
-                        + '<foreach name="coupon_list" item="v"><option value="{$v.id}" <if condition="$v[id] eq $info[expression]">selected</if>>{$v.name}</option></foreach></select>'
-                        + '<span class="err" id="err_expression"></span><p class="notic">请选择代金券</p></dd>';
+                    + '<foreach name="coupon_list" item="v"><option value="{$v.id}" <if condition="$v[id] eq $info[expression]">selected</if>>{$v.name}</option></foreach></select>'
+                    + '<span class="err" id="err_expression"></span><p class="notic">请选择代金券</p></dd>';
                 break;
             }
             case 4:{
                 expression = '<dt class="tit"><label><em>*</em>满N打M折</label></dt>'
-                        + '<dd class="opt"><input type="text" name="expression" pattern="\\d+\/\\d+" value="" class="input-txt">'
-                        + '<span class="err" id="err_expression"></span><p class="notic">满几件打几折（如满2件打7折: 2/7）</p></dd>';
+                    + '<dd class="opt"><input type="text" name="expression" pattern="\\d+\/\\d+" value="" class="input-txt">'
+                    + '<span class="err" id="err_expression"></span><p class="notic">满几件打几折（如满2件打7折: 2/7）</p></dd>';
                 break;
             }
         }
@@ -370,6 +370,9 @@
         $("#prom_type").trigger('change');
         var prom_type = parseInt($("#prom_type").val());
         switch (prom_type) {
+            case 4: // 满打折
+                $('input[name=expression]').val("{$info.goods_num}/{$info.expression}");
+                break;
             default:
                 $('input[name=expression]').val("{$info.expression}");
         }

@@ -459,7 +459,7 @@ class CouponLogic extends Model
         }
         if ($catId) {
             // 指定分类可用
-            if (is_array($goodsId)) {
+            if (is_array($catId)) {
                 $where['gc.goods_category_id'] = ['in', $catId];
             } else {
                 $where['gc.goods_category_id'] = $catId;
@@ -470,7 +470,7 @@ class CouponLogic extends Model
         }
         $coupon = Db::name('coupon')->alias('c')->join('goods_coupon gc', 'gc.coupon_id = c.id', 'LEFT')
             ->where($where)->where(['c.status' => 1, 'c.use_end_time' => ['>=', time()]])
-            ->field('c.id coupon_id, c.name, FROM_UNIXTIME(c.use_start_time,"%Y-%m-%d") as use_start_time, FROM_UNIXTIME(c.use_end_time,"%Y-%m-%d") as use_end_time, c.use_type, gc.goods_id')->select();
+            ->field('c.id coupon_id, c.name, FROM_UNIXTIME(c.use_start_time,"%Y-%m-%d") as use_start_time, FROM_UNIXTIME(c.use_end_time,"%Y-%m-%d") as use_end_time, c.use_type, gc.goods_id, gc.goods_category_id cat_id')->select();
         return $coupon;
     }
 }

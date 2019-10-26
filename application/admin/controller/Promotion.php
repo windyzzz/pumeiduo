@@ -38,11 +38,11 @@ class Promotion extends Base
      */
     public function gift2()
     {
-        $Gift= new Gift2();
+        $Gift = new Gift2();
         $count = $Gift->where('')->count();
         $Page = new Page($count, 10);
         $prom_list = $Gift->where('')->limit($Page->firstRow . ',' . $Page->listRows)->select();
-        $this->assign('page',$Page);
+        $this->assign('page', $Page);
         $this->assign('prom_list', $prom_list);
         return $this->fetch();
     }
@@ -52,34 +52,34 @@ class Promotion extends Base
     {
 
         $prom_id = I('id');
-        $info = M('gift2')->where(array('id'=>$prom_id))->find();
+        $info = M('gift2')->where(array('id' => $prom_id))->find();
 
         if ($prom_id > 0) {
 
-            $GoodsTao = M('gift2_goods')->where(array('promo_id'=>$prom_id))->group('goods_id,item_id')->select();
+            $GoodsTao = M('gift2_goods')->where(array('promo_id' => $prom_id))->group('goods_id,item_id')->select();
 
-            foreach($GoodsTao as $k=>$v){
-                $prom_goods[$k] = M('Goods')->where('goods_id='.$v['goods_id'])->find();
+            foreach ($GoodsTao as $k => $v) {
+                $prom_goods[$k] = M('Goods')->where('goods_id=' . $v['goods_id'])->find();
                 $prom_goods[$k]['stock'] = $v['stock'];
-                if($v['item_id']){
+                if ($v['item_id']) {
                     $prom_goods[$k]['SpecGoodsPrice'] = M('SpecGoodsPrice')->where(['item_id' => $v['item_id']])->find();
                 }
             }
             $this->assign('prom_goods', $prom_goods);
 
-            $GoodsTao = M('gift2_goods')->where(array('promo_id'=>$prom_id))->group('buy_goods_id,buy_item_id')->select();
-            foreach($GoodsTao as $k=>$v){
-                $buy_goods[$k] = M('Goods')->where('goods_id='.$v['buy_goods_id'])->find();
+            $GoodsTao = M('gift2_goods')->where(array('promo_id' => $prom_id))->group('buy_goods_id,buy_item_id')->select();
+            foreach ($GoodsTao as $k => $v) {
+                $buy_goods[$k] = M('Goods')->where('goods_id=' . $v['buy_goods_id'])->find();
                 $buy_goods[$k]['stock'] = $v['buy_stock'];
-                if($v['buy_item_id']){
+                if ($v['buy_item_id']) {
                     $buy_goods[$k]['SpecGoodsPrice'] = M('SpecGoodsPrice')->where(['item_id' => $v['buy_item_id']])->find();
                 }
             }
             $this->assign('buy_goods', $buy_goods);
 
-            $info['start_time'] = date('Y-m-d',$info['start_time']);
-            $info['end_time'] = date('Y-m-d',$info['end_time']);
-        }else{
+            $info['start_time'] = date('Y-m-d', $info['start_time']);
+            $info['end_time'] = date('Y-m-d', $info['end_time']);
+        } else {
             $info['start_time'] = date('Y-m-d');
             $info['end_time'] = date('Y-m-d', time() + 3600 * 60 * 24);
         }
@@ -119,32 +119,32 @@ class Promotion extends Base
         }
 
 
-        M('gift2_goods')->where(array('promo_id'=>$last_id))->delete();
+        M('gift2_goods')->where(array('promo_id' => $last_id))->delete();
         $buyGoods = $data['goods2'];
         $promGoods = $data['goods'];
 
-        if($buyGoods){
-            foreach($buyGoods as $k=>$v){
-                if($promGoods){
-                    $vval = explode('_',$k);
+        if ($buyGoods) {
+            foreach ($buyGoods as $k => $v) {
+                if ($promGoods) {
+                    $vval = explode('_', $k);
                     foreach ($promGoods as $goodsKey => $goodsVal) {
-                        $dfd = explode('_',$goodsKey);
+                        $dfd = explode('_', $goodsKey);
                         $tao_goods = array(
-                            'buy_goods_id'=>$vval[0],
-                            'buy_item_id'=>$vval[1],
-                            'buy_stock'=>$v['stock'],
+                            'buy_goods_id' => $vval[0],
+                            'buy_item_id' => $vval[1],
+                            'buy_stock' => $v['stock'],
 
-                            'goods_id'=>$dfd[0],
-                            'item_id'=>$dfd[1],
-                            'promo_id'=>$last_id,
-                            'stock'=>$goodsVal['stock']
+                            'goods_id' => $dfd[0],
+                            'item_id' => $dfd[1],
+                            'promo_id' => $last_id,
+                            'stock' => $goodsVal['stock']
                         );
                         M('gift2_goods')->data($tao_goods)->add();
                     }
                 }
             }
         }
-        $this->ajaxReturn(['status'=>1,'msg'=>'编辑促销活动成功','result']);
+        $this->ajaxReturn(['status' => 1, 'msg' => '编辑促销活动成功', 'result']);
     }
 
     public function gift2_del()
@@ -164,8 +164,8 @@ class Promotion extends Base
             ->alias('oi')
             ->join('__ORDER_GOODS__ og', 'og.order_id=oi.order_id', 'LEFT')
             ->where([
-                'oi.order_status' => ['in',[0,1,2,4,6]],
-                'oi.pay_status' => ['egt',1],
+                'oi.order_status' => ['in', [0, 1, 2, 4, 6]],
+                'oi.pay_status' => ['egt', 1],
                 'og.prom_type' => 1,
                 'og.prom_id' => $id,
             ])
@@ -179,7 +179,7 @@ class Promotion extends Base
             '3' => '已退货',
         ];
 
-        return view('', compact('detail','is_send_desc'));
+        return view('', compact('detail', 'is_send_desc'));
     }
 
     public function index()
@@ -226,9 +226,9 @@ class Promotion extends Base
 
         $info['type'] = 0 != $info && $info['cat_id'] ? 1 : 0;
 
-        $info['category'] = $info && $info['cat_id'] ?explode(',', $info['cat_id']):array();
-        $info['category2'] = $info && $info['cat_id'] ?explode(',', $info['cat_id_2']):array();
-        $info['category3'] = $info && $info['cat_id'] ?explode(',', $info['cat_id_3']):array();
+        $info['category'] = $info && $info['cat_id'] ? explode(',', $info['cat_id']) : array();
+        $info['category2'] = $info && $info['cat_id'] ? explode(',', $info['cat_id_2']) : array();
+        $info['category3'] = $info && $info['cat_id'] ? explode(',', $info['cat_id_3']) : array();
 
         $cat_list = Db::name('goods_category')->where('parent_id = 0')->select();
         $this->assign('cat_list', $cat_list);
@@ -290,7 +290,7 @@ class Promotion extends Base
         $result = $this->service->giftUpdate($data);
 
         if (!$result) {
-            return json(['status' => 0, 'msg' => '编辑赠品活动失败.错误信息:'.$this->service->error, 'result' => null]);
+            return json(['status' => 0, 'msg' => '编辑赠品活动失败.错误信息:' . $this->service->error, 'result' => null]);
         }
 
         return json(['status' => 1, 'msg' => '编辑赠品活动成功.', 'result' => null]);
@@ -322,7 +322,7 @@ class Promotion extends Base
         $PromGoods = new PromGoods();
         $count = $PromGoods->count();
         $Page = new Page($count, 10);
-        $prom_list = $PromGoods->order('start_time desc')->limit($Page->firstRow.','.$Page->listRows)->select();
+        $prom_list = $PromGoods->order('start_time desc')->limit($Page->firstRow . ',' . $Page->listRows)->select();
         $this->assign('page', $Page);
         $this->assign('prom_list', $prom_list);
 
@@ -334,24 +334,24 @@ class Promotion extends Base
         $level = M('distribut_level')->select();
         $this->assign('level', $level);
         $prom_id = I('id');
-        $info = M('prom_goods')->where(array('id'=>$prom_id))->find();
+        $info = M('prom_goods')->where(array('id' => $prom_id))->find();
 
         if ($prom_id > 0) {
 
-            $GoodsTao = M('GoodsTaoGrade')->where(array('promo_id'=>$prom_id))->select();
+            $GoodsTao = M('GoodsTaoGrade')->where(array('promo_id' => $prom_id))->select();
 
-            foreach($GoodsTao as $k=>$v){
-                $prom_goods[$k] = M('Goods')->where('goods_id='.$v['goods_id'])->find();
+            foreach ($GoodsTao as $k => $v) {
+                $prom_goods[$k] = M('Goods')->where('goods_id=' . $v['goods_id'])->find();
                 $prom_goods[$k]['stock'] = $v['stock'];
-                if($v['item_id']){
+                if ($v['item_id']) {
                     $prom_goods[$k]['SpecGoodsPrice'] = M('SpecGoodsPrice')->where(['item_id' => $v['item_id']])->find();
                 }
             }
             $this->assign('prom_goods', $prom_goods);
-            $info['start_time'] = date('Y-m-d',$info['start_time']);
-            $info['end_time'] = date('Y-m-d',$info['end_time']);
-            $info['group'] = array_filter(explode(',',$info['group']));
-        }else{
+            $info['start_time'] = date('Y-m-d', $info['start_time']);
+            $info['end_time'] = date('Y-m-d', $info['end_time']);
+            $info['group'] = array_filter(explode(',', $info['group']));
+        } else {
             $info['start_time'] = date('Y-m-d');
             $info['end_time'] = date('Y-m-d', time() + 3600 * 60 * 24);
             $info['group'] = array();
@@ -386,7 +386,14 @@ class Promotion extends Base
         $data['start_time'] = strtotime($data['start_time']);
         $data['end_time'] = strtotime($data['end_time']);
 
-        $data['group'] = ','.implode(',',$data['group']).',';
+        switch ($data['type']) {
+            case 4: // 满打折
+                $data['goods_num'] = explode('/', $data['expression'])[0];
+                $data['expression'] = explode('/', $data['expression'])[1];
+                break;
+        }
+
+        $data['group'] = implode(',', $data['group']);
 
         if ($prom_id) {
             M('prom_goods')->where(['id' => $prom_id])->save($data);
@@ -398,25 +405,25 @@ class Promotion extends Base
         }
 
 
-        M('goods_tao_grade')->where(array('promo_id'=>$last_id))->delete();
+        M('goods_tao_grade')->where(array('promo_id' => $last_id))->delete();
         $promGoods = $data['goods'];
         $tao_goods = array();
-        if($promGoods){
+        if ($promGoods) {
 
             foreach ($promGoods as $goodsKey => $goodsVal) {
-                $dfd = explode('_',$goodsKey);
+                $dfd = explode('_', $goodsKey);
                 $tao_goods = array(
-                    'goods_id'=>$dfd[0],
-                    'item_id'=>0,
-                    'promo_id'=>$last_id,
-                    'stock'=>1
+                    'goods_id' => $dfd[0],
+                    'item_id' => 0,
+                    'promo_id' => $last_id,
+                    'stock' => 1
                 );
 
                 M('goods_tao_grade')->data($tao_goods)->add();
             }
 
         }
-        $this->ajaxReturn(['status'=>1,'msg'=>'编辑促销活动成功','result']);
+        $this->ajaxReturn(['status' => 1, 'msg' => '编辑促销活动成功', 'result']);
     }
 
     public function prom_goods_del()
@@ -447,7 +454,7 @@ class Promotion extends Base
         $count = M('prom_order')->count();
         $Page = new Page($count, 10);
         $show = $Page->show();
-        $prom_list = M('prom_order')->limit($Page->firstRow.','.$Page->listRows)->select();
+        $prom_list = M('prom_order')->limit($Page->firstRow . ',' . $Page->listRows)->select();
 //        if ($res) {  //获得适用范围（用户等级）
 //            foreach ($res as $val) {
 //                if (!empty($val['group']) && !empty($lv)) {
@@ -496,10 +503,10 @@ class Promotion extends Base
         $data['group'] = $data['group'] ? implode(',', $data['group']) : '';
         if ($prom_id) {
             M('prom_order')->where("id=$prom_id")->save($data);
-            adminLog('管理员修改了商品促销 '.I('name'));
+            adminLog('管理员修改了商品促销 ' . I('name'));
         } else {
             M('prom_order')->add($data);
-            adminLog('管理员添加了商品促销 '.I('name'));
+            adminLog('管理员添加了商品促销 ' . I('name'));
         }
         $this->success('编辑促销活动成功', U('Promotion/prom_order_list'));
     }
@@ -521,7 +528,7 @@ class Promotion extends Base
         $GroupBuy = new GroupBuy();
         $count = $GroupBuy->where('')->count();
         $Page = new Page($count, 10);
-        $list = $GroupBuy->where('')->order('id desc')->limit($Page->firstRow.','.$Page->listRows)->select();
+        $list = $GroupBuy->where('')->order('id desc')->limit($Page->firstRow . ',' . $Page->listRows)->select();
         $this->assign('list', $list);
         $this->assign('page', $Page);
 
@@ -649,7 +656,7 @@ class Promotion extends Base
         $prom_where = ['prom_id' => $prom_id, 'prom_type' => 3];
         $count = $Goods->where($prom_where)->count('goods_id');
         $Page = new Page($count, 10);
-        $goodsList = $Goods->with('specGoodsPrice')->where($prom_where)->order('goods_id DESC')->limit($Page->firstRow.','.$Page->listRows)->select();
+        $goodsList = $Goods->with('specGoodsPrice')->where($prom_where)->order('goods_id DESC')->limit($Page->firstRow . ',' . $Page->listRows)->select();
         $show = $Page->show();
         $this->assign('page', $show);
         $this->assign('goodsList', $goodsList);
@@ -666,7 +673,7 @@ class Promotion extends Base
         $keywords = input('keywords');
         $prom_id = input('prom_id');
         $tpl = input('tpl', 'search_goods');
-        $where = ['is_on_sale' => 1, 'store_count' => ['gt', 0], 'is_virtual' => 0,'is_area_show'=>1];
+        $where = ['store_count' => ['gt', 0], 'is_virtual' => 0, 'is_area_show' => 1];
         $prom_type = input('prom_type/d');
         if ($goods_id) {
             $where['goods_id'] = ['notin', trim($goods_id, ',')];
@@ -682,7 +689,7 @@ class Promotion extends Base
             $where['brand_id'] = $brand_id;
         }
         if ($keywords) {
-            $where['goods_name|keywords'] = ['like', '%'.$keywords.'%'];
+            $where['goods_name|keywords'] = ['like', '%' . $keywords . '%'];
         }
         $Goods = new Goods();
         $count = $Goods->where($where)->where(function ($query) use ($prom_type, $prom_id) {
@@ -715,11 +722,11 @@ class Promotion extends Base
             } else {
                 $query->where('prom_type', 0);
             }
-        })->order('goods_id DESC')->limit($Page->firstRow.','.$Page->listRows)->select();
+        })->order('goods_id DESC')->limit($Page->firstRow . ',' . $Page->listRows)->select();
 
 
-        $types = I('types',1);
-        $this->assign('types',$types);
+        $types = I('types', 1);
+        $this->assign('types', $types);
 
         $GoodsLogic = new GoodsLogic();
         $brandList = $GoodsLogic->getSortBrands();
@@ -740,7 +747,7 @@ class Promotion extends Base
         $count = $FlashSale->where($condition)->count();
         $Page = new Page($count, 10);
         $show = $Page->show();
-        $prom_list = $FlashSale->append(['status_desc'])->where($condition)->order('id desc')->limit($Page->firstRow.','.$Page->listRows)->select();
+        $prom_list = $FlashSale->append(['status_desc'])->where($condition)->order('id desc')->limit($Page->firstRow . ',' . $Page->listRows)->select();
         $this->assign('prom_list', $prom_list);
         $this->assign('page', $show); // 赋值分页输出
         $this->assign('pager', $Page);
@@ -769,14 +776,14 @@ class Promotion extends Base
                 } else {
                     Db::name('goods')->where('goods_id', $data['goods_id'])->save(['prom_id' => $flashSaleInsertId, 'prom_type' => 1]);
                 }
-                adminLog('管理员添加抢购活动 '.$data['name']);
+                adminLog('管理员添加抢购活动 ' . $data['name']);
                 if (false !== $flashSaleInsertId) {
                     $this->ajaxReturn(['status' => 1, 'msg' => '添加抢购活动成功', 'result' => '']);
                 } else {
                     $this->ajaxReturn(['status' => 0, 'msg' => '添加抢购活动失败', 'result' => '']);
                 }
             } else {
-                $r = M('flash_sale')->where('id='.$data['id'])->save($data);
+                $r = M('flash_sale')->where('id=' . $data['id'])->save($data);
                 M('goods')->where(['prom_type' => 1, 'prom_id' => $data['id']])->save(['prom_id' => 0, 'prom_type' => 0]);
                 if ($data['item_id'] > 0) {
                     //设置商品一种规格为活动
@@ -800,7 +807,7 @@ class Promotion extends Base
         } else {
             $flash_now_time = $now_time - 1;
         }
-        $flash_sale_time = strtotime(date('Y-m-d').' '.$flash_now_time.':00:00');
+        $flash_sale_time = strtotime(date('Y-m-d') . ' ' . $flash_now_time . ':00:00');
         $info['start_time'] = date('Y-m-d H:i:s', $flash_sale_time);
         $info['end_time'] = date('Y-m-d H:i:s', $flash_sale_time + 7200);
         if ($id > 0) {
