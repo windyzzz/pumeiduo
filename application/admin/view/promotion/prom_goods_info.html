@@ -82,6 +82,7 @@
                         <!--<option value="2" <if condition="$info[type] eq 2">selected</if>>固定金额出售</option>
                         <option value="3" <if condition="$info[type] eq 3">selected</if>>买就赠代金券</option>-->
                         <option value="4" <if condition="$info[type] eq 4">selected</if>>满打折</option>
+                        <option value="5" <if condition="$info[type] eq 5">selected</if>>满减价</option>
                     </select>
                     <p class="notic">促销活动类型</p>
                 </dd>
@@ -362,6 +363,12 @@
                     + '<span class="err" id="err_expression"></span><p class="notic">满几件打几折（如满2件打7折: 2/7）</p></dd>';
                 break;
             }
+            case 5:{
+                    expression = '<dt class="tit"><label><em>*</em>满N优惠M</label></dt>'
+                        + '<dd class="opt"><input type="text" name="expression" pattern="\\d+\/\\d+" value="" class="input-txt">'
+                        + '<span class="err" id="err_expression"></span><p class="notic">满N优惠M（如满100减10: 100/10）</p></dd>';
+                    break;
+            }
         }
         $("#expression").html(expression);
     });
@@ -372,6 +379,9 @@
         switch (prom_type) {
             case 4: // 满打折
                 $('input[name=expression]').val("{$info.goods_num}/{$info.expression}");
+                break;
+            case 5: // 满减价
+                $('input[name=expression]').val("{$info.goods_price}/{$info.expression}");
                 break;
             default:
                 $('input[name=expression]').val("{$info.expression}");

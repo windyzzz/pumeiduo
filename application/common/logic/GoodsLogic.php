@@ -935,7 +935,7 @@ class GoodsLogic extends Model
             ->where(['is_end' => 0, 'end_time' => ['>=', time()]])->field('goods_id')->select();
         // 促销商品
         $promGoods = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
-            ->where(['gtg.goods_id' => ['in', $filter_goods_id], 'pg.is_end' => 0, 'pg.end_time' => ['>=', time()]])
+            ->where(['gtg.goods_id' => ['in', $filter_goods_id], 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
             ->field('pg.title, gtg.goods_id')->select();    // 促销活动
         $couponLogic = new CouponLogic();
         $couponCurrency = $couponLogic->getCoupon(0);    // 通用优惠券

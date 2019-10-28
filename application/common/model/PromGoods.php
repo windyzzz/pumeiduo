@@ -27,6 +27,12 @@ class PromGoods extends Model
             case 3:
                 $title = '买就送优惠券';
                 break;
+            case 4:
+                $title = '满' . $data['goods_num'] . '打' . $data['expression'] . '折';
+                break;
+            case 5:
+                $title = '满' . $data['goods_price'] . '减' . $data['expression'] . '元';
+                break;
             default:
                 $discount = $data['expression'] / 10;
                 $title = $discount.'折';
@@ -37,7 +43,7 @@ class PromGoods extends Model
 
     public function getPromDescAttr($value, $data)
     {
-        $parse_type = ['0' => '直接打折', '1' => '减价优惠', '2' => '固定金额出售', '3' => '买就赠优惠券', '4' => '满打折'];
+        $parse_type = ['0' => '直接打折', '1' => '减价优惠', '2' => '固定金额出售', '3' => '买就赠优惠券', '4' => '满打折', '5' => '满减价'];
 
         return $parse_type[$data['type']];
     }

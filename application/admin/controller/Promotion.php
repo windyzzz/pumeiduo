@@ -391,9 +391,17 @@ class Promotion extends Base
                 $data['goods_num'] = explode('/', $data['expression'])[0];
                 $data['expression'] = explode('/', $data['expression'])[1];
                 break;
+            case 5: // 满减价
+                $data['goods_price'] = explode('/', $data['expression'])[0];
+                $data['expression'] = explode('/', $data['expression'])[1];
+                break;
         }
 
-        $data['group'] = implode(',', $data['group']);
+        if ($data['group']) {
+            $data['group'] = implode(',', $data['group']);
+        } else {
+            $data['group'] = 1;
+        }
 
         if ($prom_id) {
             M('prom_goods')->where(['id' => $prom_id])->save($data);

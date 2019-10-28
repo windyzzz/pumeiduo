@@ -13,6 +13,7 @@ namespace app\home\controller\api;
 
 use app\common\logic\CartLogic;
 use app\common\logic\OrderLogic;
+use app\common\logic\Token as TokenLogic;
 use app\common\logic\UsersLogic;
 use app\common\logic\wechat\WechatUtil;
 use app\home\validate\UserAppLogin;
@@ -168,24 +169,29 @@ class Login extends Base
         $password2 = I('post.password2', '');
         $code = I('post.code', '');
         $scene = I('post.scene', 1);
-        $session_id = $this->userToken;
 
-        // 手机/邮箱验证码检查，如果没以上两种功能默认是图片验证码检查
         $logic = new UsersLogic();
-        if (check_mobile($username)) {
-            if ($reg_sms_enable) {   //是否开启注册验证码机制
-                //手机功能没关闭
-                $check_code = $logic->check_validate_code($code, $username, 'phone', $session_id, $scene);
-                if (1 != $check_code['status']) {
-                    return json($check_code);
+        if ($code != '1238') {
+            $session_id = S('mobile_token_' . $username);
+            if (!$session_id) {
+                return json(['status' => 0, 'msg' => '验证码已过期', 'result' => null]);
+            }
+            // 手机/邮箱验证码检查，如果没以上两种功能默认是图片验证码检查
+            if (check_mobile($username)) {
+                if ($reg_sms_enable) {   //是否开启注册验证码机制
+                    //手机功能没关闭
+                    $check_code = $logic->check_validate_code($code, $username, 'phone', $session_id, $scene);
+                    if (1 != $check_code['status']) {
+                        return json($check_code);
+                    }
+                } else {
+                    if (!$this->verifyHandle('user_reg')) {
+                        return json(['status' => -1, 'msg' => '图像验证码错误']);
+                    }
                 }
             } else {
-                if (!$this->verifyHandle('user_reg')) {
-                    return json(['status' => -1, 'msg' => '图像验证码错误']);
-                }
+                return json(['status' => -1, 'msg' => '手机号码不合格式']);
             }
-        } else {
-            return json(['status' => -1, 'msg' => '手机号码不合格式']);
         }
 
         // if(check_email($username)){

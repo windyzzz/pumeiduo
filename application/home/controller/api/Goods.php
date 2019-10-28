@@ -281,8 +281,8 @@ class Goods extends Base
         $goods['spec_price'] = $goodsLogic->get_spec_price($goods_id);
         // 促销
         $goods['promotion'] = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
-            ->where(['gtg.goods_id' => $goods_id, 'pg.is_end' => 0, 'pg.end_time' => ['>=', time()]])
-            ->field('pg.id prom_id, pg.type, pg.title')->select();    // 促销活动
+            ->where(['gtg.goods_id' => $goods_id, 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
+            ->field('pg.id prom_id, pg.type, pg.title')->select();
         // 优惠券
         $couponLogic = new CouponLogic();
         $couponCurrency = $couponLogic->getCoupon(0);    // 通用优惠券

@@ -11,7 +11,6 @@
 
 namespace app\home\controller;
 
-use app\common\logic\Token;
 use app\common\logic\UsersLogic;
 use think\Cache;
 use think\Cookie;
@@ -168,9 +167,10 @@ class Api extends Base
             if (1 == $resp['status']) {
                 //发送成功, 修改发送状态位成功
                 M('sms_log')->where(['mobile' => $mobile, 'code' => $code, 'session_id' => $session_id, 'status' => 0])->save(['status' => 1]);
+                S('mobile_token_' . $mobile, $session_id, 180);
                 $return_arr = ['status' => 1, 'msg' => '发送成功,请注意查收'];
             } else {
-                $return_arr = ['status' => -1, 'msg' => '发送失败,'.$resp['msg']];
+                $return_arr = ['status' => -1, 'msg' => '发送失败,' . $resp['msg']];
             }
             ajaxReturn($return_arr);
         }
@@ -236,14 +236,14 @@ class Api extends Base
         $method = 'GET';
         $appcode = '0e19cd48e5b6416c8491677adc8e9ae1';
         $headers = [];
-        array_push($headers, 'Authorization:APPCODE '.$appcode);
+        array_push($headers, 'Authorization:APPCODE ' . $appcode);
 
         $querys = "no=$queryNo";
         if ($type) {
             $querys = "no={$queryNo}&type={$type}";
         }
         $bodys = '';
-        $url = $host.$path.'?'.$querys;
+        $url = $host . $path . '?' . $querys;
 
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $method);
@@ -252,7 +252,7 @@ class Api extends Base
         curl_setopt($curl, CURLOPT_FAILONERROR, false);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($curl, CURLOPT_HEADER, false);
-        if (1 == strpos('$'.$host, 'https://')) {
+        if (1 == strpos('$' . $host, 'https://')) {
             curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
             curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
         }
@@ -337,9 +337,9 @@ class Api extends Base
     {
         $searchKey = input('key');
         $searchKeyList = Db::name('search_word')
-            ->where('keywords', 'like', $searchKey.'%')
-            ->whereOr('pinyin_full', 'like', $searchKey.'%')
-            ->whereOr('pinyin_simple', 'like', $searchKey.'%')
+            ->where('keywords', 'like', $searchKey . '%')
+            ->whereOr('pinyin_full', 'like', $searchKey . '%')
+            ->whereOr('pinyin_simple', 'like', $searchKey . '%')
             ->limit(10)
             ->select();
         if ($searchKeyList) {
@@ -361,7 +361,7 @@ class Api extends Base
 
             return;
         }
-        $province_id = Db::name('region2')->where(['level' => 1, 'name' => ['like', '%'.$address['province'].'%']])->limit('1')->value('id');
+        $province_id = Db::name('region2')->where(['level' => 1, 'name' => ['like', '%' . $address['province'] . '%']])->limit('1')->value('id');
         if (empty($province_id)) {
             $this->setCookieArea();
 
@@ -370,12 +370,12 @@ class Api extends Base
         if (empty($address['city'])) {
             $city_id = Db::name('region2')->where(['level' => 2, 'parent_id' => $province_id])->limit('1')->order('id')->value('id');
         } else {
-            $city_id = Db::name('region2')->where(['level' => 2, 'parent_id' => $province_id, 'name' => ['like', '%'.$address['city'].'%']])->limit('1')->value('id');
+            $city_id = Db::name('region2')->where(['level' => 2, 'parent_id' => $province_id, 'name' => ['like', '%' . $address['city'] . '%']])->limit('1')->value('id');
         }
         if (empty($address['district'])) {
             $district_id = Db::name('region2')->where(['level' => 3, 'parent_id' => $city_id])->limit('1')->order('id')->value('id');
         } else {
-            $district_id = Db::name('region2')->where(['level' => 3, 'parent_id' => $city_id, 'name' => ['like', '%'.$address['district'].'%']])->limit('1')->value('id');
+            $district_id = Db::name('region2')->where(['level' => 3, 'parent_id' => $city_id, 'name' => ['like', '%' . $address['district'] . '%']])->limit('1')->value('id');
         }
         $this->setCookieArea($province_id, $city_id, $district_id);
     }

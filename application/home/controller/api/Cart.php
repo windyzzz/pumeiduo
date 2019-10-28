@@ -84,7 +84,6 @@ class Cart extends Base
             $Pay = new \app\common\logic\Pay();
             $cartList = $Pay->activity2_goods($cartList);
 
-
             foreach ($cartList as $k => $v) {
                 if ($goods_tao_grade[$v['goods_id']]) {
                     $prom_list[$goods_tao_grade[$v['goods_id']]['id']]['list'][$k] = $v;
@@ -109,6 +108,41 @@ class Cart extends Base
         $return['prom_list'] = $prom_list; //购物车表
         $return['cartList'] = $cartList; //购物车表
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
+    }
+
+
+    public function indexNew()
+    {
+        $params['user_token'] = $this->userToken;
+        Hook::exec('app\\home\\behavior\\CheckAuth', 'run', $params);
+
+        $cartLogic = new CartLogic();
+        $cartLogic->setUserId($this->user_id);
+//        $cartGoodsNum = $cartLogic->getUserCartGoodsTypeNum(); // 获取用户购物车商品总数
+        $cartData = $cartLogic->getCartList(0, true); // 用户购物车
+        $cartList = [];
+        $promList = [];
+        $invalidList = [];
+        if (!empty($cartData)) {
+            // 计算购物车金额
+            $Pay = new \app\common\logic\Pay();
+            $cartData = collection($cartData)->toArray();
+            $cartData = $Pay->activity2_goods($cartData);
+            // 促销活动商品
+            $goods_tao_grade = M('goods_tao_grade')
+                ->alias('g')
+                ->join('prom_goods pg', "g.promo_id = pg.id and pg.group like '%" . $this->user['distribut_level'] . "%' and pg.start_time <= " . NOW_TIME . " and pg.end_time >= " . NOW_TIME . " and pg.is_end = 0 and is_open = 1")
+                ->getField('g.goods_id, pg.type, pg.id, pg.title, pg.expression, pg.min_num', true);
+            // 组装数据
+            foreach ($cartData as $k => $v) {
+                if ($goods_tao_grade[$v['goods_id']]) {
+                    // 活动商品
+
+                } elseif (1) {
+
+                }
+            }
+        }
     }
 
     /**

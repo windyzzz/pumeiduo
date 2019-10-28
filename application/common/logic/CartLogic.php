@@ -53,7 +53,7 @@ class CartLogic extends Model
     /**
      * 将session_id改成unique_id.
      *
-     * @param $uniqueId|api唯一id 类似于 pc端的session id
+     * @param $uniqueId |api唯一id 类似于 pc端的session id
      */
     public function setUniqueId($uniqueId)
     {
@@ -63,7 +63,7 @@ class CartLogic extends Model
     /**
      * 设置结算类型.
      *
-     * @param $type|设置的结算类型
+     * @param $type |设置的结算类型
      */
     public function setType($type)
     {
@@ -73,7 +73,7 @@ class CartLogic extends Model
     /**
      * 设置加入购物车类型.
      *
-     * @param $cartType|设置的购物车类型
+     * @param $cartType |设置的购物车类型
      */
     public function setCartType($cartType)
     {
@@ -172,7 +172,7 @@ class CartLogic extends Model
             'weight' => $this->goods['weight'],   // 商品重量
             'goods' => $this->goods,
             'item_id' => empty($this->specGoodsPrice) ? 0 : $this->specGoodsPrice->item_id,
-            'zone'=>$this->goods['zone']
+            'zone' => $this->goods['zone']
         ];
         if (empty($this->specGoodsPrice)) {
             $specGoodsPriceCount = Db::name('SpecGoodsPrice')->where('goods_id', $this->goods['goods_id'])->count('item_id');
@@ -192,7 +192,7 @@ class CartLogic extends Model
         }
 
         if ($this->goodsBuyNum > $store_count) {
-            throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => $this->goods['goods_name'].'，商品库存不足，剩余'.$this->goods['store_count'], 'result' => '']);
+            throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => $this->goods['goods_name'] . '，商品库存不足，剩余' . $this->goods['store_count'], 'result' => '']);
         }
 
         $goodsPromFactory = new GoodsPromFactory();
@@ -320,7 +320,7 @@ class CartLogic extends Model
             }
             if ($userWantGoodsNum > $store_count) {
                 $userCartGoodsNum = empty($userCartGoods['goods_num']) ? 0 : $userCartGoods['goods_num']; ///获取用户购物车的抢购商品数量
-                return ['status' => -4, 'msg' => $this->goods['goods_name'].'，商品库存不足，剩余'.$store_count.',当前购物车已有'.$userCartGoodsNum.'件', 'result' => ''];
+                return ['status' => -4, 'msg' => $this->goods['goods_name'] . '，商品库存不足，剩余' . $store_count . ',当前购物车已有' . $userCartGoodsNum . '件', 'result' => ''];
             }
             $member_goods_price = $price;
             $use_integral = 0;
@@ -330,7 +330,7 @@ class CartLogic extends Model
             }
 
             if (!$member_goods_price) {
-                return ['status' => -4, 'msg' => $this->goods['goods_name'].'，价格出现异常', 'result' => ''];
+                return ['status' => -4, 'msg' => $this->goods['goods_name'] . '，价格出现异常', 'result' => ''];
             }
 
             $cartResult = $userCartGoods->save([
@@ -343,7 +343,7 @@ class CartLogic extends Model
         } else {
             //如果该商品没有存在购物车
             if ($this->goodsBuyNum > $store_count) {
-                return ['status' => -4, 'msg' => $this->goods['goods_name'].'，商品库存不足，剩余'.$this->goods['store_count'], 'result' => ''];
+                return ['status' => -4, 'msg' => $this->goods['goods_name'] . '，商品库存不足，剩余' . $this->goods['store_count'], 'result' => ''];
             }
             //如果有阶梯价格,就是用阶梯价格
             if (!empty($this->goods['price_ladder'])) {
@@ -358,7 +358,7 @@ class CartLogic extends Model
                 $use_integral = $this->goods['exchange_integral'];
             }
             if (!$member_goods_price) {
-                return ['status' => -4, 'msg' =>$this->goods['goods_name'].'，价格出现异常', 'result' => ''];
+                return ['status' => -4, 'msg' => $this->goods['goods_name'] . '，价格出现异常', 'result' => ''];
             }
 
             $cartAddData = [
@@ -384,9 +384,9 @@ class CartLogic extends Model
                 $cartAddData['sku'] = $this->specGoodsPrice['sku']; //商品条形码
             }
 
-            if($this->cart_id){
-                $cartResult = Db::name('Cart')->where('id',$this->cart_id)->save($cartAddData);
-            }else{
+            if ($this->cart_id) {
+                $cartResult = Db::name('Cart')->where('id', $this->cart_id)->save($cartAddData);
+            } else {
                 $cartResult = Db::name('Cart')->insertGetId($cartAddData);
             }
 
@@ -423,7 +423,7 @@ class CartLogic extends Model
         }
 
         if ($this->goodsBuyNum > $flashSale['buy_limit']) {
-            return ['status' => -4, 'msg' => '每人限购'.$flashSale['buy_limit'].'件', 'result' => ''];
+            return ['status' => -4, 'msg' => '每人限购' . $flashSale['buy_limit'] . '件', 'result' => ''];
         }
         //获取用户购物车的抢购商品
         if (!$this->user_id) {
@@ -436,14 +436,14 @@ class CartLogic extends Model
         $flashSalePurchase = $flashSale['goods_num'] - $flashSale['buy_num']; //抢购剩余库存
         $userBuyGoodsNum = $this->goodsBuyNum + $userFlashOrderGoodsNum;
         if ($userBuyGoodsNum > $flashSale['buy_limit']) {
-            return ['status' => -4, 'msg' => '每人限购'.$flashSale['buy_limit'].'件，您已下单'.$userFlashOrderGoodsNum.'件'.'购物车已有'.$userCartGoodsNum.'件', 'result' => ''];
+            return ['status' => -4, 'msg' => '每人限购' . $flashSale['buy_limit'] . '件，您已下单' . $userFlashOrderGoodsNum . '件' . '购物车已有' . $userCartGoodsNum . '件', 'result' => ''];
         }
         $userWantGoodsNum = $this->goodsBuyNum; //本次要购买的数量加上购物车的本身存在的数量
         if ($userWantGoodsNum > 200) {
             $userWantGoodsNum = 200;
         }
         if ($userWantGoodsNum > $flashSalePurchase) {
-            return ['status' => -4, 'msg' => $this->goods['goods_name'].'，商品库存不足，剩余'.$flashSalePurchase.',当前购物车已有'.$userCartGoodsNum.'件', 'result' => ''];
+            return ['status' => -4, 'msg' => $this->goods['goods_name'] . '，商品库存不足，剩余' . $flashSalePurchase . ',当前购物车已有' . $userCartGoodsNum . '件', 'result' => ''];
         }
         $use_integral = 0;
         if (1 == $flashSale['can_integral']) {
@@ -528,7 +528,7 @@ class CartLogic extends Model
             $userWantGoodsNum = 200;
         }
         if ($userWantGoodsNum > $groupBuyPurchase) {
-            return ['status' => -4, 'msg' => '商品库存不足，剩余'.$groupBuyPurchase.',当前购物车已有'.$userCartGoodsNum.'件', 'result' => ''];
+            return ['status' => -4, 'msg' => '商品库存不足，剩余' . $groupBuyPurchase . ',当前购物车已有' . $userCartGoodsNum . '件', 'result' => ''];
         }
 
         $use_integral = 0;
@@ -619,14 +619,14 @@ class CartLogic extends Model
         $UserPromOrderGoodsNum = $promGoodsLogic->getUserPromOrderGoodsNum($this->user_id); //获取用户促销已购商品数量
         $userBuyGoodsNum = $userWantGoodsNum + $UserPromOrderGoodsNum; //本次要购买的数量+购物车本身数量+已经买
         if ($userBuyGoodsNum > $promGoods['buy_limit']) {
-            return ['status' => -4, 'msg' => '每人限购'.$promGoods['buy_limit'].'件，您已下单'.$UserPromOrderGoodsNum.'件，'.'购物车已有'.$userCartGoodsNum.'件', 'result' => ''];
+            return ['status' => -4, 'msg' => '每人限购' . $promGoods['buy_limit'] . '件，您已下单' . $UserPromOrderGoodsNum . '件，' . '购物车已有' . $userCartGoodsNum . '件', 'result' => ''];
         }
         $userWantGoodsNum = $this->goodsBuyNum + $userCartGoodsNum; //本次要购买的数量加上购物车的本身存在的数量
         if ($userWantGoodsNum > 200) {
             $userWantGoodsNum = 200;
         }
         if ($userWantGoodsNum > $storeCount) {   //用户购买量不得超过库存
-            return ['status' => -4, 'msg' => '商品活动库存不足，剩余'.$storeCount.',当前购物车已有'.$userCartGoodsNum.'件', 'result' => ''];
+            return ['status' => -4, 'msg' => '商品活动库存不足，剩余' . $storeCount . ',当前购物车已有' . $userCartGoodsNum . '件', 'result' => ''];
         }
 
         // 如果该商品已经存在购物车
@@ -703,12 +703,13 @@ class CartLogic extends Model
     }
 
     /**
-     * @param int $selected|是否被用户勾选中的 0 为全部 1为选中  一般没有查询不选中的商品情况
+     * @param int $selected |是否被用户勾选中的 0 为全部 1为选中  一般没有查询不选中的商品情况
      *                                                  获取用户的购物车列表
+     * @param bool 是否显示失效的商品，true显示 false不显示
      *
      * @return false|\PDOStatement|string|\think\Collection
      */
-    public function getCartList($selected = 0)
+    public function getCartList($selected = 0, $noSale = false)
     {
         $cart = new Cart();
         // 如果用户已经登录则按照用户id查询
@@ -737,9 +738,11 @@ class CartLogic extends Model
         //     }
         // }
 
-        $cartCheckAfterList = $this->checkCartList($cartList);
+        $cartCheckAfterList = $this->checkCartList($cartList, $noSale);
 //        $cartCheckAfterList = $cartList;
-        $cartGoodsTotalNum = array_sum(array_map(function ($val) {return $val['goods_num']; }, $cartCheckAfterList)); //购物车购买的商品总数
+        $cartGoodsTotalNum = array_sum(array_map(function ($val) {
+            return $val['goods_num'];
+        }, $cartCheckAfterList)); //购物车购买的商品总数
         setcookie('cn', $cartGoodsTotalNum, null, '/');
 
         return $cartCheckAfterList;
@@ -749,36 +752,39 @@ class CartLogic extends Model
      * 过滤掉无效的购物车商品
      *
      * @param $cartList
+     * @param bool $noSale 是否显示失效的商品，true显示 false不显示
      */
-    public function checkCartList($cartList)
+    public function checkCartList($cartList, $noSale = false)
     {
         $goodsPromFactory = new GoodsPromFactory();
         foreach ($cartList as $cartKey => $cart) {
             //商品不存在或者已经下架
-            if (empty($cart['goods']) || 1 != $cart['goods']['is_on_sale'] || 0 == $cart['goods_num']) {
-                $cart->delete();
-                unset($cartList[$cartKey]);
-                continue;
+            if (!$noSale) {
+                if (empty($cart['goods']) || 1 != $cart['goods']['is_on_sale'] || 0 == $cart['goods_num']) {
+                    $cart->delete();
+                    unset($cartList[$cartKey]);
+                    continue;
+                }
             }
 
-            $goods_sn = M('goods')->where(array('goods_id'=>$cart['goods_id']))->getField('goods_sn');
+            $goods_sn = M('goods')->where(array('goods_id' => $cart['goods_id']))->getField('goods_sn');
 
-            if($goods_sn!==$cart['goods_sn']){
-                M('cart')->where(array('id'=>$cart['id']))->data(array('goods_sn'=>$goods_sn) )->save();
+            if ($goods_sn !== $cart['goods_sn']) {
+                M('cart')->where(array('id' => $cart['id']))->data(array('goods_sn' => $goods_sn))->save();
                 $cartList[$cartKey]['goods_sn'] = $goods_sn;
             }
 
             //规格不存在 则删除
             if (!empty($cart['spec_key'])) {
                 $specGoodsPrice = SpecGoodsPrice::get(['goods_id' => $cart['goods_id'], 'key' => $cart['spec_key']], '', false);
-                if(!$specGoodsPrice){
+                if (!$specGoodsPrice) {
                     $cart->delete();
                     unset($cartList[$cartKey]);
                     continue;
                 }
-            }else{
+            } else {
                 $specGoodsPrice = SpecGoodsPrice::get(['goods_id' => $cart['goods_id']], '', false);
-                if($specGoodsPrice){
+                if ($specGoodsPrice) {
                     $cart->delete();
                     unset($cartList[$cartKey]);
                     continue;
@@ -849,8 +855,8 @@ class CartLogic extends Model
     /**
      * 更改购物车的商品数量.
      *
-     * @param $cart_id|购物车id
-     * @param $goods_num|商品数量
+     * @param $cart_id |购物车id
+     * @param $goods_num |商品数量
      *
      * @return array
      */
@@ -859,7 +865,7 @@ class CartLogic extends Model
         $Cart = new Cart();
         $cart = $Cart::get($cart_id);
         if ($goods_num > $cart->limit_num) {
-            return ['status' => 0, 'msg' => '商品数量不能大于'.$cart->limit_num, 'result' => ['limit_num' => $cart->limit_num]];
+            return ['status' => 0, 'msg' => '商品数量不能大于' . $cart->limit_num, 'result' => ['limit_num' => $cart->limit_num]];
         }
         if ($goods_num > 200) {
             $goods_num = 200;
@@ -880,8 +886,8 @@ class CartLogic extends Model
     /**
      * 更改购物车的商品类型.
      *
-     * @param $cart_id|购物车id
-     * @param $type|类型
+     * @param $cart_id |购物车id
+     * @param $type |类型
      *
      * @return array
      */
@@ -1097,7 +1103,7 @@ class CartLogic extends Model
     /**
      * 获取购物车的价格详情.
      *
-     * @param $cartList|购物车列表
+     * @param $cartList |购物车列表
      *
      * @return array
      */
@@ -1118,8 +1124,8 @@ class CartLogic extends Model
     /**
      * 转换购物车的优惠券数据.
      *
-     * @param $cartList|购物车商品
-     * @param $userCouponList|用户优惠券列表
+     * @param $cartList |购物车商品
+     * @param $userCouponList |用户优惠券列表
      *
      * @return mixedable
      */
@@ -1191,8 +1197,8 @@ class CartLogic extends Model
     /**
      * 获取可用的购物车优惠券返回。不可用的过滤掉。
      *
-     * @param $cartList|购物车商品
-     * @param $userCouponList|用户优惠券列表
+     * @param $cartList |购物车商品
+     * @param $userCouponList |用户优惠券列表
      *
      * @return mixedable
      */
@@ -1266,7 +1272,7 @@ class CartLogic extends Model
     {
         foreach ($cartList as $cartKey => $cartVal) {
             if ($cartVal->goods_num > $cartVal->limit_num) {
-                throw new TpshopException('计算订单价格', 0, ['status' => 0, 'msg' => $cartVal->goods_name.'购买数量不能大于'.$cartVal->limit_num, 'result' => ['limit_num' => $cartVal->limit_num]]);
+                throw new TpshopException('计算订单价格', 0, ['status' => 0, 'msg' => $cartVal->goods_name . '购买数量不能大于' . $cartVal->limit_num, 'result' => ['limit_num' => $cartVal->limit_num]]);
             }
         }
     }
