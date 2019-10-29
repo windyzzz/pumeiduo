@@ -14,6 +14,7 @@ namespace app\home\controller\api;
 use app\common\logic\CartLogic;
 use app\common\logic\CouponLogic;
 use app\common\logic\GoodsActivityLogic;
+use app\common\logic\GoodsLogic;
 use app\common\logic\Integral;
 use app\common\logic\OrderLogic;
 use app\common\logic\Pay;
@@ -110,7 +111,11 @@ class Cart extends Base
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
     }
 
-
+    /**
+     * 购物车列表（新）
+     * @return \think\response\Json
+     * @throws TpshopException
+     */
     public function indexNew()
     {
         $params['user_token'] = $this->userToken;
@@ -118,11 +123,17 @@ class Cart extends Base
 
         $cartLogic = new CartLogic();
         $cartLogic->setUserId($this->user_id);
-//        $cartGoodsNum = $cartLogic->getUserCartGoodsTypeNum(); // 获取用户购物车商品总数
-        $cartData = $cartLogic->getCartList(0, true); // 用户购物车
-        $cartList = [];
+        $cartData = $cartLogic->getCartList(0, true,  true); // 用户购物车
+        $cartNum = $cartData['cart_num'];   // 获取用户购物车商品总数
+        $cartData = $cartData['cart_list'];
+        $cartList = [
+            'type' => 1,
+            'type_value' => '圃美多乐活',
+            'goods' => []
+        ];
         $promList = [];
         $invalidList = [];
+        $goodsIds = [];
         if (!empty($cartData)) {
             // 计算购物车金额
             $Pay = new \app\common\logic\Pay();
@@ -135,14 +146,179 @@ class Cart extends Base
                 ->getField('g.goods_id, pg.type, pg.id, pg.title, pg.expression, pg.min_num', true);
             // 组装数据
             foreach ($cartData as $k => $v) {
-                if ($goods_tao_grade[$v['goods_id']]) {
-                    // 活动商品
-
-                } elseif (1) {
-
+                // 赠品
+                $giftGoods = [];
+                if (isset($v['gift2_goods'])) {
+                    foreach ($v['gift2_goods'] as $gift) {
+                        $giftGoods[] = [
+                            'goods_id' => $gift['goods_id'],
+                            'goods_sn' => $gift['goods_sn'],
+                            'goods_name' => $gift['goods_name'],
+                            'original_img' => $gift['original_img'],
+                            'spec_key' => $gift['spec_key'],
+                            'spec_key_name' => $gift['spec_key_name'],
+                            'goods_num' => $gift['goods_num'],
+                        ];
+                    }
                 }
+                if (isset($goods_tao_grade[$v['goods_id']])) {
+                    // 活动商品
+                    if (!isset($promList[$goods_tao_grade[$v['goods_id']]['id']])) {
+                        $promList[$goods_tao_grade[$v['goods_id']]['id']];
+                        $promList[$goods_tao_grade[$v['goods_id']]['id']]['prom_id'] = $goods_tao_grade[$v['goods_id']]['id'];
+                        $promList[$goods_tao_grade[$v['goods_id']]['id']]['type'] = $goods_tao_grade[$v['goods_id']]['type'];
+                        $promList[$goods_tao_grade[$v['goods_id']]['id']]['type_value'] = $goods_tao_grade[$v['goods_id']]['title'];
+                        $promList[$goods_tao_grade[$v['goods_id']]['id']]['goods'] = [];
+                    }
+                    $promList[$goods_tao_grade[$v['goods_id']]['id']]['goods'][] = [
+                        'cart_id' => $v['id'],
+                        'goods_id' => $v['goods_id'],
+                        'goods_sn' => $v['goods_sn'],
+                        'goods_name' => $v['goods_name'],
+                        'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                        'spec_key' => $v['spec_key'],
+                        'spec_key_name' => $v['spec_key_name'],
+                        'exchange_price' => $v['member_goods_price'],
+                        'exchange_integral' => $v['use_point'],
+                        'goods_num' => $v['goods_num'],
+                        'gift_goods' => $giftGoods
+                    ];
+                } elseif (empty($v['goods']) || 1 != $v['goods']['is_on_sale'] || 0 == $v['goods_num']) {
+                    // 已失效商品
+                    $invalidList[] = [
+                        'cart_id' => $v['id'],
+                        'goods_id' => $v['goods_id'],
+                        'goods_sn' => $v['goods_sn'],
+                        'goods_name' => $v['goods_name'],
+                        'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                        'spec_key' => $v['spec_key'],
+                        'spec_key_name' => $v['spec_key_name'],
+                        'gift_goods' => $giftGoods
+                    ];
+                } else {
+                    // 正常普通商品
+                    $cartList['goods'][] = [
+                        'cart_id' => $v['id'],
+                        'goods_id' => $v['goods_id'],
+                        'goods_sn' => $v['goods_sn'],
+                        'goods_name' => $v['goods_name'],
+                        'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                        'spec_key' => $v['spec_key'],
+                        'spec_key_name' => $v['spec_key_name'],
+                        'exchange_price' => $v['member_goods_price'],
+                        'exchange_integral' => $v['use_point'],
+                        'goods_num' => $v['goods_num'],
+                        'gift_goods' => $giftGoods
+                    ];
+                }
+                $goodsIds[] = $v['goods_id'];
             }
         }
+        $return = [
+            'cart_list' => $cartList,
+            'prom_list' => array_values($promList),
+            'invalid_list' => $invalidList
+        ];
+        // 猜你喜欢
+        $lookSee = (new GoodsLogic())->get_look_see(['goods_id' => $goodsIds], $this->user_id);
+        $filterGoodsIds = [];
+        foreach ($lookSee as $item) {
+            $filterGoodsIds[] = $item['goods_id'];
+        }
+        // 商品标签
+        $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filterGoodsIds], 'status' => 1])->select();
+        // 秒杀商品
+        $flashSale = Db::name('flash_sale')->where(['goods_id' => ['in', $filterGoodsIds]])
+            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->field('goods_id')->select();
+        // 团购商品
+        $groupBuy = Db::name('group_buy')->where(['goods_id' => ['in', $filterGoodsIds]])
+            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->field('goods_id')->select();
+        // 促销商品
+        $promGoods = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
+            ->where(['gtg.goods_id' => ['in', $filterGoodsIds], 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
+            ->field('pg.title, gtg.goods_id')->select();    // 促销活动
+        $couponLogic = new CouponLogic();
+        $couponCurrency = $couponLogic->getCoupon(0);    // 通用优惠券
+        $couponGoods = [];
+        $couponCate = [];
+        if (empty($coupon)) {
+            $couponGoods = $couponLogic->getCoupon(null, $filterGoodsIds);    // 指定商品优惠券
+            $filter_cat_id = Db::name('goods')->where(['goods_id' => ['in', $filterGoodsIds]])->getField('cat_id', true);
+            $couponCate = $couponLogic->getCoupon(null, '', $filter_cat_id, null);    // 指定分类优惠券
+        }
+        $promGoods = array_merge_recursive($promGoods, $couponCurrency, $couponGoods, $couponCate);
+        // 循环处理数据
+        foreach ($lookSee as $k => $v) {
+            // 商品标签
+            $lookSee[$k]['tabs'] = [];
+            if (!empty($goodsTab)) {
+                foreach ($goodsTab as $value) {
+                    if ($v['goods_id'] == $value['goods_id']) {
+                        $lookSee[$k]['tabs'][] = [
+                            'tab_id' => $value['tab_id'],
+                            'title' => $value['title'],
+                            'status' => $value['status']
+                        ];
+                    }
+                }
+            }
+            // 商品标识
+            $lookSee[$k]['tags'] = [];
+            // 第一类，活动类（优先级：秒杀” > ”团购“ > ”套组“ > “自营”）
+            $lookSee[$k]['tags'][0] = ['type' => 'activity', 'title' => '自营'];
+            if ($v['sale_type'] == 2) {
+                $lookSee[$k]['tags'][0]['title'] = '套组';
+            }
+            if (!empty($groupBuy)) {
+                foreach ($groupBuy as $value) {
+                    if ($v['goods_id'] == $value['goods_id']) {
+                        $lookSee[$k]['tags'][0]['title'] = '团购';
+                        break;
+                    }
+                }
+            }
+            if (!empty($flashSale)) {
+                foreach ($flashSale as $value) {
+                    if ($v['goods_id'] == $value['goods_id']) {
+                        $lookSee[$k]['tags'][0]['title'] = '秒杀';
+                        break;
+                    }
+                }
+            }
+            // 第二类，促销类
+            if (!empty($promGoods)) {
+                foreach ($promGoods as $value) {
+                    if (!isset($value['use_type'])) {
+                        // 促销活动类
+                        if ($v['goods_id'] == $value['goods_id']) {
+                            $lookSee[$k]['tags'][] = ['type' => 'promotion', 'title' => $value['title']];
+                            break;
+                        }
+                    } else {
+                        // 优惠券类
+                        if ($value['use_type'] == 0) {
+                            // 通用券
+                            $lookSee[$k]['tags'][] = ['type' => 'promotion', 'title' => $value['name']];
+                            break;
+                        } elseif ($v['goods_id'] == $value['goods_id']) {
+                            // 指定商品
+                            $lookSee[$k]['tags'][] = ['type' => 'promotion', 'title' => $value['name']];
+                            break;
+                        } elseif ($v['cat_id'] == $value['cat_id']) {
+                            // 指定分类
+                            $lookSee[$k]['tags'][] = ['type' => 'promotion', 'title' => $value['name']];
+                            break;
+                        }
+                    }
+                }
+            }
+            // 第三类，默认
+            $lookSee[$k]['tags'][] = ['type' => 'default', 'title' => '品牌直营'];
+        }
+        $return['look_see'] = $lookSee;
+        $return['cart_num'] = $cartNum;
+
+        return json($return);
     }
 
     /**

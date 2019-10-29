@@ -705,11 +705,12 @@ class CartLogic extends Model
     /**
      * @param int $selected |是否被用户勾选中的 0 为全部 1为选中  一般没有查询不选中的商品情况
      *                                                  获取用户的购物车列表
-     * @param bool 是否显示失效的商品，true显示 false不显示
+     * @param bool $noSale 是否显示失效的商品，true显示 false不显示
+     * @param bool $returnNum 是否输出购物车全部商品数量（包括赠品）
      *
-     * @return false|\PDOStatement|string|\think\Collection
+     * @return array
      */
-    public function getCartList($selected = 0, $noSale = false)
+    public function getCartList($selected = 0, $noSale = false, $returnNum = false)
     {
         $cart = new Cart();
         // 如果用户已经登录则按照用户id查询
@@ -745,7 +746,11 @@ class CartLogic extends Model
         }, $cartCheckAfterList)); //购物车购买的商品总数
         setcookie('cn', $cartGoodsTotalNum, null, '/');
 
-        return $cartCheckAfterList;
+        if ($returnNum) {
+            return ['cart_list' => $cartCheckAfterList, 'cart_num' => $cartGoodsTotalNum];
+        } else {
+            return $cartCheckAfterList;
+        }
     }
 
     /**

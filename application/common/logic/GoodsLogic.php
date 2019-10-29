@@ -341,21 +341,27 @@ class GoodsLogic extends Model
      */
     public function get_look_see($goods, $userId = null)
     {
+        $where = [
+            'is_on_sale' => 1
+        ];
         if ($userId) {
-            $user_id = $userId;
+            $where['gv.user_id'] = $userId;
         } else {
-            $user_id = cookie('user_id');
+            $where['gv.user_id'] = cookie('user_id');
+        }
+        if (is_array($goods['goods_id'])) {
+            $where['g.goods_id'] = ['not in', $goods['goods_id']];
+        } else {
+            $where['g.goods_id'] = ['<>', $goods['goods_id']];
         }
 
         $goods_list = [];
-
-        if ($user_id) {
+        if ($where['gv.user_id']) {
             $take_goods_list = M('goods')
                 ->field('g.goods_id, g.cat_id, g.goods_name, g.goods_remark, g.original_img, g.shop_price, g.exchange_integral')
                 ->alias('g')
                 ->join('__GOODS_VISIT__ gv', 'gv.goods_id = g.goods_id')
-                ->where(['g.goods_id' => ['<>', $goods['goods_id']], 'is_on_sale' => 1])
-                ->where('gv.user_id', $user_id)
+                ->where($where)
                 ->order('gv.visit_id desc')
                 ->limit(20)
                 ->select();
@@ -402,9 +408,17 @@ class GoodsLogic extends Model
             }
         }
 
+        $where = [
+            'is_on_sale' => 1
+        ];
+        if (is_array($goods['goods_id'])) {
+            $where['goods_id'] = ['not in', $goods['goods_id']];
+        } else {
+            $where['goods_id'] = ['<>', $goods['goods_id']];
+        }
         $goods_list = M('goods')
-            ->field('goods_id, cat_id, goods_name, goods_remark, original_img, shop_price, exchange_integral')
-            ->where(['goods_id' => ['<>', $goods['goods_id']], 'is_on_sale' => 1])
+            ->field('goods_id, cat_id, goods_name, goods_remark, original_img, shop_price, exchange_integral, sale_type')
+            ->where($where)
             ->where('goods_id', 'in', $ary)
             ->select();
         foreach ($goods_list as $k => $v) {
@@ -919,7 +933,7 @@ class GoodsLogic extends Model
             ->order([$sort => $sort_asc])->limit($page->firstRow . ',' . $page->listRows)
             ->field('goods_id, cat_id, extend_cat_id, goods_sn, goods_name, goods_type, brand_id, store_count, comment_count, goods_remark,
                 market_price, shop_price, cost_price, give_integral, exchange_integral, original_img, limit_buy_num, trade_type,
-                is_on_sale, is_free_shipping, is_recommend, is_new, is_hot')
+                is_on_sale, is_free_shipping, is_recommend, is_new, is_hot, sale_type')
             ->select();
         // 用户收藏
         if ($userId) {
@@ -929,10 +943,10 @@ class GoodsLogic extends Model
         $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->select();
         // 秒杀商品
         $flashSale = Db::name('flash_sale')->where(['goods_id' => ['in', $filter_goods_id]])
-            ->where(['is_end' => 0, 'end_time' => ['>=', time()]])->field('goods_id')->select();
+            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->field('goods_id')->select();
         // 团购商品
         $groupBuy = Db::name('group_buy')->where(['goods_id' => ['in', $filter_goods_id]])
-            ->where(['is_end' => 0, 'end_time' => ['>=', time()]])->field('goods_id')->select();
+            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->field('goods_id')->select();
         // 促销商品
         $promGoods = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
             ->where(['gtg.goods_id' => ['in', $filter_goods_id], 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
@@ -976,7 +990,7 @@ class GoodsLogic extends Model
             $goods_list[$k]['tags'] = [];
             // 第一类，活动类（优先级：秒杀” > ”团购“ > ”套组“ > “自营”）
             $goods_list[$k]['tags'][0] = ['type' => 'activity', 'title' => '自营'];
-            if ($v['sale_type']) {
+            if ($v['sale_type'] == 2) {
                 $goods_list[$k]['tags'][0]['title'] = '套组';
             }
             if (!empty($groupBuy)) {

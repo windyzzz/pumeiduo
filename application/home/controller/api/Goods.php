@@ -223,7 +223,7 @@ class Goods extends Base
         }
         // 判断商品性质
         $flashSale = Db::name('flash_sale')->where(['goods_id' => $goods_id])
-            ->where(['is_end' => 0, 'end_time' => ['>=', time()]])->find();     // 秒杀商品
+            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->find();     // 秒杀商品
         if (!empty($flashSale)) {
             $goods['nature'] = [
                 'type' => 'flash_sale',
@@ -235,7 +235,7 @@ class Goods extends Base
         }
         else {
             $groupBuy = Db::name('group_buy')->where(['goods_id' => $goods_id])
-                ->where(['is_end' => 0, 'end_time' => ['>=', time()]])->find();     // 团购商品
+                ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->find();     // 团购商品
             if (!empty($groupBuy)) {
                 $goods['nature'] = [
                     'type' => 'group_buy',
