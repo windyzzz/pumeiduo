@@ -701,7 +701,7 @@ class Goods extends Base
     }
 
     /**
-     * 商品列表页.
+     * 获取超值套组商品列表
      */
     public function getSeriesGoodsList()
     {
@@ -751,8 +751,24 @@ class Goods extends Base
         // return $html;
     }
 
+
+    public function getFlashSalesGoodsList()
+    {
+        $where = [
+            'fs.start_time' => ['<=', time()],
+            'fs.end_time' => ['>=', time()],
+            'fs.is_end' => 0,
+            'g.is_on_sale' => 1
+        ];
+        $goodsData = Db::name('flash_sale')->alias('fs')->join('goods g', 'g.goods_id = fs.goods_id')
+            ->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
+            ->where($where)->field('fs.id prom_id, g.goods_id, g.goods_sn, g.goods_name, g.original_img, fs.price, fs.title, sgp.key_name')
+            ->select();
+        print_r($goodsData);
+    }
+
     /**
-     * 团购商品列表页
+     * 获取团购商品列表
      */
     public function getGroupBuyGoodsList()
     {
@@ -855,7 +871,7 @@ class Goods extends Base
     }
 
     /**
-     * 商品列表页.
+     * 获取推荐（促销）商品列表
      */
     public function getRecommendGoodsList()
     {

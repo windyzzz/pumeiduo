@@ -185,25 +185,21 @@
                                         <div class="goods-price">商城价：￥{$goods.shop_price}库存:{$goods.store_count}</div>
                                     </div>
                                 </div>
-                                <else/>
-                                <volist name="goods[SpecGoodsPrice]" id="spec">
-                                    <if condition="$spec.prom_type eq 3 AND $spec.prom_id eq $info.id">
-                                        <div style="float: left;margin-right: 20px">
-                                            <input type="hidden" name="goods[{$goods.goods_id}][goods_id]" value="{$goods.goods_id}"/>
-                                            <input type="hidden" name="goods[{$goods.goods_id}][item_id][]" value="{$spec.item_id}"/>
-                                            <input type="hidden" name="store_count[]" value="{$spec.store_count}"/>
-                                            <div class="ys-btn-close" style="top: 15px;left: 172px;">×</div>
-                                            <div class="selected-group-goods">
-                                                <div class="goods-thumb"><img style="width: 162px;height: 162px" src="{$spec[spec_img]}"/></div>
-                                                <div class="goods-name">
-                                                    <a target="_blank"
-                                                       href="{:U('Home/Goods/goodsInfo',array('id'=>$goods['goods_id'],'item_id'=>$spec['item_id']))}">{$goods.goods_name}{$spec.key_name}</a>
-                                                </div>
-                                                <div class="goods-price">商城价：￥{$spec.price}库存:{$spec.store_count}</div>
-                                            </div>
+                            <else/>
+                                <div style="float: left;margin-right: 20px">
+                                    <input type="hidden" name="goods[{$goods.goods_id}][goods_id]" value="{$goods.goods_id}"/>
+                                    <input type="hidden" name="goods[{$goods.goods_id}][item_id][]" value="{$goods[SpecGoodsPrice]['item_id']}"/>
+                                    <input type="hidden" name="store_count[]" value="{$goods[SpecGoodsPrice]['store_count']}"/>
+                                    <div class="ys-btn-close" style="top: 15px;left: 172px;">×</div>
+                                    <div class="selected-group-goods">
+                                        <div class="goods-thumb"><img style="width: 162px;height: 162px" src="{$goods[SpecGoodsPrice]['spec_img']}"/></div>
+                                        <div class="goods-name">
+                                            <a target="_blank"
+                                               href="{:U('Home/Goods/goodsInfo',array('id'=>$goods['goods_id'],'item_id'=>$goods[SpecGoodsPrice]['item_id']))}">{$goods.goods_name}{$goods[SpecGoodsPrice]['key_name']}</a>
                                         </div>
-                                    </if>
-                                </volist>
+                                        <div class="goods-price">商城价：￥{$goods[SpecGoodsPrice]['price']}库存:{$goods[SpecGoodsPrice]['store_count']}</div>
+                                    </div>
+                                </div>
                             </empty>
                         </volist>
                     </div>

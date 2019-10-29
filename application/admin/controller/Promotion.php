@@ -415,14 +415,14 @@ class Promotion extends Base
 
         M('goods_tao_grade')->where(array('promo_id' => $last_id))->delete();
         $promGoods = $data['goods'];
-        $tao_goods = array();
+//        $tao_goods = array();
         if ($promGoods) {
 
             foreach ($promGoods as $goodsKey => $goodsVal) {
                 $dfd = explode('_', $goodsKey);
                 $tao_goods = array(
                     'goods_id' => $dfd[0],
-                    'item_id' => 0,
+                    'item_id' => $goodsVal['item_id'][0],
                     'promo_id' => $last_id,
                     'stock' => 1
                 );
