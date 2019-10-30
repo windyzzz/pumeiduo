@@ -279,7 +279,7 @@ class CartLogic extends Model
                 $result = $this->addNormalCart();
             }
         }
-        $result['result'] = $UserCartGoodsNum = $this->getUserCartGoodsNum(); // 查找购物车数量
+        $result['result'] = ['cart_num' => $UserCartGoodsNum = $this->getUserCartGoodsNum()]; // 查找购物车数量
         setcookie('cn', $UserCartGoodsNum, null, '/');
 
         return $result;

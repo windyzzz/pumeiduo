@@ -143,14 +143,14 @@ class Cart extends Base
             $goods_tao_grade = M('goods_tao_grade')
                 ->alias('g')
                 ->join('prom_goods pg', "g.promo_id = pg.id and pg.group like '%" . $this->user['distribut_level'] . "%' and pg.start_time <= " . NOW_TIME . " and pg.end_time >= " . NOW_TIME . " and pg.is_end = 0 and is_open = 1")
-                ->join('spec_goods_price sgp', 'sgp.item_id = g.item_id')
+                ->join('spec_goods_price sgp', 'sgp.item_id = g.item_id', 'LEFT')
                 ->field('pg.id, pg.type, pg.title, g.goods_id, sgp.key spec_key')->select();
             $promGoods = [];
             foreach ($goods_tao_grade as $item) {
                 $promGoods[$item['goods_id'] . '_' . $item['spec_key']] = $item;
             }
             // 秒杀活动商品
-            $flashSale = Db::name('flash_sale fs')->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id')
+            $flashSale = Db::name('flash_sale fs')->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
                 ->where(['fs.start_time' => ['<=', time()], 'fs.end_time' => ['>=', time()], 'fs.is_end' => 0])
                 ->field('fs.id, fs.title, fs.goods_id, fs.price, sgp.key spec_key')->select();
             $flashSaleGoods = [];
@@ -158,7 +158,7 @@ class Cart extends Base
                 $flashSaleGoods[$item['goods_id'] . '_' . $item['spec_key']] = $item;
             }
             // 团购活动商品
-            $groupBuy = Db::name('group_buy gb')->join('spec_goods_price sgp', 'sgp.item_id = gb.item_id')
+            $groupBuy = Db::name('group_buy gb')->join('spec_goods_price sgp', 'sgp.item_id = gb.item_id', 'LEFT')
                 ->where(['gb.is_end' => 0, 'gb.start_time' => ['<=', time()], 'gb.end_time' => ['>=', time()]])
                 ->field('gb.id, gb.title, gb.goods_id, gb.price, sgp.key spec_key')->select();
             $groupBuyGoods = [];
@@ -517,7 +517,7 @@ class Cart extends Base
         $goods_id = I('goods_id/d'); // 商品id
         $goods_num = I('goods_num/d'); // 商品数量
         $item_id = I('item_id/d'); // 商品规格id
-        $type = I('type/d', 1); // 加入购物车类型
+        $type = I('type/d', 1); // 结算类型
         $cartType = I('cart_type/d', 0); // 加入购物车类型
         $cart_id = I('cart_id/d', 0); // 购物车中的ID
         if (empty($goods_id)) {

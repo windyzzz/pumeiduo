@@ -470,6 +470,20 @@ class User extends Base
     }
 
     /**
+     * 用户地址列表（新）
+     * @return \think\response\Json
+     */
+    public function address_list_new()
+    {
+        $addressList = get_user_address_list_new($this->user_id);
+        foreach ($addressList as $key => $value) {
+            $addressList[$key]['tabs'] = Db::name('address_tab')->where(['id' => ['in', explode(',', $value['tabs'])]])->field('id tab_id, name')->select();
+        }
+
+        return json(['status' => 1, 'msg' => 'success', 'result' => ['list' => $addressList]]);
+    }
+
+    /**
      * 设置新手机.
      *
      * @return mixed

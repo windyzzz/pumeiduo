@@ -2323,7 +2323,7 @@ class UsersLogic extends Model
         $daya = $userInfo['sign_last'];
         $dayb = date('Y-n-j', strtotime($date) - 86400);
         if ($daya != $dayb) {                                                               //不是连续签
-            $update_data['sign_count'] = ['exp', 0];
+            $update_data['sign_count'] = ['exp', 1];
         }
 //        $mb = date('m', strtotime($date));
 //        if (intval($mb) != intval(date("m", strtotime($daya)))) {                            //不是本月签到
@@ -2337,7 +2337,7 @@ class UsersLogic extends Model
         if ($update > 0) {
             accountLog($userInfo['user_id'], 0, $config['sign_integral'], '签到赠送' . $config['sign_integral'] . '积分', 0, 0, '', 0, 8);
             $result['status'] = true;
-            $result['msg'] = '签到成功！恭喜获得' . $config['sign_integral'] . '积分';
+            $result['msg'] = $config['sign_integral'];
             $userFind = Db::name('user_sign')->where(['user_id' => $userInfo['user_id']])->find();
             //满足额外奖励
             if ($userFind['sign_count'] >= $config['sign_signcount']) {
@@ -2389,6 +2389,7 @@ class UsersLogic extends Model
         ($info['sign_last'] != date('Y-n-j', time())) && $tab = '1';
         $signTime = explode(',', $info['sign_time']);
         $str = '';
+        $tips = true;
         //是否标识历史签到
         if (date('m', strtotime($info['sign_last'])) == date('m', time())) {
             foreach ($signTime as $val) {
@@ -2399,6 +2400,7 @@ class UsersLogic extends Model
         }
         if ($info['sign_count'] >= $config['sign_signcount']) {
             $display_sign = $config['sign_award'] + $config['sign_integral'];
+            $tips = false;
         } else {
             $display_sign = $config['sign_integral'];
         }
@@ -2416,14 +2418,14 @@ class UsersLogic extends Model
             if ($info['sign_count'] % $config['sign_signcount'] > $i && 1 == $info['is_sign_yesteday']) {
                 $data['is_sign'] = 1;
             }
-            if ($i + 1 == $config['sign_signcount']) {
+            if ($i + 1 == $config['sign_signcount'] || $info['sign_count'] > $config['sign_signcount']) {
                 $data['integral'] = $config['sign_integral'] + $config['sign_award'];
             }
             $reward_list[] = $data;
         }
         // $info['is_sign_yesteday'] = ($info['sign_last'] == date('Y-n-j',strtotime('- 1day')) && $info['sign_last'] !== date('Y-n-j')) ? 1 : 0;
 
-        return ['info' => $info, 'str' => $str, 'jifen' => $jiFen, 'config' => $config, 'tab' => $tab, 'display_sign' => $display_sign, 'reward_list' => $reward_list];
+        return ['info' => $info, 'str' => $str, 'jifen' => $jiFen, 'config' => $config, 'tab' => $tab, 'display_sign' => $display_sign, 'reward_list' => $reward_list, 'tips' => $tips];
     }
 
     /**

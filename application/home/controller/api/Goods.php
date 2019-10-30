@@ -232,8 +232,7 @@ class Goods extends Base
                 'start_time' => $flashSale['start_time'],
                 'end_time' => $flashSale['end_time']
             ];
-        }
-        else {
+        } else {
             $groupBuy = Db::name('group_buy')->where(['goods_id' => $goods_id])
                 ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->find();     // 团购商品
             if (!empty($groupBuy)) {
@@ -751,20 +750,40 @@ class Goods extends Base
         // return $html;
     }
 
-
+    /**
+     * 获取秒杀商品列表
+     * @return \think\response\Json
+     */
     public function getFlashSalesGoodsList()
     {
         $where = [
             'fs.start_time' => ['<=', time()],
             'fs.end_time' => ['>=', time()],
-            'fs.is_end' => 0,
-            'g.is_on_sale' => 1
+            'fs.is_end' => 0
         ];
-        $goodsData = Db::name('flash_sale')->alias('fs')->join('goods g', 'g.goods_id = fs.goods_id')
+        // 秒杀商品
+        $flashSaleGoods = Db::name('flash_sale fs')->join('goods g', 'g.goods_id = fs.goods_id')
             ->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
-            ->where($where)->field('fs.id prom_id, g.goods_id, g.goods_sn, g.goods_name, g.original_img, fs.price, fs.title, sgp.key_name')
+            ->where($where)->where(['g.is_on_sale' => 1])->field('fs.id prom_id, g.goods_id, fs.item_id, g.goods_sn, g.goods_name, g.original_img, fs.price, fs.title, sgp.key_name')
             ->select();
-        print_r($goodsData);
+        $goodsIds = Db::name('flash_sale fs')->where($where)->getField('goods_id', true);
+        // 商品标签
+        $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $goodsIds], 'status' => 1])->select();
+        foreach ($flashSaleGoods as $k => $v) {
+            $flashSaleGoods[$k]['tabs'] = [];
+            if (!empty($goodsTab)) {
+                foreach ($goodsTab as $value) {
+                    if ($v['goods_id'] == $value['goods_id']) {
+                        $flashSaleGoods[$k]['tabs'][] = [
+                            'tab_id' => $value['tab_id'],
+                            'title' => $value['title'],
+                            'status' => $value['status']
+                        ];
+                    }
+                }
+            }
+        }
+        return json(['status' => 1, 'msg' => 'success', 'result' => ['goods_list' => $flashSaleGoods]]);
     }
 
     /**

@@ -3,7 +3,7 @@
 use think\migration\Migrator;
 use think\migration\db\Column;
 
-class UpdateCoupon extends Migrator
+class UpdatePromGoods extends Migrator
 {
     /**
      * Change Method.
@@ -28,11 +28,10 @@ class UpdateCoupon extends Migrator
      */
     public function change()
     {
-        $this->table('coupon')
-            ->changeColumn('type_value', 'string', ['default' => '', 'comment' => '放对象（0：所有人，1：注册会员，2：普卡会员，3：网店会员，4：新用户）', 'after' => 'type'])
-            ->changeColumn('use_type', 'integer', ['limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'default' => 0,
-                'comment' => '使用范围：0全店通用 1指定商品可用 2指定分类可用 4折扣商品 5兑换商品', 'after' => 'type_value'])
-            ->addColumn('discount', 'decimal', ['null' => true, 'comment' => '折扣', 'precision' => 10, 'scale' => 2, 'after' => 'goods_num'])
+        $this->table('prom_goods')
+            ->changeColumn('type', 'integer', ['limit' => 2, 'null' => true, 'comment' => '促销类型，0直接打折 1减价优惠 2固定金额出售 3赠送代金券 4满打折'])
+            ->addColumn('goods_num', 'integer', ['null' => true, 'comment' => '商品数量（满多少促销）', 'after' => 'type'])
+            ->addColumn('goods_price', 'decimal', ['null' => true, 'comment' => '商品价格（满多少促销）', 'precision' => 10, 'scale' => 2, 'after' => 'goods_num'])
             ->update();
     }
 }
