@@ -285,10 +285,16 @@ class GoodsLogic extends Model
     /**
      * 获取商品规格（新）
      * @param $goods_id
+     * @param $itemId
      * @return array
      */
-    public function get_spec_new($goods_id)
+    public function get_spec_new($goods_id, $itemId = null)
     {
+        $itemKey = '';
+        if ($itemId) {
+            $itemKey = Db::name('spec_goods_price')->where(['item_id' => $itemId])->value('key');
+            $itemKey = explode('_', $itemKey);
+        }
         $keys =  Db::name('spec_goods_price')->where('goods_id', $goods_id)->getField("GROUP_CONCAT(`key` ORDER BY store_count desc SEPARATOR '_') ");;
         $keys = array_unique(explode('_', $keys));
         $specItem = Db::name('spec_item')->alias('si')->join('spec s', 's.id = si.spec_id')
@@ -297,14 +303,32 @@ class GoodsLogic extends Model
         // 处理数据
         $specData = [];
         foreach ($specItem as $value) {
+            if (!empty($itemKey) && in_array($value['id'], $itemKey)) {
+                $isDefault = 1;
+            } else {
+                $isDefault = 0;
+            }
             $specData[$value['spec_id']]['type'] = $value['name'];
             $specData[$value['spec_id']]['type_value'][] = [
                 'item_id' => $value['id'],
                 'item' => $value['item'],
-                'src' => $specImage[$value['id']]
+                'src' => $specImage[$value['id']],
+                'is_default' => $isDefault
             ];
         }
-        return array_values($specData);
+        // 给定默认选中规格
+        if (!$itemId) {
+            foreach ($specData as $k1 => $value) {
+                foreach ($value['type_value'] as $k2 => $item) {
+                    if ($k2 == 0) {
+                        $itemKey .= $item['item_id'] . '_';
+                        $specData[$k1]['type_value'][$k2]['is_default'] = 1;
+                    }
+                }
+            }
+            $itemKey = rtrim($itemKey, '_');
+        }
+        return ['spec' => array_values($specData), 'default_key' => $itemKey];
     }
 
     /**

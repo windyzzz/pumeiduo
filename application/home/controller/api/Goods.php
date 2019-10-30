@@ -168,16 +168,16 @@ class Goods extends Base
         $data['is_alert_content'] = '';
         $data['is_alert_referee'] = '';
 
-        if ($data['goods']['zone'] == 3) {
-            $data['is_alert'] = 1;
-            $article = M('article')->where(array('article_id' => 104))->field('title,content')->find();
-            $data['is_alert_title'] = $article['title'];
-            $data['is_alert_content'] = $article['content'];
-            $invite_uid = M('users')->where(array('user_id' => $this->user_id))->getField('invite_uid');
-            if ($invite_uid) {
-                $data['is_alert_referee'] = '推荐人会员号：' . $invite_uid;
-            }
-        }
+//        if ($data['goods']['zone'] == 3) {
+//            $data['is_alert'] = 1;
+//            $article = M('article')->where(array('article_id' => 104))->field('title,content')->find();
+//            $data['is_alert_title'] = $article['title'];
+//            $data['is_alert_content'] = $article['content'];
+//            $invite_uid = M('users')->where(array('user_id' => $this->user_id))->getField('invite_uid');
+//            if ($invite_uid) {
+//                $data['is_alert_referee'] = '推荐人会员号：' . $invite_uid;
+//            }
+//        }
 
         $goods_tao_grade = M('goods_tao_grade')
             ->alias('g')
@@ -209,7 +209,11 @@ class Goods extends Base
      */
     public function goodsInfoNew()
     {
-        $goods_id = I('goods_id/d');
+        $goods_id = I('goods_id/d', null);
+        $itemId = I('item_id/d', null);
+        if (!$goods_id) {
+            return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
+        }
         $goods = Db::name('goods')->where('goods_id', $goods_id)->field('goods_id, cat_id, extend_cat_id, goods_sn, goods_name, goods_type, goods_remark, goods_content, 
             brand_id, store_count, comment_count, market_price, shop_price, cost_price, give_integral, exchange_integral, original_img, limit_buy_num,
             is_on_sale, is_free_shipping, is_recommend, is_new, is_hot, is_virtual, virtual_indate, click_count')->find();
@@ -222,28 +226,34 @@ class Goods extends Base
             $goodsLogic->add_visit_log($this->user_id, $goods);
         }
         // 判断商品性质
-        $flashSale = Db::name('flash_sale')->where(['goods_id' => $goods_id])
-            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->find();     // 秒杀商品
+        $flashSale = Db::name('flash_sale fs')->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
+            ->where(['fs.goods_id' => $goods_id, 'fs.start_time' => ['<=', time()], 'fs.end_time' => ['>=', time()], 'fs.is_end' => 0])
+            ->field('fs.goods_id, sgp.key spec_key, fs.price, fs.goods_num, fs.start_time, fs.end_time')->select();
         if (!empty($flashSale)) {
+            // 秒杀商品
             $goods['nature'] = [
                 'type' => 'flash_sale',
-                'price' => $flashSale['price'],
-                'limit_num' => $flashSale['goods_num'],
-                'start_time' => $flashSale['start_time'],
-                'end_time' => $flashSale['end_time']
+                'price' => $flashSale[0]['price'],
+                'limit_num' => $flashSale[0]['goods_num'],
+                'start_time' => $flashSale[0]['start_time'],
+                'end_time' => $flashSale[0]['end_time']
             ];
+            $extendGoodsSpec = ['type' => 'flash_sale', 'data' => $flashSale];
         } else {
-            $groupBuy = Db::name('group_buy')->where(['goods_id' => $goods_id])
-                ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->find();     // 团购商品
+            $groupBuy = Db::name('group_buy gb')->join('spec_goods_price sgp', 'sgp.item_id = gb.item_id', 'LEFT')
+                ->where(['gb.goods_id' => $goods_id, 'gb.is_end' => 0, 'gb.start_time' => ['<=', time()], 'gb.end_time' => ['>=', time()]])
+                ->field('gb.goods_id, gb.price, sgp.key spec_key, gb.price, gb.group_goods_num, gb.goods_num, gb.start_time, gb.end_time')->select();
             if (!empty($groupBuy)) {
+                // 团购商品
                 $goods['nature'] = [
                     'type' => 'group_buy',
-                    'price' => $groupBuy['price'],
-                    'group_goods_num' => $groupBuy['group_goods_num'],
-                    'limit_num' => bcdiv($groupBuy['goods_num'], $groupBuy['group_goods_num']),
-                    'start_time' => $groupBuy['start_time'],
-                    'end_time' => $groupBuy['end_time']
+                    'price' => $groupBuy[0]['price'],
+                    'group_goods_num' => $groupBuy[0]['group_goods_num'],
+                    'limit_num' => bcdiv($groupBuy[0]['goods_num'], $groupBuy[0]['group_goods_num']),
+                    'start_time' => $groupBuy[0]['start_time'],
+                    'end_time' => $groupBuy[0]['end_time']
                 ];
+                $extendGoodsSpec = ['type' => 'group_buy', 'data' => $groupBuy];
             } else {
                 $goods['nature'] = [];
             }
@@ -275,9 +285,59 @@ class Goods extends Base
         }
         $goods['goods_images_list'] = M('GoodsImages')->where('goods_id', $goods_id)->select(); //商品缩略图
         // 规格参数
-        $goods['spec'] = $goodsLogic->get_spec_new($goods_id);
+        $specData = $goodsLogic->get_spec_new($goods_id, $itemId);
+        $goods['spec'] = $specData['spec'];
+        $defaultKey = $specData['default_key'];     // 默认显示规格
         // 规格参数价格
         $goods['spec_price'] = $goodsLogic->get_spec_price($goods_id);
+        foreach ($goods['spec_price'] as $key => $spec) {
+            $goods['spec_price'][$key]['activity'] = [
+                'type' => '',
+                'price' => '',
+                'group_goods_num' => '',
+                'limit_num' => '',
+                'start_time' => '',
+                'end_time' => ''
+            ];
+        }
+        if (!empty($extendGoodsSpec) && !empty($goods['spec_price'])) {
+            $type = $extendGoodsSpec['type'];
+            foreach ($extendGoodsSpec['data'] as $spec) {
+                if (isset($goods['spec_price'][$spec['spec_key']])) {
+                    // 替换价格
+                    $goods['spec_price'][$spec['spec_key']]['price'] = $spec['price'];
+                    $goods['spec_price'][$spec['spec_key']]['store_count'] = $spec['goods_num'];
+                    switch ($type) {
+                        case 'flash_sale':
+                            $activity = [
+                                'type' => 'flash_sale',
+                                'price' => $spec['price'],
+                                'limit_num' => $spec['goods_num'],
+                                'start_time' => $spec['start_time'],
+                                'end_time' => $spec['end_time']
+                            ];
+                            break;
+                        case 'group_buy':
+                            $activity = [
+                                'type' => 'group_buy',
+                                'price' => $spec['price'],
+                                'group_goods_num' => $spec['group_goods_num'],
+                                'limit_num' => bcdiv($spec['goods_num'], $spec['group_goods_num']),
+                                'start_time' => $spec['start_time'],
+                                'end_time' => $spec['end_time']
+                            ];
+                            break;
+                        default:
+                            $activity = [];
+                    }
+                    // 添加活动信息
+                    $goods['spec_price'][$spec['spec_key']]['activity'] = $activity;
+                    if (!empty($defaultKey) && $defaultKey == $spec['spec_key']) {
+                        $goods['nature'] = $activity;
+                    }
+                }
+            }
+        }
         // 促销
         $goods['promotion'] = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
             ->where(['gtg.goods_id' => $goods_id, 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
@@ -727,7 +787,7 @@ class Goods extends Base
         $filter_goods_id = Db::name('goods')->where($goods_where)->cache(true)->getField('goods_id', true);
 
         $count = count($filter_goods_id);
-        $page = new Page($count, 20);
+        $page = new Page($count, 5);
         if ($count > 0) {
             // 获取商品数据
             $goodsLogic = new GoodsLogic();
@@ -814,13 +874,13 @@ class Goods extends Base
         $where = [
             'gb.start_time' => ['elt', time()],
             'gb.end_time' => ['egt', time()],
-            // 'gb.is_end'            =>0,
+            'gb.is_end' => 0,
             'g.is_on_sale' => 1,
         ];
         // 查询满足要求的总记录数
         $filter_goods_id = $GroupBuy->alias('gb')->join('__GOODS__ g', 'g.goods_id = gb.goods_id')->where($where)->order('gb.sort_order')->getField('g.goods_id', true);
         $count = count($filter_goods_id);
-        $page = new Page($count, 20);
+        $page = new Page($count, 1);
         $goods_list = [];
         if ($count > 0) {
             $Goods = new GoodsModel();
@@ -856,6 +916,7 @@ class Goods extends Base
                 } else {
                     $goods_list[$k]['exchange_price'] = $v['shop_price'];
                 }
+                unset($goods_list[$k]['group_buy_detail']);
             }
             $new_goods_list = [];
             if ('goods_id' == $sort) {
@@ -871,7 +932,6 @@ class Goods extends Base
             if ($new_goods_list) {
                 $goods_list = $new_goods_list;
             }
-            unset($goods_list[$k]['group_buy_detail']);
         }
         $navigate_cat = navigate_goods($id); // 面包屑导航
         $return['goods_list'] = $goods_list;

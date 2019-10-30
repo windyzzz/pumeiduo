@@ -2453,7 +2453,7 @@ class User extends Base
             'mobile' => $this->user['mobile'],
             'head_pic' => $this->user['head_pic'],
             'type' => $this->user['type'],
-            'will_invite_uid' => $this->user['will_invite_uid'],
+            'invite_uid' => $this->user['invite_uid'],
             'is_not_show_jk' => $this->user['is_not_show_jk'],  // 是否提示加入金卡弹窗
             'has_pay_pwd' => $this->user['paypwd'] ? 1 : 0,
             'is_app' => TokenLogic::getValue('is_app', $this->userToken) ? 1 : 0

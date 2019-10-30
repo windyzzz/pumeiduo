@@ -290,103 +290,103 @@ class Cart extends Base
             'invalid_list' => $invalidList
         ];
         // 猜你喜欢 --- 以下都是 猜你喜欢 里面商品的标签标识处理
-//        $lookSee = (new GoodsLogic())->get_look_see(['goods_id' => $goodsIds], $this->user_id);
-//        $filterGoodsIds = [];
-//        foreach ($lookSee as $item) {
-//            $filterGoodsIds[] = $item['goods_id'];
-//        }
-//        // 商品标签
-//        $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filterGoodsIds], 'status' => 1])->select();
-//        // 秒杀商品
-//        $flashSale = Db::name('flash_sale')->where(['goods_id' => ['in', $filterGoodsIds]])
-//            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->field('goods_id')->select();
-//        // 团购商品
-//        $groupBuy = Db::name('group_buy')->where(['goods_id' => ['in', $filterGoodsIds]])
-//            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->field('goods_id')->select();
-//        // 促销商品
-//        $promGoods = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
-//            ->where(['gtg.goods_id' => ['in', $filterGoodsIds], 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
-//            ->field('pg.title, gtg.goods_id')->select();    // 促销活动
-//        $couponLogic = new CouponLogic();
-//        $couponCurrency = $couponLogic->getCoupon(0);    // 通用优惠券
-//        $couponGoods = [];
-//        $couponCate = [];
-//        if (empty($coupon)) {
-//            $couponGoods = $couponLogic->getCoupon(null, $filterGoodsIds);    // 指定商品优惠券
-//            $filter_cat_id = Db::name('goods')->where(['goods_id' => ['in', $filterGoodsIds]])->getField('cat_id', true);
-//            $couponCate = $couponLogic->getCoupon(null, '', $filter_cat_id, null);    // 指定分类优惠券
-//        }
-//        $promGoods = array_merge_recursive($promGoods, $couponCurrency, $couponGoods, $couponCate);
-//        // 循环处理数据
-//        foreach ($lookSee as $k => $v) {
-//            // 商品标签
-//            $lookSee[$k]['tabs'] = [];
-//            if (!empty($goodsTab)) {
-//                foreach ($goodsTab as $value) {
-//                    if ($v['goods_id'] == $value['goods_id']) {
-//                        $lookSee[$k]['tabs'][] = [
-//                            'tab_id' => $value['tab_id'],
-//                            'title' => $value['title'],
-//                            'status' => $value['status']
-//                        ];
-//                    }
-//                }
-//            }
-//            // 商品标识
-//            $lookSee[$k]['tags'] = [];
-//            // 第一类，活动类（优先级：秒杀” > ”团购“ > ”套组“ > “自营”）
-//            $lookSee[$k]['tags'][0] = ['type' => 'activity', 'title' => '自营'];
-//            if ($v['sale_type'] == 2) {
-//                $lookSee[$k]['tags'][0]['title'] = '套组';
-//            }
-//            if (!empty($groupBuy)) {
-//                foreach ($groupBuy as $value) {
-//                    if ($v['goods_id'] == $value['goods_id']) {
-//                        $lookSee[$k]['tags'][0]['title'] = '团购';
-//                        break;
-//                    }
-//                }
-//            }
-//            if (!empty($flashSale)) {
-//                foreach ($flashSale as $value) {
-//                    if ($v['goods_id'] == $value['goods_id']) {
-//                        $lookSee[$k]['tags'][0]['title'] = '秒杀';
-//                        break;
-//                    }
-//                }
-//            }
-//            // 第二类，促销类
-//            if (!empty($promGoods)) {
-//                foreach ($promGoods as $value) {
-//                    if (!isset($value['use_type'])) {
-//                        // 促销活动类
-//                        if ($v['goods_id'] == $value['goods_id']) {
-//                            $lookSee[$k]['tags'][] = ['type' => 'promotion', 'title' => $value['title']];
-//                            break;
-//                        }
-//                    } else {
-//                        // 优惠券类
-//                        if ($value['use_type'] == 0) {
-//                            // 通用券
-//                            $lookSee[$k]['tags'][] = ['type' => 'promotion', 'title' => $value['name']];
-//                            break;
-//                        } elseif ($v['goods_id'] == $value['goods_id']) {
-//                            // 指定商品
-//                            $lookSee[$k]['tags'][] = ['type' => 'promotion', 'title' => $value['name']];
-//                            break;
-//                        } elseif ($v['cat_id'] == $value['cat_id']) {
-//                            // 指定分类
-//                            $lookSee[$k]['tags'][] = ['type' => 'promotion', 'title' => $value['name']];
-//                            break;
-//                        }
-//                    }
-//                }
-//            }
-//            // 第三类，默认
-//            $lookSee[$k]['tags'][] = ['type' => 'default', 'title' => '品牌直营'];
-//        }
-//        $return['look_see'] = $lookSee;
-//        $return['cart_num'] = $cartNum;
+        $lookSee = (new GoodsLogic())->get_look_see(['goods_id' => $goodsIds], $this->user_id);
+        $filterGoodsIds = [];
+        foreach ($lookSee as $item) {
+            $filterGoodsIds[] = $item['goods_id'];
+        }
+        // 商品标签
+        $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filterGoodsIds], 'status' => 1])->select();
+        // 秒杀商品
+        $flashSale = Db::name('flash_sale')->where(['goods_id' => ['in', $filterGoodsIds]])
+            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->field('goods_id')->select();
+        // 团购商品
+        $groupBuy = Db::name('group_buy')->where(['goods_id' => ['in', $filterGoodsIds]])
+            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->field('goods_id')->select();
+        // 促销商品
+        $promGoods = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
+            ->where(['gtg.goods_id' => ['in', $filterGoodsIds], 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
+            ->field('pg.title, gtg.goods_id')->select();    // 促销活动
+        $couponLogic = new CouponLogic();
+        $couponCurrency = $couponLogic->getCoupon(0);    // 通用优惠券
+        $couponGoods = [];
+        $couponCate = [];
+        if (empty($coupon)) {
+            $couponGoods = $couponLogic->getCoupon(null, $filterGoodsIds);    // 指定商品优惠券
+            $filter_cat_id = Db::name('goods')->where(['goods_id' => ['in', $filterGoodsIds]])->getField('cat_id', true);
+            $couponCate = $couponLogic->getCoupon(null, '', $filter_cat_id, null);    // 指定分类优惠券
+        }
+        $promGoods = array_merge_recursive($promGoods, $couponCurrency, $couponGoods, $couponCate);
+        // 循环处理数据
+        foreach ($lookSee as $k => $v) {
+            // 商品标签
+            $lookSee[$k]['tabs'] = [];
+            if (!empty($goodsTab)) {
+                foreach ($goodsTab as $value) {
+                    if ($v['goods_id'] == $value['goods_id']) {
+                        $lookSee[$k]['tabs'][] = [
+                            'tab_id' => $value['tab_id'],
+                            'title' => $value['title'],
+                            'status' => $value['status']
+                        ];
+                    }
+                }
+            }
+            // 商品标识
+            $lookSee[$k]['tags'] = [];
+            // 第一类，活动类（优先级：秒杀” > ”团购“ > ”套组“ > “自营”）
+            $lookSee[$k]['tags'][0] = ['type' => 'activity', 'title' => '自营'];
+            if ($v['sale_type'] == 2) {
+                $lookSee[$k]['tags'][0]['title'] = '套组';
+            }
+            if (!empty($groupBuy)) {
+                foreach ($groupBuy as $value) {
+                    if ($v['goods_id'] == $value['goods_id']) {
+                        $lookSee[$k]['tags'][0]['title'] = '团购';
+                        break;
+                    }
+                }
+            }
+            if (!empty($flashSale)) {
+                foreach ($flashSale as $value) {
+                    if ($v['goods_id'] == $value['goods_id']) {
+                        $lookSee[$k]['tags'][0]['title'] = '秒杀';
+                        break;
+                    }
+                }
+            }
+            // 第二类，促销类
+            if (!empty($promGoods)) {
+                foreach ($promGoods as $value) {
+                    if (!isset($value['use_type'])) {
+                        // 促销活动类
+                        if ($v['goods_id'] == $value['goods_id']) {
+                            $lookSee[$k]['tags'][] = ['type' => 'promotion', 'title' => $value['title']];
+                            break;
+                        }
+                    } else {
+                        // 优惠券类
+                        if ($value['use_type'] == 0) {
+                            // 通用券
+                            $lookSee[$k]['tags'][] = ['type' => 'promotion', 'title' => $value['name']];
+                            break;
+                        } elseif ($v['goods_id'] == $value['goods_id']) {
+                            // 指定商品
+                            $lookSee[$k]['tags'][] = ['type' => 'promotion', 'title' => $value['name']];
+                            break;
+                        } elseif ($v['cat_id'] == $value['cat_id']) {
+                            // 指定分类
+                            $lookSee[$k]['tags'][] = ['type' => 'promotion', 'title' => $value['name']];
+                            break;
+                        }
+                    }
+                }
+            }
+            // 第三类，默认
+            $lookSee[$k]['tags'][] = ['type' => 'default', 'title' => '品牌直营'];
+        }
+        $return['look_see'] = $lookSee;
+        $return['cart_num'] = $cartNum;
 
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
     }
