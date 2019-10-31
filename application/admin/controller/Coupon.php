@@ -108,7 +108,11 @@ class Coupon extends Base
         $data['use_start_time'] = strtotime($data['use_start_time']);
         $couponValidate = Loader::validate('Coupon');
         if (!$couponValidate->batch()->check($data)) {
-            $this->ajaxReturn(['status' => 0, 'msg' => '操作失败，' . $couponValidate->getError(), 'result' => $couponValidate->getError()]);
+            $msg = '';
+            foreach ($couponValidate->getError() as $value) {
+                $msg .= $value . ',';
+            }
+            $this->ajaxReturn(['status' => 0, 'msg' => '操作失败，' . rtrim($msg, ','), 'result' => '']);
         }
 
         if (empty($data['id'])) {

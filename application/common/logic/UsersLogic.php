@@ -299,11 +299,11 @@ class UsersLogic extends Model
             //查询用户信息之后, 查询用户的登记昵称
             $levelId = $user['level'];
             $levelName = Db::name('user_level')->where('level_id', $levelId)->getField('level_name');
-            $user['level_name'] = $levelName;
             // 更新用户token
             if (!$userToken) $userToken = TokenLogic::setToken();
             Db::name('users')->where('mobile', $username)->whereOr('email', $username)->save(['token' => $userToken, 'time_out' => strtotime('+' . config('redis_days') . ' days')]);
-            $user['token'] = $userToken;
+            $user = Db::name('users')->where('mobile', $username)->whereOr('email', $username)->find();
+            $user['level_name'] = $levelName;
             $result = ['status' => 1, 'msg' => '登录成功', 'result' => $user];
         }
 

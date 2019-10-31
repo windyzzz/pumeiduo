@@ -228,7 +228,7 @@ class Goods extends Base
         // 判断商品性质
         $flashSale = Db::name('flash_sale fs')->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
             ->where(['fs.goods_id' => $goods_id, 'fs.start_time' => ['<=', time()], 'fs.end_time' => ['>=', time()], 'fs.is_end' => 0])
-            ->field('fs.goods_id, sgp.key spec_key, fs.price, fs.goods_num, fs.start_time, fs.end_time')->select();
+            ->field('fs.goods_id, sgp.key spec_key, fs.price, fs.goods_num, fs.start_time, fs.end_time, fs.can_integral')->select();
         if (!empty($flashSale)) {
             // 秒杀商品
             $goods['nature'] = [
@@ -242,7 +242,7 @@ class Goods extends Base
         } else {
             $groupBuy = Db::name('group_buy gb')->join('spec_goods_price sgp', 'sgp.item_id = gb.item_id', 'LEFT')
                 ->where(['gb.goods_id' => $goods_id, 'gb.is_end' => 0, 'gb.start_time' => ['<=', time()], 'gb.end_time' => ['>=', time()]])
-                ->field('gb.goods_id, gb.price, sgp.key spec_key, gb.price, gb.group_goods_num, gb.goods_num, gb.start_time, gb.end_time')->select();
+                ->field('gb.goods_id, gb.price, sgp.key spec_key, gb.price, gb.group_goods_num, gb.goods_num, gb.start_time, gb.end_time, gb.can_integral')->select();
             if (!empty($groupBuy)) {
                 // 团购商品
                 $goods['nature'] = [
@@ -291,6 +291,7 @@ class Goods extends Base
         // 规格参数价格
         $goods['spec_price'] = $goodsLogic->get_spec_price($goods_id);
         foreach ($goods['spec_price'] as $key => $spec) {
+            $goods['spec_price'][$key]['exchange_integral'] = $goods['exchange_integral'];     // 是否能使用积分
             $goods['spec_price'][$key]['activity'] = [
                 'type' => '',
                 'price' => '',
@@ -304,6 +305,10 @@ class Goods extends Base
             $type = $extendGoodsSpec['type'];
             foreach ($extendGoodsSpec['data'] as $spec) {
                 if (isset($goods['spec_price'][$spec['spec_key']])) {
+                    // 是否能使用积分
+                    if ($spec['exchange_integral'] == 0) {
+                        $goods['spec_price'][$spec['spec_key']]['exchange_integral'] = 0;
+                    }
                     // 替换价格
                     $goods['spec_price'][$spec['spec_key']]['price'] = $spec['price'];
                     $goods['spec_price'][$spec['spec_key']]['store_count'] = $spec['goods_num'];

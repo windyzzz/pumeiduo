@@ -97,6 +97,20 @@ class Login extends Base
             $orderLogic = new OrderLogic();
             $orderLogic->setUserId($res['result']['user_id']); //登录后将超时未支付订单给取消掉
             $orderLogic->abolishOrder();
+            $user = $res['result'];
+            $res['result'] = [
+                'user_id' => $user['user_id'],
+                'mobile' => $user['mobile'],
+                'password' => $user['password'],
+                'nickname' => $user['nickname'],
+                'user_name' => $user['user_name'],
+                'is_distribut' => $user['is_distribut'],
+                'is_lock' => $user['is_lock'],
+                'level' => $user['level'],
+                'level_name' => $user['level_name'],
+                'token' => $user['token'],
+                'type' => $user['type']
+            ];
         }
 
         return json($res);

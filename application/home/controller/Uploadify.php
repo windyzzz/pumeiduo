@@ -565,7 +565,7 @@ class Uploadify extends Base
                 } else {
                     $state = 'ERROR'.$file->getError();
                 }
-                $return_url = '/'.UPLOAD_PATH.$savePath.$info->getSaveName();
+                $return_url = UPLOAD_PATH.$savePath.$info->getSaveName();
             }
             $return_data['url'] = $return_url;
         }
