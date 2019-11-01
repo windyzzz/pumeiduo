@@ -27,7 +27,7 @@ class Token
     public static function checkToken($token)
     {
         $timeOut = Db::name('users')->where(['token' => $token])->value('time_out');
-        if (!isset($timeOut)) return ['status' => 0, 'msg' => 'token参数错误'];
+        if (!isset($timeOut)) return ['status' => -2, 'msg' => 'token参数错误'];   // 通常是账号另一个端登录使得token更改，后面要改提示账号已在另一个地方登录
         if ($timeOut != 0) {
             if (time() - $timeOut > 0) {
                 return ['status' => 0, 'msg' => '请重新登录'];

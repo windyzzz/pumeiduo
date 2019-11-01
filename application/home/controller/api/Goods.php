@@ -826,14 +826,19 @@ class Goods extends Base
             'fs.end_time' => ['>=', time()],
             'fs.is_end' => 0
         ];
+        // 秒杀商品ID
+        $filter_goods_id = Db::name('flash_sale fs')->join('goods g', 'g.goods_id = fs.goods_id')
+            ->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
+            ->where($where)->where(['g.is_on_sale' => 1])->getField('fs.goods_id', true);
+        $count = count($filter_goods_id);
+        $page = new Page($count, 20);
         // 秒杀商品
         $flashSaleGoods = Db::name('flash_sale fs')->join('goods g', 'g.goods_id = fs.goods_id')
             ->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
-            ->where($where)->where(['g.is_on_sale' => 1])->field('fs.id prom_id, g.goods_id, fs.item_id, g.goods_sn, g.goods_name, g.original_img, fs.price, fs.title, sgp.key_name')
-            ->select();
-        $goodsIds = Db::name('flash_sale fs')->where($where)->getField('goods_id', true);
+            ->where(['fs.goods_id' => ['in', $filter_goods_id]])->field('fs.id prom_id, g.goods_id, fs.item_id, g.goods_sn, g.goods_name, g.original_img, fs.price, fs.title, sgp.key_name')
+            ->limit($page->firstRow . ',' . $page->listRows)->select();
         // 商品标签
-        $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $goodsIds], 'status' => 1])->select();
+        $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->limit($page->firstRow . ',' . $page->listRows)->select();
         foreach ($flashSaleGoods as $k => $v) {
             $flashSaleGoods[$k]['tabs'] = [];
             if (!empty($goodsTab)) {
@@ -901,8 +906,16 @@ class Goods extends Base
                 ->order([$sort => $sort_asc])
                 ->limit($page->firstRow . ',' . $page->listRows)
                 ->select();
+            // 商品规格属性
+            $goodsItem = Db::name('spec_goods_price')->where(['goods_id' => ['in', $filter_goods_id]])->limit($page->firstRow . ',' . $page->listRows)->group('goods_id')->getField('goods_id, item_id', true);
 
             foreach ($goods_list as $k => $v) {
+                // 商品规格属性
+                if (isset($goodsItem[$v['goods_id']])) {
+                    $goods_list[$k]['item_id'] = $goodsItem[$v['goods_id']];
+                } else {
+                    $goods_list[$k]['item_id'] = 0;
+                }
                 $goods_list[$k]['group_buy'] = $v['group_buy'] = $v['group_buy_detail'];
                 if ($goods_list[$k]['group_buy']['can_integral'] > 0) {
                     $integral = M('Goods')->where('goods_id', $goods_list[$k]['group_buy']['goods_id'])->getField('exchange_integral');

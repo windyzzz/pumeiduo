@@ -42,9 +42,9 @@ class CouponLogic extends Model
         })->select();
 
         if ($goods_coupon && $coupon
-                && $coupon['send_start_time'] <= $curtime
-                && $coupon['send_end_time'] > $curtime
-                && $coupon['createnum'] > $coupon['send_enum']) {
+            && $coupon['send_start_time'] <= $curtime
+            && $coupon['send_end_time'] > $curtime
+            && $coupon['createnum'] > $coupon['send_enum']) {
             return $coupon['money'];
         }
 
@@ -63,7 +63,7 @@ class CouponLogic extends Model
                             $activityLogic = new \app\common\logic\ActivityLogic();
                             $result = $activityLogic->get_coupon($v['id'], $user_id);
                             if (1 != $result['status']) {
-                                Log::record('新用户：'.$user_id.' 获取新人优惠券：'.$v['id'].'失败。原因：'.$result['msg'].'优惠券ID：'.$v['id']);
+                                Log::record('新用户：' . $user_id . ' 获取新人优惠券：' . $v['id'] . '失败。原因：' . $result['msg'] . '优惠券ID：' . $v['id']);
                             }
                         }
                     }
@@ -71,7 +71,8 @@ class CouponLogic extends Model
             }
         }
     }
-    public function sendNewVipUser($user_id,$order_id)
+
+    public function sendNewVipUser($user_id, $order_id)
     {
         $coupon_list = M('Coupon')->where('type_value', 'LIKE', '%5%')->select();
         if (!empty($coupon_list)) {
@@ -81,9 +82,9 @@ class CouponLogic extends Model
                     if (in_array(5, $type_value)) {
                         if ($this->check($v)) {
                             $activityLogic = new \app\common\logic\ActivityLogic();
-                            $result = $activityLogic->get_coupon($v['id'], $user_id,$order_id);
+                            $result = $activityLogic->get_coupon($v['id'], $user_id, $order_id);
                             if (1 != $result['status']) {
-                                Log::record('新VIP：'.$user_id.' 获取新VIP优惠券：'.$v['id'].'失败。原因：'.$result['msg'].'优惠券ID：'.$v['id']);
+                                Log::record('新VIP：' . $user_id . ' 获取新VIP优惠券：' . $v['id'] . '失败。原因：' . $result['msg'] . '优惠券ID：' . $v['id']);
                             }
                         }
                     }
@@ -91,6 +92,7 @@ class CouponLogic extends Model
             }
         }
     }
+
     public function check($coupon)
     {
         if (1 != $coupon['status'] || $coupon['send_start_time'] > time() || $coupon['send_end_time'] < time()) {
@@ -103,8 +105,8 @@ class CouponLogic extends Model
     /**
      * 获取用户可以使用的优惠券金额.
      *
-     * @param $user_id|用户id
-     * @param $coupon_id|优惠券id
+     * @param $user_id |用户id
+     * @param $coupon_id |优惠券id
      *
      * @return int|mixed
      */
@@ -126,8 +128,8 @@ class CouponLogic extends Model
     /**
      * 根据优惠券代码获取优惠券金额.
      *
-     * @param $couponCode|优惠券代码
-     * @param $orderMoney|订单金额
+     * @param $couponCode |优惠券代码
+     * @param $orderMoney |订单金额
      *
      * @return array
      */
@@ -142,10 +144,10 @@ class CouponLogic extends Model
         }
         $coupon = M('Coupon')->where('id', $couponList['cid'])->find(); // 获取优惠券类型表
         if (time() < $coupon['use_start_time']) {
-            return ['status' => -13, 'msg' => '该优惠券开始使用时间'.date('Y-m-d H:i:s', $coupon['use_start_time']), 'result' => ''];
+            return ['status' => -13, 'msg' => '该优惠券开始使用时间' . date('Y-m-d H:i:s', $coupon['use_start_time']), 'result' => ''];
         }
         if (time() > $coupon['use_end_time']) {
-            return ['status' => -10, 'msg' => '优惠券已经过期'.date('Y-m-d H:i:s', $coupon['use_start_time']), 'result' => ''];
+            return ['status' => -10, 'msg' => '优惠券已经过期' . date('Y-m-d H:i:s', $coupon['use_start_time']), 'result' => ''];
         }
         if ($orderMoney < $coupon['condition']) {
             return ['status' => -11, 'msg' => '金额没达到优惠券使用条件', 'result' => ''];
@@ -178,9 +180,9 @@ class CouponLogic extends Model
         }
 
         $query = Db::name('coupon')->alias('c1')
-                ->field('c1.name,c1.money,c1.condition,c1.use_end_time, c2.*')
-                ->join('__COUPON_LIST__ c2', 'c2.cid=c1.id AND c2.status=0', 'LEFT')
-                ->where($where);
+            ->field('c1.name,c1.money,c1.condition,c1.use_end_time, c2.*')
+            ->join('__COUPON_LIST__ c2', 'c2.cid=c1.id AND c2.status=0', 'LEFT')
+            ->where($where);
         if ($size) {
             return $query->page($p, $size)->select();
         }
@@ -191,9 +193,9 @@ class CouponLogic extends Model
     /**
      * 获取用户可用的优惠券.
      *
-     * @param $user_id|用户id
-     * @param array $goods_ids|限定商品ID数组
-     * @param array $goods_cat_id||限定商品分类ID数组
+     * @param $user_id |用户id
+     * @param array $goods_ids |限定商品ID数组
+     * @param array $goods_cat_id ||限定商品分类ID数组
      *
      * @return array
      */
@@ -314,14 +316,14 @@ class CouponLogic extends Model
         foreach ($userCouponList as $userCoupon => $userCouponItem) {
             foreach ($couponList as $coupon => $couponItem) {
                 if ($userCouponItem['cid'] == $couponItem['id']) {
-                    if(5 == $couponItem['use_type']) {
+                    if (5 == $couponItem['use_type']) {
                         //全店通用
                         $tmp = $userCouponItem;
                         $tmp['coupon'] = $couponItem->append(['use_type_title'])->toArray();
 
                         $tmp['coupon_goods'] = M('goods_coupon')
                             ->alias('gc')
-                            ->join('goods g','g.goods_id = gc.goods_id')
+                            ->join('goods g', 'g.goods_id = gc.goods_id')
                             ->where('gc.coupon_id', $userCouponItem['cid'])
                             ->field('gc.goods_id,gc.number,g.goods_name,g.original_img,g.exchange_integral,shop_price - g.exchange_integral as member_price')
                             ->select();
@@ -362,7 +364,7 @@ class CouponLogic extends Model
         }
         $coupon = Coupon::get($coupon_list['cid']); // 获取优惠券类型表
         if (time() < $coupon['use_start_time']) {
-            return ['status' => 0, 'msg' => '该优惠券开始使用时间'.date('Y-m-d H:i:s', $coupon['use_start_time']), 'result' => ''];
+            return ['status' => 0, 'msg' => '该优惠券开始使用时间' . date('Y-m-d H:i:s', $coupon['use_start_time']), 'result' => ''];
         }
         if (time() > $coupon['use_end_time'] || 2 == $coupon['status']) {
             return ['status' => 0, 'msg' => '优惠券已失效或过期', 'result' => ''];
@@ -370,7 +372,7 @@ class CouponLogic extends Model
         $do_exchange = Db::name('coupon_list')->where('id', $coupon_list['id'])->update(['uid' => $user_id]);
         if (false !== $do_exchange) {
             return ['status' => 1, 'msg' => '兑换成功',
-                'result' => ['coupon' => $coupon->append(['is_expiring', 'use_start_time_format_dot', 'use_end_time_format_dot'])->toArray(), 'coupon_list' => $coupon_list], ];
+                'result' => ['coupon' => $coupon->append(['is_expiring', 'use_start_time_format_dot', 'use_end_time_format_dot'])->toArray(), 'coupon_list' => $coupon_list],];
         }
 
         return ['status' => 0, 'msg' => '兑换失败', 'result' => ''];
@@ -379,8 +381,8 @@ class CouponLogic extends Model
     /**
      * 获取店铺商品可领取优惠券.
      *
-     * @param array $goods_ids|商品id数组
-     * @param array $goods_category_ids|商品分类数组
+     * @param array $goods_ids |商品id数组
+     * @param array $goods_category_ids |商品分类数组
      *
      * @return array
      */
@@ -470,7 +472,12 @@ class CouponLogic extends Model
         }
         $coupon = Db::name('coupon')->alias('c')->join('goods_coupon gc', 'gc.coupon_id = c.id', 'LEFT')
             ->where($where)->where(['c.status' => 1, 'c.use_start_time' => ['<=', time()], 'c.use_end_time' => ['>=', time()]])
-            ->field('c.id coupon_id, c.name, c.money, FROM_UNIXTIME(c.use_start_time,"%Y-%m-%d") as use_start_time, FROM_UNIXTIME(c.use_end_time,"%Y-%m-%d") as use_end_time, c.use_type, gc.goods_id, gc.goods_category_id cat_id')->select();
-        return $coupon;
+            ->field('c.id coupon_id, c.name, c.money, FROM_UNIXTIME(c.use_start_time,"%Y-%m-%d") as use_start_time, FROM_UNIXTIME(c.use_end_time,"%Y-%m-%d") as use_end_time, c.use_type, gc.goods_id, gc.goods_category_id cat_id');
+        if (isset($ext['limit'])) {
+            // 限制数量
+            $coupon = $coupon->limit($ext['limit']['offset'], $ext['limit']['length']);
+        }
+
+        return $coupon->select();
     }
 }

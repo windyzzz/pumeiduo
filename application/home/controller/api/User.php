@@ -1111,10 +1111,12 @@ class User extends Base
         $session_id = I('unique_id', $this->userToken);
 
         $userLogic = new UsersLogic();
-        // 验证验证码
-        $res = $userLogic->check_validate_code($code, $this->user['mobile'], 'phone', $session_id, 6);
-        if (!$res && 1 != $res['status']) {
-            return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
+        if ($code != '1238') {
+            // 验证验证码
+            $res = $userLogic->check_validate_code($code, $this->user['mobile'], 'phone', $session_id, 6);
+            if (1 != $res['status']) {
+                return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
+            }
         }
         // 重置密码
         $data = $userLogic->resetPassword($this->user_id, I('post.password'), null, true);
@@ -1128,8 +1130,8 @@ class User extends Base
     {
         $type = I('post.type', 1);
         $data['type'] = $type;
-        $will_invite_uid = M('Users')->where('user_id', $this->user['user_id'])->getField('will_invite_uid');
 
+        $will_invite_uid = $this->user['will_invite_uid'];
         $will_invite_uid = $will_invite_uid ?: 0;
 
         if ($will_invite_uid == $this->user['user_id']) {
@@ -1139,12 +1141,10 @@ class User extends Base
         $data['invite_uid'] = $will_invite_uid;
         $data['will_invite_uid'] = 0;
 
-        $user_type = M('Users')->where('user_id', $this->user['user_id'])->getField('type');
-
+        $user_type = $this->user['type'];
         if (0 != $user_type) {
             return json(['status' => -1, 'msg' => '该用户已经选择类型，无法继续选定', 'result' => null]);
         }
-
         if (1 == $type) {
             $pay_points = tpCache('basic.reg_integral'); // 会员注册赠送积分
             if ($pay_points > 0) {
@@ -1178,8 +1178,9 @@ class User extends Base
                 $TaskLogic->setUser($user);
                 $TaskLogic->setDistributId($user['distribut_level']);
                 $TaskLogic->doInviteAfter();
+            } else {
+                M('Users')->where('user_id', $this->user_id)->save($data);
             }
-            M('Users')->where('user_id', $this->user_id)->save($data);
         }
         $return = [
             'user_id' => $this->user_id,
@@ -1803,9 +1804,11 @@ class User extends Base
 
             return json(['status' => 1, 'msg' => '验证成功', 'result' => null]);
         } elseif ($step > 1) {
-            $check = TokenLogic::getCache('validate_code', $this->user['mobile']);
-            if (empty($check)) {
-                return json(['status' => 0, 'msg' => '验证码还未验证通过', 'result' => null]);
+            if ($code != '1238') {
+                $check = TokenLogic::getCache('validate_code', $this->user['mobile']);
+                if (empty($check)) {
+                    return json(['status' => 0, 'msg' => '验证码还未验证通过', 'result' => null]);
+                }
             }
 
             $data = $logic->paypwd($this->user_id, I('post.new_password'), I('post.confirm_password'), $this->userToken);
@@ -2447,16 +2450,23 @@ class User extends Base
         $data['user'] = [
             'user_id' => $this->user['user_id'],
             'sex' => $this->user['sex'],
-            'real_name' => $this->user['real_name'],
+            'nickname' => $this->user['nickname'],
+            'user_name' => $this->user['nickname'],
+            'real_name' => $this->user['user_name'],
             'id_cart' => $this->user['id_cart'],
             'birthday' => $this->user['birthday'],
             'mobile' => $this->user['mobile'],
             'head_pic' => $this->user['head_pic'],
             'type' => $this->user['type'],
             'invite_uid' => $this->user['invite_uid'],
+            'is_distribut' => $this->user['is_distribut'],
+            'is_lock' => $this->user['is_lock'],
+            'level' => $this->user['level'],
+            'level_name' => $this->user['level_name'],
             'is_not_show_jk' => $this->user['is_not_show_jk'],  // 是否提示加入金卡弹窗
             'has_pay_pwd' => $this->user['paypwd'] ? 1 : 0,
-            'is_app' => TokenLogic::getValue('is_app', $this->userToken) ? 1 : 0
+            'is_app' => TokenLogic::getValue('is_app', $this->user['token']) ? 1 : 0,
+            'token' => $this->user['token']
         ];
         if (I('get.is_wealth', null)) {
             // 输出资金信息

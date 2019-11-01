@@ -301,7 +301,7 @@ class UsersLogic extends Model
             $levelName = Db::name('user_level')->where('level_id', $levelId)->getField('level_name');
             // 更新用户token
             if (!$userToken) $userToken = TokenLogic::setToken();
-            Db::name('users')->where('mobile', $username)->whereOr('email', $username)->save(['token' => $userToken, 'time_out' => strtotime('+' . config('redis_days') . ' days')]);
+            Db::name('users')->where('mobile', $username)->whereOr('email', $username)->update(['token' => $userToken, 'time_out' => strtotime('+' . config('redis_days') . ' days')]);
             $user = Db::name('users')->where('mobile', $username)->whereOr('email', $username)->find();
             $user['level_name'] = $levelName;
             $result = ['status' => 1, 'msg' => '登录成功', 'result' => $user];
@@ -777,7 +777,28 @@ class UsersLogic extends Model
         // if($pay_points > 0){
         //     accountLog($user_id, 0,$pay_points, '会员注册赠送积分'); // 记录日志流水
         // }
-        $user = M('users')->where('user_id', $user_id)->field('user_id, mobile, nickname, user_name, is_distribut, is_lock, level, token, type')->find();
+        $user = M('users')->where('user_id', $user_id)->find();
+        $user = [
+            'user_id' => $user['user_id'],
+            'sex' => $user['sex'],
+            'nickname' => $user['nickname'],
+            'user_name' => $user['nickname'],
+            'real_name' => $user['user_name'],
+            'id_cart' => $user['id_cart'],
+            'birthday' => $user['birthday'],
+            'mobile' => $user['mobile'],
+            'head_pic' => $user['head_pic'],
+            'type' => $user['type'],
+            'invite_uid' => $user['invite_uid'],
+            'is_distribut' => $user['is_distribut'],
+            'is_lock' => $user['is_lock'],
+            'level' => $user['level'],
+            'level_name' => $user['level_name'],
+            'is_not_show_jk' => $user['is_not_show_jk'],  // 是否提示加入金卡弹窗
+            'has_pay_pwd' => $user['paypwd'] ? 1 : 0,
+            'is_app' => TokenLogic::getValue('is_app', $user['token']) ? 1 : 0,
+            'token' => $user['token']
+        ];
 
         return ['status' => 1, 'msg' => '注册成功', 'result' => $user];
     }

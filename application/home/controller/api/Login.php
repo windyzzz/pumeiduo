@@ -98,18 +98,27 @@ class Login extends Base
             $orderLogic->setUserId($res['result']['user_id']); //登录后将超时未支付订单给取消掉
             $orderLogic->abolishOrder();
             $user = $res['result'];
+            $res['result'] = [];
             $res['result'] = [
                 'user_id' => $user['user_id'],
-                'mobile' => $user['mobile'],
-                'password' => $user['password'],
+                'sex' => $user['sex'],
                 'nickname' => $user['nickname'],
-                'user_name' => $user['user_name'],
+                'user_name' => $user['nickname'],
+                'real_name' => $user['user_name'],
+                'id_cart' => $user['id_cart'],
+                'birthday' => $user['birthday'],
+                'mobile' => $user['mobile'],
+                'head_pic' => $user['head_pic'],
+                'type' => $user['type'],
+                'invite_uid' => $user['invite_uid'],
                 'is_distribut' => $user['is_distribut'],
                 'is_lock' => $user['is_lock'],
                 'level' => $user['level'],
                 'level_name' => $user['level_name'],
-                'token' => $user['token'],
-                'type' => $user['type']
+                'is_not_show_jk' => $user['is_not_show_jk'],  // 是否提示加入金卡弹窗
+                'has_pay_pwd' => $user['paypwd'] ? 1 : 0,
+                'is_app' => TokenLogic::getValue('is_app', $this->userToken) ? 1 : 0,
+                'token' => $user['token']
             ];
         }
 
