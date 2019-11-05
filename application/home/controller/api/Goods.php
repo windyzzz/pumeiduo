@@ -183,7 +183,7 @@ class Goods extends Base
             ->alias('g')
             ->field('pg.type,pg.title,pg.id')
             ->where(array('g.goods_id' => $goods_id))
-            ->join('prom_goods pg', 'g.promo_id = pg.id and pg.start_time <= ' . NOW_TIME . ' and pg.end_time >= ' . NOW_TIME . ' and pg.is_end = 0 and  pg.is_open =1 ')
+            ->join('prom_goods pg', 'g.promo_id = pg.id and pg.start_time <= ' . NOW_TIME . ' and pg.end_time >= ' . NOW_TIME . ' and pg.is_end = 0 and  pg.is_open = 1')
             ->select();
         if ($goods_tao_grade) {
             $type_arr = array(
@@ -997,6 +997,7 @@ class Goods extends Base
 //        $goods_where = ['is_on_sale' => 1, 'is_recommend' => 1, 'cat_id' => ['in', $cat_id_arr]];
 //        $filter_goods_id = Db::name('goods')->where($goods_where)->cache(true)->getField('goods_id', true);
         $where = [
+            'pg.is_open' => 1,
             'pg.is_end' => 0,
             'pg.end_time' => ['>=', time()]
         ];

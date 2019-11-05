@@ -402,6 +402,14 @@ class User extends Base
                     $this->error('合并的报单系统用户已经新用户被绑定过老用户，不能合并！');
                 }
 
+                if($c['user_name']){
+                    $cusers = M('users')->where(array("user_name"=>$c['user_name']))->count();
+                    if($cusers>=2){
+                        $this->error($c['user_name'].'已合并多次，禁止多次合并');
+                    }
+                }
+
+
                 $update = [];
                 $update['invite_uid'] = $update['first_leader'] = $c['first_leader'];
                 $update['second_leader'] = $c['second_leader'];
