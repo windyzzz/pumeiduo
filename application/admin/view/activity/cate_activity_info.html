@@ -59,8 +59,8 @@
         <div class="item-title"><a class="back" href="javascript:history.back();" title="返回列表"><i
                 class="fa fa-arrow-circle-o-left"></i></a>
             <div class="subject">
-                <h3>活动楼层管理 - 添加与编辑商品促销活动</h3>
-                <h5>网站系统编辑商品促销活动</h5>
+                <h3>活动楼层管理 - 添加与编辑商品主题活动</h3>
+                <h5>网站系统编辑商品主题活动</h5>
             </div>
         </div>
     </div>
@@ -131,7 +131,7 @@
             </dl>
             <dl class="row">
                 <dt class="tit">
-                    <label><em>*</em>背景图</label>
+                    <label>背景图</label>
                 </dt>
                 <dd class="opt">
                     <div class="input-file-show">
@@ -261,7 +261,8 @@
                             '<div class="selected-group-goods"><div class="goods-thumb">' +
                             '<img style="width: 162px;height: 162px" src="' + o.spec_img + '"/></div> <div class="goods-name"> ' +
                             '<a target="_blank" href="/index.php?m=Home&c=Goods&a=goodsInfo&id=' + item.goods_id + '">' + item.goods_name + o.key_name + '</a> </div>' +
-                            '<input type="hidden" name="store_count[]" value="' + o.store_count + '"/>' +
+                            // '<input type="hidden" name="store_count[]" value="' + o.store_count + '"/>' +
+                            '<input type="hidden" name="goods[' + item.goods_id + '][store_count][' + i + ']" value="' + o.store_count + '"/>' +
                             ' <div class="goods-price">商城价：￥' + o.price + '库存:' + o.store_count + '</div> </div></div>';
                     });
                 } else {
@@ -270,7 +271,8 @@
                         '<div class="selected-group-goods"><div class="goods-thumb">' +
                         '<img style="width: 162px;height: 162px" src="' + item.goods_image + '"/></div> <div class="goods-name"> ' +
                         '<a target="_blank" href="/index.php?m=Home&c=Goods&a=goodsInfo&id=' + item.goods_id + '">' + item.goods_name + '</a> </div>' +
-                        '<input type="hidden" name="store_count[]" value="' + item.store_count + '"/>' +
+                        // '<input type="hidden" name="store_count[]" value="' + item.store_count + '"/>' +
+                        '<input type="hidden" name="goods[' + item.goods_id + '][store_count]" value="' + item.store_count + '"/>' +
                         ' <div class="goods-price">商城价：￥' + item.goods_price + '库存:' + item.store_count + '</div> </div></div>';
                 }
             }
