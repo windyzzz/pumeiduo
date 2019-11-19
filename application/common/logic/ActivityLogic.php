@@ -14,6 +14,7 @@ namespace app\common\logic;
 use app\common\model\Coupon;
 use think\Db;
 use think\Model;
+use think\Page;
 
 /**
  * 活动逻辑类.
@@ -34,10 +35,10 @@ class ActivityLogic extends Model
             'end_time' => ['gt', time()],
         ];
         $count = M('group_buy')->alias('b')
-                ->field('b.goods_id,b.rebate,b.virtual_num,b.buy_num,b.title,b.goods_price,b.end_time,b.price,b.order_num,g.comment_count')
-                ->join('__GOODS__ g', 'b.goods_id=g.goods_id AND g.prom_type=2 AND g.is_on_sale=1')
-                ->where($group_by_where)
-                ->count();
+            ->field('b.goods_id,b.rebate,b.virtual_num,b.buy_num,b.title,b.goods_price,b.end_time,b.price,b.order_num,g.comment_count')
+            ->join('__GOODS__ g', 'b.goods_id=g.goods_id AND g.prom_type=2 AND g.is_on_sale=1')
+            ->where($group_by_where)
+            ->count();
 
         return $count;
     }
@@ -65,11 +66,11 @@ class ActivityLogic extends Model
             'is_end' => 0,
         ];
         $list = M('group_buy')->alias('b')
-                ->field('b.goods_id,b.item_id,b.rebate,b.virtual_num,b.buy_num,b.title,b.goods_price,b.end_time,b.price,b.order_num,g.comment_count')
-                ->join('__GOODS__ g', 'b.goods_id=g.goods_id AND g.prom_type=2 AND g.is_on_sale=1')
-                ->where($group_by_where)->page($page_index, $page_size)
-                ->order($type, 'desc')
-                ->select(); // 找出这个商品
+            ->field('b.goods_id,b.item_id,b.rebate,b.virtual_num,b.buy_num,b.title,b.goods_price,b.end_time,b.price,b.order_num,g.comment_count')
+            ->join('__GOODS__ g', 'b.goods_id=g.goods_id AND g.prom_type=2 AND g.is_on_sale=1')
+            ->where($group_by_where)->page($page_index, $page_size)
+            ->order($type, 'desc')
+            ->select(); // 找出这个商品
 
         $groups = [];
         $server_time = time();
@@ -84,7 +85,7 @@ class ActivityLogic extends Model
     /**
      * 优惠券列表.
      *
-     * @param type $atype    排序类型 1:默认id排序，2:即将过期，3:面值最大
+     * @param type $atype 排序类型 1:默认id排序，2:即将过期，3:面值最大
      * @param type $use_type 使用范围：0全店通用1指定商品可用2指定分类商品可用
      * @param $user_id  用户ID
      * @param int $p 第几页
@@ -139,15 +140,15 @@ class ActivityLogic extends Model
     /**
      * 获取优惠券查询对象
      *
-     * @param int  $queryType   0:count 1:select
+     * @param int $queryType 0:count 1:select
      * @param type $user_id
-     * @param int  $type        查询类型 0:未使用，1:已使用，2:已过期
-     * @param type $orderBy     排序类型，use_end_time、send_time,默认send_time
-     * @param int  $order_money
+     * @param int $type 查询类型 0:未使用，1:已使用，2:已过期
+     * @param type $orderBy 排序类型，use_end_time、send_time,默认send_time
+     * @param int $order_money
      *
      * @return Query
      */
-    public function getCouponQuery($queryType, $user_id, $type = 0, $orderBy = null, $order_money = 0,$is_yhq=true)
+    public function getCouponQuery($queryType, $user_id, $type = 0, $orderBy = null, $order_money = 0, $is_yhq = true)
     {
         $where['l.uid'] = $user_id;
         $where['c.status'] = 1;
@@ -178,7 +179,7 @@ class ActivityLogic extends Model
         } elseif (empty($orderBy)) {
             $order = ['l.send_time' => 'DESC', 'l.use_time'];
         }
-        $condition = floatval($order_money) ? ' AND c.condition <= '.$order_money : '';
+        $condition = floatval($order_money) ? ' AND c.condition <= ' . $order_money : '';
 
         /*if($is_yhq){
             $condition .= ' and use_type !=5 ';
@@ -187,12 +188,12 @@ class ActivityLogic extends Model
         }*/
 
         $query = M('coupon_list')->alias('l')
-            ->join('__COUPON__ c', 'l.cid = c.id'.$condition)
+            ->join('__COUPON__ c', 'l.cid = c.id' . $condition)
             ->where($where);
 
         if (0 != $queryType) {
             $query = $query->field('l.*,c.name,c.money,c.use_start_time,c.use_end_time,c.condition,c.use_type,c.content')
-                    ->order($order);
+                ->order($order);
         }
 
         return $query;
@@ -202,9 +203,9 @@ class ActivityLogic extends Model
      * 获取优惠券数目.
      *
      * @param $user_id
-     * @param int  $type
+     * @param int $type
      * @param null $orderBy
-     * @param int  $order_money
+     * @param int $order_money
      *
      * @return mixed
      */
@@ -221,15 +222,15 @@ class ActivityLogic extends Model
      * @param $firstRow
      * @param $listRows
      * @param $user_id
-     * @param int  $type
+     * @param int $type
      * @param null $orderBy
-     * @param int  $order_money
+     * @param int $order_money
      *
      * @return mixed
      */
-    public function getUserCouponList($firstRow, $listRows, $user_id, $type = 0, $orderBy = null, $order_money = 0,$is_yhq=true)
+    public function getUserCouponList($firstRow, $listRows, $user_id, $type = 0, $orderBy = null, $order_money = 0, $is_yhq = true)
     {
-        $query = $this->getCouponQuery(1, $user_id, $type, $orderBy, $order_money,$is_yhq);
+        $query = $this->getCouponQuery(1, $user_id, $type, $orderBy, $order_money, $is_yhq);
 
         return $query->limit($firstRow, $listRows)->select();
     }
@@ -237,9 +238,9 @@ class ActivityLogic extends Model
     /**
      * 领券中心.
      *
-     * @param type $cat_id  领券类型id
+     * @param type $cat_id 领券类型id
      * @param type $user_id 用户id
-     * @param type $p       第几页
+     * @param type $p 第几页
      *
      * @return type
      */
@@ -249,12 +250,12 @@ class ActivityLogic extends Model
         $cur_time = time();
         $coupon_where = ['type' => 2, 'status' => 1, 'send_start_time' => ['elt', time()], 'send_end_time' => ['egt', time()]];
         $query = M('coupon')->alias('c')
-            ->field('c.use_type,c.name,c.id,c.money,c.condition,c.createnum,c.send_num,c.send_end_time-'.$cur_time.' as spacing_time')
-            ->where('((createnum-send_num>0 AND createnum>0) OR (createnum=0))')    //领完的也不要显示了
+            ->field('c.use_type,c.name,c.id,c.money,c.condition,c.createnum,c.send_num,c.send_end_time-' . $cur_time . ' as spacing_time')
+            ->where('((createnum-send_num>0 AND createnum>0) OR (createnum=0))')//领完的也不要显示了
             ->where($coupon_where)->page($p, 15)
             ->order('spacing_time', 'asc');
         if ($cat_id > 0) {
-            $query = $query->join('__GOODS_COUPON__ gc', 'gc.coupon_id=c.id AND gc.goods_category_id='.$cat_id);
+            $query = $query->join('__GOODS_COUPON__ gc', 'gc.coupon_id=c.id AND gc.goods_category_id=' . $cat_id);
         }
         $coupon_list = $query->select();
 
@@ -290,13 +291,13 @@ class ActivityLogic extends Model
             $coupon_list[$k]['image'] = $store_logo;
         }
 
-        return  $coupon_list;
+        return $coupon_list;
     }
 
     /**
      * 优惠券类型列表.
      *
-     * @param type $p   第几页
+     * @param type $p 第几页
      * @param type $num 每页多少，null表示全部
      *
      * @return type
@@ -304,9 +305,9 @@ class ActivityLogic extends Model
     public function getCouponTypes($p = 1, $num = null)
     {
         $list = M('coupon')->alias('c')
-                ->join('__GOODS_COUPON__ gc', 'gc.coupon_id=c.id AND gc.goods_category_id!=0')
-                ->where(['type' => 2, 'status' => 1])
-                ->column('gc.goods_category_id');
+            ->join('__GOODS_COUPON__ gc', 'gc.coupon_id=c.id AND gc.goods_category_id!=0')
+            ->where(['type' => 2, 'status' => 1])
+            ->column('gc.goods_category_id');
 
         $result = M('goods_category')->field('id, mobile_name')->where('id', 'IN', $list)->page($p, $num)->select();
         $result = $result ?: [];
@@ -321,7 +322,7 @@ class ActivityLogic extends Model
      * @param $id 优惠券id
      * @param $user_id
      */
-    public function get_coupon($id, $user_id,$get_order_id=0)
+    public function get_coupon($id, $user_id, $get_order_id = 0)
     {
         if (empty($id)) {
             $return = ['status' => 0, 'msg' => '参数错误'];
@@ -342,10 +343,10 @@ class ActivityLogic extends Model
                     //已经领取过
                     $return = ['status' => 2, 'msg' => '您已领取过该优惠券', 'return_url' => $_SERVER['HTTP_REFERER']];
                 } else {
-                    $data = ['uid' => $user_id,'get_order_id'=>$get_order_id, 'cid' => $id, 'type' => 2, 'send_time' => time(), 'status' => 0];
+                    $data = ['uid' => $user_id, 'get_order_id' => $get_order_id, 'cid' => $id, 'type' => 2, 'send_time' => time(), 'status' => 0];
                     M('coupon_list')->add($data);
                     M('coupon')->where(['id' => $id, 'status' => 1])->setInc('send_num');
-                    $return = ['status' => 1, 'msg' => '恭喜您，抢到'.$coupon_info['money'].'元优惠券!', 'return_url' => $_SERVER['HTTP_REFERER'], 'coupon' => $coupon_info];
+                    $return = ['status' => 1, 'msg' => '恭喜您，抢到' . $coupon_info['money'] . '元优惠券!', 'return_url' => $_SERVER['HTTP_REFERER'], 'coupon' => $coupon_info];
                 }
             }
         } else {
@@ -472,7 +473,7 @@ class ActivityLogic extends Model
             foreach ($po as $p) {
                 //type:0满额打折,1满额优惠金额,2满额送积分,3满额送优惠券
                 if (0 == $p['type']) {
-                    $data[] = ['title' => '折扣', 'content' => "满{$p['money']}元打".round($p['expression'] / 10, 1).'折'];
+                    $data[] = ['title' => '折扣', 'content' => "满{$p['money']}元打" . round($p['expression'] / 10, 1) . '折'];
                 } elseif (1 == $p['type']) {
                     $data[] = ['title' => '优惠', 'content' => "满{$p['money']}元优惠{$p['expression']}元"];
                 } elseif (2 == $p['type']) {
@@ -502,14 +503,14 @@ class ActivityLogic extends Model
     {
         $cur_time = time();
         $sql = "select * from __PREFIX__prom_order where type<2 and start_time <= $cur_time "
-                ."AND end_time > $cur_time AND  money<=$order_amount order by money desc limit 1"; //显示满额打折,减价优惠信息
+            . "AND end_time > $cur_time AND  money<=$order_amount order by money desc limit 1"; //显示满额打折,减价优惠信息
         $data = '';
         $po = Db::query($sql);
         if (!empty($po)) {
             foreach ($po as $p) {
                 //type:0满额打折,1满额优惠金额,2满额送积分,3满额送优惠券
                 if (0 == $p['type']) {
-                    $data = "满{$p['money']}元打".round($p['expression'] / 10, 1).'折';
+                    $data = "满{$p['money']}元打" . round($p['expression'] / 10, 1) . '折';
                 } elseif (1 == $p['type']) {
                     $data = "满{$p['money']}元优惠{$p['expression']}元";
                 }
@@ -517,5 +518,143 @@ class ActivityLogic extends Model
         }
 
         return $data;
+    }
+
+    /**
+     * 获取分类主题列表
+     * @return array|false|\PDOStatement|string|\think\Collection
+     */
+    public function getCateActList()
+    {
+        $where = [
+            'start_time' => ['<=', time()],
+            'end_time' => ['>=', time()],
+            'is_open' => 1,
+            'is_end' => 0
+        ];
+        // 活动列表
+        $activityList = Db::name('cate_activity')->where($where)->field('id, title, slogan, banner')->select();
+        if (empty($activityList)) {
+            return [];
+        }
+        // 活动商品
+        $activityGoods = Db::name('cate_activity_goods ag')->join('goods g', 'g.goods_id = ag.goods_id')
+            ->field('ag.cate_act_id, ag.goods_id, ag.item_id, g.goods_name, goods_remark, shop_price, exchange_integral, original_img')->select();
+        $filter_goods_id = [];
+        foreach ($activityGoods as $item) {
+            $filter_goods_id[] = $item['goods_id'];
+        }
+        $count = count($filter_goods_id);
+        $page = new Page($count, 20);
+        // 商品规格属性
+        $goodsItem = Db::name('spec_goods_price')->where(['goods_id' => ['in', $filter_goods_id]])->limit($page->firstRow . ',' . $page->listRows)->getField('item_id, key_name');
+        // 商品标签
+        $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->limit($page->firstRow . ',' . $page->listRows)->select();
+        // 处理活动商品数据
+        foreach ($activityGoods as $k => $v) {
+            // 商品属性
+            if (isset($goodsItem[$v['item_id']])) {
+                $activityGoods[$k]['key_name'] = $goodsItem[$v['item_id']];
+            } else {
+                $activityGoods[$k]['key_name'] = '';
+            }
+            // 商品标签
+            $activityGoods[$k]['tabs'] = [];
+            if (!empty($goodsTab)) {
+                foreach ($goodsTab as $value) {
+                    if ($v['goods_id'] == $value['goods_id']) {
+                        $activityGoods[$k]['tabs'][] = [
+                            'tab_id' => $value['tab_id'],
+                            'title' => $value['title'],
+                            'status' => $value['status']
+                        ];
+                    }
+                }
+            }
+            // 处理显示金额
+            if ($v['exchange_integral'] != 0) {
+                $activityGoods[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);
+            } else {
+                $activityGoods[$k]['exchange_price'] = $v['shop_price'];
+            }
+        }
+        // 组合数据
+        foreach ($activityList as $key => $item) {
+            $count = 0;
+            foreach ($activityGoods as $goods) {
+                if ($item['id'] == $goods['cate_act_id']) {
+                    $activityList[$key]['goods'][] = $goods;
+                    $count++;
+                }
+                if ($count == 9) {
+                    break;
+                }
+            }
+        }
+        return $activityList;
+    }
+
+    /**
+     * 获取分类主题活动商品列表
+     * @param $activityId
+     * @return array|false|\PDOStatement|string|Model
+     */
+    public function getCateActGoodsList($activityId)
+    {
+        $where = [
+            'start_time' => ['<=', time()],
+            'end_time' => ['>=', time()],
+            'is_open' => 1,
+            'is_end' => 0,
+            'id' => $activityId
+        ];
+        // 活动信息
+        $activityInfo = Db::name('cate_activity')->where($where)->field('id, title, slogan, banner')->find();
+        if (empty($activityInfo)) {
+            return [];
+        }
+        $activityGoods = Db::name('cate_activity_goods ag')->join('goods g', 'g.goods_id = ag.goods_id')
+            ->where(['ag.cate_act_id' => $activityId])
+            ->field('ag.cate_act_id, ag.goods_id, ag.item_id, g.goods_name, goods_remark, shop_price, exchange_integral, original_img')->select();
+        $filter_goods_id = [];
+        foreach ($activityGoods as $item) {
+            $filter_goods_id[] = $item['goods_id'];
+        }
+        $count = count($filter_goods_id);
+        $page = new Page($count, 20);
+        // 商品规格属性
+        $goodsItem = Db::name('spec_goods_price')->where(['goods_id' => ['in', $filter_goods_id]])->limit($page->firstRow . ',' . $page->listRows)->getField('item_id, key_name');
+        // 商品标签
+        $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->limit($page->firstRow . ',' . $page->listRows)->select();
+        // 处理活动商品数据
+        foreach ($activityGoods as $k => $v) {
+            // 商品属性
+            if (isset($goodsItem[$v['item_id']])) {
+                $activityGoods[$k]['key_name'] = $goodsItem[$v['item_id']];
+            } else {
+                $activityGoods[$k]['key_name'] = '';
+            }
+            // 商品标签
+            $activityGoods[$k]['tabs'] = [];
+            if (!empty($goodsTab)) {
+                foreach ($goodsTab as $value) {
+                    if ($v['goods_id'] == $value['goods_id']) {
+                        $activityGoods[$k]['tabs'][] = [
+                            'tab_id' => $value['tab_id'],
+                            'title' => $value['title'],
+                            'status' => $value['status']
+                        ];
+                    }
+                }
+            }
+            // 处理显示金额
+            if ($v['exchange_integral'] != 0) {
+                $activityGoods[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);
+            } else {
+                $activityGoods[$k]['exchange_price'] = $v['shop_price'];
+            }
+        }
+        $activityInfo['goods_list'] = $activityGoods;
+        return $activityInfo;
     }
 }

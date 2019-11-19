@@ -6,7 +6,7 @@
     <div class="fixed-bar">
         <div class="item-title">
             <div class="subject">
-                <h3>活动楼层管理</h3>
+                <h3>分类主题活动</h3>
                 <h5>网站系统优惠促销审核与管理</h5>
             </div>
         </div>
@@ -19,7 +19,7 @@
             <span title="收起提示" id="explanationZoom" style="display: block;"></span>
         </div>
         <ul>
-            <li>活动楼层管理, 由平台设置管理.</li>
+            <li>分类主题活动, 由平台设置管理.</li>
         </ul>
     </div>
     <div class="flexigrid">
@@ -42,10 +42,10 @@
                             <div style="text-align: left; width: 50px;" class="">活动id</div>
                         </th>
                         <th align="left" abbr="article_title" axis="col3" class="">
-                            <div style="text-align: left; width: 240px;" class="">活动名称</div>
+                            <div style="text-align: left; width: 120px;" class="">活动名称</div>
                         </th>
                         <th align="left" abbr="ac_id" axis="col4" class="">
-                            <div style="text-align: center; width: 80px;" class="">活动标语</div>
+                            <div style="text-align: center; width: 120px;" class="">活动标语</div>
                         </th>
                         <th align="center" abbr="article_show" axis="col5" class="">
                             <div style="text-align: center; width: 80px;" class="">是否启动</div>
@@ -95,10 +95,10 @@
                                 <div style="text-align: left; width: 50px;">{$vo.id}</div>
                             </td>
                             <td align="left" class="">
-                                <div style="text-align: left; width: 240px;">{$vo.title|getSubstr=0,30}</div>
+                                <div style="text-align: left; width: 120px;">{$vo.title|getSubstr=0,30}</div>
                             </td>
                             <td align="left" class="">
-                                <div style="text-align: center; width: 80px;">{$vo.slogan}</div>
+                                <div style="text-align: center; width: 120px;">{$vo.slogan}</div>
                             </td>
                             <td align="left" class="">
                                 <div style="text-align: center; width: 80px;">
@@ -114,13 +114,13 @@
                                 </div>
                             </td>
                             <td align="left" class="">
-                                <div style="text-align: center; width: 120px;">{$vo.start_time|date='Y-m-d',###}</div>
+                                <div style="text-align: center; width: 120px;">{$vo.start_time|date='Y-m-d H:i:s',###}</div>
                             </td>
                             <td align="left" class="">
-                                <div style="text-align: center; width: 120px;">{$vo.end_time|date='Y-m-d',###}</div>
+                                <div style="text-align: center; width: 120px;">{$vo.end_time|date='Y-m-d H:i:s',###}</div>
                             </td>
                             <td align="left" class="">
-                                <div style="text-align: center; width: 120px;">{$vo.end_time}</div>
+                                <div style="text-align: center; width: 120px;">{$vo.status_desc}</div>
                             </td>
                             <td align="left" class="handle">
                                 <div style="text-align: left; width: 170px; max-width:170px;">
@@ -129,6 +129,9 @@
                                             class="fa fa-pencil-square-o"></i>编辑</a>
                                     <a class="btn red  del" data-id="{$vo['id']}"><i class="fa fa-trash-o"></i>删除</a>
                                 </div>
+                            </td>
+                            <td align="" class="" style="width: 100%;">
+                                <div>&nbsp;</div>
                             </td>
                         </tr>
                     </foreach>

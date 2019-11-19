@@ -284,9 +284,9 @@ class Cart extends Base
                 $goodsIds[] = $v['goods_id'];
             }
         }
-        $cartList['prom_list'] = array_values($promList);
         $return = [
             'cart_list' => $cartList,
+            'prom_list' => array_values($promList),
             'invalid_list' => $invalidList
         ];
         // 猜你喜欢 --- 以下都是 猜你喜欢 里面商品的标签标识处理

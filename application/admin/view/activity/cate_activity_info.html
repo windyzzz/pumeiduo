@@ -59,7 +59,7 @@
         <div class="item-title"><a class="back" href="javascript:history.back();" title="返回列表"><i
                 class="fa fa-arrow-circle-o-left"></i></a>
             <div class="subject">
-                <h3>活动楼层管理 - 添加与编辑商品主题活动</h3>
+                <h3>分类主题活动 - 添加与编辑商品主题活动</h3>
                 <h5>网站系统编辑商品主题活动</h5>
             </div>
         </div>
@@ -92,7 +92,7 @@
                 </dt>
                 <dd class="opt">
                     <input type="text" id="start_time" name="start_time" value="{$info.start_time}" class="input-txt">
-                    <p class="notic">优惠开始时间</p>
+                    <p class="notic">活动开始时间</p>
                 </dd>
             </dl>
             <dl class="row">
@@ -101,7 +101,7 @@
                 </dt>
                 <dd class="opt">
                     <input type="text" id="end_time" name="end_time" value="{$info.end_time}" class="input-txt">
-                    <p class="notic">优惠结束时间</p>
+                    <p class="notic">活动结束时间</p>
                 </dd>
             </dl>
             <dl class="row">
@@ -136,14 +136,14 @@
                 <dd class="opt">
                     <div class="input-file-show">
                         <span class="show">
-                            <a id="img_b" target="_blank" class="nyroModal" rel="gal" href="{$info.banner}">
+                            <a id="img_b" target="_blank" class="nyroModal" rel="gal" href="{$info.background}">
                                 <i id="img_j" class="fa fa-picture-o"
-                                   onmouseover="layer.tips('<img src={$info.banner}>',this,{tips: [1, '#fff']});"
+                                   onmouseover="layer.tips('<img src={$info.background}>',this,{tips: [1, '#fff']});"
                                    onmouseout="layer.closeAll();"></i>
                             </a>
                         </span>
                         <span class="type-file-box">
-                            <input type="text" id="background" name="background" value="{$info.banner}" class="type-file-text">
+                            <input type="text" id="background" name="background" value="{$info.background}" class="type-file-text">
                             <input type="button" name="button" id="button2" value="选择上传..." class="type-file-button">
                             <input class="type-file-file" onClick="GetUploadify(1,'','activity','img_call_back2')"
                                    size="30" hidefocus="true" nc_type="change_site_logo"

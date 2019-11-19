@@ -134,7 +134,7 @@ return [
         ]],
 
         ['name' => '自定义', 'child' => [
-            ['name' => '活动楼层管理 ', 'act' => 'cate_activity_list', 'op' => 'Activity'],
+            ['name' => '分类主题活动 ', 'act' => 'cate_activity_list', 'op' => 'Activity'],
         ]],
 
         // array('name' => '统计','child' => array(

@@ -44,7 +44,7 @@ class Activity
             ->join('__GOODS__ g', 'g.goods_id = gb.goods_id')
             ->where($where)
             ->order('gb.sort_order')
-            ->limit($Page->firstRow.','.$Page->listRows)
+            ->limit($Page->firstRow . ',' . $Page->listRows)
             ->select();
         foreach ($list as $k => $v) {
             if (1 == $v['is_sale_out']) {
@@ -234,5 +234,34 @@ class Activity
         $return['res'] = $result;
 
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
+    }
+
+    /**
+     * 分类主题活动列表
+     * @return \think\response\Json
+     */
+    public function cateActList()
+    {
+        $activityLogic = new ActivityLogic();
+        $res = $activityLogic->getCateActList();
+        return json(['status' => 1, 'msg' => 'success', 'result' => $res]);
+    }
+
+    /**
+     * 分类主题活动商品列表
+     * @return \think\response\Json
+     */
+    public function cateActGoodsList()
+    {
+        $activityId = I('activity_id', 0);
+        if (!$activityId) {
+            return json(['status' => 0, 'msg' => '请传入正确的活动ID']);
+        }
+        $activityLogic = new ActivityLogic();
+        $res = $activityLogic->getCateActGoodsList($activityId);
+        if (empty($res)) {
+            return json(['status' => 0, 'msg' => '活动已取消']);
+        }
+        return json(['status' => 1, 'msg' => 'success', 'result' => $res]);
     }
 }
