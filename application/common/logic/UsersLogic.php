@@ -1322,7 +1322,7 @@ class UsersLogic extends Model
         $show = $page->show();
         //获取我的收藏列表
         $result = M('goods_collect')->alias('c')
-            ->field('c.collect_id,c.add_time,g.goods_id,g.goods_name,g.shop_price,g.is_on_sale,g.store_count,g.cat_id,g.is_virtual,g.original_img,
+            ->field('c.collect_id,c.add_time,g.goods_id,g.goods_name, g.goods_remark, g.shop_price,g.is_on_sale,g.store_count,g.cat_id,g.is_virtual,g.original_img,
                  c.goods_price - g.shop_price as low_price, g.exchange_integral')
             ->join('goods g', 'g.goods_id = c.goods_id', 'INNER')
             ->where("c.user_id = $user_id")

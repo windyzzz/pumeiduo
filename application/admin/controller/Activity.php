@@ -28,7 +28,7 @@ class Activity extends Base
 
     public function cate_activity_info()
     {
-        
+
         return $this->fetch();
     }
 

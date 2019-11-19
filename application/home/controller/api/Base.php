@@ -36,7 +36,7 @@ class Base extends Controller
             }
             // 验证token
             $res = TokenLogic::checkToken($token);
-            if ($res['status'] == 0) die(json_encode(['status' => 0, 'msg' => $res['msg']]));
+            if ($res['status'] !== 1) die(json_encode(['status' => 0, 'msg' => $res['msg']]));
             $this->user = $res['user'];
             $this->user_id = $res['user']['user_id'];
             $this->userToken = $token;
