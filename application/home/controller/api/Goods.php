@@ -766,8 +766,10 @@ class Goods extends Base
 
     /**
      * 获取超值套组商品列表
+     * @param integer $num 获取数量
+     * @param string $output 输出格式，默认是json
      */
-    public function getSeriesGoodsList()
+    public function getSeriesGoodsList($num = 20, $output = 'json')
     {
         $key = md5($_SERVER['REQUEST_URI'] . I('start_price') . '_' . I('end_price'));
         $html = S($key);
@@ -792,7 +794,7 @@ class Goods extends Base
         $filter_goods_id = Db::name('goods')->where($goods_where)->cache(true)->getField('goods_id', true);
 
         $count = count($filter_goods_id);
-        $page = new Page($count, 5);
+        $page = new Page($count, $num);
         if ($count > 0) {
             // 获取商品数据
             $goodsLogic = new GoodsLogic();
@@ -809,7 +811,12 @@ class Goods extends Base
         $return['page'] = $page; // 赋值分页输出
         S($key, $return);
 
-        return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
+        switch ($output) {
+            case 'json':
+                return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
+            default:
+                return $return;
+        }
         // $html = $this->fetch();
         // S($key,$html);
         // return $html;
@@ -817,9 +824,10 @@ class Goods extends Base
 
     /**
      * 获取秒杀商品列表
-     * @return \think\response\Json
+     * @param string $output 输出格式，默认是json
+     * @return array|\think\response\Json
      */
-    public function getFlashSalesGoodsList()
+    public function getFlashSalesGoodsList($output = 'json')
     {
         $where = [
             'fs.start_time' => ['<=', time()],
@@ -835,11 +843,19 @@ class Goods extends Base
         // 秒杀商品
         $flashSaleGoods = Db::name('flash_sale fs')->join('goods g', 'g.goods_id = fs.goods_id')
             ->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
-            ->where(['fs.goods_id' => ['in', $filter_goods_id]])->field('fs.id prom_id, g.goods_id, fs.item_id, g.goods_sn, g.goods_name, g.original_img, fs.price, fs.title, sgp.key_name')
+            ->where(['fs.goods_id' => ['in', $filter_goods_id]])->field('fs.id prom_id, g.goods_id, fs.item_id, g.goods_sn, g.goods_name, g.original_img, fs.price, fs.title, sgp.key_name, fs.end_time')
             ->limit($page->firstRow . ',' . $page->listRows)->select();
         // 商品标签
         $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->limit($page->firstRow . ',' . $page->listRows)->select();
+        $endTime = 0;
         foreach ($flashSaleGoods as $k => $v) {
+            if ($k == 0) {
+                $endTime = $v['end_time'];
+            }
+            if ($endTime >= $v['end_time']) {
+                $endTime = $v['end_time'];
+            }
+            unset($flashSaleGoods[$k]['end_time']);
             $flashSaleGoods[$k]['tabs'] = [];
             if (!empty($goodsTab)) {
                 foreach ($goodsTab as $value) {
@@ -853,13 +869,21 @@ class Goods extends Base
                 }
             }
         }
-        return json(['status' => 1, 'msg' => 'success', 'result' => ['goods_list' => $flashSaleGoods]]);
+        switch ($output) {
+            case 'json':
+                return json(['status' => 1, 'msg' => 'success', 'result' => ['end_time' => $endTime, 'goods_list' => $flashSaleGoods]]);
+            default:
+                return ['end_time' => $endTime, 'goods_list' => $flashSaleGoods];
+        }
     }
 
     /**
      * 获取团购商品列表
+     * @param integer $num 获取数量
+     * @param string $output 输出格式，默认是json
+     * @return \think\response\Json
      */
-    public function getGroupBuyGoodsList()
+    public function getGroupBuyGoodsList($num = 20, $output = 'json')
     {
         $key = md5($_SERVER['REQUEST_URI'] . I('start_price') . '_' . I('end_price'));
         $html = S($key);
@@ -890,7 +914,7 @@ class Goods extends Base
         // 查询满足要求的总记录数
         $filter_goods_id = $GroupBuy->alias('gb')->join('__GOODS__ g', 'g.goods_id = gb.goods_id')->where($where)->order('gb.sort_order')->getField('g.goods_id', true);
         $count = count($filter_goods_id);
-        $page = new Page($count, 1);
+        $page = new Page($count, $num);
         $goods_list = [];
         if ($count > 0) {
             $Goods = new GoodsModel();
@@ -961,7 +985,12 @@ class Goods extends Base
         $return['page'] = $page; // 赋值分页输出
         S($key, $return);
 
-        return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
+        switch ($output) {
+            case 'json':
+                return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
+            default:
+                return $return;
+        }
         // $html = $this->fetch();
         // S($key,$html);
         // return $html;

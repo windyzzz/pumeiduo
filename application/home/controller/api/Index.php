@@ -17,7 +17,9 @@ use app\common\model\GroupBuy;
 use app\common\logic\UsersLogic;
 use app\common\logic\MessageLogic;
 use app\common\logic\ArticleLogic;
+use app\home\controller\api\Goods as GoodsController;
 use think\Page;
+
 class Index
 {
     public $user_id = 0;
@@ -29,13 +31,14 @@ class Index
         $this->user = $user;
         $this->user_id = $user['user_id'];
     }
+
     public function index()
     {
         //获取广告
         $position_id = '1,2,49,60';
-        $position_id_arr = explode(',',$position_id);
+        $position_id_arr = explode(',', $position_id);
         $ad = array();
-        foreach($position_id_arr as $k=>$position_id){
+        foreach ($position_id_arr as $k => $position_id) {
             $ad[$position_id] = M('ad')
                 ->field('ad_code,ad_link,ad_name')
                 ->where('pid', $position_id)
@@ -91,9 +94,8 @@ class Index
         // 添加 is_enshrine  是否收藏字段 && 添加 tabs  商品标签字段 BY J
         foreach ($getHotGoods as $k => $v) {
             $getHotGoods[$k]['is_enshrine'] = 0;
-            $getHotGoods[$k]['tabs'] = M('GoodsTab')->where(array('goods_id'=>$v['goods_id'],'title'=>array('neq','')))->select();
+            $getHotGoods[$k]['tabs'] = M('GoodsTab')->where(array('goods_id' => $v['goods_id'], 'title' => array('neq', '')))->select();
         }
-
 
 
         $taskLogic = new TaskLogic();
@@ -138,7 +140,7 @@ class Index
         $getSeriesGoods = M('goods')->field('goods_name,goods_id,shop_price,exchange_integral,shop_price - exchange_integral as member_price,original_img,goods_remark')
             ->where('sale_type', 2)
             ->where('is_on_sale', 1)
-            ->limit($page->firstRow.','.$page->listRows)
+            ->limit($page->firstRow . ',' . $page->listRows)
             ->order('sort')
             ->select();
 
@@ -164,7 +166,7 @@ class Index
             ->join('__GOODS__ g', 'g.goods_id = gb.goods_id')
             ->where($where)
             ->order('gb.sort_order')
-            ->limit($Page->firstRow.','.$Page->listRows)
+            ->limit($Page->firstRow . ',' . $Page->listRows)
             ->select();
         foreach ($groupBuyList as $k => $v) {
             if (1 == $v['is_sale_out']) {
@@ -176,9 +178,9 @@ class Index
 
         $time = NOW_TIME;
         $field = 'top1,top2,top3,top4,top5,top6,top7,top8,bg1';
-        $icon = M('icon')->field($field)->where(array('from_time'=>array('elt',$time),'to_time'=>array('egt',$time)))->find();
-        if(!$icon){
-            $icon = M('icon')->field($field)->where(array('id'=>1))->find();
+        $icon = M('icon')->field($field)->where(array('from_time' => array('elt', $time), 'to_time' => array('egt', $time)))->find();
+        if (!$icon) {
+            $icon = M('icon')->field($field)->where(array('id' => 1))->find();
         }
 
         //是否弹出金卡提示框
@@ -186,10 +188,10 @@ class Index
         $user_info = $userLogic->get_info($this->user_id);
         $user_info = $user_info['result'];
         $is_show_apply_jk = 0;
-        if($user_info['is_not_show_jk']==0){
+        if ($user_info['is_not_show_jk'] == 0) {
             $logic = new UsersLogic();
             $check_apply_customs = $logic->check_apply_customs($user_info['user_id']);
-            if($check_apply_customs){
+            if ($check_apply_customs) {
                 $is_show_apply_jk = 1;
             }
         }
@@ -205,22 +207,32 @@ class Index
         $user_article_count = $articleLogic->getUserArticleCount();
 
         $data = array(
-            'ad'=>$ad,
-            'getCartNum'=>$getCartNum,//购物车
-            'getNewGoods'=>$getNewGoods,//新品
-            'flashSaleList'=>$flashSaleList,//抢购活动
-            'getHotGoods'=>$getHotGoods,//热门
-            'getRecommendGoods'=>$getRecommendGoods,//推荐
-            'getSeriesGoods'=>$getSeriesGoods,//热销
-            'groupBuyList'=>$groupBuyList,//团购
-            'icon'=>$icon,//logo
-            'is_show_apply_jk'=>$is_show_apply_jk,//是否弹出金卡
-            'user_message_count'=>$user_message_count,//用户信息的数量
-            'user_article_count'=>$user_article_count//用户活动信息的数量
+            'ad' => $ad,
+            'getCartNum' => $getCartNum,//购物车
+            'getNewGoods' => $getNewGoods,//新品
+            'flashSaleList' => $flashSaleList,//抢购活动
+            'getHotGoods' => $getHotGoods,//热门
+            'getRecommendGoods' => $getRecommendGoods,//推荐
+            'getSeriesGoods' => $getSeriesGoods,//热销
+            'groupBuyList' => $groupBuyList,//团购
+            'icon' => $icon,//logo
+            'is_show_apply_jk' => $is_show_apply_jk,//是否弹出金卡
+            'user_message_count' => $user_message_count,//用户信息的数量
+            'user_article_count' => $user_article_count//用户活动信息的数量
         );
 
         return json(['status' => 1, 'msg' => 'success', 'result' => $data]);
 
 
+    }
+
+
+    public function indexNew()
+    {
+        $goodsController = new GoodsController();
+        // 超值套装列表
+        $series = $goodsController->getSeriesGoodsList(2, 'array');
+        // 团购商品列表
+        $groupBuy = $goodsController->getGroupBuyGoodsList(2, 'array');
     }
 }
