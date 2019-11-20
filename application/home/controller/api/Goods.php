@@ -930,7 +930,7 @@ class Goods extends Base
                 CASE buy_num >= goods_num WHEN 1 THEN 1 ELSE 0 END AS is_sale_out, group_goods_num - buy_num%group_goods_num as people_num');
             }])
                 ->where('goods_id', 'in', implode(',', $filter_goods_id))
-                ->field('goods_id, cat_id, extend_cat_id, goods_sn, goods_name, goods_type, brand_id, store_count, comment_count, goods_remark,
+                ->field('goods_id, cat_id, extend_cat_id, goods_sn, goods_name, goods_remark, goods_type, brand_id, store_count, comment_count, goods_remark,
                 market_price, shop_price, cost_price, give_integral, exchange_integral, original_img, limit_buy_num, trade_type,
                 is_on_sale, is_free_shipping, is_recommend, is_new, is_hot')
                 ->order([$sort => $sort_asc])
@@ -1028,11 +1028,11 @@ class Goods extends Base
             $Goods = new GoodsModel();
             $goods_list = $Goods->with(['GroupBuyDetail' => function ($query) use ($filter_goods_id) {
                 $query->alias('gb')->field('gb.*, FROM_UNIXTIME(start_time,"%Y-%m-%d") as start_time, FROM_UNIXTIME(end_time,"%Y-%m-%d") as end_time,
-                (FORMAT(buy_num%group_goods_num/group_goods_num,2)) as percent, (FORMAT((goods_num - buy_num) / goods_num,2)) as num_percent, goods_num - buy_num as store_count, 
+                (FORMAT((goods_num - buy_num) / goods_num,2)) as num_percent, goods_num - buy_num as store_count, 
                 CASE buy_num >= goods_num WHEN 1 THEN 1 ELSE 0 END AS is_sale_out, group_goods_num - buy_num%group_goods_num as people_num');
             }])
                 ->where('goods_id', 'in', implode(',', $filter_goods_id))
-                ->field('goods_id, cat_id, extend_cat_id, goods_sn, goods_name, goods_type, brand_id, store_count, comment_count, goods_remark,
+                ->field('goods_id, cat_id, extend_cat_id, goods_sn, goods_name, goods_remark, goods_type, brand_id, store_count, comment_count, goods_remark,
                 market_price, shop_price, cost_price, give_integral, exchange_integral, original_img, limit_buy_num, trade_type,
                 is_on_sale, is_free_shipping, is_recommend, is_new, is_hot')
                 ->limit($page->firstRow . ',' . $page->listRows)
@@ -1048,12 +1048,7 @@ class Goods extends Base
                     $goods_list[$k]['group_buy']['percent'] = 1;
                     $goods_list[$k]['group_buy']['people_num'] = 0;
                 }
-//                // 处理显示金额
-//                if ($v['exchange_integral'] != 0) {
-//                    $goods_list[$k]['group_buy']['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);
-//                } else {
-//                    $goods_list[$k]['group_buy']['exchange_price'] = $v['shop_price'];
-//                }
+                $goods_list[$k]['group_buy']['goods_remark'] = $v['goods_remark'];
                 $goods_list[$k]['group_buy']['groupBuy_price'] = $v['group_buy_detail']['price'];
                 $goods_list[$k]['group_buy']['exchange_integral'] = $v['exchange_integral'];
                 unset($goods_list[$k]['group_buy_detail']);

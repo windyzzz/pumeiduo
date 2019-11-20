@@ -398,15 +398,17 @@ class Cart extends Base
      */
     public function calcCartPrice()
     {
+        $params['user_token'] = $this->userToken;
         Hook::exec('app\\home\\behavior\\CheckAuth', 'run', $params);
 
         $cartIds = I('cart_ids', '');
         if (empty($cartIds)) {
             return json(['status' => 1, 'msg' => '计算成功', 'result' => [
                 'total_fee' => 0.00,
-                'total_integral' => 0,
+                'goods_num' => 0,
+                'use_integral' => 0,
                 'discount_price' => 0,
-                'user_integral' => 0
+                'can_integral' => 1
             ]]);
         }
         $cartIds = explode(',', $cartIds);
@@ -422,12 +424,18 @@ class Cart extends Base
         $goodsPrice = $result['result']['total_fee'];   // 商品总价
         $Pay = new Pay();
         // 商品优惠促销
-        $discountPrice1 = $Pay->goodsPromotion($goodsList, false, true);
+        $discountPrice = $Pay->goodsPromotion($goodsList, false, true);
         // 订单优惠促销
-        $discountPrice2 = $Pay->calcGoodsOrderProm($goodsList, $goodsPrice);
-        $discountPrice = bcadd($discountPrice1, $discountPrice2, 2);
+//        $discountPrice2 = $Pay->calcGoodsOrderProm($goodsList, $goodsPrice);
+//        $discountPrice = bcadd($discountPrice1, $discountPrice2, 2);
+        unset($result['result']['goods_fee']);
         $result['result']['total_fee'] = bcsub($result['result']['total_fee'], $discountPrice, 2);
         $result['result']['discount_price'] = $discountPrice;
+        if ($this->user['pay_points'] >= $result['result']['use_integral']) {
+            $result['result']['can_integral'] = 1;
+        } else {
+            $result['result']['can_integral'] = 0;
+        }
 
         return json($result);
     }

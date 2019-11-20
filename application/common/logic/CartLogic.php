@@ -1114,16 +1114,17 @@ class CartLogic extends Model
      */
     public function getCartPriceInfo($cartList = null)
     {
-        $total_fee = $goods_fee = $goods_num = 0; //初始化数据。商品总额/节约金额/商品总共数量
+        $total_fee = $goods_fee = $goods_num = $use_integral = 0; //初始化数据。商品总额/节约金额/商品总共数量/商品使用积分
         if ($cartList) {
             foreach ($cartList as $cartKey => $cartItem) {
                 $total_fee += $cartItem['goods_fee'];
                 $goods_fee += $cartItem['cut_fee'];
                 $goods_num += $cartItem['goods_num'];
+                $use_integral += $cartItem['use_integral'];
             }
         }
 
-        return compact('total_fee', 'goods_fee', 'goods_num');
+        return compact('total_fee', 'goods_fee', 'goods_num', 'use_integral');
     }
 
     /**
