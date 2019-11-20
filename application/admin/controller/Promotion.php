@@ -428,6 +428,7 @@ class Promotion extends Base
                 );
 
                 M('goods_tao_grade')->data($tao_goods)->add();
+                M('goods')->where(['goods_id' => $dfd[0]])->update(['prom_type' => 3, 'prom_id' => $last_id]);
             }
 
         }

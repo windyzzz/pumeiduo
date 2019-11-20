@@ -127,7 +127,7 @@
                                     <a class="btn blue"
                                        href="{:U('Activity/cate_activity_info',array('id'=>$vo['id']))}"><i
                                             class="fa fa-pencil-square-o"></i>编辑</a>
-                                    <a class="btn red  del" data-id="{$vo['id']}"><i class="fa fa-trash-o"></i>删除</a>
+                                    <a class="btn red del" data-id="{$vo['id']}"><i class="fa fa-trash-o"></i>删除</a>
                                 </div>
                             </td>
                             <td align="" class="" style="width: 100%;">
@@ -171,8 +171,9 @@
                         layer.msg(data.msg, {icon: 1}, function () {
                             location.href = '';
                         });
+                    } else {
+                        layer.msg(data.msg, {icon: 2, time: 2000});
                     }
-                    layer.msg(data.msg, {icon: 2})
                 }
             })
         }, function (index) {

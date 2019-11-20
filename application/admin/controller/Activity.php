@@ -106,4 +106,22 @@ class Activity extends Base
         $cateActGoods->saveAll($actGoods);
         $this->ajaxReturn(['status' => 1, 'msg' => '处理成功']);
     }
+
+    /**
+     * 删除活动
+     */
+    public function cate_activity_del()
+    {
+        $activityId = I('id');
+        $cateActivity = Db::name('cate_activity')->where(['id' => $activityId])->find();
+        if (empty($activityId)) {
+            $this->ajaxReturn(['status' => 1, 'msg' => '处理成功']);
+        }
+        if ($cateActivity['is_open'] == 1) {
+            $this->ajaxReturn(['status' => 0, 'msg' => '活动正在开启']);
+        }
+        Db::name('cate_activity')->where(['id' => $activityId])->delete();
+        Db::name('cate_activity_goods')->where(['cate_act_id' => $activityId])->delete();
+        $this->ajaxReturn(['status' => 1, 'msg' => '处理成功']);
+    }
 }
