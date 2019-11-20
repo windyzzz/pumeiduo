@@ -222,17 +222,32 @@ class Index
         );
 
         return json(['status' => 1, 'msg' => 'success', 'result' => $data]);
-
-
     }
 
-
+    /**
+     * 主页（新）
+     * @return \think\response\Json
+     */
     public function indexNew()
     {
         $goodsController = new GoodsController();
         // 超值套装列表
-        $series = $goodsController->getSeriesGoodsList(2, 'array');
+        $seriesGoods = $goodsController->getSeriesGoodsList(11, 'array');
         // 团购商品列表
-        $groupBuy = $goodsController->getGroupBuyGoodsList(2, 'array');
+        $groupBuyGoods = $goodsController->getGroupBuyGoodsList(11, 'array');
+        // 新品列表
+        $newGoods = $goodsController->getNewGoodsList(20, 'array');
+        // 促销商品
+        $recommendGoods = $goodsController->getRecommendGoodsList(20, 'array');
+        // 热销商品
+        $hotGoods = $goodsController->getHotGoodsList(20, 'array');
+        $return = [
+            'series_goods' => $seriesGoods,
+            'groupBuy_goods' => $groupBuyGoods,
+            'new_goods' => $newGoods,
+            'recommend_goods' => $recommendGoods,
+            'hot_goods' => $hotGoods
+        ];
+        return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
     }
 }

@@ -780,14 +780,14 @@ class Goods extends Base
         $sort_asc = I('get.sort_asc', 'asc'); // 排序
         $filter_param = []; // 筛选数组
         $id = I('get.id/d', 0); // 当前分类id
-
-        $filter_param['id'] = $id; //加入筛选条件中
-
-        $goodsLogic = new GoodsLogic(); // 前台商品操作逻辑类
-        // 分类菜单显示
-        $goodsCate = M('GoodsCategory')->where('id', $id)->find(); // 当前分类
-        //($goodsCate['level'] == 1) && header('Location:'.U('Home/Channel/index',array('cat_id'=>$id))); //一级分类跳转至大分类馆
-        $cateArr = $goodsLogic->get_goods_cate($goodsCate);
+        if ($id != 0) {
+            $filter_param['id'] = $id; //加入筛选条件中
+            $goodsLogic = new GoodsLogic(); // 前台商品操作逻辑类
+            // 分类菜单显示
+            $goodsCate = M('GoodsCategory')->where('id', $id)->find(); // 当前分类
+            //($goodsCate['level'] == 1) && header('Location:'.U('Home/Channel/index',array('cat_id'=>$id))); //一级分类跳转至大分类馆
+            $cateArr = $goodsLogic->get_goods_cate($goodsCate);
+        }
         // 筛选 品牌 规格 属性 价格
         $cat_id_arr = getCatGrandson($id);
         $goods_where = ['is_on_sale' => 1, 'sale_type' => 2, 'cat_id' => ['in', $cat_id_arr]];
@@ -815,7 +815,7 @@ class Goods extends Base
             case 'json':
                 return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
             default:
-                return $return;
+                return $return['goods_list'];
         }
         // $html = $this->fetch();
         // S($key,$html);
@@ -881,7 +881,7 @@ class Goods extends Base
      * 获取团购商品列表
      * @param integer $num 获取数量
      * @param string $output 输出格式，默认是json
-     * @return \think\response\Json
+     * @return array|false|\PDOStatement|string|\think\Collection|\think\response\Json
      */
     public function getGroupBuyGoodsList($num = 20, $output = 'json')
     {
@@ -894,15 +894,14 @@ class Goods extends Base
         $sort_asc = I('get.sort_asc', 'asc'); // 排序
         $filter_param = []; // 筛选数组
         $id = I('get.id/d', 0); // 当前分类id
-
-        $filter_param['id'] = $id; //加入筛选条件中
-
-        $goodsLogic = new GoodsLogic(); // 前台商品操作逻辑类
-        // 分类菜单显示
-        $goodsCate = M('GoodsCategory')->where('id', $id)->find(); // 当前分类
-        //($goodsCate['level'] == 1) && header('Location:'.U('Home/Channel/index',array('cat_id'=>$id))); //一级分类跳转至大分类馆
-        $cateArr = $goodsLogic->get_goods_cate($goodsCate);
-
+        if ($id != 0) {
+            $filter_param['id'] = $id; //加入筛选条件中
+            $goodsLogic = new GoodsLogic(); // 前台商品操作逻辑类
+            // 分类菜单显示
+            $goodsCate = M('GoodsCategory')->where('id', $id)->find(); // 当前分类
+            //($goodsCate['level'] == 1) && header('Location:'.U('Home/Channel/index',array('cat_id'=>$id))); //一级分类跳转至大分类馆
+            $cateArr = $goodsLogic->get_goods_cate($goodsCate);
+        }
         // 筛选 品牌 规格 属性 价格
         $GroupBuy = new GroupBuy();
         $where = [
@@ -930,6 +929,7 @@ class Goods extends Base
                 ->order([$sort => $sort_asc])
                 ->limit($page->firstRow . ',' . $page->listRows)
                 ->select();
+            $goods_list = collection($goods_list)->toArray();
             // 商品规格属性
             $goodsItem = Db::name('spec_goods_price')->where(['goods_id' => ['in', $filter_goods_id]])->limit($page->firstRow . ',' . $page->listRows)->group('goods_id')->getField('goods_id, item_id', true);
 
@@ -978,8 +978,8 @@ class Goods extends Base
         $navigate_cat = navigate_goods($id); // 面包屑导航
         $return['goods_list'] = $goods_list;
         $return['navigate_cat'] = $navigate_cat;
-        $return['goodsCate'] = $goodsCate;
-        $return['cateArr'] = $cateArr;
+        $return['goodsCate'] = $goodsCate ?? [];
+        $return['cateArr'] = $cateArr ?? [];
         $return['filter_param'] = $filter_param; // 筛选条件
         $return['cat_id'] = $id;
         $return['page'] = $page; // 赋值分页输出
@@ -989,7 +989,7 @@ class Goods extends Base
             case 'json':
                 return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
             default:
-                return $return;
+                return $return['goods_list'];
         }
         // $html = $this->fetch();
         // S($key,$html);
@@ -998,8 +998,11 @@ class Goods extends Base
 
     /**
      * 获取推荐（促销）商品列表
+     * @param $num
+     * @param string $output
+     * @return array|\think\response\Json
      */
-    public function getRecommendGoodsList()
+    public function getRecommendGoodsList($num = '20', $output = 'json')
     {
         $key = md5($_SERVER['REQUEST_URI'] . I('start_price') . '_' . I('end_price'));
         $html = S($key);
@@ -1013,14 +1016,14 @@ class Goods extends Base
         $sort_asc = I('get.sort_asc', 'asc'); // 排序
         $filter_param = []; // 筛选数组
         $id = I('get.id/d', 0); // 当前分类id
-
         $filter_param['id'] = $id; //加入筛选条件中
-
-        $goodsLogic = new GoodsLogic(); // 前台商品操作逻辑类
-        // 分类菜单显示
-        $goodsCate = M('GoodsCategory')->where('id', $id)->find(); // 当前分类
-        //($goodsCate['level'] == 1) && header('Location:'.U('Home/Channel/index',array('cat_id'=>$id))); //一级分类跳转至大分类馆
-        $cateArr = $goodsLogic->get_goods_cate($goodsCate);
+        if ($id != 0) {
+            $goodsLogic = new GoodsLogic(); // 前台商品操作逻辑类
+            // 分类菜单显示
+            $goodsCate = M('GoodsCategory')->where('id', $id)->find(); // 当前分类
+            //($goodsCate['level'] == 1) && header('Location:'.U('Home/Channel/index',array('cat_id'=>$id))); //一级分类跳转至大分类馆
+            $cateArr = $goodsLogic->get_goods_cate($goodsCate);
+        }
         // 筛选 品牌 规格 属性 价格
 //        $cat_id_arr = getCatGrandson($id);
 //        $goods_where = ['is_on_sale' => 1, 'is_recommend' => 1, 'cat_id' => ['in', $cat_id_arr]];
@@ -1041,7 +1044,7 @@ class Goods extends Base
         $filter_goods_id = array_unique($filter_goods_id);
 
         $count = count($filter_goods_id);
-        $page = new Page($count, 20);
+        $page = new Page($count, $num);
         if ($count > 0) {
             // 获取商品数据
             $goodsLogic = new GoodsLogic();
@@ -1057,17 +1060,288 @@ class Goods extends Base
 //        $return['filter_attr'] = $filter_attr;  // 筛选属性
 //        $return['filter_brand'] = $filter_brand;  // 列表页筛选属性 - 商品品牌
 //        $return['filter_price'] = $filter_price; // 筛选的价格期间
-        $return['goodsCate'] = $goodsCate;
-        $return['cateArr'] = $cateArr;
+        $return['goodsCate'] = $goodsCate ?? [];
+        $return['cateArr'] = $cateArr ?? [];
         $return['filter_param'] = $filter_param; // 筛选条件
         $return['cat_id'] = $id;
         $return['page'] = $page; // 赋值分页输出
         S($key, $return);
 
-        return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
+        switch ($output) {
+            case 'json':
+                return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
+            default:
+                return $return['goods_list'];
+        }
         // $html = $this->fetch();
         // S($key,$html);
         // return $html;
+    }
+
+    /**
+     * 获取新商品列表
+     * @param int $num
+     * @param string $output
+     * @return \think\response\Json
+     */
+    public function getNewGoodsList($num = 20, $output = 'json')
+    {
+        $filter_goods_id = M('goods')->where('is_new', 1)->where('is_on_sale', 1)->getField('goods_id', true);
+        $filter_goods_id = array_unique($filter_goods_id);
+        $count = count($filter_goods_id);
+        $page = new Page($count, $num);
+        $goodsList = M('goods')->field('goods_id, goods_name, shop_price, exchange_integral, original_img')
+            ->where('is_new', 1)
+            ->where('is_on_sale', 1)
+            ->order('sort')
+            ->limit($page->firstRow . ',' . $page->listRows)
+            ->select();
+        // 商品规格属性
+        $goodsItem = Db::name('spec_goods_price')->where(['goods_id' => ['in', $filter_goods_id]])->limit($page->firstRow . ',' . $page->listRows)->group('goods_id')->getField('goods_id, item_id', true);
+        // 商品标签
+        $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->limit($page->firstRow . ',' . $page->listRows)->select();
+        // 秒杀商品
+        $flashSale = Db::name('flash_sale')->where(['goods_id' => ['in', $filter_goods_id]])
+            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->limit($page->firstRow . ',' . $page->listRows)->field('goods_id')->select();
+        // 团购商品
+        $groupBuy = Db::name('group_buy')->where(['goods_id' => ['in', $filter_goods_id]])
+            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->limit($page->firstRow . ',' . $page->listRows)->field('goods_id')->select();
+        // 促销商品
+        $promGoods = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
+            ->where(['gtg.goods_id' => ['in', $filter_goods_id], 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
+            ->field('pg.title, gtg.goods_id')->limit($page->firstRow . ',' . $page->listRows)->select();    // 促销活动
+        $couponLogic = new CouponLogic();
+        $couponCurrency = $couponLogic->getCoupon(0);    // 通用优惠券
+        $couponGoods = [];
+        $couponCate = [];
+        if (empty($coupon)) {
+            $couponGoods = $couponLogic->getCoupon(null, $filter_goods_id, null, ['limit' => ['offset' => $page->firstRow, 'length' => $page->listRows]]);    // 指定商品优惠券
+            $filter_cat_id = Db::name('goods')->where(['goods_id' => ['in', $filter_goods_id]])->limit($page->firstRow . ',' . $page->listRows)->getField('cat_id', true);
+            $couponCate = $couponLogic->getCoupon(null, null, $filter_cat_id, ['limit' => ['offset' => $page->firstRow, 'length' => $page->listRows]]);    // 指定分类优惠券
+        }
+        $promGoods = array_merge_recursive($promGoods, $couponCurrency, $couponGoods, $couponCate);
+        // 循环处理数据
+        foreach ($goodsList as $k => $v) {
+            // 商品规格属性
+            if (isset($goodsItem[$v['goods_id']])) {
+                $goodsList[$k]['item_id'] = $goodsItem[$v['goods_id']];
+            } else {
+                $goodsList[$k]['item_id'] = 0;
+            }
+            // 商品标签
+            $goodsList[$k]['tabs'] = [];
+            if (!empty($goodsTab)) {
+                foreach ($goodsTab as $value) {
+                    if ($v['goods_id'] == $value['goods_id']) {
+                        $goodsList[$k]['tabs'][] = [
+                            'tab_id' => $value['tab_id'],
+                            'title' => $value['title'],
+                            'status' => $value['status']
+                        ];
+                    }
+                }
+            }
+            // 商品标识
+            $goodsList[$k]['tags'] = [];
+            // 第一类，活动类（优先级：秒杀” > ”团购“ > ”套组“ > “自营”）
+            $goodsList[$k]['tags'][0] = ['type' => 'activity', 'title' => '自营'];
+            if ($v['sale_type'] == 2) {
+                $goodsList[$k]['tags'][0]['title'] = '套组';
+            }
+            if (!empty($groupBuy)) {
+                foreach ($groupBuy as $value) {
+                    if ($v['goods_id'] == $value['goods_id']) {
+                        $goodsList[$k]['tags'][0]['title'] = '团购';
+                        break;
+                    }
+                }
+            }
+            if (!empty($flashSale)) {
+                foreach ($flashSale as $value) {
+                    if ($v['goods_id'] == $value['goods_id']) {
+                        $goodsList[$k]['tags'][0]['title'] = '秒杀';
+                        break;
+                    }
+                }
+            }
+            // 第二类，促销类
+            if (!empty($promGoods)) {
+                foreach ($promGoods as $value) {
+                    if (!isset($value['use_type'])) {
+                        // 促销活动类
+                        if ($v['goods_id'] == $value['goods_id']) {
+                            $goodsList[$k]['tags'][] = ['type' => 'promotion', 'title' => $value['title']];
+                            break;
+                        }
+                    } else {
+                        // 优惠券类
+                        if ($value['use_type'] == 0) {
+                            // 通用券
+                            $goodsList[$k]['tags'][] = ['type' => 'promotion', 'title' => $value['name']];
+                            break;
+                        } elseif ($v['goods_id'] == $value['goods_id']) {
+                            // 指定商品
+                            $goodsList[$k]['tags'][] = ['type' => 'promotion', 'title' => $value['name']];
+                            break;
+                        } elseif ($v['cat_id'] == $value['cat_id']) {
+                            // 指定分类
+                            $goodsList[$k]['tags'][] = ['type' => 'promotion', 'title' => $value['name']];
+                            break;
+                        }
+                    }
+                }
+            }
+            // 第三类，默认
+            $goodsList[$k]['tags'][] = ['type' => 'default', 'title' => '品牌直营'];
+
+            // 处理显示金额
+            if ($v['exchange_integral'] != 0) {
+                $goodsList[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);
+            } else {
+                $goodsList[$k]['exchange_price'] = $v['shop_price'];
+            }
+        }
+        $return['goods_list'] = $goodsList;
+        $return['page'] = $page; // 赋值分页输出
+        switch ($output) {
+            case 'json':
+                return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
+            default:
+                return $return['goods_list'];
+        }
+    }
+
+    /**
+     * 获取热销商品列表
+     * @param int $num
+     * @param string $output
+     * @return \think\response\Json
+     */
+    public function getHotGoodsList($num = 20, $output = 'json')
+    {
+        $filter_goods_id = M('goods')->where('is_hot', 1)->where('is_on_sale', 1)->getField('goods_id', true);
+        $filter_goods_id = array_unique($filter_goods_id);
+        $count = count($filter_goods_id);
+        $page = new Page($count, $num);
+        $goodsList = M('goods')->field('goods_id, goods_name, shop_price, exchange_integral, original_img')
+            ->where('is_hot', 1)
+            ->where('is_on_sale', 1)
+            ->order('sort')
+            ->limit($page->firstRow . ',' . $page->listRows)
+            ->select();
+        // 商品规格属性
+        $goodsItem = Db::name('spec_goods_price')->where(['goods_id' => ['in', $filter_goods_id]])->limit($page->firstRow . ',' . $page->listRows)->group('goods_id')->getField('goods_id, item_id', true);
+        // 商品标签
+        $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->limit($page->firstRow . ',' . $page->listRows)->select();
+        // 秒杀商品
+        $flashSale = Db::name('flash_sale')->where(['goods_id' => ['in', $filter_goods_id]])
+            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->limit($page->firstRow . ',' . $page->listRows)->field('goods_id')->select();
+        // 团购商品
+        $groupBuy = Db::name('group_buy')->where(['goods_id' => ['in', $filter_goods_id]])
+            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->limit($page->firstRow . ',' . $page->listRows)->field('goods_id')->select();
+        // 促销商品
+        $promGoods = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
+            ->where(['gtg.goods_id' => ['in', $filter_goods_id], 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
+            ->field('pg.title, gtg.goods_id')->limit($page->firstRow . ',' . $page->listRows)->select();    // 促销活动
+        $couponLogic = new CouponLogic();
+        $couponCurrency = $couponLogic->getCoupon(0);    // 通用优惠券
+        $couponGoods = [];
+        $couponCate = [];
+        if (empty($coupon)) {
+            $couponGoods = $couponLogic->getCoupon(null, $filter_goods_id, null, ['limit' => ['offset' => $page->firstRow, 'length' => $page->listRows]]);    // 指定商品优惠券
+            $filter_cat_id = Db::name('goods')->where(['goods_id' => ['in', $filter_goods_id]])->limit($page->firstRow . ',' . $page->listRows)->getField('cat_id', true);
+            $couponCate = $couponLogic->getCoupon(null, null, $filter_cat_id, ['limit' => ['offset' => $page->firstRow, 'length' => $page->listRows]]);    // 指定分类优惠券
+        }
+        $promGoods = array_merge_recursive($promGoods, $couponCurrency, $couponGoods, $couponCate);
+        // 循环处理数据
+        foreach ($goodsList as $k => $v) {
+            // 商品规格属性
+            if (isset($goodsItem[$v['goods_id']])) {
+                $goodsList[$k]['item_id'] = $goodsItem[$v['goods_id']];
+            } else {
+                $goodsList[$k]['item_id'] = 0;
+            }
+            // 商品标签
+            $goodsList[$k]['tabs'] = [];
+            if (!empty($goodsTab)) {
+                foreach ($goodsTab as $value) {
+                    if ($v['goods_id'] == $value['goods_id']) {
+                        $goodsList[$k]['tabs'][] = [
+                            'tab_id' => $value['tab_id'],
+                            'title' => $value['title'],
+                            'status' => $value['status']
+                        ];
+                    }
+                }
+            }
+            // 商品标识
+            $goodsList[$k]['tags'] = [];
+            // 第一类，活动类（优先级：秒杀” > ”团购“ > ”套组“ > “自营”）
+            $goodsList[$k]['tags'][0] = ['type' => 'activity', 'title' => '自营'];
+            if ($v['sale_type'] == 2) {
+                $goodsList[$k]['tags'][0]['title'] = '套组';
+            }
+            if (!empty($groupBuy)) {
+                foreach ($groupBuy as $value) {
+                    if ($v['goods_id'] == $value['goods_id']) {
+                        $goodsList[$k]['tags'][0]['title'] = '团购';
+                        break;
+                    }
+                }
+            }
+            if (!empty($flashSale)) {
+                foreach ($flashSale as $value) {
+                    if ($v['goods_id'] == $value['goods_id']) {
+                        $goodsList[$k]['tags'][0]['title'] = '秒杀';
+                        break;
+                    }
+                }
+            }
+            // 第二类，促销类
+            if (!empty($promGoods)) {
+                foreach ($promGoods as $value) {
+                    if (!isset($value['use_type'])) {
+                        // 促销活动类
+                        if ($v['goods_id'] == $value['goods_id']) {
+                            $goodsList[$k]['tags'][] = ['type' => 'promotion', 'title' => $value['title']];
+                            break;
+                        }
+                    } else {
+                        // 优惠券类
+                        if ($value['use_type'] == 0) {
+                            // 通用券
+                            $goodsList[$k]['tags'][] = ['type' => 'promotion', 'title' => $value['name']];
+                            break;
+                        } elseif ($v['goods_id'] == $value['goods_id']) {
+                            // 指定商品
+                            $goodsList[$k]['tags'][] = ['type' => 'promotion', 'title' => $value['name']];
+                            break;
+                        } elseif ($v['cat_id'] == $value['cat_id']) {
+                            // 指定分类
+                            $goodsList[$k]['tags'][] = ['type' => 'promotion', 'title' => $value['name']];
+                            break;
+                        }
+                    }
+                }
+            }
+            // 第三类，默认
+            $goodsList[$k]['tags'][] = ['type' => 'default', 'title' => '品牌直营'];
+
+            // 处理显示金额
+            if ($v['exchange_integral'] != 0) {
+                $goodsList[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);
+            } else {
+                $goodsList[$k]['exchange_price'] = $v['shop_price'];
+            }
+        }
+        $return['goods_list'] = $goodsList;
+        $return['page'] = $page; // 赋值分页输出
+        switch ($output) {
+            case 'json':
+                return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
+            default:
+                return $return['goods_list'];
+        }
     }
 
     /**
