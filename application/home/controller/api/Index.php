@@ -234,13 +234,14 @@ class Index
         // 超值套装列表
         $seriesGoods = $goodsController->getSeriesGoodsList(11, 'array');
         // 团购商品列表
-        $groupBuyGoods = $goodsController->getGroupBuyGoodsList(11, 'array');
+        $groupBuyGoods = $goodsController->getGroupBuyGoodsListNew(11, 'array');
         // 新品列表
         $newGoods = $goodsController->getNewGoodsList(20, 'array');
         // 促销商品
         $recommendGoods = $goodsController->getRecommendGoodsList(20, 'array');
         // 热销商品
         $hotGoods = $goodsController->getHotGoodsList(20, 'array');
+
         $return = [
             'series_goods' => $seriesGoods,
             'groupBuy_goods' => $groupBuyGoods,

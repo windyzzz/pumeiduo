@@ -392,6 +392,47 @@ class Cart extends Base
     }
 
     /**
+     * 计算购物车选中商品的价格与优惠
+     * @return \think\response\Json
+     * @throws TpshopException
+     */
+    public function calcCartPrice()
+    {
+        Hook::exec('app\\home\\behavior\\CheckAuth', 'run', $params);
+
+        $cartIds = I('cart_ids', '');
+        if (empty($cartIds)) {
+            return json(['status' => 1, 'msg' => '计算成功', 'result' => [
+                'total_fee' => 0.00,
+                'total_integral' => 0,
+                'discount_price' => 0,
+                'user_integral' => 0
+            ]]);
+        }
+        $cartIds = explode(',', $cartIds);
+        foreach ($cartIds as $k => $v) {
+            $data = [];
+            $data['id'] = $v;
+            $data['selected'] = 1;
+            $cartIds[$k] = $data;
+        }
+        $result = $this->AsyncUpdateCarts($cartIds);
+        $goodsList = $result['result']['cartList'];     // 选中商品
+        unset($result['result']['cartList']);
+        $goodsPrice = $result['result']['total_fee'];   // 商品总价
+        $Pay = new Pay();
+        // 商品优惠促销
+        $discountPrice1 = $Pay->goodsPromotion($goodsList, false, true);
+        // 订单优惠促销
+        $discountPrice2 = $Pay->calcGoodsOrderProm($goodsList, $goodsPrice);
+        $discountPrice = bcadd($discountPrice1, $discountPrice2, 2);
+        $result['result']['total_fee'] = bcsub($result['result']['total_fee'], $discountPrice, 2);
+        $result['result']['discount_price'] = $discountPrice;
+
+        return json($result);
+    }
+
+    /**
      * 更新购物车，并返回计算结果.
      */
     public function AsyncUpdateCart()

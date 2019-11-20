@@ -594,6 +594,13 @@ class Promotion extends Base
         $data['groupbuy_intro'] = htmlspecialchars(stripslashes($this->request->param('groupbuy_intro')));
         $data['start_time'] = strtotime($data['start_time']);
         $data['end_time'] = strtotime($data['end_time']);
+        if ($data['can_integral'] == 1) {
+            // 验证秒杀积分
+            $goodsIntegral = Db::name('goods')->where(['goods_id' => $data['goods_id']])->value('exchange_integral');
+            if ($goodsIntegral >= $data['price']) {
+                $this->ajaxReturn(['status' => 0, 'msg' => '可兑换商品的积分多于秒杀价格，请不要勾选使用积分']);
+            }
+        }
         if ('del' == $data['act']) {
             $spec_goods = Db::name('spec_goods_price')->where(['prom_type' => 2, 'prom_id' => $data['id']])->find();
             //有活动商品规格
@@ -774,6 +781,13 @@ class Promotion extends Base
             if (!$flashSaleValidate->batch()->check($data)) {
                 $return = ['status' => 0, 'msg' => '操作失败', 'result' => $flashSaleValidate->getError()];
                 $this->ajaxReturn($return);
+            }
+            if ($data['can_integral'] == 1) {
+                // 验证秒杀积分
+                $goodsIntegral = Db::name('goods')->where(['goods_id' => $data['goods_id']])->value('exchange_integral');
+                if ($goodsIntegral >= $data['price']) {
+                    $this->ajaxReturn(['status' => 0, 'msg' => '可兑换商品的积分多于秒杀价格，请不要勾选使用积分']);
+                }
             }
             if (empty($data['id'])) {
                 $flashSaleInsertId = Db::name('flash_sale')->insertGetId($data);
