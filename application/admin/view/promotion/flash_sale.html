@@ -67,7 +67,7 @@
 							<div style="text-align: center; width: 50px;" class="">活动状态</div>
 						</th>
 						<th align="left" axis="col1" class="handle">
-							<div style="text-align: center; width: 150px;">操作</div>
+							<div style="text-align: center; width: 200px;">操作</div>
 						</th>
 						<th style="width:100%" axis="col7">
 							<div></div>
@@ -127,7 +127,7 @@
 								<div style="text-align: center; width: 50px;">{$vo.status_desc}</div>
 							</td>
 							<td align="left" class="handle">
-								<div style="text-align: left; width: 150px; max-width:170px;">
+								<div style="text-align: left; width: 200px; max-width:170px;">
 									<a class="btn blue" href="{:U('Promotion/flash_sale_info',array('id'=>$vo['id']))}"><i class="fa fa-pencil-square-o"></i>编辑</a>
 									<a class="btn red" href="javascript:void(0)" data-url="{:U('Promotion/flash_sale_del')}" data-id="{$vo.id}" onClick="delfun(this)"><i class="fa fa-trash-o"></i>删除</a>
 									<a class="btn blue" href="{:U('Promotion/flash_sale_log',array('id'=>$vo['id']))}"><i class="fa fa-pencil-square-o"></i>详情</a>
