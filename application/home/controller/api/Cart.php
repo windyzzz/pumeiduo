@@ -201,7 +201,7 @@ class Cart extends Base
                         'spec_key' => $v['spec_key'],
                         'spec_key_name' => $v['spec_key_name'],
                         'shop_price' => $v['member_goods_price'],
-                        'exchange_integral' => $v['use_point'],
+                        'exchange_integral' => $v['use_integral'],
                         'exchange_price' => $v['member_goods_price'],
                         'goods_num' => $v['goods_num'],
                         'gift_goods' => $giftGoods
@@ -224,7 +224,7 @@ class Cart extends Base
                         'spec_key' => $v['spec_key'],
                         'spec_key_name' => $v['spec_key_name'],
                         'shop_price' => $v['member_goods_price'],
-                        'exchange_integral' => $v['use_point'],
+                        'exchange_integral' => $v['use_integral'],
                         'exchange_price' => $v['member_goods_price'],
                         'goods_num' => $v['goods_num'],
                         'gift_goods' => $giftGoods
@@ -247,7 +247,7 @@ class Cart extends Base
                         'spec_key' => $v['spec_key'],
                         'spec_key_name' => $v['spec_key_name'],
                         'shop_price' => $v['member_goods_price'],
-                        'exchange_integral' => $v['use_point'],
+                        'exchange_integral' => $v['use_integral'],
                         'exchange_price' => $v['member_goods_price'],
                         'goods_num' => $v['goods_num'],
                         'gift_goods' => $giftGoods
@@ -275,7 +275,7 @@ class Cart extends Base
                         'spec_key' => $v['spec_key'],
                         'spec_key_name' => $v['spec_key_name'],
                         'shop_price' => $v['member_goods_price'],
-                        'exchange_integral' => $v['use_point'],
+                        'exchange_integral' => $v['use_integral'],
                         'exchange_price' => $v['member_goods_price'],
                         'goods_num' => $v['goods_num'],
                         'gift_goods' => $giftGoods
@@ -447,7 +447,8 @@ class Cart extends Base
         Hook::exec('app\\home\\behavior\\CheckAuth', 'run', $params);
 
         $cartIds = I('cart_ids', '');
-        if (empty($cartIds)) {
+        $cartNum = I('cart_num', '');
+        if (empty($cartIds) || empty($cartNum)) {
             return json(['status' => 1, 'msg' => '计算成功', 'result' => [
                 'total_fee' => 0.00,
                 'goods_num' => 0,
@@ -457,32 +458,43 @@ class Cart extends Base
             ]]);
         }
         $cartIds = explode(',', $cartIds);
-        foreach ($cartIds as $k => $v) {
-            $data = [];
-            $data['id'] = $v;
-            $data['selected'] = 1;
-            $cartIds[$k] = $data;
+        $cartNum = explode(',', $cartNum);
+        if (count($cartIds) !== count($cartNum)) {
+            return json(['status' => 0, 'msg' => '参数错误']);
         }
-        $result = $this->AsyncUpdateCarts($cartIds);
-        $goodsList = $result['result']['cartList'];     // 选中商品
-        unset($result['result']['cartList']);
-        $goodsPrice = $result['result']['total_fee'];   // 商品总价
+        $cartIdArr = [];
+        foreach ($cartIds as $k => $v) {
+            $cartIdArr[] = [
+                'cart_id' => $v,
+                'cart_num' => $cartNum[$k]
+            ];
+        }
+        // 更新购物车
+        $cartLogic = new CartLogic();
+        $cartLogic->setUserId($this->user_id);
+        $res = $cartLogic->calcUpdateCart($cartIdArr);
+        if ($res['status'] == 0) {
+            return json(['status' => 1, 'msg' => '计算成功', 'result' => $res['data']]);
+        }
+        $goodsList = $res['data']['cart_list'];     // 选中商品
+        $goodsPrice = $res['data']['total_fee'];   // 商品总价
         $Pay = new Pay();
         // 商品优惠促销
         $discountPrice1 = $Pay->goodsPromotion($goodsList, false, 'amount');
         // 订单优惠促销
         $discountPrice2 = $Pay->calcGoodsOrderProm($goodsList, $goodsPrice);
         $discountPrice = bcadd($discountPrice1, $discountPrice2, 2);
-        unset($result['result']['goods_fee']);
-        $result['result']['total_fee'] = bcsub($result['result']['total_fee'], $discountPrice, 2);
-        $result['result']['discount_price'] = $discountPrice;
-        if ($this->user['pay_points'] >= $result['result']['use_integral']) {
-            $result['result']['can_integral'] = 1;
+        unset($res['data']['cart_list']);
+        unset($res['data']['goods_fee']);
+        $result = $res['data'];
+        $result['total_fee'] = bcsub($res['data']['total_fee'], $discountPrice, 2);
+        $result['discount_price'] = $discountPrice;
+        if ($this->user['pay_points'] >= $result['data']['use_integral']) {
+            $result['can_integral'] = 1;
         } else {
-            $result['result']['can_integral'] = 0;
+            $result['can_integral'] = 0;
         }
-
-        return json($result);
+        return json(['status' => 1, 'msg' => '计算成功', 'result' => $result]);
     }
 
     /**

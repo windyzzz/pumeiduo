@@ -1123,6 +1123,45 @@ class CartLogic extends Model
     }
 
     /**
+     * 更新并获取购物车选中的商品
+     * @param $cartIdArr
+     * @return array
+     */
+    public function calcUpdateCart($cartIdArr)
+    {
+        if ($this->user_id) {
+            $where['user_id'] = $this->user_id;
+        } else {
+            $where['session_id'] = $this->session_id;
+        }
+        $cartIds = [];
+        $cartModel = new Cart();
+        foreach ($cartIdArr as $cart) {
+            $cartIds[] = $cart['cart_id'];
+            // 更新购物车
+            $cartModel->where($where)->where(['id' => $cart['cart_id']])->update(['goods_num' => $cart['cart_num'], 'selected' => 1]);
+        }
+        // 更新购物车
+        $cartModel->where($where)->where(['id' => ['not in', $cartIds]])->update(['selected' => 0]);
+        // 购物车数据
+        $cartList = $cartModel->where($where)->where(['id' => ['in', $cartIds]])->select();
+        if ($cartList) {
+            $cartList = collection($cartList)->append(['cut_fee', 'total_fee', 'goods_fee'])->toArray();
+            $cartPriceInfo = $this->getCartPriceInfo($cartList);
+            $cartPriceInfo['cart_list'] = $cartList;
+            return ['status' => 1, 'data' => $cartPriceInfo];
+        } else {
+            return ['status' => 0, 'data' => [
+                'total_fee' => 0.00,
+                'goods_num' => 0,
+                'use_integral' => 0,
+                'discount_price' => 0,
+                'can_integral' => 1
+            ]];
+        }
+    }
+
+    /**
      * 获取购物车的价格详情.
      *
      * @param $cartList |购物车列表
