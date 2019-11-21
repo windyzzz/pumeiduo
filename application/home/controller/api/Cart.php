@@ -144,7 +144,7 @@ class Cart extends Base
                 ->alias('g')
                 ->join('prom_goods pg', "g.promo_id = pg.id and pg.group like '%" . $this->user['distribut_level'] . "%' and pg.start_time <= " . NOW_TIME . " and pg.end_time >= " . NOW_TIME . " and pg.is_end = 0 and is_open = 1")
                 ->join('spec_goods_price sgp', 'sgp.item_id = g.item_id', 'LEFT')
-                ->field('pg.id, pg.type, pg.title, g.goods_id, sgp.key spec_key')->select();
+                ->field('pg.id, pg.type, pg.title, pg.buy_limit, g.goods_id, sgp.key spec_key')->select();
             $promGoods = [];
             foreach ($goods_tao_grade as $item) {
                 $promGoods[$item['goods_id'] . '_' . $item['spec_key']] = $item;
@@ -152,7 +152,7 @@ class Cart extends Base
             // 秒杀活动商品
             $flashSale = Db::name('flash_sale fs')->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
                 ->where(['fs.start_time' => ['<=', time()], 'fs.end_time' => ['>=', time()], 'fs.is_end' => 0])
-                ->field('fs.id, fs.title, fs.goods_id, fs.price, sgp.key spec_key')->select();
+                ->field('fs.id, fs.title, fs.goods_id, fs.price, fs.buy_limit, sgp.key spec_key')->select();
             $flashSaleGoods = [];
             foreach ($flashSale as $item) {
                 $flashSaleGoods[$item['goods_id'] . '_' . $item['spec_key']] = $item;
@@ -160,7 +160,7 @@ class Cart extends Base
             // 团购活动商品
             $groupBuy = Db::name('group_buy gb')->join('spec_goods_price sgp', 'sgp.item_id = gb.item_id', 'LEFT')
                 ->where(['gb.is_end' => 0, 'gb.start_time' => ['<=', time()], 'gb.end_time' => ['>=', time()]])
-                ->field('gb.id, gb.title, gb.goods_id, gb.price, sgp.key spec_key')->select();
+                ->field('gb.id, gb.title, gb.goods_id, gb.price, gb.buy_limit, sgp.key spec_key')->select();
             $groupBuyGoods = [];
             foreach ($groupBuy as $item) {
                 $groupBuyGoods[$item['goods_id'] . '_' . $item['spec_key']] = $item;
@@ -204,6 +204,7 @@ class Cart extends Base
                         'exchange_integral' => $v['use_integral'],
                         'exchange_price' => $v['member_goods_price'],
                         'goods_num' => $v['goods_num'],
+                        'buy_limit' => $promGoods[$key]['buy_limit'],
                         'gift_goods' => $giftGoods
                     ];
                 } elseif (isset($flashSaleGoods[$key])) {
@@ -227,6 +228,7 @@ class Cart extends Base
                         'exchange_integral' => $v['use_integral'],
                         'exchange_price' => $v['member_goods_price'],
                         'goods_num' => $v['goods_num'],
+                        'buy_limit' => $flashSaleGoods[$key]['buy_limit'],
                         'gift_goods' => $giftGoods
                     ];
                 } elseif (isset($groupBuyGoods[$key])) {
@@ -250,6 +252,7 @@ class Cart extends Base
                         'exchange_integral' => $v['use_integral'],
                         'exchange_price' => $v['member_goods_price'],
                         'goods_num' => $v['goods_num'],
+                        'buy_limit' => $groupBuyGoods[$key]['buy_limit'],
                         'gift_goods' => $giftGoods
                     ];
                 } elseif (empty($v['goods']) || 1 != $v['goods']['is_on_sale'] || 0 == $v['goods_num']) {
@@ -544,6 +547,22 @@ class Cart extends Base
         $result = $cartLogic->changeNum($cart_id, $goods_num);
 
         return json($result);
+    }
+
+    /**
+     * 更新购物车数量（新）
+     * @return array|\think\response\Json
+     */
+    public function changeNumNew()
+    {
+        $cartId = I('cart_id', '');
+        $cartNum = I('cart_num', '');
+        if (empty($cartId) || empty($cartNum)) {
+            return ['status' => 0, 'msg' => '参数错误'];
+        }
+        // 更新购物车
+        $res = (new CartLogic())->changeNumNew($cartId, $cartNum);
+        return json($res);
     }
 
     /**

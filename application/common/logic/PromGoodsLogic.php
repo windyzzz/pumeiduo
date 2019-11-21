@@ -65,7 +65,7 @@ class PromGoodsLogic extends Prom
     /**
      * 计算促销价格。
      *
-     * @param $Price|原价或者规格价格
+     * @param $Price |原价或者规格价格
      *
      * @return float
      */
@@ -210,7 +210,7 @@ class PromGoodsLogic extends Prom
     {
         if (!$this->checkActivityIsEnd() && $this->checkActivityIsAble()) {
             if ($buyGoods['goods_num'] > $this->promGoods['buy_limit']) {
-                throw new TpshopException('促销商品立即购买', 0, ['status' => 0, 'msg' => '每人限购'.$this->promGoods['buy_limit'].'件', 'result' => '']);
+                throw new TpshopException('促销商品立即购买', 0, ['status' => 0, 'msg' => '每人限购' . $this->promGoods['buy_limit'] . '件', 'result' => '']);
             }
             $buyGoods['member_goods_price'] = $this->getPromotionPrice($buyGoods['member_goods_price']);
         }
@@ -218,10 +218,10 @@ class PromGoodsLogic extends Prom
         $userPromOrderGoodsNum = $this->getUserPromOrderGoodsNum($buyGoods['user_id']); //获取用户已购商品数量
         $userBuyGoodsNum = $buyGoods['goods_num'] + $userPromOrderGoodsNum;  //已经下单+要买
         if ($userBuyGoodsNum > $this->promGoods['buy_limit']) {
-            throw new TpshopException('促销商品立即购买', 0, ['status' => 0, 'msg' => '每人限购'.$this->promGoods['buy_limit'].'件，您已下单'.$userPromOrderGoodsNum.'件', 'result' => '']);
+            throw new TpshopException('促销商品立即购买', 0, ['status' => 0, 'msg' => '每人限购' . $this->promGoods['buy_limit'] . '件，您已下单' . $userPromOrderGoodsNum . '件', 'result' => '']);
         }
         if ($buyGoods['goods_num'] > $residue_buy_limit) {  //不算购物车的
-            throw new TpshopException('促销商品立即购买', 0, ['status' => 0, 'msg' => '商品库存不足，你只能购买'.$residue_buy_limit, 'result' => '']);
+            throw new TpshopException('促销商品立即购买', 0, ['status' => 0, 'msg' => '商品库存不足，你只能购买' . $residue_buy_limit, 'result' => '']);
         }
         $buyGoods['prom_type'] = 3;
         $buyGoods['prom_id'] = $this->promGoods['id'];
@@ -275,16 +275,19 @@ class PromGoodsLogic extends Prom
     public function getPromoGoodsResidueGoodsNum($user_id)
     {
         $user_purchase_num = $this->getUserPromOrderGoodsNum($user_id); //用户已购商品数量
-        //限购》已购
-        $residue_buy_limit = $this->promGoods['buy_limit'] - $user_purchase_num;  //用户还能买的数量
+        //限购 > 已购
         $store_count = $this->goods['store_count'];  //剩余库存
         if ($this->specGoodsPrice) {
             $store_count = $this->specGoodsPrice['store_count'];
         }
-        if ($residue_buy_limit > $store_count) {
+        if ($this->promGoods['buy_limit'] == 0) {
             return $store_count;
+        } else {
+            $residue_buy_limit = $this->promGoods['buy_limit'] - $user_purchase_num;  //用户还能买的数量
+            if ($residue_buy_limit > $store_count) {
+                return $store_count;
+            }
+            return $residue_buy_limit;
         }
-
-        return $residue_buy_limit;
     }
 }

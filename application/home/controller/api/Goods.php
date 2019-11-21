@@ -1048,6 +1048,7 @@ class Goods extends Base
                     $goods_list[$k]['group_buy']['percent'] = 1;
                     $goods_list[$k]['group_buy']['people_num'] = 0;
                 }
+                $goods_list[$k]['group_buy']['original_img'] = $v['original_img'];
                 $goods_list[$k]['group_buy']['goods_remark'] = $v['goods_remark'];
                 $goods_list[$k]['group_buy']['groupBuy_price'] = $v['group_buy_detail']['price'];
                 $goods_list[$k]['group_buy']['exchange_integral'] = $v['exchange_integral'];

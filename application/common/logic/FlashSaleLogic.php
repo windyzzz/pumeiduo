@@ -137,9 +137,13 @@ class FlashSaleLogic extends Prom
      */
     public function getUserFlashResidueGoodsNum($user_id)
     {
-        $purchase_num = $this->getUserFlashOrderGoodsNum($user_id); //用户抢购已购商品数量
         $residue_num = $this->flashSale['goods_num'] - $this->flashSale['buy_num']; //剩余库存
-        //限购》已购
+        if ($this->flashSale['buy_limit'] == 0) {
+            // 没有限制购买数量
+            return $residue_num;
+        }
+        $purchase_num = $this->getUserFlashOrderGoodsNum($user_id); //用户抢购已购商品数量
+        //限购 > 已购
         $residue_buy_limit = $this->flashSale['buy_limit'] - $purchase_num;
         if ($residue_buy_limit > $residue_num) {
             return $residue_num;

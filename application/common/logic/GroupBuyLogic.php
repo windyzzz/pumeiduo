@@ -62,11 +62,50 @@ class GroupBuyLogic extends Prom
     }
 
     /**
+     * 获取用户抢购已购商品数量.
+     *
+     * @param $user_id
+     *
+     * @return float|int
+     */
+    public function getUserGroupBuyOrderGoodsNum($user_id)
+    {
+        $orderWhere = [
+            'user_id' => $user_id,
+            'order_status' => ['<>', 3],
+            'add_time' => ['between', [$this->GroupBuy['start_time'], $this->GroupBuy['end_time']]],
+        ];
+        $order_id_arr = Db::name('order')->where($orderWhere)->getField('order_id', true);
+        if ($order_id_arr) {
+            $orderGoodsWhere = ['prom_id' => $this->GroupBuy['id'], 'prom_type' => 2, 'order_id' => ['in', implode(',', $order_id_arr)]];
+            $goods_num = DB::name('order_goods')->where($orderGoodsWhere)->sum('goods_num');
+            if ($goods_num) {
+                return $goods_num;
+            }
+
+            return 0;
+        }
+
+        return 0;
+    }
+
+    /**
      * 获取团购剩余库存.
      */
-    public function getPromotionSurplus()
+    public function getPromotionSurplus($user_id)
     {
-        return $this->GroupBuy['goods_num'] - $this->GroupBuy['buy_num'];
+        $residue_num = $this->GroupBuy['goods_num'] - $this->GroupBuy['buy_num'];
+        if ($this->GroupBuy['buy_limit'] == 0) {
+            // 没有限制购买数量
+            return $residue_num;
+        }
+        $purchase_num = $this->getUserGroupBuyOrderGoodsNum($user_id); //用户抢购已购商品数量
+        // 限购 > 已购
+        $residue_buy_limit = $this->GroupBuy['buy_limit'] - $purchase_num;
+        if ($residue_buy_limit > $residue_num) {
+            return $residue_num;
+        }
+        return $residue_buy_limit;
     }
 
     public function getPromModel()

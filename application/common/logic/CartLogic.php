@@ -906,6 +906,28 @@ class CartLogic extends Model
     }
 
     /**
+     * 更新购物车数量（新）
+     * @param $cartId
+     * @param $cartNum
+     * @return array
+     */
+    public function changeNumNew($cartId, $cartNum)
+    {
+        // 验证库存
+        $cartModel = new Cart();
+        $cart = $cartModel::get($cartId);
+        if ($cartNum > $cart->limit_num) {
+            return ['status' => 0, 'msg' => '商品数量不能大于' . $cart->limit_num, 'result' => ['limit_num' => $cart->limit_num]];
+        }
+        if ($cartNum > 200) {
+            $cartNum = 200;
+        }
+        // 更新购物车
+        Db::name('cart')->where(['id' => $cartId])->update(['goods_num' => $cartNum]);
+        return ['status' => 1, 'msg' => '更新购物车数量成功'];
+    }
+
+    /**
      * 更改购物车的商品类型.
      *
      * @param $cart_id |购物车id

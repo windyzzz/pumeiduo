@@ -104,7 +104,7 @@ class Cart extends Model
                 $limitNum = $FlashSaleLogic->getUserFlashResidueGoodsNum($data['user_id']);
             } elseif (2 == $data['prom_type']) {
                 $groupBuyLogic = new GroupBuyLogic($goods, $spec_goods_price);
-                $limitNum = $groupBuyLogic->getPromotionSurplus(); //团购剩余库存
+                $limitNum = $groupBuyLogic->getPromotionSurplus($data['user_id']); //团购剩余库存
             } elseif (3 == $data['prom_type']) {
                 $promoGoodsLogic = new PromGoodsLogic($goods, $spec_goods_price);
                 $limitNum = $promoGoodsLogic->getPromoGoodsResidueGoodsNum($data['user_id']);
