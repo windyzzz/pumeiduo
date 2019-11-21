@@ -17,6 +17,8 @@ use app\admin\model\FlashSale;
 use app\admin\model\Goods;
 use app\admin\model\GroupBuy;
 use app\admin\validate\Gift as Giftvalidate;
+use app\common\model\OrderProm as OrderPromModel;
+use app\common\model\OrderPromGoods as OrderPromGoodsModel;
 use app\common\model\PromGoods;
 use app\common\model\Gift2;
 use think\Db;
@@ -719,6 +721,9 @@ class Promotion extends Base
             } elseif (in_array($prom_type, [1, 2, 6])) {
                 //抢购，团购
                 $query->where('prom_type', 'in', [0, $prom_type])->where('prom_type', 0);
+            } elseif (7 == $prom_type) {
+                // 订单合购
+                $query->where('prom_type', 'not in', [$prom_type]);
             } else {
                 $query->where('prom_type', 0);
             }
@@ -735,6 +740,9 @@ class Promotion extends Base
             } elseif (in_array($prom_type, [1, 2, 6])) {
                 //抢购，团购
                 $query->where('prom_type', 'in', [0, $prom_type])->where('prom_id', 0);
+            } elseif (7 == $prom_type) {
+                // 订单合购
+                $query->where('prom_type', 'not in', [$prom_type]);
             } else {
                 $query->where('prom_type', 0);
             }
@@ -924,5 +932,194 @@ class Promotion extends Base
     {
         header('Content-type: text/html; charset=utf-8');
         exit('该功能暂未开放');
+    }
+
+    /**
+     * 订单优惠促销列表
+     * @return mixed
+     */
+    public function order_prom_list()
+    {
+        $orderProm = new OrderPromModel();
+        $count = $orderProm->count();
+        $page = new Page($count, 10);
+        $prom_list = $orderProm->limit($page->firstRow . ',' . $page->listRows)->order('id desc')->select();
+
+        $this->assign('page', $page);
+        $this->assign('prom_list', $prom_list);
+
+        return $this->fetch();
+    }
+
+    /**
+     * 订单优惠促销详情
+     * @return mixed
+     */
+    public function order_prom_info()
+    {
+        $orderPromId = I('id', '');
+        if (!$orderPromId) {
+            return $this->fetch();
+        }
+        $promInfo = Db::name('order_prom')->where(['id' => $orderPromId])->find();
+        // 活动购买商品
+        $buyGoods = Db::name('order_prom_goods')->where(['order_prom_id' => $orderPromId, 'type' => 1])->select();
+        $buy_goods = [];
+        foreach ($buyGoods as $k => $v) {
+            $buy_goods[$k] = M('Goods')->where('goods_id=' . $v['goods_id'])->find();
+            $buy_goods[$k]['goods_num'] = $v['goods_num'];
+            if ($v['item_id']) {
+                $buy_goods[$k]['SpecGoodsPrice'] = M('SpecGoodsPrice')->where(['item_id' => $v['item_id']])->find();
+            }
+        }
+        // 赠送商品
+        $giftGoods = Db::name('order_prom_goods')->where(['order_prom_id' => $orderPromId, 'type' => 2])->select();
+        $gift_goods = [];
+        foreach ($giftGoods as $k => $v) {
+            $gift_goods[$k] = M('Goods')->where('goods_id=' . $v['goods_id'])->find();
+            $gift_goods[$k]['goods_num'] = $v['goods_num'];
+            if ($v['item_id']) {
+                $gift_goods[$k]['SpecGoodsPrice'] = M('SpecGoodsPrice')->where(['item_id' => $v['item_id']])->find();
+            }
+        }
+        $promInfo['start_time'] = date('Y-m-d H:i:s', $promInfo['start_time']);
+        $promInfo['end_time'] = date('Y-m-d H:i:s', $promInfo['end_time']);
+        $this->assign('gift_goods', $gift_goods);
+        $this->assign('buy_goods', $buy_goods);
+        $this->assign('info', $promInfo);
+        return $this->fetch();
+    }
+
+    /**
+     * 订单促销可赠送商品
+     * @return mixed
+     */
+    public function order_search_goods()
+    {
+        // 要过滤的商品ID
+        $goodsIds1 = Db::name('gift')->getField('goods_id', true);
+        $goodsIds2 = Db::name('gift2_goods')->getField('goods_id', true);
+        $goodsIds = array_unique(array_merge($goodsIds1, $goodsIds2));
+        $where = [
+            'goods_id' => ['not in', $goodsIds]
+        ];
+        $Goods = new Goods();
+        $count = $Goods->where($where)->count();
+        $Page = new Page($count, 10);
+        // 获取商品信息
+        $goodsList = $Goods->with('specGoodsPrice')->where($where)->order('goods_id DESC')->limit($Page->firstRow . ',' . $Page->listRows)->select();
+        $types = I('types', 1);
+        $this->assign('types', $types);
+
+        $GoodsLogic = new GoodsLogic();
+        $brandList = $GoodsLogic->getSortBrands();
+        $categoryList = $GoodsLogic->getSortCategory();
+        $this->assign('brandList', $brandList);
+        $this->assign('categoryList', $categoryList);
+        $this->assign('page', $Page);
+        $this->assign('goodsList', $goodsList);
+
+        return $this->fetch('order_search_goods');
+    }
+
+    /**
+     * 新增/编辑订单促销活动
+     * @throws \think\Exception
+     * @throws \think\exception\PDOException
+     */
+    public function order_prom_save()
+    {
+        $data = I('post.');
+        $orderPromId = $data['id'];
+        switch ($data['type']) {
+            case 0:
+            case 2:
+                if (!isset($data['gift_goods'])) {
+                    $this->ajaxReturn(['status' => 0, 'msg' => '请选择赠送商品']);
+                }
+                break;
+            case 1:
+                unset($data['gift_goods']);
+                break;
+        }
+        // 验证
+        $orderPromValidate = Loader::validate('OrderProm');
+        if (!$orderPromValidate->batch()->check($data)) {
+            $msg = '';
+            foreach ($orderPromValidate->getError() as $item) {
+                $msg .= $item . '，';
+            }
+            $return = ['status' => 0, 'msg' => rtrim($msg, '，')];
+            $this->ajaxReturn($return);
+        }
+
+        $buyGoods = $data['buy_goods'];
+        unset($data['buy_goods']);
+        $giftGoods = isset($data['gift_goods']) ? $data['gift_goods'] : [];
+
+        // 订单优惠数据
+        $data['start_time'] = strtotime($data['start_time']);
+        $data['end_time'] = strtotime($data['end_time']);
+        if ($orderPromId) {
+            // 编辑
+            Db::name('order_prom')->where(['id' => $orderPromId])->update($data);
+            Db::name('order_prom_goods')->where(['order_prom_id' => $orderPromId])->delete();   // 删除旧商品数据
+        } else {
+            // 新增
+            $orderPromId = Db::name('order_prom')->add($data);
+        }
+        // 参与活动商品
+        $goodsIds = [];
+        $buyGoodsData = [];
+        foreach ($buyGoods as $key => $value) {
+            $goods_item = explode('_', $key);
+            $goodsIds[] = $goods_item[0];
+            $buyGoodsData[] = [
+                'order_prom_id' => $orderPromId,
+                'type' => 1,
+                'goods_id' => $goods_item[0],
+                'item_id' => isset($goods_item[1]) ? $goods_item[1] : 0
+            ];
+        }
+        $orderPromGoods = new OrderPromGoodsModel();
+        $orderPromGoods->saveAll($buyGoodsData);
+        // 更新商品活动类型
+        Db::name('goods')->where(['goods_id' => ['in', array_unique($goodsIds)]])->update(['prom_type' => 7]);
+        // 赠送商品
+        if (!empty($giftGoods)) {
+            $giftGoodsData = [];
+            foreach ($giftGoods as $key => $value) {
+                $goods_item = explode('_', $key);
+                $giftGoodsData[] = [
+                    'order_prom_id' => $orderPromId,
+                    'type' => 2,
+                    'goods_id' => $goods_item[0],
+                    'item_id' => isset($goods_item[1]) ? $goods_item[1] : 0,
+                    'goods_num' => $value['goods_num']
+                ];
+            }
+            $orderPromGoods->saveAll($giftGoodsData);
+        }
+        $this->ajaxReturn(['status' => 1, 'msg' => '处理成功']);
+    }
+
+    /**
+     * 删除订单促销活动
+     * @throws \think\Exception
+     * @throws \think\exception\PDOException
+     */
+    public function order_prom_del()
+    {
+        $orderPromId = I('id');
+        $order_goods = M('order_goods')->where(['prom_type' => 7, 'prom_id' => $orderPromId, 'is_send' => 0])->find();
+        if (!empty($order_goods)) {
+            $this->ajaxReturn(['status' => -1, 'msg' => '该活动有订单参与不能删除!']);
+        }
+        Db::name('order_prom')->where(['id' => $orderPromId])->delete();
+        // 活动相关商品
+        $goodsIds = Db::name('order_prom_goods')->where(['order_prom_id' => $orderPromId, 'type' => 1])->getField('goods_id', true);
+        Db::name('goods')->where(['goods_id' => ['in', $goodsIds]])->save(['prom_id' => 0, 'prom_type' => 0]);
+
+        $this->ajaxReturn(['status' => 1, 'msg' => '删除活动成功']);
     }
 }

@@ -32,6 +32,7 @@ class Pay
     private $orderAmount = 0; //应付金额
     private $shippingPrice = 0; //物流费
     private $goodsPrice = 0; //商品总价
+    private $orderPromPrice = 0; //订单优惠促销商品总价
     private $cutFee = 0; //共节约多少钱
     private $totalNum = 0; // 商品总共数量
     private $integralMoney = 0; //积分抵消金额
@@ -171,6 +172,9 @@ class Pay
                 $this->cutFee += $this->payList[$payCursor]['goods_num'] * ($this->payList[$payCursor]['market_price'] - $this->payList[$payCursor]['member_goods_price']); // 共节约
             }
             $this->totalNum += $this->payList[$payCursor]['goods_num'];
+            if (isset($this->payList[$payCursor]['is_order_prom']) && $this->payList[$payCursor]['is_order_prom'] == 1) {
+                $this->orderPromPrice += ($this->payList[$payCursor]['goods_num'] * $this->payList[$payCursor]['member_goods_price']);
+            }
         }
         $this->orderAmount = $this->goodsPrice;
         $this->totalAmount = $this->goodsPrice;
@@ -416,13 +420,16 @@ class Pay
     public function activity2()
     {
         if ($this->payList) {
-            $goods_list = $this->activity2_goods($this->payList);
+            $goods_list = $this->activity2_goods($this->payList, $this->totalAmount);
             $this->payList = $goods_list;
         }
     }
 
-    function activity2_goods($goods_list)
+    function activity2_goods($goods_list, $cartPrice = 0)
     {
+        $orderPromId1 = [];
+        $orderPromId2 = [];
+        $giftGoods = [];
         foreach ($goods_list as $k => $v) {
             if ($v['spec_key']) {
                 $gift2_goods = M('gift2_goods')
@@ -433,6 +440,7 @@ class Pay
                     ->join('spec_goods_price sg', "sg.item_id = gg.buy_item_id and sg.key = '" . $v['spec_key'] . "'")
                     ->where(array('gg.buy_goods_id' => $v['goods_id'], 'gg.buy_stock' => array('elt', $v['goods_num']), 'gt.start_time' => array('elt', NOW_TIME), 'gt.end_time' => array('egt', NOW_TIME)))
                     ->select();
+                $v['item_id'] = M('spec_goods_price')->where(['goods_id' => $v['goods_id'], 'key' => $v['spec_key']])->value('item_id');
             } else {
                 $gift2_goods = M('gift2_goods')
                     ->alias('gg')
@@ -486,13 +494,122 @@ class Pay
                     }
                 }
                 if (count($gift2_goods_list) > 0) {
-                    $goods_list[$k]['gift2_goods'] = $gift2_goods_list;
+//                    $goods_list[$k]['gift2_goods'] = $gift2_goods_list;
+                    $giftGoods[] = $gift2_goods_list;
                 }
-
+            }
+            if ($cartPrice > 0) {
+                $itemId = isset($v['item_id']) ? $v['item_id'] : 0;
+                // 订单优惠促销（查看是否有赠送商品）
+                $orderProm = Db::name('order_prom_goods opg')->join('order_prom op', 'op.id = opg.order_prom_id')
+                    ->where(['opg.type' => 1, 'goods_id' => $v['goods_id'], 'item_id' => $itemId])
+                    ->where(['op.type' => ['in', '0, 2'], 'is_open' => 1, 'is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])
+                    ->field('order_prom_id, order_price')->find();
+                if (!empty($orderProm) && !in_array($orderProm['order_prom_id'], $orderPromId1)) {
+                    if ($cartPrice >= $orderProm['order_price']) {
+                        // 订单价格满足要求
+                        $giftGoodsList = Db::name('order_prom_goods opg')->join('goods g', 'g.goods_id = opg.goods_id')
+                            ->join('spec_goods_price sgp', 'sgp.item_id = opg.item_id', 'LEFT')->where(['opg.order_prom_id' => $orderProm['order_prom_id'], 'opg.type' => 2])
+                            ->field('opg.goods_id, opg.item_id, opg.goods_num, g.goods_sn, g.goods_name, g.sku, g.trade_type, g.prom_type, g.prom_id, g.original_img, sgp.key spec_key, sgp.key_name spec_key_name')
+                            ->select();
+                        if ($giftGoodsList) {
+//                            if (isset($goods_list[$k]['gift2_goods'])) {
+//                                $goods_list[$k]['gift2_goods'] = array_merge($goods_list[$k]['gift2_goods'][], $giftGoodsList);
+//                            } else {
+//                                $goods_list[$k]['gift2_goods'] = $giftGoodsList;
+//                            }
+                            if (!empty($giftGoods)) {
+                                $giftGoods = array_merge($giftGoods, $giftGoodsList);
+                            } else {
+                                $giftGoods = $giftGoodsList;
+                            }
+                        }
+                        $goods_list[$k]['prom_id'] = $orderProm['order_prom_id'];
+                        $goods_list[$k]['prom_type'] = 7;   // 订单合购优惠
+                        $orderPromId1[] = $orderProm['order_prom_id'];
+                    }
+                }
+                // 订单优惠促销（查看是否有优惠价格）
+//                $orderProm = Db::name('order_prom_goods opg')->join('order_prom op', 'op.id = opg.order_prom_id')
+//                    ->where(['opg.type' => 1, 'goods_id' => $v['goods_id'], 'item_id' => $itemId])
+//                    ->where(['op.type' => ['in', '0, 1'], 'is_open' => 1, 'is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])
+//                    ->field('order_prom_id, order_price, discount_price')->find();
+//                if (!empty($orderProm) && !in_array($orderProm['order_prom_id'], $orderPromId2)) {
+//                    if ($cartPrice >= $orderProm['order_price'] && $orderProm['order_price'] != 0) {
+//                        // 订单价格满足要求
+//                        $discountPrice += $orderProm['discount_price'];
+//                    }
+//                    $orderPromId2[] = $orderProm['order_prom_id'];
+//                }
+            }
+            if ($k == count($goods_list) - 1 && !empty($giftGoods)) {
+                $goods_list[$k]['gift2_goods'] = $giftGoods;
             }
         }
         return $goods_list;
+    }
 
+    public function activity3()
+    {
+        $this->payList;
+        $this->orderPromPrice;
+        $orderPromId = [];
+        foreach ($this->payList as $k => $v) {
+            if ($this->orderPromPrice > 0) {
+                $itemId = isset($v['item_id']) ? $v['item_id'] : 0;
+                // 订单优惠促销（查看是否有优惠价格）
+                $orderProm = Db::name('order_prom_goods opg')->join('order_prom op', 'op.id = opg.order_prom_id')
+                    ->where(['opg.type' => 1, 'goods_id' => $v['goods_id'], 'item_id' => $itemId])
+                    ->where(['op.type' => ['in', '0, 1'], 'is_open' => 1, 'is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])
+                    ->field('order_prom_id, order_price, discount_price')->find();
+                if (!empty($orderProm) && !in_array($orderProm['order_prom_id'], $orderPromId)) {
+                    if ($this->orderPromPrice >= $orderProm['order_price']) {
+                        // 订单价格满足要求
+                        $this->orderPromPrice = $this->orderPromPrice - $orderProm['discount_price'];
+                        $this->orderAmount = $this->orderAmount - $orderProm['discount_price'];
+                        $this->totalAmount = $this->totalAmount - $orderProm['discount_price'];
+                        $this->orderPromAmount += $orderProm['discount_price'];
+                    }
+                    $this->payList[$k]['prom_id'] = $orderProm['order_prom_id'];
+                    $this->payList[$k]['prom_type'] = 7;    // 订单合购优惠
+                    $orderPromId[] = $orderProm['order_prom_id'];
+                }
+            }
+        }
+    }
+
+    /**
+     * 计算商品订单优惠促销
+     * @param $goodsList
+     * @param $goodsPrice
+     * @return float|mixed
+     */
+    public function calcGoodsOrderProm($goodsList, $goodsPrice)
+    {
+        $orderPromId = [];
+        $goodsDiscount = 0.00;
+        foreach ($goodsList as $k => $v) {
+            if ($goodsPrice > 0) {
+                if (!empty($v['spec_key'])) {
+                    $itemId = M('spec_goods_price')->where(['goods_id' => $v['goods_id'], 'key' => $v['spec_key']])->value('item_id');
+                } else {
+                    $itemId = 0;
+                }
+                // 订单优惠促销（查看是否有优惠价格）
+                $orderProm = Db::name('order_prom_goods opg')->join('order_prom op', 'op.id = opg.order_prom_id')
+                    ->where(['opg.type' => 1, 'goods_id' => $v['goods_id'], 'item_id' => $itemId])
+                    ->where(['op.type' => ['in', '0, 1'], 'is_open' => 1, 'is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])
+                    ->field('order_prom_id, order_price, discount_price')->find();
+                if (!empty($orderProm) && !in_array($orderProm['order_prom_id'], $orderPromId)) {
+                    if ($goodsPrice >= $orderProm['order_price']) {
+                        // 订单价格满足要求
+                        $goodsDiscount += $orderProm['discount_price'];
+                    }
+                    $orderPromId[] = $orderProm['order_prom_id'];
+                }
+            }
+        }
+        return $goodsDiscount;
     }
 
     function gift2_goods($goods_id)

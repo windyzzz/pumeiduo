@@ -13,6 +13,8 @@ namespace app\admin\logic;
 
 use app\common\logic\OrderLogic as OrderService;
 use app\common\logic\WechatLogic;
+use app\common\model\CouponList;
+use app\common\model\UserTask;
 use think\Db;
 
 class OrderLogic
@@ -172,7 +174,7 @@ class OrderLogic
         $updata = [];
         switch ($act) {
             case 'pay': //付款
-                   $order_sn = M('order')->where("order_id = $order_id")->getField('order_sn');
+                $order_sn = M('order')->where("order_id = $order_id")->getField('order_sn');
                 update_pay_status($order_sn, $ext); // 调用确认收货按钮
                 return true;
             case 'pay_cancel': //取消付款
@@ -182,6 +184,113 @@ class OrderLogic
                 return true;
             case 'confirm': //确认订单
                 $updata['order_status'] = 1;
+                // 查看订单商品
+                $goodsIds = Db::name('order_goods')->where(['order_id' => $order_id])->getField('goods_id', true);
+                $goods = Db::name('goods')->where(['goods_id' => ['in', $goodsIds]])->getField('zone', true);
+                foreach ($goods as $value) {
+                    if ($value == 3) {
+                        $isVip = 1;
+                        break;
+                    }
+                }
+                if (isset($isVip) && $isVip == 1) {
+                    // 订单中含有VIP申请套餐
+                    $order = Db::name('order')->where(['order_id' => $order_id])->field('order_sn, user_id')->find();
+                    $userInviteUid = Db::name('users')->where(['user_id' => $order['user_id']])->value('invite_uid');
+                    if ($userInviteUid != 0) {
+                        // 拥有上级
+                        // 任务内容
+                        $taskReward = Db::name('task_reward')->where(['task_id' => 2])->order('reward_id asc')
+                            ->getField('reward_id, invite_num, reward_coupon_id', true);
+                        $userTask = Db::name('user_task')->where(['user_id' => $userInviteUid, 'task_id' => 2])->order('id asc')->select();
+                        if (empty($userTask)) {
+                            // 添加用户任务
+                            $data = [];
+                            foreach ($taskReward as $item) {
+                                $data[] = [
+                                    'user_id' => $userInviteUid,
+                                    'task_id' => 2,
+                                    'task_reward_id' => $item['reward_id'],
+                                    'finish_num' => 1,
+                                    'target_num' => $item['invite_num'],
+                                    'status' => $item['invite_num'] == 1 ? 1 : 0,
+                                    'invite_uid_list' => $order['user_id'],
+                                    'order_sn_list' => $order['order_sn'],
+                                    'created_at' => time(),
+                                    'finished_at' => $item['invite_num'] == 1 ? time() : 0
+                                ];
+                            }
+                            $userTask = new UserTask();
+                            $res = $userTask->saveAll($data);
+                            $taskReward = array_values($taskReward);
+                            $rewardId = $taskReward[0]['reward_id'];
+                            $userTaskId = $res[0]['id'];
+                        } else {
+                            $rewardId = '';
+                            $userTaskId = '';
+                            // 更新用户任务
+                            foreach ($userTask as $key => $item) {
+                                if ($item['status'] == 0) {
+                                    $k = ($key - 1 >= 0) ? $key - 1 : 0;
+                                    Db::name('user_task')->where(['id' => $item['id']])->update([
+                                        'finish_num' => $item['target_num'],
+                                        'status' => 1,
+                                        'invite_uid_list' => $userTask[$k]['invite_uid_list'] . ',' . $order['user_id'],
+                                        'order_sn_list' => $userTask[$k]['order_sn_list'] . ',' . $order['order_sn'],
+                                        'finished_at' => time()
+                                    ]);
+                                    $rewardId = $item['task_reward_id'];
+                                    $userTaskId = $item['id'];
+                                    break;
+                                }
+                            }
+                        }
+                        // 上级奖励自动发放
+                        if (!empty($rewardId) && !empty($userTaskId)) {
+                            $taskReward = Db::name('task_reward')->where(['reward_id' => $rewardId])->find();
+                            // 优惠券信息
+                            $couponIds = explode('-', $taskReward['reward_coupon_id']);
+                            $coupon = Db::name('coupon')->where(['id' => ['in', $couponIds]])->field('id, name, money')->select();
+                            $couponName = '';
+                            $couponMoney = '';
+                            $couponData = [];
+                            foreach ($coupon as $item) {
+                                $couponName .= $item['name'] . '-';
+                                $couponMoney .= $item['money'] . '-';
+                                $couponData[] = [
+                                    'cid' => $item['id'],
+                                    'type' => 3,    // 邀请
+                                    'uid' => $userInviteUid,
+                                    'order_id' => 0,
+                                    'get_order_id' => $order_id,
+                                    'send_time' => time()
+                                ];
+                            }
+                            // 优惠券记录
+                            $couponList = new CouponList();
+                            $couponList->saveAll($couponData);
+                            // 任务记录
+                            Db::name('task_log')->add([
+                                'task_id' => 2,
+                                'user_task_id' => $userTaskId,
+                                'task_title' => Db::name('task')->where(['id' => 2])->value('title'),
+                                'task_reward_id' => $taskReward['reward_id'],
+                                'task_reward_desc' => $taskReward['description'],
+                                'user_id' => $userInviteUid,
+                                'order_sn' => $order['order_sn'],
+                                'reward_electronic' => $taskReward['reward_price'],
+                                'reward_integral' => $taskReward['reward_interval'],
+                                'reward_coupon_id' => $taskReward['reward_coupon_id'],
+                                'reward_coupon_money' => rtrim($couponMoney, '-'),
+                                'reward_coupon_name' => rtrim($couponName, '-'),
+                                'status' => 1,  // 自动领取
+                                'type' => 1,
+                                'created_at' => time(),
+                                'finished_at' => time()
+                            ]);
+                        }
+                    }
+                }
                 break;
             case 'cancel': //取消确认
                 $updata['order_status'] = 0;

@@ -779,7 +779,6 @@ class CartLogic extends Model
                 M('cart')->where(array('id' => $cart['id']))->data(array('goods_sn' => $goods_sn))->save();
                 $cartList[$cartKey]['goods_sn'] = $goods_sn;
             }
-
             //规格不存在 则删除
             if (!empty($cart['spec_key'])) {
                 $specGoodsPrice = SpecGoodsPrice::get(['goods_id' => $cart['goods_id'], 'key' => $cart['spec_key']], '', false);
@@ -820,8 +819,25 @@ class CartLogic extends Model
                     continue;
                 }
             }
+            $itemId = isset($cartList[$cartKey]['item_id']) ? $cartList[$cartKey]['item_id'] : 0;
+            // 订单优惠促销（查看是否有赠送商品）
+            $orderProm = Db::name('order_prom_goods opg')->join('order_prom op', 'op.id = opg.order_prom_id')
+                ->where(['opg.type' => 1, 'goods_id' => $cart['goods_id'], 'item_id' => $itemId])
+                ->where(['op.type' => ['in', '0, 2'], 'is_open' => 1, 'is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])
+                ->field('order_prom_id, order_price')->find();
+            if ($orderProm) {
+                $cartList[$cartKey]['is_order_prom'] = 1;
+            } else {
+                // 订单优惠促销（查看是否有优惠价格）
+                $orderProm = Db::name('order_prom_goods opg')->join('order_prom op', 'op.id = opg.order_prom_id')
+                    ->where(['opg.type' => 1, 'goods_id' => $cart['goods_id'], 'item_id' => $itemId])
+                    ->where(['op.type' => ['in', '0, 1'], 'is_open' => 1, 'is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])
+                    ->field('order_prom_id, order_price, discount_price')->find();
+                if ($orderProm) {
+                    $cartList[$cartKey]['is_order_prom'] = 1;
+                }
+            }
         }
-
         return $cartList;
     }
 

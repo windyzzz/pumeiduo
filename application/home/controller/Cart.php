@@ -248,7 +248,6 @@ class Cart
             $cartLogic->setGoodsBuyNum($goods_num);
             $cartLogic->setType($type);
             $cartLogic->setCartType($cart_type);
-            $buyGoods = [];
             try {
                 $buyGoods = $cartLogic->buyNow();
             } catch (TpshopException $t) {
@@ -282,40 +281,49 @@ class Cart
             $cartList['cartList'] = $cartLogic->getCartList(1); // 获取用户选中的购物车商品
             $cartGoodsTotalNum = count($cartList['cartList']);
         }
-
         $point = 0;
         $give_integral = 0;
         $weight = 0;
         $total_fee = 0;
-
+        $order_prom_fee = 0;
         foreach ($cartList['cartList'] as $v) {
             $point += $v['goods_num'] * $v['use_integral'];
-            $total_fee = ($v['use_integral'] + $v['member_goods_price']) * $v['goods_num'];
+            $total_fee += ($v['use_integral'] + $v['member_goods_price']) * $v['goods_num'];
             $goodsInfo = M('Goods')->field('give_integral,weight')->where('goods_id', $v['goods_id'])->find();
             $give_integral += $goodsInfo['give_integral'];
             $weight += $goodsInfo['weight'];
+            if (isset($v['is_order_prom']) && $v['is_order_prom'] == 1) {
+                // 订单优惠促销商品总价
+                $order_prom_fee += ($v['use_integral'] + $v['member_goods_price']) * $v['goods_num'];
+            }
         }
 
         $cartGoodsList = get_arr_column($cartList['cartList'], 'goods');
         $cartGoodsId = get_arr_column($cartGoodsList, 'goods_id');
         $cartGoodsCatId = get_arr_column($cartGoodsList, 'cat_id');
         $cartPriceInfo = $cartLogic->getCartPriceInfo($cartList['cartList']);  //初始化数据。商品总额/节约金额/商品总共数量
+
         $userCouponList = $couponLogic->getUserAbleCouponList($this->user_id, $cartGoodsId, $cartGoodsCatId); //用户可用的优惠券列表
+        $userCouponListRe = $couponLogic->getUserAbleCouponListRe($this->user_id, $cartGoodsId, $cartGoodsCatId); //用户可用的优惠券列表
+
         $cartList = array_merge($cartList, $cartPriceInfo);
         $userCartCouponList = $cartLogic->getCouponCartList($cartList, $userCouponList);
+        $return['userCartCouponList'] = $userCartCouponList;  //优惠券，用able判断是否用
+
+        $userCartCouponListRe = $cartLogic->getCouponCartList($cartList, $userCouponListRe);
+        $return['userCartCouponListRe'] = $userCartCouponListRe;
 
         $Pay = new \app\common\logic\Pay();
-        $cartList['cartList'] = $Pay->activity2_goods($cartList['cartList']);
+        $cartList['cartList'] = $Pay->activity2_goods($cartList['cartList'], $order_prom_fee);
 
-        $return['userCartCouponList'] = $userCartCouponList;  //优惠券，用able判断是否用
         $return['cartGoodsTotalNum'] = $cartGoodsTotalNum;
-        $return['cartList'] = $cartList['cartList']; // 购物车的品
+        $return['cartList'] = $cartList['cartList']; // 购物车的商品
         $return['cartPriceInfo'] = $cartPriceInfo; //商品优惠价
         $user_wealth['pay_points'] = $this->user['pay_points'];
         $user_wealth['user_electronic'] = $this->user['user_electronic'];
         $return['user_wealth'] = $user_wealth;
         $return['use_point'] = $point;
-        $return['total_fee'] = $total_fee;
+        $return['total_fee'] = 1;
         $return['give_integral'] = $give_integral;
         $return['weight'] = round($weight / 1000);
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);

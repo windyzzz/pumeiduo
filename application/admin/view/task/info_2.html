@@ -53,16 +53,16 @@
 
 
 
-<!--             <dl class="row">
-                <dt class="tit">
-                    <label>参与任务商品id</label>
-                </dt>
-                <dd class="opt">
-                    <input type="text" name="goods_id_list" value="{$info.goods_id_list}"  class="input-txt">
-                    <span class="err" id="err_goods_id_list"></span>
-                    <p class="notic">多个商品请用','号分割（例如：1,2,3,4）</p>
-                </dd>
-            </dl> -->
+            <!--             <dl class="row">
+                            <dt class="tit">
+                                <label>参与任务商品id</label>
+                            </dt>
+                            <dd class="opt">
+                                <input type="text" name="goods_id_list" value="{$info.goods_id_list}"  class="input-txt">
+                                <span class="err" id="err_goods_id_list"></span>
+                                <p class="notic">多个商品请用','号分割（例如：1,2,3,4）</p>
+                            </dd>
+                        </dl> -->
             <hr>
             <dl class="row">
                 <dt >
@@ -71,25 +71,25 @@
             </dl>
             <hr>
 
-                <table class="reward_table" style="width: 80%; margin: 0 auto;" border="1">
-                    <tr>
-                        <th>序号\(任务id)</th>
-                        <th>周期</th>
-                        <th>邀请人数</th>
-                        <th>级别</th>
-                        <th>奖励数量（积分）/ 奖励金额（电子币）/ 奖励现金券ID</th>
-                        <th>奖励类型</th>
-                        <th>任务类别</th>
-                        <th>文案</th>
-                        <th>操作</th>
-                        <!-- <th>奖励数量</th>
-                        <th>奖励金额</th>
-                        <th>奖励商品id</th>
+            <table class="reward_table" style="width: 80%; margin: 0 auto;" border="1">
+                <tr>
+                    <th>序号\(任务id)</th>
+                    <th>周期</th>
+                    <th>邀请人数</th>
+                    <th>级别</th>
+                    <th>奖励数量（积分）/ 奖励金额（电子币）/ 奖励现金券ID（多张用 - 隔开）</th>
+                    <th>奖励类型</th>
+                    <th>任务类别</th>
+                    <th>文案</th>
+                    <th>操作</th>
+                    <!-- <th>奖励数量</th>
+                    <th>奖励金额</th>
+                    <th>奖励商品id</th>
 
-                        <th>奖励概率</th>-->
-                    </tr>
-                    <span id="index" style="display: none;">{$info.task_reward|count}</span>
-                    <volist name="info.task_reward" id="item" key="k">
+                    <th>奖励概率</th>-->
+                </tr>
+                <span id="index" style="display: none;">{$info.task_reward|count}</span>
+                <volist name="info.task_reward" id="item" key="k">
                     <tr>
                         <td>{$k}\（{$item.reward_id}）</td>
                         <input type="hidden" name="reward[{$k}][reward_id]" value="{$item.reward_id}">
@@ -132,23 +132,23 @@
                         <td><textarea name="reward[{$k}][description]" rows="30" cols="20">{$item.description}</textarea></td>
                         <td><a href="javascript:;" class="ncap-btn-mini ncap-btn-red delete">删除</a></td>
                     </tr>
-                    </volist>
-                    <!-- <tr>
-                        <td>1</td>
-                        <td><input type="number" name="reward[reward_count]" value="100"></td>
-                        <td><input type="text" name="reward[invite_num]" value="0.01-999"></td>
-                        <td>
-                            <select name="reward[reward_type]">
-                                <option value="1">积分</option>
-                                <option value="2">电子币</option>
-                            </select>
-                        </td>
-                        <td>1</td>
-                        <td>1.00</td>
-                        <td>386</td>
-                        <td>100%</td>
-                    </tr>-->
-                </table>
+                </volist>
+                <!-- <tr>
+                    <td>1</td>
+                    <td><input type="number" name="reward[reward_count]" value="100"></td>
+                    <td><input type="text" name="reward[invite_num]" value="0.01-999"></td>
+                    <td>
+                        <select name="reward[reward_type]">
+                            <option value="1">积分</option>
+                            <option value="2">电子币</option>
+                        </select>
+                    </td>
+                    <td>1</td>
+                    <td>1.00</td>
+                    <td>386</td>
+                    <td>100%</td>
+                </tr>-->
+            </table>
 
             <div><a onclick="addSetting()" class="ncap-btn-big ncap-btn-blue">添加奖励设置</a></div>
 
@@ -177,43 +177,43 @@
     function repalceHtml(index)
     {
         var html = '<tr>' +
-                    '<td>\\index\\</td>' +
-                    '<td>' +
-                        '<select name="reward[\\index\\][cycle]">' +
-                            '<option value="0">一次</option>' +
-                            '<option value="1">每次</option>' +
+            '<td>\\index\\</td>' +
+            '<td>' +
+            '<select name="reward[\\index\\][cycle]">' +
+            '<option value="0">一次</option>' +
+            '<option value="1">每次</option>' +
 
-                        '</select>' +
-                    '</td>' +
-                    '<td><input type="text" name="reward[\\index\\][invite_num]" value="" placeholder="邀请人数"></td>' +
-                    '<td>' +
-                        '<select name="reward[\\index\\][distribut_id]">' +
-                            distribut_option +
-                        '</select>' +
-                    '</td>' +
-                    '<td>' +
-                    '<input type="text" name="reward[\\index\\][reward_num]" value="" placeholder="奖励数量（积分）"> ' +
-                    '<input type="text" name="reward[\\index\\][reward_price]" value="" placeholder="奖励金额（电子币）"> ' +
-                    '<input type="text" name="reward[\\index\\][reward_coupon_id]" value="" placeholder="奖励现金券ID"> ' +
-                    '</td>' +
-                    '<td>' +
-                        '<select name="reward[\\index\\][reward_type]">' +
-                            '<option value="1">积分</option>' +
-                            '<option value="2">电子币</option>' +
-                            '<option value="3">现金券</option>' +
+            '</select>' +
+            '</td>' +
+            '<td><input type="text" name="reward[\\index\\][invite_num]" value="" placeholder="邀请人数"></td>' +
+            '<td>' +
+            '<select name="reward[\\index\\][distribut_id]">' +
+            distribut_option +
+            '</select>' +
+            '</td>' +
+            '<td>' +
+            '<input type="text" name="reward[\\index\\][reward_num]" value="" placeholder="奖励数量（积分）"> ' +
+            '<input type="text" name="reward[\\index\\][reward_price]" value="" placeholder="奖励金额（电子币）"> ' +
+            '<input type="text" name="reward[\\index\\][reward_coupon_id]" value="" placeholder="奖励现金券ID"> ' +
+            '</td>' +
+            '<td>' +
+            '<select name="reward[\\index\\][reward_type]">' +
+            '<option value="1">积分</option>' +
+            '<option value="2">电子币</option>' +
+            '<option value="3">现金券</option>' +
 
-                        '</select>' +
-                    '</td>' +
-                    '<td>' +
-                        '<select name="reward[\\index\\][task_cate]">' +
-                            '<option value="1">日常任务</option>' +
-                            '<option value="2">推荐任务</option>' +
-                            '<option value="3">销售任务</option>' +
-                            '<option value="4">会员任务</option>' +
-                        '</select>' +
-                    '</td>' +
-                    '<td><textarea name="reward[\\index\\][description]" rows="30" cols="20" ></textarea></td>' +
-                    '<td><a href="javascript:;" class="ncap-btn-mini ncap-btn-red delete">删除</a></td>';
+            '</select>' +
+            '</td>' +
+            '<td>' +
+            '<select name="reward[\\index\\][task_cate]">' +
+            '<option value="1">日常任务</option>' +
+            '<option value="2">推荐任务</option>' +
+            '<option value="3">销售任务</option>' +
+            '<option value="4">会员任务</option>' +
+            '</select>' +
+            '</td>' +
+            '<td><textarea name="reward[\\index\\][description]" rows="30" cols="20" ></textarea></td>' +
+            '<td><a href="javascript:;" class="ncap-btn-mini ncap-btn-red delete">删除</a></td>';
         var h = /\\index\\/g;
         html = html.replace(h, index);
         return html;
@@ -310,20 +310,20 @@
         if(goodsItem.spec != null){
             //有规格
             html = '<input type="hidden" id="goods_id" name="goods_id" value="'+goodsItem.goods_id+'">' +
-                    '<input type="hidden" id="goods_name" name="goods_name" value="'+goodsItem.goods_name+goodsItem.spec.key_name+'">' +
-                    '<input type="hidden" name="item_id" value="'+goodsItem.spec.item_id+'">' +
-                    '<div style="float: left;margin: 10px auto;" class="selected-group-goods"><div class="goods-thumb">' +
-                    '<img style="width: 162px;height: 162px" src="'+goodsItem.spec.spec_img+'"/></div> <div class="goods-name"> ' +
-                    '<a  href="/index.php?m=Home&c=Goods&a=goodsInfo&id='+goodsItem.goods_id+'">'+goodsItem.goods_name+goodsItem.spec.key_name+'</a> </div>' +
-                    ' <div class="goods-price">商城价：￥'+goodsItem.spec.price+'周期:'+goodsItem.spec.cycle+'</div> </div>';
+                '<input type="hidden" id="goods_name" name="goods_name" value="'+goodsItem.goods_name+goodsItem.spec.key_name+'">' +
+                '<input type="hidden" name="item_id" value="'+goodsItem.spec.item_id+'">' +
+                '<div style="float: left;margin: 10px auto;" class="selected-group-goods"><div class="goods-thumb">' +
+                '<img style="width: 162px;height: 162px" src="'+goodsItem.spec.spec_img+'"/></div> <div class="goods-name"> ' +
+                '<a  href="/index.php?m=Home&c=Goods&a=goodsInfo&id='+goodsItem.goods_id+'">'+goodsItem.goods_name+goodsItem.spec.key_name+'</a> </div>' +
+                ' <div class="goods-price">商城价：￥'+goodsItem.spec.price+'周期:'+goodsItem.spec.cycle+'</div> </div>';
             $('#goods_name').val(goodsItem.goods_name+goodsItem.spec.key_name);
         }else{
             html =  '<input type="hidden" id="goods_id" name="goods_id" value="'+goodsItem.goods_id+'">' +
-                    '<input type="hidden" id="goods_name" name="goods_name" value="'+goodsItem.goods_name+'"> ' +
-                    '<div style="float: left;margin: 10px auto;" class="selected-group-goods"><div class="goods-thumb">' +
-                    '<img style="width: 162px;height: 162px" src="'+goodsItem.goods_image+'"/></div> <div class="goods-name"> ' +
-                    '<a  href="/index.php?m=Home&c=Goods&a=goodsInfo&id='+goodsItem.goods_id+'">'+goodsItem.goods_name+'</a> </div>' +
-                    ' <div class="goods-price">商城价：￥'+goodsItem.goods_price+'周期:'+goodsItem.cycle+'</div> </div>';
+                '<input type="hidden" id="goods_name" name="goods_name" value="'+goodsItem.goods_name+'"> ' +
+                '<div style="float: left;margin: 10px auto;" class="selected-group-goods"><div class="goods-thumb">' +
+                '<img style="width: 162px;height: 162px" src="'+goodsItem.goods_image+'"/></div> <div class="goods-name"> ' +
+                '<a  href="/index.php?m=Home&c=Goods&a=goodsInfo&id='+goodsItem.goods_id+'">'+goodsItem.goods_name+'</a> </div>' +
+                ' <div class="goods-price">商城价：￥'+goodsItem.goods_price+'周期:'+goodsItem.cycle+'</div> </div>';
             $('#goods_name').val(goodsItem.goods_name);
         }
         $('#select_goods_button').attr('data-goods-id',goodsItem.goods_id);

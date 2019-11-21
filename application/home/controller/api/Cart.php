@@ -466,13 +466,13 @@ class Cart extends Base
         $result = $this->AsyncUpdateCarts($cartIds);
         $goodsList = $result['result']['cartList'];     // 选中商品
         unset($result['result']['cartList']);
-//        $goodsPrice = $result['result']['total_fee'];   // 商品总价
+        $goodsPrice = $result['result']['total_fee'];   // 商品总价
         $Pay = new Pay();
         // 商品优惠促销
-        $discountPrice = $Pay->goodsPromotion($goodsList, false, 'amount');
+        $discountPrice1 = $Pay->goodsPromotion($goodsList, false, 'amount');
         // 订单优惠促销
-//        $discountPrice2 = $Pay->calcGoodsOrderProm($goodsList, $goodsPrice);
-//        $discountPrice = bcadd($discountPrice1, $discountPrice2, 2);
+        $discountPrice2 = $Pay->calcGoodsOrderProm($goodsList, $goodsPrice);
+        $discountPrice = bcadd($discountPrice1, $discountPrice2, 2);
         unset($result['result']['goods_fee']);
         $result['result']['total_fee'] = bcsub($result['result']['total_fee'], $discountPrice, 2);
         $result['result']['discount_price'] = $discountPrice;
@@ -662,7 +662,6 @@ class Cart extends Base
             $cartLogic->setGoodsBuyNum($goods_num);
             $cartLogic->setType($type);
             $cartLogic->setCartType($cart_type);
-            $buyGoods = [];
             try {
                 $buyGoods = $cartLogic->buyNow();
             } catch (TpshopException $t) {
@@ -696,18 +695,21 @@ class Cart extends Base
             $cartList['cartList'] = $cartLogic->getCartList(1); // 获取用户选中的购物车商品
             $cartGoodsTotalNum = count($cartList['cartList']);
         }
-
         $point = 0;
         $give_integral = 0;
         $weight = 0;
         $total_fee = 0;
-
+        $order_prom_fee = 0;
         foreach ($cartList['cartList'] as $v) {
             $point += $v['goods_num'] * $v['use_integral'];
-            $total_fee = ($v['use_integral'] + $v['member_goods_price']) * $v['goods_num'];
+            $total_fee += ($v['use_integral'] + $v['member_goods_price']) * $v['goods_num'];
             $goodsInfo = M('Goods')->field('give_integral,weight')->where('goods_id', $v['goods_id'])->find();
             $give_integral += $goodsInfo['give_integral'];
             $weight += $goodsInfo['weight'];
+            if (isset($v['is_order_prom']) && $v['is_order_prom'] == 1) {
+                // 订单优惠促销商品总价
+                $order_prom_fee += ($v['use_integral'] + $v['member_goods_price']) * $v['goods_num'];
+            }
         }
 
         $cartGoodsList = get_arr_column($cartList['cartList'], 'goods');
@@ -726,25 +728,18 @@ class Cart extends Base
         $return['userCartCouponListRe'] = $userCartCouponListRe;
 
         $Pay = new \app\common\logic\Pay();
-        $cartList['cartList'] = $Pay->activity2_goods($cartList['cartList']);
-
+        $cartList['cartList'] = $Pay->activity2_goods($cartList['cartList'], $order_prom_fee);
 
         $return['cartGoodsTotalNum'] = $cartGoodsTotalNum;
-        $return['cartList'] = $cartList['cartList']; // 购物车的品
+        $return['cartList'] = $cartList['cartList']; // 购物车的商品
         $return['cartPriceInfo'] = $cartPriceInfo; //商品优惠价
         $user_wealth['pay_points'] = $this->user['pay_points'];
         $user_wealth['user_electronic'] = $this->user['user_electronic'];
         $return['user_wealth'] = $user_wealth;
         $return['use_point'] = $point;
-        $return['total_fee'] = $total_fee;
+        $return['total_fee'] = 1;
         $return['give_integral'] = $give_integral;
         $return['weight'] = round($weight / 1000);
-
-        //是否弹窗
-        //弹窗内容
-        //弹窗推荐人
-
-
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
     }
 
@@ -849,9 +844,10 @@ class Cart extends Base
      */
     public function cart3()
     {
-//        $params['user_token'] = $this->userToken;
-//        Hook::exec('app\\home\\behavior\\CheckAuth', 'run', $params);
-//        Hook::exec('app\\home\\behavior\\CheckValid', 'run', $params);
+        $params['user_token'] = $this->userToken;
+        Hook::exec('app\\home\\behavior\\CheckAuth', 'run', $params);
+        Hook::exec('app\\home\\behavior\\CheckValid', 'run', $params);
+
         $address_id = input('address_id/d'); //  收货地址id
         $invoice_title = input('invoice_title');  // 发票
         $taxpayer = input('taxpayer');       // 纳税人识别号
@@ -898,13 +894,12 @@ class Cart extends Base
                 $pay->payCart($userCartList);
             }
 
-
             list($prom_type, $prom_id) = $pay->getPromInfo();
 
             $pay->check(); // 加价购活动
             $pay->activityPayBefore(); // 参与活动促销 加价购活动
 
-            $pay->orderPromotion();
+//            $pay->orderPromotion();
             $pay->goodsPromotion();
             $pay->delivery($address['district']);   // 配送物流
 
@@ -915,9 +910,9 @@ class Cart extends Base
             $pay->usePayPoints($pay_points);
             $pay->useUserElectronic($user_electronic); // 电子币
             $pay->activity();   // 参与活动奖励 例如:赠品活动
-
-
             $pay->activity2();   // 参与活动奖励 例如:赠品活动
+            $pay->activity3();   // 参与活动奖励 例如:订单优惠促销
+
             $coupon = null;
             if ($coupon_id) {
                 $couponList = new CouponList();
@@ -935,17 +930,15 @@ class Cart extends Base
                 $placeOrder->setUserNote($user_note);
                 $placeOrder->setTaxpayer($taxpayer);
                 $placeOrder->setPayPsw($payPwd);
-
-
                 if (2 == $prom_type) {
                     $placeOrder->addGroupBuyOrder($prom_id);
                 } else {
                     $placeOrder->addNormalOrder();
                 }
+
                 $cartLogic->clear();
                 $order = $placeOrder->getOrder();
                 $pay->activityRecord($order);
-
                 return json(['status' => 1, 'msg' => '提交订单成功', 'result' => $order['order_sn'], 'order_id' => $order['order_id']]);
             }
             $return = $pay->toArray();
@@ -1301,5 +1294,31 @@ class Cart extends Base
         $return = $couponLogic->exchangeCoupon($this->user_id, $coupon_code);
 
         return json($return);
+    }
+
+    public function createOrder()
+    {
+        $params['user_token'] = $this->userToken;
+        Hook::exec('app\\home\\behavior\\CheckAuth', 'run', $params);
+
+        $cartIds = input('cart_ids', '');
+        $cartIds = explode(',', $cartIds);
+        foreach ($cartIds as $k => $v) {
+            $data = [];
+            $data['id'] = $v;
+            $data['selected'] = 1;
+            $cartIds[$k] = $data;
+        }
+        $result = $this->AsyncUpdateCarts($cartIds);
+        if (1 != $result['status']) {
+            return json(['status' => 0, 'msg' => $result['msg'], 'result' => null]);
+        }
+        $cartLogic = new CartLogic();
+        $cartLogic->setUserId($this->user_id);
+        if (0 == $cartLogic->getUserCartOrderCount()) {
+            return json(['status' => 0, 'msg' => '你的购物车没有选中商品', 'result' => null]);
+        }
+        $cartList['cartList'] = $cartLogic->getCartList(1); // 获取用户选中的购物车商品
+        $totalNum = count($cartList['cartList']);
     }
 }

@@ -100,14 +100,13 @@ class Order extends Base
         '' != I('shipping_status') ? $condition['shipping_status'] = I('shipping_status') : false;
         '' != I('prom_type') ? $condition['prom_type'] = I('prom_type') : false;
         I('user_id') ? $condition['user_id'] = trim(I('user_id')) : false;
-        $sort_order = I('order_by', 'DESC').' '.I('sort');
+        $sort_order = I('order_by', 'DESC') . ' ' . I('sort');
 
         $count = M('order')->where($condition)->count();
         $Page = new AjaxPage($count, 20);
         $show = $Page->show();
         //获取订单列表
         $orderList = $orderLogic->getOrderList($condition, $sort_order, $Page->firstRow, $Page->listRows);
-
 
         foreach ($orderList as $k => $v) {
             if (2 == $v['prom_type']) {
@@ -122,10 +121,9 @@ class Order extends Base
             }
         }
 
-        $field = 'sum(order_amount) as order_amount,sum(goods_price) as goods_price,sum(coupon_price) as coupon_price,sum(integral_money) as integral_money,sum(user_electronic) as user_electronic,sum(shipping_price) as shipping_price';
-        $all =  M('order')->where($condition)->field($field)->find();
-        $this->assign('all',$all);
-
+        $field = 'sum(order_amount) as order_amount,sum(goods_price) as goods_price,sum(coupon_price) as coupon_price,sum(integral_money) as integral_money,sum(user_electronic) as user_electronic, sum(order_prom_amount) as order_prom_amount, sum(shipping_price) as shipping_price';
+        $all = M('order')->where($condition)->field($field)->find();
+        $this->assign('all', $all);
         $this->assign('orderList', $orderList);
         $this->assign('page', $show); // 赋值分页输出
         $this->assign('pager', $Page);
@@ -191,7 +189,7 @@ class Order extends Base
                 $this->ajaxReturn(['status' => 0, 'msg' => '该兑换码已被使用']);
             }
             if ($vr_code_info['vr_indate'] < time()) {
-                $this->ajaxReturn(['status' => 0, 'msg' => '该兑换码已过期，使用截止日期为： '.date('Y-m-d H:i:s', $vr_code_info['vr_indate'])]);
+                $this->ajaxReturn(['status' => 0, 'msg' => '该兑换码已过期，使用截止日期为： ' . date('Y-m-d H:i:s', $vr_code_info['vr_indate'])]);
             }
             if ($vr_code_info['refund_lock'] > 0) {//退款锁定状态:0为正常,1为锁定(待审核),2为同意
                 $this->ajaxReturn(['status' => 0, 'msg' => '该兑换码已申请退款，不能使用']);
@@ -265,7 +263,7 @@ class Order extends Base
             }
         }
         $show = $Page->show();
-        $orderList = M('order')->where($condition)->limit($Page->firstRow.','.$Page->listRows)->order('add_time DESC')->select();
+        $orderList = M('order')->where($condition)->limit($Page->firstRow . ',' . $Page->listRows)->order('add_time DESC')->select();
         $this->assign('orderList', $orderList);
         $this->assign('page', $show); // 赋值分页输出
         $this->assign('pager', $Page);
@@ -295,7 +293,7 @@ class Order extends Base
             }
         }
         $show = $Page->show();
-        $orderList = M('order')->where($condition)->limit($Page->firstRow.','.$Page->listRows)->order('add_time DESC')->select();
+        $orderList = M('order')->where($condition)->limit($Page->firstRow . ',' . $Page->listRows)->order('add_time DESC')->select();
         $this->assign('orderList', $orderList);
         $this->assign('page', $show); // 赋值分页输出
         $this->assign('pager', $Page);
@@ -395,9 +393,9 @@ class Order extends Base
         //查找用户昵称
         foreach ($action_log as $k => $v) {
             if (0 == $v['action_user']) {
-                $action_log["$k"]['action_user_name'] = '用户:'.$user['nickname'];
+                $action_log["$k"]['action_user_name'] = '用户:' . $user['nickname'];
             } else {
-                $action_log["$k"]['action_user_name'] = '管理员:'.$admins[$v['action_user']];
+                $action_log["$k"]['action_user_name'] = '管理员:' . $admins[$v['action_user']];
             }
             $action_log["$k"]['log_time'] = date('Y-m-d H:i:s', $v['log_time']);
             $action_log["$k"]['order_status'] = $this->order_status[$v['order_status']];
@@ -428,12 +426,12 @@ class Order extends Base
 
             foreach ($orderGoods as $val) {
                 if (empty($old_goods[$val['rec_id']])) {
-                    M('order_goods')->where('rec_id='.$val['rec_id'])->delete(); //删除商品
+                    M('order_goods')->where('rec_id=' . $val['rec_id'])->delete(); //删除商品
                 } else {
                     //修改商品数量
                     if ($old_goods[$val['rec_id']] != $val['goods_num']) {
                         $val['goods_num'] = $old_goods[$val['rec_id']];
-                        M('order_goods')->where('rec_id='.$val['rec_id'])->save(['goods_num' => $val['goods_num']]);
+                        M('order_goods')->where('rec_id=' . $val['rec_id'])->save(['goods_num' => $val['goods_num']]);
                     }
                     $oldArr[] = $val; //剩余商品
                 }
@@ -458,7 +456,7 @@ class Order extends Base
 
             //################################新单处理
             for ($i = 1; $i < 20; ++$i) {
-                $temp = $this->request->param($i.'_old_goods/a');
+                $temp = $this->request->param($i . '_old_goods/a');
                 if (!empty($temp)) {
                     $split_goods[] = $temp;
                 }
@@ -483,7 +481,7 @@ class Order extends Base
                     $this->error($error['msg']);
                 }
                 $new_order = $order;
-                $new_order['order_sn'] = date('YmdHis').mt_rand(1000, 9999);
+                $new_order['order_sn'] = date('YmdHis') . mt_rand(1000, 9999);
                 $new_order['parent_sn'] = $order['order_sn'];
                 //修改订单费用
                 $new_order['goods_price'] = $newPay->getGoodsPrice(); // 商品总价
@@ -504,7 +502,7 @@ class Order extends Base
         }
 
         foreach ($orderGoods as $val) {
-            $brr[$val['rec_id']] = ['goods_num' => $val['goods_num'], 'goods_name' => getSubstr($val['goods_name'], 0, 35).$val['spec_key_name']];
+            $brr[$val['rec_id']] = ['goods_num' => $val['goods_num'], 'goods_name' => getSubstr($val['goods_name'], 0, 35) . $val['spec_key_name']];
         }
         $this->assign('order', $order);
         $this->assign('goods_num_arr', json_encode($brr));
@@ -574,7 +572,7 @@ class Order extends Base
             }
             $orderLogic = new OrderLogic();
             $orderLogic->orderProcessHandle($data['order_id'], 'pay_cancel');
-            $d = $orderLogic->orderActionLog($data['order_id'], '支付取消', $data['remark'].':'.$note[$data['refundType']]);
+            $d = $orderLogic->orderActionLog($data['order_id'], '支付取消', $data['remark'] . ':' . $note[$data['refundType']]);
             if ($d) {
                 exit('<script>window.parent.pay_callback(1);</script>');
             }
@@ -606,7 +604,7 @@ class Order extends Base
         $order['province'] = getRegionName($order['province']);
         $order['city'] = getRegionName($order['city']);
         $order['district'] = getRegionName($order['district']);
-        $order['full_address'] = $order['province'].' '.$order['city'].' '.$order['district'].' '.$order['address'];
+        $order['full_address'] = $order['province'] . ' ' . $order['city'] . ' ' . $order['district'] . ' ' . $order['address'];
         if ($id) {
             return $order;
         }
@@ -636,10 +634,10 @@ class Order extends Base
             $order_length = count($v['orderGoods']);
             foreach ($v['orderGoods'] as $gk => $gv) {
                 $goods_info = M('Goods')
-                  ->alias('g')->field('s.suppliers_name,g.trade_type')
-                  ->join('__SUPPLIERS__ s', 'g.suppliers_id = s.suppliers_id', 'LEFT')
-                  ->where('g.goods_id', $gv['goods_id'])
-                  ->find();
+                    ->alias('g')->field('s.suppliers_name,g.trade_type')
+                    ->join('__SUPPLIERS__ s', 'g.suppliers_id = s.suppliers_id', 'LEFT')
+                    ->where('g.goods_id', $gv['goods_id'])
+                    ->find();
                 $order[$k]['orderGoods'][$gk]['suppliers'] = $goods_info['suppliers_name'];
                 $order[$k]['orderGoods'][$gk]['trade_type'] = trade_type($goods_info['trade_type']);
 
@@ -647,27 +645,27 @@ class Order extends Base
                 if (2 == $gv['sale_type']) {
                     // $order_goods = array();
                     $g_list = M('GoodsSeries')
-                ->field('gs.*,g.goods_name,g.shop_price,g.original_img,g.trade_type,g.goods_sn,sg.key_name as spec_key_name')
-                ->alias('gs')
-                ->join('__GOODS__ g', 'g.goods_id = gs.g_id')
-                ->join('__SPEC_GOODS_PRICE__ sg', 'sg.item_id = gs.item_id', 'left')
-                ->where('gs.goods_id', $gv['goods_id'])
-                ->select();
+                        ->field('gs.*,g.goods_name,g.shop_price,g.original_img,g.trade_type,g.goods_sn,sg.key_name as spec_key_name')
+                        ->alias('gs')
+                        ->join('__GOODS__ g', 'g.goods_id = gs.g_id')
+                        ->join('__SPEC_GOODS_PRICE__ sg', 'sg.item_id = gs.item_id', 'left')
+                        ->where('gs.goods_id', $gv['goods_id'])
+                        ->select();
                     if ($g_list) {
                         foreach ($g_list as $key => $value) {
                             // $j = $gk + $order_length + 1;
                             $data = [
-                            'goods_name' => $value['goods_name'],
-                            'shop_price' => $value['shop_price'],
-                            'final_price' => $value['shop_price'],
-                            'original_img' => $value['original_img'],
-                            'goods_num' => $value['g_number'] * $gv['goods_num'],
-                            'goods_sn' => $value['goods_sn'],
-                            'spec_key_name' => $value['spec_key_name'],
-                            'trade_type' => $order[$k]['orderGoods'][$gk]['trade_type'],
-                            'suppliers' => $order[$k]['orderGoods'][$gk]['suppliers'],
-                            'is_send' => $order[$k]['orderGoods'][$gk]['is_send'],
-                        ];
+                                'goods_name' => $value['goods_name'],
+                                'shop_price' => $value['shop_price'],
+                                'final_price' => $value['shop_price'],
+                                'original_img' => $value['original_img'],
+                                'goods_num' => $value['g_number'] * $gv['goods_num'],
+                                'goods_sn' => $value['goods_sn'],
+                                'spec_key_name' => $value['spec_key_name'],
+                                'trade_type' => $order[$k]['orderGoods'][$gk]['trade_type'],
+                                'suppliers' => $order[$k]['orderGoods'][$gk]['suppliers'],
+                                'is_send' => $order[$k]['orderGoods'][$gk]['is_send'],
+                            ];
                             $order[$k]['orderGoods'][] = $data;
                             $total_amount += $data['goods_num'] * $data['final_price'];
                         }
@@ -706,7 +704,7 @@ class Order extends Base
             $this->error('快递公司不存在');
         }
         if (empty($shipping['template_html'])) {
-            $this->error('请设置'.$shipping['shipping_name'].'打印模板');
+            $this->error('请设置' . $shipping['shipping_name'] . '打印模板');
         }
         $shop = tpCache('shop_info'); //获取网站信息
         $shop['province'] = empty($shop['province']) ? '' : getRegionName($shop['province']);
@@ -717,9 +715,9 @@ class Order extends Base
         $order['city'] = getRegionName($order['city']);
         $order['district'] = getRegionName($order['district']);
         $template_var = ['发货点-名称', '发货点-联系人', '发货点-电话', '发货点-省份', '发货点-城市',
-                 '发货点-区县', '发货点-手机', '发货点-详细地址', '收件人-姓名', '收件人-手机', '收件人-电话',
-                '收件人-省份', '收件人-城市', '收件人-区县', '收件人-邮编', '收件人-详细地址', '时间-年', '时间-月',
-                '时间-日', '时间-当前日期', '订单-订单号', '订单-备注', '订单-配送费用', ];
+            '发货点-区县', '发货点-手机', '发货点-详细地址', '收件人-姓名', '收件人-手机', '收件人-电话',
+            '收件人-省份', '收件人-城市', '收件人-区县', '收件人-邮编', '收件人-详细地址', '时间-年', '时间-月',
+            '时间-日', '时间-当前日期', '订单-订单号', '订单-备注', '订单-配送费用',];
         $content_var = [$shop['store_name'], $shop['contact'], $shop['phone'], $shop['province'], $shop['city'],
             $shop['district'], $shop['phone'], $shop['address'], $order['consignee'], $order['mobile'], $order['phone'],
             $order['province'], $order['city'], $order['district'], $order['zipcode'], $order['address'], date('Y'), date('M'),
@@ -766,8 +764,8 @@ class Order extends Base
 
 
         $order_id = $data['order_id'];
-        $order = M('order')->field('add_time')->where(array('order_id'=>$order_id))->find();
-        if($order['add_time'] > order_time()){
+        $order = M('order')->field('add_time')->where(array('order_id' => $order_id))->find();
+        if ($order['add_time'] > order_time()) {
             $this->error('新订单不可以发货', U('Admin/Order/delivery_info', ['order_id' => $data['order_id']]));
         }
 
@@ -814,7 +812,7 @@ class Order extends Base
 
             return $order;
         }
-        $delivery_record = M('delivery_doc')->alias('d')->join('__ADMIN__ a', 'a.admin_id = d.admin_id')->where('d.order_id='.$order_id)->select();
+        $delivery_record = M('delivery_doc')->alias('d')->join('__ADMIN__ a', 'a.admin_id = d.admin_id')->where('d.order_id=' . $order_id)->select();
         if ($delivery_record) {
             $order['invoice_no'] = $delivery_record[count($delivery_record) - 1]['invoice_no'];
         }
@@ -822,10 +820,10 @@ class Order extends Base
         //是否显示发货按钮
         $is_show_de = 1;
 
-        if($order['add_time']>order_time()){
+        if ($order['add_time'] > order_time()) {
             $is_show_de = 0;
         }
-        $this->assign('is_show_de',$is_show_de);
+        $this->assign('is_show_de', $is_show_de);
 
         $this->assign('order', $order);
         $this->assign('orderGoods', $orderGoods);
@@ -894,7 +892,7 @@ class Order extends Base
         Url::root('/');
         if ($return_goods['imgs']) {
             foreach ($return_goods['imgs'] as $k => $v) {
-                $return_goods['imgs'][$k] = url('/', '', '', true).$v;
+                $return_goods['imgs'][$k] = url('/', '', '', true) . $v;
             }
         }
 
@@ -923,8 +921,12 @@ class Order extends Base
         $type_msg = C('RETURN_TYPE');
         $status_msg = C('REFUND_STATUS');
         switch ($post_data['status']) {
-            case 1:$post_data['checktime'] = time(); break;
-            case 3:$post_data['receivetime'] = time(); break;  //卖家收货时间
+            case 1:
+                $post_data['checktime'] = time();
+                break;
+            case 3:
+                $post_data['receivetime'] = time();
+                break;  //卖家收货时间
             default:
         }
 
@@ -941,10 +943,10 @@ class Order extends Base
                     $dec_point = $money[$return_goods['rec_id']]['point'];
 
                     M('rebate_log')->where('id', $rv['id'])->update([
-                       'money' => ['exp', "money + {$dec_money}"],
+                        'money' => ['exp', "money + {$dec_money}"],
                         'point' => ['exp', "point + {$dec_point}"],
-                       'freeze_money' => ['exp', "freeze_money - {$dec_money}"],
-                   ]);
+                        'freeze_money' => ['exp', "freeze_money - {$dec_money}"],
+                    ]);
                 }
             }
             $post_data['seller_delivery']['express_time'] = date('Y-m-d H:i:s');
@@ -984,21 +986,21 @@ class Order extends Base
                     $dec_point = $money[$return_goods['rec_id']]['point'];
 
                     M('rebate_log')->where('id', $rv['id'])->update([
-                       'money' => ['exp', "money + {$dec_money}"],
+                        'money' => ['exp', "money + {$dec_money}"],
                         'point' => ['exp', "point + {$dec_point}"],
-                       'freeze_money' => ['exp', "freeze_money - {$dec_money}"],
-                   ]);
+                        'freeze_money' => ['exp', "freeze_money - {$dec_money}"],
+                    ]);
                 }
             }
         }
         $orderLogic->orderActionLog($return_goods['order_id'], '退换货', $note);
 
         //仅退款-审核通过   和  退货退款确认收货
-        if(($post_data['status']==1 && $return_goods['type']==0) || ($post_data['status']==3 && $return_goods['type']==1) ){
+        if (($post_data['status'] == 1 && $return_goods['type'] == 0) || ($post_data['status'] == 3 && $return_goods['type'] == 1)) {
             //通知 退货补回库存
             include_once "plugins/Tb.php";
             $TbLogic = new \Tb();
-            $TbLogic->add_tb(3,9,$return_goods['id'],0);
+            $TbLogic->add_tb(3, 9, $return_goods['id'], 0);
         }
 
 
@@ -1011,11 +1013,11 @@ class Order extends Base
 
         $return_id = I('id');
         $return_goods = M('return_goods')->where("id= $return_id")->find();
-        if($return_goods['type'] ==1 && $return_goods['status']!=3 ){
+        if ($return_goods['type'] == 1 && $return_goods['status'] != 3) {
             $this->ajaxReturn(['status' => 0, 'msg' => '请先确认收货', 'url' => '']);
             exit;
         }
-        if($_SERVER['SERVER_ADDR']!='61.238.101.138'){
+        if ($_SERVER['SERVER_ADDR'] != '61.238.101.138') {
             $this->ajaxReturn(['status' => 0, 'msg' => '只能在正式服退款', 'url' => '']);
             exit;
         }
@@ -1029,9 +1031,10 @@ class Order extends Base
         $order = M('order')->where(['order_id' => $rec_goods['order_id']])->find();
         $orderLogic = new OrderLogic();
         $return_goods['refund_money'] = $orderLogic->getRefundGoodsMoney($return_goods);
+
         if ('weixinJsApi' == $order['pay_code'] || 'weixin' == $order['pay_code'] || 'alipay' == $order['pay_code'] || 'alipayMobile' == $order['pay_code']) {
             if ('weixinJsApi' == $order['pay_code']) {
-                include_once PLUGIN_PATH.'payment/weixinJsApi/weixinJsApi.class.php';
+                include_once PLUGIN_PATH . 'payment/weixinJsApi/weixinJsApi.class.php';
                 $payment_obj = new \weixinJsApi();
                 $result = $payment_obj->refund1($order, $data['refund_money']);
 
@@ -1041,10 +1044,10 @@ class Order extends Base
                     // $this->success('退款成功');
                     $this->ajaxReturn(['status' => 1, 'msg' => '退款成功', 'url' => '']);
                 } else {
-                    $this->ajaxReturn(['status' => 0, 'msg' => $result['err_code_des'], 'url' => '']);
+                    $this->ajaxReturn(['status' => 0, 'msg' => $result['return_msg'], 'url' => '']);
                 }
             } elseif ('alipay' == $order['pay_code']) {
-                include_once PLUGIN_PATH.'payment/alipay/alipay.class.php';
+                include_once PLUGIN_PATH . 'payment/alipay/alipay.class.php';
                 $payment_obj = new \alipay();
                 $result = $payment_obj->refund1($order, $data['refund_money'], '售后订单退款');
                 if ('10000' == $result->code) {
@@ -1056,7 +1059,7 @@ class Order extends Base
                     $this->ajaxReturn(['status' => 0, 'msg' => $result['return_msg'], 'url' => '']);
                 }
             } elseif ('weixin' == $order['pay_code']) {
-                include_once PLUGIN_PATH.'payment/weixin/weixin.class.php';
+                include_once PLUGIN_PATH . 'payment/weixin/weixin.class.php';
                 $payment_obj = new \weixin();
                 // $data = array('transaction_id'=>$order['transaction_id'],'total_fee'=>$order['order_amount'],'refund_fee'=>$return_goods['refund_money']);
                 //          $result = $payment_obj->payment_refund($data);
@@ -1071,7 +1074,7 @@ class Order extends Base
                     $this->ajaxReturn(['status' => 0, 'msg' => $result['return_msg'], 'url' => '']);
                 }
             } else {
-                include_once PLUGIN_PATH.'payment/alipayMobile/alipayMobile.class.php';
+                include_once PLUGIN_PATH . 'payment/alipayMobile/alipayMobile.class.php';
                 $payment_obj = new \alipayMobile();
                 $result = $payment_obj->refund1($order, $data['refund_money'], '售后订单退款');
                 $msg = $result->msg;
@@ -1195,24 +1198,24 @@ class Order extends Base
             $condition['action_user'] = $admin_id;
         }
         $count = M('order_action')
-        ->alias('oa')
-        ->join('__ORDER__ o', 'o.order_id = oa.order_id')
-        ->join('__USERS__ u', 'o.user_id = u.user_id')
-        ->where($condition)->count();
+            ->alias('oa')
+            ->join('__ORDER__ o', 'o.order_id = oa.order_id')
+            ->join('__USERS__ u', 'o.user_id = u.user_id')
+            ->where($condition)->count();
         $Page = new Page($count, 20);
 
         foreach ($condition as $key => $val) {
-            $Page->parameter[$key] = urlencode($begin.'_'.$end);
+            $Page->parameter[$key] = urlencode($begin . '_' . $end);
         }
         $show = $Page->show();
         $list = M('order_action')
-        ->alias('oa')
-        ->join('__ORDER__ o', 'o.order_id = oa.order_id')
-        ->join('__USERS__ u', 'o.user_id = u.user_id')
-        ->where($condition)
-        ->order('action_id desc')
-        ->limit($Page->firstRow.','.$Page->listRows)
-        ->select();
+            ->alias('oa')
+            ->join('__ORDER__ o', 'o.order_id = oa.order_id')
+            ->join('__USERS__ u', 'o.user_id = u.user_id')
+            ->where($condition)
+            ->order('action_id desc')
+            ->limit($Page->firstRow . ',' . $Page->listRows)
+            ->select();
         $orderIds = [];
         foreach ($list as $k => $log) {
             $list[$k]['user_id'] = M('users')->alias('u')->join('__ORDER__ o', 'o.user_id = u.user_id')->where('o.order_id', $log['order_id'])->getField('u.user_id');
@@ -1284,12 +1287,12 @@ class Order extends Base
             $region = get_region_list();
             foreach ($orderList as $k => $val) {
                 $strTable .= '<tr>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;'.$val['order_sn'].'</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;' . $val['order_sn'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">&nbsp</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['consignee'].'</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['consignee'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">&nbsp</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['mobile'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'."{$region[$val['province']]},{$region[$val['city']]},{$region[$val['district']]},{$region[$val['twon']]}{$val['address']}".' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['mobile'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . "{$region[$val['province']]},{$region[$val['city']]},{$region[$val['district']]},{$region[$val['twon']]}{$val['address']}" . ' </td>';
 
                 $strTable .= '</tr>';
             }
@@ -1345,8 +1348,7 @@ class Order extends Base
         '' != I('shipping_status') ? $condition['shipping_status'] = I('shipping_status') : false;
         '' != I('prom_type') ? $condition['prom_type'] = I('prom_type') : false;
         I('user_id') ? $condition['user_id'] = trim(I('user_id')) : false;
-        $sort_order = I('order_by', 'DESC').' '.I('sort');
-
+        $sort_order = I('order_by', 'DESC') . ' ' . I('sort');
 
 
         $orderList = Db::name('order')->field("*,FROM_UNIXTIME(add_time,'%Y-%m-%d %H:%i:%s') as create_time")->where($condition)->order($sort_order)->select();
@@ -1356,7 +1358,7 @@ class Order extends Base
         $strTable .= '<td style="text-align:center;font-size:12px;width:120px;">订单编号</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="120">下单日期</td>';
 
-$strTable .= '<td style="text-align:center;font-size:12px;" width="120">支付日期</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="120">支付日期</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">会员ID</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">会员等级</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">收货人</td>';
@@ -1369,7 +1371,6 @@ $strTable .= '<td style="text-align:center;font-size:12px;" width="120">支付�
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">积分折扣</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">现金折扣</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">运费</td>';
-
 
 
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">订单状态</td>';
@@ -1388,34 +1389,34 @@ $strTable .= '<td style="text-align:center;font-size:12px;" width="120">支付�
             $region = get_region_list();
             foreach ($orderList as $k => $val) {
                 $user_info = M('users')->where('user_id', $val['user_id'])->find();
-                $orderGoods = D('order_goods')->where('order_id='.$val['order_id'])->select();
+                $orderGoods = D('order_goods')->where('order_id=' . $val['order_id'])->select();
                 $orderGoodsNum = count($orderGoods);
 
 
-$val['pay_time_show'] = $val['pay_time']?date('Y-m-d H:i:s',$val['pay_time']):'';
+                $val['pay_time_show'] = $val['pay_time'] ? date('Y-m-d H:i:s', $val['pay_time']) : '';
 
                 $strTable .= '<tr>';
-                $strTable .= '<td style="text-align:center;font-size:12px;" rowspan="'.$orderGoodsNum.'">&nbsp;'.$val['order_sn'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="'.$orderGoodsNum.'">'.$val['create_time'].' </td>';
-$strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="'.$orderGoodsNum.'">'.$val['pay_time_show'].' </td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;" rowspan="' . $orderGoodsNum . '">&nbsp;' . $val['order_sn'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['create_time'] . ' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['pay_time_show'] . ' </td>';
 
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="'.$orderGoodsNum.'">'.$val['user_id'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="'.$orderGoodsNum.'">'.$level_list[$user_info['distribut_level']].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="'.$orderGoodsNum.'">'.$val['consignee'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="'.$orderGoodsNum.'">'."{$region[$val['province']]},{$region[$val['city']]},{$region[$val['district']]},{$region[$val['twon']]}{$val['address']}".' </td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="'.$orderGoodsNum.'">'.$val['mobile'].'</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['user_id'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $level_list[$user_info['distribut_level']] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['consignee'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . "{$region[$val['province']]},{$region[$val['city']]},{$region[$val['district']]},{$region[$val['twon']]}{$val['address']}" . ' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['mobile'] . '</td>';
 
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="'.$orderGoodsNum.'">'.$val['order_amount'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="'.$orderGoodsNum.'">'.$val['goods_price'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="'.$orderGoodsNum.'">'.$val['coupon_price'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="'.$orderGoodsNum.'">'.$val['integral_money'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="'.$orderGoodsNum.'">'.$val['user_electronic'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="'.$orderGoodsNum.'">'.$val['shipping_price'].'</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['order_amount'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['goods_price'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['coupon_price'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['integral_money'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['user_electronic'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['shipping_price'] . '</td>';
 
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="'.$orderGoodsNum.'">'.C('ORDER_STATUS')[$val['order_status']].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="'.$orderGoodsNum.'">'.$val['pay_name'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="'.$orderGoodsNum.'">'.$this->pay_status[$val['pay_status']].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="'.$orderGoodsNum.'">'.$this->shipping_status[$val['shipping_status']].'</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . C('ORDER_STATUS')[$val['order_status']] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['pay_name'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $this->pay_status[$val['pay_status']] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $this->shipping_status[$val['shipping_status']] . '</td>';
                 // $orderGoods = D('order_goods')->where('order_id='.$val['order_id'])->select();
                 $strGoods = '';
                 $goods_num = 0;
@@ -1424,16 +1425,16 @@ $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="'.$orderGoo
                     // $strGoods .= "商品编号：".$goods['goods_sn']. " 商品购买数量：".$goods['goods_num']." 商品名称：".$goods['goods_name'];
                     // if ($goods['spec_key_name'] != '') $strGoods .= " 规格：".$goods['spec_key_name'];
                     // $strGoods .= "<br />";
-        //             $strTradeType = $goods['trade_type'] == 1 ? '仓库自发'  : '一件代发';
+                    //             $strTradeType = $goods['trade_type'] == 1 ? '仓库自发'  : '一件代发';
                 }
-                $strTable .= '<td style="text-align:left;font-size:12px;"    rowspan="'.$orderGoodsNum.'">'.$goods_num.' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;"    rowspan="' . $orderGoodsNum . '">' . $goods_num . ' </td>';
                 foreach ($orderGoods as $goods) {
-                    $strTable .= '<td style="text-align:left;font-size:12px;">'.$goods['goods_sn'].' </td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">'.$goods['goods_num'].' </td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">'.$goods['goods_name'].' </td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">'.$goods['spec_key_name'].' </td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['goods_sn'] . ' </td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['goods_num'] . ' </td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['goods_name'] . ' </td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['spec_key_name'] . ' </td>';
                     $strTradeType = 1 == $goods['trade_type'] ? '仓库自发' : '一件代发';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">'.$strTradeType.' </td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $strTradeType . ' </td>';
                     $strTable .= '</tr>';
                     break;
                 }
@@ -1441,22 +1442,22 @@ $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="'.$orderGoo
                 if ($orderGoods) {
                     foreach ($orderGoods as $goods) {
                         $strTable .= '<tr>';
-                        $strTable .= '<td style="text-align:left;font-size:12px;">'.$goods['goods_sn'].' </td>';
-                        $strTable .= '<td style="text-align:left;font-size:12px;">'.$goods['goods_num'].' </td>';
-                        $strTable .= '<td style="text-align:left;font-size:12px;">'.$goods['goods_name'].' </td>';
-                        $strTable .= '<td style="text-align:left;font-size:12px;">'.$goods['spec_key_name'].' </td>';
+                        $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['goods_sn'] . ' </td>';
+                        $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['goods_num'] . ' </td>';
+                        $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['goods_name'] . ' </td>';
+                        $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['spec_key_name'] . ' </td>';
                         $strTradeType = 1 == $goods['trade_type'] ? '仓库自发' : '一件代发';
-                        $strTable .= '<td style="text-align:left;font-size:12px;">'.$strTradeType.' </td>';
+                        $strTable .= '<td style="text-align:left;font-size:12px;">' . $strTradeType . ' </td>';
                         $strTable .= '</tr>';
                     }
                 }
                 //          $strTable .= '<td style="text-align:left;font-size:12px;">'.$goods_num.' </td>';
-       //          foreach($orderGoods as $goods){
-       //              $goods_num = $goods_num + $goods['goods_num'];
-       //          }
+                //          foreach($orderGoods as $goods){
+                //              $goods_num = $goods_num + $goods['goods_num'];
+                //          }
                 // unset($orderGoods);
 
-       //          $strTable .= '<td style="text-align:left;font-size:12px;">'.$strGoods.' </td>';
+                //          $strTable .= '<td style="text-align:left;font-size:12px;">'.$strGoods.' </td>';
                 // $strTable .= '<td style="text-align:left;font-size:12px;">'.$strTradeType.' </td>';
                 // $strTable .= '</tr>';
             }
@@ -1488,7 +1489,7 @@ $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="'.$orderGoo
         $status = I('status');
         $where = [];
         if ($order_sn) {
-            $where['order_sn'] = ['like', '%'.$order_sn.'%'];
+            $where['order_sn'] = ['like', '%' . $order_sn . '%'];
         }
         if ($user_id) {
             $where['user_id'] = $user_id;
@@ -1502,7 +1503,7 @@ $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="'.$orderGoo
         $list = M('return_goods')->where($where)->order("$order_by $sort_order")->limit("{$Page->firstRow},{$Page->listRows}")->select();
         $goods_id_arr = get_arr_column($list, 'goods_id');
         if (!empty($goods_id_arr)) {
-            $goods_list = M('goods')->where('goods_id in ('.implode(',', $goods_id_arr).')')->getField('goods_id,goods_name');
+            $goods_list = M('goods')->where('goods_id in (' . implode(',', $goods_id_arr) . ')')->getField('goods_id,goods_name');
         }
         $state = C('REFUND_STATUS');
         $return_type = C('RETURN_TYPE');
@@ -1533,21 +1534,21 @@ $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="'.$orderGoo
     public function addOrder()
     {
         $user_id = I('user_id'); // 用户id 可以为空
-            $admin_note = I('admin_note'); // 管理员备注
-            //收货信息
-            $user = Db::name('users')->where(['user_id' => $user_id])->find();
+        $admin_note = I('admin_note'); // 管理员备注
+        //收货信息
+        $user = Db::name('users')->where(['user_id' => $user_id])->find();
         $address['consignee'] = I('consignee'); // 收货人
-            $address['province'] = I('province'); // 省份
-            $address['city'] = I('city'); // 城市
-            $address['district'] = I('district'); // 县
-            $address['address'] = I('address'); // 收货地址
-            $address['mobile'] = I('mobile'); // 手机
-            $address['zipcode'] = I('zipcode'); // 邮编
-            $address['email'] = $user['email']; // 邮编
-            $invoice_title = I('invoice_title'); // 发票抬头
-            $taxpayer = I('taxpayer'); // 纳税人识别号
+        $address['province'] = I('province'); // 省份
+        $address['city'] = I('city'); // 城市
+        $address['district'] = I('district'); // 县
+        $address['address'] = I('address'); // 收货地址
+        $address['mobile'] = I('mobile'); // 手机
+        $address['zipcode'] = I('zipcode'); // 邮编
+        $address['email'] = $user['email']; // 邮编
+        $invoice_title = I('invoice_title'); // 发票抬头
+        $taxpayer = I('taxpayer'); // 纳税人识别号
 
-            $goods_id_arr = I('goods_id/a');
+        $goods_id_arr = I('goods_id/a');
         $orderLogic = new OrderLogic();
         $order_goods = $orderLogic->get_spec_goods($goods_id_arr);
         $pay = new Pay();
@@ -1568,14 +1569,14 @@ $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="'.$orderGoo
         $order = $placeOrder->getOrder();
         if ($order) {
             M('order_action')->add([
-                    'order_id' => $order['order_id'],
-                    'action_user' => session('admin_id'),
-                    'order_status' => 0,  //待支付
-                    'shipping_status' => 0, //待确认
-                    'action_note' => $admin_note,
-                    'status_desc' => '提交订单',
-                    'log_time' => time(),
-                ]);
+                'order_id' => $order['order_id'],
+                'action_user' => session('admin_id'),
+                'order_status' => 0,  //待支付
+                'shipping_status' => 0, //待确认
+                'action_note' => $admin_note,
+                'status_desc' => '提交订单',
+                'log_time' => time(),
+            ]);
             $this->success('添加商品成功', U('Admin/Order/detail', ['order_id' => $order['order_id']]));
         } else {
             $this->error('添加失败');
@@ -1632,12 +1633,12 @@ $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="'.$orderGoo
             $old_goods = I('old_goods/a');
             foreach ($orderGoods as $val) {
                 if (empty($old_goods[$val['rec_id']])) {
-                    M('order_goods')->where('rec_id='.$val['rec_id'])->delete(); //删除商品
+                    M('order_goods')->where('rec_id=' . $val['rec_id'])->delete(); //删除商品
                 } else {
                     //修改商品数量
                     if ($old_goods[$val['rec_id']] != $val['goods_num']) {
                         $val['goods_num'] = $old_goods[$val['rec_id']];
-                        M('order_goods')->where('rec_id='.$val['rec_id'])->save(['goods_num' => $val['goods_num']]);
+                        M('order_goods')->where('rec_id=' . $val['rec_id'])->save(['goods_num' => $val['goods_num']]);
                     }
                     $old_goods_arr[] = $val;
                 }
@@ -1659,7 +1660,7 @@ $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="'.$orderGoo
             $order['shipping_price'] = $pay->getShippingPrice(); //物流费
             $order['order_amount'] = $pay->getOrderAmount(); // 应付金额
             $order['total_amount'] = $pay->getTotalAmount(); // 订单总价
-            $o = M('order')->where('order_id='.$order_id)->save($order);
+            $o = M('order')->where('order_id=' . $order_id)->save($order);
 
             $l = $orderLogic->orderActionLog($order_id, '修改订单', '修改订单'); //操作日志
             if ($o && $l) {
@@ -1700,20 +1701,20 @@ $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="'.$orderGoo
         $categoryList = M('goods_category')->select();
         $this->assign('categoryList', $categoryList);
         $this->assign('brandList', $brandList);
-        $where = 'exchange_integral = 0 and is_on_sale = 1 and is_virtual ='.I('is_virtual/d', 0); //搜索条件
-        I('intro') && $where = "$where and ".I('intro').' = 1';
+        $where = 'exchange_integral = 0 and is_on_sale = 1 and is_virtual =' . I('is_virtual/d', 0); //搜索条件
+        I('intro') && $where = "$where and " . I('intro') . ' = 1';
         if (I('cat_id')) {
             $this->assign('cat_id', I('cat_id'));
             $grandson_ids = getCatGrandson(I('cat_id'));
-            $where = " $where  and cat_id in(".implode(',', $grandson_ids).') '; // 初始化搜索条件
+            $where = " $where  and cat_id in(" . implode(',', $grandson_ids) . ') '; // 初始化搜索条件
         }
         if (I('brand_id')) {
             $this->assign('brand_id', I('brand_id'));
-            $where = "$where and brand_id = ".I('brand_id');
+            $where = "$where and brand_id = " . I('brand_id');
         }
         if (!empty($_REQUEST['keywords'])) {
             $this->assign('keywords', I('keywords'));
-            $where = "$where and (goods_name like '%".I('keywords')."%' or keywords like '%".I('keywords')."%')";
+            $where = "$where and (goods_name like '%" . I('keywords') . "%' or keywords like '%" . I('keywords') . "%')";
         }
         $goods_count = M('goods')->where($where)->count();
         $Page = new Page($goods_count, C('PAGESIZE'));

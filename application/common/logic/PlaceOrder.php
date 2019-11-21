@@ -195,7 +195,7 @@ class PlaceOrder
     {
         $queue = Cache::get('queue');
         if ($queue >= 100) {
-            throw new TpshopException('提交订单', 0, ['status' => -99, 'msg' => '当前人数过多请耐心排队!'.$queue, 'result' => '']);
+            throw new TpshopException('提交订单', 0, ['status' => -99, 'msg' => '当前人数过多请耐心排队!' . $queue, 'result' => '']);
         }
         Cache::inc('queue');
     }
@@ -289,6 +289,9 @@ class PlaceOrder
         $goodsArr = Db::name('goods')->where('goods_id', 'IN', $goods_ids)->getField('goods_id,cost_price,give_integral,commission,exchange_integral,trade_type,sale_type');
         $orderGoodsAllData = [];
 
+        $orderPromId = [];  // 订单优惠促销ID
+        $orderDiscount = 0.00;  // 订单优惠金额
+
         foreach ($payList as $payKey => $payItem) {
             unset($payItem['goods']);
             $totalPriceToRatio = $payItem['member_goods_price'] / $this->pay->getGoodsPrice();  //商品价格占总价的比例
@@ -301,7 +304,7 @@ class PlaceOrder
             $orderGoodsData['goods_num'] = $payItem['goods_num']; // 购买数量
             $orderGoodsData['final_price'] = $finalPrice; // 每件商品实际支付价格
             $orderGoodsData['goods_price'] = $payItem['goods_price']; // 商品价
-            $orderGoodsData['re_id'] = isset($payItem['re_id'])?intval($payItem['re_id']):0;
+            $orderGoodsData['re_id'] = isset($payItem['re_id']) ? intval($payItem['re_id']) : 0;
             if (!empty($payItem['spec_key'])) {
                 $orderGoodsData['spec_key'] = $payItem['spec_key']; // 商品规格
                 $orderGoodsData['spec_key_name'] = $payItem['spec_key_name']; // 商品规格名称
@@ -309,7 +312,7 @@ class PlaceOrder
                 $orderGoodsData['spec_key'] = ''; // 商品规格
                 $orderGoodsData['spec_key_name'] = ''; // 商品规格名称
             }
-            $orderGoodsData['sku'] = $payItem['sku']?$payItem['sku']:''; // sku
+            $orderGoodsData['sku'] = $payItem['sku'] ? $payItem['sku'] : ''; // sku
             $orderGoodsData['member_goods_price'] = $payItem['member_goods_price']; // 会员折扣价
             $orderGoodsData['cost_price'] = $goodsArr[$payItem['goods_id']]['cost_price']; // 成本价
             $orderGoodsData['give_integral'] = $goodsArr[$payItem['goods_id']]['give_integral']; // 购买商品赠送积分
@@ -321,7 +324,7 @@ class PlaceOrder
                 $orderGoodsData['use_integral'] = 0;
             }
             if ($payItem['prom_type']) {
-                $orderGoodsData['prom_type'] = $payItem['prom_type']; // 0 普通订单,1 限时抢购, 2 团购 , 3 促销优惠
+                $orderGoodsData['prom_type'] = $payItem['prom_type']; // 0普通订单 1限时抢购 2团购 3促销优惠 7订单合购优惠
                 $orderGoodsData['prom_id'] = $payItem['prom_id']; // 活动id
             } else {
                 $orderGoodsData['prom_type'] = 0; // 0 普通订单,1 限时抢购, 2 团购 , 3 促销优惠
@@ -329,8 +332,8 @@ class PlaceOrder
             }
             array_push($orderGoodsAllData, $orderGoodsData);
 
-            if($payItem['gift2_goods']){
-                foreach($payItem['gift2_goods'] as $k=>$v){
+            if ($payItem['gift2_goods']) {
+                foreach ($payItem['gift2_goods'] as $k => $v) {
                     $finalPrice = 0;
                     $orderGoodsData = array();
                     $orderGoodsData['order_id'] = $this->order['order_id']; // 订单id
@@ -348,7 +351,7 @@ class PlaceOrder
                         $orderGoodsData['spec_key'] = ''; // 商品规格
                         $orderGoodsData['spec_key_name'] = ''; // 商品规格名称
                     }
-                    $orderGoodsData['sku'] = $v['sku']?$v['sku']:''; // sku
+                    $orderGoodsData['sku'] = $v['sku'] ? $v['sku'] : ''; // sku
                     $orderGoodsData['member_goods_price'] = 0; // 会员折扣价
                     $orderGoodsData['cost_price'] = 0; // 成本价
                     $orderGoodsData['give_integral'] = 0; // 购买商品赠送积分
@@ -361,10 +364,27 @@ class PlaceOrder
                     array_push($orderGoodsAllData, $orderGoodsData);
                 }
             }
+            if ($this->order['goods_price'] > 0) {
+                // 订单优惠促销（查看是否有优惠价格）
+                $orderProm = Db::name('order_prom_goods opg')->join('order_prom op', 'op.id = opg.order_prom_id')
+                    ->where(['opg.type' => 1, 'goods_id' => $payItem['goods_id'], 'item_id' => $payItem['item_id']])
+                    ->where(['op.type' => ['in', '0, 1'], 'is_open' => 1, 'is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])
+                    ->field('order_prom_id, order_price, discount_price')->find();
+                if (!empty($orderProm) && !in_array($orderProm['order_prom_id'], $orderPromId)) {
+                    if ($this->order['goods_price'] >= $orderProm['order_price']) {
+                        // 订单价格满足要求
+                        $orderDiscount += $orderProm['discount_price'];
+                    }
+                    $orderPromId[] = $orderProm['order_prom_id'];
+                }
+            }
         }
 
         Db::name('order_goods')->insertAll($orderGoodsAllData);
-
+        if ($orderDiscount != 0.00) {
+            // 增加优惠金额
+            Db::name('order')->where(['order_id' => $this->order['order_id']])->setInc('order_prom_amount', $orderDiscount);
+        }
     }
 
     /**
@@ -397,8 +417,8 @@ class PlaceOrder
         if ($couponId) {
             $user = $this->pay->getUser();
             $couponList = new CouponList();
-            $couponIdArr = explode(',',$couponId);
-            foreach($couponIdArr as $k=>$couponId){
+            $couponIdArr = explode(',', $couponId);
+            foreach ($couponIdArr as $k => $couponId) {
                 $userCoupon = $couponList->where(['status' => 0, 'id' => $couponId])->find();
                 if ($userCoupon) {
                     $userCoupon->uid = $user['user_id'];
