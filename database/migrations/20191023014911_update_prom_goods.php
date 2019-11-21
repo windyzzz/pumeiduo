@@ -29,9 +29,14 @@ class UpdatePromGoods extends Migrator
     public function change()
     {
         $this->table('prom_goods')
-            ->changeColumn('type', 'integer', ['limit' => 2, 'null' => true, 'comment' => '促销类型，0直接打折 1减价优惠 2固定金额出售 3赠送代金券 4满打折'])
+            ->changeColumn('type', 'integer', ['limit' => 2, 'null' => true, 'comment' => '促销类型，0直接打折 1减价优惠 2固定金额出售 3赠送代金券 4满打折 5满减价'])
             ->addColumn('goods_num', 'integer', ['null' => true, 'comment' => '商品数量（满多少促销）', 'after' => 'type'])
             ->addColumn('goods_price', 'decimal', ['null' => true, 'comment' => '商品价格（满多少促销）', 'precision' => 10, 'scale' => 2, 'after' => 'goods_num'])
+            ->changeColumn('is_open', 'integer', ['limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'default' => 0, 'comment' => '是否开启'])
+            ->update();
+
+        $this->table('goods_tao_grade')
+            ->changeColumn('item_id', 'integer', ['null' => true, 'default' => 0])
             ->update();
     }
 }
