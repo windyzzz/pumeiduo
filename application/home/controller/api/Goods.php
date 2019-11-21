@@ -228,7 +228,7 @@ class Goods extends Base
         // 判断商品性质
         $flashSale = Db::name('flash_sale fs')->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
             ->where(['fs.goods_id' => $goods_id, 'fs.start_time' => ['<=', time()], 'fs.end_time' => ['>=', time()], 'fs.is_end' => 0])
-            ->field('fs.goods_id, sgp.key spec_key, fs.price, fs.goods_num, fs.start_time, fs.end_time, fs.can_integral')->select();
+            ->field('fs.goods_id, sgp.key spec_key, fs.price, fs.goods_num, fs.buy_limit, fs.start_time, fs.end_time, fs.can_integral')->select();
         if (!empty($flashSale)) {
             // 秒杀商品
             $goods['nature'] = [
@@ -242,7 +242,7 @@ class Goods extends Base
         } else {
             $groupBuy = Db::name('group_buy gb')->join('spec_goods_price sgp', 'sgp.item_id = gb.item_id', 'LEFT')
                 ->where(['gb.goods_id' => $goods_id, 'gb.is_end' => 0, 'gb.start_time' => ['<=', time()], 'gb.end_time' => ['>=', time()]])
-                ->field('gb.goods_id, gb.price, sgp.key spec_key, gb.price, gb.group_goods_num, gb.goods_num, gb.start_time, gb.end_time, gb.can_integral')->select();
+                ->field('gb.goods_id, gb.price, sgp.key spec_key, gb.price, gb.group_goods_num, gb.goods_num, gb.buy_limit, gb.start_time, gb.end_time, gb.can_integral')->select();
             if (!empty($groupBuy)) {
                 // 团购商品
                 $goods['nature'] = [
@@ -297,6 +297,7 @@ class Goods extends Base
                 'price' => '',
                 'group_goods_num' => '',
                 'limit_num' => '',
+                'buy_limit' => '',
                 'start_time' => '',
                 'end_time' => ''
             ];
@@ -318,6 +319,7 @@ class Goods extends Base
                                 'type' => 'flash_sale',
                                 'price' => $spec['price'],
                                 'limit_num' => $spec['goods_num'],
+                                'buy_limit' => $spec['buy_limit'],
                                 'start_time' => $spec['start_time'],
                                 'end_time' => $spec['end_time']
                             ];
@@ -328,6 +330,7 @@ class Goods extends Base
                                 'price' => $spec['price'],
                                 'group_goods_num' => $spec['group_goods_num'],
                                 'limit_num' => bcdiv($spec['goods_num'], $spec['group_goods_num']),
+                                'buy_limit' => $spec['buy_limit'],
                                 'start_time' => $spec['start_time'],
                                 'end_time' => $spec['end_time']
                             ];
