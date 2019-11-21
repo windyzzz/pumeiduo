@@ -79,7 +79,7 @@ class Pay
             for ($payCursor = 0; $payCursor < $goodsListCount; ++$payCursor) {
                 $goods_stock = getGoodNum($this->payList[$payCursor]['goods_id'], $this->payList[$payCursor]['spec_key']); // 最多可购买的库存数量
                 if ($goods_stock <= 0 && $this->payList[$payCursor]['goods_num'] > $goods_stock) {
-                    throw new TpshopException('计算订单价格', 0, ['status' => -9, 'msg' => $this->payList[$payCursor]['goods_name'].','.$this->payList[$payCursor]['spec_key_name'].'库存不足,请重新下单', 'result' => '']);
+                    throw new TpshopException('计算订单价格', 0, ['status' => -9, 'msg' => $this->payList[$payCursor]['goods_name'] . ',' . $this->payList[$payCursor]['spec_key_name'] . '库存不足,请重新下单', 'result' => '']);
                 }
             }
         }
@@ -198,7 +198,7 @@ class Pay
      * @throws TpshopException
      *
      * @param $pay_points
-     * @param $is_exchange|是否有使用积分兑换商品流程
+     * @param $is_exchange |是否有使用积分兑换商品流程
      */
     public function usePayPoints($pay_points, $is_exchange = false)
     {
@@ -228,7 +228,7 @@ class Pay
                     }
                 }
                 if ($pay_points > $this->user['pay_points']) {
-                    throw new TpshopException('计算订单价格', 0, ['status' => -5, 'msg' => '你的账户可用积分为:'.$this->user['pay_points'], 'result' => '']);
+                    throw new TpshopException('计算订单价格', 0, ['status' => -5, 'msg' => '你的账户可用积分为:' . $this->user['pay_points'], 'result' => '']);
                 }
                 if ($min_use_limit_point > 0 && $pay_points < $min_use_limit_point) {
                     // throw new TpshopException("计算订单价格",0,['status' => -1, 'msg' => "您使用的积分必须大于".$min_use_limit_point."才可以使用", 'result' => '']);
@@ -243,7 +243,7 @@ class Pay
 
                 $this->integralMoney = $this->payPoints;
 
-            // $this->orderAmount = $this->orderAmount - $this->integralMoney;
+                // $this->orderAmount = $this->orderAmount - $this->integralMoney;
             } else {
                 //积分兑换流程
                 if ($pay_points <= $this->user['pay_points']) {
@@ -279,9 +279,9 @@ class Pay
 
         foreach ($pay_list as $k => $v) {
             $goods_info = M('goods')
-            ->field('goods_id,goods_name,distribut_id,zone,limit_buy_num,sale_type,prom_type')
-            ->where(['goods_id' => $v['goods_id']])
-            ->find();
+                ->field('goods_id,goods_name,distribut_id,zone,limit_buy_num,sale_type,prom_type')
+                ->where(['goods_id' => $v['goods_id']])
+                ->find();
 
             if (3 == $goods_info['zone'] && $goods_info['distribut_id'] > 0) {
                 $district_level[] = $goods_info['distribut_id'];
@@ -421,44 +421,45 @@ class Pay
         }
     }
 
-    function activity2_goods($goods_list){
-        foreach($goods_list as $k=>$v){
-            if($v['spec_key']){
+    function activity2_goods($goods_list)
+    {
+        foreach ($goods_list as $k => $v) {
+            if ($v['spec_key']) {
                 $gift2_goods = M('gift2_goods')
                     ->alias('gg')
                     ->field('gg.goods_id,gg.item_id,gg.stock as goods_num,gt.id,gg.buy_stock')
-                    ->join('gift2 gt','gt.id = gg.promo_id')
-                    ->join('goods g','g.goods_id = gg.buy_goods_id')
-                    ->join('spec_goods_price sg',"sg.item_id = gg.buy_item_id and sg.key = '".$v['spec_key']."'")
-                    ->where(array('gg.buy_goods_id'=>$v['goods_id'],'gg.buy_stock'=>array('elt',$v['goods_num']),'gt.start_time'=>array('elt',NOW_TIME),'gt.end_time'=>array('egt',NOW_TIME)  ))
+                    ->join('gift2 gt', 'gt.id = gg.promo_id')
+                    ->join('goods g', 'g.goods_id = gg.buy_goods_id')
+                    ->join('spec_goods_price sg', "sg.item_id = gg.buy_item_id and sg.key = '" . $v['spec_key'] . "'")
+                    ->where(array('gg.buy_goods_id' => $v['goods_id'], 'gg.buy_stock' => array('elt', $v['goods_num']), 'gt.start_time' => array('elt', NOW_TIME), 'gt.end_time' => array('egt', NOW_TIME)))
                     ->select();
-            }else{
+            } else {
                 $gift2_goods = M('gift2_goods')
                     ->alias('gg')
                     ->field('gg.goods_id,gg.item_id,gg.stock as goods_num,gt.id,gg.buy_stock')
-                    ->join('goods g','g.goods_id = gg.buy_goods_id')
-                    ->join('gift2 gt','gt.id = gg.promo_id')
-                    ->where(array('gg.buy_goods_id'=>$v['goods_id'],'gg.buy_item_id'=>0,'gg.buy_stock'=>array('elt',$v['goods_num']),'gt.start_time'=>array('elt',NOW_TIME),'gt.end_time'=>array('egt',NOW_TIME)  ))
+                    ->join('goods g', 'g.goods_id = gg.buy_goods_id')
+                    ->join('gift2 gt', 'gt.id = gg.promo_id')
+                    ->where(array('gg.buy_goods_id' => $v['goods_id'], 'gg.buy_item_id' => 0, 'gg.buy_stock' => array('elt', $v['goods_num']), 'gt.start_time' => array('elt', NOW_TIME), 'gt.end_time' => array('egt', NOW_TIME)))
                     ->select();
             }
 
-            if($gift2_goods){
+            if ($gift2_goods) {
                 $gift2_goods_list = array();
-                foreach($gift2_goods as $key=>$val){
+                foreach ($gift2_goods as $key => $val) {
                     $gift2_goods_list[$key] = $val;
-                    $stock = bcdiv($v['goods_num'],$val['buy_stock'],0);
+                    $stock = bcdiv($v['goods_num'], $val['buy_stock'], 0);
 
-                    $goods = M('goods')->where(array('goods_id'=>$val['goods_id']))->field('goods_id,goods_sn,goods_name,sku,trade_type,original_img,store_count')->find();
+                    $goods = M('goods')->where(array('goods_id' => $val['goods_id']))->field('goods_id,goods_sn,goods_name,sku,trade_type,original_img,store_count')->find();
 
-                    if($goods['store_count']<$val['goods_num']){
+                    if ($goods['store_count'] < $val['goods_num']) {
                         $gift2_goods_list = array();
                         break;
                     }
-                    if($goods['store_count']<$stock){
-                        throw new TpshopException('计算订单价格', 0, ['status' => -51, 'msg' => $goods['goods_name'].'只剩下'.$goods['store_count'].'件赠品，请重新下单', 'result' => '']);
+                    if ($goods['store_count'] < $stock) {
+                        throw new TpshopException('计算订单价格', 0, ['status' => -51, 'msg' => $goods['goods_name'] . '只剩下' . $goods['store_count'] . '件赠品，请重新下单', 'result' => '']);
                     }
 
-                    $gift2_goods_list[$key]['goods_num'] = $stock*$gift2_goods_list[$key]['goods_num'];
+                    $gift2_goods_list[$key]['goods_num'] = $stock * $gift2_goods_list[$key]['goods_num'];
                     $gift2_goods_list[$key]['goods_id'] = $goods['goods_id'];
                     $gift2_goods_list[$key]['goods_sn'] = $goods['goods_sn'];
                     $gift2_goods_list[$key]['goods_name'] = $goods['goods_name'];
@@ -468,23 +469,23 @@ class Pay
                     $gift2_goods_list[$key]['prom_id'] = $val['id'];
                     $gift2_goods_list[$key]['original_img'] = $goods['original_img'];
 
-                    if($val['item_id']){
-                        $spec_goods_price = M('spec_goods_price')->where(array('goods_id'=>$val['goods_id'],'item_id'=>$val['item_id']))->field('key,key_name,store_count')->find();
+                    if ($val['item_id']) {
+                        $spec_goods_price = M('spec_goods_price')->where(array('goods_id' => $val['goods_id'], 'item_id' => $val['item_id']))->field('key,key_name,store_count')->find();
                         $gift2_goods_list[$key]['spec_key'] = $spec_goods_price['key'];
                         $gift2_goods_list[$key]['spec_key_name'] = $spec_goods_price['key_name'];
-                        if($spec_goods_price['store_count']<$val['goods_num']){
+                        if ($spec_goods_price['store_count'] < $val['goods_num']) {
                             $gift2_goods_list = array();
                             break;
                         }
-                        if($spec_goods_price['store_count']<$stock){
-                            throw new TpshopException('计算订单价格', 0, ['status' => -51, 'msg' => $goods['goods_name'].'只剩下'.$spec_goods_price['store_count'].'件赠品，请重新下单', 'result' => '']);
+                        if ($spec_goods_price['store_count'] < $stock) {
+                            throw new TpshopException('计算订单价格', 0, ['status' => -51, 'msg' => $goods['goods_name'] . '只剩下' . $spec_goods_price['store_count'] . '件赠品，请重新下单', 'result' => '']);
                         }
-                    }else{
+                    } else {
                         $gift2_goods_list[$key]['spec_key'] = '';
                         $gift2_goods_list[$key]['spec_key_name'] = '';
                     }
                 }
-                if(count($gift2_goods_list)>0){
+                if (count($gift2_goods_list) > 0) {
                     $goods_list[$k]['gift2_goods'] = $gift2_goods_list;
                 }
 
@@ -494,30 +495,31 @@ class Pay
 
     }
 
-    function gift2_goods($goods_id){
+    function gift2_goods($goods_id)
+    {
         $gift2_goods = M('gift2_goods')
             ->alias('gg')
             ->field('gt.title,sum(gg.stock) as gift_stock,gg.buy_stock,gg.goods_id,gg.item_id')
-            ->join('goods g','g.goods_id = gg.buy_goods_id')
-            ->join('gift2 gt','gt.id = gg.promo_id')
-            ->where(array('gg.buy_goods_id'=>$goods_id,'gt.start_time'=>array('elt',NOW_TIME),'gt.end_time'=>array('egt',NOW_TIME)  ))
+            ->join('goods g', 'g.goods_id = gg.buy_goods_id')
+            ->join('gift2 gt', 'gt.id = gg.promo_id')
+            ->where(array('gg.buy_goods_id' => $goods_id, 'gt.start_time' => array('elt', NOW_TIME), 'gt.end_time' => array('egt', NOW_TIME)))
             ->group('gg.buy_goods_id')
             ->select();
         $gift2_goods_list = array();
-        if($gift2_goods){
+        if ($gift2_goods) {
 
-            foreach($gift2_goods as $key=>$val){
+            foreach ($gift2_goods as $key => $val) {
                 $gift2_goods_list[$key] = $val;
-                $goods = M('goods')->where(array('goods_id'=>$val['goods_id']))->field('goods_id,goods_sn,goods_name,sku,trade_type,original_img,store_count')->find();
+                $goods = M('goods')->where(array('goods_id' => $val['goods_id']))->field('goods_id,goods_sn,goods_name,sku,trade_type,original_img,store_count')->find();
 
-                if($goods['store_count']<$val['gift_stock']){
+                if ($goods['store_count'] < $val['gift_stock']) {
                     $gift2_goods_list = array();
                     break;
                 }
 
-                if($val['item_id']){
-                    $spec_goods_price = M('spec_goods_price')->where(array('goods_id'=>$val['goods_id'],'item_id'=>$val['item_id']))->field('key,key_name,store_count')->find();
-                    if($spec_goods_price['store_count']<$val['gift_stock']){
+                if ($val['item_id']) {
+                    $spec_goods_price = M('spec_goods_price')->where(array('goods_id' => $val['goods_id'], 'item_id' => $val['item_id']))->field('key,key_name,store_count')->find();
+                    if ($spec_goods_price['store_count'] < $val['gift_stock']) {
                         $gift2_goods_list = array();
                         break;
                     }
@@ -561,10 +563,10 @@ class Pay
             foreach ($want_to_buy_extra_goods as $ak => $av) {
                 $cartLogic->setGoodsModel($av['goods_id']);
                 $cartLogic->setGoodsBuyNum($av['goods_num']);
-                if($extra_goods_list[$av['goods_id']]['exchange_integral'] > 0){
+                if ($extra_goods_list[$av['goods_id']]['exchange_integral'] > 0) {
                     $cartLogic->setType(1);
 //                    $this->payPoints += $av['goods_num'] * $extra_goods_list[$av['goods_id']]['exchange_integral'];
-                }else{
+                } else {
                     $cartLogic->setType(2);
                 }
                 $cartLogic->setCartType(0);
@@ -604,7 +606,7 @@ class Pay
     {
         if ($user_electronic > 0) {
             if ($user_electronic > $this->user['user_electronic']) {
-                throw new TpshopException('计算订单价格', 0, ['status' => -6, 'msg' => '你的账户可用电子币为:'.$this->user['user_electronic'], 'result' => '']);
+                throw new TpshopException('计算订单价格', 0, ['status' => -6, 'msg' => '你的账户可用电子币为:' . $this->user['user_electronic'], 'result' => '']);
             }
             if ($user_electronic > $this->orderAmount) {
                 $this->userElectronic = $this->orderAmount;
@@ -631,7 +633,7 @@ class Pay
      *
      * @param $coupon_id
      */
-    public function useCouponById($coupon_id,$getPayList=array())
+    public function useCouponById($coupon_id, $getPayList = array())
     {
         if ($coupon_id > 0) {
             list($prom_type, $prom_id) = $this->getPromInfo();
@@ -647,26 +649,25 @@ class Pay
             $userCoupon = $couponList->where($where)->find();
             if ($userCoupon) {
                 $coupon = Db::name('coupon')->where(['id' => $userCoupon['cid'], 'status' => 1])->find(); // 获取有效优惠券类型表
-                if ($coupon && $coupon['use_type']!=5) {
+                if ($coupon && $coupon['use_type'] != 5) {
                     $this->couponId = $coupon_id;
 
                     //优惠券金额
-                    if($coupon['use_type']==4){
+                    if ($coupon['use_type'] == 4) {
                         $this->couponPrice = 0;
-                        $goods_ids = Db::name('goods_coupon')->where(array('coupon_id'=>$userCoupon['cid']))->getField('goods_id',true);
-                        foreach($getPayList as $k=>$v){
-                            if(in_array($v['goods_id'],$goods_ids)){
-                                $dis_price = bcmul(bcdiv(bcmul($v['member_goods_price'],$coupon['money'],2),10,0),$v['goods_num'],0);
+                        $goods_ids = Db::name('goods_coupon')->where(array('coupon_id' => $userCoupon['cid']))->getField('goods_id', true);
+                        foreach ($getPayList as $k => $v) {
+                            if (in_array($v['goods_id'], $goods_ids)) {
+                                $dis_price = bcmul(bcdiv(bcmul($v['member_goods_price'], $coupon['money'], 2), 10, 0), $v['goods_num'], 0);
 
-                                $couponPrice = bcsub(bcmul($v['member_goods_price'],$v['goods_num'],2),$dis_price,2);
+                                $couponPrice = bcsub(bcmul($v['member_goods_price'], $v['goods_num'], 2), $dis_price, 2);
 
-                                $this->couponPrice = bcadd($this->couponPrice,$couponPrice,0);
+                                $this->couponPrice = bcadd($this->couponPrice, $couponPrice, 0);
                             }
                         }
-                    }else{
+                    } else {
                         $this->couponPrice = $coupon['money'];
                     }
-
 
 
                     $this->orderAmount = $this->orderAmount - $this->couponPrice;
@@ -684,10 +685,10 @@ class Pay
             }*/
             $couponList = new CouponList();
 
-            $coupon_id_arr = explode(',',$coupon_id_str);
+            $coupon_id_arr = explode(',', $coupon_id_str);
             $coupon_ids_arr = array();
 
-            foreach($coupon_id_arr as $kfdd=>$coupon_id){
+            foreach ($coupon_id_arr as $kfdd => $coupon_id) {
                 $where = array(
                     'uid' => $this->user['user_id'],
                     'id' => $coupon_id
@@ -697,7 +698,7 @@ class Pay
 
                 if ($userCoupon) {
                     $coupon = Db::name('coupon')->where(['id' => $userCoupon['cid'], 'status' => 1])->find(); // 获取有效优惠券类型表
-                    if ($coupon && $coupon['use_type']==5) {
+                    if ($coupon && $coupon['use_type'] == 5) {
                         $coupon_ids_arr[] = $coupon_id;
 
                         $cartLogic = new CartLogic();
@@ -710,7 +711,7 @@ class Pay
 
                         $enable_goods = M('goods_coupon')
                             ->alias('gc')
-                            ->join('goods g','g.goods_id = gc.goods_id')
+                            ->join('goods g', 'g.goods_id = gc.goods_id')
                             ->where('gc.coupon_id', $coupon['id'])
                             ->field('gc.goods_id,gc.number,g.goods_name,g.original_img,g.exchange_integral,shop_price - g.exchange_integral as member_price')
                             ->select();
@@ -718,9 +719,9 @@ class Pay
                         foreach ($enable_goods as $ak => $av) {
                             $cartLogic->setGoodsModel($av['goods_id']);
                             $cartLogic->setGoodsBuyNum($av['number']);
-                            if($av['exchange_integral'] > 0){
+                            if ($av['exchange_integral'] > 0) {
                                 $cartLogic->setType(1);
-                            }else{
+                            } else {
                                 $cartLogic->setType(2);
                             }
                             $cartLogic->setCartType(0);
@@ -734,7 +735,7 @@ class Pay
                         $this->payList = array_merge($this->payList, $extra_list);
                     }
 
-                    $this->couponIdRe = implode(',',$coupon_ids_arr);
+                    $this->couponIdRe = implode(',', $coupon_ids_arr);
                 }
             }
 
@@ -764,7 +765,7 @@ class Pay
         }
         $freight_free = tpCache('shopping.freight_free'); // 全场满多少免运费
 
-        $ln = bcsub($this->goodsPrice,$this->orderPromAmount,2);
+        $ln = bcsub($this->goodsPrice, $this->orderPromAmount, 2);
 
         if ($ln < $freight_free || 0 == $freight_free) {
             $this->shippingPrice = $GoodsLogic->getFreight($this->payList, $district_id);
@@ -814,7 +815,7 @@ class Pay
     /**
      * 使用优惠促销
      */
-    public function goodsPromotion($goodsList = [], $isOrder = true, $output = false)
+    public function goodsPromotion($goodsList = [], $isOrder = true, $output = 'log')
     {
         $user_info = $this->getUser();
         $pay_list = !empty($goodsList) ? $goodsList : $this->payList;
@@ -912,13 +913,17 @@ class Pay
             throw new TpshopException('计算订单价格', 0, ['status' => -1, 'msg' => "超出活动商品：【{$goods_info['goods_name']}】 限购数量， 每人限购 {$group_activity['buy_limit']} 件", 'result' => '']);
         }
 
-        if ($output) {
-            return $goodsPromAmount;
-        } else {
-            $this->orderPromAmount = bcadd($this->orderPromAmount, $goodsPromAmount, 2);
-            $this->orderAmount = bcsub($this->orderAmount, $goodsPromAmount, 2);
-//            $this->goodsPrice = bcsub($this->goodsPrice, $goodsPromAmount, 2);
-//            $this->totalAmount = bcsub($this->totalAmount, $goodsPromAmount, 2);
+        switch ($output) {
+            case 'log':
+                $this->orderPromAmount = bcadd($this->orderPromAmount, $goodsPromAmount, 2);
+                $this->orderAmount = bcsub($this->orderAmount, $goodsPromAmount, 2);
+//                $this->goodsPrice = bcsub($this->goodsPrice, $goodsPromAmount, 2);
+//                $this->totalAmount = bcsub($this->totalAmount, $goodsPromAmount, 2);
+                break;
+            case 'amount':
+                return $goodsPromAmount;
+            case 'prom_info':
+                return [];
         }
     }
 
@@ -1021,6 +1026,7 @@ class Pay
     {
         return $this->couponId;
     }
+
     public function getCouponIdRe()
     {
         return $this->couponIdRe;
@@ -1042,12 +1048,12 @@ class Pay
         return [
             'shipping_price' => $this->shippingPrice,
             'coupon_price' => $this->couponPrice,
-            'user_electronic' => bcadd($this->userElectronic,0, 2),
+            'user_electronic' => bcadd($this->userElectronic, 0, 2),
             'integral_money' => $this->integralMoney,
             'pay_points' => $this->payPoints,
-            'order_amount' => bcadd($this->orderAmount,0, 2),
-            'total_amount' => bcadd($this->totalAmount,0, 2),
-            'goods_price' => bcadd($this->goodsPrice,0, 2),
+            'order_amount' => bcadd($this->orderAmount, 0, 2),
+            'total_amount' => bcadd($this->totalAmount, 0, 2),
+            'goods_price' => bcadd($this->goodsPrice, 0, 2),
             'order_prom_amount' => $this->orderPromAmount,
             'gift_goods_list' => $this->gift_goods_list,
             'extra_goods_list' => $this->extra_goods_list,

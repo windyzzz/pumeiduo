@@ -391,6 +391,51 @@ class Cart extends Base
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
     }
 
+
+    public function checkCartPromotion()
+    {
+        $params['user_token'] = $this->userToken;
+        Hook::exec('app\\home\\behavior\\CheckAuth', 'run', $params);
+
+        $promId = I('prom_id', '');
+        $promType = I('prom_type', '');
+        $cartIds = I('cart_ids', '');
+        if (empty($cartIds)) {
+            // 该活动没有选择商品
+            switch ($promType) {
+                case 0:
+                case 1:
+                case 2:
+                case 3:
+                case 4:
+                case 5:
+                    $promInfo = Db::name('prom_goods')->where(['id' => $promId])->find();
+                    break;
+                case 6:
+                    $promInfo = Db::name('flash_sale')->where(['id' => $promId])->find();
+                    break;
+                case 7:
+                    $promInfo = Db::name('group_buy')->where(['id' => $promId])->find();
+                    break;
+                default:
+                    return json(['status' => 0, 'msg' => '活动类型错误']);
+            }
+            return json(['prom_id' => $promId, 'type' => $promType, 'type_value' => $promInfo['title'], 'other_value' => '']);
+        }
+        $cartIds = explode(',', $cartIds);
+        foreach ($cartIds as $k => $v) {
+            $data = [];
+            $data['id'] = $v;
+            $data['selected'] = 1;
+            $cartIds[$k] = $data;
+        }
+        $result = $this->AsyncUpdateCarts($cartIds);
+        $goodsList = $result['result']['cartList'];     // 选中商品
+        unset($result['result']['cartList']);
+        $Pay = new Pay();
+        $res = $Pay->goodsPromotion($goodsList, false, 'prom_info');
+    }
+
     /**
      * 计算购物车选中商品的价格与优惠
      * @return \think\response\Json
@@ -421,10 +466,10 @@ class Cart extends Base
         $result = $this->AsyncUpdateCarts($cartIds);
         $goodsList = $result['result']['cartList'];     // 选中商品
         unset($result['result']['cartList']);
-        $goodsPrice = $result['result']['total_fee'];   // 商品总价
+//        $goodsPrice = $result['result']['total_fee'];   // 商品总价
         $Pay = new Pay();
         // 商品优惠促销
-        $discountPrice = $Pay->goodsPromotion($goodsList, false, true);
+        $discountPrice = $Pay->goodsPromotion($goodsList, false, 'amount');
         // 订单优惠促销
 //        $discountPrice2 = $Pay->calcGoodsOrderProm($goodsList, $goodsPrice);
 //        $discountPrice = bcadd($discountPrice1, $discountPrice2, 2);

@@ -199,11 +199,12 @@ class CartLogic extends Model
 
         if ($goodsPromFactory->checkPromType($prom_type)) {
             $goodsPromLogic = $goodsPromFactory->makeModule($this->goods, $this->specGoodsPrice);
-
-            if ($goodsPromLogic->checkActivityIsAble()) {
-                $buyGoods = $goodsPromLogic->buyNow($buyGoods);
-            } else {
-                throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '活动已经结束，无法购买', 'result' => '']);
+            if (!empty($goodsPromLogic)) {
+                if ($goodsPromLogic->checkActivityIsAble()) {
+                    $buyGoods = $goodsPromLogic->buyNow($buyGoods);
+                } else {
+                    throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '活动已经结束，无法购买', 'result' => '']);
+                }
             }
         } else {
             if (0 == $this->goods['prom_type']) {
