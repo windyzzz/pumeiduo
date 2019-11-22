@@ -916,6 +916,14 @@ class CartLogic extends Model
         // 验证库存
         $cartModel = new Cart();
         $cart = $cartModel::get($cartId);
+        if (empty($cart)) {
+            return ['status' => 0, 'msg' => '购物车商品已删除'];
+        }
+        if ($cartNum == 0) {
+            // 删除购物车
+            Db::name('cart')->where(['id' => $cartId])->delete();
+            return ['status' => 1, 'msg' => '更新购物车数量成功'];
+        }
         if ($cartNum > $cart->limit_num) {
             return ['status' => 0, 'msg' => '商品数量不能大于' . $cart->limit_num, 'result' => ['limit_num' => $cart->limit_num]];
         }

@@ -545,6 +545,11 @@ class User extends Base
                 return json(['status' => 0, 'msg' => '缺少传参', 'result' => null]);
             }
 
+            $userInfo = M('Users')->find($id);
+            if (empty($userInfo)) {
+                return json(['status' => 0, 'msg' => '推荐人ID有误', 'result' => null]);
+            }
+
             if ($this->_hasRelationship($id)) {
                 return json(['status' => 0, 'msg' => '不能绑定和自己有关系的普通会员', 'result' => null]);
             }
@@ -558,8 +563,6 @@ class User extends Base
             }
 
             $data = [];
-
-            $userInfo = M('Users')->find($id);
             $data['invite_uid'] = $data['first_leader'] = $id;
             $data['second_leader'] = $userInfo['first_leader'];
             $data['third_leader'] = $userInfo['second_leader'];

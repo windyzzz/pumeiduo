@@ -15,6 +15,13 @@ use think\Model;
 
 class Coupon extends Model
 {
+    public function getUseDescAttr($value, $data)
+    {
+        $parse_type = ['0' => '全店通用', '1' => '指定商品可用', '2' => '指定分类可用', '4' => '折扣券', '5' => '兑换商品'];
+
+        return $parse_type[$data['use_type']];
+    }
+
     public function goodsCoupon()
     {
         return $this->hasMany('GoodsCoupon', 'coupon_id', 'id');

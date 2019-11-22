@@ -748,7 +748,6 @@ class Promotion extends Base
             }
         })->order('goods_id DESC')->limit($Page->firstRow . ',' . $Page->listRows)->select();
 
-
         $types = I('types', 1);
         $this->assign('types', $types);
 
@@ -1001,7 +1000,8 @@ class Promotion extends Base
         $goodsIds2 = Db::name('gift2_goods')->getField('goods_id', true);
         $goodsIds = array_unique(array_merge($goodsIds1, $goodsIds2));
         $where = [
-            'goods_id' => ['not in', $goodsIds]
+            'goods_id' => ['not in', $goodsIds],
+            'is_on_sale' => 1
         ];
         $Goods = new Goods();
         $count = $Goods->where($where)->count();
@@ -1083,8 +1083,8 @@ class Promotion extends Base
         }
         $orderPromGoods = new OrderPromGoodsModel();
         $orderPromGoods->saveAll($buyGoodsData);
-        // 更新商品活动类型
-        Db::name('goods')->where(['goods_id' => ['in', array_unique($goodsIds)]])->update(['prom_type' => 7]);
+        // 更新商品活动信息
+        Db::name('goods')->where(['goods_id' => ['in', array_unique($goodsIds)]])->update(['prom_id' => $orderPromId, 'prom_type' => 7]);
         // 赠送商品
         if (!empty($giftGoods)) {
             $giftGoodsData = [];

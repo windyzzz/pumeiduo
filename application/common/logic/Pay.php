@@ -785,8 +785,6 @@ class Pay
                     } else {
                         $this->couponPrice = $coupon['money'];
                     }
-
-
                     $this->orderAmount = $this->orderAmount - $this->couponPrice;
                 }
             }
@@ -870,7 +868,10 @@ class Pay
      */
     public function delivery($district_id)
     {
-        if (empty($district_id)) {
+        if ($district_id === 0) {
+            return $this->shippingPrice = 0;
+        }
+        if (!is_int($district_id) && empty($district_id)) {
             throw new TpshopException('计算订单价格', 0, ['status' => -1, 'msg' => '请填写收货信息', 'result' => ['']]);
         }
         $GoodsLogic = new GoodsLogic();
@@ -1161,7 +1162,6 @@ class Pay
 
     public function toArray()
     {
-
         return [
             'shipping_price' => $this->shippingPrice,
             'coupon_price' => $this->couponPrice,

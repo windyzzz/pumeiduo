@@ -317,7 +317,7 @@ class CouponLogic extends Model
             foreach ($couponList as $coupon => $couponItem) {
                 if ($userCouponItem['cid'] == $couponItem['id']) {
                     if (5 == $couponItem['use_type']) {
-                        //全店通用
+                        // 兑换券
                         $tmp = $userCouponItem;
                         $tmp['coupon'] = $couponItem->append(['use_type_title'])->toArray();
 

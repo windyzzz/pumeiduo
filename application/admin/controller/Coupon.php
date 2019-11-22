@@ -11,6 +11,7 @@
 
 namespace app\admin\controller;
 
+use app\common\model\Coupon as CouponModel;
 use think\AjaxPage;
 use think\Db;
 use think\Loader;
@@ -27,11 +28,11 @@ class Coupon extends Base
     public function index()
     {
         //获取优惠券列表
-
         $count = M('coupon')->count();
         $Page = new Page($count, 10);
         $show = $Page->show();
-        $lists = M('coupon')->order('add_time desc')->limit($Page->firstRow . ',' . $Page->listRows)->select();
+        $coupon = new CouponModel();
+        $lists = $coupon->order('add_time desc')->limit($Page->firstRow . ',' . $Page->listRows)->select();
         $this->assign('lists', $lists);
         $this->assign('pager', $Page); // 赋值分页输出
         $this->assign('page', $show); // 赋值分页输出

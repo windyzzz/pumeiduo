@@ -43,7 +43,7 @@ class PromGoods extends Model
 
     public function getPromDescAttr($value, $data)
     {
-        $parse_type = ['0' => '直接打折', '1' => '减价优惠ddd', '2' => '固定金额出售', '3' => '买就赠优惠券', '4' => '满打折', '5' => '满减价'];
+        $parse_type = ['0' => '直接打折', '1' => '减价优惠', '2' => '固定金额出售', '3' => '买就赠优惠券', '4' => '满打折', '5' => '满减价'];
 
         return $parse_type[$data['type']];
     }

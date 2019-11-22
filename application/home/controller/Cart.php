@@ -323,7 +323,7 @@ class Cart
         $user_wealth['user_electronic'] = $this->user['user_electronic'];
         $return['user_wealth'] = $user_wealth;
         $return['use_point'] = $point;
-        $return['total_fee'] = 1;
+        $return['total_fee'] = $total_fee;
         $return['give_integral'] = $give_integral;
         $return['weight'] = round($weight / 1000);
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);

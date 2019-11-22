@@ -21,6 +21,7 @@ use app\common\logic\Pay;
 use app\common\logic\PickupLogic;
 use app\common\logic\PlaceOrder;
 use app\common\logic\UserAddressLogic;
+use app\common\logic\UsersLogic;
 use app\common\model\CouponList;
 use app\common\model\Goods;
 use app\common\model\SpecGoodsPrice;
@@ -183,7 +184,20 @@ class Cart extends Base
                         ];
                     }
                 }
-                if (isset($promGoods[$key])) {
+                if (empty($v['goods']) || 1 != $v['goods']['is_on_sale']) {
+                    $cartNum -= $v['goods_num'];
+                    // 已失效商品
+                    $invalidList[] = [
+                        'cart_id' => $v['id'],
+                        'goods_id' => $v['goods_id'],
+                        'goods_sn' => $v['goods_sn'],
+                        'goods_name' => $v['goods_name'],
+                        'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                        'spec_key' => $v['spec_key'],
+                        'spec_key_name' => $v['spec_key_name'],
+                        'gift_goods' => $giftGoods
+                    ];
+                } elseif (isset($promGoods[$key])) {
                     // 促销活动
                     $id = 'prom_' . $promGoods[$key]['id'];
                     if (!isset($promList[$id])) {
@@ -253,18 +267,6 @@ class Cart extends Base
                         'exchange_price' => $v['member_goods_price'],
                         'goods_num' => $v['goods_num'],
                         'buy_limit' => $groupBuyGoods[$key]['buy_limit'],
-                        'gift_goods' => $giftGoods
-                    ];
-                } elseif (empty($v['goods']) || 1 != $v['goods']['is_on_sale'] || 0 == $v['goods_num']) {
-                    // 已失效商品
-                    $invalidList[] = [
-                        'cart_id' => $v['id'],
-                        'goods_id' => $v['goods_id'],
-                        'goods_sn' => $v['goods_sn'],
-                        'goods_name' => $v['goods_name'],
-                        'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
-                        'spec_key' => $v['spec_key'],
-                        'spec_key_name' => $v['spec_key_name'],
                         'gift_goods' => $giftGoods
                     ];
                 } else {
@@ -558,7 +560,7 @@ class Cart extends Base
         $cartId = I('cart_id', '');
         $cartNum = I('cart_num', '');
         if (empty($cartId) || empty($cartNum)) {
-            return ['status' => 0, 'msg' => '参数错误'];
+            return json(['status' => 0, 'msg' => '参数错误']);
         }
         // 更新购物车
         $res = (new CartLogic())->changeNumNew($cartId, $cartNum);
@@ -673,6 +675,9 @@ class Cart extends Base
      */
     public function cart2()
     {
+        $params['user_token'] = $this->userToken;
+        Hook::exec('app\\home\\behavior\\CheckAuth', 'run', $params);
+
         $goods_id = input('goods_id/d'); // 商品id
         $goods_num = input('goods_num/d'); // 商品数量
         $item_id = input('item_id/d'); // 商品规格id
@@ -680,8 +685,6 @@ class Cart extends Base
         $type = input('type', 1); // 结算类型
         $cart_type = input('cart_type', 0); // 购物车类型
         $cart_id = input('cart_id', ''); // 购物车id字符串
-
-        Hook::exec('app\\home\\behavior\\CheckAuth', 'run', $params);
 
         $cartLogic = new CartLogic();
         $couponLogic = new CouponLogic();
@@ -768,7 +771,7 @@ class Cart extends Base
         $user_wealth['user_electronic'] = $this->user['user_electronic'];
         $return['user_wealth'] = $user_wealth;
         $return['use_point'] = $point;
-        $return['total_fee'] = 1;
+        $return['total_fee'] = $total_fee;
         $return['give_integral'] = $give_integral;
         $return['weight'] = round($weight / 1000);
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
@@ -1327,13 +1330,22 @@ class Cart extends Base
         return json($return);
     }
 
+
     public function createOrder()
     {
         $params['user_token'] = $this->userToken;
         Hook::exec('app\\home\\behavior\\CheckAuth', 'run', $params);
 
-        $cartIds = input('cart_ids', '');
+        // 用户默认地址
+        $userDefaultAddress = get_user_address_list_new($this->user_id, true);
+        if (!empty($userDefaultAddress)) {
+            $userDefaultAddress = $userDefaultAddress[0];
+        }
+
+        $cartIds = I('cart_ids', '');
         $cartIds = explode(',', $cartIds);
+        $couponId = I('coupon_id', '');
+
         foreach ($cartIds as $k => $v) {
             $data = [];
             $data['id'] = $v;
@@ -1345,11 +1357,92 @@ class Cart extends Base
             return json(['status' => 0, 'msg' => $result['msg'], 'result' => null]);
         }
         $cartLogic = new CartLogic();
-        $cartLogic->setUserId($this->user_id);
+        $cartLogic->setUserId($this->user_id);  // 设置购物车用户ID
         if (0 == $cartLogic->getUserCartOrderCount()) {
             return json(['status' => 0, 'msg' => '你的购物车没有选中商品', 'result' => null]);
         }
         $cartList['cartList'] = $cartLogic->getCartList(1); // 获取用户选中的购物车商品
-        $totalNum = count($cartList['cartList']);
+        $cartPriceInfo = $cartLogic->getCartPriceInfo($cartList['cartList']);  //初始化数据 商品总额/节约金额/商品总共数量/商品使用积分
+        $cartList = array_merge($cartList, $cartPriceInfo);
+
+        $cartGoodsList = get_arr_column($cartList['cartList'], 'goods');
+        $cartGoodsId = get_arr_column($cartGoodsList, 'goods_id');
+        $cartGoodsCatId = get_arr_column($cartGoodsList, 'cat_id');
+        $couponLogic = new CouponLogic();
+        // 用户可用的优惠券列表
+        $userCouponList = $couponLogic->getUserAbleCouponList($this->user_id, $cartGoodsId, $cartGoodsCatId);
+        $userCouponList = $cartLogic->getCouponCartList($cartList, $userCouponList);
+        $couponList = [];
+        foreach ($userCouponList as $coupon) {
+            $couponList[] = [
+                'coupon_id' => $coupon['coupon']['id'],
+                'name' => $coupon['coupon']['name'],
+                'money' => $coupon['coupon']['money'],
+                'use_start_time' => date('Y-m-d', $coupon['coupon']['use_start_time']),
+                'use_end_time' => date('Y-m-d', $coupon['coupon']['use_end_time']),
+                'is_selected' => $coupon['coupon']['id'] == $couponId ? 1 : 0
+            ];
+        }
+        // 用户可用的兑换券列表
+        $userExchangeList = $couponLogic->getUserAbleCouponListRe($this->user_id, $cartGoodsId, $cartGoodsCatId);
+        $userExchangeList = $cartLogic->getCouponCartList($cartList, $userExchangeList);
+        $exchangeList = [];
+        foreach ($userExchangeList as $coupon) {
+            $exchangeList[] = [
+                'coupon_id' => $coupon['coupon']['id'],
+                'name' => $coupon['coupon']['name'],
+                'money' => $coupon['coupon']['money'],
+                'use_start_time' => date('Y-m-d', $coupon['coupon']['use_start_time']),
+                'use_end_time' => date('Y-m-d', $coupon['coupon']['use_end_time']),
+                'is_selected' => $coupon['coupon']['id'] == $couponId ? 1 : 0
+            ];
+        }
+        $payLogic = new Pay();
+        // 计算购物车价格
+        $payLogic->payCart($cartList['cartList']);
+        // 检测支付商品购买限制
+        $payLogic->check();
+        // 使用优惠券
+        if (isset($couponId) && $couponId > 0) {
+            $payLogic->useCouponById($couponId, $payLogic->getPayList());
+        }
+        // 参与活动促销 加价购活动
+//        $payLogic->activityPayBefore();
+        $payLogic->goodsPromotion();
+        // 配送物流
+        if (empty($userDefaultAddress)) {
+            $payLogic->delivery(0);
+        } else {
+            $payLogic->delivery($userDefaultAddress['district']);
+        }
+        $payLogic->activity();      // 满单赠品
+        $payLogic->activity2();     // 指定商品赠品
+        $payLogic->activity3();     // 订单优惠促销
+
+        $point = 0;                     // 使用积分
+        $give_integral = 0;             // 赠送积分
+        $weight = 0;                    // 产品重量
+        $total_fee = 0;                 // 商品总价
+        $order_prom_fee = 0;            // 订单优惠促销总价
+        foreach ($cartList['cartList'] as $v) {
+            $point += $v['goods_num'] * $v['use_integral'];
+            $goodsInfo = M('Goods')->field('give_integral, weight')->where('goods_id', $v['goods_id'])->find();
+            $give_integral += $goodsInfo['give_integral'];
+            $weight += $goodsInfo['weight'];
+            $total_fee += ($v['use_integral'] + $v['member_goods_price']) * $v['goods_num'];
+            if (isset($v['is_order_prom']) && $v['is_order_prom'] == 1) {
+                $order_prom_fee += ($v['use_integral'] + $v['member_goods_price']) * $v['goods_num'];
+            }
+        }
+        // 商品列表
+        $payList = $payLogic->getPayList();
+        $payList = collection($payList)->toArray();
+        $goodsList = [];
+        $giftList = [];
+        foreach ($payList as $list) {
+            
+        }
+        $return = $payLogic->toArray();
+        return json(['status' => 1, 'result' => $return]);
     }
 }

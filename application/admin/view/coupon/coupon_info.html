@@ -120,7 +120,7 @@
                     </label>
                 </dd>
             </dl>
-            <dl id="enable_goods" style="display:<if condition='$coupon[use_type] eq 1 || $coupon[use_type] eq 3  || $coupon[use_type] eq 4'>;<else/>none;</if>">
+            <dl id="enable_goods" style="display:<if condition='$coupon[use_type] eq 1 || $coupon[use_type] eq 3  || $coupon[use_type] eq 4 || $coupon[use_type] eq 5'>;<else/>none;</if>">
                 <dt class="tit">指定商品列表：</dt>
                 <dd class="opt">
                     <table class="ncsc-default-table">
@@ -182,7 +182,7 @@
                     <p class="hint">若不选表示不限制，否则请选择到指定三级分类</p>
                 </dd>
             </dl>
-            <dl class="row" id="money_row">
+            <dl class="row" id="money_row" style="display:<if condition='$coupon[use_type] neq 5'>;<else/>none;</if>">
                 <dt class="tit">
                     <label><em>*</em>优惠券面额</label>
                 </dt>
@@ -192,7 +192,7 @@
                     <p class="notic">优惠券可抵扣金额 下方如果选择了折扣商品，则为折扣数值  5折</p>
                 </dd>
             </dl>
-            <dl class="row" id="condition_row">
+            <dl class="row" id="condition_row" style="display:<if condition='$coupon[use_type] neq 5'>;<else/>none;</if>">
                 <dt class="tit">
                     <label><em>*</em>消费金额</label>
                 </dt>
@@ -217,7 +217,7 @@
                     <label><em>*</em>发放数量</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" id="createnum" name="createnum" value="<if condition='$coupon[createnum]'>$coupon[createnum]<else/>0</if>" onpaste="this.value=this.value.replace(/[^\d]/g,'')" onkeyup="this.value=this.value.replace(/[^\d]/g,'')" class="input-txt">
+                    <input type="text" id="createnum" name="createnum" value="<if condition='$coupon[createnum]'>{$coupon.createnum}<else/>0</if>" onpaste="this.value=this.value.replace(/[^\d]/g,'')" onkeyup="this.value=this.value.replace(/[^\d]/g,'')" class="input-txt">
                     <span class="err" id="err_createnum"></span>
                     <p class="notic">发放数量限制(默认为0则无限制)</p>
                 </dd>
@@ -343,10 +343,13 @@
             data: $('#handleposition').serialize(),
             dataType: "json",
             success: function (data) {
-
                 if (data.status == 1) {
-                    layer.msg(data.msg, {icon: 1});
-                    location.href = "{:U('Admin/Coupon/index')}";
+                    layer.msg(data.msg, {
+                        icon: 1,
+                        time: 1000
+                    }, function(){
+                        location.href = "{:U('Admin/Coupon/index')}";
+                    });
                 } else {
                     layer.msg(data.msg, {icon: 2});
                     $.each(data.result, function (index, item) {
