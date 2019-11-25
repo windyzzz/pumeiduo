@@ -43,7 +43,7 @@ class Promotion extends Base
         $Gift = new Gift2();
         $count = $Gift->where('')->count();
         $Page = new Page($count, 10);
-        $prom_list = $Gift->where('')->limit($Page->firstRow . ',' . $Page->listRows)->select();
+        $prom_list = $Gift->where('')->limit($Page->firstRow . ',' . $Page->listRows)->order('id desc')->select();
         $this->assign('page', $Page);
         $this->assign('prom_list', $prom_list);
         return $this->fetch();

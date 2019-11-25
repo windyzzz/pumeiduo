@@ -881,9 +881,9 @@ class Goods extends Base
         }
         switch ($output) {
             case 'json':
-                return json(['status' => 1, 'msg' => 'success', 'result' => ['end_time' => $endTime, 'goods_list' => $flashSaleGoods]]);
+                return json(['status' => 1, 'msg' => 'success', 'result' => ['now_time' => time(), 'end_time' => $endTime, 'goods_list' => $flashSaleGoods]]);
             default:
-                return ['end_time' => $endTime, 'goods_list' => $flashSaleGoods];
+                return ['now_time' => time(), 'end_time' => $endTime, 'goods_list' => $flashSaleGoods];
         }
     }
 

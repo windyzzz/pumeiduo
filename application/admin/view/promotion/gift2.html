@@ -97,7 +97,7 @@
 							<td align="left" class="handle">
 								<div style="text-align: left; width: 170px; max-width:170px;">
 									<a class="btn blue" href="{:U('Promotion/gift2_info',array('id'=>$vo['id']))}"><i class="fa fa-pencil-square-o"></i>编辑</a>
-									<a class="btn red" href="{:U('Promotion/gift2_del',array('id'=>$vo['id']))}"><i class="fa fa-trash-o"></i>删除</a>
+									<a class="btn red" onclick="return confirm('确定删除当前数据？')" href="{:U('Promotion/gift2_del',array('id'=>$vo['id']))}"><i class="fa fa-trash-o"></i>删除</a>
 								</div>
 							</td>
 							<td align="" class="" style="width: 100%;">

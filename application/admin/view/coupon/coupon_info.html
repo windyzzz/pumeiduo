@@ -189,7 +189,7 @@
                 <dd class="opt">
                     <input type="text" id="money" name="money"  onpaste="this.value=this.value.replace(/[^\d.]/g,'')" onkeyup="this.value=this.value.replace(/[^\d.]/g,'')" value="{$coupon.money}" class="input-txt">
                     <span class="err" id="err_money"></span>
-                    <p class="notic">优惠券可抵扣金额 下方如果选择了折扣商品，则为折扣数值  5折</p>
+                    <p class="notic">优惠券可抵扣金额，选择了折扣商品，则为折扣数值</p>
                 </dd>
             </dl>
             <dl class="row" id="condition_row" style="display:<if condition='$coupon[use_type] neq 5'>;<else/>none;</if>">
@@ -200,16 +200,6 @@
                     <input type="text" id="condition" name="condition" value="{$coupon.condition}" onpaste="this.value=this.value.replace(/[^\d.]/g,'')" onkeyup="this.value=this.value.replace(/[^\d.]/g,'')" class="input-txt">
                     <span class="err" id="err_condition"></span>
                     <p class="notic">订单需满足的最低消费金额(必需为整数)才能使用</p>
-                </dd>
-            </dl>
-            <dl class="row" id="discount_row" style="display:<if condition='$coupon[use_type] eq 4'>;<else/>none;</if>">>
-                <dt class="tit">
-                    <label><em>*</em>折扣</label>
-                </dt>
-                <dd class="opt">
-                    <input type="text" id="discount" name="discount" value="{$coupon.discount}" onpaste="this.value=this.value.replace(/[^\d.]/g,'')" onkeyup="this.value=this.value.replace(/[^\d.]/g,'')" class="input-txt">
-                    <span class="err" id="err_discount"></span>
-                    <p class="notic">优惠折扣</p>
                 </dd>
             </dl>
             <dl class="row">
@@ -378,7 +368,6 @@
 
                 $('#money_row').show();
                 $('#condition_row').show();
-                $('#discount_row').hide();
                 break;
             case 1:
                 $('#enable_goods').show();
@@ -386,7 +375,6 @@
 
                 $('#money_row').show();
                 $('#condition_row').show();
-                $('#discount_row').hide();
                 break;
             case 2:
                 $('#enable_goods').hide();
@@ -395,12 +383,10 @@
 
                 $('#money_row').show();
                 $('#condition_row').show();
-                $('#discount_row').hide();
                 break;
             case 4:
-                $('#money_row').hide();
-                $('#condition_row').hide();
-                $('#discount_row').show();
+                $('#money_row').show();
+                $('#condition_row').show();
                 break;
             case 5:
                 $('#enable_goods').show();
@@ -409,7 +395,6 @@
 
                 $('#money_row').hide();
                 $('#condition_row').hide();
-                $('#discount_row').hide();
                 break;
         }
     }

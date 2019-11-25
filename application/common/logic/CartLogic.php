@@ -175,6 +175,8 @@ class CartLogic extends Model
             'zone' => $this->goods['zone']
         ];
         if (empty($this->specGoodsPrice)) {
+            $buyGoods['goods']['spec_key'] = '';
+            $buyGoods['goods']['spec_key_name'] = '';
             $specGoodsPriceCount = Db::name('SpecGoodsPrice')->where('goods_id', $this->goods['goods_id'])->count('item_id');
             if ($specGoodsPriceCount > 0) {
                 throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '必须传递商品规格', 'result' => '']);
@@ -182,6 +184,8 @@ class CartLogic extends Model
             $prom_type = $this->goods['prom_type'];
             $store_count = $this->goods['store_count'];
         } else {
+            $buyGoods['goods']['spec_key'] = $this->specGoodsPrice['key'];
+            $buyGoods['goods']['spec_key_name'] = $this->specGoodsPrice['key_name'];
             $buyGoods['member_goods_price'] = $this->specGoodsPrice['price'];
             $buyGoods['goods_price'] = $this->specGoodsPrice['price'];
             $buyGoods['spec_key'] = $this->specGoodsPrice['key'];

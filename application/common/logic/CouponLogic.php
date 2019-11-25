@@ -201,16 +201,15 @@ class CouponLogic extends Model
      */
     public function getUserAbleCouponList($user_id, $goods_ids = [], $goods_cat_id = [])
     {
-
-        $goods_list = M('goods')->where('goods_id', 'in', $goods_ids)->select();
-        foreach ($goods_list as $key => $value) {
-            if ($value['prom_id'] > 0) {
-                return [];
-            }
-            if (3 == $value['zone']) {
-                return [];
-            }
-        }
+//        $goods_list = M('goods')->where('goods_id', 'in', $goods_ids)->select();
+//        foreach ($goods_list as $key => $value) {
+//            if ($value['prom_id'] > 0) {
+//                return [];
+//            }
+//            if (3 == $value['zone']) {
+//                return [];
+//            }
+//        }
         $CouponList = new CouponList();
         $Coupon = new Coupon();
         $userCouponArr = [];
@@ -290,15 +289,15 @@ class CouponLogic extends Model
 
     public function getUserAbleCouponListRe($user_id, $goods_ids = [], $goods_cat_id = [])
     {
-        $goods_list = M('goods')->where('goods_id', 'in', $goods_ids)->select();
-        foreach ($goods_list as $key => $value) {
-            /*if ($value['prom_id'] > 0) {
-                return [];
-            }*/
-            /*if (3 == $value['zone']) {
-                return [];
-            }*/
-        }
+//        $goods_list = M('goods')->where('goods_id', 'in', $goods_ids)->select();
+//        foreach ($goods_list as $key => $value) {
+//            if ($value['prom_id'] > 0) {
+//                return [];
+//            }
+//            if (3 == $value['zone']) {
+//                return [];
+//            }
+//        }
         $CouponList = new CouponList();
         $Coupon = new Coupon();
         $userCouponArr = [];
@@ -320,7 +319,6 @@ class CouponLogic extends Model
                         // 兑换券
                         $tmp = $userCouponItem;
                         $tmp['coupon'] = $couponItem->append(['use_type_title'])->toArray();
-
                         $tmp['coupon_goods'] = M('goods_coupon')
                             ->alias('gc')
                             ->join('goods g', 'g.goods_id = gc.goods_id')

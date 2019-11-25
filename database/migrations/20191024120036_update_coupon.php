@@ -32,8 +32,6 @@ class UpdateCoupon extends Migrator
             ->changeColumn('type_value', 'string', ['default' => '', 'comment' => '放对象（0：所有人，1：注册会员，2：普卡会员，3：网店会员，4：新用户）', 'after' => 'type'])
             ->changeColumn('use_type', 'integer', ['limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'default' => 0,
                 'comment' => '使用范围：0全店通用 1指定商品可用 2指定分类可用 4折扣商品 5兑换商品', 'after' => 'type_value'])
-            ->addColumn('goods_num', 'integer', ['null' => true, 'comment' => '商品数量（满多少促销）'])
-            ->addColumn('discount', 'decimal', ['null' => true, 'comment' => '折扣', 'precision' => 10, 'scale' => 2, 'after' => 'goods_num'])
             ->update();
     }
 }
