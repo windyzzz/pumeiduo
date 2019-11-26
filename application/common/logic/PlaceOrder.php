@@ -171,7 +171,6 @@ class PlaceOrder
      */
     public function check()
     {
-
         $pay_points = $this->pay->getPayPoints();
         $user_electronic = $this->pay->getUserElectronic();
         if ($pay_points || $user_electronic) {

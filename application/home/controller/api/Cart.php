@@ -1065,6 +1065,76 @@ class Cart extends Base
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
     }
 
+
+    public function createOrder()
+    {
+        $goodsId = I('goods_id', '');                   // 商品ID
+        $itemId = I('item_id', '');                     // 商品规格ID
+        $goodsNum = I('goods_num', '');                 // 商品数量
+        $payType = input('pay_type', 1);                // 结算类型
+        $cartIds = I('cart_ids', '');                   // 购物车ID组合
+        $addressId = I('address_id', '');               // 地址ID
+        $couponId = I('coupon_id', '');                 // 优惠券ID
+        $exchangeId = I('exchange_id', '');             // 兑换券ID
+        $payPwd = I('pay_pwd', '');                     // 支付密码
+        $userElectronic = I('user_electronic', '');     // 使用电子币
+
+        if (!$addressId) {
+            return json(['status' => 0, 'msg' => '请先填写收货人信息']);
+        }
+        $address = Db::name('UserAddress')->where('address_id', $addressId)->find();
+        if (empty($address)) {
+            return json(['status' => 0, 'msg' => '收货人信息不存在']);
+        }
+
+        $cartLogic = new CartLogic();
+        $cartLogic->setUserId($this->user_id);
+        if (!empty($goodsId) && empty($cartIds)) {
+            /*
+             * 单个商品下单
+             */
+            $cartLogic->setGoodsModel($goodsId);
+            $cartLogic->setSpecGoodsPriceModel($itemId);
+            $cartLogic->setGoodsBuyNum($goodsNum);
+            $cartLogic->setType($payType);
+            $cartLogic->setCartType(0);
+            try {
+                $buyGoods = $cartLogic->buyNow();
+            } catch (TpshopException $t) {
+                $error = $t->getErrorArr();
+                return json(['status' => 0, 'msg' => $error['msg']]);
+            }
+            $cartList['cartList'] = [$buyGoods];
+        } elseif (empty($goodsId) && !empty($cartIds)) {
+            /*
+             * 购物车下单
+             */
+            $cartIds = explode(',', $cartIds);
+            foreach ($cartIds as $k => $v) {
+                $data = [];
+                $data['id'] = $v;
+                $data['selected'] = 1;
+                $cartIds[$k] = $data;
+            }
+            $result = $cartLogic->AsyncUpdateCarts($cartIds);
+            if (1 != $result['status']) {
+                return json(['status' => 0, 'msg' => $result['msg'], 'result' => null]);
+            }
+            if (0 == $cartLogic->getUserCartOrderCount()) {
+                return json(['status' => 0, 'msg' => '你的购物车没有选中商品', 'result' => null]);
+            }
+            $cartList['cartList'] = $cartLogic->getCartList(1); // 获取用户选中的购物车商品
+        } else {
+            /*
+             * 单个商品 + 购物车 下单
+             */
+
+        }
+
+
+
+    }
+
     //ajax 请求购物车列表
     public function header_cart_list()
     {

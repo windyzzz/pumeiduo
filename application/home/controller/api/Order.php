@@ -1092,7 +1092,7 @@ class Order extends Base
         $exchangeList = [];
         foreach ($userExchangeList as $coupon) {
             $exchangeList[] = [
-                'coupon_id' => $coupon['coupon']['id'],
+                'exchange_id' => $coupon['coupon']['id'],
                 'name' => $coupon['coupon']['name'],
                 'money' => $coupon['coupon']['money'],
                 'use_start_time' => date('Y-m-d', $coupon['coupon']['use_start_time']),

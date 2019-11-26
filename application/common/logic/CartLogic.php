@@ -174,6 +174,24 @@ class CartLogic extends Model
             'item_id' => empty($this->specGoodsPrice) ? 0 : $this->specGoodsPrice->item_id,
             'zone' => $this->goods['zone']
         ];
+        // 订单优惠促销（查看是否有赠送商品）
+        $orderProm = Db::name('order_prom_goods opg')->join('order_prom op', 'op.id = opg.order_prom_id')
+            ->where(['opg.type' => 1, 'goods_id' => $this->goods['goods_id'], 'item_id' => $buyGoods['item_id']])
+            ->where(['op.type' => ['in', '0, 2'], 'is_open' => 1, 'is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])
+            ->field('order_prom_id, order_price')->find();
+        if ($orderProm) {
+            $buyGoods['is_order_prom'] = 1;
+        } else {
+            // 订单优惠促销（查看是否有优惠价格）
+            $orderProm = Db::name('order_prom_goods opg')->join('order_prom op', 'op.id = opg.order_prom_id')
+                ->where(['opg.type' => 1, 'goods_id' => $this->goods['goods_id'], 'item_id' => $buyGoods['item_id']])
+                ->where(['op.type' => ['in', '0, 1'], 'is_open' => 1, 'is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])
+                ->field('order_prom_id, order_price, discount_price')->find();
+            if ($orderProm) {
+                $buyGoods['is_order_prom'] = 1;
+            }
+        }
+
         if (empty($this->specGoodsPrice)) {
             $buyGoods['goods']['spec_key'] = '';
             $buyGoods['goods']['spec_key_name'] = '';
@@ -1434,7 +1452,7 @@ class CartLogic extends Model
                 if ($differ <= 0) {
                     return ['status' => 1, 'type_value' => '已满' . $promInfo['goods_num'] . '件，已打' . $promInfo['expression'] . '折'];
                 } else {
-                    return ['status' => 0, 'type_value' => '已满' . $goodsNum . '件', 'other_value' => '再购买' . $differ . '件，可打' . $promInfo['expression'] . '折'];
+                    return ['status' => 0, 'type_value' => '已满' . $goodsNum . '件', 'other_value' => '再购' . $differ . '件可打' . $promInfo['expression'] . '折，去凑单'];
                 }
             case 5:
                 // 满减价
@@ -1442,7 +1460,7 @@ class CartLogic extends Model
                 if ($differ <= 0) {
                     return ['status' => 1, 'type_value' => '已满' . $promInfo['goods_price'] . '元，已减' . $promInfo['expression'] . '元'];
                 } else {
-                    return ['status' => 0, 'type_value' => '已满' . $goodsPrice . '元', 'other_value' => '再购买' . $differ . '元，可减' . $promInfo['expression'] . '元'];
+                    return ['status' => 0, 'type_value' => '已满' . $goodsPrice . '元', 'other_value' => '再购' . $differ . '元可减' . $promInfo['expression'] . '元，去凑单'];
                 }
             default:
                 return ['status' => 1, 'type_value' => $promInfo['title']];
