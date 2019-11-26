@@ -1382,4 +1382,28 @@ class CartLogic extends Model
     {
         Db::name('cart')->where(['user_id' => $this->user_id, 'selected' => 1])->delete();
     }
+
+    /**
+     * 获取购物车商品信息
+     * @param array $cartIds
+     * @param string $field
+     * @param bool $getField
+     * @return false|mixed|\PDOStatement|string|\think\Collection
+     */
+    public function getCartGoods($cartIds = [], $field = '', $getField = false)
+    {
+        if (!empty($cartIds)) {
+            $where['c.id'] = ['in', $cartIds];
+        } else {
+            $where['c.user_id'] = $this->user_id;
+        }
+        $data = Db::name('cart c')->join('goods g', 'g.goods_id = c.goods_id')
+            ->join('spec_goods_price sgp', 'sgp.goods_id = c.goods_id and sgp.`key` = c.spec_key', 'LEFT')
+            ->where($where)->field($field);
+        if ($getField) {
+            return $data->getField($field, true);
+        } else {
+            return $data->select();
+        }
+    }
 }

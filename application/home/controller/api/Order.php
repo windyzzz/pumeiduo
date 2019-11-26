@@ -972,11 +972,11 @@ class Order extends Base
     }
 
     /**
-     * 提交订单前的信息
+     * 获取提交订单前的信息
      * @return \think\response\Json
      * @throws \app\common\util\TpshopException
      */
-    public function orderBefore()
+    public function orderBeforeInfo()
     {
         // 用户默认地址
         $userAddress = get_user_address_list_new($this->user_id, true);
@@ -990,15 +990,20 @@ class Order extends Base
         $goodsId = I('goods_id', '');           // 商品ID
         $itemId = I('item_id', '');             // 商品规格ID
         $goodsNum = I('goods_num', '');         // 商品数量
+        $payType = input('pay_type', 1);        // 结算类型
         $cartIds = I('cart_ids', '');           // 购物车ID组合
         $couponId = I('coupon_id', '');         // 优惠券ID
 
         $cartLogic = new CartLogic();
+        $cartLogic->setUserId($this->user_id);
         if (!empty($goodsId) && empty($cartIds)) {
+            /*
+             * 单个商品下单
+             */
             $cartLogic->setGoodsModel($goodsId);
             $cartLogic->setSpecGoodsPriceModel($itemId);
             $cartLogic->setGoodsBuyNum($goodsNum);
-            $cartLogic->setType(2);
+            $cartLogic->setType($payType);
             $cartLogic->setCartType(0);
             try {
                 $buyGoods = $cartLogic->buyNow();
@@ -1007,7 +1012,10 @@ class Order extends Base
                 return json(['status' => 0, 'msg' => $error['msg']]);
             }
             $cartList['cartList'] = [$buyGoods];
-        } else {
+        } elseif (empty($goodsId) && !empty($cartIds)) {
+            /*
+             * 购物车下单
+             */
             $cartIds = explode(',', $cartIds);
             foreach ($cartIds as $k => $v) {
                 $data = [];
@@ -1015,7 +1023,6 @@ class Order extends Base
                 $data['selected'] = 1;
                 $cartIds[$k] = $data;
             }
-            $cartLogic->setUserId($this->user_id);
             $result = $cartLogic->AsyncUpdateCarts($cartIds);
             if (1 != $result['status']) {
                 return json(['status' => 0, 'msg' => $result['msg'], 'result' => null]);
@@ -1024,6 +1031,33 @@ class Order extends Base
                 return json(['status' => 0, 'msg' => '你的购物车没有选中商品', 'result' => null]);
             }
             $cartList['cartList'] = $cartLogic->getCartList(1); // 获取用户选中的购物车商品
+        } else {
+            /*
+             * 单个商品 + 购物车 下单
+             */
+            $cartIds = explode(',', $cartIds);
+            $goodsInfo = $cartLogic->getCartGoods($cartIds, 'c.goods_id, sgp.item_id, c.goods_num, c.type pay_type');
+            $goodsInfo[] = [
+                'goods_id' => $goodsId,
+                'item_id' => $itemId,
+                'goods_num' => $goodsNum,
+                'pay_type' => $payType
+            ];
+            $buyGoods = [];
+            foreach ($goodsInfo as $goods) {
+                $cartLogic->setGoodsModel($goods['goods_id']);
+                $cartLogic->setSpecGoodsPriceModel($goods['item_id']);
+                $cartLogic->setGoodsBuyNum($goods['goods_num']);
+                $cartLogic->setType($goods['pay_type']);
+                $cartLogic->setCartType(0);
+                try {
+                    $buyGoods[] = $cartLogic->buyNow();
+                } catch (TpshopException $t) {
+                    $error = $t->getErrorArr();
+                    return json(['status' => 0, 'msg' => $error['msg']]);
+                }
+            }
+            $cartList['cartList'] = $buyGoods;
         }
         $cartPriceInfo = $cartLogic->getCartPriceInfo($cartList['cartList']);  //初始化数据 商品总额/节约金额/商品总共数量/商品使用积分
         $cartList = array_merge($cartList, $cartPriceInfo);

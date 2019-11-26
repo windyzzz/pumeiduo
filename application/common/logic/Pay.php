@@ -628,6 +628,8 @@ class Pay
                 if (count($gift2_goods_list) > 0) {
                     $goods_list[$k]['gift_goods'] = $gift2_goods_list;
                 }
+            } else {
+                $goods_list[$k]['gift_goods'] = [];
             }
             if ($orderPromPrice > 0) {
                 $itemId = isset($v['item_id']) ? $v['item_id'] : 0;
