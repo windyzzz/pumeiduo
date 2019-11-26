@@ -727,6 +727,7 @@ class CartLogic extends Model
         if (0 != $selected) {
             $cartWhere['selected'] = 1;
         }
+        $cartWhere['goods_num'] = ['neq', 0];
         $cartList = $cart
             ->field("
                 *,CASE type WHEN 1 THEN goods_price - member_goods_price ELSE '0' END AS use_point,
@@ -1404,6 +1405,47 @@ class CartLogic extends Model
             return $data->getField($field, true);
         } else {
             return $data->select();
+        }
+    }
+
+    /**
+     * 检查优惠促销（同一优惠促销）
+     * @param $promInfo
+     * @param $cartList
+     * @return array
+     */
+    public function checkCardPromotion($promInfo, $cartList)
+    {
+        $goodsNum = 0;          // 商品总数量
+        $goodsPrice = 0.00;     // 商品总价格
+        foreach ($cartList as $k => $v) {
+            $goodsNum += $v['goods_num'];
+            $goodsPrice = bcadd($goodsPrice, $v['member_goods_price'], 2);
+        }
+        switch ($promInfo['type']) {
+            case 0:
+            case 1:
+            case 2:
+            case 3:
+                return ['status' => 1, 'type_value' => $promInfo['title']];
+            case 4:
+                // 满打折
+                $differ = (int)$promInfo['goods_num'] - $goodsNum;
+                if ($differ <= 0) {
+                    return ['status' => 1, 'type_value' => '已满' . $promInfo['goods_num'] . '件，已打' . $promInfo['expression'] . '折'];
+                } else {
+                    return ['status' => 0, 'type_value' => '已满' . $goodsNum . '件', 'other_value' => '再购买' . $differ . '件，可打' . $promInfo['expression'] . '折'];
+                }
+            case 5:
+                // 满减价
+                $differ = bcsub($promInfo['goods_price'], $goodsPrice, 2);
+                if ($differ <= 0) {
+                    return ['status' => 1, 'type_value' => '已满' . $promInfo['goods_price'] . '元，已减' . $promInfo['expression'] . '元'];
+                } else {
+                    return ['status' => 0, 'type_value' => '已满' . $goodsPrice . '元', 'other_value' => '再购买' . $differ . '元，可减' . $promInfo['expression'] . '元'];
+                }
+            default:
+                return ['status' => 1, 'type_value' => $promInfo['title']];
         }
     }
 }

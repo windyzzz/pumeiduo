@@ -396,7 +396,10 @@ class Cart extends Base
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
     }
 
-
+    /**
+     * 检查购物车选中商品的优惠信息
+     * @return \think\response\Json
+     */
     public function checkCartPromotion()
     {
         $params['user_token'] = $this->userToken;
@@ -405,27 +408,19 @@ class Cart extends Base
         $promId = I('prom_id', '');
         $promType = I('prom_type', '');
         $cartIds = I('cart_ids', '');
+        switch ($promType) {
+            case 0:
+            case 3:
+            case 4:
+            case 5:
+                $promInfo = Db::name('prom_goods')->where(['id' => $promId])->find();
+                break;
+            default:
+                return json(['status' => 0, 'msg' => '活动类型错误']);
+        }
         if (empty($cartIds)) {
             // 该活动没有选择商品
-            switch ($promType) {
-                case 0:
-                case 1:
-                case 2:
-                case 3:
-                case 4:
-                case 5:
-                    $promInfo = Db::name('prom_goods')->where(['id' => $promId])->find();
-                    break;
-                case 6:
-                    $promInfo = Db::name('flash_sale')->where(['id' => $promId])->find();
-                    break;
-                case 7:
-                    $promInfo = Db::name('group_buy')->where(['id' => $promId])->find();
-                    break;
-                default:
-                    return json(['status' => 0, 'msg' => '活动类型错误']);
-            }
-            return json(['prom_id' => $promId, 'type' => $promType, 'type_value' => $promInfo['title'], 'other_value' => '']);
+            return json(['status' => 1, 'result' => ['prom_id' => $promId, 'type' => $promType, 'type_value' => $promInfo['title'], 'other_value' => '']]);
         }
         $cartIds = explode(',', $cartIds);
         foreach ($cartIds as $k => $v) {
@@ -435,10 +430,16 @@ class Cart extends Base
             $cartIds[$k] = $data;
         }
         $result = $this->AsyncUpdateCarts($cartIds);
-        $goodsList = $result['result']['cartList'];     // 选中商品
+        $cartList = $result['result']['cartList'];     // 选中购物车商品
         unset($result['result']['cartList']);
-        $Pay = new Pay();
-        $res = $Pay->goodsPromotion($goodsList, false, 'prom_info');
+        $cartLogic = new CartLogic();
+        $res = $cartLogic->checkCardPromotion($promInfo, $cartList);
+        return json(['status' => 1, 'result' => [
+            'prom_id' => $promInfo['id'],
+            'type' => $promInfo['type'],
+            'type_value' => $res['type_value'],
+            'other_value' => isset($res['other_value']) ? $res['other_value'] : '']
+        ]);
     }
 
     /**

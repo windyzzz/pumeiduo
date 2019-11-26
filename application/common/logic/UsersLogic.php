@@ -1339,7 +1339,7 @@ class UsersLogic extends Model
             }
             // 处理显示金额
             if ($v['exchange_integral'] != 0) {
-                $result[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100 ,2);
+                $result[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);
             } else {
                 $result[$k]['exchange_price'] = $v['shop_price'];
             }
@@ -1647,7 +1647,6 @@ class UsersLogic extends Model
             }
         }
 
-        //检查手机格式
         if ('' == $post['consignee']) {
             return ['status' => -1, 'msg' => '收货人不能为空', 'result' => ''];
         }
@@ -1697,6 +1696,43 @@ class UsersLogic extends Model
         }
 
         return ['status' => 1, 'msg' => '添加成功', 'result' => $address_id];
+    }
+
+    /**
+     * 获取地址标签
+     * @param $userId
+     * @return false|\PDOStatement|string|\think\Collection
+     */
+    public function getAddressTab($userId)
+    {
+        return Db::name('address_tab')->whereOr(['user_id' => ['in', [0, $userId]]])->field('id tab_id, name')->select();
+    }
+
+    /**
+     * 添加地址标签
+     * @param $userId
+     * @param $name
+     * @return array|\think\db\Query
+     */
+    public function addAddressTab($userId, $name)
+    {
+        if (Db::name('address_tab')->where(['user_id' => $userId, 'name' => $name])->find()) {
+            return ['status' => 0, 'msg' => '标签已重复'];
+        }
+        Db::name('address_tab')->add(['name' => $name, 'user_id' => $userId]);
+        return ['status' => 1, 'msg' => '添加成功'];
+    }
+
+    /**
+     * 删除地址标签
+     * @param $userId
+     * @param $tabId
+     * @return array
+     */
+    public function delAddressTab($userId, $tabId)
+    {
+        Db::name('address_tab')->where(['id' => $tabId, 'user_id' => $userId])->delete();
+        return ['status' => 1, 'msg' => '删除成功'];
     }
 
     /**

@@ -1006,11 +1006,14 @@ function get_user_address_list($user_id)
 /*
  * 获取用户地址列表（新）
  */
-function get_user_address_list_new($user_id, $default = false)
+function get_user_address_list_new($user_id, $default = false, $addressId = 0)
 {
     $where = ['user_id' => $user_id];
     if ($default) {
         $where['is_default'] = 1;
+    }
+    if ($addressId) {
+        $where['address_id'] = $addressId;
     }
     $lists = Db::name('user_address ua')
         ->join('region2 r1', 'r1.id = ua.province', 'LEFT')
@@ -1019,6 +1022,7 @@ function get_user_address_list_new($user_id, $default = false)
         ->where($where)->order('is_default desc')->limit(20)
         ->field('address_id, consignee, mobile, province, r1.name province_name, city, r2.name city_name, district, r3.name district_name,
         address, zipcode, is_default, is_pickup, tabs')
+        ->order('ua.is_default DESC, ua.address_id DESC')
         ->select();
 
     return $lists;

@@ -981,18 +981,17 @@ class Order extends Base
         // 用户默认地址
         $userAddress = get_user_address_list_new($this->user_id, true);
         if (!empty($userAddress)) {
-            $userAddress = $userAddress[0];
+            unset($userAddress[0]['zipcode']);
+            unset($userAddress[0]['is_pickup']);
+            unset($userAddress[0]['tabs']);
         }
-        unset($userAddress['zipcode']);
-        unset($userAddress['is_pickup']);
-        unset($userAddress['tabs']);
 
         $goodsId = I('goods_id', '');           // 商品ID
         $itemId = I('item_id', '');             // 商品规格ID
         $goodsNum = I('goods_num', '');         // 商品数量
         $payType = input('pay_type', 1);        // 结算类型
-        $cartIds = I('cart_ids', '');           // 购物车ID组合
         $couponId = I('coupon_id', '');         // 优惠券ID
+        $cartIds = I('cart_ids', '');           // 购物车ID组合
 
         $cartLogic = new CartLogic();
         $cartLogic->setUserId($this->user_id);
@@ -1115,7 +1114,7 @@ class Order extends Base
         if (empty($userAddress)) {
             $payLogic->delivery(0);
         } else {
-            $payLogic->delivery($userAddress['district']);
+            $payLogic->delivery($userAddress[0]['district']);
         }
         $pay_points = $payLogic->getUsePoint();     // 使用积分
         if ($this->user['pay_points'] < $pay_points) {

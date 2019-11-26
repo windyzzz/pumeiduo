@@ -484,6 +484,58 @@ class User extends Base
     }
 
     /**
+     * 用户地址信息
+     * @return \think\response\Json
+     */
+    public function address_info()
+    {
+        $addressId = I('address_id', '');
+        if (!$addressId) {
+            return json(['status' => 0, 'msg' => '地址ID错误']);
+        }
+        $addressList = get_user_address_list_new($this->user_id, false, $addressId);
+        foreach ($addressList as $key => $value) {
+            $addressList[$key]['tabs'] = Db::name('address_tab')->where(['id' => ['in', explode(',', $value['tabs'])]])->field('id tab_id, name')->select();
+        }
+        return json(['status' => 1, 'msg' => 'success', 'result' => $addressList[0]]);
+    }
+
+    /**
+     * 地址标签
+     * @param Request $request
+     * @return \think\response\Json
+     */
+    public function address_tab(Request $request)
+    {
+        if ($request->isPost()) {
+            // 添加标签
+            $action = $request->post('action', '');
+            switch ($action) {
+                case 'add':
+                    $tabName = $request->post('tab_name', '');
+                    if (!$tabName) {
+                        return json(['status' => 0, 'msg' => '标签名不能为空']);
+                    }
+                    $res = (new UsersLogic())->addAddressTab($this->user_id, $tabName);
+                    break;
+                case 'del':
+                    $tabId = I('tab_id', '');
+                    if (!$tabId) {
+                        return json(['status' => 0, 'msg' => '标签ID不能为空']);
+                    }
+                    $res = (new UsersLogic())->delAddressTab($this->user_id, $tabId);
+                    break;
+                default:
+                    return json(['status' => 0, 'msg' => '行为错误']);
+            }
+            if ($res['status'] == 0) return json(['status' => 0, 'msg' => $res['msg']]);
+            return json(['status' => 1, 'msg' => $res['msg']]);
+        }
+        $addressTab = (new UsersLogic())->getAddressTab($this->user_id);
+        return json(['status' => 1, 'result' => $addressTab]);
+    }
+
+    /**
      * 设置新手机.
      *
      * @return mixed
@@ -673,7 +725,6 @@ class User extends Base
         if (!$row) {
             return json(['status' => 0, 'msg' => '操作失败', 'result' => null]);
         }
-
         return json(['status' => 1, 'msg' => '操作成功', 'result' => null]);
     }
 

@@ -1071,7 +1071,9 @@ class Pay
 
             if ($goods_tao_grade) {
                 foreach ($goods_tao_grade as $key => $group_activity) {
-
+                    if ($this->orderPromId == $group_activity['id']) {
+                        continue;
+                    }
                     if ($isOrder && $group_activity['buy_limit'] > 0) {
                         $buy_num = M('order')
                             ->alias('oi')
