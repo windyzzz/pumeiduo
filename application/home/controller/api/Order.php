@@ -17,8 +17,10 @@ use app\common\logic\CouponLogic;
 use app\common\logic\MessageLogic;
 use app\common\logic\OrderLogic;
 use app\common\logic\Pay;
+use app\common\logic\PlaceOrder;
 use app\common\logic\UsersLogic;
 use app\common\util\TpshopException;
+use app\home\controller\Api as ApiController;
 use think\Db;
 use think\Hook;
 use think\Page;
@@ -143,6 +145,84 @@ class Order extends Base
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
     }
 
+    /**
+     * 订单列表（新）
+     * @return array
+     */
+    public function order_list_new()
+    {
+        $where = "user_id = $this->user_id AND deleted != 1";
+        if (I('type')) {
+            $where .= C(strtoupper(I('get.type')));
+        }
+        $where .= ' and prom_type < 5 '; // 虚拟拼团订单不列出来
+        // 搜索订单 根据商品名称 或者 订单编号
+        $search_key = trim(I('search_key'));
+        $bind = [];
+        if ($search_key) {
+            $where .= ' and (order_sn like :search_key1 or order_id in (select order_id from `' . C('database.prefix') . 'order_goods` where goods_name like :search_key2) ) ';
+            $bind['search_key1'] = "%$search_key%";
+            $bind['search_key2'] = "%$search_key%";
+        }
+        // 订单数量
+        $orderNum = Db::name('order')->where($where)->bind($bind)->count();
+        $page = new Page($orderNum, 10);
+        // 订单列表
+        $orderList = Db::name('order')->where($where)->bind($bind)->order('order_id DESC')->limit($page->firstRow . ',' . $page->listRows)->select();
+        $orderIds = [];
+        foreach ($orderList as $order) {
+            $orderIds[] = $order['order_id'];
+        }
+        // 订单商品数据
+        $userLogic = new OrderLogic();
+        $orderGoods = $userLogic->getOrderGoods($orderIds);
+        // 组合数据
+        $orderData = [];
+        foreach ($orderList as $k => $list) {
+            $orderList[$k] = set_btn_order_status($list);  // 添加属性  包括按钮显示属性 和 订单状态显示属性
+            $orderData[$k] = [
+                'type' => 1,
+                'type_value' => '圃美多乐活',
+                'order_info' => [
+                    'order_id' => $list['order_id'],
+                    'order_sn' => $list['order_sn'],
+                    'order_status' => $list['order_status'],
+                    'pay_status' => $list['order_status'],
+                    'shipping_status' => $list['order_status'],
+                    'order_status_code' => $orderList[$k]['order_status_code'],
+                    'order_status_desc' => $orderList[$k]['order_status_desc'],
+                    'order_amount' => $list['order_amount'],
+                    'shipping_price' => $list['shipping_price'],
+                    'add_time' => $list['add_time'],
+                ],
+                'order_goods' => []     // 订单商品
+            ];
+            $goodsNum = 0;          // 商品数量
+            $giveIntegral = 0.00;   // 返还积分
+            foreach ($orderGoods as $goods) {
+                if ($list['order_id'] == $goods['order_id']) {
+                    $orderData[$k]['order_goods'][] = [
+                        'goods_id' => $goods['goods_id'],
+                        'goods_sn' => $goods['goods_sn'],
+                        'goods_name' => $goods['goods_name'],
+                        'spec_key_name' => $goods['spec_key_name'],
+                        'item_id' => $goods['item_id'],
+                        'goods_num' => $goods['goods_num'],
+                        'shop_price' => $goods['goods_price'],
+                        'exchange_integral' => $goods['use_integral'],
+                        'exchange_price' => $goods['member_goods_price'],
+                        'original_img' => $goods['original_img']
+                    ];
+                }
+                $goodsNum += $goods['goods_num'];
+                $giveIntegral = bcadd($giveIntegral, $goods['give_integral'], 2);
+            }
+            $orderData[$k]['order_info']['total_num'] = $goodsNum;
+            $orderData[$k]['order_info']['give_integral'] = $giveIntegral;
+        }
+        return json(['status' => 1, 'result' => $orderData]);
+    }
+
     /*
      * 订单详情
      */
@@ -263,6 +343,92 @@ class Order extends Base
         }
 
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
+    }
+
+    /**
+     * 订单详情（新）
+     * @return array|\think\response\Json
+     */
+    public function order_detail_new()
+    {
+        $orderId = I('order_id', '');
+        $map['order_id'] = $orderId;
+        $map['user_id'] = $this->user_id;
+        $orderInfo = M('order')->where($map)->find();
+        if (!$orderInfo) {
+            return json(['status' => 0, 'msg' => '没有获取到订单信息', 'result' => null]);
+        }
+        $orderInfo = set_btn_order_status($orderInfo);  // 添加属性  包括按钮显示属性 和 订单状态显示属性
+        // 获取订单商品
+        $userLogic = new UsersLogic();
+        $orderGoods = $userLogic->get_order_goods($orderInfo['order_id'])['result'];
+        // 自动确认时间
+        if ($orderInfo['shipping_status'] == 1 && $orderInfo['order_status'] == 1) {
+            $autoConfirmTime = $orderInfo['shipping_time'] + tpCache('shopping.auto_confirm_date') * 24 * 60 * 60;
+        } else {
+            $autoConfirmTime = 0;
+        }
+        // 组合数据
+        $orderData = [
+            'order_id' => $orderInfo['order_id'],
+            'order_sn' => $orderInfo['order_sn'],
+            'transaction_id' => $orderInfo['transaction_id'],
+            'order_status' => $orderInfo['order_status'],
+            'pay_status' => $orderInfo['order_status'],
+            'shipping_status' => $orderInfo['order_status'],
+            'order_status_code' => $orderInfo['order_status_code'],
+            'order_status_desc' => $orderInfo['order_status_desc'],
+            'pay_code' => $orderInfo['pay_code'],
+            'pay_name' => $orderInfo['pay_name'],
+            'goods_price' => $orderInfo['goods_price'],
+            'weight' => 0,
+            'shipping_price' => $orderInfo['shipping_price'],
+            'coupon_price' => $orderInfo['coupon_price'],
+            'prom_price' => $orderInfo['order_prom_amount'],
+            'electronic_price' => $orderInfo['user_electronic'],
+            'pay_points' => $orderInfo['integral'],
+            'order_amount' => $orderInfo['order_amount'],
+            'give_integral' => 0,
+            'add_time' => $orderInfo['add_time'],
+            'pay_time' => $orderInfo['pay_time'],
+            'shipping_time' => $orderInfo['shipping_time'],
+            'confirm_time' => $orderInfo['confirm_time'],
+            'delivery' => [
+                'consignee' => $orderInfo['consignee'],
+                'mobile' => $orderInfo['mobile'],
+                'province' => $orderInfo['province'],
+                'province_name' => Db::name('region2')->where(['id' => $orderInfo['province']])->value('name'),
+                'city' => $orderInfo['city'],
+                'city_name' => Db::name('region2')->where(['id' => $orderInfo['city']])->value('name'),
+                'district' => $orderInfo['district'],
+                'district_name' => Db::name('region2')->where(['id' => $orderInfo['district']])->value('name'),
+                'address' => $orderInfo['address'],
+                'auto_confirm_time' => $autoConfirmTime,
+                'shipping_name' => $orderInfo['shipping_name']
+            ],
+            'goods' => []
+        ];
+        $weight = 0.00;
+        $giveIntegral = 0.00;
+        foreach ($orderGoods as $goods) {
+            $orderData['goods'][] = [
+                'goods_id' => $goods['goods_id'],
+                'goods_sn' => $goods['goods_sn'],
+                'goods_name' => $goods['goods_name'],
+                'spec_key_name' => $goods['spec_key_name'],
+                'item_id' => $goods['item_id'],
+                'goods_num' => $goods['goods_num'],
+                'shop_price' => $goods['goods_price'],
+                'exchange_integral' => $goods['use_integral'],
+                'exchange_price' => $goods['member_goods_price'],
+                'original_img' => $goods['original_img']
+            ];
+            $weight = bcadd($weight, $goods['weight'], 2);
+            $giveIntegral = bcadd($giveIntegral, $goods['give_integral'], 2);
+        }
+        $orderData['weight'] = $weight;
+        $orderData['give_integral'] = $giveIntegral;
+        return json(['status' => 1, 'result' => $orderData]);
     }
 
     public function del_order()
@@ -1120,8 +1286,8 @@ class Order extends Base
         if ($this->user['pay_points'] < $pay_points) {
             return json(['status' => 0, 'msg' => '用户消费积分只有' . $this->user['pay_points']]);
         }
-
         $payLogic->usePayPoints($pay_points);
+
         $give_integral = 0;             // 赠送积分
         $weight = 0;                    // 产品重量
         $order_prom_fee = 0;            // 订单优惠促销总价
@@ -1208,5 +1374,227 @@ class Order extends Base
             'free_shipping_price' => tpCache('shopping.freight_free') <= $payReturn['order_amount'] ? 0 : bcsub(tpCache('shopping.freight_free'), $payReturn['order_amount'], 2)
         ];
         return json(['status' => 1, 'result' => $return]);
+    }
+
+    /**
+     * 创建订单
+     * @return \think\response\Json
+     * @throws TpshopException
+     * @throws \think\Exception
+     */
+    public function createOrder()
+    {
+        $goodsId = I('goods_id', '');                   // 商品ID
+        $itemId = I('item_id', '');                     // 商品规格ID
+        $goodsNum = I('goods_num', '');                 // 商品数量
+        $payType = input('pay_type', 1);                // 结算类型
+        $cartIds = I('cart_ids', '');                   // 购物车ID组合
+        $addressId = I('address_id', '');               // 地址ID
+        $couponId = I('coupon_id', '');                 // 优惠券ID
+        $exchangeId = I('exchange_id', '');             // 兑换券ID
+        $payPwd = I('pay_pwd', '');                     // 支付密码
+        $userElectronic = I('user_electronic', '');     // 使用电子币
+
+        if (!$addressId) {
+            return json(['status' => 0, 'msg' => '请先填写收货人信息']);
+        }
+        $address = Db::name('UserAddress')->where('address_id', $addressId)->find();
+        if (empty($address)) {
+            return json(['status' => 0, 'msg' => '收货人信息不存在']);
+        }
+
+        $cartLogic = new CartLogic();
+        $cartLogic->setUserId($this->user_id);
+        if (!empty($goodsId) && empty($cartIds)) {
+            /*
+             * 单个商品下单
+             */
+            $cartLogic->setGoodsModel($goodsId);
+            $cartLogic->setSpecGoodsPriceModel($itemId);
+            $cartLogic->setGoodsBuyNum($goodsNum);
+            $cartLogic->setType($payType);
+            $cartLogic->setCartType(0);
+            try {
+                $buyGoods = $cartLogic->buyNow();
+            } catch (TpshopException $t) {
+                $error = $t->getErrorArr();
+                return json(['status' => 0, 'msg' => $error['msg']]);
+            }
+            $cartList['cartList'] = [$buyGoods];
+        } elseif (empty($goodsId) && !empty($cartIds)) {
+            /*
+             * 购物车下单
+             */
+            $cartIds = explode(',', $cartIds);
+            foreach ($cartIds as $k => $v) {
+                $data = [];
+                $data['id'] = $v;
+                $data['selected'] = 1;
+                $cartIds[$k] = $data;
+            }
+            $result = $cartLogic->AsyncUpdateCarts($cartIds);
+            if (1 != $result['status']) {
+                return json(['status' => 0, 'msg' => $result['msg'], 'result' => null]);
+            }
+            if (0 == $cartLogic->getUserCartOrderCount()) {
+                return json(['status' => 0, 'msg' => '你的购物车没有选中商品', 'result' => null]);
+            }
+            $cartList['cartList'] = $cartLogic->getCartList(1); // 获取用户选中的购物车商品
+        } else {
+            /*
+             * 单个商品 + 购物车 下单
+             */
+        }
+        $payLogic = new Pay();
+        $payLogic->setUserId($this->user_id);   // 设置支付用户ID
+        // 计算购物车价格
+        $payLogic->payCart($cartList['cartList']);
+        // 检测支付商品购买限制
+        $payLogic->check();
+        // 参与活动促销 加价购活动
+//        $payLogic->activityPayBefore();
+        $payLogic->goodsPromotion();
+
+        // 配送物流
+        if (empty($userAddress)) {
+            $payLogic->delivery(0);
+        } else {
+            $payLogic->delivery($userAddress[0]['district']);
+        }
+        $pay_points = $payLogic->getUsePoint();     // 使用积分
+        if ($this->user['pay_points'] < $pay_points) {
+            return json(['status' => 0, 'msg' => '用户消费积分只有' . $this->user['pay_points']]);
+        }
+        $payLogic->usePayPoints($pay_points);
+        $payLogic->useUserElectronic($userElectronic);  // 使用电子币
+
+        $order_prom_fee = 0;            // 订单优惠促销总价
+        foreach ($cartList['cartList'] as $v) {
+            if (isset($v['is_order_prom']) && $v['is_order_prom'] == 1) {
+                $order_prom_fee += ($v['use_integral'] + $v['member_goods_price']) * $v['goods_num'];
+            }
+        }
+
+        $payLogic->activity();      // 满单赠品
+        $payLogic->activity2New($order_prom_fee);     // 指定商品赠品 / 订单优惠赠品
+        $payLogic->activity3();     // 订单优惠促销
+        list($prom_type, $prom_id) = $payLogic->getPromInfo();
+
+        // 使用优惠券
+        if (isset($couponId) && $couponId > 0) {
+            $payLogic->useCouponById($couponId, $payLogic->getPayList());
+        }
+        // 使用兑换券
+        if (isset($exchangeId) && $exchangeId > 0) {
+            $payLogic->useCouponByIdRe($exchangeId);
+        }
+
+        // 创建订单
+        try {
+            Db::startTrans();
+            $placeOrder = new PlaceOrder($payLogic);
+            $placeOrder->setUserAddress($address);
+            $placeOrder->setPayPsw($payPwd);
+            if (2 == $prom_type) {
+                $placeOrder->addGroupBuyOrder($prom_id);    // 团购订单
+            } else {
+                $placeOrder->addNormalOrder();     // 普通订单
+            }
+            $cartLogic->clear();    // 清除选中的购物车
+            $order = $placeOrder->getOrder();
+            $payLogic->activityRecord($order);  // 记录
+            Db::commit();
+            $return = [
+                'order_id' => $order['order_id'],
+                'order_sn' => $order['order_sn'],
+            ];
+//            // 预售和抢购暂不支持货到付款
+//            $orderGoodsPromType = M('order_goods')->where(['order_id' => $order['order_id']])->getField('prom_type', true);
+//            $no_cod_order_prom_type = ['4,5']; // 预售订单，虚拟订单不支持货到付款
+//            if (in_array($order['prom_type'], $no_cod_order_prom_type) || in_array(1, $orderGoodsPromType)) {
+//                $payment_where['code'] = ['neq', 'cod'];
+//            }
+            // 获取支付方式
+            $payment_where = [
+                'type' => 'payment',
+                'status' => 1,
+                'scene' => 3,   // APP支付
+            ];
+            $paymentList = M('Plugin')->field('code, name, icon')->where($payment_where)->select();
+            foreach ($paymentList as $key => $val) {
+                $paymentList[$key]['icon'] = '/plugins/payment/' . $val['code'] . '/logo.jpg';
+            }
+            $return['payment_list'] = $paymentList;
+            return json(['status' => 1, 'msg' => '创建订单成功', 'result' => $return]);
+        } catch (TpshopException $tpE) {
+            Db::rollback();
+            return json(['status' => 0, 'msg' => $tpE->getErrorArr()['msg'] ?? '创建订单失败']);
+        }
+    }
+
+    /**
+     * 获取订单支付方式
+     * @return \think\response\Json
+     */
+    public function orderPayment()
+    {
+        $orderSn = I('order_sn', '');
+        if (empty($orderSn)) {
+            return json(['status' => 0, 'msg' => '订单编号不能为空']);
+        }
+        $order = Db::name('order')->where(['order_sn' => $orderSn])->field('order_id, order_sn, order_status, pay_status')->find();
+        if (empty($order)) {
+            return json(['status' => 0, 'msg' => '订单不存在']);
+        }
+        if (3 == $order['order_status']) {
+            return json(['status' => 0, 'msg' => '该订单已取消']);
+        }
+        if (1 == $order['pay_status']) {
+            return json(['status' => 0, 'msg' => '订单已经完成支付']);
+        }
+        $return = [
+            'order_id' => $order['order_id'],
+            'order_sn' => $order['order_sn'],
+        ];
+        // 获取支付方式
+        $payment_where = [
+            'type' => 'payment',
+            'status' => 1,
+            'scene' => 3,   // APP支付
+        ];
+        $paymentList = M('Plugin')->field('code, name, icon')->where($payment_where)->select();
+        foreach ($paymentList as $key => $val) {
+            $paymentList[$key]['icon'] = '/plugins/payment/' . $val['code'] . '/logo.jpg';
+        }
+        $return['payment_list'] = $paymentList;
+        return json(['status' => 1, 'msg' => '', 'result' => $return]);
+    }
+
+    /**
+     * 获取订单支付状态信息
+     * @return \think\response\Json
+     */
+    public function orderPayStatus()
+    {
+        $orderSn = I('order_sn', '');
+        if (empty($orderSn)) {
+            return json(['status' => 0, 'msg' => '订单编号不能为空']);
+        }
+        $order = Db::name('order o')->join('region2 r1', 'r1.id = o.province', 'LEFT')
+            ->join('region2 r2', 'r2.id = o.city', 'LEFT')
+            ->join('region2 r3', 'r3.id = o.district', 'LEFT')
+            ->where(['order_sn' => $orderSn])->field('order_id, order_sn, order_status, pay_status, order_amount,
+            consignee, mobile, r1.name province_name, city, r2.name city_name, district, r3.name district_name, address')->find();
+        if (empty($order)) {
+            return json(['status' => 0, 'msg' => '订单不存在']);
+        }
+        if (3 == $order['order_status']) {
+            return json(['status' => 0, 'msg' => '该订单已取消']);
+        }
+        if (1 == $order['pay_status']) {
+            return json(['status' => 0, 'msg' => '订单已经完成支付']);
+        }
+        unset($order['order_status']);
+        return json(['status' => 1, 'result' => $order]);
     }
 }

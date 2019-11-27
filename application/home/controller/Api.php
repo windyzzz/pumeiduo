@@ -222,12 +222,10 @@ class Api extends Base
     /**
      * 查询物流
      */
-    public function queryExpress()
+    public function queryExpress($request = [])
     {
-        $queryNo = I('queryNo', '');
-        // $queryNo = '250016221475';
-        // $type = 'SFEXPRESS';
-        $type = I('shipping_code', '');
+        $type = isset($request['shipping_code']) ? $request['shipping_code'] : I('shipping_code', '');
+        $queryNo = isset($request['queryNo']) ? $request['queryNo'] : I('queryNo', '');
         if (!$queryNo) {
             return json(['status' => -1, 'message' => '参数有误', 'result' => '']);
         }

@@ -765,9 +765,9 @@ class Order extends Base
 
         $order_id = $data['order_id'];
         $order = M('order')->field('add_time')->where(array('order_id' => $order_id))->find();
-        if ($order['add_time'] > order_time()) {
-            $this->error('新订单不可以发货', U('Admin/Order/delivery_info', ['order_id' => $data['order_id']]));
-        }
+//        if ($order['add_time'] > order_time()) {
+//            $this->error('新订单不可以发货', U('Admin/Order/delivery_info', ['order_id' => $data['order_id']]));
+//        }
 
         $res = $orderLogic->deliveryHandle($data);
         if (1 == $res['status']) {

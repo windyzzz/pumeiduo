@@ -31,8 +31,8 @@ class OrderLogic
     /**
      * 取消订单.
      *
-     * @param $user_id|用户ID
-     * @param $order_id|订单ID
+     * @param $user_id |用户ID
+     * @param $order_id |订单ID
      * @param string $action_note 操作备注
      * @param boolean $is_admin 是否后台操作
      *
@@ -53,19 +53,19 @@ class OrderLogic
             return ['status' => -1, 'msg' => '该订单已发货，不能取消', 'result' => ''];
         }
 
-        if($order['order_status'] == 1 && $is_admin == false){
+        if ($order['order_status'] == 1 && $is_admin == false) {
             return ['status' => -1, 'msg' => '该订单已确认，不能取消订单', 'result' => ''];
         }
 
-        if($order['pay_status']==1  && $is_admin == false){//已支付 检查是否是vip升级单
+        if ($order['pay_status'] == 1 && $is_admin == false) {//已支付 检查是否是vip升级单
             $has_vip_order = M('order')
                 ->alias('o')
                 ->field('o.order_id')
-                ->join('order_goods og','o.order_id = og.order_id')
-                ->join('goods g','g.goods_id = og.goods_id and g.zone=3')
+                ->join('order_goods og', 'o.order_id = og.order_id')
+                ->join('goods g', 'g.goods_id = og.goods_id and g.zone=3')
                 ->where(array('o.order_id' => $order_id))
                 ->find();
-            if($has_vip_order){
+            if ($has_vip_order) {
                 return ['status' => -1, 'msg' => 'VIP升级套装，不能取消订单', 'result' => ''];
             }
 
@@ -73,17 +73,16 @@ class OrderLogic
         }
 
         //检查是否未支付的订单
-        if (($order['pay_status'] > 0 || $order['order_status'] > 0) && $order['order_amount'] > 0)
-        {
+        if (($order['pay_status'] > 0 || $order['order_status'] > 0) && $order['order_amount'] > 0) {
             // return array('status'=>-1,'msg'=>'支付状态或订单状态不允许','result'=>'');
-            if($_SERVER['SERVER_ADDR']!='61.238.101.138'){
+            if ($_SERVER['SERVER_ADDR'] != '61.238.101.138') {
                 exit;
             }
             //获取记录表信息
             //$log = M('account_log')->where(array('order_id'=>$order_id))->find();
             $res = false;
             if ('weixinJsApi' == $order['pay_code']) {
-                include_once PLUGIN_PATH.'payment/weixinJsApi/weixinJsApi.class.php';
+                include_once PLUGIN_PATH . 'payment/weixinJsApi/weixinJsApi.class.php';
                 $payment_obj = new \weixinJsApi();
                 $result = $payment_obj->refund1($order, $order['order_amount']);
                 $msg = $result['return_msg'];
@@ -91,7 +90,7 @@ class OrderLogic
                     $res = true;
                 }
             } elseif ('weixin' == $order['pay_code']) {
-                include_once PLUGIN_PATH.'payment/weixin/weixin.class.php';
+                include_once PLUGIN_PATH . 'payment/weixin/weixin.class.php';
                 $payment_obj = new \weixin();
                 $result = $payment_obj->refund1($order, $order['order_amount']);
                 $msg = $result['return_msg'];
@@ -99,7 +98,7 @@ class OrderLogic
                     $res = true;
                 }
             } elseif ('alipayMobile' == $order['pay_code']) {
-                include_once PLUGIN_PATH.'payment/alipayMobile/alipayMobile.class.php';
+                include_once PLUGIN_PATH . 'payment/alipayMobile/alipayMobile.class.php';
                 $payment_obj = new \alipayMobile();
                 $result = $payment_obj->refund1($order, $order['order_amount'], $action_note);
                 $msg = $result->sub_msg;
@@ -107,7 +106,7 @@ class OrderLogic
                     $res = true;
                 }
             } elseif ('alipay' == $order['pay_code']) {
-                include_once PLUGIN_PATH.'payment/alipay/alipay.class.php';
+                include_once PLUGIN_PATH . 'payment/alipay/alipay.class.php';
                 $payment_obj = new \alipay();
                 $result = $payment_obj->refund1($order, $order['order_amount'], $action_note);
                 $msg = $result->sub_msg;
@@ -121,7 +120,7 @@ class OrderLogic
             }
 
             if (!$res) {
-                return ['status' => -1, 'msg' => '退款失败,'.$msg, 'result' => '错误原因:'.$msg];
+                return ['status' => -1, 'msg' => '退款失败,' . $msg, 'result' => '错误原因:' . $msg];
             }
             // 如果有微信公众号 则推送一条消息到微信
             $user = Db::name('OauthUsers')->where(['user_id' => $order['user_id'], 'oauth' => 'weixin', 'oauth_child' => 'mp'])->find();
@@ -153,13 +152,12 @@ class OrderLogic
 
                 // 分销追回 (下级)
                 if (1 == $level) {
-                    M('rebate_log')->where('user_id', $user_id)->update(['money'=>0,'point'=>0,'confirm_time' => time(), 'remark' => '取消订单，追回佣金']);
+                    M('rebate_log')->where('user_id', $user_id)->update(['money' => 0, 'point' => 0, 'confirm_time' => time(), 'remark' => '取消订单，追回佣金']);
                 } elseif (2 == $level) {
-                    M('rebate_log')->where('user_id', $user_id)->where('type', 1)->update(['money'=>0,'point'=>0, 'confirm_time' => time(), 'remark' => '取消订单，追回佣金']);
+                    M('rebate_log')->where('user_id', $user_id)->where('type', 1)->update(['money' => 0, 'point' => 0, 'confirm_time' => time(), 'remark' => '取消订单，追回佣金']);
                 }
             }
         }
-
 
 
         // $OrderGoods = M('OrderGoods')->field('goods_id')->where('order_id',$order_id)->select();
@@ -219,7 +217,7 @@ class OrderLogic
         $task->returnReward();
 
         // 分销追回 (上级)
-        M('rebate_log')->where('order_sn', $order['order_sn'])->update(['status' => 4, 'confirm_time' => time(), 'remark' =>  '追回佣金']);
+        M('rebate_log')->where('order_sn', $order['order_sn'])->update(['status' => 4, 'confirm_time' => time(), 'remark' => '追回佣金']);
 
         // 退还现金券
         if ($order['coupon_price'] > 0) {
@@ -250,40 +248,41 @@ class OrderLogic
         $money = [];
 
         $order_goods = M('OrderGoods')
-        ->alias('a')
-        ->field('a.*,o.add_time')
-        ->join('__ORDER__ o', 'o.order_id = a.order_id', 'LEFT')
-        ->where('a.order_id', $order_id)
-        ->select();
+            ->alias('a')
+            ->field('a.*,o.add_time')
+            ->join('__ORDER__ o', 'o.order_id = a.order_id', 'LEFT')
+            ->where('a.order_id', $order_id)
+            ->select();
 
         foreach ($order_goods as $ok => $ov) {
-            $money[$ov['rec_id']]['money'] = $this->getRongMoney(($ov['final_price'] * $ov['goods_num']) * $ov['commission'] / 100,$level,$ov['add_time'],$ov['goods_id']);
-            $money[$ov['rec_id']]['point'] = $this->getRongPoint($ov['goods_id'],$level);
+            $money[$ov['rec_id']]['money'] = $this->getRongMoney(($ov['final_price'] * $ov['goods_num']) * $ov['commission'] / 100, $level, $ov['add_time'], $ov['goods_id']);
+            $money[$ov['rec_id']]['point'] = $this->getRongPoint($ov['goods_id'], $level);
         }
 
         return $money;
     }
 
-    function getRongMoney($money,$level,$order_time,$goods_id=0,$is_zone=false){
+    function getRongMoney($money, $level, $order_time, $goods_id = 0, $is_zone = false)
+    {
 
-        if($order_time < bonus_time()){
+        if ($order_time < bonus_time()) {
             $distribut_rate = 25 / 100;
             return round($money * $distribut_rate, 2);
-        }else{
+        } else {
             $zone = 0;
-            if($goods_id){
-                $zone = M('goods')->where(array('goods_id'=>$goods_id))->getField('zone');
+            if ($goods_id) {
+                $zone = M('goods')->where(array('goods_id' => $goods_id))->getField('zone');
             }
-            if($level==1 && ($zone==3 || $is_zone == true) ){
+            if ($level == 1 && ($zone == 3 || $is_zone == true)) {
                 return tpCache('distribut.referee_vip_money');
-            }else{
+            } else {
                 if (1 == $level) {
                     $distribut_rate = tpCache('distribut.first_rate') / 100;
                 } elseif (2 == $level) {
                     $distribut_rate = tpCache('distribut.second_rate') / 100;
                 } elseif (3 == $level) {
                     $distribut_rate = tpCache('distribut.third_rate') / 100;
-                }else{
+                } else {
                     $distribut_rate = tpCache('distribut.shop_rate') / 100;
                 }
             }
@@ -293,10 +292,11 @@ class OrderLogic
 
     }
 
-    function getRongPoint($goods_id,$level){
-        if($level==1){
-            $zone = M('goods')->where(array('goods_id'=>$goods_id))->getField('zone');
-            if($zone==3){
+    function getRongPoint($goods_id, $level)
+    {
+        if ($level == 1) {
+            $zone = M('goods')->where(array('goods_id' => $goods_id))->getField('zone');
+            if ($zone == 3) {
                 return tpCache('distribut.referee_vip_point');
             }
         }
@@ -309,7 +309,7 @@ class OrderLogic
         $confirm_time_config = tpCache('shopping.auto_service_date'); //后台设置多少天内可申请售后
         $confirm_time = $confirm_time_config * 24 * 60 * 60;
         if ((time() - $order['confirm_time']) > $confirm_time && !empty($order['confirm_time'])) {
-            return ['result' => -1, 'msg' => '已经超过'.($confirm_time_config ?: 0).'天内退货时间'];
+            return ['result' => -1, 'msg' => '已经超过' . ($confirm_time_config ?: 0) . '天内退货时间'];
         }
 
         $img = $this->uploadReturnGoodsImg();
@@ -343,11 +343,11 @@ class OrderLogic
                 $img = base64_decode($base_img);
 
                 $save_path = 'return';
-                $savePath = PUBLIC_PATH.'upload/user/'.cookie('user_id').'/'.$save_path.'/';
-                $savePath1 = 'public/upload/user/'.cookie('user_id').'/'.$save_path.'/';
-                $time = time().rand(0, 99999);
-                $fullName = $savePath.$time.$ext;
-                $fullName1 = $savePath1.$time.$ext;
+                $savePath = PUBLIC_PATH . 'upload/user/' . cookie('user_id') . '/' . $save_path . '/';
+                $savePath1 = 'public/upload/user/' . cookie('user_id') . '/' . $save_path . '/';
+                $time = time() . rand(0, 99999);
+                $fullName = $savePath . $time . $ext;
+                $fullName1 = $savePath1 . $time . $ext;
 
                 if (!file_exists($savePath) && !mkdir($savePath, 0777, true)) {
                     $data = [
@@ -358,8 +358,8 @@ class OrderLogic
                     exit;
                 } elseif (!is_writeable($savePath)) {
                     $data = [
-                         'msg' => '目录没有写权限',
-                         'status' => -1,
+                        'msg' => '目录没有写权限',
+                        'status' => -1,
                     ];
                     echo json_encode($data);
                     exit;
@@ -367,9 +367,9 @@ class OrderLogic
 
                 if (!(file_put_contents($fullName, $img) && file_exists($fullName))) { //移动失败
                     $data = [
-                            'msg' => '写入文件内容错误',
-                            'status' => -1,
-                            'return' => $img,
+                        'msg' => '写入文件内容错误',
+                        'status' => -1,
+                        'return' => $img,
                     ];
                     echo json_encode($data);
                     exit;
@@ -396,7 +396,7 @@ class OrderLogic
             $userExpenditureMoney = $order['goods_price'] - $order['order_prom_amount'] - $order['coupon_price'];    //用户实际使用金额
             $rate = round($useRapplyReturnMoney / $userExpenditureMoney, 8);
             $shipping_rate = $order['shipping_price'] / $order['total_amount'];
-            $user_electronic =round($order['user_electronic'] - $order['user_electronic'] * $shipping_rate, 2);
+            $user_electronic = round($order['user_electronic'] - $order['user_electronic'] * $shipping_rate, 2);
 
             // $data['refund_integral'] = floor($rate*$order['integral']);//该退积分支付
             $data['refund_integral'] = $order_goods['use_integral'] * $order_goods['goods_num']; //该退积分支付
@@ -442,7 +442,7 @@ class OrderLogic
         }
 
         if ($result) {
-            M('order')->where('order_sn',$order['order_sn'])->update(['order_status'=>6]);
+            M('order')->where('order_sn', $order['order_sn'])->update(['order_status' => 6]);
             return ['status' => 1, 'msg' => '申请成功'];
         }
 
@@ -464,7 +464,7 @@ class OrderLogic
             }
             $image_upload_limit_size = config('image_upload_limit_size');
             $validate = ['size' => $image_upload_limit_size, 'ext' => 'jpg,png,gif,jpeg'];
-            $dir = UPLOAD_PATH.'return_goods/';
+            $dir = UPLOAD_PATH . 'return_goods/';
             if (!($_exists = file_exists($dir))) {
                 $isMk = mkdir($dir);
             }
@@ -473,7 +473,7 @@ class OrderLogic
                 $info = $file->rule($parentDir)->validate($validate)->move($dir, true);
                 if ($info) {
                     $filename = $info->getFilename();
-                    $new_name = '/'.$dir.$parentDir.'/'.$filename;
+                    $new_name = '/' . $dir . $parentDir . '/' . $filename;
                     $return_imgs[] = $new_name;
                 } else {
                     return ['status' => -1, 'msg' => $file->getError()]; //上传错误提示错误信息
@@ -515,7 +515,7 @@ class OrderLogic
         $count = M('order')->where($condition)->count();
         $Page = new \think\Page($count, 10);
         $show = $Page->show();
-        $order_list = M('order')->where($condition)->order('order_id desc')->limit($Page->firstRow.','.$Page->listRows)->select();
+        $order_list = M('order')->where($condition)->order('order_id desc')->limit($Page->firstRow . ',' . $Page->listRows)->select();
 
         foreach ($order_list as $k => $v) {
             $order_list[$k] = set_btn_order_status($v);  // 添加属性  包括按钮显示属性 和 订单状态显示属性
@@ -557,16 +557,16 @@ class OrderLogic
             $where['addtime'] = ['lt', (time() - 90 * 24 * 3600)];
         }
         $query = M('return_goods')->alias('r')->field('r.*,g.goods_name')
-                ->join('__ORDER__ o', 'r.order_id = o.order_id AND o.deleted = 0 AND o.user_id='.$user_id)
-                ->join('__GOODS__ g', 'r.goods_id = g.goods_id', 'LEFT')
-                ->where($where);
+            ->join('__ORDER__ o', 'r.order_id = o.order_id AND o.deleted = 0 AND o.user_id=' . $user_id)
+            ->join('__GOODS__ g', 'r.goods_id = g.goods_id', 'LEFT')
+            ->where($where);
         $query2 = clone $query;
         $count = $query->count();
         $page = new \think\Page($count, 10);
         $list = $query2->order('id desc')->limit($page->firstRow, $page->listRows)->select();
         $goods_id_arr = get_arr_column($list, 'goods_id');
         if (!empty($goods_id_arr)) {
-            $goodsList = M('goods')->where('goods_id in ('.implode(',', $goods_id_arr).')')->getField('goods_id,goods_name');
+            $goodsList = M('goods')->where('goods_id in (' . implode(',', $goods_id_arr) . ')')->getField('goods_id,goods_name');
         }
 
         return [
@@ -646,7 +646,7 @@ class OrderLogic
     }
 
     /**
-     * 	生成兑换码
+     *    生成兑换码
      * 长度 =3位 + 4位 + 2位 + 3位  + 1位 + 5位随机  = 18位.
      *
      * @param $order
@@ -660,12 +660,12 @@ class OrderLogic
         M('order')->where(['order_id' => $order['order_id']])->save(['order_status' => 1, 'shipping_time' => time()]);
         $perfix = mt_rand(100, 999);
         $perfix .= sprintf('%04d', $order['user_id'] % 10000)
-                .sprintf('%02d', (int) $order['user_id'] % 100).sprintf('%03d', (float) microtime() * 1000);
+            . sprintf('%02d', (int)$order['user_id'] % 100) . sprintf('%03d', (float)microtime() * 1000);
 
         for ($i = 0; $i < $order_goods['goods_num']; ++$i) {
             $order_code[$i]['order_id'] = $order['order_id'];
             $order_code[$i]['user_id'] = $order['user_id'];
-            $order_code[$i]['vr_code'] = $perfix.sprintf('%02d', (int) $i % 100).rand(5, 1);
+            $order_code[$i]['vr_code'] = $perfix . sprintf('%02d', (int)$i % 100) . rand(5, 1);
             $order_code[$i]['pay_price'] = $goods['shop_price'];
             $order_code[$i]['vr_indate'] = $goods['virtual_indate'];
             $order_code[$i]['vr_invalid_refund'] = $goods['virtual_refund'];
@@ -693,10 +693,10 @@ class OrderLogic
         $set_time = 1; //自动取消时间/天 默认1天
         $abolishtime = strtotime("-$set_time day");
         $order_where = [
-                'user_id' => $this->user_id,
-                'add_time' => ['lt', $abolishtime],
-                'pay_status' => 0,
-                'order_status' => 0,
+            'user_id' => $this->user_id,
+            'add_time' => ['lt', $abolishtime],
+            'pay_status' => 0,
+            'order_status' => 0,
         ];
         $order = Db::name('order')->where($order_where)->getField('order_id', true);
         foreach ($order as $key => $value) {
@@ -721,30 +721,30 @@ class OrderLogic
     public function addPreSellOrder($user_id, $address_id, $invoice_title, $act_id, $pre_sell_price, $taxpayer = '')
     {
         // 仿制灌水 1天只能下 50 单
-        $order_count = M('Order')->where("user_id= $user_id and order_sn like '".date('Ymd')."%'")->count(); // 查找购物车商品总数量
+        $order_count = M('Order')->where("user_id= $user_id and order_sn like '" . date('Ymd') . "%'")->count(); // 查找购物车商品总数量
         if ($order_count >= 50) {
             return ['status' => -9, 'msg' => '一天只能下50个订单', 'result' => ''];
         }
         $address = M('UserAddress')->where(['address_id' => $address_id])->find();
         $data = [
-                'order_sn' => date('YmdHis').rand(1000, 9999), // 订单编号
-                'user_id' => $user_id, // 用户id
-                'consignee' => $address['consignee'], // 收货人
-                'province' => $address['province'], //'省份id',
-                'city' => $address['city'], //'城市id',
-                'district' => $address['district'], //'县',
-                'twon' => $address['twon'], // '街道',
-                'address' => $address['address'], //'详细地址',
-                'mobile' => $address['mobile'], //'手机',
-                'zipcode' => $address['zipcode'], //'邮编',
-                'email' => $address['email'], //'邮箱',
-                'invoice_title' => $invoice_title, //'发票抬头',
-                'taxpayer' => $taxpayer, //'纳税人识别号',
-                'goods_price' => $pre_sell_price['cut_price'] * $pre_sell_price['goods_num'], //'商品价格',
-                'total_amount' => $pre_sell_price['cut_price'] * $pre_sell_price['goods_num'], // 订单总额
-                'add_time' => time(), // 下单时间
-                'prom_type' => 4,
-                'prom_id' => $act_id,
+            'order_sn' => date('YmdHis') . rand(1000, 9999), // 订单编号
+            'user_id' => $user_id, // 用户id
+            'consignee' => $address['consignee'], // 收货人
+            'province' => $address['province'], //'省份id',
+            'city' => $address['city'], //'城市id',
+            'district' => $address['district'], //'县',
+            'twon' => $address['twon'], // '街道',
+            'address' => $address['address'], //'详细地址',
+            'mobile' => $address['mobile'], //'手机',
+            'zipcode' => $address['zipcode'], //'邮编',
+            'email' => $address['email'], //'邮箱',
+            'invoice_title' => $invoice_title, //'发票抬头',
+            'taxpayer' => $taxpayer, //'纳税人识别号',
+            'goods_price' => $pre_sell_price['cut_price'] * $pre_sell_price['goods_num'], //'商品价格',
+            'total_amount' => $pre_sell_price['cut_price'] * $pre_sell_price['goods_num'], // 订单总额
+            'add_time' => time(), // 下单时间
+            'prom_type' => 4,
+            'prom_id' => $act_id,
         ];
         if (0 == $pre_sell_price['deposit_price']) {
             //无定金
@@ -796,8 +796,8 @@ class OrderLogic
         $order_sn = null;
         // 保证不会有重复订单号存在
         while (true) {
-            $order_sn = date('YmdHis').rand(1000, 9999); // 订单编号
-            $order_sn_count = M('order')->where('order_sn = '.$order_sn)->count();
+            $order_sn = date('YmdHis') . rand(1000, 9999); // 订单编号
+            $order_sn_count = M('order')->where('order_sn = ' . $order_sn)->count();
             if (0 == $order_sn_count) {
                 break;
             }
@@ -828,7 +828,7 @@ class OrderLogic
      * 取消订单后改变库存，根据不同的规格，商品活动修改对应的库存.
      *
      * @param $order
-     * @param $rec_id|订单商品表id 如果有只返还订单某个商品的库存,没有返还整个订单
+     * @param $rec_id |订单商品表id 如果有只返还订单某个商品的库存,没有返还整个订单
      */
     public function alterReturnGoodsInventory($order, $rec_id = '')
     {
@@ -891,5 +891,29 @@ class OrderLogic
                 }
             }
         }
+    }
+
+    /**
+     * 获取订单商品
+     * @param $orderId
+     * @return false|\PDOStatement|string|\think\Collection
+     */
+    public function getOrderGoods($orderId)
+    {
+        if (is_array($orderId)) {
+            $where['og.order_id'] = ['in', $orderId];
+        } else {
+            $where['og.order_id'] = $orderId;
+        }
+        $orderGoods = Db::name('order_goods og')
+            ->join('goods g', 'g.goods_id = og.goods_id', 'LEFT')
+            ->join('return_goods rg', 'rg.rec_id = og.rec_id', 'LEFT')
+            ->join('spec_goods_price sgp', 'sgp.goods_id = og.goods_id AND sgp.`key` = og.spec_key', 'LEFT')
+            ->where($where)->field('og.*, sgp.item_id, g.commission, g.original_img, og.use_integral, og.give_integral, rg.status, g.zone')->select();
+        foreach ($orderGoods as $k => $goods) {
+            $orderGoods[$k]['is_return'] = M('ReturnGoods')->where('rec_id', $goods['rec_id'])->find() ? 1 : 0;
+            $orderGoods[$k]['status_desc'] = C('REFUND_STATUS')[$goods['status']];
+        }
+        return $orderGoods;
     }
 }

@@ -846,7 +846,7 @@ class Goods extends Base
         // 秒杀商品
         $flashSaleGoods = Db::name('flash_sale fs')->join('goods g', 'g.goods_id = fs.goods_id')
             ->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
-            ->where(['fs.goods_id' => ['in', $filter_goods_id]])->field('fs.id prom_id, g.goods_id, fs.item_id, g.goods_sn, g.goods_name, g.original_img, g.exchange_integral, fs.price flash_sale_price, fs.title, sgp.key_name, fs.end_time, fs.can_integral')
+            ->where(['fs.goods_id' => ['in', $filter_goods_id]])->field('fs.id prom_id, g.goods_id, fs.item_id, g.goods_sn, g.goods_name, g.original_img, g.exchange_integral, fs.price flash_sale_price, fs.title, fs.goods_num, fs.buy_num, sgp.key_name, fs.end_time, fs.can_integral')
             ->limit($page->firstRow . ',' . $page->listRows)->select();
         // 商品标签
         $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->limit($page->firstRow . ',' . $page->listRows)->select();
@@ -860,6 +860,14 @@ class Goods extends Base
                 $endTime = $v['end_time'];
             }
             unset($flashSaleGoods[$k]['end_time']);
+            // 是否已售完
+            if ($v['goods_num'] <= $v['buy_num']) {
+                $flashSaleGoods[$k]['sold_out'] = 1;
+            } else {
+                $flashSaleGoods[$k]['sold_out'] = 0;
+            }
+            unset($flashSaleGoods[$k]['goods_num']);
+            unset($flashSaleGoods[$k]['buy_num']);
             // 商品标签
             $flashSaleGoods[$k]['tabs'] = [];
             if (!empty($goodsTab)) {
