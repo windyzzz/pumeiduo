@@ -29,7 +29,7 @@ return [
     // 注册的根命名空间
     'root_namespace' => [],
     // 扩展函数文件
-    'extra_file_list' => [THINK_PATH.'helper'.EXT, APP_PATH.'function.php'],
+    'extra_file_list' => [THINK_PATH . 'helper' . EXT, APP_PATH . 'function.php'],
     // 默认输出类型
     'default_return_type' => 'html',
     // 默认AJAX 数据返回格式,可选json xml ...
@@ -143,17 +143,17 @@ return [
     // 视图输出字符串内容替换
     'view_replace_str' => [],
     // 默认跳转页面对应的模板文件
-    'dispatch_success_tmpl' => THINK_PATH.'tpl'.DS.'dispatch_jump.tpl',
-    'dispatch_error_tmpl' => THINK_PATH.'tpl'.DS.'dispatch_jump.tpl',
+    'dispatch_success_tmpl' => THINK_PATH . 'tpl' . DS . 'dispatch_jump.tpl',
+    'dispatch_error_tmpl' => THINK_PATH . 'tpl' . DS . 'dispatch_jump.tpl',
 
     // +----------------------------------------------------------------------
     // | 异常及错误设置
     // +----------------------------------------------------------------------
 
     // 异常页面的模板文件
-    'exception_tmpl' => THINK_PATH.'tpl'.DS.'think_exception.tpl',
+    'exception_tmpl' => THINK_PATH . 'tpl' . DS . 'think_exception.tpl',
     // errorpage 错误页面
-    'error_tmpl' => THINK_PATH.'tpl'.DS.'think_error.tpl',
+    'error_tmpl' => THINK_PATH . 'tpl' . DS . 'think_error.tpl',
 
     // 错误显示信息,非调试模式有效
     'error_message' => '页面错误！请稍后再试～',
@@ -200,13 +200,13 @@ return [
         'expire' => 1,
     ],
 
-/*
-    'cache'                  => [
-        // 驱动方式
-        'type'   => 'redis',
-        'host'       => '192.168.0.201', // 指定redis的地址
-    ],
-*/
+    /*
+        'cache'                  => [
+            // 驱动方式
+            'type'   => 'redis',
+            'host'       => '192.168.0.201', // 指定redis的地址
+        ],
+    */
     // +----------------------------------------------------------------------
     // | 会话设置
     // +----------------------------------------------------------------------
@@ -314,7 +314,7 @@ return [
     'WAITSEND' => ' AND (pay_status=1 OR pay_code="cod") AND shipping_status !=1 AND order_status in(0,1) ', //订单查询状态 待发货
     'WAITRECEIVE' => ' AND shipping_status=1 AND order_status = 1 ', //订单查询状态 待收货
     'WAITCCOMMENT' => ' AND order_status=2 ', // 待评价 确认收货     //'FINISHED'=>'  AND order_status=1 ', //订单查询状态 已完成
-    'FINISH' => ' AND order_status = 2 ', // 已完成
+    'FINISH' => ' AND (order_status = 2 OR order_status = 6)', // 已完成
     'CANCEL' => ' AND order_status = 3 ', // 已取消
     'CANCELLED' => 'AND order_status = 5 ', //已作废
     'PAYED' => ' AND (order_status=2 OR (order_status=1 AND pay_status=1) ) ', //虚拟订单状态:已付款
@@ -351,6 +351,14 @@ return [
         1 => '退货退款',
         2 => '换货',
     ],
+    /*
+     * 售后退款原因
+     */
+    'RETURN_REASON' => [
+        '0' => ['商品质量问题', '商品过期', '货物破损已拒签', '未收到商品'],
+        '1' => ['7天无理由退换货', '商品质量问题', '规格与商品描述不符', '发错货/漏发', '商品过期', '货物破损已拒签'],
+        '2' => ['7天无理由退换货', '商品质量问题', '规格与商品描述不符', '发错货/漏发', '商品过期', '货物破损已拒签']
+    ],
     //短信使用场景
     'SEND_SCENE' => [
         '1' => ['用户注册', '验证码${code}，用户注册新账号, 请勿告诉他人，感谢您的支持!', 'regis_sms_enable'],
@@ -384,10 +392,10 @@ return [
      *配置成这样, 指定 模块 控制器 方法名 参数名
      */
     'HTML_CACHE_ARR' => [
-    ['mca' => 'home_Goods_goodsInfo', 'p' => ['id']],
-    ['mca' => 'home_Index_index'],  // 缓存首页静态页面
-    ['mca' => 'home_Goods_ajaxComment', 'p' => ['goods_id', 'commentType', 'p']],  // 缓存评论静态页面 http://www.tpshop2.0.com/index.php?m=Home&c=Goods&a=ajaxComment&goods_id=142&commentType=1&p=1
-    ['mca' => 'home_Goods_ajax_consult', 'p' => ['goods_id', 'consult_type', 'p']],  // 缓存咨询静态页面 http://www.tpshop2.0.com/index.php?m=Home&c=Goods&a=ajax_consult&goods_id=142&consult_type=0&p=2
+        ['mca' => 'home_Goods_goodsInfo', 'p' => ['id']],
+        ['mca' => 'home_Index_index'],  // 缓存首页静态页面
+        ['mca' => 'home_Goods_ajaxComment', 'p' => ['goods_id', 'commentType', 'p']],  // 缓存评论静态页面 http://www.tpshop2.0.com/index.php?m=Home&c=Goods&a=ajaxComment&goods_id=142&commentType=1&p=1
+        ['mca' => 'home_Goods_ajax_consult', 'p' => ['goods_id', 'consult_type', 'p']],  // 缓存咨询静态页面 http://www.tpshop2.0.com/index.php?m=Home&c=Goods&a=ajax_consult&goods_id=142&consult_type=0&p=2
     ],
 
     /*订单操作*/
@@ -415,7 +423,7 @@ return [
         '2' => '交易关闭',
     ],
     'erasable_type' => ['.gif', '.jpg', '.jpeg', '.bmp', '.png', '.mp4', '.3gp', '.flv', '.avi', '.wmv'],
-    'COUPON_USER_TYPE' => ['全店通用', '指定商品可用', '指定分类商品可用','','折扣券','兑换券'],
+    'COUPON_USER_TYPE' => ['全店通用', '指定商品可用', '指定分类商品可用', '', '折扣券', '兑换券'],
 
     'image_upload_limit_size' => 1024 * 1024 * 5, //上传图片大小限制
 

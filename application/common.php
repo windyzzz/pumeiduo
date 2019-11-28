@@ -1095,7 +1095,7 @@ function orderStatusDesc($order_id = 0, $order = [])
     } //'已作废',
     if (6 == $order['order_status']) {
         return 'AFTER-SALES';
-    } //'已作废',
+    } //'售后状态',
     return 'OTHER';
 }
 

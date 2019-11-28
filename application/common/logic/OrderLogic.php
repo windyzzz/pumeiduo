@@ -394,7 +394,7 @@ class OrderLogic
         if ($data['type'] < 2) {
             $useRapplyReturnMoney = $order_goods['final_price'] * $data['goods_num'];    //要退的总价 商品购买单价*申请数量
             $userExpenditureMoney = $order['goods_price'] - $order['order_prom_amount'] - $order['coupon_price'];    //用户实际使用金额
-            $rate = round($useRapplyReturnMoney / $userExpenditureMoney, 8);
+            $rate = round($useRapplyReturnMoney / $userExpenditureMoney, 2);
             $shipping_rate = $order['shipping_price'] / $order['total_amount'];
             $user_electronic = round($order['user_electronic'] - $order['user_electronic'] * $shipping_rate, 2);
 
@@ -909,11 +909,26 @@ class OrderLogic
             ->join('goods g', 'g.goods_id = og.goods_id', 'LEFT')
             ->join('return_goods rg', 'rg.rec_id = og.rec_id', 'LEFT')
             ->join('spec_goods_price sgp', 'sgp.goods_id = og.goods_id AND sgp.`key` = og.spec_key', 'LEFT')
-            ->where($where)->field('og.*, sgp.item_id, g.commission, g.original_img, og.use_integral, og.give_integral, rg.status, g.zone')->select();
+            ->where($where)->field('og.*, sgp.item_id, g.commission, g.original_img, rg.status return_status, g.zone')->select();
         foreach ($orderGoods as $k => $goods) {
             $orderGoods[$k]['is_return'] = M('ReturnGoods')->where('rec_id', $goods['rec_id'])->find() ? 1 : 0;
             $orderGoods[$k]['status_desc'] = C('REFUND_STATUS')[$goods['status']];
         }
+        return $orderGoods;
+    }
+
+    /**
+     * 根据订单商品记录ID获取商品
+     * @param $recId
+     * @return false|\PDOStatement|string|\think\Collection
+     */
+    public function getOrderGoodsById($recId)
+    {
+        $where['og.rec_id'] = $recId;
+        $orderGoods = Db::name('order_goods og')
+            ->join('goods g', 'g.goods_id = og.goods_id', 'LEFT')
+            ->join('spec_goods_price sgp', 'sgp.goods_id = og.goods_id AND sgp.`key` = og.spec_key', 'LEFT')
+            ->where($where)->field('og.*, sgp.item_id, g.commission, g.original_img, g.zone')->find();
         return $orderGoods;
     }
 }

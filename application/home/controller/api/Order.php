@@ -211,11 +211,12 @@ class Order extends Base
                         'shop_price' => $goods['goods_price'],
                         'exchange_integral' => $goods['use_integral'],
                         'exchange_price' => $goods['member_goods_price'],
-                        'original_img' => $goods['original_img']
+                        'original_img' => $goods['original_img'],
+                        'is_return' => $goods['is_return']
                     ];
                 }
                 $goodsNum += $goods['goods_num'];
-                $giveIntegral = bcadd($giveIntegral, $goods['give_integral'], 2);
+                $giveIntegral = bcadd($giveIntegral, bcmul($goods['give_integral'], $goods['goods_num']), 2);
             }
             $orderData[$k]['order_info']['total_num'] = $goodsNum;
             $orderData[$k]['order_info']['give_integral'] = $giveIntegral;
@@ -408,10 +409,16 @@ class Order extends Base
             ],
             'goods' => []
         ];
+        if ($orderInfo['order_status_code'] == 'WAITCCOMMENT') {
+            $canReturn = $orderInfo['end_sale_time'] > time() ? true : false;   // 能否退货
+        } else {
+            $canReturn = false;
+        }
         $weight = 0.00;
         $giveIntegral = 0.00;
         foreach ($orderGoods as $goods) {
             $orderData['goods'][] = [
+                'rec_id' => $goods['rec_id'],
                 'goods_id' => $goods['goods_id'],
                 'goods_sn' => $goods['goods_sn'],
                 'goods_name' => $goods['goods_name'],
@@ -421,12 +428,14 @@ class Order extends Base
                 'shop_price' => $goods['goods_price'],
                 'exchange_integral' => $goods['use_integral'],
                 'exchange_price' => $goods['member_goods_price'],
-                'original_img' => $goods['original_img']
+                'original_img' => $goods['original_img'],
+                'can_return' => $canReturn == true ? $goods['sale_type'] == 1 ? 1 : 0 : 0,   // sale_type = 1 普通商品
+                'return_status' => $goods['return_status']
             ];
             $weight = bcadd($weight, $goods['weight'], 2);
-            $giveIntegral = bcadd($giveIntegral, $goods['give_integral'], 2);
+            $giveIntegral = bcadd($giveIntegral, bcmul($goods['give_integral'], $goods['goods_num']), 2);
         }
-        $orderData['weight'] = $weight;
+        $orderData['weight'] = $weight . 'g';
         $orderData['give_integral'] = $giveIntegral;
         return json(['status' => 1, 'result' => $orderData]);
     }
@@ -675,7 +684,8 @@ class Order extends Base
         }
         $order_goods = M('order_goods')->where(['rec_id' => $rec_id])->find();
         $order_goods['goods_img'] = M('goods')->where(['goods_id' => $order_goods['goods_id']])->getField('original_img');
-        $order = M('order')->where(['order_id' => $order_goods['order_id'], 'user_id' => $this->user_id])->find();
+//        $order = M('order')->where(['order_id' => $order_goods['order_id'], 'user_id' => $this->user_id])->find();
+        $order = M('order')->where(['order_id' => $order_goods['order_id']])->find();
         $confirm_time_config = tpCache('shopping.auto_service_date'); //后台设置多少天内可申请售后
         $confirm_time = $confirm_time_config * 24 * 60 * 60;
         if ((time() - $order['confirm_time']) > $confirm_time && !empty($order['confirm_time'])) {
@@ -705,6 +715,43 @@ class Order extends Base
         $return['order'] = $order;
 
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
+    }
+
+
+    public function return_goods_new()
+    {
+        $type = I('type', -1);
+        $recId = I('rec_id', '');
+        if ($this->request->isGet()) {
+            $orderGoods = (new OrderLogic())->getOrderGoodsById($recId); // 订单商品信息
+            $return['order_goods'] = [
+                'rec_id' => $orderGoods['rec_id'],
+                'goods_id' => $orderGoods['goods_id'],
+                'goods_sn' => $orderGoods['goods_sn'],
+                'goods_name' => $orderGoods['goods_name'],
+                'spec_key_name' => $orderGoods['spec_key_name'],
+                'item_id' => $orderGoods['item_id'],
+                'original_img' => $orderGoods['original_img']
+            ];
+            switch ($type) {
+                case -1:
+                    break;
+                case 0:
+                    $return['return_reason'] = C('RETURN_REASON')[0];
+                    break;
+                case 1:
+                    $return['return_reason'] = C('RETURN_REASON')[1];
+                    break;
+                case 2:
+                    $return['return_reason'] = C('RETURN_REASON')[2];
+                    break;
+                default:
+                    return json(['status' => 0, 'msg' => '参数错误']);
+            }
+            return json(['status' => 1, 'result' => $return]);
+        } else {
+
+        }
     }
 
     /**
@@ -1361,7 +1408,7 @@ class Order extends Base
             'exchange_list' => $exchangeList,
             // 支付
             'user_electronic' => $this->user['user_electronic'],
-            'weight' => $weight,
+            'weight' => $weight . 'g',
             'goods_fee' => $payReturn['goods_price'],
             'shipping_price' => $payReturn['shipping_price'],
             'coupon_price' => $payReturn['coupon_price'],

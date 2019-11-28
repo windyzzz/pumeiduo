@@ -1332,12 +1332,12 @@ class UsersLogic extends Model
             ->select();
 
         foreach ($result as $k => $v) {
-            // 比起原价的升降关系
-            if ($v['low_price'] > 0) {
-                $result[$k]['type'] = 1;    // 降价
-            } else {
-                $result[$k]['type'] = 2;    // 升价
-            }
+//            // 比起原价的升降关系
+//            if ($v['low_price'] > 0) {
+//                $result[$k]['type'] = 1;    // 降价
+//            } else {
+//                $result[$k]['type'] = 2;    // 升价
+//            }
             // 处理显示金额
             if ($v['exchange_integral'] != 0) {
                 $result[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);

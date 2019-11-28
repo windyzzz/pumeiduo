@@ -350,6 +350,7 @@ class Goods extends Base
         $goods['promotion'] = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
             ->where(['gtg.goods_id' => $goods_id, 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
             ->field('pg.id prom_id, pg.type, pg.title')->select();
+
         // 优惠券
         $couponLogic = new CouponLogic();
         $couponCurrency = $couponLogic->getCoupon(0);    // 通用优惠券
@@ -363,6 +364,14 @@ class Goods extends Base
         }
         $couponCate = $couponLogic->getCoupon(null, '', $goods['cat_id'], $couponIds);    // 指定分类优惠券
         $goods['coupon'] = array_merge_recursive($couponCurrency, $couponGoods, $couponCate);
+        if ($this->user && !empty($goods['coupon'])) {
+            // 查看用户是否拥有优惠券
+            foreach ($goods['coupon'] as $k => $coupon) {
+                if (!Db::name('coupon_list')->where(['cid' => $coupon['coupon_id'], 'uid' => $this->user_id, 'status' => 0])->find()) {
+                    unset($goods['coupon'][$k]);
+                }
+            }
+        }
         $goods['freight_free'] = tpCache('shopping.freight_free'); // 全场满多少免运费
         // 组装数据
         $result['goods'] = $goods;
