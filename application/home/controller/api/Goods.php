@@ -279,6 +279,7 @@ class Goods extends Base
             $goods['exchange_price'] = $goods['shop_price'];
         }
         // 商品标签
+        $goods['tabs'] = [];
         $goodsTab = Db::name('goods_tab')->where(['goods_id' => $goods_id, 'status' => 1])->limit(0, 3)->field('tab_id, title')->select();
         if ($goodsTab) {
             $goods['tabs'] = $goodsTab;
@@ -359,7 +360,7 @@ class Goods extends Base
             $couponIds['not_coupon_id'][] = $item['coupon_id'];
         }
         $couponGoods = $couponLogic->getCoupon(null, $goods_id, '', $couponIds);    // 指定商品优惠券
-        foreach ($couponGoods as $item) {
+        foreach ($couponGoods as $k => $item) {
             $couponIds['not_coupon_id'][] = $item['coupon_id'];
         }
         $couponCate = $couponLogic->getCoupon(null, '', $goods['cat_id'], $couponIds);    // 指定分类优惠券

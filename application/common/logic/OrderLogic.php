@@ -450,6 +450,80 @@ class OrderLogic
     }
 
     /**
+     * 添加售后申请（新）
+     * @param $recId
+     * @param $type
+     * @param $order
+     * @param $data
+     * @return array
+     */
+    public function addReturnGoodsNew($recId, $type, $order, $data)
+    {
+        $returnData['rec_id'] = $recId;
+        $returnData['type'] = $type;
+        $returnData['is_receive'] = $data['is_receive'] ?? 1;
+        $returnData['reason'] = $data['return_reason'] ?? '';
+        $returnData['describe'] = $data['describe'] ?? '';
+        $imageArr = $data['image_arr'] ?? [];
+
+        $confirmTimeConfig = tpCache('shopping.auto_service_date');   // 后台设置多少天内可申请售后
+        $confirmTime = $confirmTimeConfig * 24 * 60 * 60;
+        if ((time() - $order['confirm_time']) > $confirmTime && !empty($order['confirm_time'])) {
+            return ['status' => 0, 'msg' => '已经超过' . $confirmTimeConfig . '天内退货时间'];
+        }
+
+        if (!empty($imageArr) && is_array($imageArr)) {
+            $returnData['imgs'] = implode(',', $imageArr);
+        }
+        $returnData['addtime'] = time();
+        $returnData['user_id'] = $order['user_id'];
+        $returnData['order_id'] = $order['order_id'];
+        $returnData['order_sn'] = $order['order_sn'];
+        $orderGoods = M('order_goods')->where(['rec_id' => $recId])->find();
+        $returnData['goods_id'] = $orderGoods['goods_id'];
+        $returnData['spec_key'] = $orderGoods['spec_key'];
+        $returnData['spec_key_name'] = $orderGoods['spec_key_name'];
+
+        // 退还金额
+        $goodsReturnPrice = bcmul($orderGoods['final_price'], $orderGoods['goods_num'], 2);    // 要退的商品总价 商品购买单价 * 申请数量
+        $orderAmount = bcsub(bcsub($order['goods_price'], $order['order_prom_amount'], 2), $order['coupon_price'], 2);    // 用户实际使用金额
+        $priceRate = bcdiv($goodsReturnPrice, $orderAmount, 2);
+        $returnData['refund_money'] = bcmul($priceRate, bcsub($orderAmount, $order['shipping_price'], 2), 2);
+        if ($order['user_electronic'] > 0) {
+            // 退换电子币
+            $shippingRate = bcdiv($order['shipping_price'], $order['total_amount']);
+            $returnData['refund_electronic'] = bcsub($order['user_electronic'], bcmul($order['user_electronic'], $shippingRate, 2), 2);
+        }
+        $goodsReturnIntegral = bcmul($orderGoods['use_integral'], $orderGoods['goods_num'], 2); // 要退的商品积分 商品购买积分 * 申请数量
+        $orderIntegral = $order['integral'];    // 用户实际使用积分
+        if ($orderIntegral > 0) {
+            // 退还积分
+            $integralRate = bcdiv($goodsReturnIntegral, $orderIntegral, 2);
+            $returnData['refund_integral'] = bcmul($integralRate, bcsub($orderIntegral, $order['shipping_price'], 2), 2);
+        }
+
+        // 佣金处理
+        $rebate_list = M('rebate_log')->where('order_sn', $order['order_sn'])->select();
+        foreach ($rebate_list as $rk => $rv) {
+            $money = $this->getDecMoney($rv['order_id'], $rv['level']);
+            $dec_money = $money[$recId]['money'];
+            $dec_point = $money[$recId]['point'];
+            M('rebate_log')->where('id', $rv['id'])->update([
+                'money' => ['exp', "money - {$dec_money}"],
+                'point' => ['exp', "point - {$dec_point}"],
+                'freeze_money' => ['exp', "freeze_money + {$dec_money}"],
+            ]);
+        }
+
+        $res = M('return_goods')->add($returnData);
+        if ($res) {
+            M('order')->where('order_sn', $order['order_sn'])->update(['order_status' => 6]);
+            return ['status' => 1, 'msg' => '申请成功', 'result' => ['return_id' => $res]];
+        }
+        return ['status' => 0, 'msg' => '申请失败'];
+    }
+
+    /**
      * 上传退换货图片，兼容小程序.
      *
      * @return array

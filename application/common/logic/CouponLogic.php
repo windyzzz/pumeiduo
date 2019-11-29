@@ -468,9 +468,12 @@ class CouponLogic extends Model
         if (isset($ext['not_coupon_id'])) {
             $where['c.id'] = ['not in', $ext['not_coupon_id']];
         }
-        $coupon = Db::name('coupon')->alias('c')->join('goods_coupon gc', 'gc.coupon_id = c.id', 'LEFT')
+        $coupon = Db::name('coupon')->alias('c')
+            ->join('goods_coupon gc', 'gc.coupon_id = c.id', 'LEFT')
+            ->join('goods g', 'g.goods_id = gc.goods_id', 'LEFT')
+            ->join('goods_category gcc', 'gcc.id = gc.goods_category_id', 'LEFT')
             ->where($where)->where(['c.status' => 1, 'c.use_start_time' => ['<=', time()], 'c.use_end_time' => ['>=', time()]])
-            ->field('c.id coupon_id, c.name, c.money, FROM_UNIXTIME(c.use_start_time,"%Y-%m-%d") as use_start_time, FROM_UNIXTIME(c.use_end_time,"%Y-%m-%d") as use_end_time, c.use_type, gc.goods_id, gc.goods_category_id cat_id');
+            ->field('c.id coupon_id, c.name, c.money, FROM_UNIXTIME(c.use_start_time,"%Y-%m-%d") as use_start_time, FROM_UNIXTIME(c.use_end_time,"%Y-%m-%d") as use_end_time, c.use_type, gc.goods_id, g.goods_name, g.original_img, gc.goods_category_id cat_id, gcc.name cat_name');
         if (isset($ext['limit'])) {
             // 限制数量
             $coupon = $coupon->limit($ext['limit']['offset'], $ext['limit']['length']);

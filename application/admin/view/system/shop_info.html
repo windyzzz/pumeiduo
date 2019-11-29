@@ -284,7 +284,7 @@
             </dl>
             <dl class="row">
                 <dt class="tit">
-                    <label for="address">所在地区</label>
+                    <label for="address">公司所在地区</label>
                 </dt>
                 <dd class="opt">
                     <select onchange="get_city(this)" id="province" name="province">
@@ -305,12 +305,11 @@
                             <option value="{$vo.id}" <if condition="$config[district] eq $vo[id]">selected</if>>{$vo.name}</option>
                         </volist>
                     </select>
-
                 </dd>
             </dl>
             <dl class="row">
                 <dt class="tit">
-                    <label for="address">详细地址</label>
+                    <label for="address">公司详细地址</label>
                 </dt>
                 <dd class="opt">
                 	<input id="address" name="address" value="{$config.address}" class="input-txt" type="text" />

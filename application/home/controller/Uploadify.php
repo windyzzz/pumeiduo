@@ -12,6 +12,7 @@
 namespace app\home\controller;
 
 use common\util\File;
+use think\Exception;
 use think\Request;
 
 class Uploadify extends Base
@@ -23,7 +24,7 @@ class Uploadify extends Base
     {
         parent::__construct();
         date_default_timezone_set('Asia/Shanghai');
-        $this->savePath = I('savepath', 'temp').'/';
+        $this->savePath = I('savepath', 'temp') . '/';
         error_reporting(E_ERROR | E_WARNING);
         header('Content-Type: text/html; charset=utf-8');
     }
@@ -34,14 +35,14 @@ class Uploadify extends Base
         $path = I('path', 'temp');
         $image_upload_limit_size = config('image_upload_limit_size');
         $info = [
-                'num' => I('num/d'),
-                'title' => '',
-                'upload' => U('Uploadify/imageUp', ['savepath' => $path, 'pictitle' => 'banner', 'dir' => 'images']),
-                'fileList' => U('Uploadify/fileList', ['path' => $path]),
-                'size' => $image_upload_limit_size / (1024 * 1024).'M',
-                'type' => 'jpg,png,gif,jpeg',
-                'input' => I('input'),
-                'func' => empty($func) ? 'undefined' : $func,
+            'num' => I('num/d'),
+            'title' => '',
+            'upload' => U('Uploadify/imageUp', ['savepath' => $path, 'pictitle' => 'banner', 'dir' => 'images']),
+            'fileList' => U('Uploadify/fileList', ['path' => $path]),
+            'size' => $image_upload_limit_size / (1024 * 1024) . 'M',
+            'type' => 'jpg,png,gif,jpeg',
+            'input' => I('input'),
+            'func' => empty($func) ? 'undefined' : $func,
         ];
         $this->assign('info', $info);
 
@@ -85,14 +86,19 @@ class Uploadify extends Base
         $type = I('type', 'Images');
         switch ($type) {
             /* 列出图片 */
-            case 'Images': $allowFiles = 'png|jpg|jpeg|gif|bmp'; break;
-            case 'Flash': $allowFiles = 'flash|swf'; break;
+            case 'Images':
+                $allowFiles = 'png|jpg|jpeg|gif|bmp';
+                break;
+            case 'Flash':
+                $allowFiles = 'flash|swf';
+                break;
             /* 列出文件 */
-            default: $allowFiles = '.+';
+            default:
+                $allowFiles = '.+';
         }
 
         $user_id = cookie('user_id') ? cookie('user_id') : $this->user_id;
-        $path = UPLOAD_PATH.'user/'.$user_id.'/'.I('path', 'temp');
+        $path = UPLOAD_PATH . 'user/' . $user_id . '/' . I('path', 'temp');
         $listSize = 100000;
         $key = empty($_GET['key']) ? '' : $_GET['key'];
 
@@ -105,10 +111,10 @@ class Uploadify extends Base
         $files = $this->getfiles($path, $allowFiles, $key);
         if (!count($files)) {
             echo json_encode([
-                    'state' => '没有相关文件',
-                    'list' => [],
-                    'start' => $start,
-                    'total' => count($files),
+                'state' => '没有相关文件',
+                'list' => [],
+                'start' => $start,
+                'total' => count($files),
             ]);
             exit;
         }
@@ -121,10 +127,10 @@ class Uploadify extends Base
 
         /* 返回数据 */
         $result = json_encode([
-                'state' => 'SUCCESS',
-                'list' => $list,
-                'start' => $start,
-                'total' => count($files),
+            'state' => 'SUCCESS',
+            'list' => $list,
+            'start' => $start,
+            'total' => count($files),
         ]);
 
         echo $result;
@@ -149,15 +155,15 @@ class Uploadify extends Base
         $handle = opendir($path);
         while (false !== ($file = readdir($handle))) {
             if ('.' != $file && '..' != $file) {
-                $path2 = $path.$file;
+                $path2 = $path . $file;
                 if (is_dir($path2)) {
                     $this->getfiles($path2, $allowFiles, $key, $files);
                 } else {
-                    if (preg_match("/\.(".$allowFiles.')$/i', $file) && preg_match('/.*'.$key.'.*/i', $file)) {
+                    if (preg_match("/\.(" . $allowFiles . ')$/i', $file) && preg_match('/.*' . $key . '.*/i', $file)) {
                         $files[] = [
-                                'url' => '/'.$path2,
-                                'name' => $file,
-                                'mtime' => filemtime($path2),
+                            'url' => '/' . $path2,
+                            'name' => $file,
+                            'mtime' => filemtime($path2),
                         ];
                     }
                 }
@@ -176,33 +182,33 @@ class Uploadify extends Base
             case 'config':
                 $result = json_encode($CONFIG2);
                 break;
-                /* 上传图片 */
+            /* 上传图片 */
             case 'uploadimage':
                 $fieldName = $CONFIG2['imageFieldName'];
                 $result = $this->imageUp();
                 break;
-                /* 上传涂鸦 */
+            /* 上传涂鸦 */
             case 'uploadscrawl':
                 $config = [
-                'pathFormat' => $CONFIG2['scrawlPathFormat'],
-                'maxSize' => $CONFIG2['scrawlMaxSize'],
-                'allowFiles' => $CONFIG2['scrawlAllowFiles'],
-                'oriName' => 'scrawl.png', ];
+                    'pathFormat' => $CONFIG2['scrawlPathFormat'],
+                    'maxSize' => $CONFIG2['scrawlMaxSize'],
+                    'allowFiles' => $CONFIG2['scrawlAllowFiles'],
+                    'oriName' => 'scrawl.png',];
                 $fieldName = $CONFIG2['scrawlFieldName'];
                 $base64 = 'base64';
                 $result = $this->upBase64($config, $fieldName);
                 break;
-                /* 上传视频 */
+            /* 上传视频 */
             case 'uploadvideo':
                 $fieldName = $CONFIG2['videoFieldName'];
                 $result = $this->upFile($fieldName);
                 break;
-                /* 上传文件 */
+            /* 上传文件 */
             case 'uploadfile':
                 $fieldName = $CONFIG2['fileFieldName'];
                 $result = $this->upFile($fieldName);
                 break;
-                /* 列出图片 */
+            /* 列出图片 */
             case 'listimage':
                 $allowFiles = $CONFIG2['imageManagerAllowFiles'];
                 $listSize = $CONFIG2['imageManagerListSize'];
@@ -210,7 +216,7 @@ class Uploadify extends Base
                 $get = $_GET;
                 $result = $this->fileList2($allowFiles, $listSize, $get);
                 break;
-                /* 列出文件 */
+            /* 列出文件 */
             case 'listfile':
                 $allowFiles = $CONFIG2['fileManagerAllowFiles'];
                 $listSize = $CONFIG2['fileManagerListSize'];
@@ -218,13 +224,13 @@ class Uploadify extends Base
                 $get = $_GET;
                 $result = $this->fileList2($allowFiles, $listSize, $get);
                 break;
-                /* 抓取远程文件 */
+            /* 抓取远程文件 */
             case 'catchimage':
                 $config = [
-                'pathFormat' => $CONFIG2['catcherPathFormat'],
-                'maxSize' => $CONFIG2['catcherMaxSize'],
-                'allowFiles' => $CONFIG2['catcherAllowFiles'],
-                'oriName' => 'remote.png', ];
+                    'pathFormat' => $CONFIG2['catcherPathFormat'],
+                    'maxSize' => $CONFIG2['catcherMaxSize'],
+                    'allowFiles' => $CONFIG2['catcherAllowFiles'],
+                    'oriName' => 'remote.png',];
                 $fieldName = $CONFIG2['catcherFieldName'];
                 /* 抓取远程图片 */
                 $list = [];
@@ -233,18 +239,18 @@ class Uploadify extends Base
                 foreach ($source as $imgUrl) {
                     $info = json_decode($this->saveRemote($config, $imgUrl), true);
                     array_push($list, [
-                    'state' => $info['state'],
-                    'url' => $info['url'],
-                    'size' => $info['size'],
-                    'title' => htmlspecialchars($info['title']),
-                    'original' => htmlspecialchars($info['original']),
-                    'source' => htmlspecialchars($imgUrl),
+                        'state' => $info['state'],
+                        'url' => $info['url'],
+                        'size' => $info['size'],
+                        'title' => htmlspecialchars($info['title']),
+                        'original' => htmlspecialchars($info['original']),
+                        'source' => htmlspecialchars($imgUrl),
                     ]);
                 }
 
                 $result = json_encode([
-                        'state' => count($list) ? 'SUCCESS' : 'ERROR',
-                        'list' => $list,
+                    'state' => count($list) ? 'SUCCESS' : 'ERROR',
+                    'list' => $list,
                 ]);
                 break;
             default:
@@ -255,10 +261,10 @@ class Uploadify extends Base
         /* 输出结果 */
         if (isset($_GET['callback'])) {
             if (preg_match("/^[\w_]+$/", $_GET['callback'])) {
-                echo htmlspecialchars($_GET['callback']).'('.$result.')';
+                echo htmlspecialchars($_GET['callback']) . '(' . $result . ')';
             } else {
                 echo json_encode([
-                        'state' => 'callback参数不合法',
+                    'state' => 'callback参数不合法',
                 ]);
             }
         } else {
@@ -274,35 +280,35 @@ class Uploadify extends Base
             $file = request()->file('upfile');
         }
         $result = $this->validate(
-                ['file' => $file],
-                ['file' => 'image|fileSize:40000000|fileExt:jpg,jpeg,gif,png'],
-                ['file.image' => '上传文件必须为图片', 'file.fileSize' => '上传文件过大', 'file.fileExt' => '上传文件后缀名必须为jpg,jpeg,gif,png']
+            ['file' => $file],
+            ['file' => 'image|fileSize:40000000|fileExt:jpg,jpeg,gif,png'],
+            ['file.image' => '上传文件必须为图片', 'file.fileSize' => '上传文件过大', 'file.fileExt' => '上传文件后缀名必须为jpg,jpeg,gif,png']
         );
 
         if (true !== $result || !$file) {
-            $state = 'ERROR'.$result;
+            $state = 'ERROR' . $result;
 
             return json_encode(['state' => $state]);
         }
         // 移动到框架应用根目录/public/uploads/ 目录下
         $user_id = cookie('user_id') ? cookie('user_id') : $this->user_id;
-        $savePath = 'user/'.$user_id.'/'.$this->savePath.'/';
+        $savePath = 'user/' . $user_id . '/' . $this->savePath . '/';
         // 使用自定义的文件保存规则
         $info = $file->rule(function ($file) {
-            return  md5(mt_rand());
-        })->move(UPLOAD_PATH.$this->savePath);
+            return md5(mt_rand());
+        })->move(UPLOAD_PATH . $this->savePath);
 
         if ($info) {
             $data = [
-                    'state' => 'SUCCESS',
-                    'url' => '/'.UPLOAD_PATH.$this->savePath.$info->getSaveName(),
-                    'title' => $info->getFilename(),
-                    'original' => $info->getFilename(),
-                    'type' => '.'.$info->getExtension(),
-                    'size' => $info->getSize(),
+                'state' => 'SUCCESS',
+                'url' => '/' . UPLOAD_PATH . $this->savePath . $info->getSaveName(),
+                'title' => $info->getFilename(),
+                'original' => $info->getFilename(),
+                'type' => '.' . $info->getExtension(),
+                'size' => $info->getSize(),
             ];
         } else {
-            $data = ['state' => 'ERROR'.$file->getError()];
+            $data = ['state' => 'ERROR' . $file->getError()];
         }
 
         return json_encode($data);
@@ -314,14 +320,19 @@ class Uploadify extends Base
         $type = I('type', 'Images');
         switch ($type) {
             /* 列出图片 */
-            case 'Images': $allowFiles = 'png|jpg|jpeg|gif|bmp'; break;
-            case 'Flash': $allowFiles = 'flash|swf'; break;
+            case 'Images':
+                $allowFiles = 'png|jpg|jpeg|gif|bmp';
+                break;
+            case 'Flash':
+                $allowFiles = 'flash|swf';
+                break;
             /* 列出文件 */
-            default: $allowFiles = '.+';
+            default:
+                $allowFiles = '.+';
         }
 
         $user_id = cookie('user_id') ? cookie('user_id') : $this->user_id;
-        $path = UPLOAD_PATH.'user/'.$user_id.'/'.$this->savePath;
+        $path = UPLOAD_PATH . 'user/' . $user_id . '/' . $this->savePath;
         $listSize = 100000;
         $key = empty($_GET['key']) ? '' : $_GET['key'];
         /* 获取参数 */
@@ -332,10 +343,10 @@ class Uploadify extends Base
         $files = $this->getfiles($path, $allowFiles, $key);
         if (!count($files)) {
             echo json_encode([
-                    'state' => '没有相关文件',
-                    'list' => [],
-                    'start' => $start,
-                    'total' => count($files),
+                'state' => '没有相关文件',
+                'list' => [],
+                'start' => $start,
+                'total' => count($files),
             ]);
             exit;
         }
@@ -348,10 +359,10 @@ class Uploadify extends Base
 
         /* 返回数据 */
         $result = json_encode([
-                'state' => 'SUCCESS',
-                'list' => $list,
-                'start' => $start,
-                'total' => count($files),
+            'state' => 'SUCCESS',
+            'list' => $list,
+            'start' => $start,
+            'total' => count($files),
         ]);
 
         return $result;
@@ -366,7 +377,7 @@ class Uploadify extends Base
         //http开头验证
         if (0 !== strpos($imgUrl, 'http')) {
             $data = [
-                    'state' => '链接不是http链接',
+                'state' => '链接不是http链接',
             ];
 
             return json_encode($data);
@@ -375,7 +386,7 @@ class Uploadify extends Base
         $heads = get_headers($imgUrl);
         if (!(stristr($heads[0], '200') && stristr($heads[0], 'OK'))) {
             $data = [
-                    'state' => '链接不可用',
+                'state' => '链接不可用',
             ];
 
             return json_encode($data);
@@ -384,7 +395,7 @@ class Uploadify extends Base
         $fileType = strtolower(strrchr($imgUrl, '.'));
         if (!in_array($fileType, $config['allowFiles']) || stristr($heads['Content-Type'], 'image')) {
             $data = [
-                    'state' => '链接contentType不正确',
+                'state' => '链接contentType不正确',
             ];
 
             return json_encode($data);
@@ -393,27 +404,27 @@ class Uploadify extends Base
         //打开输出缓冲区并获取远程图片
         ob_start();
         $context = stream_context_create(
-                ['http' => [
-                        'follow_location' => false, // don't follow redirects
-                ]]
+            ['http' => [
+                'follow_location' => false, // don't follow redirects
+            ]]
         );
         readfile($imgUrl, false, $context);
         $img = ob_get_contents();
         ob_end_clean();
         preg_match("/[\/]([^\/]*)[\.]?[^\.\/]*$/", $imgUrl, $m);
 
-        $dirname = UPLOAD_PATH.'remote/';
+        $dirname = UPLOAD_PATH . 'remote/';
         $file['oriName'] = $m ? $m[1] : '';
         $file['filesize'] = strlen($img);
         $file['ext'] = strtolower(strrchr($config['oriName'], '.'));
-        $file['name'] = uniqid().$file['ext'];
-        $file['fullName'] = $dirname.$file['name'];
+        $file['name'] = uniqid() . $file['ext'];
+        $file['fullName'] = $dirname . $file['name'];
         $fullName = $file['fullName'];
 
         //检查文件大小是否超出限制
         if ($file['filesize'] >= ($config['maxSize'])) {
             $data = [
-                    'state' => '文件大小超出网站限制',
+                'state' => '文件大小超出网站限制',
             ];
 
             return json_encode($data);
@@ -422,13 +433,13 @@ class Uploadify extends Base
         //创建目录失败
         if (!file_exists($dirname) && !mkdir($dirname, 0777, true)) {
             $data = [
-                    'state' => '目录创建失败',
+                'state' => '目录创建失败',
             ];
 
             return json_encode($data);
         } elseif (!is_writeable($dirname)) {
             $data = [
-                    'state' => '目录没有写权限',
+                'state' => '目录没有写权限',
             ];
 
             return json_encode($data);
@@ -437,19 +448,19 @@ class Uploadify extends Base
         //移动文件
         if (!(file_put_contents($fullName, $img) && file_exists($fullName))) { //移动失败
             $data = [
-                    'state' => '写入文件内容错误',
+                'state' => '写入文件内容错误',
             ];
 
             return json_encode($data);
         } //移动成功
         $data = [
-                    'state' => 'SUCCESS',
-                    'url' => substr($file['fullName'], 1),
-                    'title' => $file['name'],
-                    'original' => $file['oriName'],
-                    'type' => $file['ext'],
-                    'size' => $file['filesize'],
-            ];
+            'state' => 'SUCCESS',
+            'url' => substr($file['fullName'], 1),
+            'title' => $file['name'],
+            'original' => $file['oriName'],
+            'type' => $file['ext'],
+            'size' => $file['filesize'],
+        ];
 
         return json_encode($data);
     }
@@ -463,18 +474,18 @@ class Uploadify extends Base
         $base64Data = $_POST[$fieldName];
         $img = base64_decode($base64Data);
 
-        $dirname = UPLOAD_PATH.'scrawl/';
+        $dirname = UPLOAD_PATH . 'scrawl/';
         $file['filesize'] = strlen($img);
         $file['oriName'] = $config['oriName'];
         $file['ext'] = strtolower(strrchr($config['oriName'], '.'));
-        $file['name'] = uniqid().$file['ext'];
-        $file['fullName'] = $dirname.$file['name'];
+        $file['name'] = uniqid() . $file['ext'];
+        $file['fullName'] = $dirname . $file['name'];
         $fullName = $file['fullName'];
 
         //检查文件大小是否超出限制
         if ($file['filesize'] >= ($config['maxSize'])) {
             $data = [
-                    'state' => '文件大小超出网站限制',
+                'state' => '文件大小超出网站限制',
             ];
 
             return json_encode($data);
@@ -483,13 +494,13 @@ class Uploadify extends Base
         //创建目录失败
         if (!file_exists($dirname) && !mkdir($dirname, 0777, true)) {
             $data = [
-                    'state' => '目录创建失败',
+                'state' => '目录创建失败',
             ];
 
             return json_encode($data);
         } elseif (!is_writeable($dirname)) {
             $data = [
-                    'state' => '目录没有写权限',
+                'state' => '目录没有写权限',
             ];
 
             return json_encode($data);
@@ -498,16 +509,16 @@ class Uploadify extends Base
         //移动文件
         if (!(file_put_contents($fullName, $img) && file_exists($fullName))) { //移动失败
             $data = [
-                    'state' => '写入文件内容错误',
+                'state' => '写入文件内容错误',
             ];
         } else { //移动成功
             $data = [
-                    'state' => 'SUCCESS',
-                    'url' => substr($file['fullName'], 1),
-                    'title' => $file['name'],
-                    'original' => $file['oriName'],
-                    'type' => $file['ext'],
-                    'size' => $file['filesize'],
+                'state' => 'SUCCESS',
+                'url' => substr($file['fullName'], 1),
+                'title' => $file['name'],
+                'original' => $file['oriName'],
+                'type' => $file['ext'],
+                'size' => $file['filesize'],
             ];
         }
 
@@ -532,24 +543,24 @@ class Uploadify extends Base
             $file = request()->file('upfile');
         }
         $result = $this->validate(
-                ['file' => $file],
-                ['file' => 'image|fileSize:40000000|fileExt:jpg,jpeg,gif,png'],
-                ['file.image' => '上传文件必须为图片', 'file.fileSize' => '上传文件过大', 'file.fileExt' => '上传文件后缀名必须为jpg,jpeg,gif,png']
+            ['file' => $file],
+            ['file' => 'image|fileSize:40000000|fileExt:jpg,jpeg,gif,png'],
+            ['file.image' => '上传文件必须为图片', 'file.fileSize' => '上传文件过大', 'file.fileExt' => '上传文件后缀名必须为jpg,jpeg,gif,png']
         );
         if (true !== $result || !$file) {
-            $state = 'ERROR'.$result;
+            $state = 'ERROR' . $result;
         } else {
             $user_id = cookie('user_id') ? cookie('user_id') : $this->user_id;
-            $savePath = 'user/'.$user_id.'/'.$this->savePath;
+            $savePath = 'user/' . $user_id . '/' . $this->savePath;
             $ossConfig = tpCache('oss');
             $ossSupportPath = ['comment', 'photo'];
             if (in_array(I('savepath'), $ossSupportPath) && $ossConfig['oss_switch']) {
                 //商品图片可选择存放在oss
-                $object = UPLOAD_PATH.$savePath.md5(time()).'.'.pathinfo($file->getInfo('name'), PATHINFO_EXTENSION);
+                $object = UPLOAD_PATH . $savePath . md5(time()) . '.' . pathinfo($file->getInfo('name'), PATHINFO_EXTENSION);
                 $ossClient = new \app\common\logic\OssLogic();
                 $return_url = $ossClient->uploadFile($file->getRealPath(), $object);
                 if (!$return_url) {
-                    $state = 'ERROR'.$ossClient->getError();
+                    $state = 'ERROR' . $ossClient->getError();
                     $return_url = '';
                 } else {
                     $state = 'SUCCESS';
@@ -558,14 +569,14 @@ class Uploadify extends Base
             } else {
                 // 移动到框架应用根目录/public/uploads/ 目录下
                 $info = $file->rule(function ($file) {
-                    return  md5(mt_rand()); // 使用自定义的文件保存规则
-                })->move(UPLOAD_PATH.$savePath);
+                    return md5(mt_rand()); // 使用自定义的文件保存规则
+                })->move(UPLOAD_PATH . $savePath);
                 if ($info) {
                     $state = 'SUCCESS';
                 } else {
-                    $state = 'ERROR'.$file->getError();
+                    $state = 'ERROR' . $file->getError();
                 }
-                $return_url = UPLOAD_PATH.$savePath.$info->getSaveName();
+                $return_url = UPLOAD_PATH . $savePath . $info->getSaveName();
             }
             $return_data['url'] = $return_url;
         }
@@ -575,5 +586,52 @@ class Uploadify extends Base
         $return_data['state'] = $state;
         $return_data['path'] = $path;
         $this->ajaxReturn($return_data, 'json');
+    }
+
+    /**
+     * 上传多张图片
+     * @return \think\response\Json
+     */
+    public function imageUpArr()
+    {
+        $fileArr = request()->file('file');
+        if (empty($fileArr) || !is_array($fileArr)) {
+            return json(['status' => 0, 'msg' => '请上传图片']);
+        }
+        $returnUrl = [];
+        foreach ($fileArr as $file) {
+            $result = $this->validate(
+                ['file' => $file],
+                ['file' => 'image|fileSize:40000000|fileExt:jpg,jpeg,gif,png'],
+                ['file.image' => '上传文件必须为图片', 'file.fileSize' => '上传文件过大', 'file.fileExt' => '上传文件后缀名必须为jpg,jpeg,gif,png']
+            );
+            if (true !== $result) {
+                return json($result);
+            }
+            $savePath = 'user/' . $this->user_id . '/' . $this->savePath;
+            $ossConfig = tpCache('oss');
+            $ossSupportPath = ['comment', 'photo'];
+            if (in_array(I('savepath'), $ossSupportPath) && $ossConfig['oss_switch']) {
+                //商品图片可选择存放在oss
+                $object = UPLOAD_PATH . $savePath . md5(time()) . '.' . pathinfo($file->getInfo('name'), PATHINFO_EXTENSION);
+                $ossClient = new \app\common\logic\OssLogic();
+                $return_url = $ossClient->uploadFile($file->getRealPath(), $object);
+                if (!$return_url) {
+                    return json(['status' => 0, 'msg' => 'ERROR' . $ossClient->getError()]);
+                } else {
+                    $returnUrl[] = $return_url;
+                }
+                @unlink($file->getRealPath());
+            } else {
+                $info = $file->rule(function ($file) {
+                    return md5(mt_rand());      // 使用自定义的文件保存规则
+                })->move(UPLOAD_PATH . $savePath);
+                if (!$info) {
+                    return json(['status' => 0, 'msg' => 'ERROR' . $file->getError()]);
+                }
+                $returnUrl[] = UPLOAD_PATH . $savePath . $info->getSaveName();
+            }
+        }
+        return json(['status' => 1, 'result' => ['url' => $returnUrl]]);
     }
 }

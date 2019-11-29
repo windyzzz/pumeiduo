@@ -240,7 +240,7 @@ class SmsLogic
      */
     private function sendSmsByAliyun($mobile, $smsSign, $smsParam, $templateCode)
     {
-        include_once './vendor/aliyun-php-sdk-core/Config.php';
+        include_once './vendor/aliyun-php-sdk-core/ConfigData.php';
         include_once './vendor/Dysmsapi/Request/V20170525/SendSmsRequest.php';
 
         $accessKeyId = $this->config['sms_appkey'];

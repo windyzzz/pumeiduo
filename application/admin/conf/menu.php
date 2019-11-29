@@ -134,6 +134,10 @@ return [
             ['name' => '素材管理', 'act' => 'materials', 'op' => 'Wechat'],
         ]],
 
+        ['name' => '自定义', 'child' => [
+            ['name' => '分类主题活动', 'act' => 'cate_activity_list', 'op' => 'Activity'],
+        ]],
+
         // array('name' => '统计','child' => array(
         // 		array('name' => '销售概况', 'act'=>'index', 'op'=>'Report'),
         // 		array('name' => '销售排行', 'act'=>'saleTop', 'op'=>'Report'),

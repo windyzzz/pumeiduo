@@ -94,6 +94,19 @@
             </dl>
             <dl class="row">
                 <dt class="tit">
+                    <label for="distribut_date">多少天内售后审核完毕</label>
+                </dt>
+                <dd class="opt">
+                    <select name="return_verify_date" id="return_verify_date">
+                        <for start="1" end="31" name="i" >
+                            <option value="{$i}" <if condition="$config[return_verify_date] eq $i">selected="selected"</if>>{$i}天</option>
+                        </for>
+                    </select>
+                    <p class="notic">多少天内售后审核完毕</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
                     <label for="point_rate">减库存的时机</label>
                 </dt>
                 <dd class="opt">

@@ -388,7 +388,7 @@ class Order extends Base
             'prom_price' => $orderInfo['order_prom_amount'],
             'electronic_price' => $orderInfo['user_electronic'],
             'pay_points' => $orderInfo['integral'],
-            'order_amount' => $orderInfo['order_amount'],
+            'order_amount' => $orderInfo['total_amount'],
             'give_integral' => 0,
             'add_time' => $orderInfo['add_time'],
             'pay_time' => $orderInfo['pay_time'],
@@ -717,13 +717,35 @@ class Order extends Base
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
     }
 
-
+    /**
+     * 申请售后（新）
+     * @return array|\think\response\Json
+     */
     public function return_goods_new()
     {
         $type = I('type', -1);
         $recId = I('rec_id', '');
-        if ($this->request->isGet()) {
-            $orderGoods = (new OrderLogic())->getOrderGoodsById($recId); // 订单商品信息
+        if ($a = Db::name('return_goods')->where(['rec_id' => $recId, 'user_id' => $this->user_id])->find()) {
+            return json(['status' => 0, 'msg' => '该商品已申请了售后']);
+        }
+        // 订单商品信息
+        $orderGoods = (new OrderLogic())->getOrderGoodsById($recId);
+        // 订单信息
+        $order = Db::name('order')->where(['order_id' => $orderGoods['order_id']])->find();
+        if (empty($order)) {
+            return json(['status' => 0, 'msg' => '非法操作']);
+        }
+        $confirmTimeConfig = tpCache('shopping.auto_service_date');   // 后台设置多少天内可申请售后
+        $confirmTime = $confirmTimeConfig * 24 * 60 * 60;
+        if ((time() - $order['confirm_time']) > $confirmTime && !empty($order['confirm_time'])) {
+            return json(['status' => 0, 'msg' => '已经超过' . $confirmTimeConfig . '天内退货时间']);
+        }
+        if ($this->request->isPost()) {
+            // 申请售后
+            $orderLogic = new OrderLogic();
+            $res = $orderLogic->addReturnGoodsNew($recId, $type, $order, I('post.'));
+            return json($res);
+        } else {
             $return['order_goods'] = [
                 'rec_id' => $orderGoods['rec_id'],
                 'goods_id' => $orderGoods['goods_id'],
@@ -733,24 +755,49 @@ class Order extends Base
                 'item_id' => $orderGoods['item_id'],
                 'original_img' => $orderGoods['original_img']
             ];
+            if ($type != -1) {
+                // 退还金额
+                $goodsReturnPrice = bcmul($orderGoods['final_price'], $orderGoods['goods_num'], 2);    // 要退的商品总价 商品购买单价 * 申请数量
+                $orderAmount = bcsub(bcsub($order['goods_price'], $order['order_prom_amount'], 2), $order['coupon_price'], 2);    // 用户实际使用金额
+                $priceRate = bcdiv($goodsReturnPrice, $orderAmount, 2);
+                $returnPrice = bcmul($priceRate, bcsub($orderAmount, $order['shipping_price'], 2), 2);
+                if ($order['user_electronic'] > 0) {
+                    // 退换电子币
+                    $shippingRate = bcdiv($order['shipping_price'], $order['total_amount']);
+                    $userElectronic = bcsub($order['user_electronic'], bcmul($order['user_electronic'], $shippingRate, 2), 2);
+                }
+                $goodsReturnIntegral = bcmul($orderGoods['use_integral'], $orderGoods['goods_num'], 2); // 要退的商品积分 商品购买积分 * 申请数量
+                $orderIntegral = $order['integral'];    // 用户实际使用积分
+                if ($orderIntegral > 0) {
+                    // 退还积分
+                    $integralRate = bcdiv($goodsReturnIntegral, $orderIntegral, 2);
+                    $returnIntegral = bcmul($integralRate, bcsub($orderIntegral, $order['shipping_price'], 2), 2);
+                }
+                // 公司地址
+                $provinceName = Db::name('region2')->where(['id' => tpCache('shop_info.province')])->value('name');
+                $cityName = Db::name('region2')->where(['id' => tpCache('shop_info.city')])->value('name');
+                $districtName = Db::name('region2')->where(['id' => tpCache('shop_info.district')])->value('name');
+                $address = tpCache('shop_info.address');
+                $address = $provinceName . $cityName . $districtName . $address;
+            }
             switch ($type) {
                 case -1:
                     break;
                 case 0:
-                    $return['return_reason'] = C('RETURN_REASON')[0];
-                    break;
                 case 1:
-                    $return['return_reason'] = C('RETURN_REASON')[1];
-                    break;
                 case 2:
-                    $return['return_reason'] = C('RETURN_REASON')[2];
+                    $return['return_reason'] = C('RETURN_REASON')[$type];
+                    $return['return_contact'] = tpCache('shop_info.contact');
+                    $return['return_mobile'] = tpCache('shop_info.mobile');
+                    $return['return_address'] = isset($address) ? $address : '';
+                    $return['return_price'] = isset($returnPrice) ? $returnPrice : 0;
+                    $return['return_electronic'] = isset($userElectronic) ? $userElectronic : 0;
+                    $return['return_integral'] = isset($returnIntegral) ? $returnIntegral : 0;
                     break;
                 default:
                     return json(['status' => 0, 'msg' => '参数错误']);
             }
             return json(['status' => 1, 'result' => $return]);
-        } else {
-
         }
     }
 
@@ -831,6 +878,46 @@ class Order extends Base
         $return['return_goods'] = $return_goods;
 
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
+    }
+
+
+    public function return_goods_info_new()
+    {
+        $returnId = I('return_id', '');
+        $returnGoods = Db::name('return_goods')->where(['id' => $returnId, 'user_id' => $this->user_id])->find();
+        if (empty($returnGoods)) {
+            return json(['status' => 0, 'msg' => '参数错误']);
+        }
+        $orderLogic = new OrderLogic();
+        $orderGoods = $orderLogic->getOrderGoodsById($returnGoods['rec_id']);
+        $return = [
+            'order_goods' => [
+                'rec_id' => $orderGoods['rec_id'],
+                'goods_id' => $orderGoods['goods_id'],
+                'goods_sn' => $orderGoods['goods_sn'],
+                'goods_name' => $orderGoods['goods_name'],
+                'spec_key_name' => $orderGoods['spec_key_name'],
+                'item_id' => $orderGoods['item_id'],
+                'original_img' => $orderGoods['original_img']
+            ],
+            'type' => $returnGoods['type'],
+            'status' => $returnGoods['status'],
+            'verify_time' => $returnGoods['addtime'] + tpCache('shopping.return_verify_date') * 24 * 60 * 60,
+            'return_contact' => tpCache('shop_info.contact'),
+            'return_mobile' => tpCache('shop_info.mobile')
+        ];
+        $provinceName = Db::name('region2')->where(['id' => tpCache('shop_info.province')])->value('name');
+        $cityName = Db::name('region2')->where(['id' => tpCache('shop_info.city')])->value('name');
+        $districtName = Db::name('region2')->where(['id' => tpCache('shop_info.district')])->value('name');
+        $address = tpCache('shop_info.address');
+        $address = $provinceName . $cityName . $districtName . $address;
+        $return['return_address'] = $address;
+        $return['return_reason'] = $returnGoods['reason'];
+        $return['describe'] = $returnGoods['describe'];
+        $return['return_price'] = $returnGoods['refund_money'];
+        $return['return_electronic'] = $returnGoods['refund_electronic'];
+        $return['return_integral'] = $returnGoods['refund_integral'];
+        $returnGoods['can_delivery'] = !empty($returnGoods['delivery']) ? 0 : 1;
     }
 
     public function return_goods_refund()
@@ -1415,7 +1502,7 @@ class Order extends Base
             'prom_price' => $payReturn['order_prom_amount'],
             'electronic_price' => $payReturn['user_electronic'],
             'pay_points' => $payReturn['pay_points'],
-            'order_amount' => $payReturn['order_amount'],
+            'order_amount' => $payReturn['total_amount'],
             'spare_pay_points' => bcsub($this->user['pay_points'], $payReturn['pay_points'], 2),
             'give_integral' => $give_integral,
             'free_shipping_price' => tpCache('shopping.freight_free') <= $payReturn['order_amount'] ? 0 : bcsub(tpCache('shopping.freight_free'), $payReturn['order_amount'], 2)
