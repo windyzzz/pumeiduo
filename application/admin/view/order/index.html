@@ -107,13 +107,13 @@
                         <select name="keytype" class="select">
                             <option value="consignee">收货人</option>
                             <option value="order_sn">订单编号</option>
-                            </foreach>
                         </select>
                     </div>
                     <div class="sDiv2">
-                        <input type="text" size="30" name="keywords" class="qsbox" placeholder="搜索相关数据...">
-
-                        <input type="text" size="30" name="user_id" class="qsbox" placeholder="用户id...">
+                        <input type="text" size="30" name="keywords" class="qsbox" placeholder="搜索关键字">
+                    </div>
+                    <div class="sDiv2">
+                        <input type="text" size="30" name="user_id" class="qsbox" placeholder="订单所属用户ID">
                     </div>
                     <div class="sDiv2">
                         <input type="button" onclick="ajax_get_table('search-form2',1)" class="btn" value="搜索">
@@ -129,7 +129,7 @@
                         <th axis="col0">
                             <div style="width: 24px;"><i class="ico-check"></i></div>
                         </th>
-                        <th align="left" abbr="order_sn" axis="col3" class="">
+                        <th align="left" abbr="user_id" axis="col3" class="">
                             <div style="text-align: left; width: 50px;" class="">会员id</div>
                         </th>
                         <th align="left" abbr="order_sn" axis="col3" class="">

@@ -1000,9 +1000,33 @@ class OrderLogic
     {
         $where['og.rec_id'] = $recId;
         $orderGoods = Db::name('order_goods og')
-            ->join('goods g', 'g.goods_id = og.goods_id', 'LEFT')
+            ->join('goods g', 'g.goods_id = og.goods_id')
             ->join('spec_goods_price sgp', 'sgp.goods_id = og.goods_id AND sgp.`key` = og.spec_key', 'LEFT')
-            ->where($where)->field('og.*, sgp.item_id, g.commission, g.original_img, g.zone')->find();
+            ->where($where)->field('og.*, sgp.item_id, g.original_img')->find();
         return $orderGoods;
+    }
+
+    /**
+     * 获取退货商品信息
+     * @param $returnId
+     * @param $page
+     * @return array|false|\PDOStatement|string|\think\Model
+     */
+    public function getReturnGoods($returnId, $page = '')
+    {
+        if (is_array($returnId)) {
+            $where['rg.id'] = ['in', $returnId];
+        } else {
+            $where['rg.id'] = $returnId;
+        }
+        $returnGoods = Db::name('return_goods rg')
+            ->join('order_goods og', 'og.rec_id = rg.rec_id')
+            ->join('goods g', 'g.goods_id = og.goods_id')
+            ->join('spec_goods_price sgp', 'sgp.goods_id = og.goods_id AND sgp.`key` = og.spec_key', 'LEFT')
+            ->where($where)->field('rg.*, og.goods_sn, og.goods_name, og.spec_key_name, sgp.item_id, g.original_img');
+        if ($page) {
+            $returnGoods = $returnGoods->limit($page->firstRow . ',' . $page->listRows);
+        }
+        return $returnGoods->select();
     }
 }

@@ -837,6 +837,47 @@ class Order extends Base
     }
 
     /**
+     * 退换货列表（新）
+     * @return \think\response\Json
+     */
+    public function return_goods_list_new()
+    {
+        $where = 'user_id = ' . $this->user_id;
+        // 根据商品名称 或者 订单编号
+        $search_key = trim(I('search_key'));
+        $bind = [];
+        if ($search_key) {
+            $where .= ' and (order_sn like :search_key1 or rec_id in (select rec_id from `' . C('database.prefix') . 'order_goods` where goods_name like :search_key2) ) ';
+            $bind['search_key1'] = "%$search_key%";
+            $bind['search_key2'] = "%$search_key%";
+        }
+        // 记录ID
+        $returnIds = Db::name('return_goods')->where($where)->bind($bind)->getField('id', true);
+        $page = new Page(count($returnIds), 10);
+        // 记录列表
+        $returnList = (new OrderLogic())->getReturnGoods($returnIds, $page);
+        // 组合数据
+        $return = [];
+        foreach ($returnList as $k => $returnGoods) {
+            $return[$k] = [
+                'order_id' => $returnGoods['order_id'],
+                'order_sn' => $returnGoods['order_sn'],
+                'goods_id' => $returnGoods['goods_id'],
+                'goods_sn' => $returnGoods['goods_sn'],
+                'goods_name' => $returnGoods['goods_name'],
+                'spec_key_name' => $returnGoods['spec_key_name'],
+                'item_id' => $returnGoods['item_id'],
+                'original_img' => $returnGoods['original_img'],
+                'return_id' => $returnGoods['id'],
+                'return_type' => $returnGoods['type'],
+                'return_status' => $returnGoods['status']
+            ];
+            $return[$k]['return_status'] = !empty($returnGoods['delivery']) ? 7 : $returnGoods['status'];
+        }
+        return json(['status' => 1, 'result' => $return]);
+    }
+
+    /**
      *  退货详情.
      */
     public function return_goods_info(Request $request)
@@ -880,7 +921,10 @@ class Order extends Base
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
     }
 
-
+    /**
+     * 退货详情（新）
+     * @return \think\response\Json
+     */
     public function return_goods_info_new()
     {
         $returnId = I('return_id', '');
@@ -898,6 +942,7 @@ class Order extends Base
                 'goods_name' => $orderGoods['goods_name'],
                 'spec_key_name' => $orderGoods['spec_key_name'],
                 'item_id' => $orderGoods['item_id'],
+                'goods_num' => $orderGoods['goods_num'],
                 'original_img' => $orderGoods['original_img']
             ],
             'type' => $returnGoods['type'],
@@ -917,7 +962,13 @@ class Order extends Base
         $return['return_price'] = $returnGoods['refund_money'];
         $return['return_electronic'] = $returnGoods['refund_electronic'];
         $return['return_integral'] = $returnGoods['refund_integral'];
-        $returnGoods['can_delivery'] = !empty($returnGoods['delivery']) ? 0 : 1;
+        $return['voucher'] = explode(',', $returnGoods['imgs']);
+        $return['can_delivery'] = !empty($returnGoods['delivery']) ? 0 : 1;
+        $return['status'] = !empty($returnGoods['delivery']) ? 7 : $return['status'];
+        $return['goods_num'] = $returnGoods['goods_num'];
+        $return['order_sn'] = Db::name('order')->where(['order_id' => $orderGoods['order_id']])->value('order_sn');
+        $return['addtime'] = $returnGoods['addtime'];
+        return json(['status' => 1, 'result' => $return]);
     }
 
     public function return_goods_refund()

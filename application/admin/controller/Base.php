@@ -73,7 +73,7 @@ class Base extends Controller
             $begin = $begin = I('start_time');
             $end = I('end_time');
         } else {
-            $begin = date('Y-m-d', strtotime('-3 month')); //30天前
+            $begin = date('Y-m-d', strtotime('-3 month')); // 3个月前
             $end = date('Y-m-d', strtotime('+1 days'));
         }
         $this->assign('start_time', $begin);
