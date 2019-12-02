@@ -9,6 +9,7 @@
  * with this source code in the file LICENSE.
  */
 
+use app\common\logic\Token as TokenLogic;
 use app\common\logic\wechat\WechatUtil;
 use think\Db;
 
@@ -920,6 +921,8 @@ function accountLog($user_id, $user_money = 0, $pay_points = 0, $desc = '', $dis
     $update = Db::name('users')->where('user_id', $user_id)->update($update_data);
     if ($update) {
         M('account_log')->add($account_log);
+        $user = Db::name('users')->where('user_id', $user_id)->find();
+        TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
 
         return true;
     }

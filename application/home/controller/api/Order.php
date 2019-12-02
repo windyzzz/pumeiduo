@@ -189,7 +189,7 @@ class Order extends Base
                     'order_status' => $list['order_status'],
                     'pay_status' => $list['order_status'],
                     'shipping_status' => $list['order_status'],
-                    'order_status_code' => $orderList[$k]['order_status_code'],
+                    'order_status_code' => $orderList[$k]['order_status_code'] == 'AFTER-SALES' ? 'WAITCCOMMENT' : $orderList[$k]['order_status_code'],
                     'order_status_desc' => $orderList[$k]['order_status_desc'],
                     'order_amount' => $list['order_amount'],
                     'shipping_price' => $list['shipping_price'],
@@ -377,7 +377,7 @@ class Order extends Base
             'order_status' => $orderInfo['order_status'],
             'pay_status' => $orderInfo['order_status'],
             'shipping_status' => $orderInfo['order_status'],
-            'order_status_code' => $orderInfo['order_status_code'],
+            'order_status_code' => $orderInfo['order_status_code'] == 'AFTER-SALES' ? 'WAITCCOMMENT' :$orderInfo['order_status_code'],
             'order_status_desc' => $orderInfo['order_status_desc'],
             'pay_code' => $orderInfo['pay_code'],
             'pay_name' => $orderInfo['pay_name'],
@@ -394,6 +394,7 @@ class Order extends Base
             'pay_time' => $orderInfo['pay_time'],
             'shipping_time' => $orderInfo['shipping_time'],
             'confirm_time' => $orderInfo['confirm_time'],
+            'cancel_time' => $orderInfo['cancel_time'],
             'delivery' => [
                 'consignee' => $orderInfo['consignee'],
                 'mobile' => $orderInfo['mobile'],
@@ -867,6 +868,7 @@ class Order extends Base
                 'goods_name' => $returnGoods['goods_name'],
                 'spec_key_name' => $returnGoods['spec_key_name'],
                 'item_id' => $returnGoods['item_id'],
+                'goods_num' => $returnGoods['goods_num'],
                 'original_img' => $returnGoods['original_img'],
                 'return_id' => $returnGoods['id'],
                 'return_type' => $returnGoods['type'],
@@ -948,6 +950,7 @@ class Order extends Base
             'type' => $returnGoods['type'],
             'status' => $returnGoods['status'],
             'verify_time' => $returnGoods['addtime'] + tpCache('shopping.return_verify_date') * 24 * 60 * 60,
+            'verify_remark' => $returnGoods['remark'],
             'return_contact' => tpCache('shop_info.contact'),
             'return_mobile' => tpCache('shop_info.mobile')
         ];

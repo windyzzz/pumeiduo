@@ -1771,4 +1771,14 @@ class Goods extends Base
 
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
     }
+
+    /**
+     * 猜你喜欢
+     * @return \think\response\Json
+     */
+    public function look_see()
+    {
+        $lookSee = (new GoodsLogic())->get_look_see([], $this->user_id);
+        return json(['status' => 1, 'result' => $lookSee]);
+    }
 }

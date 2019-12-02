@@ -181,6 +181,30 @@ class User extends Base
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
     }
 
+    /**
+     * 用户积分（明细）（新）
+     * @return \think\response\Json
+     */
+    public function accountNew()
+    {
+        $result = (new UsersLogic())->get_account_log($this->user_id, 1)['result'];
+        $return = [
+            'user_pay_points' => $this->user['pay_points'],
+            'account_log' => []
+        ];
+        foreach ($result as $month) {
+            foreach ($month as $log) {
+                $return['account_log'][] = [
+                    'log_id' => $log['log_id'],
+                    'pay_points' => $log['pay_points'],
+                    'title' => $log['desc'],
+                    'add_time' => strtotime($log['change_time'])
+                ];
+            }
+        }
+        return json(['status' => 1, 'result' => $return]);
+    }
+
     // 获取用户财富
     public function userWealth()
     {
@@ -1513,6 +1537,41 @@ class User extends Base
         accountLog($to_user_id, 0, $pay_points, "转入积分From用户{$user['user_id']}", 0, 0, '', 0, 12);
 
         return json(['status' => 1, 'msg' => '积分转帐成功', 'result' => null]);
+    }
+
+    /**
+     * 积分转让（新）
+     * @return \think\response\Json
+     */
+    public function transferPayPointsNew()
+    {
+        if ($this->request->isPost()) {
+            $payPoints = I('pay_points', 0);
+            $toUser = I('to_user', '');
+            if ($payPoints < 1) {
+                return json(['status' => 0, 'msg' => '转让积分的数额不能小于1']);
+            }
+            if (!$toUser) {
+                return json(['status' => 0, 'msg' => '缺少转账用户参数']);
+            }
+            if (check_mobile($toUser)) {
+                $toUser = Db::name('users')->where(['mobile' => $toUser])->find();
+            } else {
+                $toUser = Db::name('users')->where(['user_id' => $toUser])->find();
+            }
+            if (!$toUser) {
+                return json(['status' => -2, 'msg' => '无此用户']);
+            }
+            $userPayPoints = M('Users')->where('user_id', $this->user_id)->getField('pay_points');
+            if ($userPayPoints < $payPoints) {
+                return json(['status' => 0, 'msg' => '你的积分不够' . $payPoints]);
+            }
+            accountLog($this->user_id, 0, -$payPoints, '转出积分给用户' . $toUser['user_id'], 0, 0, '', 0, 12);
+            accountLog($toUser['user_id'], 0, $payPoints, '转入积分From用户' . $this->user_id, 0, 0, '', 0, 12);
+            return json(['status' => 1, 'msg' => '积分转让成功']);
+        } else {
+            return json(['status' => 1, 'result' => ['user_pay_points' => $this->user['pay_points']]]);
+        }
     }
 
     public function recharge(Request $request)

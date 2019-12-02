@@ -30,7 +30,7 @@ class Token
         if (!isset($timeOut)) return ['status' => -2, 'msg' => 'token参数错误'];   // 通常是账号另一个端登录使得token更改，后面要改提示账号已在另一个地方登录
         if ($timeOut != 0) {
             if (time() - $timeOut > 0) {
-                return ['status' => 0, 'msg' => '请重新登录'];
+                return ['status' => -1, 'msg' => '请重新登录'];
             }
             $newTimeOut = time() + (config('redis_time'));
             Db::name('users')->where(['token' => $token])->setField(['time_out' => $newTimeOut]);

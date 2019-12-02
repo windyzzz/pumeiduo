@@ -363,7 +363,7 @@ class GoodsLogic extends Model
     /**
      * 看了又看.
      */
-    public function get_look_see($goods, $userId = null)
+    public function get_look_see($goods = [], $userId = null)
     {
         $where = [
             'is_on_sale' => 1
@@ -373,10 +373,8 @@ class GoodsLogic extends Model
         } else {
             $where['gv.user_id'] = cookie('user_id');
         }
-        if (is_array($goods['goods_id'])) {
+        if (!empty($goods)) {
             $where['g.goods_id'] = ['not in', $goods['goods_id']];
-        } else {
-            $where['g.goods_id'] = ['<>', $goods['goods_id']];
         }
 
         $goods_list = [];
@@ -384,7 +382,7 @@ class GoodsLogic extends Model
             $take_goods_list = M('goods')
                 ->field('g.goods_id, g.cat_id, g.goods_name, g.goods_remark, g.original_img, g.shop_price, g.exchange_integral')
                 ->alias('g')
-                ->join('__GOODS_VISIT__ gv', 'gv.goods_id = g.goods_id')
+                ->join('__GOODS_VISIT__ gv', 'gv.goods_id = g.goods_id', 'LEFT')
                 ->where($where)
                 ->order('gv.visit_id desc')
                 ->limit(20)
@@ -404,7 +402,6 @@ class GoodsLogic extends Model
                 }
             }
         }
-
         if ($goods_list) {
             return $goods_list;
         }
@@ -435,13 +432,11 @@ class GoodsLogic extends Model
         $where = [
             'is_on_sale' => 1
         ];
-        if (is_array($goods['goods_id'])) {
+        if (!empty($goods)) {
             $where['goods_id'] = ['not in', $goods['goods_id']];
-        } else {
-            $where['goods_id'] = ['<>', $goods['goods_id']];
         }
         $goods_list = M('goods')
-            ->field('goods_id, cat_id, goods_name, goods_remark, original_img, shop_price, exchange_integral, sale_type')
+            ->field('goods_id, cat_id, goods_name, goods_remark, original_img, shop_price, exchange_integral')
             ->where($where)
             ->where('goods_id', 'in', $ary)
             ->select();

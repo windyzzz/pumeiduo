@@ -939,7 +939,7 @@ class UsersLogic extends Model
         $count = M('account_log')->where($account_log_where)->count();
         $Page = new Page($count, 15);
         $account_log = M('account_log')
-            ->field('*,FROM_UNIXTIME(change_time,"%Y-%m-%d %H:%i:%s") as change_time')
+            ->field('*')
             ->where($account_log_where)
             ->order('change_time desc')
             ->limit($Page->firstRow . ',' . $Page->listRows)
@@ -948,6 +948,7 @@ class UsersLogic extends Model
         $list = [];
         foreach ($account_log as $ak => $av) {
             $key = date('m', $av['change_time']);
+            $av['change_time'] = date('Y-m-d H:i:s', $av['change_time']);
             $list[$key][] = $av;
         }
 
