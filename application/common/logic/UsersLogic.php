@@ -292,8 +292,18 @@ class UsersLogic extends Model
     {
         // 查看是否有oauth用户记录
         $oauthUser = M('oauth_users')->where('unionid', $data['unionid'])->where('oauth', 'wechatApp')->find();
+        $updateData = [
+            'user_id' => $oauthUser['user_id'],
+            'openid' => $data['openid'],
+            'oauth' => 'wechatApp',
+            'unionid' => $data['unionid'],
+            'oauth_child' => 'open',
+            'oauth_data' => serialize($data)
+        ];
         if ($oauthUser) {
             // 已授权登录过
+            // 更新数据
+            Db::name('oauth_users')->where('unionid', $data['unionid'])->where('oauth', 'wechatApp')->update($updateData);
             if ($oauthUser['user_id'] == 0) {
                 $result = ['status' => 2, 'result' => ['openid' => $data['openid']]]; // 需要绑定手机号
             } else {
@@ -307,16 +317,8 @@ class UsersLogic extends Model
             }
         } else {
             // 未授权登录过
-            $insertData = [
-                'user_id' => 0,
-                'openid' => $data['openid'],
-                'oauth' => 'wechatApp',
-                'unionid' => $data['unionid'],
-                'oauth_child' => 'open',
-                'oauth_data' => serialize($data)
-            ];
             // 插入数据
-            Db::name('oauth_users')->insert($insertData);
+            Db::name('oauth_users')->insert($updateData);
             $result = ['status' => 2, 'result' => ['openid' => $data['openid']]]; // 需要绑定手机号
         }
         return $result;

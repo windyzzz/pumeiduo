@@ -192,7 +192,7 @@ class ActivityLogic extends Model
             ->where($where);
 
         if (0 != $queryType) {
-            $query = $query->field('l.*,c.name,c.money,c.use_start_time,c.use_end_time,c.condition,c.use_type,c.content')
+            $query = $query->field('l.*,c.name,c.money,c.type_value,c.use_start_time,c.use_end_time,c.condition,c.use_type,c.content')
                 ->order($order);
         }
 

@@ -14,6 +14,7 @@ namespace app\home\controller\api;
 use app\common\logic\CartLogic;
 use app\common\logic\Token as TokenLogic;
 use app\common\logic\UsersLogic;
+use think\cache\driver\Redis;
 use think\Exception;
 
 class LoginApi
@@ -58,7 +59,9 @@ class LoginApi
             $wechatUserInfo = $this->class_obj->login();
             $res = (new UsersLogic())->handleAppLoginNew($wechatUserInfo);
             if ($res['status'] == 1) {
+                // 登录成功
                 $user = $res['result'];
+                (new Redis())->set('user_' . $user['token'], $user, config('redis_time'));
                 $res['result'] = [
                     'user_id' => $user['user_id'],
                     'sex' => $user['sex'],

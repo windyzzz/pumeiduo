@@ -3,7 +3,6 @@
 <load href="__ROOT__/public/plugins/Ueditor/ueditor.config.js"/>
 <load href="__ROOT__/public/plugins/Ueditor/ueditor.all.min.js"/>
 <script type="text/javascript" charset="utf-8" src="__ROOT__/public/plugins/Ueditor/lang/zh-cn/zh-cn.js"></script>
-<script src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
 <style>
     .ncsc-default-table {
         line-height: 20px;
@@ -107,20 +106,20 @@
                     <label>
                         <input type="radio" value="0" name="use_type" onclick="use_type_tab(0)" <if condition="$coupon.use_type eq 0">checked</if>>全店通用</label>
                     <label>
-                        <input type="radio" value="1" name="use_type" onclick="javascript:selectGoods();use_type_tab(1)" <if condition="$coupon.use_type eq 1">checked</if>>指定商品
+                        <input type="radio" value="1" name="use_type" onclick="javascript:use_type_tab(1);selectGoods();" <if condition="$coupon.use_type eq 1">checked</if>>指定商品
                     </label>
                     <label>
                         <input type="radio" value="2" name="use_type" onclick="use_type_tab(2)" <if condition="$coupon.use_type eq 2">checked</if>>指定分类
                     </label>
                     <label>
-                        <input type="radio" value="4" name="use_type" onclick="javascript:selectGoods();use_type_tab(4)" <if condition="$coupon.use_type eq 4">checked</if>>折扣券
+                        <input type="radio" value="4" name="use_type" onclick="javascript:use_type_tab(4);selectGoods();" <if condition="$coupon.use_type eq 4">checked</if>>折扣券
                     </label>
                     <label>
-                        <input type="radio" value="5" name="use_type" onclick="javascript:selectGoods();use_type_tab(5)" <if condition="$coupon.use_type eq 5">checked</if>>兑换券
+                        <input type="radio" value="5" name="use_type" onclick="javascript:use_type_tab(5);selectGoods();" <if condition="$coupon.use_type eq 5">checked</if>>兑换券
                     </label>
                 </dd>
             </dl>
-            <dl id="enable_goods" style="display:<if condition='$coupon[use_type] eq 1 || $coupon[use_type] eq 3  || $coupon[use_type] eq 4 || $coupon[use_type] eq 5'>;<else/>none;</if>">
+            <dl id="enable_goods" style="display:<if condition='$coupon[use_type] eq 0 || $coupon[use_type] eq 2'>none;<else/>;</if>">
                 <dt class="tit">指定商品列表：</dt>
                 <dd class="opt">
                     <table class="ncsc-default-table">
@@ -130,9 +129,7 @@
                             <th class="w80">商品名称</th>
                             <th class="w80">价格</th>
                             <th class="w80">库存</th>
-                            <if condition="$coupon['use_type'] eq 5">
-                                <th class="w80">数量</th>
-                            </if>
+                            <th class="w80">数量</th>
                             <th class="w80">操作</th>
                         </tr>
                         </thead>
@@ -286,7 +283,6 @@
     })
     function test_type_value(obj)
     {
-
         var status = $(obj).is(':checked');
         if(status == true){
             $('#type_value').show()
@@ -353,18 +349,20 @@
         });
     }
 
-
-    var lnln="{$coupon['use_type']}";
+    var old_lnln="{$coupon['use_type']}";
+    var new_lnln='-1';
     /**可使用商品**/
     //点击单选按钮
     function use_type_tab(v){
-
-        lnln = v;
+        old_lnln = new_lnln;
+        new_lnln = v;
+        if (old_lnln != new_lnln) {
+            $('#goods_list').html('');
+        }
         switch (v) {
             case 0:
                 $('#enable_goods').hide();
                 $('#goods_all_cate').hide();
-                $('#goods_list').html('');
 
                 $('#money_row').show();
                 $('#condition_row').show();
@@ -379,19 +377,20 @@
             case 2:
                 $('#enable_goods').hide();
                 $('#goods_all_cate').show();
-                $('#goods_list').html('');
 
                 $('#money_row').show();
                 $('#condition_row').show();
                 break;
             case 4:
+                $('#enable_goods').show();
+                $('#goods_all_cate').hide();
+
                 $('#money_row').show();
                 $('#condition_row').show();
                 break;
             case 5:
                 $('#enable_goods').show();
                 $('#goods_all_cate').hide();
-                $('#goods_list').html('');
 
                 $('#money_row').hide();
                 $('#condition_row').hide();
@@ -400,7 +399,6 @@
     }
 
     function selectGoods(){
-        use_type_tab(1);
         var goods_id = [];
         //过滤选择重复商品
         $('.goods_id').each(function(i,o){
@@ -417,54 +415,20 @@
         });
     }
 
-
-
-    function selectGoods1(){
-
-        use_type_tab(4);
-        var goods_id = [];
-        //过滤选择重复商品
-        $('.goods_id').each(function(i,o){
-            goods_id += $(o).val()+',';
-        });
-        var url = '/index.php?m=admin&c=Promotion&a=search_goods&exvirtual=1&nospec=1&goods_id='+goods_id+'&t='+Math.random();
-        layer.open({
-            type: 2,
-            title: '选择商品',
-            shadeClose: true,
-            shade: 0.3,
-            area: ['70%', '80%'],
-            content: url,
-        });
-    }
-    function selectGoods2(){
-
-        use_type_tab(5);
-        var goods_id = [];
-        //过滤选择重复商品
-        $('.goods_id').each(function(i,o){
-            goods_id += $(o).val()+',';
-        });
-        var url = '/index.php?m=admin&c=Promotion&a=search_goods&exvirtual=1&nospec=1&goods_id='+goods_id+'&t='+Math.random();
-        layer.open({
-            type: 2,
-            title: '选择商品',
-            shadeClose: true,
-            shade: 0.3,
-            area: ['70%', '80%'],
-            content: url,
-        });
-    }
     function selGoodsCallBack(table_html)
     {
+        if (old_lnln != new_lnln) {
+            $('#goods_list').html('');
+        }
         layer.closeAll('iframe');
         var goods_list_html='';
         $.each(table_html, function (n, value) {
             var sln = '';
-            if(lnln==5){
-                var sln = '<td><input type="text" name="goods_id['+value.goods_id+'][number]" value="1"/></td>';
+            if(new_lnln==5){
+                sln = '<td><input type="text" style="text-align: center;" name="goods_id['+value.goods_id+'][number]" value="1"/></td>';
+            } else {
+                sln = '<td>'+1+'</td>'
             }
-
             goods_list_html += ' <tr>' +
                     '<td style="display:none"><input type="checkbox" name="goods_id['+value.goods_id+'][goods_id]" class="goods_id" checked="checked" value="'+value.goods_id+'"/></td>' +
                     '<td>'+value.goods_id+'</td><td>'+value.goods_name+'</td><td>'+value.goods_price+'</td>' +

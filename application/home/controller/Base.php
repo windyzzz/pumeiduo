@@ -55,9 +55,16 @@ class Base extends Controller
                 $this->userToken = TokenLogic::setToken();
                 return true;
             }
+            if (in_array(self::getUrl(), self::specialListPath()) && $token) {
+                $user = TokenLogic::getValue('user', $token);
+                $this->user = $user;
+                $this->user_id = $user['user_id'];
+                $this->userToken = $token;
+                return true;
+            }
             // 验证token
             $res = TokenLogic::checkToken($token);
-            if ($res['status'] !== 1) die(json_encode(['status' => 0, 'msg' => $res['msg']]));
+            if ($res['status'] !== 1) die(json_encode(['status' => $res['status'], 'msg' => $res['msg']]));
             $this->user = $res['user'];
             $this->user_id = $res['user']['user_id'];
             $this->userToken = $token;
@@ -122,6 +129,15 @@ class Base extends Controller
      * @return array
      */
     private function whiteListPath()
+    {
+        return [];
+    }
+
+    /**
+     * 特殊路径
+     * @return array
+     */
+    private function specialListPath()
     {
         return [];
     }

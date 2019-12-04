@@ -96,7 +96,6 @@ class Coupon extends Base
     {
         $data = I('post.');
         $data['type'] = 1;
-
         if ($data['type_value'] && isset($data['type'])) {
             $data['type_value'] = implode(',', $data['type_value']);
         } else {

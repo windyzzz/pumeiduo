@@ -34,6 +34,13 @@ class Base extends Controller
                 $this->userToken = TokenLogic::setToken();
                 return true;
             }
+            if (in_array(self::getUrl(), self::specialListPath()) && $token) {
+                $user = TokenLogic::getValue('user', $token);
+                $this->user = $user;
+                $this->user_id = $user['user_id'];
+                $this->userToken = $token;
+                return true;
+            }
             // 验证token
             $res = TokenLogic::checkToken($token);
             if ($res['status'] !== 1) die(json_encode(['status' => $res['status'], 'msg' => $res['msg']]));
@@ -73,6 +80,17 @@ class Base extends Controller
             '/index.php?m=Home&c=api.Goods&a=getRecommendGoodsList',   // 促销商品
             '/index.php?m=Home&c=api.Goods&a=getHotGoodsList',   // 热销商品
             '/index.php?m=Home&c=api.Goods&a=getFlashSalesGoodsList',   // 秒杀商品
+        ];
+    }
+
+    /**
+     * 特殊路径
+     * @return array
+     */
+    private function specialListPath()
+    {
+        return [
+            '/index.php?m=Home&c=api.Coupon&a=couponList',   // 领券中心
         ];
     }
 }
