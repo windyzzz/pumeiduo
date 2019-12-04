@@ -11,6 +11,7 @@
 
 namespace app\home\controller;
 
+use app\common\logic\Token as TokenLogic;
 use app\common\logic\UsersLogic;
 use think\Cache;
 use think\Cookie;
@@ -117,6 +118,7 @@ class Api extends Base
         $verify_code = I('verify_code');
         $mobile = !empty($mobile) ? $mobile : $sender;
         $session_id = I('unique_id', $this->userToken);
+        $openid = I('openid', '');
         S('scene_' . $scene . '_' . $session_id, $scene, 180);
 
 //        $exist = M('users')->where(['mobile'=>$mobile,'is_lock'=>0])->find();
@@ -141,6 +143,66 @@ class Api extends Base
             //验证手机格式
             if (!check_mobile($mobile)) {
                 ajaxReturn(['status' => -1, 'msg' => '手机号填写错误']);
+            }
+            switch ($scene) {
+                case 1:
+                    // 注册 验证手机是否已存在
+                    if (M('users')->where(['mobile' => $mobile])->find()) {
+                        $this->ajaxReturn(['status' => -1, 'msg' => '手机号已存在']);
+                    }
+                    break;
+                case 8:
+                    // 授权登录绑定手机
+                    $user = M('users')->where(['mobile' => $mobile])->find();
+                    if ($user) {
+                        // 已存在，直接登录
+                        $oauthUser = M('oauth_users')->where(['openid' => $openid, 'oauth' => 'wechatApp'])->find();
+                        if (!$oauthUser) {
+                            return ['status' => 0, 'msg' => 'openid错误'];
+                        }
+                        $oauthData = unserialize($oauthUser['oauth_data']);
+                        // 更新用户token
+                        $userToken = TokenLogic::setToken();
+                        Db::name('users')->where(['user_id' => $user['user_id']])->update([
+                            'openid' => $oauthData['openid'],
+                            'unionid' => $oauthData['unionid'],
+                            'oauth' => $oauthUser['oauth'],
+                            'nickname' => $oauthData['nickname'],
+                            'head_pic' => !empty($oauthData['headimgurl']) ? $oauthData['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png',
+                            'sex' => $oauthData['sex'] ?? 0,
+                            'last_login' => time(),
+                            'token' => $userToken,
+                            'time_out' => strtotime('+' . config('redis_days') . ' days')
+                        ]);
+                        // 更新oauth记录
+                        M('oauth_users')->where(['tu_id' => $oauthUser['tu_id']])->update(['user_id' => $user['user_id']]);
+
+                        $user = Db::name('users')->where(['user_id' => $user['user_id']])->find();
+                        $levelName = Db::name('user_level')->where('level_id', $user['level'])->getField('level_name');
+                        $result = [
+                            'user_id' => $user['user_id'],
+                            'sex' => $user['sex'],
+                            'nickname' => $user['nickname'],
+                            'user_name' => $user['nickname'],
+                            'real_name' => $user['user_name'],
+                            'id_cart' => $user['id_cart'],
+                            'birthday' => $user['birthday'],
+                            'mobile' => $user['mobile'],
+                            'head_pic' => $user['head_pic'],
+                            'type' => $user['type'],
+                            'invite_uid' => $user['invite_uid'],
+                            'is_distribut' => $user['is_distribut'],
+                            'is_lock' => $user['is_lock'],
+                            'level' => $user['level'],
+                            'level_name' => $levelName,
+                            'is_not_show_jk' => $user['is_not_show_jk'],  // 是否提示加入金卡弹窗
+                            'has_pay_pwd' => $user['paypwd'] ? 1 : 0,
+                            'is_app' => TokenLogic::getValue('is_app', $user['token']) ? 1 : 0,
+                            'token' => $user['token']
+                        ];
+                        $this->ajaxReturn(['status' => 11, 'result' => $result]);  // 直接登录成功
+                    }
+                    break;
             }
             //发送短信验证码
             $res = checkEnableSendSms($scene);  // 检查是否能够发短信

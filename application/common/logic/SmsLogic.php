@@ -52,6 +52,7 @@ class SmsLogic
             4 => ['orderId' => $order_id],                                                                                                //4. 客户支付
             5 => ['userName' => $user_name, 'consignee' => $consignee],                                           //5. 商家发货
             6 => ['code' => $code],
+            8 => ['code' => $code],
         ];
 
         $smsParam = $smsParams[$scene];

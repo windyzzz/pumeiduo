@@ -1492,7 +1492,7 @@ class User extends Base
         }
         $to_user_id = I('to_user_id', 0);
         if ($to_user_id < 1) {
-            return json(['status' => 0, 'msg' => '缺少转账用户参数', 'result' => null]);
+            return json(['status' => 0, 'msg' => '缺少转让用户参数', 'result' => null]);
         }
         $is_exists = M('Users')->find($to_user_id);
         if (!$is_exists) {
@@ -1520,7 +1520,7 @@ class User extends Base
         }
         $to_user_id = I('to_user_id', 0);
         if ($to_user_id < 1) {
-            return json(['status' => 0, 'msg' => '缺少转账用户参数', 'result' => null]);
+            return json(['status' => 0, 'msg' => '缺少转让用户参数', 'result' => null]);
         }
         $is_exists = M('Users')->find($to_user_id);
         if (!$is_exists) {
@@ -1548,11 +1548,15 @@ class User extends Base
         if ($this->request->isPost()) {
             $payPoints = I('pay_points', 0);
             $toUser = I('to_user', '');
+            $payPwd = I('pay_pwd', '');
+            if ($this->user['paypwd'] !== encrypt($payPwd)) {
+                return json(['status' => 0, 'msg' => '密码错误']);
+            }
             if ($payPoints < 1) {
                 return json(['status' => 0, 'msg' => '转让积分的数额不能小于1']);
             }
             if (!$toUser) {
-                return json(['status' => 0, 'msg' => '缺少转账用户参数']);
+                return json(['status' => 0, 'msg' => '缺少转让用户参数']);
             }
             if (check_mobile($toUser)) {
                 $toUser = Db::name('users')->where(['mobile' => $toUser])->find();
@@ -1568,7 +1572,7 @@ class User extends Base
             }
             accountLog($this->user_id, 0, -$payPoints, '转出积分给用户' . $toUser['user_id'], 0, 0, '', 0, 12);
             accountLog($toUser['user_id'], 0, $payPoints, '转入积分From用户' . $this->user_id, 0, 0, '', 0, 12);
-            return json(['status' => 1, 'msg' => '积分转让成功']);
+            return json(['status' => 1, 'msg' => '积分转增成功']);
         } else {
             return json(['status' => 1, 'result' => ['user_pay_points' => $this->user['pay_points']]]);
         }

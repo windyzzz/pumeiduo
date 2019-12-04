@@ -243,6 +243,10 @@ return [
         'setcookie' => true,
     ],
 
+    //redis储存数据的时间
+    'redis_time' => 86400,
+    'redis_days' => 1,
+
     //分页配置
     'paginate' => [
         'type' => 'bootstrap',
@@ -368,6 +372,7 @@ return [
         '5' => ['商家发货', '尊敬的${userName}用户，您的订单已发货，收货人${consignee}，请您及时查收', 'order_shipping_sms_enable'],
         '6' => ['身份验证', '尊敬的用户，您的验证码为${code}, 请勿告诉他人.', 'bind_mobile_sms_enable'],
         '7' => ['购买虚拟商品通知', '尊敬的用户，您购买的虚拟商品${goodsName}兑换码已生成,请注意查收.', 'virtual_goods_sms_enable'],
+        '8' => ['授权登录绑定手机号', '验证码${code}，授权登录绑定手机号, 请勿告诉他人，感谢您的支持!', 'regis_sms_enable'],
     ],
 
     'APP_TOKEN_TIME' => 60 * 60 * 24, //App保持token时间 , 此处为1天

@@ -220,7 +220,7 @@ class UsersLogic extends Model
     /*
      * App 登录
      * */
-    public function handleAppLogin($data, $userToken)
+    public function handleAppLogin($data, $userToken = '')
     {
         // 1.判断是否需要注册新用户,先找到第三方登录数据，再判断用户状态是否正常
         $need_reg = true;
@@ -241,6 +241,10 @@ class UsersLogic extends Model
             }
         }
 
+        if (!$userToken) {
+            $userToken = TokenLogic::setToken();
+        }
+
         // 需要注册
         if ($need_reg) {
             $map = [];
@@ -251,14 +255,14 @@ class UsersLogic extends Model
             $map['nickname'] = filter($data['nickname']);
             $map['reg_time'] = time();
             $map['oauth'] = $data['oauth'];
-            $map['head_pic'] = !empty($data['head_pic']) ? $data['head_pic'] : '/public/images/default_head.png';
+            $map['head_pic'] = !empty($data['head_pic']) ? $data['head_pic'] : url('/', '', '', true) . '/public/images/default_head.png';
             $map['sex'] = null === $data['sex'] ? 0 : $data['sex'];
             $map['type'] = 0;
             $map['token'] = $userToken;
             $map['time_out'] = strtotime('+' . config('redis_days') . ' days');
-            $row_id1 = Db::name('users')->add($map);
+            $row_id1 = Db::name('users')->add($map);    // 注册新用户
             $data['user_id'] = $row_id1;
-            $row_id2 = Db::name('OauthUsers')->data($data)->add();
+            $row_id2 = Db::name('OauthUsers')->data($data)->add();  // 记录oauth用户
             $user_info = M('users')->where('user_id', $row_id1)->find();
             session('is_new', 1);
             (new Redis())->set('is_new_' . $userToken, 1, config('redis_time'));
@@ -275,6 +279,46 @@ class UsersLogic extends Model
             $result = ['status' => 1, 'msg' => '登录成功'];
         }
 
+        return $result;
+    }
+
+    /**
+     * APP微信授权登录（新）
+     * @param $data
+     * @return array
+     * @throws \think\Exception
+     */
+    public function handleAppLoginNew($data)
+    {
+        // 查看是否有oauth用户记录
+        $oauthUser = M('oauth_users')->where('unionid', $data['unionid'])->where('oauth', 'wechatApp')->find();
+        if ($oauthUser) {
+            // 已授权登录过
+            if ($oauthUser['user_id'] == 0) {
+                $result = ['status' => 2, 'result' => ['openid' => $data['openid']]]; // 需要绑定手机号
+            } else {
+                // 更新用户token
+                $userToken = TokenLogic::setToken();
+                Db::name('users')->where(['user_id' => $oauthUser['user_id']])->update(['token' => $userToken, 'time_out' => strtotime('+' . config('redis_days') . ' days')]);
+                $user = Db::name('users')->where(['user_id' => $oauthUser['user_id']])->find();
+                $levelName = Db::name('user_level')->where('level_id', $user['level'])->getField('level_name');
+                $user['level_name'] = $levelName;
+                $result = ['status' => 1, 'result' => $user];  // 登录成功
+            }
+        } else {
+            // 未授权登录过
+            $insertData = [
+                'user_id' => 0,
+                'openid' => $data['openid'],
+                'oauth' => 'wechatApp',
+                'unionid' => $data['unionid'],
+                'oauth_child' => 'open',
+                'oauth_data' => serialize($data)
+            ];
+            // 插入数据
+            Db::name('oauth_users')->insert($insertData);
+            $result = ['status' => 2, 'result' => ['openid' => $data['openid']]]; // 需要绑定手机号
+        }
         return $result;
     }
 
@@ -799,7 +843,74 @@ class UsersLogic extends Model
             'is_app' => TokenLogic::getValue('is_app', $user['token']) ? 1 : 0,
             'token' => $user['token']
         ];
+        return ['status' => 1, 'msg' => '注册成功', 'result' => $user];
+    }
 
+    /**
+     * 授权用户注册
+     * @param $openid
+     * @param $username
+     * @param $password
+     * @return array
+     */
+    public function oauthReg($openid, $username, $password)
+    {
+        if (check_mobile($username)) {
+            $exists = M('users')->where('mobile', $username)->find();
+            if ($exists) {
+                return ['status' => -1, 'msg' => '手机号已经存在'];
+            }
+        }
+        $password = htmlspecialchars($password, ENT_NOQUOTES, 'UTF-8', false);
+        if (!check_password($password)) {
+            return ['status' => 0, 'msg' => '密码格式为6-20位字母数字组合'];
+        }
+        $oauthUser = M('oauth_users')->where(['openid' => $openid, 'oauth' => 'wechatApp'])->find();
+        if (!$oauthUser) {
+            return ['status' => 0, 'msg' => 'openid错误'];
+        }
+        $oauthData = unserialize($oauthUser['oauth_data']);
+        // 用户注册
+        $data = [
+            'mobile' => $username,
+            'password' => encrypt($password),
+            'openid' => $oauthData['openid'],
+            'unionid' => $oauthData['unionid'],
+            'oauth' => $oauthUser['oauth'],
+            'nickname' => $oauthData['nickname'],
+            'head_pic' => !empty($oauthData['headimgurl']) ? $oauthData['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png',
+            'sex' => $oauthData['sex'] ?? 0,
+            'reg_time' => time(),
+            'last_login' => time(),
+            'token' => TokenLogic::setToken(),
+            'time_out' => strtotime('+' . config('redis_days') . ' days')
+        ];
+        $userId = M('users')->add($data);
+        // 更新oauth记录
+        M('oauth_users')->where(['tu_id' => $oauthUser['tu_id']])->update(['user_id' => $userId]);
+
+        $user = M('users')->where(['user_id' => $userId])->find();
+        $user = [
+            'user_id' => $user['user_id'],
+            'sex' => $user['sex'],
+            'nickname' => $user['nickname'],
+            'user_name' => $user['nickname'],
+            'real_name' => $user['user_name'],
+            'id_cart' => $user['id_cart'],
+            'birthday' => $user['birthday'],
+            'mobile' => $user['mobile'],
+            'head_pic' => $user['head_pic'],
+            'type' => $user['type'],
+            'invite_uid' => $user['invite_uid'],
+            'is_distribut' => $user['is_distribut'],
+            'is_lock' => $user['is_lock'],
+            'level' => $user['level'],
+            'level_name' => $user['level_name'],
+            'is_not_show_jk' => $user['is_not_show_jk'],  // 是否提示加入金卡弹窗
+            'has_pay_pwd' => $user['paypwd'] ? 1 : 0,
+            'is_app' => TokenLogic::getValue('is_app', $user['token']) ? 1 : 0,
+            'token' => $user['token']
+        ];
         return ['status' => 1, 'msg' => '注册成功', 'result' => $user];
     }
 

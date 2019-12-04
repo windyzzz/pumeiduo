@@ -377,7 +377,7 @@ class Order extends Base
             'order_status' => $orderInfo['order_status'],
             'pay_status' => $orderInfo['order_status'],
             'shipping_status' => $orderInfo['order_status'],
-            'order_status_code' => $orderInfo['order_status_code'] == 'AFTER-SALES' ? 'WAITCCOMMENT' :$orderInfo['order_status_code'],
+            'order_status_code' => $orderInfo['order_status_code'] == 'AFTER-SALES' ? 'WAITCCOMMENT' : $orderInfo['order_status_code'],
             'order_status_desc' => $orderInfo['order_status_desc'],
             'pay_code' => $orderInfo['pay_code'],
             'pay_name' => $orderInfo['pay_name'],

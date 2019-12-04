@@ -12,46 +12,119 @@
 namespace app\home\controller\api;
 
 use app\common\logic\CartLogic;
+use app\common\logic\Token as TokenLogic;
 use app\common\logic\UsersLogic;
+use think\Exception;
 
 class LoginApi
 {
     public $config;
     public $oauth;
     public $class_obj;
+    public $code;
 
     public function __construct()
     {
         session('?user');
-        $this->oauth = I('get.oauth');
-        //获取配置
-        $data = M('Plugin')->where('code', $this->oauth)->where('type', 'login')->find();
-        $this->config = unserialize($data['config_value']); // 配置反序列化
+        $this->oauth = I('get.oauth', '');
+        $this->code = I('get.code', '');
         if (!$this->oauth) {
             return json(['status' => 0, 'msg' => '非法操作', 'result' => null]);
         }
+        //获取配置
+        $data = M('Plugin')->where('code', $this->oauth)->where('type', 'login')->find();
+        $this->config = unserialize($data['config_value']); // 配置反序列化
         include_once "plugins/login/{$this->oauth}/{$this->oauth}.class.php";
-        $class = '\\'.$this->oauth;
+        $class = '\\' . $this->oauth;
+        $this->config['code'] = $this->code;
         $this->class_obj = new $class($this->config); //实例化对应的登陆插件
     }
 
     public function login()
     {
-        if (!$this->oauth) {
-            return json(['status' => 0, 'msg' => '非法操作', 'result' => null]);
-        }
-        include_once "plugins/login/{$this->oauth}/{$this->oauth}.class.php";
         $url = $this->class_obj->login();
         $return['url'] = $url;
 
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
     }
 
+    /**
+     * 授权登录（新）
+     * @return \think\response\Json
+     */
+    public function loginNew()
+    {
+        try {
+            $wechatUserInfo = $this->class_obj->login();
+            $res = (new UsersLogic())->handleAppLoginNew($wechatUserInfo);
+            if ($res['status'] == 1) {
+                $user = $res['result'];
+                $res['result'] = [
+                    'user_id' => $user['user_id'],
+                    'sex' => $user['sex'],
+                    'nickname' => $user['nickname'],
+                    'user_name' => $user['nickname'],
+                    'real_name' => $user['user_name'],
+                    'id_cart' => $user['id_cart'],
+                    'birthday' => $user['birthday'],
+                    'mobile' => $user['mobile'],
+                    'head_pic' => $user['head_pic'],
+                    'type' => $user['type'],
+                    'invite_uid' => $user['invite_uid'],
+                    'is_distribut' => $user['is_distribut'],
+                    'is_lock' => $user['is_lock'],
+                    'level' => $user['level'],
+                    'level_name' => $user['level_name'],
+                    'is_not_show_jk' => $user['is_not_show_jk'],  // 是否提示加入金卡弹窗
+                    'has_pay_pwd' => $user['paypwd'] ? 1 : 0,
+                    'is_app' => TokenLogic::getValue('is_app', $user['token']) ? 1 : 0,
+                    'token' => $user['token']
+                ];
+            }
+            return json($res);
+        } catch (Exception $e) {
+            return json(['status' => 0, 'msg' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * 授权登录注册
+     * @return \think\response\Json
+     */
+    public function oauthReg()
+    {
+        $openid = I('post.openid', '');
+        $username = I('post.username', '');
+        $password = I('post.password', '');
+        $code = I('post.code', '');
+        $scene = I('post.scene', 1);
+
+        $userLogic = new UsersLogic();
+        if ($code != '1238') {
+            // 验证验证码
+            $sessionId = S('mobile_token_' . $username);
+            if (!$sessionId) {
+                return json(['status' => 0, 'msg' => '验证码已过期']);
+            }
+            if (check_mobile($username)) {
+                $check_code = $userLogic->check_validate_code($code, $username, 'phone', $sessionId, $scene);
+                if (1 != $check_code['status']) {
+                    return json($check_code);
+                }
+            } else {
+                return json(['status' => 0, 'msg' => '手机号码不合格式']);
+            }
+        }
+        // 授权用户注册
+        $res = $userLogic->oauthReg($openid, $username, $password);
+        return json($res);
+    }
+
     public function callback()
     {
         $data = $this->class_obj->respon();
-        $logic = new UsersLogic();
 
+        $logic = new UsersLogic();
         $data = $logic->thirdLogin($data);
 
         if (1 != $data['status']) {

@@ -3,7 +3,7 @@
 use think\migration\Migrator;
 use think\migration\db\Column;
 
-class UpdateUsers extends Migrator
+class UpdateTb extends Migrator
 {
     /**
      * Change Method.
@@ -28,14 +28,9 @@ class UpdateUsers extends Migrator
      */
     public function change()
     {
-        $this->table('users')
-            ->changeColumn('token', 'string', ['limit' => 64, 'null' => true, 'comment' => '用户token', 'after' => 'third_leader'])
-            ->addColumn('time_out', 'integer', ['default' => 0, 'signed' => false, 'comment' => 'token过期时间', 'after' => 'token'])
-            ->update();
-
-        $this->table('users')
-            ->changeColumn('is_consummate', 'integer', ['limit' =>  \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'default' => 0, 'comment' => '完善个人信息已领取收益'])
-            ->changeColumn('is_not_show_jk', 'integer', ['limit' =>  \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'default' => 0, 'comment' => '完是否永久不提示 加入金卡弹窗 1是 0不是'])
+        $this->table('tb')
+            ->changeColumn('tb_time', 'integer', ['null' => true, 'default' => null, 'comment' => '同步时间'])
+            ->changeColumn('msg', 'string', ['limit' => 50, 'null' => true, 'default' => null])
             ->update();
     }
 }

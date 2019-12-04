@@ -627,7 +627,6 @@ function isMobile()
     if (isset($_SERVER['HTTP_X_WAP_PROFILE'])) {
         return true;
     }
-
     // 如果via信息含有wap则一定是移动设备,部分服务商会屏蔽该信息
     if (isset($_SERVER['HTTP_VIA'])) {
         // 找不到为flase,否则为true
@@ -649,7 +648,6 @@ function isMobile()
             return true;
         }
     }
-
     return false;
 }
 

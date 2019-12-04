@@ -17,10 +17,7 @@ $home_config = [
     'dispatch_error_tmpl' => 'public:dispatch_jump',
     //默认成功跳转对应的模板文件
     'dispatch_success_tmpl' => 'public:dispatch_jump',
-    'controller_auto_search' => true,
-    //redis储存数据的时间
-    'redis_time' => 86400 * 5,
-    'redis_days' => 5
+    'controller_auto_search' => true
 ];
 
 $html_config = include_once 'html.php';

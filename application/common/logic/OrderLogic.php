@@ -198,7 +198,7 @@ class OrderLogic
 
         //有余额支付的情况
         if ($order['user_money'] > 0 || $order['integral'] > 0 || $order['user_electronic'] > 0) {
-            accountLog($user_id, $order['user_money'], $order['integral'], '订单取消', 0, $order['order_id'], $order['order_sn'], $order['user_electronic'], 10);
+            accountLog($user_id, $order['user_money'], $order['integral'], '订单取消回退', 0, $order['order_id'], $order['order_sn'], $order['user_electronic'], 10);
         }
 
         // 双十一活动奖励追回

@@ -24,14 +24,14 @@ class LoginApi
     {
         session('?user');
         $this->oauth = I('get.oauth');
-        //获取配置
-        $data = M('Plugin')->where('code', $this->oauth)->where('type', 'login')->find();
-        $this->config = unserialize($data['config_value']); // 配置反序列化
         if (!$this->oauth) {
             return json(['status' => 0, 'msg' => '非法操作', 'result' => null]);
         }
+        //获取配置
+        $data = M('Plugin')->where('code', $this->oauth)->where('type', 'login')->find();
+        $this->config = unserialize($data['config_value']); // 配置反序列化
         include_once "plugins/login/{$this->oauth}/{$this->oauth}.class.php";
-        $class = '\\'.$this->oauth;
+        $class = '\\' . $this->oauth;
         $this->class_obj = new $class($this->config); //实例化对应的登陆插件
     }
 
@@ -52,7 +52,6 @@ class LoginApi
         $data = $this->class_obj->respon();
 
         $logic = new UsersLogic();
-
         $data = $logic->thirdLogin($data);
 
         if (1 != $data['status']) {
@@ -71,10 +70,10 @@ class LoginApi
         $cartLogic->doUserLoginHandle($this->session_id, $data['result']['user_id']);  //用户登录后 需要对购物车 一些操作
         if (isMobile()) {
 //            $this->success('登陆成功', U('Home/index/index'));
-            echo "<script> top.location.href='".url('/', '', true, true)."'</script>";
+            echo "<script> top.location.href='" . url('/', '', true, true) . "'</script>";
             exit;
         }
-        echo "<script> top.location.href='".url('/', '', true, true)."'</script>";
+        echo "<script> top.location.href='" . url('/', '', true, true) . "'</script>";
         exit;
 //            $this->success('登陆成功', U('Home/index/index'));
     }
