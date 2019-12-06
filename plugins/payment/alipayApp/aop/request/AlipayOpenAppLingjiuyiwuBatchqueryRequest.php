@@ -3,7 +3,7 @@
  * ALIPAY API: alipay.open.app.lingjiuyiwu.batchquery request
  *
  * @author auto create
- * @since 1.0, 2017-09-15 01:02:23
+ * @since 1.0, 2019-01-07 20:51:15
  */
 class AlipayOpenAppLingjiuyiwuBatchqueryRequest
 {

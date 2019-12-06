@@ -57,7 +57,7 @@ class AopClient {
 
 	public $encryptType = "AES";
 
-	protected $alipaySdkVersion = "alipay-sdk-php-20180705";
+	protected $alipaySdkVersion = "alipayAppNew-php-20180705";
 
 	public function generateSign($params, $signType = "RSA") {
 		return $this->sign($this->getSignContent($params), $signType);

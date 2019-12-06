@@ -3,7 +3,7 @@
  * ALIPAY API: ssdata.dataservice.risk.antifraud.verify request
  *
  * @author auto create
- * @since 1.0, 2017-09-27 11:42:12
+ * @since 1.0, 2019-01-07 20:51:15
  */
 class SsdataDataserviceRiskAntifraudVerifyRequest
 {

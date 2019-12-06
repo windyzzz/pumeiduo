@@ -23,7 +23,7 @@ class weixinApp
         require_once 'example/WxPay.JsApiPay.php';
         require_once 'example/WxPay.AppPay.php';
 
-        $paymentPlugin = M('Plugin')->where("code='weixinApp' and  type = 'payment' ")->find(); // 找到微信支付插件的配置
+        $paymentPlugin = M('Plugin')->where(['code' => 'weixinApp', 'type' => 'payment'])->find(); // 找到微信支付插件的配置
         $config_value = unserialize($paymentPlugin['config_value']); // 配置反序列化
         $this->config_value = $config_value;
         WxPayConfig::$appid = $config_value['appid']; // * APPID：绑定支付的APPID（必须配置，开户邮件中可查看）
@@ -38,33 +38,43 @@ class weixinApp
      * @param   array   $order      订单信息
      * @param   array   $config    支付方式信息
      */
-    public function get_code($order, $config)
+    public function get_code($order)
     {
-        if (false !== stripos($order['order_sn'], 'recharge')) {
-            $go_url = U('Mobile/User/points', ['type' => 'recharge']);
-            $back_url = U('Mobile/User/recharge', ['order_id' => $order['order_id']]);
-        } else {
-            $go_url = U('Mobile/Order/order_detail', ['id' => $order['order_id']]);
-            $back_url = U('Mobile/Cart/cart4', ['order_id' => $order['order_id']]);
-        }
+//        if (false !== stripos($order['order_sn'], 'recharge')) {
+//            $go_url = U('Mobile/User/points', ['type' => 'recharge']);
+//            $back_url = U('Mobile/User/recharge', ['order_id' => $order['order_id']]);
+//        } else {
+//            $go_url = U('Mobile/Order/order_detail', ['id' => $order['order_id']]);
+//            $back_url = U('Mobile/Cart/cart4', ['order_id' => $order['order_id']]);
+//        }
         //①、获取用户openid
-        $tools = new AppPay();
         //$openId = $tools->GetOpenid();
-        $openId = $_SESSION['openid'];
+//        $openId = $_SESSION['openid'];
+
         //②、统一下单
+        require_once 'lib/WxPay.Data.php';
         $input = new WxPayUnifiedOrder();
-        $input->SetBody('支付订单：'.$order['order_sn']);
+        $input->SetBody('支付订单：' . $order['order_sn']);
         $input->SetAttach('weixinApp');
         $input->SetOut_trade_no($order['order_sn']);
         $input->SetTotal_fee($order['order_amount'] * 100);
         $input->SetTime_start(date('YmdHis'));
         $input->SetTime_expire(date('YmdHis', time() + 600));
         $input->SetGoods_tag('tp_wx_app_pay');
-        $input->SetNotify_url(SITE_URL.'/index.php/Home/Payment/notifyUrl/pay_code/weixinApp');
         $input->SetTrade_type('APP');
-        $input->SetOpenid($openId);
+        $input->SetNotify_url(SITE_URL . '/application/common/callback/wechatApp.php');
+//        $input->SetOpenid($openId);
+
+        require_once 'lib/WxPay.Api.php';
         $order2 = WxPayApi::unifiedOrder($input);
-        $AppParameters = $tools->GetAppParameters($order2);
+        if ($order2['return_code'] == 'FAIL') {
+            return ['status' => 0, 'msg' => $order2['return_msg']];
+        } elseif ($order2['result_code'] == 'FAIL') {
+            return ['status' => 0, 'msg' => $order2['err_code_des']];
+        }
+
+        $tools = new AppPay();
+        $AppParameters = $tools->GetAppParameters($order2); // 二次签名
         $param = json_decode($AppParameters, true);
 //        $order2['noncestr'] = $param['nonceStr'];
 //        $order2['timestamp'] = $param['timeStamp'];
@@ -72,7 +82,7 @@ class weixinApp
 //        $order2['partnerid'] = $this->config_value['mchid'];
 //        $order2['new_sign'] = $param['paySign'];
 
-        return $param;
+        return ['status' => 1, 'result' => $param];
     }
 
     /**
@@ -108,14 +118,14 @@ class weixinApp
         $openId = $_SESSION['openid'];
         //②、统一下单
         $input = new WxPayUnifiedOrder();
-        $input->SetBody('支付订单：'.$order['order_sn']);
+        $input->SetBody('支付订单：' . $order['order_sn']);
         $input->SetAttach('weixinApp');
         $input->SetOut_trade_no($order['order_sn']);
         $input->SetTotal_fee($order['order_amount'] * 100);
         $input->SetTime_start(date('YmdHis'));
         $input->SetTime_expire(date('YmdHis', time() + 600));
         $input->SetGoods_tag('tp_wx_pay');
-        $input->SetNotify_url(SITE_URL.'/index.php/Home/Payment/notifyUrl/pay_code/weixinApp');
+        $input->SetNotify_url(SITE_URL . '/index.php/Home/Payment/notifyUrl/pay_code/weixinApp');
         $input->SetTrade_type('APP');
         $input->SetOpenid($openId);
         $order2 = WxPayApi::unifiedOrder($input);
@@ -145,14 +155,14 @@ class weixinApp
         $openId = $_SESSION['openid'];
         //②、统一下单
         $input = new WxPayUnifiedOrder();
-        $input->SetBody('支付订单：'.$order['order_sn']);
+        $input->SetBody('支付订单：' . $order['order_sn']);
         $input->SetAttach('weixinApp');
         $input->SetOut_trade_no($order['order_sn']);
         $input->SetTotal_fee($order['order_amount'] * 100);
         $input->SetTime_start(date('YmdHis'));
         $input->SetTime_expire(date('YmdHis', time() + 600));
         $input->SetGoods_tag('tp_wx_pay');
-        $input->SetNotify_url(SITE_URL.'/index.php/Home/Payment/notifyUrl/pay_code/weixinApp');
+        $input->SetNotify_url(SITE_URL . '/index.php/Home/Payment/notifyUrl/pay_code/weixinApp');
         $input->SetTrade_type('JSAPI');
         $input->SetOpenid($openId);
         $order2 = WxPayApi::unifiedOrder($input);
@@ -209,8 +219,8 @@ EOF;
     /**
      * 将一个数组转换为 XML 结构的字符串.
      *
-     * @param array $arr   要转换的数组
-     * @param int   $level 节点层级, 1 为 Root
+     * @param array $arr 要转换的数组
+     * @param int $level 节点层级, 1 为 Root
      *
      * @return string XML 结构的字符串
      */
@@ -223,14 +233,14 @@ EOF;
                 unset($value['TagName']);
             }
             if (!is_array($value)) {
-                $s .= "<{$tagname}>".(!is_numeric($value) ? '<![CDATA[' : '').$value.(!is_numeric($value) ? ']]>' : '')."</{$tagname}>";
+                $s .= "<{$tagname}>" . (!is_numeric($value) ? '<![CDATA[' : '') . $value . (!is_numeric($value) ? ']]>' : '') . "</{$tagname}>";
             } else {
-                $s .= "<{$tagname}>".$this->array2xml($value, $level + 1)."</{$tagname}>";
+                $s .= "<{$tagname}>" . $this->array2xml($value, $level + 1) . "</{$tagname}>";
             }
         }
         $s = preg_replace("/([\x01-\x08\x0b-\x0c\x0e-\x1f])+/", ' ', $s);
 
-        return 1 == $level ? $s.'</xml>' : $s;
+        return 1 == $level ? $s . '</xml>' : $s;
     }
 
     public function http_post($url, $param, $wxchat)
@@ -245,7 +255,7 @@ EOF;
         } else {
             $aPOST = [];
             foreach ($param as $key => $val) {
-                $aPOST[] = $key.'='.urlencode($val);
+                $aPOST[] = $key . '=' . urlencode($val);
             }
             $strPOST = join('&', $aPOST);
         }
@@ -254,9 +264,9 @@ EOF;
         curl_setopt($oCurl, CURLOPT_POST, true);
         curl_setopt($oCurl, CURLOPT_POSTFIELDS, $strPOST);
         if ($wxchat) {
-            curl_setopt($oCurl, CURLOPT_SSLCERT, dirname(THINK_PATH).$wxchat['api_cert']);
-            curl_setopt($oCurl, CURLOPT_SSLKEY, dirname(THINK_PATH).$wxchat['api_key']);
-            curl_setopt($oCurl, CURLOPT_CAINFO, dirname(THINK_PATH).$wxchat['api_ca']);
+            curl_setopt($oCurl, CURLOPT_SSLCERT, dirname(THINK_PATH) . $wxchat['api_cert']);
+            curl_setopt($oCurl, CURLOPT_SSLKEY, dirname(THINK_PATH) . $wxchat['api_key']);
+            curl_setopt($oCurl, CURLOPT_CAINFO, dirname(THINK_PATH) . $wxchat['api_ca']);
         }
         $sContent = curl_exec($oCurl);
         $aStatus = curl_getinfo($oCurl);
@@ -294,7 +304,7 @@ EOF;
         // $input->SetNonce_str(); // 设置随机字符串，不长于32位。推荐随机数生成算法
         $input->SetTransaction_id($order['transaction_id']); // 设置微信订单号
         // $input->SetOut_trade_no($order['order_sn']); // 设置商户系统内部的订单号,transaction_id、out_trade_no二选一，如果同时存在优先级：transaction_id>
-        $input->SetOut_refund_no($order['order_sn'].rand(100, 999)); // 设置商户系统内部的退款单号，商户系统内部唯一，同一退款单号多次请求只退一笔
+        $input->SetOut_refund_no($order['order_sn'] . rand(100, 999)); // 设置商户系统内部的退款单号，商户系统内部唯一，同一退款单号多次请求只退一笔
         $input->SetTotal_fee($order['order_amount'] * 100); // 设置订单总金额，单位为分，只能为整数，详见支付金额
         $input->SetRefund_fee($refund_money * 100); // 设置退款总金额，订单总金额，单位为分，只能为整数，详见支付金额
         // $input->SetRefund_fee_type(); // 设置货币类型，符合ISO 4217标准的三位字母代码，默认人民币：CNY，其他值列表详见货币类型

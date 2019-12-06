@@ -3,7 +3,7 @@
  * ALIPAY API: koubei.advert.delivery.discount.get request
  *
  * @author auto create
- * @since 1.0, 2018-03-01 15:55:54
+ * @since 1.0, 2019-01-07 20:51:15
  */
 class KoubeiAdvertDeliveryDiscountGetRequest
 {

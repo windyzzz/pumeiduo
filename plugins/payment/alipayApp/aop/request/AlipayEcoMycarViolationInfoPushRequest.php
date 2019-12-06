@@ -3,7 +3,7 @@
  * ALIPAY API: alipay.eco.mycar.violation.info.push request
  *
  * @author auto create
- * @since 1.0, 2017-09-15 16:29:47
+ * @since 1.0, 2019-08-29 11:18:59
  */
 class AlipayEcoMycarViolationInfoPushRequest
 {

@@ -55,7 +55,7 @@ class WxPayApi
 		//if(!$inputObj->IsNotify_urlSet()){
 			//$inputObj->SetNotify_url(WxPayConfig::NOTIFY_URL);//异步通知url
 		//}
-            
+
 		//$inputObj->SetAppid(WxPayConfig::APPID);//公众账号ID
 		//$inputObj->SetMch_id(WxPayConfig::MCHID);//商户号
 		//$inputObj->SetSpbill_create_ip($_SERVER['REMOTE_ADDR']);//终端ip
@@ -78,20 +78,20 @@ class WxPayApi
         } elseif ($traceType == 'JSAPI') {
             if ($result['return_code'] !== 'SUCCESS') {
                 ajaxReturn(['status' => -1, 'msg' => $result['return_msg'], 'result' => $result]);
-            } 
+            }
             $result = self::JsApiReSign($result);
         } else {
             throw new Exception("交易类型不支持:" + $traceType);
         }
-        
+
 		return $result;
 	}
-    
+
     public static function AppReSign($inputObj, $result)
     {
         // 统一下单接口返回正常的prepay_id，再按签名规范重新生成签名后，将数据传输给APP。
 		// 参与签名的字段名为appId，partnerId，prepayId，nonceStr，timeStamp，package。注意：package的值格式为Sign=WXPay
-		
+
 		/*****
 								Array
 						(
@@ -106,7 +106,7 @@ class WxPayApi
 							[trade_type] => APP
 						)
 		*****/
-		
+
 		//print_r($result);
 		//exit();
 		$time_stamp = time();
@@ -136,9 +136,9 @@ class WxPayApi
 								[package] => Sign=WXPay
 								[timestamp] => 1438334130
 							)
-							
-			**************/				
-							
+
+			**************/
+
 		//print_r($prePayParams);
 		//exit();
 		//echo json_encode($prePayParams);
@@ -156,7 +156,7 @@ class WxPayApi
         //&package=prepay_id=wx2017033010242291fcfe0db70013231072&signType=MD5
         //&timeStamp=1490840662&key=qazwsxedcrfvtgbyhnujmikolp111111)
         // = 22D9B4E54AB1950F51E0649E8810ACD6
-        
+
 		/*****
         Array(
             [appid] => wxe60de18d2b51ea4b
@@ -170,7 +170,7 @@ class WxPayApi
             [trade_type] => APP
         )
 		*****/
-        
+
 		//输出参数列表
 		$prePayParams =array();
 		$prePayParams['appId']		= $result['appid'];
@@ -178,12 +178,12 @@ class WxPayApi
         $prePayParams['package']	= 'prepay_id='.$result['prepay_id'];
         $prePayParams['signType']   = 'MD5';
         $prePayParams['timeStamp']  = time();
-        
+
 		$result = WxPayResults::InitFromArray($prePayParams, true)->GetValues();
-        
+
         return $result;
     }
-    
+
 	/**
 	 *
 	 * 查询订单，WxPayOrderQuery中out_trade_no、transaction_id至少填一个
@@ -459,9 +459,9 @@ class WxPayApi
 		$response = self::postXmlCurl($xml, $url, false, $timeOut);
 		return $response;
 	}
-    
+
     /**
-     * 
+     *
      * @param type $inputObj
      * @param type $timeOut
      * @return type

@@ -3,7 +3,7 @@
  * ALIPAY API: alipay.open.mini.tinyapp.exist.query request
  *
  * @author auto create
- * @since 1.0, 2018-07-24 16:05:00
+ * @since 1.0, 2019-11-13 17:15:36
  */
 class AlipayOpenMiniTinyappExistQueryRequest
 {

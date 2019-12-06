@@ -3,7 +3,7 @@
  * ALIPAY API: alipay.marketing.campaign.cash.list.query request
  *
  * @author auto create
- * @since 1.0, 2018-07-19 14:27:01
+ * @since 1.0, 2019-01-07 20:51:15
  */
 class AlipayMarketingCampaignCashListQueryRequest
 {

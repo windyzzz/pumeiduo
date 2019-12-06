@@ -3,7 +3,7 @@
  * ALIPAY API: alipay.app.token.get request
  *
  * @author auto create
- * @since 1.0, 2017-04-13 19:13:06
+ * @since 1.0, 2019-03-26 17:00:00
  */
 class AlipayAppTokenGetRequest
 {

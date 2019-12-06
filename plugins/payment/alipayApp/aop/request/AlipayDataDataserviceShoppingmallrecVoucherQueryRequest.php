@@ -3,7 +3,7 @@
  * ALIPAY API: alipay.data.dataservice.shoppingmallrec.voucher.query request
  *
  * @author auto create
- * @since 1.0, 2017-08-15 19:53:24
+ * @since 1.0, 2019-01-07 20:51:15
  */
 class AlipayDataDataserviceShoppingmallrecVoucherQueryRequest
 {

@@ -3,7 +3,7 @@
  * ALIPAY API: alipay.daowei.service.modify request
  *
  * @author auto create
- * @since 1.0, 2018-06-26 14:23:36
+ * @since 1.0, 2019-01-07 20:51:15
  */
 class AlipayDaoweiServiceModifyRequest
 {
