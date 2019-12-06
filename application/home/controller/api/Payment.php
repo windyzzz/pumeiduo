@@ -45,8 +45,8 @@ class Payment
             return json(['status' => 0, 'msg' => 'pay_code 不能为空', 'result' => null]);
         }
         // 导入具体的支付类文件
-        include_once "plugins/payment/{$this->pay_code}/{$this->pay_code}.class.php"; // D:\wamp\www\svn_tpshop\www\plugins\payment\alipay\alipayPayment.class.php
-        $code = '\\'.$this->pay_code; // \alipay
+        include_once "plugins/payment/{$this->pay_code}/{$this->pay_code}.class.php";
+        $code = '\\'.$this->pay_code; //
         $this->payment = new $code();
     }
 

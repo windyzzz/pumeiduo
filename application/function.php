@@ -26,7 +26,7 @@ function convert_arr_key($arr, $key_name)
     return $arr2;
 }
 
-function encrypt($str)
+function systemEncrypt($str)
 {
     return md5(C('AUTH_CODE').md5($str).'milan');
 }

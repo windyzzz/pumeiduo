@@ -74,9 +74,8 @@ class OrderLogic
 
         //检查是否未支付的订单
         if (($order['pay_status'] > 0 || $order['order_status'] > 0) && $order['order_amount'] > 0) {
-            // return array('status'=>-1,'msg'=>'支付状态或订单状态不允许','result'=>'');
             if ($_SERVER['SERVER_ADDR'] != '61.238.101.138') {
-                exit;
+                return array('status'=>-1,'msg'=>'支付状态或订单状态不允许','result'=>'');
             }
             //获取记录表信息
             //$log = M('account_log')->where(array('order_id'=>$order_id))->find();
@@ -229,7 +228,7 @@ class OrderLogic
         $res = ['use_time' => 0, 'status' => 0, 'order_id' => 0];
         M('coupon_list')->where(['order_id' => $order_id, 'uid' => $user_id])->save($res);
 
-        $row = M('order')->where(['order_id' => $order_id, 'user_id' => $user_id])->save(['order_status' => 3]);
+        $row = M('order')->where(['order_id' => $order_id, 'user_id' => $user_id])->save(['order_status' => 3, 'cancel_time' => time()]);
         $reduce = tpCache('shopping.reduce');
         if (1 == $reduce || empty($reduce)) {
             $this->alterReturnGoodsInventory($order);

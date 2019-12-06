@@ -21,6 +21,6 @@ class SmsTemplateData extends Seeder
             'send_scene' => '8',
             'add_time' => time()
         ];
-        $this->table('sms_template')->insert($data)->save();
+//        $this->table('sms_template')->insert($data)->save();
     }
 }

@@ -62,8 +62,8 @@ class Admin extends Base
 
         if (IS_POST) {
             //修改密码
-            $enOldPwd = encrypt($oldPwd);
-            $enNewPwd = encrypt($newPwd);
+            $enOldPwd = systemEncrypt($oldPwd);
+            $enNewPwd = systemEncrypt($newPwd);
             $admin = M('admin')->where('admin_id', $admin_id)->find();
             if (!$admin || $admin['password'] != $enOldPwd) {
                 exit(json_encode(['status' => -1, 'msg' => '旧密码不正确']));
@@ -102,7 +102,7 @@ class Admin extends Base
         if (empty($data['password'])) {
             unset($data['password']);
         } else {
-            $data['password'] = encrypt($data['password']);
+            $data['password'] = systemEncrypt($data['password']);
         }
         if ('add' == $data['act']) {
             unset($data['admin_id']);

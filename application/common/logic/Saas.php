@@ -205,7 +205,7 @@ class Saas
             'service_domain' => $this->app['domain'],
             'app_domain' => $this->saas['main_domain'],
             'redirect' => urlencode($this->loginUrl),
-            'password' => encrypt($password),
+            'password' => systemEncrypt($password),
         ]);
         ajaxReturn(['status' => 1, 'url' => 'http://'.$this->saas['saas_domain'].'/client/sso/login?'.$params]);
     }

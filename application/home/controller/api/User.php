@@ -1547,9 +1547,9 @@ class User extends Base
     {
         if ($this->request->isPost()) {
             $payPoints = I('pay_points', 0);
-            $toUser = I('to_user', '');
+            $toUser = I('user_name', '');
             $payPwd = I('pay_pwd', '');
-            if ($this->user['paypwd'] !== encrypt($payPwd)) {
+            if ($this->user['paypwd'] !== systemEncrypt($payPwd)) {
                 return json(['status' => 0, 'msg' => '密码错误']);
             }
             if ($payPoints < 1) {
@@ -1564,7 +1564,7 @@ class User extends Base
                 $toUser = Db::name('users')->where(['user_id' => $toUser])->find();
             }
             if (!$toUser) {
-                return json(['status' => -2, 'msg' => '无此用户']);
+                return json(['status' => 0, 'msg' => '无此用户']);
             }
             $userPayPoints = M('Users')->where('user_id', $this->user_id)->getField('pay_points');
             if ($userPayPoints < $payPoints) {
@@ -1572,7 +1572,8 @@ class User extends Base
             }
             accountLog($this->user_id, 0, -$payPoints, '转出积分给用户' . $toUser['user_id'], 0, 0, '', 0, 12);
             accountLog($toUser['user_id'], 0, $payPoints, '转入积分From用户' . $this->user_id, 0, 0, '', 0, 12);
-            return json(['status' => 1, 'msg' => '积分转增成功']);
+            $userPayPoints = M('Users')->where('user_id', $this->user_id)->getField('pay_points');
+            return json(['status' => 1, 'msg' => '积分转增成功', 'result' => ['user_pay_points' => $userPayPoints]]);
         } else {
             return json(['status' => 1, 'result' => ['user_pay_points' => $this->user['pay_points']]]);
         }
@@ -1667,7 +1668,7 @@ class User extends Base
             //验证成功
             $user = M('Users')
                 ->where('user_name', $username)//
-                ->where('password', encrypt($password))
+                ->where('password', systemEncrypt($password))
                 // ->where('is_zhixiao',1)
                 // ->where('is_lock',0)
                 ->find();
@@ -1889,7 +1890,7 @@ class User extends Base
         $new_password = I('post.new_password');
         $confirm_password = I('post.confirm_password');
 
-        $old_password = encrypt($old_password);
+        $old_password = systemEncrypt($old_password);
         $old_password_u = M('Users')->where('user_id', $this->user_id)->getField('paypwd');
         if ($old_password_u !== $old_password) {
             return json(['status' => 0, 'msg' => '输入原来的支付密码不正确', 'result' => null]);
@@ -2077,7 +2078,7 @@ class User extends Base
             if ($data['money'] > $this->user['user_money']) {
                 return json(['status' => 0, 'msg' => "你最多可提现{$this->user['user_money']}账户余额."]);
             }
-            // if(encrypt($data['paypwd']) != $this->user['paypwd']){
+            // if(systemEncrypt($data['paypwd']) != $this->user['paypwd']){
             //     return json(['status'=>0,'msg'=>"支付密码错误"]);
             // }
             if (M('withdrawals')->where('user_id', $this->user_id)->where('status', 0)->find()) {
@@ -2533,6 +2534,28 @@ class User extends Base
         }
 
         return json(['status' => 1, 'msg' => 'ok', 'result' => $check_user_info]);
+    }
+
+    /**
+     * 查看用户是否存在
+     * @return \think\response\Json
+     */
+    public function checkUserNew()
+    {
+        $username = I('user_name', '');
+        if (check_mobile($username)) {
+            $user = Db::name('users')->where(['mobile' => $username])->find();
+        } else {
+            $user = Db::name('users')->where(['user_id' => $username])->find();
+        }
+        if (!$user) {
+            return json(['status' => 0, 'msg' => '无此用户']);
+        }
+        $result = [
+            'user_id' => $user['user_id'],
+            'user_name' => $user['user_name']
+        ];
+        return json(['status' => 1, 'result' => $result]);
     }
 
     /**

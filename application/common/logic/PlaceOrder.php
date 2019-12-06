@@ -184,7 +184,7 @@ class PlaceOrder
             if (empty($this->payPsw)) {
                 throw new TpshopException('提交订单', 0, ['status' => -7, 'msg' => '请输入支付密码', 'result' => '']);
             }
-            if (encrypt($this->payPsw) !== $user['paypwd']) {
+            if (systemEncrypt($this->payPsw) !== $user['paypwd']) {
                 throw new TpshopException('提交订单', 0, ['status' => -8, 'msg' => '支付密码错误', 'result' => '']);
             }
         }

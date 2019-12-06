@@ -71,7 +71,7 @@ class UsersLogic extends Model
         if ($user_count > 0) {
             return ['status' => -1, 'msg' => '账号已存在'];
         }
-        $user['password'] = encrypt($user['password']);
+        $user['password'] = systemEncrypt($user['password']);
         $user['reg_time'] = time();
         $user_id = M('users')->add($user);
         if (!$user_id) {

@@ -1764,23 +1764,20 @@ class Order extends Base
      */
     public function orderPayStatus()
     {
-        $orderSn = I('order_sn', '');
-        if (empty($orderSn)) {
+        $orderId = I('order_id', '');
+        if (empty($orderId)) {
             return json(['status' => 0, 'msg' => '订单编号不能为空']);
         }
         $order = Db::name('order o')->join('region2 r1', 'r1.id = o.province', 'LEFT')
             ->join('region2 r2', 'r2.id = o.city', 'LEFT')
             ->join('region2 r3', 'r3.id = o.district', 'LEFT')
-            ->where(['order_sn' => $orderSn])->field('order_id, order_sn, order_status, pay_status, order_amount,
+            ->where(['order_id' => $orderId])->field('order_id, order_sn, order_status, pay_status, order_amount,
             consignee, mobile, r1.name province_name, city, r2.name city_name, district, r3.name district_name, address')->find();
         if (empty($order)) {
             return json(['status' => 0, 'msg' => '订单不存在']);
         }
         if (3 == $order['order_status']) {
             return json(['status' => 0, 'msg' => '该订单已取消']);
-        }
-        if (1 == $order['pay_status']) {
-            return json(['status' => 0, 'msg' => '订单已经完成支付']);
         }
         unset($order['order_status']);
         return json(['status' => 1, 'result' => $order]);

@@ -25,7 +25,7 @@ class AdminLogic
         Saas::instance()->ssoAdmin($username, $password);
 
         $condition['a.user_name'] = $username;
-        $condition['a.password'] = encrypt($password);
+        $condition['a.password'] = systemEncrypt($password);
         $admin = Db::name('admin')->alias('a')->join('__ADMIN_ROLE__ ar', 'a.role_id=ar.role_id')->where('1=1')->find();
         if (!$admin) {
             return ['status' => 0, 'msg' => '账号密码不正确'];

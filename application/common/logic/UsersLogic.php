@@ -336,7 +336,7 @@ class UsersLogic extends Model
         $user = Db::name('users')->where('mobile', $username)->whereOr('email', $username)->field('password, user_id, mobile, nickname, user_name, is_distribut, is_lock, level, token, type')->find();
         if (!$user) {
             $result = ['status' => -1, 'msg' => '账号不存在!'];
-        } elseif (encrypt($password) != $user['password']) {
+        } elseif (systemEncrypt($password) != $user['password']) {
             $result = ['status' => -2, 'msg' => '密码错误!'];
         } elseif (1 == $user['is_lock']) {
             $result = ['status' => -3, 'msg' => '账号异常已被锁定！！！'];
@@ -376,7 +376,7 @@ class UsersLogic extends Model
         $user = Db::name('users')->where('user_id', $username)->find();
         if (!$user) {
             $result = ['status' => -1, 'msg' => '账号不存在!'];
-        } elseif (encrypt($password) != $user['password']) {
+        } elseif (systemEncrypt($password) != $user['password']) {
             $result = ['status' => -2, 'msg' => '密码错误!'];
         } elseif (1 == $user['is_lock']) {
             $result = ['status' => -3, 'msg' => '账号异常已被锁定！！！'];
@@ -767,7 +767,7 @@ class UsersLogic extends Model
             return ['status' => -1, 'msg' => '账号已存在', 'result' => ''];
         }
 
-        $map['password'] = encrypt($password);
+        $map['password'] = systemEncrypt($password);
         $map['reg_time'] = time();
         $map['invite_uid'] = $map['will_invite_uid'] = $map['first_leader'] = 0;
 
@@ -875,7 +875,7 @@ class UsersLogic extends Model
         // 用户注册
         $data = [
             'mobile' => $username,
-            'password' => encrypt($password),
+            'password' => systemEncrypt($password),
             'openid' => $oauthData['openid'],
             'unionid' => $oauthData['unionid'],
             'oauth' => $oauthUser['oauth'],
@@ -1920,10 +1920,10 @@ class UsersLogic extends Model
             return ['status' => -1, 'msg' => '两次密码输入不一致', 'result' => ''];
         }
         $old_password = M('users')->where('user_id', $user_id)->getField('password');
-        if (encrypt($new_password) == $old_password) {
+        if (systemEncrypt($new_password) == $old_password) {
             return ['status' => -1, 'msg' => '设置失败,你重新设置的密码必须要跟原来的密码不一样。', 'result' => ''];
         }
-        $row = M('users')->where('user_id', $user_id)->save(['password' => encrypt($new_password)]);
+        $row = M('users')->where('user_id', $user_id)->save(['password' => systemEncrypt($new_password)]);
         if (!$row) {
             return ['status' => -1, 'msg' => '设置失败', 'result' => ''];
         }
@@ -1954,7 +1954,7 @@ class UsersLogic extends Model
         if ('' != $user['password']) {
             return ['status' => -1, 'msg' => '已存在密码，请勿重新设置', 'result' => ''];
         }
-        $row = M('users')->where('user_id', $user_id)->save(['password' => encrypt($new_password)]);
+        $row = M('users')->where('user_id', $user_id)->save(['password' => systemEncrypt($new_password)]);
         if (!$row) {
             return ['status' => -1, 'msg' => '设置失败', 'result' => ''];
         }
@@ -1984,10 +1984,10 @@ class UsersLogic extends Model
             return ['status' => -1, 'msg' => '两次密码输入不一致', 'result' => ''];
         }
         //验证原密码
-        if ($is_update && ('' != $user['password'] && encrypt($old_password) != $user['password'])) {
+        if ($is_update && ('' != $user['password'] && systemEncrypt($old_password) != $user['password'])) {
             return ['status' => -1, 'msg' => '原密码验证失败', 'result' => ''];
         }
-        $row = M('users')->where('user_id', $user_id)->save(['password' => encrypt($new_password)]);
+        $row = M('users')->where('user_id', $user_id)->save(['password' => systemEncrypt($new_password)]);
         if (!$row) {
             return ['status' => -1, 'msg' => '修改失败', 'result' => ''];
         }
@@ -2043,7 +2043,7 @@ class UsersLogic extends Model
         if ($new_password != $confirm_password) {
             return ['status' => -1, 'msg' => '两次密码输入不一致', 'result' => ''];
         }
-        $row = M('users')->where('user_id', $user_id)->update(['paypwd' => encrypt($new_password)]);
+        $row = M('users')->where('user_id', $user_id)->update(['paypwd' => systemEncrypt($new_password)]);
         if (!$row) {
             return ['status' => -1, 'msg' => '修改失败', 'result' => ''];
         }
