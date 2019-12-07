@@ -1350,15 +1350,12 @@ class Order extends Base
         I('user_id') ? $condition['user_id'] = trim(I('user_id')) : false;
         $sort_order = I('order_by', 'DESC') . ' ' . I('sort');
 
-
-        $orderList = Db::name('order')->field("*,FROM_UNIXTIME(add_time,'%Y-%m-%d %H:%i:%s') as create_time")->where($condition)->order($sort_order)->select();
-
         $strTable = '<table width="500" border="1">';
         $strTable .= '<tr>';
         $strTable .= '<td style="text-align:center;font-size:12px;width:120px;">订单编号</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="120">下单日期</td>';
-
         $strTable .= '<td style="text-align:center;font-size:12px;" width="120">支付日期</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">父级ID</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">会员ID</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">会员等级</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">收货人</td>';
@@ -1366,13 +1363,10 @@ class Order extends Base
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">电话</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">应付金额</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品金额</td>';
-
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">优惠券折扣</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">积分折扣</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">现金折扣</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">运费</td>';
-
-
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">订单状态</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">支付方式</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">支付状态</td>';
@@ -1384,48 +1378,50 @@ class Order extends Base
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品规格</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">交易条件</td>';
         $strTable .= '</tr>';
+
+        // 等级列表
         $level_list = M('distribut_level')->getField('level_id,level_name');
+        // 用户父级ID
+        $parent_list = Db::name('users')->getField('user_id, first_leader', true);
+        // 订单数据
+        $orderList = Db::name('order')->field("*,FROM_UNIXTIME(add_time,'%Y-%m-%d %H:%i:%s') as create_time")->where($condition)->order($sort_order)->select();
         if (is_array($orderList)) {
             $region = get_region_list();
             foreach ($orderList as $k => $val) {
                 $user_info = M('users')->where('user_id', $val['user_id'])->find();
                 $orderGoods = D('order_goods')->where('order_id=' . $val['order_id'])->select();
                 $orderGoodsNum = count($orderGoods);
-
-
                 $val['pay_time_show'] = $val['pay_time'] ? date('Y-m-d H:i:s', $val['pay_time']) : '';
-
                 $strTable .= '<tr>';
                 $strTable .= '<td style="text-align:center;font-size:12px;" rowspan="' . $orderGoodsNum . '">&nbsp;' . $val['order_sn'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['create_time'] . ' </td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['pay_time_show'] . ' </td>';
-
+                $parentId = $parent_list[$val['user_id']];
+                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $parentId . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['user_id'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $level_list[$user_info['distribut_level']] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['consignee'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . "{$region[$val['province']]},{$region[$val['city']]},{$region[$val['district']]},{$region[$val['twon']]}{$val['address']}" . ' </td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['mobile'] . '</td>';
-
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['order_amount'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['goods_price'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['coupon_price'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['integral_money'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['user_electronic'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['shipping_price'] . '</td>';
-
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . C('ORDER_STATUS')[$val['order_status']] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['pay_name'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $this->pay_status[$val['pay_status']] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $this->shipping_status[$val['shipping_status']] . '</td>';
                 // $orderGoods = D('order_goods')->where('order_id='.$val['order_id'])->select();
-                $strGoods = '';
+                // $strGoods = '';
                 $goods_num = 0;
                 foreach ($orderGoods as $goods) {
                     $goods_num = $goods_num + $goods['goods_num'];
                     // $strGoods .= "商品编号：".$goods['goods_sn']. " 商品购买数量：".$goods['goods_num']." 商品名称：".$goods['goods_name'];
                     // if ($goods['spec_key_name'] != '') $strGoods .= " 规格：".$goods['spec_key_name'];
                     // $strGoods .= "<br />";
-                    //             $strTradeType = $goods['trade_type'] == 1 ? '仓库自发'  : '一件代发';
+                    // $strTradeType = $goods['trade_type'] == 1 ? '仓库自发'  : '一件代发';
                 }
                 $strTable .= '<td style="text-align:left;font-size:12px;"    rowspan="' . $orderGoodsNum . '">' . $goods_num . ' </td>';
                 foreach ($orderGoods as $goods) {
@@ -1451,15 +1447,15 @@ class Order extends Base
                         $strTable .= '</tr>';
                     }
                 }
-                //          $strTable .= '<td style="text-align:left;font-size:12px;">'.$goods_num.' </td>';
-                //          foreach($orderGoods as $goods){
-                //              $goods_num = $goods_num + $goods['goods_num'];
-                //          }
-                // unset($orderGoods);
-
-                //          $strTable .= '<td style="text-align:left;font-size:12px;">'.$strGoods.' </td>';
-                // $strTable .= '<td style="text-align:left;font-size:12px;">'.$strTradeType.' </td>';
-                // $strTable .= '</tr>';
+//                $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods_num . ' </td>';
+//                foreach ($orderGoods as $goods) {
+//                    $goods_num = $goods_num + $goods['goods_num'];
+//                }
+//                unset($orderGoods);
+//
+//                $strTable .= '<td style="text-align:left;font-size:12px;">' . $strGoods . ' </td>';
+//                $strTable .= '<td style="text-align:left;font-size:12px;">' . $strTradeType . ' </td>';
+//                $strTable .= '</tr>';
             }
         }
         $strTable .= '</table>';

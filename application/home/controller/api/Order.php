@@ -388,7 +388,7 @@ class Order extends Base
             'prom_price' => $orderInfo['order_prom_amount'],
             'electronic_price' => $orderInfo['user_electronic'],
             'pay_points' => $orderInfo['integral'],
-            'order_amount' => $orderInfo['total_amount'],
+            'order_amount' => $orderInfo['order_amount'],
             'give_integral' => 0,
             'add_time' => $orderInfo['add_time'],
             'pay_time' => $orderInfo['pay_time'],
@@ -1556,7 +1556,7 @@ class Order extends Base
             'prom_price' => $payReturn['order_prom_amount'],
             'electronic_price' => $payReturn['user_electronic'],
             'pay_points' => $payReturn['pay_points'],
-            'order_amount' => $payReturn['total_amount'],
+            'order_amount' => $payReturn['order_amount'],
             'spare_pay_points' => bcsub($this->user['pay_points'], $payReturn['pay_points'], 2),
             'give_integral' => $give_integral,
             'free_shipping_price' => tpCache('shopping.freight_free') <= $payReturn['order_amount'] ? 0 : bcsub(tpCache('shopping.freight_free'), $payReturn['order_amount'], 2)

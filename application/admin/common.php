@@ -360,11 +360,12 @@ function task_cate($type)
 
 function task_type($type)
 {
-    $task_type = [
-        '1' => '红包活动',
-        '2' => '邀请任务',
-        '3' => '销售任务',
-    ];
+//    $task_type = [
+//        '1' => '红包活动',
+//        '2' => '邀请任务',
+//        '3' => '销售任务',
+//    ];
+    $task_type = unserialize(M('task_config')->value('config_value'));
 
     return $task_type[$type];
 }

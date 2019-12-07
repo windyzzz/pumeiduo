@@ -142,7 +142,8 @@
                     <th>库存</th>
                     <th>奖励区间 (用'-'分割 如：0.01-999)</th>
                     <th>奖励类型</th>
-                    <th>操作</th>
+                    <th>任务类别</th>
+                    <!--<th>操作</th>-->
                     <!-- <th>奖励数量</th>
                     <th>奖励金额</th>
                     <th>奖励商品id</th>
@@ -167,6 +168,13 @@
                                 'selected' : ''}>积分</option>
                                 <option value="2" {$item.reward_type== 2 ?
                                 'selected' : ''}>电子币</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select name="reward[{$k}][task_cate]">
+                                <foreach name="task_cate" key="k" item="v">
+                                    <option value="{$v}" {$item.task_cate == $k ? 'selected' : ''}>{$v}</option>
+                                </foreach>
                             </select>
                         </td>
                     </tr>

@@ -27,6 +27,26 @@ class Task extends Base
         $this->service = $service;
     }
 
+    public function config()
+    {
+        if ($this->request->isPost()) {
+            $banner = $this->request->post()['banner'];
+            if (!$banner) {
+                $this->error('banner不能为空');
+            }
+            $config_value = $this->request->post()['config_value'];
+            M('task_config')->where(['id' => 1])->update([
+                'banner' => $banner,
+                'config_value' => serialize($config_value)
+            ]);
+            $this->success('更新成功');
+        }
+        $config = M('task_config')->find();
+        $config_value = unserialize($config['config_value']);
+
+        return view('', compact('config', 'config_value'));
+    }
+
     public function index()
     {
         $list = $this->service->getList();
@@ -44,8 +64,6 @@ class Task extends Base
 
         if ($request->isPost()) {
             $data = input('post.');
-
-            $reward = I('reward/a');
 
             $validate = \think\Loader::validate('Task');
             if (!$validate->batch()->check($data)) {
@@ -74,10 +92,11 @@ class Task extends Base
 
         $info = $this->service->getById($id);
 
-        $task_cate = C('TASK_CATE');
+//        $task_cate = C('TASK_CATE');
+        $task_cate = unserialize(M('task_config')->find()['config_value']);
         $distribut_list = getDistributList(); // 分销等级列表
 
-        $template_name = 'info_'.$id;
+        $template_name = 'info_' . $id;
 
         return view($template_name, compact('info', 'task_cate', 'distribut_list'));
     }
@@ -121,11 +140,11 @@ class Task extends Base
         if (is_array($list)) {
             foreach ($list as $k => $val) {
                 $strTable .= '<tr>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['user_id'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;'.$val['order_sn'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['reward_integral'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['reward_electronic'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['created_at'].'</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['user_id'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;' . $val['order_sn'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['reward_integral'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['reward_electronic'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['created_at'] . '</td>';
                 $strTable .= '</tr>';
             }
         }
@@ -186,13 +205,13 @@ class Task extends Base
 
         // $userTask = $orderLogic->getOrderList($condition,$sort_order,$Page->firstRow,$Page->listRows);
         $task_log = $TaskLog
-        ->field('*,FROM_UNIXTIME(created_at,"%Y-%m-%d %H:%i:%s") as created_at,FROM_UNIXTIME(finished_at,"%Y-%m-%d %H:%i:%s") as finished_at')
-        ->where($condition)
-        ->where('task_id', 'in', [2, 3])
-        ->with(['user_task'])
-        ->limit($Page->firstRow, $Page->listRows)
-        ->order('id desc')
-        ->select();
+            ->field('*,FROM_UNIXTIME(created_at,"%Y-%m-%d %H:%i:%s") as created_at,FROM_UNIXTIME(finished_at,"%Y-%m-%d %H:%i:%s") as finished_at')
+            ->where($condition)
+            ->where('task_id', 'in', [2, 3])
+            ->with(['user_task'])
+            ->limit($Page->firstRow, $Page->listRows)
+            ->order('id desc')
+            ->select();
 
         $this->assign('task_log', $task_log);
         $this->assign('page', $show); // 赋值分页输出
@@ -236,12 +255,12 @@ class Task extends Base
         $TaskLog = new \app\common\model\TaskLog();
 
         $task_log = $TaskLog
-        ->field('*,FROM_UNIXTIME(created_at,"%Y-%m-%d %H:%i:%s") as created_at,FROM_UNIXTIME(finished_at,"%Y-%m-%d %H:%i:%s") as finished_at')
-        ->where($condition)
-        ->where('task_id', 'in', [2, 3])
-        ->with(['user_task'])
-        ->order('id desc')
-        ->select();
+            ->field('*,FROM_UNIXTIME(created_at,"%Y-%m-%d %H:%i:%s") as created_at,FROM_UNIXTIME(finished_at,"%Y-%m-%d %H:%i:%s") as finished_at')
+            ->where($condition)
+            ->where('task_id', 'in', [2, 3])
+            ->with(['user_task'])
+            ->order('id desc')
+            ->select();
 
         $strTable = '<table width="500" border="1">';
         $strTable .= '<tr>';
@@ -265,16 +284,16 @@ class Task extends Base
                     $finished_at = $val['finished_at'];
                 }
                 $strTable .= '<tr>';
-                $strTable .= '<td style="text-align:center;font-size:12px">'.$val['user_id'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.task_type($val['task_id']).' </td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['reward_integral'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['reward_coupon_money'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['reward_electronic'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['task_reward_desc'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">&nbsp;'.$val['user_task']['order_sn_list'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$status.'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['created_at'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$finished_at.'</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px">' . $val['user_id'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . task_type($val['task_id']) . ' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['reward_integral'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['reward_coupon_money'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['reward_electronic'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['task_reward_desc'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">&nbsp;' . $val['user_task']['order_sn_list'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $status . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['created_at'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $finished_at . '</td>';
                 $strTable .= '</tr>';
             }
         }

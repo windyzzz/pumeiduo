@@ -1,0 +1,70 @@
+<include file="public/layout" />
+<style>
+    .system_img_location{text-align: center; width: 120px;position:absolute;top:15px; margin-left:265px;}
+</style>
+<body style="background-color: #FFF; overflow: auto;">
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title">
+            <div class="subject">
+                <h3>任务配置</h3>
+                <h5>任务栏目配置信息</h5>
+            </div>
+        </div>
+    </div>
+    <form method="post" id="handlepost" action="{:U('Task/config')}" enctype="multipart/form-data" name="form1">
+        <input type="hidden" name="form_submit" value="ok" />
+        <div class="ncap-form-default">
+            <dl class="row">
+                <dt class="tit">
+                    <label for="store_logo">任务banner</label>
+                </dt>
+                <dd class="opt">
+                    <div class="input-file-show">
+                        <span class="show">
+                            <a id="store_logo_a" target="_blank" class="nyroModal" rel="gal" href="{$config.banner}">
+                                <i id="store_logo_i" class="fa fa-picture-o" onmouseover="layer.tips('<img src={$config.banner}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();"></i>
+                            </a>
+                        </span>
+           	            <span class="type-file-box">
+                            <input type="text" id="store_logo" name="banner" value="{$config.banner}" class="type-file-text">
+                            <input type="button" name="button" id="button1" value="选择上传..." class="type-file-button">
+                            <input class="type-file-file" onClick="GetUploadify(1,'store_logo','logo','img_call_back')" size="30" hidefocus="true" nc_type="change_site_logo" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">
+                        </span>
+                    </div>
+                    <span class="err"></span>
+                    <p class="notic">任务栏目banner</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label for="store_desc">任务分类</label>
+                </dt>
+                <foreach name="config_value" key="k" item="v">
+                    <dd class="opt">
+                        <input id="store_desc" name="config_value[{$k}]" value="{$v}" class="input-txt" type="text" style="text-align: center;"/>
+                    </dd>
+                    <dt class="tit">
+                        <label for="store_desc"></label>
+                    </dt>
+                </foreach>
+            </dl>
+            <div class="bot">
+                <a href="JavaScript:void(0);" class="ncap-btn-big ncap-btn-green" onclick="document.form1.submit()">确认提交</a>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="goTop"> <a href="JavaScript:void(0);" id="btntop"><i class="fa fa-angle-up"></i></a><a href="JavaScript:void(0);" id="btnbottom"><i class="fa fa-angle-down"></i></a></div>
+</body>
+<script type="text/javascript">
+    function img_call_back(fileurl_tmp , elementid)
+    {
+        $("#"+elementid).val(fileurl_tmp);
+        $("#"+elementid+'_a').attr('href', fileurl_tmp);
+        $("#"+elementid+'_i').attr('onmouseover', "layer.tips('<img src="+fileurl_tmp+">',this,{tips: [1, '#fff']});");
+    }
+</script>
+</html>

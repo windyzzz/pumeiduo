@@ -107,8 +107,6 @@ return [
             ['name' => '订单优惠促销', 'act' => 'order_prom_list', 'op' => 'Promotion'],
             //array('name' => '订单促销', 'act'=>'prom_order_list', 'op'=>'Promotion'),
             ['name' => '优惠券', 'act' => 'index', 'op' => 'Coupon'],
-            ['name' => '任务管理', 'act' => 'index', 'op' => 'Task'],
-            ['name' => '任务详情', 'act' => 'userTask', 'op' => 'Task'],
             ['name' => '满单赠品活动', 'act' => 'gift', 'op' => 'Promotion'],
             ['name' => '指定商品赠品活动', 'act' => 'gift2', 'op' => 'Promotion'],
             ['name' => '搜索热词管理', 'act' => 'index', 'op' => 'KeyWord'],
@@ -132,6 +130,12 @@ return [
             ['name' => '粉丝列表', 'act' => 'fans_list', 'op' => 'Wechat'],
             ['name' => '模板消息', 'act' => 'template_msg', 'op' => 'Wechat'],
             ['name' => '素材管理', 'act' => 'materials', 'op' => 'Wechat'],
+        ]],
+
+        ['name' => '任务', 'child' => [
+            ['name' => '任务配置', 'act' => 'config', 'op' => 'Task'],
+            ['name' => '任务管理', 'act' => 'index', 'op' => 'Task'],
+            ['name' => '任务详情', 'act' => 'userTask', 'op' => 'Task'],
         ]],
 
         ['name' => '自定义', 'child' => [

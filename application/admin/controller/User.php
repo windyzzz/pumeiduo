@@ -596,13 +596,13 @@ class User extends Base
         }
 
         $ids = I('ids');
-
         if ($ids) {
             $condition['user_id'] = ['in', $ids];
         }
 
         $strTable = '<table width="500" border="1">';
         $strTable .= '<tr>';
+        $strTable .= '<td style="text-align:center;font-size:12px;width:120px;">父级ID</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;width:120px;">会员ID</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;width:120px;">用户名</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="100">会员昵称</td>';
@@ -615,36 +615,43 @@ class User extends Base
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">电子币</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">累计消费</td>';
         $strTable .= '</tr>';
+
+        // 会员订单数据
+        $user_total_amount = M('order')->where('order_status', 'in', [1, 2, 4])->group('user_id')->getField('user_id, sum(order_amount)', true);
+        // 等级列表
+        $level_list = M('distribut_level')->getField('level_id, level_name');
+        // 用户数据
         $count = M('users')->count();
         $p = ceil($count / 5000);
-        $level_list = M('distribut_level')->getField('level_id,level_name');
-
         for ($i = 0; $i < $p; ++$i) {
             $start = $i * 5000;
-            // $end = ($i+1)*5000;
-            $userList = M('users')->where($condition)->order('user_id')->limit($start, 5000)->select();
+            $userList = M('users')->where($condition)
+                ->field('user_id, first_leader, user_name, nickname, distribut_level, mobile, reg_time, last_login, user_money, pay_points, user_electronic')
+                ->order('user_id')->limit($start, 5000)->select();
             if (is_array($userList)) {
                 foreach ($userList as $k => $val) {
-                    $total_amount = M('order')->where('user_id', $val['user_id'])->where('order_status', 'in', [1, 2, 4])->sum('order_amount');
+//                    $total_amount = M('order')->where('user_id', $val['user_id'])->where('order_status', 'in', [1, 2, 4])->sum('order_amount');
                     $strTable .= '<tr>';
-                    $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['user_id'].'</td>';
-                    $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['user_name'].'</td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['nickname'].' </td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">'.$level_list[$val['distribut_level']].'</td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['mobile'].'</td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">'.date('Y-m-d H:i', $val['reg_time']).'</td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">'.date('Y-m-d H:i', $val['last_login']).'</td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['user_money'].'</td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['pay_points'].' </td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['user_electronic'].' </td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">'.$total_amount.' </td>';
+                    $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['first_leader'] . '</td>';
+                    $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['user_id'] . '</td>';
+                    $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['user_name'] . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['nickname'] . ' </td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $level_list[$val['distribut_level']] . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['mobile'] . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . date('Y-m-d H:i', $val['reg_time']) . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . date('Y-m-d H:i', $val['last_login']) . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['user_money'] . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['pay_points'] . ' </td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['user_electronic'] . ' </td>';
+                    $totalAmount = isset($user_total_amount[$val['user_id']]) ? $user_total_amount[$val['user_id']] : "0.00";
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $totalAmount . ' </td>';
                     $strTable .= '</tr>';
                 }
                 unset($userList);
             }
         }
         $strTable .= '</table>';
-        downloadExcel($strTable, 'users_'.$i);
+        downloadExcel($strTable, 'users_' . $i);
         exit();
     }
 
