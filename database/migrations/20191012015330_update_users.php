@@ -37,5 +37,10 @@ class UpdateUsers extends Migrator
             ->changeColumn('is_consummate', 'integer', ['limit' =>  \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'default' => 0, 'comment' => '完善个人信息已领取收益'])
             ->changeColumn('is_not_show_jk', 'integer', ['limit' =>  \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'default' => 0, 'comment' => '完是否永久不提示 加入金卡弹窗 1是 0不是'])
             ->update();
+
+        $this->table('users')
+            ->addColumn('is_not_show_hb', 'integer', ['limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
+                'default' => 0, 'comment' => '是否永久不显示登录红包 1是 0否'])
+            ->update();
     }
 }

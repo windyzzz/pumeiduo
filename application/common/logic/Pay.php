@@ -874,7 +874,7 @@ class Pay
             $couponList = new CouponList();
             $where = array(
                 'uid' => $this->user['user_id'],
-                'cid' => $coupon_id
+                'id' => $coupon_id
             );
             $userCoupon = $couponList->where($where)->find();
             if ($userCoupon) {

@@ -52,7 +52,7 @@
             </dl>
             <dl class="row">
                 <dt class="tit">
-                    <label><em>*</em>图标上传</label>
+                    <label><em>*</em>奖励类型图标上传</label>
                 </dt>
                 <dd class="opt">
                     <div class="input-file-show">
@@ -88,6 +88,7 @@
                     <th>级别</th>
                     <th>奖励数量（积分）/ 奖励金额（电子币）/ 奖励优惠券ID（多张用 - 隔开）</th>
                     <th>奖励类型</th>
+                    <th>奖励次数（0不限）</th>
                     <th>任务类别</th>
                     <th>文案</th>
                     <th>操作</th>
@@ -106,8 +107,6 @@
                             <select name="reward[{$k}][cycle]">
                                 <option value="0" {$item.cycle == 0 ? 'selected' : ''}>一次</option>
                                 <option value="1" {$item.cycle == 1 ? 'selected' : ''}>每次</option>
-
-
                             </select>
                         </td>
                         <td><input type="text" name="reward[{$k}][invite_num]" value="{$item.invite_num}"></td>
@@ -130,10 +129,11 @@
                                 <option value="3" {$item.reward_type == 3 ? 'selected' : ''}>优惠券</option>
                             </select>
                         </td>
+                        <td><input type="text" name="reward[{$k}][reward_times]" value="{$item.reward_times}"></td>
                         <td>
                             <select name="reward[{$k}][task_cate]">
-                                <foreach name="task_cate" key="k" item="v">
-                                    <option value="{$v}" {$item.task_cate == $k ? 'selected' : ''}>{$v}</option>
+                                <foreach name="task_cate" key="k2" item="v">
+                                    <option value="{$k2}" {$item.task_cate == $k2 ? 'selected' : ''}>{$v}</option>
                                 </foreach>
                             </select>
                         </td>
@@ -293,7 +293,7 @@
                         location.reload();
                     });
                 } else {
-                    layer.msg(data.msg, {icon: 2,time: 1000});
+                    layer.msg(data.msg, {icon: 2,time: 3000});
                     $.each(data.result, function (index, item) {
                         $('#err_' + index).text(item).show();
                     });

@@ -13,6 +13,8 @@ namespace app\admin\controller;
 
 use app\admin\logic\TaskLogic;
 use think\AjaxPage;
+use think\Db;
+use think\Exception;
 use think\Page;
 use think\Request;
 
@@ -64,7 +66,6 @@ class Task extends Base
 
         if ($request->isPost()) {
             $data = input('post.');
-
             $validate = \think\Loader::validate('Task');
             if (!$validate->batch()->check($data)) {
                 $error = $validate->getError();
@@ -76,24 +77,36 @@ class Task extends Base
                 ];
                 $this->ajaxReturn($return_arr);
             }
+            $rewardType = [];
+            foreach ($data['reward'] as $reward) {
+                if (!empty($rewardType) && !in_array($reward['reward_type'], $rewardType)) {
+                    $this->ajaxReturn(['status' => -1, 'msg' => '任务奖励类型要统一']);
+                }
+                $rewardType[] = $reward['reward_type'];
+            }
 
-            $this->service->store($data);
+            try {
+                Db::startTrans();
+                $this->service->store($data);
 
-            $this->service->afterSave($data['id']);
-            // $return_url = U('admin/Task/goodsList');
+                $this->service->afterSave($data['id']);
 
-            $return_arr = [
-                'status' => 1,
-                'msg' => '操作成功',
-                // 'data' => array('url' => $return_url),
-            ];
-            $this->ajaxReturn($return_arr);
+                $return_arr = [
+                    'status' => 1,
+                    'msg' => '操作成功',
+                ];
+                Db::commit();
+                $this->ajaxReturn($return_arr);
+            } catch (Exception $e) {
+                Db::rollback();
+                $this->ajaxReturn(['status' => -1, 'msg' => '记录错误']);
+            }
         }
 
         $info = $this->service->getById($id);
 
 //        $task_cate = C('TASK_CATE');
-        $task_cate = unserialize(M('task_config')->find()['config_value']);
+        $task_cate = unserialize(M('task_config')->value('config_value'));
         $distribut_list = getDistributList(); // 分销等级列表
 
         $template_name = 'info_' . $id;

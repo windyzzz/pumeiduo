@@ -69,7 +69,7 @@
             </dl>
             <dl class="row">
                 <dt class="tit">
-                    <label><em>*</em>图标上传</label>
+                    <label><em>*</em>奖励类型图标上传</label>
                 </dt>
                 <dd class="opt">
                     <div class="input-file-show">
@@ -132,8 +132,8 @@
                         </td>
                         <td>
                             <select name="reward[{$k}][task_cate]">
-                                <foreach name="task_cate" key="k" item="v">
-                                    <option value="{$v}" {$item.task_cate== $k ?
+                                <foreach name="task_cate" key="k2" item="v">
+                                    <option value="{$k2}" {$item.task_cate== $k2 ?
                                     'selected' : ''}>{$v}</option>
                                 </foreach>
                             </select>
@@ -260,7 +260,7 @@
                         location.reload();
                     });
                 } else {
-                    layer.msg(data.msg, {icon: 2, time: 1000});
+                    layer.msg(data.msg, {icon: 2, time: 3000});
                     $.each(data.result, function (index, item) {
                         $('#err_' + index).text(item).show();
                     });

@@ -3,7 +3,7 @@
 use think\migration\Migrator;
 use think\migration\db\Column;
 
-class UpdateTaskReward extends Migrator
+class UpdateAccountLog extends Migrator
 {
     /**
      * Change Method.
@@ -28,10 +28,8 @@ class UpdateTaskReward extends Migrator
      */
     public function change()
     {
-        $this->table('task_reward')
-            ->changeColumn('reward_coupon_id', 'string', ['limit' => 50, 'default' => '0', 'comment' => '奖励现金券ID，多张用 - 隔开'])
-            ->changeColumn('cycle', 'integer', ['default' => -1, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'comment' => '任务周期：-1没设定 0限一次 1每次 2每日 3每周 4每月'])
-            ->addColumn('reward_times', 'integer', ['default' => 0, 'comment' => '奖励次数，0不限制', 'after' => 'reward_coupon_id'])
+        $this->table('account_log')
+            ->addColumn('task_id', 'integer', ['default' => 0, 'comment' => '任务ID', 'after' => 'desc'])
             ->update();
     }
 }

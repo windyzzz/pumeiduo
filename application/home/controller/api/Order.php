@@ -388,6 +388,7 @@ class Order extends Base
             'prom_price' => $orderInfo['order_prom_amount'],
             'electronic_price' => $orderInfo['user_electronic'],
             'pay_points' => $orderInfo['integral'],
+            'total_amount' => bcadd($orderInfo['goods_price'], $orderInfo['shipping_price']),
             'order_amount' => $orderInfo['order_amount'],
             'give_integral' => 0,
             'add_time' => $orderInfo['add_time'],
@@ -410,6 +411,9 @@ class Order extends Base
             ],
             'goods' => []
         ];
+        if ($orderData['delivery']['city_name'] == '直辖区') {
+            $orderData['delivery']['city_name'] = '';
+        }
         if ($orderInfo['order_status_code'] == 'WAITCCOMMENT') {
             $canReturn = $orderInfo['end_sale_time'] > time() ? true : false;   // 能否退货
         } else {
@@ -431,7 +435,7 @@ class Order extends Base
                 'exchange_price' => $goods['member_goods_price'],
                 'original_img' => $goods['original_img'],
                 'can_return' => $canReturn == true ? $goods['sale_type'] == 1 ? 1 : 0 : 0,   // sale_type = 1 普通商品
-                'return_status' => $goods['return_status']
+                'return_status' => $goods['status']
             ];
             $weight = bcadd($weight, $goods['weight'], 2);
             $giveIntegral = bcadd($giveIntegral, bcmul($goods['give_integral'], $goods['goods_num']), 2);
@@ -1778,6 +1782,9 @@ class Order extends Base
         }
         if (3 == $order['order_status']) {
             return json(['status' => 0, 'msg' => '该订单已取消']);
+        }
+        if ($order['city_name'] == '直辖市') {
+            $order['city_name'] = '';
         }
         unset($order['order_status']);
         return json(['status' => 1, 'result' => $order]);

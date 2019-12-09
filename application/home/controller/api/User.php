@@ -15,6 +15,7 @@ use app\common\logic\ArticleLogic;
 use app\common\logic\CartLogic;
 use app\common\logic\GoodsLogic;
 use app\common\logic\MessageLogic;
+use app\common\logic\TaskLogic;
 use app\common\logic\Token as TokenLogic;
 use app\common\logic\UsersLogic;
 use think\Db;
@@ -2406,7 +2407,8 @@ class User extends Base
         }
         // exit;
         $return['list'] = $list;
-        $return['task_cate'] = C('TASK_CATE');
+//        $return['task_cate'] = C('TASK_CATE');
+        $return['task_cate'] = unserialize(M('task_config')->value('config_value'));
 
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
     }
@@ -2464,12 +2466,13 @@ class User extends Base
             return json(['status' => 1, 'msg' => '用户领取奖励成功', 'result' => $return]);
         }
 
-        return json(['status' => 0, 'msg' => '用户还没有领取该奖励资格', 'result' => $return]);
+        return json(['status' => 0, 'msg' => '用户还没有领取该奖励资格', 'result' => '']);
     }
 
     public function getTask()
     {
-        $task_cate = C('TASK_CATE');
+//        $task_cate = C('TASK_CATE');
+        $task_cate = unserialize(M('task_config')->value('config_value'));
 
         $list = [];
         foreach ($task_cate as $k => $v) {
@@ -2512,6 +2515,89 @@ class User extends Base
         $return['list'] = $list;
 
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
+    }
+
+    /**
+     * 用户任务列表
+     * @return \think\response\Json
+     */
+    public function userTask()
+    {
+        $taskLogic = new TaskLogic(0, false);
+        // 任务列表
+        $taskList = $taskLogic->taskList();
+        // 任务奖励
+        $taskData = [];
+        foreach ($taskList as $task) {
+            $taskReward = $taskLogic->taskReward($task['id']);
+            foreach ($taskReward as $k => $reward) {
+                switch ($reward['reward_type']) {
+                    case 1:
+                        // 积分
+                        $reward_ = $reward['reward_num'];
+                        break;
+                    case 2:
+                        // 电子币
+                        $reward_ = $reward['reward_price'] . '元';
+                        break;
+                    case 3:
+                        // 优惠券
+                        $couponIds = explode('-', $reward['reward_coupon_id']);
+                        $reward_ = '优惠券x' . count($couponIds);
+                        break;
+                    default:
+                        continue;
+                }
+                $taskData[$k] = [
+                    'task_cate' => $reward['task_cate'],
+                    'task_id' => $task['id'],
+                    'task_title' => $task['title'],
+                    'task_icon' => $task['icon'],
+                    'task_reward' => $reward_,
+                    'reward_desc' => $reward['description'],
+                    'reward_cycle' => $reward['cycle'],
+                    'reward_times' => $reward['reward_times'],
+                    'user_reward_times' => 0
+                ];
+                // 查看用户是否已完成任务
+                $userTask = M('user_task')
+                    ->where(['user_id' => $this->user_id, 'task_reward_id' => $reward['reward_id']])
+                    ->where('created_at', 'gt', $task['start_time'])
+                    ->where('created_at', 'lt', $task['end_time'])
+                    ->field('id')
+                    ->find();
+                if ($userTask) {
+                    // 查看用户完成任务的次数
+                    $taskData[$k]['user_reward_times'] = M('task_log')
+                        ->where(['task_id' => $task['id'], 'task_reward_id' => $reward['reward_id'], 'user_id' => $this->user_id])
+                        ->count('id');
+                }
+            }
+        }
+        // 任务配置
+        $taskConfig = M('task_config')->find();
+        // 任务类型
+        $taskCate = unserialize($taskConfig['config_value']);
+        $cateData = [];
+        foreach ($taskCate as $key => $cate) {
+            $cateData[$key] = [
+                'id' => $key,
+                'title' => $cate,
+                'is_finished' => 0,
+                'list' => []
+            ];
+            foreach ($taskData as $data) {
+                if ($key == $data['task_cate']) {
+                    unset($data['task_cate']);
+                    $cateData[$key]['list'][] = $data;
+                }
+            }
+        }
+        $task = [
+            'banner' => $taskConfig['banner'],
+            'cate' => array_values($cateData)
+        ];
+        return json(['status' => 1, 'result' => $task]);
     }
 
     /**

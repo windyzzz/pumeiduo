@@ -20,10 +20,10 @@ use think\Db;
 class OrderLogic
 {
     /**
-     * @param array  $condition 搜索条件
-     * @param string $order     排序方式
-     * @param int    $start     limit开始行
-     * @param int    $page_size 获取数量
+     * @param array $condition 搜索条件
+     * @param string $order 排序方式
+     * @param int $start limit开始行
+     * @param int $page_size 获取数量
      */
     public function getOrderList($condition, $order = '', $start = 0, $page_size = 20)
     {
@@ -102,9 +102,9 @@ class OrderLogic
     public function get_delivery_sn()
     {
 //        /* 选择一个随机的方案 */send_http_status('310');
-        mt_srand((float) microtime() * 1000000);
+        mt_srand((float)microtime() * 1000000);
 
-        return date('YmdHi').str_pad(mt_rand(1, 99999), 5, '0', STR_PAD_LEFT);
+        return date('YmdHi') . str_pad(mt_rand(1, 99999), 5, '0', STR_PAD_LEFT);
     }
 
     /*
@@ -162,7 +162,7 @@ class OrderLogic
         } elseif (3 == $os || 5 == $os) {
             $btn['remove'] = '移除';
         }
-        if (5 != $os && $ps==0 ) {
+        if (5 != $os && $ps == 0) {
             $btn['invalid'] = '无效';
         }
 
@@ -360,7 +360,7 @@ class OrderLogic
     }
 
     /**
-     *	处理发货单.
+     *    处理发货单.
      *
      * @param array $data 查询数量
      *
@@ -413,7 +413,7 @@ class OrderLogic
             if (0 == $v['is_send'] && in_array($v['rec_id'], $selectgoods)) {
                 $res['is_send'] = 1;
                 $res['delivery_id'] = $did;
-                $r = M('order_goods')->where('rec_id='.$v['rec_id'])->save($res); //改变订单商品发货状态
+                $r = M('order_goods')->where('rec_id=' . $v['rec_id'])->save($res); //改变订单商品发货状态
                 ++$is_delivery;
             }
         }
@@ -425,7 +425,7 @@ class OrderLogic
         } else {
             $update['shipping_status'] = 2;
         }
-        M('order')->where('order_id='.$data['order_id'])->save($update); //改变订单状态
+        M('order')->where('order_id=' . $data['order_id'])->save($update); //改变订单状态
         $s = $this->orderActionLog($order['order_id'], 'delivery', $data['note']); //操作日志
 
         // //商家发货, 发送短信给客户
@@ -489,7 +489,7 @@ class OrderLogic
         $c = M('region2')->where(['id' => $c])->field('name')->find();
         $d = M('region2')->where(['id' => $d])->field('name')->find();
 
-        return $p['name'].','.$c['name'].','.$d['name'].',';
+        return $p['name'] . ',' . $c['name'] . ',' . $d['name'] . ',';
     }
 
     /**
@@ -601,7 +601,7 @@ class OrderLogic
     //识别单号
     public function distinguishExpress()
     {
-        require_once PLUGIN_PATH.'kdniao/kdniao.php';
+        require_once PLUGIN_PATH . 'kdniao/kdniao.php';
         $kdniao = new \kdniao();
         $data['LogisticCode'] = I('invoice_no');
         $res = $kdniao->getOrderTracesByJson(json_encode($data));

@@ -74,10 +74,10 @@ class TaskLogic
 
                     // 为目前正在进行的用户任务进行修改
                     $user_task = M('UserTask')
-                          ->where('task_reward_id', $val['reward_id'])
-                          ->where('status', 'neq', 1)
-                          ->where('task_id', $task_id)
-                          ->select();
+                        ->where('task_reward_id', $val['reward_id'])
+                        ->where('status', 'neq', 1)
+                        ->where('task_id', $task_id)
+                        ->select();
                     if ($user_task) {
                         foreach ($user_task as $k => $v) {
                             $update = [];

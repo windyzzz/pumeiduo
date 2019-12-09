@@ -20,10 +20,12 @@ class TaskLogic
     private $user;
     private $distribut_id;
 
-    public function __construct($id = 1)
+    public function __construct($id = 1, $get = true)
     {
-        $taskService = new TaskService();
-        $this->task = $taskService->getById($id);
+        if ($get) {
+            $taskService = new TaskService();
+            $this->task = $taskService->getById($id);
+        }
     }
 
     public function setOrder($order)
@@ -39,6 +41,29 @@ class TaskLogic
     public function setDistributId($distribut_id)
     {
         $this->distribut_id = $distribut_id;
+    }
+
+    /**
+     * 获取任务列表
+     * @return mixed
+     */
+    public function taskList()
+    {
+        $taskList = M('task t')->join('task_reward tr', 'tr.task_id = t.id')
+            ->where(['t.is_open' => 1, 't.start_time' => ['<=', time()], 't.end_time' => ['>=', time()]])
+            ->group('tr.task_id')->field('t.*, tr.reward_type')->select();
+        return $taskList;
+    }
+
+    /**
+     * 获取任务奖励
+     * @param $taskId
+     * @return mixed
+     */
+    public function taskReward($taskId)
+    {
+        $taskReward = M('task_reward')->where(['task_id' => $taskId])->select();
+        return $taskReward;
     }
 
     // 销售任务

@@ -1011,8 +1011,10 @@ class UsersLogic extends Model
      */
     public function get_order_goods($order_id)
     {
-        $sql = 'SELECT og.*,g.commission,g.original_img,g.weight,og.use_integral,og.give_integral,rg.status,g.zone FROM __PREFIX__order_goods og 
-                LEFT JOIN __PREFIX__goods g ON g.goods_id = og.goods_id LEFT JOIN __PREFIX__return_goods rg ON rg.rec_id = og.rec_id WHERE og.order_id = :order_id';
+        $sql = 'SELECT og.*, g.commission, g.original_img, g.weight, og.use_integral, og.give_integral, rg.status, g.zone FROM __PREFIX__order_goods og 
+                LEFT JOIN __PREFIX__goods g ON g.goods_id = og.goods_id 
+                LEFT JOIN __PREFIX__return_goods rg ON rg.rec_id = og.rec_id 
+                WHERE og.order_id = :order_id';
         $bind['order_id'] = $order_id;
         $goods_list = DB::query($sql, $bind);
 

@@ -87,24 +87,9 @@
                     <p class="notic">允许使用结束时间</p>
                 </dd>
             </dl>
-            <dl class="row timed">
-                <dt class="tit">
-                    <label><em>*</em>任务周期</label>
-                </dt>
-                <dd class="opt">
-                    <select name="cycle">
-                        <option value="1" {$info.cycle== 1 ?
-                        'selected' : ''}>限一次</option>
-                        <!--<option value="0" {$info.cycle == 0 ? 'selected' : ''}>没设定</option>-->
-                    </select>
-                    <span class="err" id="err_cycle"></span>
-                    <p class="notic">允许使用结束时间</p>
-                </dd>
-            </dl>
-
             <dl class="row">
                 <dt class="tit">
-                    <label>图标上传</label>
+                    <label>奖励类型图标上传</label>
                 </dt>
                 <dd class="opt">
                     <div class="input-file-show">
@@ -172,8 +157,8 @@
                         </td>
                         <td>
                             <select name="reward[{$k}][task_cate]">
-                                <foreach name="task_cate" key="k" item="v">
-                                    <option value="{$v}" {$item.task_cate == $k ? 'selected' : ''}>{$v}</option>
+                                <foreach name="task_cate" key="k2" item="v">
+                                    <option value="{$k2}" {$item.task_cate == $k2 ? 'selected' : ''}>{$v}</option>
                                 </foreach>
                             </select>
                         </td>
@@ -302,7 +287,7 @@
                         location.reload();
                     });
                 } else {
-                    layer.msg(data.msg, {icon: 2, time: 1000});
+                    layer.msg(data.msg, {icon: 2, time: 3000});
                     $.each(data.result, function (index, item) {
                         $('#err_' + index).text(item).show();
                     });
