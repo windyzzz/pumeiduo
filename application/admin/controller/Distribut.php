@@ -135,7 +135,7 @@ class Distribut extends Base
         ('' !== I('status')) && $where = "$where and status = ".I('status');
         ('' !== I('level')) && $where = "$where and level = ".I('level');
 
-        $cat_id = I('cat_id');
+//        $cat_id = I('cat_id');
 
         $order_sn = I('order_sn') ? trim(I('order_sn')) : '';
         if ($order_sn) {

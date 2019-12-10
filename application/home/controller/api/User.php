@@ -2523,7 +2523,7 @@ class User extends Base
      */
     public function userTask()
     {
-        $taskLogic = new TaskLogic(0, false);
+        $taskLogic = new TaskLogic(0);
         // 任务列表
         $taskList = $taskLogic->taskList();
         // 任务奖励
@@ -2553,9 +2553,12 @@ class User extends Base
                     'task_id' => $task['id'],
                     'task_title' => $task['title'],
                     'task_icon' => $task['icon'],
+                    'reward_id' => $reward['reward_id'],
                     'task_reward' => $reward_,
                     'reward_desc' => $reward['description'],
                     'reward_cycle' => $reward['cycle'],
+                    'reward_set' => $reward['invite_num'] != 0 ? $reward['invite_num'] : ($reward['order_num'] != 0 ? $reward['order_num'] : 0),
+                    'user_reward_set' => 0,
                     'reward_times' => $reward['reward_times'],
                     'user_reward_times' => 0
                 ];
@@ -2568,9 +2571,11 @@ class User extends Base
                     ->find();
                 if ($userTask) {
                     // 查看用户完成任务的次数
-                    $taskData[$k]['user_reward_times'] = M('task_log')
+                    $user_reward_times = M('task_log')
                         ->where(['task_id' => $task['id'], 'task_reward_id' => $reward['reward_id'], 'user_id' => $this->user_id])
                         ->count('id');
+                    $taskData[$k]['user_reward_set'] = $user_reward_times;
+                    $taskData[$k]['user_reward_times'] = $user_reward_times;
                 }
             }
         }
@@ -2583,13 +2588,76 @@ class User extends Base
             $cateData[$key] = [
                 'id' => $key,
                 'title' => $cate,
-                'is_finished' => 0,
+                'is_all_finished' => 1,     // 分类下的任务是否全部完成
                 'list' => []
             ];
             foreach ($taskData as $data) {
+                // 查看该类型的任务是否完成
+                switch ($data['reward_cycle']) {
+                    case -1:
+                        // 没有设定
+                        $logStatus = M('task_log')->where(['task_id' => $data['task_id'], 'task_reward_id' => $data['reward_id'], 'user_id' => $this->user_id])->order('id DESC')->value('status');
+                        if (!$logStatus) {
+                            // 未完成任务
+                            $data['is_finished'] = 0;
+                            $data['is_got'] = 0;
+                        } elseif ($logStatus == 0) {
+                            // 已完成任务，但未领取奖励
+                            $data['is_finished'] = 1;
+                            $data['is_got'] = 0;
+                        } elseif ($logStatus == 1) {
+                            // 已完成任务，已领取奖励，可以继续完成任务
+                            $data['is_finished'] = 0;
+                            $data['is_got'] = 0;
+                        }
+                        break;
+                    case 0:
+                        // 一次性任务
+                        if ($data['user_reward_times'] >= 0) {
+                            $data['is_finished'] = 1;
+                        } else {
+                            $data['is_finished'] = 0;
+                        }
+                        // 是否已领取奖励
+                        if (M('task_log')->where(['task_id' => $data['task_id'], 'task_reward_id' => $data['reward_id'], 'user_id' => $this->user_id, 'status' => 1])->value('status')) {
+                            $data['is_got'] = 1;
+                        } else {
+                            $data['is_got'] = 0;
+                        }
+                        break;
+                    case 1:
+                        // 每次（循环）
+                        $logStatus = M('task_log')->where(['task_id' => $data['task_id'], 'task_reward_id' => $data['reward_id'], 'user_id' => $this->user_id])->order('id DESC')->value('status');
+                        if (!$logStatus) {
+                            // 未完成任务
+                            $data['is_finished'] = 0;
+                            $data['is_got'] = 0;
+                        } elseif ($logStatus == 0) {
+                            // 已完成任务，但未领取奖励
+                            $data['is_finished'] = 1;
+                            $data['is_got'] = 0;
+                        } elseif ($logStatus == 1) {
+                            // 已完成任务，已领取奖励，可以继续完成任务
+                            $data['is_finished'] = 0;
+                            $data['is_got'] = 0;
+                        }
+                        break;
+                }
                 if ($key == $data['task_cate']) {
                     unset($data['task_cate']);
                     $cateData[$key]['list'][] = $data;
+                }
+            }
+        }
+        foreach ($cateData as $key => $cate) {
+            if (empty($cate['list'])) {
+                unset($cateData[$key]);
+            }
+            // 查看分类下的任务是否已全都完成
+            foreach ($cate['list'] as $list) {
+                if ($list['is_finished'] == 0) {
+                    $cateData[$key]['is_all_finished'] = 0;
+                    break;
                 }
             }
         }
@@ -2598,6 +2666,58 @@ class User extends Base
             'cate' => array_values($cateData)
         ];
         return json(['status' => 1, 'result' => $task]);
+    }
+
+
+    public function userTaskReward()
+    {
+        $taskLogic = new TaskLogic(0);
+        $taskLogic->setUser($this->user);
+        // 奖励记录
+        $taskRewardLog = $taskLogic->taskLog(1, 1);
+        // 任务配置
+        $taskConfig = unserialize(M('task_config')->value('config_value'));
+
+        $rewardLogList = [];
+        $integral = 0.00;
+        $electronic = 0.00;
+        $coupon = 0;
+        foreach ($taskRewardLog as $log) {
+            switch ($log['reward_type']) {
+                case 1:
+                    // 积分
+                    $reward = '+' . $log['reward_integral'] . '积分';
+                    $integral = bcadd($integral, $log['reward_integral'], 2);
+                    break;
+                case 2:
+                    // 电子币
+                    $reward = '+' . $log['reward_electronic'] . '电子币';
+                    $electronic = bcadd($electronic, $log['reward_electronic'], 2);
+                    break;
+                case 3:
+                    // 优惠券
+                    $couponIds = explode('-', $log['reward_coupon_id']);
+                    $reward = '+优惠券' . count($couponIds) . '张';
+                    $coupon += count($couponIds);
+                    break;
+                default:
+                    continue;
+            }
+            $rewardLogList[] = [
+                'log_id' => $log['id'],
+                'cate_name' => $taskConfig[$log['task_cate']],
+                'title' => $log['task_title'],
+                'reward' => $reward,
+                'create_time' => $log['finished_at']
+            ];
+        }
+        $rewardLog = [
+            'integral' => $integral,
+            'electronic' => $electronic,
+            'coupon' => $coupon,
+            'reward_list' => $rewardLogList
+        ];
+        return json(['status' => 1, 'result' => $rewardLog]);
     }
 
     /**

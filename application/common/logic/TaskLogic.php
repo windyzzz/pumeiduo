@@ -20,9 +20,9 @@ class TaskLogic
     private $user;
     private $distribut_id;
 
-    public function __construct($id = 1, $get = true)
+    public function __construct($id = 1)
     {
-        if ($get) {
+        if ($id && $id !== 0) {
             $taskService = new TaskService();
             $this->task = $taskService->getById($id);
         }
@@ -66,6 +66,26 @@ class TaskLogic
         return $taskReward;
     }
 
+    /**
+     * 获取任务记录
+     * @param $status
+     * @param $type
+     * @return mixed
+     */
+    public function taskLog($status, $type)
+    {
+        $where = ['tl.user_id' => $this->user['user_id']];
+        if (is_int($status)) {
+            $where['tl.status'] = $status;
+        }
+        if ($type) {
+            $where['tl.type'] = $type;
+        }
+        $taskLog = M('task_log tl')->join('task_reward tr', 'tr.reward_id = tl.task_reward_id')
+            ->where($where)->field('tl.*, tr.*')->select();
+        return $taskLog;
+    }
+
     // 销售任务
     public function doOrderPayAfterSell()
     {
@@ -102,23 +122,23 @@ class TaskLogic
             if ($tv['distribut_id'] == $this->user['distribut_level'] || 0 == $tv['distribut_id']) {
                 //1.查看任务存不存在，不存在则创建
                 $user_task = M('user_task')
-                ->where('user_id', $uid)
-                ->where('task_reward_id', $tv['reward_id'])
-                ->where('status', 0)
-                ->where('created_at', 'gt', $this->task['start_time'])
-                ->where('created_at', 'lt', $this->task['end_time'])
-                ->find();
+                    ->where('user_id', $uid)
+                    ->where('task_reward_id', $tv['reward_id'])
+                    ->where('status', 0)
+                    ->where('created_at', 'gt', $this->task['start_time'])
+                    ->where('created_at', 'lt', $this->task['end_time'])
+                    ->find();
 
                 $status = 0;
                 if (!$user_task) {
                     // 如果奖励周期是空的话（只奖励一次），则跳过新增
                     if (0 == $tv['cycle']) {
                         $has_task = M('user_task')
-                        ->where('user_id', $uid)
-                        ->where('task_reward_id', $tv['reward_id'])
-                        ->where('created_at', 'gt', $this->task['start_time'])
-                        ->where('created_at', 'lt', $this->task['end_time'])
-                        ->find();
+                            ->where('user_id', $uid)
+                            ->where('task_reward_id', $tv['reward_id'])
+                            ->where('created_at', 'gt', $this->task['start_time'])
+                            ->where('created_at', 'lt', $this->task['end_time'])
+                            ->find();
                         if ($has_task) {
                             continue;
                         }
@@ -152,14 +172,14 @@ class TaskLogic
                         $status = 1;
                     }
                     if ($user_task['order_sn_list']) {
-                        $order_sn_list = $user_task['order_sn_list'].','.$order_sn;
+                        $order_sn_list = $user_task['order_sn_list'] . ',' . $order_sn;
                     } else {
                         $order_sn_list = '';
                     }
                     $update = [
                         'finish_num' => $finish_num,
                         'status' => $status,
-                        'invite_uid_list' => $user_task['invite_uid_list'].','.$this->user['user_id'],
+                        'invite_uid_list' => $user_task['invite_uid_list'] . ',' . $this->user['user_id'],
                         'order_sn_list' => $order_sn_list,
                         'finished_at' => $status ? time() : 0,
                     ];
@@ -251,7 +271,7 @@ class TaskLogic
             ->find();
 
         if ($reward_log) {
-            accountLog($reward_log['user_id'], 0, -$reward_log['reward_integral'], $msg.'，返回双十一奖励', 0, $this->order['order_id'], $this->order['order_sn'], -$reward_log['reward_electronic'], 10);
+            accountLog($reward_log['user_id'], 0, -$reward_log['reward_integral'], $msg . '，返回双十一奖励', 0, $this->order['order_id'], $this->order['order_sn'], -$reward_log['reward_electronic'], 10);
 
             M('task_reward')->where('reward_id', $reward_log['task_reward_id'])->setInc('store_count');
             M('task_reward')->where('reward_id', $reward_log['task_reward_id'])->setDec('buy_num');
@@ -263,7 +283,7 @@ class TaskLogic
 
     public function checkTaskEnable()
     {
-        if (1 != $this->task['is_open'] || $this->task['start_time'] > time() || $this->task['end_time'] < time() || $this->order['add_time'] < $this->task['start_time'] ) {
+        if (1 != $this->task['is_open'] || $this->task['start_time'] > time() || $this->task['end_time'] < time() || $this->order['add_time'] < $this->task['start_time']) {
             return false;
         }
 
@@ -291,23 +311,23 @@ class TaskLogic
                 if ($tv['distribut_id'] == $this->distribut_id || 0 == $tv['distribut_id']) {
                     //1.查看任务存不存在，不存在则创建
                     $user_task = M('user_task')
-                    ->where('user_id', $this->user['first_leader'])
-                    ->where('task_reward_id', $tv['reward_id'])
-                    ->where('status', 0)
-                    ->where('created_at', 'gt', $this->task['start_time'])
-                    ->where('created_at', 'lt', $this->task['end_time'])
-                    ->find();
+                        ->where('user_id', $this->user['first_leader'])
+                        ->where('task_reward_id', $tv['reward_id'])
+                        ->where('status', 0)
+                        ->where('created_at', 'gt', $this->task['start_time'])
+                        ->where('created_at', 'lt', $this->task['end_time'])
+                        ->find();
 
                     $status = 0;
                     if (!$user_task) {
                         // 如果奖励周期是空的话（只奖励一次），则跳过新增
                         if (0 == $tv['cycle']) {
                             $has_task = M('user_task')
-                            ->where('user_id', $this->user['first_leader'])
-                            ->where('task_reward_id', $tv['reward_id'])
-                            ->where('created_at', 'gt', $this->task['start_time'])
-                            ->where('created_at', 'lt', $this->task['end_time'])
-                            ->find();
+                                ->where('user_id', $this->user['first_leader'])
+                                ->where('task_reward_id', $tv['reward_id'])
+                                ->where('created_at', 'gt', $this->task['start_time'])
+                                ->where('created_at', 'lt', $this->task['end_time'])
+                                ->find();
                             if ($has_task) {
                                 continue;
                             }
@@ -336,14 +356,14 @@ class TaskLogic
                             $status = 1;
                         }
                         if ($user_task['order_sn_list']) {
-                            $order_sn_list = $user_task['order_sn_list'].','.$order_sn;
+                            $order_sn_list = $user_task['order_sn_list'] . ',' . $order_sn;
                         } else {
                             $order_sn_list = '';
                         }
                         $update = [
                             'finish_num' => $finish_num,
                             'status' => $status,
-                            'invite_uid_list' => $user_task['invite_uid_list'].','.$this->user['user_id'],
+                            'invite_uid_list' => $user_task['invite_uid_list'] . ',' . $this->user['user_id'],
                             'order_sn_list' => $order_sn_list,
                             'finished_at' => $status ? time() : 0,
                         ];

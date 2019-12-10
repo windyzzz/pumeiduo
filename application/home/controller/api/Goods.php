@@ -303,7 +303,10 @@ class Goods extends Base
                 'end_time' => ''
             ];
         }
-        if (!empty($extendGoodsSpec) && !empty($goods['spec_price'])) {
+        if (empty($goods['spec']) || empty($goods['spec_price'])) {
+            $goods['spec'] = ['0_0' => 1];
+            $goods['spec_price'] = ['0_0' => 1];
+        } elseif (!empty($extendGoodsSpec) && !empty($goods['spec_price'])) {
             $type = $extendGoodsSpec['type'];
             foreach ($extendGoodsSpec['data'] as $spec) {
                 if (isset($goods['spec_price'][$spec['spec_key']])) {
@@ -346,8 +349,6 @@ class Goods extends Base
                     }
                 }
             }
-        } else {
-            $goods['spec_price'] = ['0_0' => 1];
         }
         // 促销
         $goods['promotion'] = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')

@@ -309,8 +309,7 @@ class Login extends Base
      */
     public function getInviteInfo()
     {
-
-        $invite_id = I('invite_id/d');
+        $invite_id = I('invite_id/d', $this->user_id);
         if (!$invite_id) {
             return json(['status' => -1, 'msg' => '接口使用错误，缺少必要参数', 'result' => null]);
         }
@@ -353,9 +352,9 @@ class Login extends Base
 
         }
 
-        $return['qr_img'] = $filename;
         $return['user_id'] = $invite_id;
         $return['basic_url'] = $baseUrl;
+        $return['qr_img'] = $filename;
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
 
     }
