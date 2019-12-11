@@ -82,6 +82,20 @@ class System extends Base
             // 'oss'       => '对象存储',
             'express' => '物流设置',
         ];
+        $act_list = session('act_list');
+        if ($act_list != 'all') {
+            $right = M('system_menu')->where('id', 'in', $act_list)->cache(true)->getField('right', true);
+            $role_right = '';
+            foreach ($right as $val) {
+                $role_right .= $val . ',';
+            }
+            $role_right = explode(',', $role_right);
+            foreach ($group_list as $k => $mrr) {
+                if (!in_array('System' . '@' . $k, $role_right)) {
+                    unset($group_list[$k]); // 过滤菜单
+                }
+            }
+        }
         $this->assign('group_list', $group_list);
         $inc_type = I('get.inc_type', 'shop_info');
         $this->assign('inc_type', $inc_type);
@@ -426,6 +440,7 @@ class System extends Base
                 $planList[] = basename($dir, '.php');
             }
         }
+//        echo '<pre>'; print_r($group); echo '</pre>'; exit();
 
         $this->assign('modules', $modules);
         $this->assign('planList', $planList);
@@ -517,4 +532,20 @@ class System extends Base
         echo "数据已清空,请立即删除这个方法";
         */
     }
+
+    public function shop_info(){}
+
+    public function basic(){}
+
+    public function sms(){}
+
+    public function shopping(){}
+
+    public function water(){}
+
+    public function distribut(){}
+
+    public function push(){}
+
+    public function express(){}
 }

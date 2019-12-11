@@ -90,4 +90,95 @@ class Distribute extends Base
         }
         return json(['status' => 1, 'result' => $return]);
     }
+
+    /**
+     * 根据购买用户获取提成记录（上部分）
+     * @return \think\response\Json
+     */
+    public function rebateLogSum()
+    {
+        $buyUserId = I('buy_user_id', '');
+        if (!$buyUserId) return json(['status' => 0, 'msg' => '请传入购买者ID']);
+        $startAt = I('start_at', date('Y-m-01', time()));
+        $endAt = I('end_at', date('Y-m-t', time()));
+        $status = I('status', 0);
+
+        $where = [
+            'rl.user_id' => $this->user_id,
+            'rl.buy_user_id' => $buyUserId,
+            'rl.create_time' => ['BETWEEN', [strtotime($startAt), strtotime($endAt)]],
+            'rl.status' => $status
+        ];
+        $rebateLogSum = M('rebate_log rl')->where($where)->sum('rl.money');
+        // 购买者用户信息
+        $buyUser = M('users')->where(['user_id' => $buyUserId])->field('user_id, nickname, user_name, head_pic')->find();
+        $return = [
+            'buy_user' => [
+                'user_id' => $buyUser['user_id'],
+                'nickname' => !empty($buyUser['nickname']) ? $buyUser['nickname'] : $buyUser['user_name'],
+                'head_pic' => $buyUser['head_pic']
+            ],
+            'income' => $rebateLogSum
+        ];
+        return json(['status' => 1, 'result' => $return]);
+    }
+
+    /**
+     * 根据购买用户获取提成记录（下部分）
+     * @return \think\response\Json
+     */
+    public function rebateLogList()
+    {
+        $buyUserId = I('buy_user_id', '');
+        if (!$buyUserId) return json(['status' => 0, 'msg' => '请传入购买者ID']);
+        $startAt = I('start_at', date('Y-m-01', time()));
+        $endAt = I('end_at', date('Y-m-t', time()));
+        $status = I('status', 0);
+
+        $where = [
+            'rl.user_id' => $this->user_id,
+            'rl.buy_user_id' => $buyUserId,
+            'rl.create_time' => ['BETWEEN', [strtotime($startAt), strtotime($endAt)]],
+            'rl.status' => $status
+        ];
+        // 订单ID
+        $orderIds = M('rebate_log rl')->where($where)->getField('rl.order_id', true);
+        // 订单商品列表
+        $orderGoods = M('order_goods og')
+            ->join('goods g', 'g.goods_id = og.goods_id')
+            ->where(['order_id' => ['in', array_unique($orderIds)]])
+            ->field('og.order_id, og.goods_id, og.goods_name, og.spec_key_name, g.original_img, g.commission, og.goods_num, og.final_price, og.use_integral')->select();
+        // 提成记录
+        $page = new Page(count($orderIds), 10);
+        $rebateLog = M('rebate_log rl')
+            ->where($where)->field('rl.*')
+            ->limit($page->firstRow . ',' . $page->listRows)->order('create_time DESC')->select();
+        $return = [];
+        foreach ($rebateLog as $k => $log) {
+            $return[$k] = [
+                'log_id' => $log['id'],
+                'order_id' => $log['order_id'],
+                'order_sn' => $log['order_sn'],
+                'commission' => $log['money'],
+                'status' => $log['status'],
+                'create_time' => $log['create_time'],
+                'goods_list' => []
+            ];
+            foreach ($orderGoods as $goods) {
+                if ($log['order_id'] == $goods['order_id']) {
+                    $return[$k]['goods_list'][] = [
+                        'goods_id' => $goods['goods_id'],
+                        'goods_name' => $goods['goods_name'],
+                        'spec_key_name' => $goods['spec_key_name'],
+                        'original_img' => $goods['original_img'],
+                        'goods_num' => $goods['goods_num'],
+                        'exchange_price' => $goods['final_price'],
+                        'exchange_integral' => $goods['use_integral'],
+                        'commission' => $goods['commission']
+                    ];
+                }
+            }
+        }
+        return json(['status' => 1, 'result' => $return]);
+    }
 }
