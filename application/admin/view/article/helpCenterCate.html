@@ -1,0 +1,158 @@
+<include file="public/layout" />
+
+<body style="background-color: rgb(255, 255, 255); overflow: auto; cursor: default;">
+<div class="page">
+  <div class="fixed-bar">
+    <div class="item-title">
+      <div class="subject">
+        <h3>帮助中心分类</h3>
+        <h5>帮助中心分类添加与管理</h5>
+      </div>
+    </div>
+  </div>
+  <form method="post">
+    <input type="hidden" name="form_submit" value="ok">
+    <div class="flexigrid">
+      <div class="hDiv">
+        <div class="hDivBox">
+          <table cellpadding="0" cellspacing="0">
+            <thead>
+              <tr>
+                <th align="center" class="sign" axis="col0">
+                  <div style="text-align: center; width: 24px;"><i class="ico-check"></i></div>
+                </th>
+                <th align="center" axis="col3" class="">
+                  <div class="sundefined" style="text-align: center; width: 250px;">分类名称</div>
+                </th>
+                <th align="center" axis="col3" class="">
+                  <div style="text-align: center; width: 350px;">分类描述</div>
+                </th>
+                <th align="center" class="handle" axis="col1">
+                  <div style="text-align: center; width: 150px;">操作</div>
+                </th>
+                <th align="center" axis="col2">
+                  <div style="text-align: center; width: 60px;">排序</div>
+                </th>
+                <th axis="col4">
+                  <div></div>
+                </th>
+              </tr>
+            </thead>
+          </table>
+        </div>
+      </div>
+      <div class="tDiv">
+        <div class="tDiv2">
+         <a href="{:U('Article/helpCenterCateInfo')}">
+          <div class="fbutton">
+            <div class="add" title="新增分类">
+              <span><i class="fa fa-plus"></i>新增分类</span>
+            </div>
+          </div>
+         </a>
+           <div class="fbutton">
+            <div class="add" title="收缩分类">
+              <span onclick="tree_open(this);"><i class="fa fa-angle-double-up"></i>收缩分类</span>
+            </div>
+          </div>
+        </div>
+        <div style="clear:both"></div>
+      </div>
+      <div class="bDiv" style="height: auto;">
+
+      </div>
+    </div>
+  </form>
+  <script>
+	function  tree_open(obj)
+	{
+		var tree = $('#article_cat_table tr[id^="1_"],#article_cat_table tr[id^="2_"], #list-table tr[id^="3_"] '); //,'table-row'
+		if(tree.css('display')  == 'table-row')
+		{
+			$(obj).html("<i class='fa fa-angle-double-down'></i>展开分类");
+			tree.css('display','none');
+			//$("span[id^='icon_']").removeClass('glyphicon-minus');
+			$("img[id^='icon_']").attr('src','/public/static/images/tv-expandable.gif');
+		}else
+		{
+			$(obj).html("<i class='fa fa-angle-double-up'></i>收缩分类");
+			tree.css('display','table-row');
+			$("img[id^='icon_']").attr('src','/public/static/images/tv-collapsable-last.gif');
+		}
+	}
+     // 点击展开 收缩节点
+     function treeClicked(obj,cat_id){
+		 var src = $(obj).attr('src');
+		 if(src == '/public/static/images/tv-expandable.gif')
+		 {
+			 $(".parent_id_"+cat_id).show();
+			 $(obj).attr('src','/public/static/images/tv-collapsable-last.gif');
+		 }else{
+			 $(obj).attr('src','/public/static/images/tv-expandable.gif');
+
+			 // 如果是点击减号, 遍历循环他下面的所有都关闭
+			 var tbl = document.getElementById("article_cat_table");
+			 cur_tr = obj.parentNode.parentNode.parentNode;
+			 var fnd = false;
+			  for (i = 0; i < tbl.rows.length; i++)
+			  {
+				  var row = tbl.rows[i];
+
+				  if (row == cur_tr)
+				  {
+					  fnd = true;
+				  }
+				  else
+				  {
+					  if (fnd == true)
+					  {
+
+						  var level = parseInt($(row).data('level'));
+						  var cur_level = $(cur_tr).data('level');
+
+						  if (level > cur_level)
+						  {
+							  $(row).hide();
+							  $(row).find('img').attr('src','/public/static/images/tv-expandable.gif');
+						  }
+						  else
+						  {
+							  fnd = false;
+							  break;
+						  }
+					  }
+				  }
+			  }
+		 }
+	 }
+
+     function delfun(obj) {
+       layer.confirm('确认删除？', {
+                 btn: ['确定', '取消'] //按钮
+               }, function () {
+                 // 确定
+                 $.ajax({
+                   type: 'post',
+                   url : $(obj).attr('data-url'),
+                   data : {act:'del',cat_id:$(obj).attr('data-id')},
+                   dataType: 'json',
+                   success: function (data) {
+                     layer.closeAll();
+                     if (data.status === 1) {
+                       layer.msg('操作成功', {icon: 1});
+                       $(obj).parent().parent().parent().parent().parent().parent().remove();
+                       location.reload();
+                     } else {
+                       layer.msg(data.msg, {icon: 2, time: 2000});
+                     }
+                   }
+                 })
+               }, function (index) {
+                 layer.close(index);
+               }
+       );
+     }
+  </script>
+</div>
+</body>
+</html>

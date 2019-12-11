@@ -32,7 +32,7 @@ class Article extends Base
         $cat_id = I('get.cat_id/d');
         $parent_id = I('get.parent_id/d');
         if ($cat_id) {
-            $cat_info = M('article_cat')->where('cat_id='.$cat_id)->find();
+            $cat_info = M('article_cat')->where('cat_id=' . $cat_id)->find();
             $parent_id = $cat_info['parent_id'];
             $this->assign('cat_info', $cat_info);
         }
@@ -85,7 +85,7 @@ class Article extends Base
         $info['publish_time'] = time();
         if (I('GET.article_id')) {
             $article_id = I('GET.article_id');
-            $info = M('article')->where('article_id='.$article_id)->find();
+            $info = M('article')->where('article_id=' . $article_id)->find();
         }
         $cats = $ArticleCat->article_cat_list(0, $info['cat_id']);
         $this->assign('cat_select', $cats);
@@ -99,7 +99,7 @@ class Article extends Base
     {
         $data = I('post.');
 
-        $result = $this->validate($data, 'ArticleCategory.'.$data['act'], [], true);
+        $result = $this->validate($data, 'ArticleCategory.' . $data['act'], [], true);
         if (true !== $result) {
             $this->ajaxReturn(['status' => 0, 'msg' => '参数错误', 'result' => $result]);
         }
@@ -137,7 +137,7 @@ class Article extends Base
         $data['publish_time'] = strtotime($data['publish_time']);
         //$referurl = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : U('Admin/Article/articleList');
 
-        $result = $this->validate($data, 'Article.'.$data['act'], [], true);
+        $result = $this->validate($data, 'Article.' . $data['act'], [], true);
         if (true !== $result) {
             $this->ajaxReturn(['status' => 0, 'msg' => '参数错误', 'result' => $result]);
         }
@@ -147,9 +147,9 @@ class Article extends Base
             $data['add_time'] = time();
             $r = M('article')->add($data);
         } elseif ('edit' == $data['act']) {
-            $r = M('article')->where('article_id='.$data['article_id'])->save($data);
+            $r = M('article')->where('article_id=' . $data['article_id'])->save($data);
         } elseif ('del' == $data['act']) {
-            $r = M('article')->where('article_id='.$data['article_id'])->delete();
+            $r = M('article')->where('article_id=' . $data['article_id'])->delete();
         }
 
         if (!$r) {
@@ -166,7 +166,7 @@ class Article extends Base
         $link_id = I('GET.link_id');
         $link_info = [];
         if ($link_id) {
-            $link_info = M('friend_link')->where('link_id='.$link_id)->find();
+            $link_info = M('friend_link')->where('link_id=' . $link_id)->find();
             $this->assign('info', $link_info);
         }
 
@@ -177,7 +177,7 @@ class Article extends Base
     {
         $Ad = M('friend_link');
         $p = $this->request->param('p');
-        $res = $Ad->order('orderby')->page($p.',10')->select();
+        $res = $Ad->order('orderby')->page($p . ',10')->select();
         if ($res) {
             foreach ($res as $val) {
                 $val['target'] = $val['target'] > 0 ? '开启' : '关闭';
@@ -202,12 +202,12 @@ class Article extends Base
                 exit(json_encode(1));
             }
         }
-        $result = $this->validate($data, 'FriendLink.'.$data['act'], [], true);
+        $result = $this->validate($data, 'FriendLink.' . $data['act'], [], true);
         if (true !== $result) {
             // 验证失败 输出错误信息
             $validate_error = '';
             foreach ($result as $key => $value) {
-                $validate_error .= $value.',';
+                $validate_error .= $value . ',';
             }
             $this->error($validate_error);
         }
@@ -215,12 +215,87 @@ class Article extends Base
             $r = M('friend_link')->insert($data);
         }
         if ('edit' == $data['act']) {
-            $r = M('friend_link')->where('link_id='.$data['link_id'])->save($data);
+            $r = M('friend_link')->where('link_id=' . $data['link_id'])->save($data);
         }
         if ($r) {
             $this->success('操作成功', U('Admin/Article/linkList'));
         } else {
             $this->error('操作失败');
         }
+    }
+
+
+    public function helpCenterCate()
+    {
+        // 未分类的帮助中心数据
+        $cateList1[] = [
+            'id' => 0,
+            'level' => 1,
+            'name' => '未分类',
+            'desc' => '未分类的不会显示',
+            'sort' => 0,
+        ];
+        $articleCate = M('article_cat')->where(['parent_id' => 2, 'help_center_cate_id' => null])
+            ->field('cat_id, cat_name, sort_order, cat_desc')->order('sort_order')->select();
+        foreach ($articleCate as $article) {
+            $cateList1[] = [
+                'id' => $article['cat_id'],
+                'level' => 2,
+                'name' => $article['cat_name'],
+                'desc' => $article['cat_desc'],
+                'sort' => $article['sort_order'],
+            ];
+        }
+        // 帮助中心上级分类
+        $centerCate = M('help_center_cate')->field('id, name, `desc`, `sort`')->order('sort')->select();
+        // 已分类的帮助中心数据
+        $cateList2 = [];
+        foreach ($centerCate as $center) {
+            $cateList2[] = [
+                'id' => $center['id'],
+                'level' => 1,
+                'name' => $center['name'],
+                'desc' => $center['desc'],
+                'sort' => $center['sort'],
+            ];
+            // 帮助中心分类数据
+            $articleCate = M('article_cat')->where(['help_center_cate_id' => $center['id']])
+                ->field('cat_id, cat_name, sort_order, cat_desc')->order('sort_order')->select();
+            foreach ($articleCate as $article) {
+                $cateList2[] = [
+                    'id' => $article['cat_id'],
+                    'level' => 2,
+                    'name' => $article['cat_name'],
+                    'desc' => $article['cat_desc'],
+                    'sort' => $article['sort_order'],
+                ];
+            }
+        }
+
+        $this->assign('cate_list', array_merge($cateList1, $cateList2));
+        return $this->fetch();
+    }
+
+    /**
+     * 帮助中心分类信息
+     * @return mixed
+     */
+    public function helpCenterCateInfo()
+    {
+        if ($this->request->isPost()) {
+            $data = I('post.', []);
+            if (!empty($data['cate_id'])) {
+                $cateId = $data['cate_id'];
+                unset($data['cate_id']);
+                M('help_center_cate')->where(['id' => $cateId])->update($data);
+            } else {
+                $cateId = M('help_center_cate')->add($data);
+            }
+            $this->success('更新成功', U('Admin/Article/addHelpCenterCate', ['cate_id' => $cateId]));
+        }
+        $cateId = I('cate_id', '');
+        $cateInfo = M('help_center_cate')->where(['id' => $cateId])->find();
+        $this->assign('cate_info', $cateInfo);
+        return $this->fetch();
     }
 }

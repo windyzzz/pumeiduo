@@ -47,6 +47,7 @@ return [
         ['name' => '文章', 'child' => [
             ['name' => '文章列表', 'act' => 'articleList', 'op' => 'Article'],
             ['name' => '文章分类', 'act' => 'categoryList', 'op' => 'Article'],
+            ['name' => '帮助中心分类', 'act' => 'helpCenterCate', 'op' => 'Article'],
             // array('name' => '帮助管理', 'act'=>'help_list', 'op'=>'Article'),
             // array('name' =>'友情链接',  'act'=>'linkList','op'=>'Article'),
             // array('name' => '公告管理', 'act'=>'notice_list', 'op'=>'Article'),
