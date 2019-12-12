@@ -2668,7 +2668,10 @@ class User extends Base
         return json(['status' => 1, 'result' => $task]);
     }
 
-
+    /**
+     * 奖励记录
+     * @return \think\response\Json
+     */
     public function userTaskReward()
     {
         $taskLogic = new TaskLogic(0);

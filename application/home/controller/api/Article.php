@@ -76,7 +76,7 @@ class Article
     {
         $article_id = I('article_id/d', 1);
         $article = Db::name('article')->where('article_id', $article_id)->where('publish_time', 'elt', time())
-        ->where('is_open', 1)->find();
+            ->where('is_open', 1)->find();
         if ($article) {
             $parent = Db::name('article_cat')->where('cat_id', $article['cat_id'])->find();
             $return['cat_name'] = $parent['cat_name'];
@@ -103,20 +103,20 @@ class Article
         array_push($child_cat_ids, $cat_id);
 
         $count = M('article')
-        ->where('title|description|keywords', 'LIKE', "%{$keyword}%")
-        ->where('cat_id', 'in', $child_cat_ids)
-        ->where('publish_time', 'elt', time())
-        ->where('is_open', 1)
-        ->count();
+            ->where('title|description|keywords', 'LIKE', "%{$keyword}%")
+            ->where('cat_id', 'in', $child_cat_ids)
+            ->where('publish_time', 'elt', time())
+            ->where('is_open', 1)
+            ->count();
         $Page = new Page($count, 15);
 
         $list = M('article')
-        ->where('title|description|keywords', 'LIKE', "%{$keyword}%")
-        ->where('cat_id', 'in', $child_cat_ids)
-        ->where('publish_time', 'elt', time())
-        ->where('is_open', 1)
-        ->limit($Page->firstRow.','.$Page->listRows)
-        ->select();
+            ->where('title|description|keywords', 'LIKE', "%{$keyword}%")
+            ->where('cat_id', 'in', $child_cat_ids)
+            ->where('publish_time', 'elt', time())
+            ->where('is_open', 1)
+            ->limit($Page->firstRow . ',' . $Page->listRows)
+            ->select();
 
         foreach ($list as $k => $v) {
             $list[$k]['title'] = str_replace($keyword, "<span style='color:red'>{$keyword}</span>", $list[$k]['title']);
@@ -141,5 +141,46 @@ class Article
         $return['info'] = $info;
 
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
+    }
+
+    /**
+     * 帮助中心分类列表
+     * @return \think\response\Json
+     */
+    public function articleCateList()
+    {
+        $cateId = I('cate_id', 2);
+        // 帮助中心
+        $cateList = (new ArticleLogic())->getCateListById($cateId);
+        return json(['status' => 1, 'result' => $cateList]);
+    }
+
+    /**
+     * 帮助中心文章列表
+     * @return \think\response\Json
+     */
+    public function articleListNew()
+    {
+        $cateId = I('cate_id', '');
+        $keyword = I('keyword', '');
+        if (!$cateId) {
+            return json(['status' => 0, 'msg' => '参数错误']);
+        }
+        $articleList = (new ArticleLogic())->getArticleListByCateId($cateId, $keyword);
+        return json(['status' => 1, 'result' => $articleList]);
+    }
+
+    /**
+     * 帮助中心文章内容
+     * @return \think\response\Json
+     */
+    public function articleDetail()
+    {
+        $articleId = I('article_id', '');
+        if (!$articleId) {
+            return json(['status' => 0, 'msg' => '参数错误']);
+        }
+        // 由于APP不能解析文章content的html标签，所以直接返回H5的地址给APP
+        return json(['status' => 1, 'result' => ['article_url' => SITE_URL . '/#/member/help_particulars?article_id=' . $articleId]]);
     }
 }

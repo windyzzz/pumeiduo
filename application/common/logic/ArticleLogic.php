@@ -124,7 +124,7 @@ class ArticleLogic extends Model
             ->field('um.rec_id,um.user_id,um.category,um.article_id,um.status,m.publish_time,m.title,m.description,m.link')
             ->join('__ARTICLE__ m', 'um.article_id = m.article_id', 'LEFT')
             ->where($user_system_article_no_read_where)
-            ->limit($Page->firstRow.','.$Page->listRows)
+            ->limit($Page->firstRow . ',' . $Page->listRows)
             ->order('publish_time desc')
             ->select();
 
@@ -233,11 +233,11 @@ class ArticleLogic extends Model
         $data = [];
         foreach ($categorys as $c) {
             $query = Db::query('SELECT m.category,m.article_id,um.status,m.send_time,m.type,m.data FROM __PREFIX__article m '
-                    .'INNER JOIN __PREFIX__user_article um ON (um.article_id=m.article_id AND um.user_id = ?) '
-                    .'WHERE m.type = 0 AND m.category = ? AND m.data!=""  '
-                    .'UNION (SELECT m.category,m.article_id, 1 AS status,m.send_time,m.type,m.data FROM __PREFIX__article m '
-                    .'WHERE m.type = 1 AND m.category = ? AND m.data!="") '
-                    .'ORDER BY send_time DESC LIMIT 1', [$user['user_id'], $c, $c]);
+                . 'INNER JOIN __PREFIX__user_article um ON (um.article_id=m.article_id AND um.user_id = ?) '
+                . 'WHERE m.type = 0 AND m.category = ? AND m.data!=""  '
+                . 'UNION (SELECT m.category,m.article_id, 1 AS status,m.send_time,m.type,m.data FROM __PREFIX__article m '
+                . 'WHERE m.type = 1 AND m.category = ? AND m.data!="") '
+                . 'ORDER BY send_time DESC LIMIT 1', [$user['user_id'], $c, $c]);
 
             if (!empty($query[0])) {
                 $query = $query[0];
@@ -268,11 +268,11 @@ class ArticleLogic extends Model
         $p = ($p - 1) * 15;
 
         $data = Db::query('SELECT m.category,m.article_id,um.status,m.send_time,m.type,m.data FROM __PREFIX__article m '
-                    .'INNER JOIN __PREFIX__user_article um ON (um.article_id=m.article_id AND um.user_id = ?) '
-                    .'WHERE m.type = 0 AND m.category = ? AND m.data!=""  '
-                    .'UNION (SELECT m.category,m.article_id, 1 AS status,m.send_time,m.type,m.data FROM __PREFIX__article m '
-                    .'WHERE m.type = 1 AND m.category = ? AND m.data!="") '
-                    .'ORDER BY send_time DESC LIMIT ?,15', [$user_id, $category, $category, $p]);
+            . 'INNER JOIN __PREFIX__user_article um ON (um.article_id=m.article_id AND um.user_id = ?) '
+            . 'WHERE m.type = 0 AND m.category = ? AND m.data!=""  '
+            . 'UNION (SELECT m.category,m.article_id, 1 AS status,m.send_time,m.type,m.data FROM __PREFIX__article m '
+            . 'WHERE m.type = 1 AND m.category = ? AND m.data!="") '
+            . 'ORDER BY send_time DESC LIMIT ?,15', [$user_id, $category, $category, $p]);
 
         foreach ($data as &$d) {
             $d['data'] = unserialize($d['data']);
@@ -328,7 +328,7 @@ class ArticleLogic extends Model
         }
 
         $discription = $discription ?: "您的订单已炼货完毕，待出库交付{$row['shipping_name']},"
-                      ."运单号为{$row['order_sn']}";
+            . "运单号为{$row['order_sn']}";
         $title = $title ?: '发货提醒';
         $data = [
             'category' => $t,
@@ -374,7 +374,7 @@ class ArticleLogic extends Model
      * @param type $change_type 1:积分,2:余额,3:优惠券
      * @param type $title
      * @param type $discription
-     * @param type $money       优惠券类型通知时该值才大于0
+     * @param type $money 优惠券类型通知时该值才大于0
      */
     public function createAssetMsg($t, $change_type, $title, $discription = '', $money = 0)
     {
@@ -415,9 +415,9 @@ class ArticleLogic extends Model
     /**
      * 发送消息.
      *
-     * @param type  $msg       article表字段必要的数据
-     * @param type  $push_data 推送的消息主体
-     * @param array $user_ids  用户的id集
+     * @param type $msg article表字段必要的数据
+     * @param type $push_data 推送的消息主体
+     * @param array $user_ids 用户的id集
      *
      * @return type
      */
@@ -488,7 +488,7 @@ class ArticleLogic extends Model
     /**
      * 设置消息开关.
      *
-     * @param type $type         开关类型
+     * @param type $type 开关类型
      * @param type $val开关值
      */
     public function setArticleSwitch($type, $val, $user)
@@ -539,7 +539,6 @@ class ArticleLogic extends Model
             ->where('parent_id', $id)
             ->order('sort_order')
             ->select();
-
         return $cat_list;
     }
 
@@ -578,5 +577,50 @@ class ArticleLogic extends Model
         }
 
         return $catList;
+    }
+
+    public function getCateListById($id)
+    {
+        if ($id == 2) {
+            // 帮助中心
+            $helpCenterCate = M('help_center_cate')->order('sort ASC')->select();
+            $cateList = M('article_cat')->where('parent_id', $id)->where('help_center_cate_id', 'not null')
+                ->order('help_center_cate_id ASC, help_center_sort ASC')->select();
+            $cate_list = [];
+            foreach ($helpCenterCate as $k => $center) {
+                $cat_list[$k] = [
+                    'id' => $center['id'],
+                    'name' => $center['name'],
+                    'list' => []
+                ];
+                foreach ($cateList as $cate) {
+                    if ($center['id'] == $cate['help_center_cate_id']) {
+                        $cate_list[$k]['list'][] = [
+                            'cate_id' => $cate['cat_id'],
+                            'cate_name' => $cate['cat_name'],
+                            'cate_icon' => $cate['icon']
+                        ];
+                    }
+                }
+            }
+        } else {
+            $cate_list = M('article_cat')->where('parent_id', $id)->order('sort_order')->select();
+        }
+        return $cate_list;
+    }
+
+    public function getArticleListByCateId($cateId, $keyword = '')
+    {
+        $where = ['cat_id' => $cateId, 'is_open' => 1];
+        $whereOr = [];
+        if ($keyword) {
+            $whereOr['title'] = ['like', '%' . $keyword . '%'];
+            $whereOr['content'] = ['like', '%' . $keyword . '%'];
+        }
+        $articleList = M('article')->where($where)
+            ->where(function ($query) use ($whereOr) {
+                $query->whereOr($whereOr);
+            })->field('article_id, cat_id, title')->select();
+        return $articleList;
     }
 }

@@ -103,7 +103,7 @@
                 </div>
               </td>
               <td class="name">
-                <div style="text-align: center; width: 250px;">
+                <div style="text-align: center; width: 250px; font-weight:<?php if($vo[parent_id] == 0) echo bold; else echo 0; ?>">
                   <!--<input type="text" value="{$vo.name}" onblur="changeTableVal('article_cat','cat_id',{$vo.cat_id},'cat_name',this)" <in name="vo.id" value="$article_system_id">readonly="readonly"</in>/>-->
                     {$vo.name}
                 </div>
