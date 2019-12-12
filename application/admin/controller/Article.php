@@ -20,6 +20,7 @@ class Article extends Base
     {
         $ArticleCat = new ArticleCatLogic();
         $cat_list = $ArticleCat->article_cat_list(0, 0, false);
+
         $this->assign('cat_list', $cat_list);
 
         return $this->fetch('categoryList');
@@ -37,6 +38,11 @@ class Article extends Base
             $this->assign('cat_info', $cat_info);
         }
         $cats = $ArticleCat->article_cat_list(0, $parent_id, true);
+        if ($parent_id == 2) {
+            // 帮助中心分类
+            $helpCate = M('help_center_cate')->select();
+            $this->assign('help_cate', $helpCate);
+        }
         $this->assign('act', $act);
         $this->assign('cat_select', $cats);
 
@@ -224,26 +230,31 @@ class Article extends Base
         }
     }
 
-
+    /**
+     * 帮助中心分类
+     * @return mixed
+     */
     public function helpCenterCate()
     {
         // 未分类的帮助中心数据
         $cateList1[] = [
             'id' => 0,
-            'level' => 1,
+            'parent_id' => -1,
+            'level' => 0,
             'name' => '未分类',
             'desc' => '未分类的不会显示',
             'sort' => 0,
         ];
         $articleCate = M('article_cat')->where(['parent_id' => 2, 'help_center_cate_id' => null])
-            ->field('cat_id, cat_name, sort_order, cat_desc')->order('sort_order')->select();
+            ->field('cat_id, cat_name, help_center_sort, cat_desc')->order('sort_order')->select();
         foreach ($articleCate as $article) {
             $cateList1[] = [
                 'id' => $article['cat_id'],
-                'level' => 2,
+                'parent_id' => 0,
+                'level' => 1,
                 'name' => $article['cat_name'],
                 'desc' => $article['cat_desc'],
-                'sort' => $article['sort_order'],
+                'sort' => $article['help_center_sort'],
             ];
         }
         // 帮助中心上级分类
@@ -253,25 +264,26 @@ class Article extends Base
         foreach ($centerCate as $center) {
             $cateList2[] = [
                 'id' => $center['id'],
-                'level' => 1,
+                'parent_id' => -1,
+                'level' => 0,
                 'name' => $center['name'],
                 'desc' => $center['desc'],
                 'sort' => $center['sort'],
             ];
             // 帮助中心分类数据
             $articleCate = M('article_cat')->where(['help_center_cate_id' => $center['id']])
-                ->field('cat_id, cat_name, sort_order, cat_desc')->order('sort_order')->select();
+                ->field('cat_id, cat_name, help_center_sort, cat_desc')->order('sort_order')->select();
             foreach ($articleCate as $article) {
                 $cateList2[] = [
                     'id' => $article['cat_id'],
-                    'level' => 2,
+                    'parent_id' => $center['id'],
+                    'level' => 1,
                     'name' => $article['cat_name'],
                     'desc' => $article['cat_desc'],
-                    'sort' => $article['sort_order'],
+                    'sort' => $article['help_center_sort'],
                 ];
             }
         }
-
         $this->assign('cate_list', array_merge($cateList1, $cateList2));
         return $this->fetch();
     }
@@ -291,7 +303,7 @@ class Article extends Base
             } else {
                 $cateId = M('help_center_cate')->add($data);
             }
-            $this->success('更新成功', U('Admin/Article/addHelpCenterCate', ['cate_id' => $cateId]));
+            $this->success('更新成功', U('Admin/Article/helpCenterCate'));
         }
         $cateId = I('cate_id', '');
         $cateInfo = M('help_center_cate')->where(['id' => $cateId])->find();
