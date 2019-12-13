@@ -1,0 +1,155 @@
+<include file="public/layout"/>
+<body style="background-color: rgb(255, 255, 255); overflow: auto; cursor: default; -moz-user-select: inherit;">
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title">
+            <div class="subject">
+                <h3>投诉与建议</h3>
+            </div>
+        </div>
+    </div>
+    <div class="flexigrid">
+        <div class="mDiv">
+            <div class="ftitle">
+                <h3>建议列表</h3>
+                <h5>(共{$page->totalRows}条记录)</h5>
+            </div>
+            <div title="刷新数据" class="pReload"><i class="fa fa-refresh"></i></div>
+        </div>
+        <div class="hDiv">
+            <div class="hDivBox">
+                <table cellspacing="0" cellpadding="0">
+                    <thead>
+                    <tr>
+                        <th class="sign" axis="col0">
+                            <div style="width: 24px;"><i class="ico-check"></i></div>
+                        </th>
+                        <th align="left" abbr="article_title" axis="col3" class="">
+                            <div style="text-align: center; width: 50px;" class="">id</div>
+                        </th>
+                        <th align="left" abbr="article_title" axis="col3" class="">
+                            <div style="text-align: center; width: 120px;" class="">反馈类型</div>
+                        </th>
+                        <th align="left" abbr="ac_id" axis="col4" class="">
+                            <div style="text-align: center; width: 120px;" class="">手机号</div>
+                        </th>
+                        <th align="center" abbr="article_show" axis="col5" class="">
+                            <div style="text-align: center; width: 300px;" class="">内容</div>
+                        </th>
+                        <th align="center" abbr="article_show" axis="col5" class="">
+                            <div style="text-align: center; width: 150px;" class="">提交时间</div>
+                        </th>
+                        <th align="left" axis="col1" class="handle">
+                            <div style="text-align: center; width: 170px;">操作</div>
+                        </th>
+                        <th style="width:100%" axis="col7">
+                            <div></div>
+                        </th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+        <div class="bDiv" style="height: auto;">
+            <div id="flexigrid" cellpadding="0" cellspacing="0" border="0">
+                <table>
+                    <tbody>
+                    <foreach name="suggestion_list" item="vo" key="k">
+                        <tr>
+                            <td class="sign">
+                                <div style="width: 24px;"><i class="ico-check"></i></div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 50px;">{$vo.id}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">{$vo.cate_name}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">{$vo.phone}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 300px;">
+                                    <textarea style="width: 90%;">{$vo.content}</textarea>
+                                </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 150px;">{$vo.create_time|date='Y-m-d H:i:s',###}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 170px; max-width:170px;">
+                                    <if condition="$vo['is_handled'] == 0">
+                                        <a class="btn blue" onclick="javascript:handle(this)" data-id="{$vo['id']}"><i class="fa fa-pencil-square-o"></i>处理完毕</a>
+                                        <a class="btn red del" onclick="javascript:del(this)" data-id="{$vo['id']}"><i class="fa fa-trash-o"></i>删除</a>
+                                    <else/>
+                                        已处理
+                                    </if>
+                                </div>
+                            </td>
+                            <td align="" class="" style="width: 100%;">
+                                <div>&nbsp;</div>
+                            </td>
+                        </tr>
+                    </foreach>
+                    </tbody>
+                </table>
+            </div>
+            <div class="iDiv" style="display: none;"></div>
+        </div>
+        <!--分页位置-->
+        {$page->show()}
+    </div>
+</div>
+<script>
+    function handle(ojb) {
+        var id = $(ojb).data('id');
+        layer.confirm('确认处理完毕？', {btn: ['确定', '取消']}, function () {
+            // 确定
+            $.ajax({
+                url: "{:U('Suggestion/handle')}",
+                data: {id: id, is_handled: 1},
+                dataType: 'json',
+                success: function (data) {
+                    if (data.status == 1) {
+                        layer.msg(data.msg, {icon: 1, time: 2000}, function () {
+                            location.href = '';
+                        });
+                    } else {
+                        layer.msg(data.msg, {icon: 2, time: 2000});
+                    }
+                }
+            })
+        }, function (index) {
+            // 取消
+            layer.close(index);
+        });
+    }
+
+    function del(ojb) {
+        var id = $(ojb).data('id');
+        layer.confirm('确认删除？', {btn: ['确定', '取消']}, function () {
+            // 确定
+            $.ajax({
+                url: "{:U('Suggestion/delete')}",
+                data: {id: id, is_handled: 1},
+                dataType: 'json',
+                success: function (data) {
+                    if (data.status == 1) {
+                        layer.msg(data.msg, {icon: 1, time: 2000}, function () {
+                            location.href = '';
+                        });
+                    } else {
+                        layer.msg(data.msg, {icon: 2, time: 2000});
+                    }
+                }
+            })
+        }, function (index) {
+            // 取消
+            layer.close(index);
+        });
+    }
+</script>
+</body>
+</html>

@@ -143,6 +143,11 @@ return [
             ['name' => '分类主题活动', 'act' => 'cate_activity_list', 'op' => 'Activity'],
         ]],
 
+        ['name' => '建议', 'child' => [
+            ['name' => '反馈类型', 'act' => 'suggestion_cate', 'op' => 'Suggestion'],
+            ['name' => '投诉与建议', 'act' => 'suggestion_list', 'op' => 'Suggestion'],
+        ]],
+
         // array('name' => '统计','child' => array(
         // 		array('name' => '销售概况', 'act'=>'index', 'op'=>'Report'),
         // 		array('name' => '销售排行', 'act'=>'saleTop', 'op'=>'Report'),

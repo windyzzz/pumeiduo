@@ -18,18 +18,21 @@ class Distribute extends Base
         switch ($level) {
             case 1:
                 $where['first_leader'] = $this->user_id;
+                $level = '一级会员';
                 break;
             case 2:
                 $where['second_leader'] = $this->user_id;
+                $level = '二级会员';
                 break;
             case 3:
                 $where['third_leader'] = $this->user_id;
+                $level = '三级会员';
                 break;
             default:
                 return json(['status' => 0, 'msg' => '等级不存在']);
         }
         $memberCount = M('users')->where($where)->count('user_id');
-        return json(['status' => 1, 'result' => ['member_count' => $memberCount]]);
+        return json(['status' => 1, 'result' => ['level' => $level, 'member_count' => $memberCount]]);
     }
 
     /**

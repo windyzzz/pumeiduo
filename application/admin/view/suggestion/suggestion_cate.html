@@ -1,0 +1,119 @@
+<include file="public/layout"/>
+<body style="background-color: rgb(255, 255, 255); overflow: auto; cursor: default; -moz-user-select: inherit;">
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title">
+            <div class="subject">
+                <h3>反馈类型</h3>
+            </div>
+        </div>
+    </div>
+    <div class="flexigrid">
+        <div class="hDiv">
+            <div class="hDivBox">
+                <table cellspacing="0" cellpadding="0">
+                    <thead>
+                    <tr>
+                        <th class="sign" axis="col0">
+                            <div style="width: 24px;"><i class="ico-check"></i></div>
+                        </th>
+                        <th align="left" abbr="article_title" axis="col3" class="">
+                            <div style="text-align: center; width: 50px;" class="">类型id</div>
+                        </th>
+                        <th align="left" abbr="article_title" axis="col3" class="">
+                            <div style="text-align: center; width: 200px;" class="">名称</div>
+                        </th>
+                        <th align="left" abbr="ac_id" axis="col4" class="">
+                            <div style="text-align: center; width: 120px;" class="">排序</div>
+                        </th>
+                        <th align="center" abbr="article_show" axis="col5" class="">
+                            <div style="text-align: center; width: 80px;" class="">操作</div>
+                        </th>
+                        <th style="width:100%" axis="col7">
+                            <div></div>
+                        </th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+        <div class="tDiv">
+            <div class="tDiv2">
+                <a href="{:U('Suggestion/cate_info')}">
+                    <div class="fbutton">
+                        <div title="添加活动" class="add">
+                            <span><i class="fa fa-plus"></i>添加类型</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div style="clear:both"></div>
+        </div>
+        <div class="bDiv" style="height: auto;">
+            <div id="flexigrid" cellpadding="0" cellspacing="0" border="0">
+                <table>
+                    <tbody>
+                    <foreach name="cate_list" item="vo" key="k">
+                        <tr>
+                            <td class="sign">
+                                <div style="width: 24px;"><i class="ico-check"></i></div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 50px;">{$vo.id}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 200px;">
+                                    <input style="text-align: center;" type="text" onblur="changeTableVal('suggestion_cate','id','{$vo.id}','name',this)" value="{$vo.name}" />
+                                </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">
+                                    <input style="text-align: center;" type="text" onKeyUp="this.value=this.value.replace(/[^\d]/g,'')" onpaste="this.value=this.value.replace(/[^\d]/g,'')" onblur="changeTableVal('suggestion_cate','id','{$vo.id}','sort',this)" size="4" value="{$vo.sort}" />
+                                </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 80px;">
+                                    <a class="btn red del" data-id="{$vo['id']}"><i class="fa fa-trash-o"></i>删除</a>
+                                </div>
+                            </td>
+                            <td align="" class="" style="width: 100%;">
+                                <div>&nbsp;</div>
+                            </td>
+                        </tr>
+                    </foreach>
+                    </tbody>
+                </table>
+            </div>
+            <div class="iDiv" style="display: none;"></div>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).on('click', '.del', function () {
+        var id = $(this).data('id');
+        layer.confirm('确认删除？', {btn: ['确定', '取消']}, function () {
+            // 确定
+            $.ajax({
+                url: "{:U('Suggestion/cate_del')}",
+                data: {id: id},
+                dataType: 'json',
+                success: function (data) {
+                    if (data.status == 1) {
+                        layer.msg(data.msg, {icon: 1, time: 2000}, function () {
+                            location.href = '';
+                        });
+                    } else {
+                        layer.msg(data.msg, {icon: 2, time: 2000});
+                    }
+                }
+            })
+        }, function (index) {
+            // 取消
+            layer.close(index);
+        });
+    })
+</script>
+</body>
+</html>
