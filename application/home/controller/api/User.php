@@ -2927,6 +2927,20 @@ class User extends Base
                     $userLogic->setMessageForRead(0, $value['message_id'], $this->user);
                 }
                 break;
+            case 3:
+                // 常见问题
+                $questionCate = M('question_cate')->where(['is_show' => 1])->order('sort')->select();
+                $message = [];
+                foreach ($questionCate as $cate) {
+                    $questionList = M('article')->where(['cat_id' => 81, 'extend_cate_id' => $cate['id'], 'is_open' => 1])
+                        ->order('extend_sort')->field('article_id message_id, title, content')->select();
+                    $message[] = [
+                        'cate_id' => $cate['id'],
+                        'cate_name' => $cate['name'],
+                        'message_list' => $questionList
+                    ];
+                }
+                break;
             default:
                 return json(['status' => 0, 'msg' => '类型错误']);
         }

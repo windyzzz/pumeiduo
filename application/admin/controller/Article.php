@@ -38,10 +38,17 @@ class Article extends Base
             $this->assign('cat_info', $cat_info);
         }
         $cats = $ArticleCat->article_cat_list(0, $parent_id, true);
-        if ($parent_id == 2) {
-            // 帮助中心分类
-            $helpCate = M('help_center_cate')->select();
-            $this->assign('help_cate', $helpCate);
+        switch ($parent_id) {
+            case 2:
+                // 帮助中心分类
+                $helpCate = M('help_center_cate')->select();
+                $this->assign('help_cate', $helpCate);
+                break;
+            case 81:
+                // 常见问题分类
+                $helpCate = M('question_cate')->select();
+                $this->assign('question_cate', $helpCate);
+                break;
         }
         $this->assign('act', $act);
         $this->assign('cat_select', $cats);
@@ -272,7 +279,7 @@ class Article extends Base
                 'sort' => $center['sort'],
             ];
             // 帮助中心分类数据
-            $articleCate = M('article_cat')->where(['extend_cate_id' => $center['id']])
+            $articleCate = M('article_cat')->where(['parent_id' => 2, 'extend_cate_id' => $center['id']])
                 ->field('cat_id, cat_name, extend_sort, cat_desc')->order('sort_order')->select();
             foreach ($articleCate as $article) {
                 $cateList2[] = [
@@ -310,5 +317,113 @@ class Article extends Base
         $cateInfo = M('help_center_cate')->where(['id' => $cateId])->find();
         $this->assign('cate_info', $cateInfo);
         return $this->fetch();
+    }
+
+    /**
+     * 常见问题分类
+     * @return mixed
+     */
+    public function questionCate()
+    {
+        $questionCate = M('question_cate')->field('id, name, sort, is_show')->order('sort')->select();
+        // 已分类的常见问题数据
+        $cateList = [];
+        foreach ($questionCate as $question) {
+            $cateList[] = [
+                'id' => $question['id'],
+                'parent_id' => -1,
+                'level' => 0,
+                'cate_name' => $question['name'],
+                'sort' => $question['sort'],
+                'is_show' => $question['is_show'],
+            ];
+            // 文章列表
+            $article = M('article')->where(['cat_id' => 81, 'extend_cate_id' => $question['id']])
+                ->field('article_id, title, extend_sort, is_open')->order('extend_sort')->select();
+            foreach ($article as $value) {
+                $cateList[] = [
+                    'id' => $value['article_id'],
+                    'parent_id' => $question['id'],
+                    'level' => 1,
+                    'article_title' => $value['title'],
+                    'sort' => $value['extend_sort'],
+                    'is_open' => $value['is_open'],
+                ];
+            }
+        }
+        $this->assign('cate_list', $cateList);
+        return $this->fetch();
+    }
+
+    /**
+     * 常见问题分类信息
+     * @return mixed
+     */
+    public function questionCateInfo()
+    {
+        if ($this->request->isPost()) {
+            $data = I('post.', []);
+            if (!empty($data['cate_id'])) {
+                $cateId = $data['cate_id'];
+                unset($data['cate_id']);
+                M('question_cate')->where(['id' => $cateId])->update($data);
+            } else {
+                $cateId = M('question_cate')->add($data);
+            }
+            $this->success('更新成功', U('Admin/Article/questionCate'));
+        }
+        $cateId = I('cate_id', '');
+        $cateInfo = M('question_cate')->where(['id' => $cateId])->find();
+        $this->assign('cate_info', $cateInfo);
+        return $this->fetch();
+    }
+
+    /**
+     * 常见问题文章
+     * @return mixed
+     */
+    public function questionArticle()
+    {
+        $articleId = I('article_id', '');
+        if ($this->request->isPost()) {
+            $data = $this->request->post();
+            if (empty($data['extend_cate_id']) || $data['extend_cate_id'] == 0) {
+                $this->error('分类ID不能为空');
+            }
+            unset($data['article_id']);
+            if ($articleId) {
+                M('article')->where(['article_id' => $articleId])->update($data);
+            } else {
+                $data['cat_id'] = 81;
+                $data['add_time'] = time();
+                M('article')->add($data);
+            }
+            $this->success('更新成功', U('Admin/Article/questionCate'));
+        } else {
+            if ($articleId) {
+                $article = M('article')->where(['article_id' => $articleId])
+                    ->field('article_id id, extend_cate_id, extend_sort, title, content')->find();
+                $this->assign('article', $article);
+            }
+            $questionCate = M('question_cate')->field('id, name')->order('sort')->select();
+            $this->assign('question_cate', $questionCate);
+            return $this->fetch();
+        }
+    }
+
+    /**
+     * 处理常见问题文章
+     */
+    public function handleQuestionArticle()
+    {
+        $act = I('act');
+        $articleId = I('article_id');
+        switch ($act) {
+            case 'del':
+                M('article')->where(['article_id' => $articleId])->delete();
+                $this->ajaxReturn(['status' => 1]);
+            default:
+                $this->ajaxReturn(['status' => 1]);
+        }
     }
 }

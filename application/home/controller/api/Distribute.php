@@ -145,18 +145,12 @@ class Distribute extends Base
     {
         $buyUserId = I('buy_user_id', '');
         if (!$buyUserId) return json(['status' => 0, 'msg' => '请传入购买者ID']);
-        $startAt = I('start_at', strtotime(date('Y-m-01 00:00:00', time())));
-        $endAt = I('end_at', strtotime(date('Y-m-t 23:59:59', time())));
-        $status = I('status', 0);
 
         $where = [
             'rl.user_id' => $this->user_id,
             'rl.buy_user_id' => $buyUserId,
-            'rl.create_time' => ['BETWEEN', [$startAt, $endAt]]
+            'rl.status' => ['in', [3, 5]],
         ];
-        if ($status) {
-            $where['rl.status'] = $status;
-        }
         $rebateLogSum = M('rebate_log rl')->where($where)->sum('rl.money');
         // 购买者用户信息
         $buyUser = M('users')->where(['user_id' => $buyUserId])->field('user_id, nickname, user_name, head_pic')->find();
