@@ -137,10 +137,11 @@ class Article extends Base
         $this->ajaxReturn(['status' => 1, 'msg' => '操作成功']);
     }
 
-    public function aticleHandle()
+    public function articleHandle()
     {
         $data = I('post.');
         $data['publish_time'] = strtotime($data['publish_time']);
+        $data['finish_time'] = !empty($data['finish_time']) ? strtotime($data['finish_time']) : '';
         //$referurl = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : U('Admin/Article/articleList');
 
         $result = $this->validate($data, 'Article.' . $data['act'], [], true);
@@ -245,8 +246,8 @@ class Article extends Base
             'desc' => '未分类的不会显示',
             'sort' => 0,
         ];
-        $articleCate = M('article_cat')->where(['parent_id' => 2, 'help_center_cate_id' => null])
-            ->field('cat_id, cat_name, help_center_sort, cat_desc')->order('sort_order')->select();
+        $articleCate = M('article_cat')->where(['parent_id' => 2, 'extend_cate_id' => null])
+            ->field('cat_id, cat_name, extend_sort, cat_desc')->order('sort_order')->select();
         foreach ($articleCate as $article) {
             $cateList1[] = [
                 'id' => $article['cat_id'],
@@ -254,7 +255,7 @@ class Article extends Base
                 'level' => 1,
                 'name' => $article['cat_name'],
                 'desc' => $article['cat_desc'],
-                'sort' => $article['help_center_sort'],
+                'sort' => $article['extend_sort'],
             ];
         }
         // 帮助中心上级分类
@@ -271,8 +272,8 @@ class Article extends Base
                 'sort' => $center['sort'],
             ];
             // 帮助中心分类数据
-            $articleCate = M('article_cat')->where(['help_center_cate_id' => $center['id']])
-                ->field('cat_id, cat_name, help_center_sort, cat_desc')->order('sort_order')->select();
+            $articleCate = M('article_cat')->where(['extend_cate_id' => $center['id']])
+                ->field('cat_id, cat_name, extend_sort, cat_desc')->order('sort_order')->select();
             foreach ($articleCate as $article) {
                 $cateList2[] = [
                     'id' => $article['cat_id'],
@@ -280,7 +281,7 @@ class Article extends Base
                     'level' => 1,
                     'name' => $article['cat_name'],
                     'desc' => $article['cat_desc'],
-                    'sort' => $article['help_center_sort'],
+                    'sort' => $article['extend_sort'],
                 ];
             }
         }

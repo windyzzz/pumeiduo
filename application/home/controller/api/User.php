@@ -2260,7 +2260,7 @@ class User extends Base
     public function ajax_article_notice()
     {
         $type = I('type');
-        $user_logic = new UsersLogic();
+//        $user_logic = new UsersLogic();
         $article_model = new ArticleLogic();
         if (0 == $type) {
             //系统消息
@@ -2857,5 +2857,102 @@ class User extends Base
         $data['sex'] = C('SEX');
 
         return json(['status' => 1, 'msg' => 'success', 'result' => $data]);
+    }
+
+    /**
+     * 消息列表
+     * @return \think\response\Json
+     */
+    public function messageList()
+    {
+        $type = I('type', 1);
+        $nowDate = date('Y-m-d', time());
+        switch ($type) {
+            case 1:
+                // 活动消息
+                $articleLogic = new ArticleLogic();
+                $messageNotice = $articleLogic->getUserArticleNotice($this->user);
+                $message = [];
+                foreach ($messageNotice as $value) {
+                    $publishTime = date('m' . '月' . 'd' . '日' . ' H:i', $value['publish_time']);
+                    if (date('Y-m-d', $value['publish_time']) == date('Y-m-d', strtotime($nowDate))) {
+                        // 今天
+                        $publishTime = date('H:i', $value['publish_time']);
+                    } elseif (date('Y-m-d', $value['publish_time']) == date('Y-m-d', strtotime($nowDate) - 3600 * 24)) {
+                        // 昨天
+                        $publishTime = '昨天 ' . date('H:i', $value['publish_time']);
+                    } elseif (date('Y-m-d', $value['publish_time']) == date('Y-m-d', strtotime($nowDate) - 3600 * 24 * 2)
+                        || date('Y-m-d', $value['publish_time']) == date('Y-m-d', strtotime($nowDate) - 3600 * 24 * 3)) {
+                        // 前天 大前天
+                        $publishTime = getWeekDay($value['publish_time']) . date('H:i', $value['publish_time']);
+                    }
+                    $message[] = [
+                        'message_id' => $value['article_id'],
+                        'title' => $value['title'],
+                        'publish_time' => $publishTime,
+                        'finish_time' => !empty($value['finish_time']) ? date('Y.m.d', $value['finish_time']) . '结束' : '',
+                        'desc' => $value['description'],
+                        'cover_pic' => $value['thumb'],
+                    ];
+                }
+                break;
+            case 2:
+                // 系统消息
+                $userLogic = new UsersLogic();
+                $messageLogic = new MessageLogic();
+                $messageNotice = $messageLogic->getUserMessageNotice($this->user);
+                $message = [];
+                foreach ($messageNotice as $value) {
+                    $publishTime = date('m' . '月' . 'd' . '日' . ' H:i', $value['send_time']);
+                    if (date('Y-m-d', $value['send_time']) == date('Y-m-d', strtotime($nowDate))) {
+                        // 今天
+                        $publishTime = date('H:i', $value['send_time']);
+                    } elseif (date('Y-m-d', $value['send_time']) == date('Y-m-d', strtotime($nowDate) - 3600 * 24)) {
+                        // 昨天
+                        $publishTime = '昨天 ' . date('H:i', $value['send_time']);
+                    } elseif (date('Y-m-d', $value['send_time']) == date('Y-m-d', strtotime($nowDate) - 3600 * 24 * 2)
+                        || date('Y-m-d', $value['send_time']) == date('Y-m-d', strtotime($nowDate) - 3600 * 24 * 3)) {
+                        // 前天 大前天
+                        $publishTime = getWeekDay($value['send_time']) . date('H:i', $value['send_time']);
+                    }
+                    $message[] = [
+                        'message_id' => $value['message_id'],
+                        'title' => '',
+                        'publish_time' => $publishTime,
+                        'finish_time' => '',
+                        'desc' => $value['message'],
+                        'cover_pic' => '',
+                    ];
+                    // 设置已读
+                    $userLogic->setMessageForRead(0, $value['message_id'], $this->user);
+                }
+                break;
+            default:
+                return json(['status' => 0, 'msg' => '类型错误']);
+        }
+        $return = [
+            'list' => $message
+        ];
+        return json(['status' => 1, 'result' => $return]);
+    }
+
+    /**
+     * 消息详情
+     * @return \think\response\Json
+     */
+    public function messageInfo()
+    {
+        $messageId = I('message_id', '');
+        if (!$messageId) {
+            return json(['status' => 0, 'msg' => '参数错误']);
+        }
+        // 设置已读
+        $userLogic = new UsersLogic();
+        $userLogic->setArticleForRead($messageId, $this->user);
+        // 由于APP不能解析文章content的html标签，所以直接返回H5的地址给APP
+        $return = [
+            'message_url' => SITE_URL . '/#/news/news_particulars?article_id=' . $messageId
+        ];
+        return json(['status' => 1, 'result' => $return]);
     }
 }

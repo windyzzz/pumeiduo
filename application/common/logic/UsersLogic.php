@@ -2239,9 +2239,11 @@ class UsersLogic extends Model
      *
      * @throws \think\Exception
      */
-    public function setMessageForRead($category = 0, $msg_id)
+    public function setMessageForRead($category = 0, $msg_id, $user_info = [])
     {
-        $user_info = session('user');
+        if (empty($user_info)) {
+            $user_info = session('user');
+        }
         if (!empty($user_info['user_id'])) {
             $data['status'] = 1;
             $set_where['user_id'] = $user_info['user_id'];
@@ -2294,9 +2296,11 @@ class UsersLogic extends Model
      *
      * @throws \think\Exception
      */
-    public function setArticleForRead($msg_id)
+    public function setArticleForRead($msg_id, $user_info = [])
     {
-        $user_info = session('user');
+        if (empty($user_info)) {
+            $user_info = session('user');
+        }
         if (!empty($user_info['user_id'])) {
             $data['status'] = 1;
             $set_where['user_id'] = $user_info['user_id'];

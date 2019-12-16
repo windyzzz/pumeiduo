@@ -103,10 +103,12 @@ class MessageLogic extends Model
      *
      * @return array
      */
-    public function getUserMessageNotice()
+    public function getUserMessageNotice($user_info = [])
     {
         $this->checkPublicMessage();
-        $user_info = session('user');
+        if (empty($user_info)) {
+            $user_info = session('user');
+        }
         $user_system_message_no_read_where = [
             'user_id' => $user_info['user_id'],
             'status' => ['in', [0, 1]],
@@ -123,7 +125,7 @@ class MessageLogic extends Model
             ->field('um.rec_id,um.user_id,um.category,um.message_id,um.status,m.send_time,m.type,m.message')
             ->join('__MESSAGE__ m', 'um.message_id = m.message_id', 'LEFT')
             ->where($user_system_message_no_read_where)
-            ->limit($Page->firstRow.','.$Page->listRows)
+            ->limit($Page->firstRow . ',' . $Page->listRows)
             ->order('send_time desc')
             ->select();
 
@@ -232,11 +234,11 @@ class MessageLogic extends Model
         $data = [];
         foreach ($categorys as $c) {
             $query = Db::query('SELECT m.category,m.message_id,um.status,m.send_time,m.type,m.data FROM __PREFIX__message m '
-                    .'INNER JOIN __PREFIX__user_message um ON (um.message_id=m.message_id AND um.user_id = ?) '
-                    .'WHERE m.type = 0 AND m.category = ? AND m.data!=""  '
-                    .'UNION (SELECT m.category,m.message_id, 1 AS status,m.send_time,m.type,m.data FROM __PREFIX__message m '
-                    .'WHERE m.type = 1 AND m.category = ? AND m.data!="") '
-                    .'ORDER BY send_time DESC LIMIT 1', [$user['user_id'], $c, $c]);
+                . 'INNER JOIN __PREFIX__user_message um ON (um.message_id=m.message_id AND um.user_id = ?) '
+                . 'WHERE m.type = 0 AND m.category = ? AND m.data!=""  '
+                . 'UNION (SELECT m.category,m.message_id, 1 AS status,m.send_time,m.type,m.data FROM __PREFIX__message m '
+                . 'WHERE m.type = 1 AND m.category = ? AND m.data!="") '
+                . 'ORDER BY send_time DESC LIMIT 1', [$user['user_id'], $c, $c]);
 
             if (!empty($query[0])) {
                 $query = $query[0];
@@ -267,11 +269,11 @@ class MessageLogic extends Model
         $p = ($p - 1) * 15;
 
         $data = Db::query('SELECT m.category,m.message_id,um.status,m.send_time,m.type,m.data FROM __PREFIX__message m '
-                    .'INNER JOIN __PREFIX__user_message um ON (um.message_id=m.message_id AND um.user_id = ?) '
-                    .'WHERE m.type = 0 AND m.category = ? AND m.data!=""  '
-                    .'UNION (SELECT m.category,m.message_id, 1 AS status,m.send_time,m.type,m.data FROM __PREFIX__message m '
-                    .'WHERE m.type = 1 AND m.category = ? AND m.data!="") '
-                    .'ORDER BY send_time DESC LIMIT ?,15', [$user_id, $category, $category, $p]);
+            . 'INNER JOIN __PREFIX__user_message um ON (um.message_id=m.message_id AND um.user_id = ?) '
+            . 'WHERE m.type = 0 AND m.category = ? AND m.data!=""  '
+            . 'UNION (SELECT m.category,m.message_id, 1 AS status,m.send_time,m.type,m.data FROM __PREFIX__message m '
+            . 'WHERE m.type = 1 AND m.category = ? AND m.data!="") '
+            . 'ORDER BY send_time DESC LIMIT ?,15', [$user_id, $category, $category, $p]);
 
         foreach ($data as &$d) {
             $d['data'] = unserialize($d['data']);
@@ -327,7 +329,7 @@ class MessageLogic extends Model
         }
 
         $discription = $discription ?: "您的订单已炼货完毕，待出库交付{$row['shipping_name']},"
-                      ."运单号为{$row['order_sn']}";
+            . "运单号为{$row['order_sn']}";
         $title = $title ?: '发货提醒';
         $data = [
             'category' => $t,
@@ -373,7 +375,7 @@ class MessageLogic extends Model
      * @param type $change_type 1:积分,2:余额,3:优惠券
      * @param type $title
      * @param type $discription
-     * @param type $money       优惠券类型通知时该值才大于0
+     * @param type $money 优惠券类型通知时该值才大于0
      */
     public function createAssetMsg($t, $change_type, $title, $discription = '', $money = 0)
     {
@@ -414,9 +416,9 @@ class MessageLogic extends Model
     /**
      * 发送消息.
      *
-     * @param type  $msg       message表字段必要的数据
-     * @param type  $push_data 推送的消息主体
-     * @param array $user_ids  用户的id集
+     * @param type $msg message表字段必要的数据
+     * @param type $push_data 推送的消息主体
+     * @param array $user_ids 用户的id集
      *
      * @return type
      */
@@ -487,7 +489,7 @@ class MessageLogic extends Model
     /**
      * 设置消息开关.
      *
-     * @param type $type         开关类型
+     * @param type $type 开关类型
      * @param type $val开关值
      */
     public function setMessageSwitch($type, $val, $user)

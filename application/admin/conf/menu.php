@@ -110,7 +110,6 @@ return [
             ['name' => '优惠券', 'act' => 'index', 'op' => 'Coupon'],
             ['name' => '满单赠品活动', 'act' => 'gift', 'op' => 'Promotion'],
             ['name' => '指定商品赠品活动', 'act' => 'gift2', 'op' => 'Promotion'],
-            ['name' => '搜索热词管理', 'act' => 'index', 'op' => 'KeyWord'],
             ['name' => '加价购', 'act' => 'index', 'op' => 'Extra'],
             // array('name' => '预售管理','act'=>'pre_sell_list', 'op'=>'Promotion'),
             // array('name' => '拼团管理','act'=>'index', 'op'=>'Team'),
@@ -140,6 +139,7 @@ return [
         ]],
 
         ['name' => '自定义', 'child' => [
+            ['name' => '搜索热词管理', 'act' => 'index', 'op' => 'KeyWord'],
             ['name' => '分类主题活动', 'act' => 'cate_activity_list', 'op' => 'Activity'],
         ]],
 

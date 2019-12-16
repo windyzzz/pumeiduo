@@ -1876,4 +1876,30 @@ class Goods extends Base
         }
         return json(['status' => 1, 'result' => $lookSee]);
     }
+
+    /**
+     * 升级套餐列表
+     * @return \think\response\Json
+     */
+    public function levelGoodsList()
+    {
+        $type = I('type', 2); // 2为普卡会员 3为网点会员
+        $count = M('goods')->where(['zone' => 3, 'distribut_id' => $type, 'is_on_sale' => 1])->count('goods_id');
+        $page = new Page($count, 10);
+        $list = M('goods')
+            ->where(['zone' => 3, 'distribut_id' => $type, 'is_on_sale' => 1])
+            ->field('goods_id, goods_name, shop_price, exchange_integral, original_img')
+            ->limit($page->firstRow . ',' . $page->listRows)
+            ->order('sort')
+            ->select();
+        foreach ($list as $k => $v) {
+            // 处理显示金额
+            if ($v['exchange_integral'] != 0) {
+                $list[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);
+            } else {
+                $list[$k]['exchange_price'] = $v['shop_price'];
+            }
+        }
+        return json(['status' => 1, 'result' => $list]);
+    }
 }

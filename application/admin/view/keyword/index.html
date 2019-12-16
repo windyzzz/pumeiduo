@@ -43,12 +43,11 @@
 						<th align="left" abbr="ac_id" axis="col4" class="">
 							<div style="text-align: center; width: 290px;" class="">关键词</div>
 						</th>
-
-						<th align="left" abbr="ac_id" axis="col4" class="">
-							<div style="text-align: center; width: 80px;" class="">点击数</div>
-						</th>
 						<th align="center" abbr="article_show" axis="col5" class="">
 							<div style="text-align: center; width: 80px;" class="">状态</div>
+						</th>
+						<th align="left" abbr="ac_id" axis="col4" class="">
+							<div style="text-align: center; width: 80px;" class="">是否热门</div>
 						</th>
 						<th align="center" abbr="article_time" axis="col6" class="">
 							<div style="text-align: center; width: 170px;" class="">排序</div>
@@ -96,18 +95,21 @@
 									{$team.name}
 								</div>
 							</td>
-
-							<td align="left" class="">
-								<div style="text-align: center; width: 80px;">
-									{$team.click_num}
-								</div>
-							</td>
 							<td align="left" class="">
 								<div style="text-align: center; width: 80px;">
 									<if condition='$team[status] eq 1'>
 										<span class="yes" onClick="changeTableVal('key_word','id','{$team.id}','status',this)" ><i class="fa fa-check-circle"></i>开启</span>
 										<else />
 										<span class="no" onClick="changeTableVal('key_word','id','{$team.id}','status',this)" ><i class="fa fa-ban"></i>关闭</span>
+									</if>
+								</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 80px;">
+									<if condition='$team[is_hot] eq 1'>
+										<span class="yes" onClick="changeTableVal('key_word','id','{$team.id}','is_hot',this)" ><i class="fa fa-check-circle"></i>开启</span>
+										<else />
+										<span class="no" onClick="changeTableVal('key_word','id','{$team.id}','is_hot',this)" ><i class="fa fa-ban"></i>关闭</span>
 									</if>
 								</div>
 							</td>

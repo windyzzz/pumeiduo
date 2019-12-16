@@ -109,9 +109,9 @@
                         <label for="parent_id">帮助中心分类</label>
                     </dt>
                     <dd class="opt">
-                        <select class="small form-control" style="width:200px" tabindex="1" name="help_center_cate_id" id="">
+                        <select class="small form-control" style="width:200px" tabindex="1" name="extend_cate_id" id="">
                             <foreach name="help_cate" item="vo" key="k" >
-                                <option value="{$vo.id}" <?php if($vo[id] == $cat_info[help_center_cate_id]) echo 'selected="selected"' ?>>{$vo.name}</option>
+                                <option value="{$vo.id}" <?php if($vo[id] == $cat_info[extend_cate_id]) echo 'selected="selected"' ?>>{$vo.name}</option>
                             </foreach>
                         </select>
                         <span class="err"></span>
@@ -123,7 +123,7 @@
                         <label>帮助中心排序</label>
                     </dt>
                     <dd class="opt">
-                        <input type="text" placeholder="排序" name="help_center_sort" value="{$cat_info.help_center_sort}" class="input-txt" onKeyUp="this.value=this.value.replace(/[^\d]/g,'')">
+                        <input type="text" placeholder="排序" name="extend_sort" value="{$cat_info.extend_sort}" class="input-txt" onKeyUp="this.value=this.value.replace(/[^\d]/g,'')">
                         <span class="err"></span>
                         <p class="notic"></p>
                     </dd>

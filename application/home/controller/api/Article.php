@@ -181,6 +181,9 @@ class Article
             return json(['status' => 0, 'msg' => '参数错误']);
         }
         // 由于APP不能解析文章content的html标签，所以直接返回H5的地址给APP
-        return json(['status' => 1, 'result' => ['article_url' => SITE_URL . '/#/member/help_particulars?article_id=' . $articleId]]);
+        $return = [
+            'article_url' => SITE_URL . '/#/member/help_particulars?article_id=' . $articleId
+        ];
+        return json(['status' => 1, 'result' => $return]);
     }
 }

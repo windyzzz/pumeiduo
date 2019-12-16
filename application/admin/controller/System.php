@@ -19,19 +19,21 @@ use think\db;
 class System extends Base
 {
 
-    function icon(){
+    function icon()
+    {
         $icon = M('icon')->select();
-        $this->assign('list',$icon);
+        $this->assign('list', $icon);
         return $this->fetch();
     }
 
-    function icon_edit(){
-        if(IS_POST){
+    function icon_edit()
+    {
+        if (IS_POST) {
             $data = I('post.');
-            if($data['from_time']){
+            if ($data['from_time']) {
                 $data['from_time'] = strtotime($data['from_time']);
             }
-            if($data['to_time']){
+            if ($data['to_time']) {
                 $data['to_time'] = strtotime($data['to_time']);
             }
             if (I('id')) {
@@ -39,25 +41,26 @@ class System extends Base
             } else {
                 M('icon')->add($data);
             }
-            $this->success('操作成功',U('System/icon'));
-        }else{
-            $id = I('id',0,'int');
+            $this->success('操作成功', U('System/icon'));
+        } else {
+            $id = I('id', 0, 'int');
             if ($id) {
-                $icon = M('icon')->where('id',$id)->find();
-                $icon['from_time'] = $icon['from_time']?date('Y-m-d H:i:s',$icon['from_time']):'';
-                $icon['to_time'] = $icon['to_time']?date('Y-m-d H:i:s',$icon['to_time']):'';
+                $icon = M('icon')->where('id', $id)->find();
+                $icon['from_time'] = $icon['from_time'] ? date('Y-m-d H:i:s', $icon['from_time']) : '';
+                $icon['to_time'] = $icon['to_time'] ? date('Y-m-d H:i:s', $icon['to_time']) : '';
 
             }
-            $this->assign('id',$id);
-            $this->assign('config',$icon);
+            $this->assign('id', $id);
+            $this->assign('config', $icon);
             return $this->fetch();
         }
     }
 
-    function icon_delete(){
-        $id = I('del_id',0,'int');
-        if($id>1){
-            M('icon')->where(array('id'=>$id))->delete();
+    function icon_delete()
+    {
+        $id = I('del_id', 0, 'int');
+        if ($id > 1) {
+            M('icon')->where(array('id' => $id))->delete();
         }
         $json_arr = ['status' => 1, 'msg' => '操作成功'];
         $json_str = json_encode($json_arr);
@@ -97,7 +100,13 @@ class System extends Base
             }
         }
         $this->assign('group_list', $group_list);
-        $inc_type = I('get.inc_type', 'shop_info');
+        $inc_type = I('get.inc_type', '');
+        if (!$inc_type) {
+            foreach ($group_list as $key => $item) {
+                $inc_type = $key;
+                break;
+            }
+        }
         $this->assign('inc_type', $inc_type);
         $config = tpCache($inc_type);
         if ('shop_info' == $inc_type) {
@@ -171,7 +180,7 @@ class System extends Base
             foreach ($cat_list as $key => $value) {
                 $strpad_count = $value['level'] * 4;
                 $select_val = U('/Home/Goods/goodsList', ['id' => $key]);
-                $select_option[$select_val] = str_pad('', $strpad_count, '-', STR_PAD_LEFT).$value['name'];
+                $select_option[$select_val] = str_pad('', $strpad_count, '-', STR_PAD_LEFT) . $value['name'];
             }
         }
         $system_nav = [
@@ -191,7 +200,7 @@ class System extends Base
         $article = db('article')->where('is_open', 1)->select();
         if (!empty($article)) {
             foreach ($article as $value) {
-                $system_bottom['/index.php/Home/Article/detail/article_id/'.$value['article_id']] = $value['title'];
+                $system_bottom['/index.php/Home/Article/detail/article_id/' . $value['article_id']] = $value['title'];
             }
         }
 
@@ -231,7 +240,7 @@ class System extends Base
                 $arr[$val['mod_id']] = $val['title'];
             }
             if (3 == $row['level']) {
-                $arr[$val['mod_id']] = $pmenu[$val['parent_id']].'/'.$val['title'];
+                $arr[$val['mod_id']] = $pmenu[$val['parent_id']] . '/' . $val['title'];
             }
         }
 
@@ -265,7 +274,7 @@ class System extends Base
             $html_arr = glob('./Application/Runtime/Html/Home_Goods*.html');
             foreach ($html_arr as $key => $val) {
                 strstr($val, "Home_Goods_ajax_consult_{$goods_id}") && unlink($val); // 商品咨询缓存
-                    strstr($val, "Home_Goods_ajaxComment_{$goods_id}") && unlink($val); // 商品评论缓存
+                strstr($val, "Home_Goods_ajaxComment_{$goods_id}") && unlink($val); // 商品评论缓存
             }
             $json_arr = ['status' => 1, 'msg' => '清除成功', 'result' => ''];
         } else {
@@ -281,7 +290,7 @@ class System extends Base
     public function ClearGoodsThumb()
     {
         $goods_id = I('goods_id');
-        delFile(UPLOAD_PATH.'goods/thumb/'.$goods_id); // 删除缩略图
+        delFile(UPLOAD_PATH . 'goods/thumb/' . $goods_id); // 删除缩略图
         Cache::clear('original_img_cache');
         $json_arr = ['status' => 1, 'msg' => '清除成功,请清除对应的静态页面', 'result' => ''];
         $json_str = json_encode($json_arr);
@@ -295,11 +304,11 @@ class System extends Base
     {
         $article_id = I('article_id');
         unlink("./Application/Runtime/Html/Index_Article_detail_{$article_id}.html"); // 清除文章静态缓存
-            unlink("./Application/Runtime/Html/Doc_Index_article_{$article_id}_api.html"); // 清除文章静态缓存
-            unlink("./Application/Runtime/Html/Doc_Index_article_{$article_id}_phper.html"); // 清除文章静态缓存
-            unlink("./Application/Runtime/Html/Doc_Index_article_{$article_id}_android.html"); // 清除文章静态缓存
-            unlink("./Application/Runtime/Html/Doc_Index_article_{$article_id}_ios.html"); // 清除文章静态缓存
-            $json_arr = ['status' => 1, 'msg' => '操作完成', 'result' => ''];
+        unlink("./Application/Runtime/Html/Doc_Index_article_{$article_id}_api.html"); // 清除文章静态缓存
+        unlink("./Application/Runtime/Html/Doc_Index_article_{$article_id}_phper.html"); // 清除文章静态缓存
+        unlink("./Application/Runtime/Html/Doc_Index_article_{$article_id}_android.html"); // 清除文章静态缓存
+        unlink("./Application/Runtime/Html/Doc_Index_article_{$article_id}_ios.html"); // 清除文章静态缓存
+        $json_arr = ['status' => 1, 'msg' => '操作完成', 'result' => ''];
         $json_str = json_encode($json_arr);
         exit($json_str);
     }
@@ -309,7 +318,7 @@ class System extends Base
     {
         $param = I('post.');
         //		tpCache($param['inc_type'],$param); //注释掉，不注释会出现重复写入数据库
-        $res = send_email($param['test_eamil'], '后台测试', '测试发送验证码:'.mt_rand(1000, 9999));
+        $res = send_email($param['test_eamil'], '后台测试', '测试发送验证码:' . mt_rand(1000, 9999));
         exit(json_encode($res));
     }
 
@@ -357,7 +366,7 @@ class System extends Base
         }
 
         $selectControl = [];
-        $className = 'app\\'.$module['name'].'\\controller\\'.$control;
+        $className = 'app\\' . $module['name'] . '\\controller\\' . $control;
         $methods = (new \ReflectionClass($className))->getMethods(\ReflectionMethod::IS_PUBLIC);
         foreach ($methods as $method) {
             if ($method->class == $className) {
@@ -369,7 +378,7 @@ class System extends Base
 
         $html = '';
         foreach ($selectControl as $val) {
-            $html .= "<li><label><input class='checkbox' name='act_list' value=".$val." type='checkbox'>".$val.'</label></li>';
+            $html .= "<li><label><input class='checkbox' name='act_list' value=" . $val . " type='checkbox'>" . $val . '</label></li>';
             if ($val && strlen($val) > 18) {
                 $html .= '<li></li>';
             }
@@ -432,7 +441,7 @@ class System extends Base
 
         $modules = $moduleLogic->getModules();
         $group = $moduleLogic->getPrivilege($type);
-        $planPath = APP_PATH.$modules[$type]['name'].'/controller';
+        $planPath = APP_PATH . $modules[$type]['name'] . '/controller';
         $planList = [];
         $dirRes = opendir($planPath);
         while ($dir = readdir($dirRes)) {
@@ -533,19 +542,35 @@ class System extends Base
         */
     }
 
-    public function shop_info(){}
+    public function shop_info()
+    {
+    }
 
-    public function basic(){}
+    public function basic()
+    {
+    }
 
-    public function sms(){}
+    public function sms()
+    {
+    }
 
-    public function shopping(){}
+    public function shopping()
+    {
+    }
 
-    public function water(){}
+    public function water()
+    {
+    }
 
-    public function distribut(){}
+    public function distribut()
+    {
+    }
 
-    public function push(){}
+    public function push()
+    {
+    }
 
-    public function express(){}
+    public function express()
+    {
+    }
 }

@@ -121,7 +121,9 @@ class Base extends Controller
      */
     private function getUrl()
     {
-        return $this->request->url();
+        $url = $this->request->url();
+        $urlArr = explode('&', $url);
+        return $urlArr[1] . '&' . $urlArr[2];
     }
 
     /**

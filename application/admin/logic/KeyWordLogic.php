@@ -27,7 +27,7 @@ class KeyWordLogic
 
     public function getList()
     {
-        return $this->model->order('sort_order,click_num desc')->select();
+        return $this->model->order('sort_order')->select();
     }
 
     public function getCount()

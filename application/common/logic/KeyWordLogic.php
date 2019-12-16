@@ -24,9 +24,6 @@ class KeyWordLogic
 
     public function getActivityList()
     {
-        return $this->model->where([
-            'status' => 1,
-        ])->order('sort_order,click_num desc')
-        ->select();
+        return $this->model->where(['status' => 1])->field('id, name, is_hot')->order('sort_order')->select();
     }
 }

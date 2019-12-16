@@ -104,10 +104,12 @@ class ArticleLogic extends Model
      *
      * @return array
      */
-    public function getUserArticleNotice()
+    public function getUserArticleNotice($user_info = [])
     {
         $this->checkPublicArticle();
-        $user_info = session('user');
+        if (empty($user_info)) {
+            $user_info = session('user');
+        }
         $user_system_article_no_read_where = [
             'user_id' => $user_info['user_id'],
             'status' => ['in', [0, 1]],
@@ -121,7 +123,7 @@ class ArticleLogic extends Model
         $Page = new Page($count, 10);
         $user_system_article_no_read = Db::name('user_article')
             ->alias('um')
-            ->field('um.rec_id,um.user_id,um.category,um.article_id,um.status,m.publish_time,m.title,m.description,m.link')
+            ->field('um.rec_id,um.user_id,um.category,um.article_id,um.status,m.publish_time,m.finish_time,m.title,m.description,m.link,m.thumb')
             ->join('__ARTICLE__ m', 'um.article_id = m.article_id', 'LEFT')
             ->where($user_system_article_no_read_where)
             ->limit($Page->firstRow . ',' . $Page->listRows)
@@ -584,8 +586,8 @@ class ArticleLogic extends Model
         if ($id == 2) {
             // 帮助中心
             $helpCenterCate = M('help_center_cate')->order('sort ASC')->select();
-            $cateList = M('article_cat')->where('parent_id', $id)->where('help_center_cate_id', 'not null')
-                ->order('help_center_cate_id ASC, help_center_sort ASC')->select();
+            $cateList = M('article_cat')->where('parent_id', $id)->where('extend_cate_id', 'not null')
+                ->order('extend_cate_id ASC, extend_sort ASC')->select();
             $cate_list = [];
             foreach ($helpCenterCate as $k => $center) {
                 $cat_list[$k] = [
@@ -594,7 +596,7 @@ class ArticleLogic extends Model
                     'list' => []
                 ];
                 foreach ($cateList as $cate) {
-                    if ($center['id'] == $cate['help_center_cate_id']) {
+                    if ($center['id'] == $cate['extend_cate_id']) {
                         $cate_list[$k]['list'][] = [
                             'cate_id' => $cate['cat_id'],
                             'cate_name' => $cate['cat_name'],

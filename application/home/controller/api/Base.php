@@ -60,7 +60,9 @@ class Base extends Controller
      */
     private function getUrl()
     {
-        return $this->request->url();
+        $url = $this->request->url();
+        $urlArr = explode('&', $url);
+        return $urlArr[1] . '&' . $urlArr[2];
     }
 
     /**
@@ -70,16 +72,17 @@ class Base extends Controller
     private function whiteListPath()
     {
         return [
-            '/index.php?m=Home&c=api.Login&a=reg', // 用户注册
-            '/index.php?m=Home&c=api.Login&a=do_login', // 用户登录,
-            '/index.php?m=Home&c=api.Index&a=indexNew',   // 主页
-            '/index.php?m=Home&c=api.Goods&a=all_category',   // 商品分类
-            '/index.php?m=Home&c=api.Goods&a=getSeriesGoodsList',   // 超值套装列表
-            '/index.php?m=Home&c=api.Goods&a=getGroupBuyGoodsListNew',   // 团购商品列表
-            '/index.php?m=Home&c=api.Goods&a=getNewGoodsList',   // 新品列表
-            '/index.php?m=Home&c=api.Goods&a=getRecommendGoodsList',   // 促销商品
-            '/index.php?m=Home&c=api.Goods&a=getHotGoodsList',   // 热销商品
-            '/index.php?m=Home&c=api.Goods&a=getFlashSalesGoodsList',   // 秒杀商品
+            'c=api.Login&a=reg', // 用户注册
+            'c=api.Login&a=do_login', // 用户登录,
+            'c=api.Index&a=indexNew',   // 主页
+            'c=api.Goods&a=all_category',   // 商品分类
+            'c=api.Goods&a=goodsList',   // 商品分类
+            'c=api.Goods&a=getSeriesGoodsList',   // 超值套装列表
+            'c=api.Goods&a=getGroupBuyGoodsListNew',   // 团购商品列表
+            'c=api.Goods&a=getNewGoodsList',   // 新品列表
+            'c=api.Goods&a=getRecommendGoodsList',   // 促销商品
+            'c=api.Goods&a=getHotGoodsList',   // 热销商品
+            'c=api.Goods&a=getFlashSalesGoodsList',   // 秒杀商品
         ];
     }
 
@@ -90,7 +93,7 @@ class Base extends Controller
     private function specialListPath()
     {
         return [
-            '/index.php?m=Home&c=api.Coupon&a=couponList',   // 领券中心
+            'c=api.Coupon&a=couponList',   // 领券中心
         ];
     }
 }
