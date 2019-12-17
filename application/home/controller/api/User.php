@@ -646,7 +646,6 @@ class User extends Base
 
             M('users')->where('first_leader', $this->user_id)->update(['second_leader' => $data['first_leader'], 'third_leader' => $data['second_leader']]);
             M('users')->where('second_leader', $this->user_id)->update(['third_leader' => $data['first_leader']]);
-
             M('users')->where(['user_id' => $this->user_id])->save($data);
 
             // 邀请送积分
@@ -2857,5 +2856,39 @@ class User extends Base
         $data['sex'] = C('SEX');
 
         return json(['status' => 1, 'msg' => 'success', 'result' => $data]);
+    }
+
+    /**
+     * 获取推荐人信息
+     * @return \think\response\Json
+     */
+    public function getInviteUser()
+    {
+        $inviteUid = M('users')->where(['user_id' => $this->user_id])->value('invite_uid');
+        if (!$inviteUid || $inviteUid == 0) {
+            return json(['status' => -11, 'msg' => '暂无推荐人']);
+        }
+        $inviteUser = M('users')->where(['user_id' => $inviteUid])->field('user_id, nickname')->find();
+        return json(['status' => 1, 'result' => $inviteUser]);
+    }
+
+    /**
+     * 查看用户购买VIP套餐资格
+     * @return \think\response\Json
+     */
+    public function checkUserLevelGoods()
+    {
+        $goodsId = I('goods_id', '');
+        if (!$goodsId || $goodsId === 0) {
+            return json(['status' => 0, 'msg' => '请传入正确的商品ID']);
+        }
+        // 商品分销等级
+        $goodsDistribute = M('goods')->where(['goods_id' => $goodsId])->value('distribut_id');
+        // 用户分销等级
+        $userDistribute = M('users')->where(['user_id' => $this->user_id])->value('distribut_level');
+        if ($goodsDistribute <= $userDistribute) {
+            return json(['status' => -11, 'msg' => '你已经是VIP会员了，无法再次购买']);
+        }
+        return json(['status' => 1]);
     }
 }

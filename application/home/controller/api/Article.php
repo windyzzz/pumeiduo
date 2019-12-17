@@ -144,7 +144,7 @@ class Article
     }
 
     /**
-     * 帮助中心分类列表
+     * 文章分类列表
      * @return \think\response\Json
      */
     public function articleCateList()
@@ -156,7 +156,7 @@ class Article
     }
 
     /**
-     * 帮助中心文章列表
+     * 文章列表
      * @return \think\response\Json
      */
     public function articleListNew()
@@ -175,7 +175,7 @@ class Article
     }
 
     /**
-     * 帮助中心文章内容
+     * 文章内容
      * @return \think\response\Json
      */
     public function articleDetail()
@@ -184,7 +184,7 @@ class Article
         if (!$articleId) {
             return json(['status' => 0, 'msg' => '参数错误']);
         }
-        $article = M('article')->where(['article_id' => $articleId, 'is_open' => 1])->field('article_id, title, content')->find();
+        $article = M('article')->where(['article_id' => $articleId, 'is_open' => 1])->field('article_id, title, app_content')->find();
         $return = $article;
         return json(['status' => 1, 'result' => $return]);
     }
