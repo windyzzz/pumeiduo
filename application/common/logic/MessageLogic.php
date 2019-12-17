@@ -29,14 +29,10 @@ class MessageLogic extends Model
      *
      * @return array
      */
-    public function getUserMessageCount($userToken = null)
+    public function getUserMessageCount($userId = '')
     {
-        if (session('user')) {
+        if (!$userId) {
             $userId = session('user')['user_id'];
-        } elseif ($userToken) {
-            $userId = Db::name('users')->where('token', $userToken)->value('user_id');
-        } else {
-            return [];
         }
         $this->checkPublicMessage();
         $user_system_message_no_read_where = [

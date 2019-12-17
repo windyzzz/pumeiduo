@@ -83,6 +83,7 @@ class Base extends Controller
             'c=api.Goods&a=getRecommendGoodsList',   // 促销商品
             'c=api.Goods&a=getHotGoodsList',   // 热销商品
             'c=api.Goods&a=getFlashSalesGoodsList',   // 秒杀商品
+            'c=api.Message&a=announce',   // 公告列表
         ];
     }
 

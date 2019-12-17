@@ -26,6 +26,7 @@ class Article extends Validate
         'cat_id' => 'require|checkEmpty',
         'content' => 'require|checkContent',
         'link' => 'url',
+        'goods_id' => 'require',
     ];
 
     //错误消息
@@ -36,6 +37,7 @@ class Article extends Validate
         'cat_id.checkEmpty' => '所属分类必须选择',
         'article_id.checkArtcileId' => '系统预定义的文章不能删除',
         'link.url' => '链接格式错误',
+        'goods_id' => '请选择商品',
     ];
 
     //验证场景
@@ -43,6 +45,7 @@ class Article extends Validate
         'add' => ['title', 'cat_id', 'content', 'link'],
         'edit' => ['title', 'cat_id', 'content', 'link'],
         'del' => ['article_id'],
+        'announce' => ['title', 'goods_id']
     ];
 
     protected function checkEmpty($value)

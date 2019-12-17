@@ -1,0 +1,71 @@
+<include file="public/layout"/>
+<body style="background-color: #FFF; overflow: auto;">
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title"><a class="back" href="javascript:history.back();" title="返回列表"><i
+                class="fa fa-arrow-circle-o-left"></i></a>
+            <div class="subject">
+                <h3>常见问题分类</h3>
+                <h5>网站文章分类添加与管理</h5>
+            </div>
+        </div>
+    </div>
+    <form method="post" class="form-horizontal" id="data_form">
+        <div class="ncap-form-default">
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>分类名称</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" class="input-txt" name="name" value="{$cate_info.name}">
+                    <span class="err" id="err_cat_name"></span>
+                    <p class="notic"></p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>导航显示</label>
+                </dt>
+                <dd class="opt">
+                    <div class="onoff">
+                        <label for="article_show1" class="cb-enable <if condition=" $cate_info[is_show] eq 1">selected</if>">是</label>
+                        <label for="article_show0" class="cb-disable <if condition=" $cate_info[is_show] eq 0">selected</if>">否</label>
+                        <input id="article_show1" name="is_show" value="1" type="radio" <if condition="$cate_info[is_show] eq 1"> checked="checked"</if>>
+                        <input id="article_show0" name="is_show" value="0" type="radio" <if condition="$cate_info[is_show] eq 0"> checked="checked"</if>>
+                    </div>
+                    <p class="notic"></p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>排序</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" placeholder="排序" name="sort" value="{$cate_info.sort}" class="input-txt"
+                           onKeyUp="this.value=this.value.replace(/[^\d]/g,'')">
+                    <span class="err"></span>
+                    <p class="notic"></p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>搜索描述</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" placeholder="搜索描述" name="desc" value="{$cate_info.desc}" class="input-txt">
+                    <span class="err"></span>
+                    <p class="notic"></p>
+                </dd>
+            </dl>
+            <div class="bot">
+                <a href="#" onclick="$('#data_form').submit();return false;" class="ncap-btn-big ncap-btn-green">确认提交</a>
+            </div>
+        </div>
+        <input type="hidden" name="cate_id" value="{$cate_info.id}">
+    </form>
+</div>
+<script>
+
+</script>
+</body>
+</html>

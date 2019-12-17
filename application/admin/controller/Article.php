@@ -12,6 +12,7 @@
 namespace app\admin\controller;
 
 use app\admin\logic\ArticleCatLogic;
+use app\admin\model\Announce as AnnounceModel;
 use think\Page;
 
 class Article extends Base
@@ -293,7 +294,7 @@ class Article extends Base
             }
         }
         $this->assign('cate_list', array_merge($cateList1, $cateList2));
-        return $this->fetch();
+        return $this->fetch('help_center_cate');
     }
 
     /**
@@ -316,7 +317,7 @@ class Article extends Base
         $cateId = I('cate_id', '');
         $cateInfo = M('help_center_cate')->where(['id' => $cateId])->find();
         $this->assign('cate_info', $cateInfo);
-        return $this->fetch();
+        return $this->fetch('help_center_cate_info');
     }
 
     /**
@@ -352,7 +353,7 @@ class Article extends Base
             }
         }
         $this->assign('cate_list', $cateList);
-        return $this->fetch();
+        return $this->fetch('question_cate');
     }
 
     /**
@@ -375,7 +376,7 @@ class Article extends Base
         $cateId = I('cate_id', '');
         $cateInfo = M('question_cate')->where(['id' => $cateId])->find();
         $this->assign('cate_info', $cateInfo);
-        return $this->fetch();
+        return $this->fetch('question_cate_info');
     }
 
     /**
@@ -395,7 +396,7 @@ class Article extends Base
                 M('article')->where(['article_id' => $articleId])->update($data);
             } else {
                 $data['cat_id'] = 81;
-                $data['add_time'] = time();
+                $data['add_time'] = $data['publish_time'] = time();
                 M('article')->add($data);
             }
             $this->success('更新成功', U('Admin/Article/questionCate'));
@@ -407,7 +408,7 @@ class Article extends Base
             }
             $questionCate = M('question_cate')->field('id, name')->order('sort')->select();
             $this->assign('question_cate', $questionCate);
-            return $this->fetch();
+            return $this->fetch('question_article');
         }
     }
 
@@ -425,5 +426,65 @@ class Article extends Base
             default:
                 $this->ajaxReturn(['status' => 1]);
         }
+    }
+
+    /**
+     * 公告列表
+     * @return mixed
+     */
+    public function announceList()
+    {
+        $count = M('announce')->count();
+        $page = new Page($count, 10);
+        $announceModel = new AnnounceModel();
+        $announceList = $announceModel->limit($page->firstRow . ',' . $page->listRows)->order('create_time DESC')->select();
+        $this->assign('announce_list', $announceList);
+        $this->assign('page', $page);
+        return $this->fetch('announce_list');
+    }
+
+    /**
+     * 公告内容
+     * @return mixed
+     */
+    public function announceInfo()
+    {
+        if ($this->request->isPost()) {
+            $data = $this->request->post();
+            $result = $this->validate($data, 'Article.announce', [], true);
+            if (true !== $result) {
+                // 验证失败 输出错误信息
+                $validate_error = '';
+                foreach ($result as $key => $value) {
+                    $validate_error .= $value . ',';
+                }
+                $this->ajaxReturn(['status' => 0, 'msg' => $validate_error]);
+            }
+            if (!empty($data['announce_id'])) {
+                M('announce')->where(['id' => $data['announce_id']])->update($data);
+            } else {
+                unset($data['announce_id']);
+                $data['create_time'] = time();
+                M('announce')->add($data);
+            }
+            $this->ajaxReturn(['status' => 1, 'msg' => '操作成功']);
+        }
+        $announceId = I('announce_id', '');
+        if ($announceId) {
+            $announce = new AnnounceModel();
+            $announceInfo = $announce->with('goods,specGoodsPrice')->find($announceId);
+            $this->assign('announce_info', $announceInfo);
+        }
+        return $this->fetch('announce_info');
+    }
+
+    /**
+     * 删除公告
+     */
+    public function announceDel()
+    {
+        $announceId = I('announce_id', '');
+        M('announce')->where(['id' => $announceId])->delete();
+        $this->ajaxReturn(['status' => 1, 'msg' => '删除成功']);
     }
 }

@@ -29,14 +29,10 @@ class ArticleLogic extends Model
      *
      * @return array
      */
-    public function getUserArticleCount($userToken = null)
+    public function getUserArticleCount($userId = '')
     {
-        if (session('user')) {
+        if (!$userId) {
             $userId = session('user')['user_id'];
-        } elseif ($userToken) {
-            $userId = Db::name('users')->where('token', $userToken)->value('user_id');
-        } else {
-            return [];
         }
         $this->checkPublicArticle();
         $user_system_article_no_read_where = [
@@ -622,7 +618,7 @@ class ArticleLogic extends Model
         $articleList = M('article')->where($where)
             ->where(function ($query) use ($whereOr) {
                 $query->whereOr($whereOr);
-            })->field('article_id, cat_id, title')->select();
+            })->field('article_id, title')->select();
         return $articleList;
     }
 }

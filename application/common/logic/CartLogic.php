@@ -276,9 +276,11 @@ class CartLogic extends Model
         if ($userCartCount >= 50) {
             return ['status' => -9, 'msg' => '购物车最多只能放50种商品', 'result' => ''];
         }
-        $specGoodsPriceCount = Db::name('SpecGoodsPrice')->where('goods_id', $this->goods['goods_id'])->count('item_id');
-        if (empty($this->specGoodsPrice) && !empty($specGoodsPriceCount)) {
-            return ['status' => -1, 'msg' => '必须传递商品规格', 'result' => ''];
+        $itemId = Db::name('SpecGoodsPrice')->where('goods_id', $this->goods['goods_id'])->field('item_id')->find();
+        if (empty($this->specGoodsPrice) && !empty($itemId)) {
+//            return ['status' => -1, 'msg' => '必须传递商品规格', 'result' => ''];
+            // 默认第一个商品规格
+            $this->setSpecGoodsPriceModel($itemId);
         }
         //有商品规格，和没有商品规格
         if ($this->specGoodsPrice) {

@@ -167,7 +167,11 @@ class Article
             return json(['status' => 0, 'msg' => '参数错误']);
         }
         $articleList = (new ArticleLogic())->getArticleListByCateId($cateId, $keyword);
-        return json(['status' => 1, 'result' => $articleList]);
+        // 由于APP不能解析文章content的html标签，所以直接返回H5的地址给APP
+        foreach ($articleList as $key => $item) {
+            $articleList[$key]['article_url'] = SITE_URL . '/#/member/help_particulars?article_id=' . $item['article_id'];
+        }
+        return json(['status' => 1, 'result' => ['list' => $articleList]]);
     }
 
     /**
@@ -180,10 +184,8 @@ class Article
         if (!$articleId) {
             return json(['status' => 0, 'msg' => '参数错误']);
         }
-        // 由于APP不能解析文章content的html标签，所以直接返回H5的地址给APP
-        $return = [
-            'article_url' => SITE_URL . '/#/member/help_particulars?article_id=' . $articleId
-        ];
+        $article = M('article')->where(['article_id' => $articleId, 'is_open' => 1])->field('article_id, title, content')->find();
+        $return = $article;
         return json(['status' => 1, 'result' => $return]);
     }
 }
