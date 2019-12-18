@@ -129,6 +129,10 @@ class UsersLogic extends Model
 
         $invite_uid = M('Users')->where('user_id', $user_id)->getField('invite_uid');
         $referee_user_id = $this->nk($invite_uid, 3);
+        if (!empty($data['referee_user_id']) && $data['referee_user_id'] !== $referee_user_id) {
+            $this->error = '推荐人信息有误';
+            return false;
+        }
 
         $apply_customs = M('apply_customs')->where(array('user_id' => $user_id))->find();
         $add_data = array(

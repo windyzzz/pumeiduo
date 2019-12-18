@@ -39,6 +39,27 @@
                     <p class="notic"></p>
                 </dd>
             </dl>
+            <dl class="row imgtr">
+                <dt class="tit">
+                    <label for="mark_img">金卡封面图</label>
+                </dt>
+                <dd class="opt">
+                    <div class="input-file-show">
+                        <span class="show">
+                            <a id="img_a" class="nyroModal" rel="gal" href="{$config.apply_card_cover}">
+                                <i id="img_i" class="fa fa-picture-o" onmouseover="layer.tips('<img src={$config.apply_card_cover}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();"></i>
+                            </a>
+                        </span>
+                        <span class="type-file-box">
+                            <input type="text"  name="apply_card_cover" id="apply_card_cover" value="{$config.apply_card_cover}" class="type-file-text">
+                            <input type="button" name="button" id="button1" value="选择上传..." class="type-file-button">
+                            <input class="type-file-file" onClick="GetUploadify(1,'','apply_card','call_back');" size="30" hidefocus="true" nc_type="change_site_logo" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">
+                        </span>
+                    </div>
+                    <span class="err"></span>
+                    <p class="notic">金卡封面图</p>
+                </dd>
+            </dl>
             <dl class="row">
                 <dt class="tit">
                     <label for="reg_integral">会员注册赠送积分</label>
@@ -260,6 +281,12 @@
             return false;
         }
         document.form1.submit();
+    }
+    // 上传金卡封面图成功回调函数
+    function call_back(fileurl_tmp){
+        $("#apply_card_cover").val(fileurl_tmp);
+        $("#img_a").attr('href', fileurl_tmp);
+        $("#img_i").attr('onmouseover', "layer.tips('<img src="+fileurl_tmp+">',this,{tips: [1, '#fff']});");
     }
 </script>
 <div id="goTop">
