@@ -143,6 +143,7 @@ class UsersLogic extends Model
             'add_time' => NOW_TIME,
             'referee_user_id' => $referee_user_id,
             'status' => 0,
+            'success_time' => 0,
             'cancel_time' => 0,
         );
 
