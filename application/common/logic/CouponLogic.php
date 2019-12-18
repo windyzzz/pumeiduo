@@ -191,25 +191,24 @@ class CouponLogic extends Model
     }
 
     /**
-     * 获取用户可用的优惠券.
-     *
-     * @param $user_id |用户id
-     * @param array $goods_ids |限定商品ID数组
-     * @param array $goods_cat_id ||限定商品分类ID数组
-     *
+     * 获取用户可用的优惠券
+     * @param $user_id
+     * @param array $goods_ids
+     * @param array $goods_cat_id
      * @return array
      */
     public function getUserAbleCouponList($user_id, $goods_ids = [], $goods_cat_id = [])
     {
-//        $goods_list = M('goods')->where('goods_id', 'in', $goods_ids)->select();
-//        foreach ($goods_list as $key => $value) {
-//            if ($value['prom_id'] > 0) {
-//                return [];
-//            }
-//            if (3 == $value['zone']) {
-//                return [];
-//            }
-//        }
+        $goods_list = M('goods')->where('goods_id', 'in', $goods_ids)->select();
+        foreach ($goods_list as $key => $value) {
+            if ($value['prom_type'] == 1) {
+                // 秒杀商品不能使用优惠券
+                return [];
+            }
+            if (3 == $value['zone']) {
+                return [];
+            }
+        }
         $CouponList = new CouponList();
         $Coupon = new Coupon();
         $userCouponArr = [];
@@ -228,57 +227,61 @@ class CouponLogic extends Model
         foreach ($userCouponList as $userCoupon => $userCouponItem) {
             foreach ($couponList as $coupon => $couponItem) {
                 if ($userCouponItem['cid'] == $couponItem['id']) {
-                    switch ($couponItem['use_type']) {
-                        case 0:
-                            // 全店通用
-                            $tmp = $userCouponItem;
-                            $tmp['coupon'] = $couponItem->append(['use_type_title'])->toArray();
-                            $userCouponArr[] = $tmp;
-                            break;
-                        case 1:
-                            // 限定商品
-                            if (!empty($couponItem['goods_coupon'])) {
-                                foreach ($couponItem['goods_coupon'] as $goodsCoupon => $goodsCouponItem) {
-                                    if (in_array($goodsCouponItem['goods_id'], $goods_ids)) {
-                                        $tmp = $userCouponItem;
-                                        $tmp['coupon'] = array_merge($couponItem->append(['use_type_title'])->toArray(), $goodsCouponItem->toArray());
-                                        $userCouponArr[] = $tmp;
-                                        break;
+                    if ($couponItem['is_usual'] == 1) {
+                        switch ($couponItem['use_type']) {
+                            case 0:
+                                // 全店通用
+                                $tmp = $userCouponItem;
+                                $tmp['coupon'] = $couponItem->append(['use_type_title'])->toArray();
+                                $userCouponArr[] = $tmp;
+                                break;
+                            case 1:
+                                // 限定商品
+                                if (!empty($couponItem['goods_coupon'])) {
+                                    foreach ($couponItem['goods_coupon'] as $goodsCoupon => $goodsCouponItem) {
+                                        if (in_array($goodsCouponItem['goods_id'], $goods_ids)) {
+                                            $tmp = $userCouponItem;
+                                            $tmp['coupon'] = array_merge($couponItem->append(['use_type_title'])->toArray(), $goodsCouponItem->toArray());
+                                            $userCouponArr[] = $tmp;
+                                            break;
+                                        }
                                     }
                                 }
-                            }
-                            break;
-                        case 2:
-                            // 限定商品类型
-                            if (!empty($couponItem['goods_coupon'])) {
-                                foreach ($couponItem['goods_coupon'] as $goodsCoupon => $goodsCouponItem) {
-                                    if (in_array($goodsCouponItem['goods_category_id'], $goods_cat_id)) {
-                                        $tmp = $userCouponItem;
-                                        $tmp['coupon'] = array_merge($couponItem->append(['use_type_title'])->toArray(), $goodsCouponItem->toArray());
-                                        $userCouponArr[] = $tmp;
-                                        break;
+                                break;
+                            case 2:
+                                // 限定商品类型
+                                if (!empty($couponItem['goods_coupon'])) {
+                                    foreach ($couponItem['goods_coupon'] as $goodsCoupon => $goodsCouponItem) {
+                                        if (in_array($goodsCouponItem['goods_category_id'], $goods_cat_id)) {
+                                            $tmp = $userCouponItem;
+                                            $tmp['coupon'] = array_merge($couponItem->append(['use_type_title'])->toArray(), $goodsCouponItem->toArray());
+                                            $userCouponArr[] = $tmp;
+                                            break;
+                                        }
                                     }
                                 }
-                            }
-                            break;
-                        case 4:
-                            //
-                            if (!empty($couponItem['goods_coupon'])) {
-                                foreach ($couponItem['goods_coupon'] as $goodsCoupon => $goodsCouponItem) {
-                                    if (in_array($goodsCouponItem['goods_id'], $goods_ids)) {
-                                        $tmp = $userCouponItem;
-                                        $tmp['coupon'] = array_merge($couponItem->append(['use_type_title'])->toArray(), $goodsCouponItem->toArray());
-                                        $userCouponArr[] = $tmp;
-                                        break;
+                                break;
+                            case 4:
+                                //
+                                if (!empty($couponItem['goods_coupon'])) {
+                                    foreach ($couponItem['goods_coupon'] as $goodsCoupon => $goodsCouponItem) {
+                                        if (in_array($goodsCouponItem['goods_id'], $goods_ids)) {
+                                            $tmp = $userCouponItem;
+                                            $tmp['coupon'] = array_merge($couponItem->append(['use_type_title'])->toArray(), $goodsCouponItem->toArray());
+                                            $userCouponArr[] = $tmp;
+                                            break;
+                                        }
                                     }
                                 }
-                            }
-                            break;
-                        case 5:
-                            //
-                            break;
-                        default:
-                            return [];
+                                break;
+                            case 5:
+                                //
+                                break;
+                            default:
+                                return [];
+                        }
+                    } else {
+
                     }
                 }
             }
@@ -287,17 +290,25 @@ class CouponLogic extends Model
         return $userCouponArr;
     }
 
+    /**
+     * 用户可用的兑换券
+     * @param $user_id
+     * @param array $goods_ids
+     * @param array $goods_cat_id
+     * @return array
+     */
     public function getUserAbleCouponListRe($user_id, $goods_ids = [], $goods_cat_id = [])
     {
-//        $goods_list = M('goods')->where('goods_id', 'in', $goods_ids)->select();
-//        foreach ($goods_list as $key => $value) {
-//            if ($value['prom_id'] > 0) {
-//                return [];
-//            }
-//            if (3 == $value['zone']) {
-//                return [];
-//            }
-//        }
+        $goods_list = M('goods')->where('goods_id', 'in', $goods_ids)->select();
+        foreach ($goods_list as $key => $value) {
+            if ($value['prom_type'] == 1) {
+                // 秒杀商品不能使用优惠券
+                return [];
+            }
+            if (3 == $value['zone']) {
+                return [];
+            }
+        }
         $CouponList = new CouponList();
         $Coupon = new Coupon();
         $userCouponArr = [];

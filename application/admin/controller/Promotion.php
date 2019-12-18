@@ -714,7 +714,7 @@ class Promotion extends Base
             if (3 == $prom_type) {
                 //优惠促销
                 if ($prom_id) {
-                    $query->where(['prom_id' => $prom_id, 'prom_type' => 3])->whereor('prom_id', 0);
+                    $query->where(['prom_id' => $prom_id, 'prom_type' => $prom_type])->whereor('prom_id', 0);
                 } else {
                     $query->where('prom_type', 0);
                 }
@@ -733,7 +733,7 @@ class Promotion extends Base
             if (3 == $prom_type) {
                 //优惠促销
                 if ($prom_id) {
-                    $query->where(['prom_id' => $prom_id, 'prom_type' => 3])->whereor('prom_id', 0);
+                    $query->where(['prom_id' => $prom_id, 'prom_type' => $prom_type])->whereor('prom_id', 0);
                 } else {
                     $query->where('prom_type', 0);
                 }

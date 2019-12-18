@@ -79,6 +79,7 @@ class Coupon extends Base
             $def['use_start_time'] = strtotime('+1 day');
             $def['use_end_time'] = strtotime('+2 month');
             $def['type_value_arr'] = [];
+            $def['status'] = 1;
 
             $this->assign('coupon', $def);
         }

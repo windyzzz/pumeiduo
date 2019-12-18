@@ -939,7 +939,10 @@ class Order extends Base
             return json(['status' => 0, 'msg' => '参数错误']);
         }
         $orderLogic = new OrderLogic();
+        // 订单商品
         $orderGoods = $orderLogic->getOrderGoodsById($returnGoods['rec_id']);
+        // 订单数据
+        $order = M('order')->where(['order_id' => $orderGoods['order_id']])->find();
         $return = [
             'order_goods' => [
                 'rec_id' => $orderGoods['rec_id'],
@@ -953,10 +956,11 @@ class Order extends Base
             ],
             'type' => $returnGoods['type'],
             'status' => $returnGoods['status'],
-            'verify_time' => $returnGoods['addtime'] + tpCache('shopping.return_verify_date') * 24 * 60 * 60,
+            'verify_time' => $returnGoods['addtime'] + tpCache('shopping.return_verify_date') * 24 * 60 * 60,   // 审核完毕时间
             'verify_remark' => $returnGoods['remark'],
+            'refund_time' => $returnGoods['refund_time'],
             'return_contact' => tpCache('shop_info.contact'),
-            'return_mobile' => tpCache('shop_info.mobile')
+            'return_mobile' => tpCache('shop_info.mobile'),
         ];
         $provinceName = Db::name('region2')->where(['id' => tpCache('shop_info.province')])->value('name');
         $cityName = Db::name('region2')->where(['id' => tpCache('shop_info.city')])->value('name');
@@ -975,6 +979,8 @@ class Order extends Base
         $return['goods_num'] = $returnGoods['goods_num'];
         $return['order_sn'] = Db::name('order')->where(['order_id' => $orderGoods['order_id']])->value('order_sn');
         $return['addtime'] = $returnGoods['addtime'];
+        $return['pay_code'] = $order['pay_code'];
+        $return['pay_name'] = $order['pay_name'];
         return json(['status' => 1, 'result' => $return]);
     }
 
@@ -1364,8 +1370,8 @@ class Order extends Base
             $cartLogic->setCartType(0);
             try {
                 $buyGoods = $cartLogic->buyNow();
-            } catch (TpshopException $t) {
-                $error = $t->getErrorArr();
+            } catch (TpshopException $tpE) {
+                $error = $tpE->getErrorArr();
                 return json(['status' => 0, 'msg' => $error['msg']]);
             }
             $cartList['cartList'] = [$buyGoods];
@@ -1392,29 +1398,29 @@ class Order extends Base
             /*
              * 单个商品 + 购物车 下单
              */
-            $cartIds = explode(',', $cartIds);
-            $goodsInfo = $cartLogic->getCartGoods($cartIds, 'c.goods_id, sgp.item_id, c.goods_num, c.type pay_type');
-            $goodsInfo[] = [
-                'goods_id' => $goodsId,
-                'item_id' => $itemId,
-                'goods_num' => $goodsNum,
-                'pay_type' => $payType
-            ];
-            $buyGoods = [];
-            foreach ($goodsInfo as $goods) {
-                $cartLogic->setGoodsModel($goods['goods_id']);
-                $cartLogic->setSpecGoodsPriceModel($goods['item_id']);
-                $cartLogic->setGoodsBuyNum($goods['goods_num']);
-                $cartLogic->setType($goods['pay_type']);
-                $cartLogic->setCartType(0);
-                try {
-                    $buyGoods[] = $cartLogic->buyNow();
-                } catch (TpshopException $t) {
-                    $error = $t->getErrorArr();
-                    return json(['status' => 0, 'msg' => $error['msg']]);
-                }
-            }
-            $cartList['cartList'] = $buyGoods;
+//            $cartIds = explode(',', $cartIds);
+//            $goodsInfo = $cartLogic->getCartGoods($cartIds, 'c.goods_id, sgp.item_id, c.goods_num, c.type pay_type');
+//            $goodsInfo[] = [
+//                'goods_id' => $goodsId,
+//                'item_id' => $itemId,
+//                'goods_num' => $goodsNum,
+//                'pay_type' => $payType
+//            ];
+//            $buyGoods = [];
+//            foreach ($goodsInfo as $goods) {
+//                $cartLogic->setGoodsModel($goods['goods_id']);
+//                $cartLogic->setSpecGoodsPriceModel($goods['item_id']);
+//                $cartLogic->setGoodsBuyNum($goods['goods_num']);
+//                $cartLogic->setType($goods['pay_type']);
+//                $cartLogic->setCartType(0);
+//                try {
+//                    $buyGoods[] = $cartLogic->buyNow();
+//                } catch (TpshopException $tpE) {
+//                    $error = $tpE->getErrorArr();
+//                    return json(['status' => 0, 'msg' => $error['msg']]);
+//                }
+//            }
+//            $cartList['cartList'] = $buyGoods;
         }
         $cartPriceInfo = $cartLogic->getCartPriceInfo($cartList['cartList']);  //初始化数据 商品总额/节约金额/商品总共数量/商品使用积分
         $cartList = array_merge($cartList, $cartPriceInfo);
@@ -1427,6 +1433,7 @@ class Order extends Base
         $userCouponList = $couponLogic->getUserAbleCouponList($this->user_id, $cartGoodsId, $cartGoodsCatId);
 //        $userCouponList = $cartLogic->getCouponCartList($cartList, $userCouponList);
         $couponList = [];
+        $hasSelected = false;
         foreach ($userCouponList as $k => $coupon) {
             $couponList[$k] = [
                 'coupon_id' => $coupon['coupon']['id'],
@@ -1438,10 +1445,10 @@ class Order extends Base
             ];
             if ($coupon['coupon']['id'] == $couponId) {
                 $couponList[$k]['is_selected'] = 1;
+                $hasSelected = true;
             }
         }
-        $couponSelected = get_arr_column($couponList, 'is_selected');
-        if (!in_array(1, $couponSelected)) {
+        if (!$hasSelected && !empty($couponList)) {
             $couponId = $couponList[0]['coupon_id'];    // 默认选中第一张
         }
         // 用户可用的兑换券列表
@@ -1458,77 +1465,81 @@ class Order extends Base
                 'is_selected' => $coupon['coupon']['id'] == $couponId ? 1 : 0
             ];
         }
-        $payLogic = new Pay();
-        $payLogic->setUserId($this->user_id);   // 设置支付用户ID
-        // 计算购物车价格
-        $payLogic->payCart($cartList['cartList']);
-        // 检测支付商品购买限制
-        $payLogic->check();
-        // 参与活动促销 加价购活动
+        try {
+            $payLogic = new Pay();
+            $payLogic->setUserId($this->user_id);   // 设置支付用户ID
+            // 计算购物车价格
+            $payLogic->payCart($cartList['cartList']);
+            // 检测支付商品购买限制
+            $payLogic->check();
+            // 参与活动促销 加价购活动
 //        $payLogic->activityPayBefore();
-        $payLogic->goodsPromotion();
+            $payLogic->goodsPromotion();
 
-        // 配送物流
-        if (empty($userAddress)) {
-            $payLogic->delivery(0);
-        } else {
-            $payLogic->delivery($userAddress[0]['district']);
-        }
-        $pay_points = $payLogic->getUsePoint();     // 使用积分
-        if ($this->user['pay_points'] < $pay_points) {
-            return json(['status' => 0, 'msg' => '用户消费积分只有' . $this->user['pay_points']]);
-        }
-        $payLogic->usePayPoints($pay_points);
-
-        $give_integral = 0;             // 赠送积分
-        $weight = 0;                    // 产品重量
-        $order_prom_fee = 0;            // 订单优惠促销总价
-        foreach ($cartList['cartList'] as $v) {
-            $goodsInfo = M('Goods')->field('give_integral, weight')->where('goods_id', $v['goods_id'])->find();
-            $give_integral += $goodsInfo['give_integral'];
-            $weight += $goodsInfo['weight'];
-            if (isset($v['is_order_prom']) && $v['is_order_prom'] == 1) {
-                $order_prom_fee += ($v['use_integral'] + $v['member_goods_price']) * $v['goods_num'];
-            }
-        }
-
-        $payLogic->activity();      // 满单赠品
-        $payLogic->activity2New($order_prom_fee);     // 指定商品赠品 / 订单优惠赠品
-        $payLogic->activity3();     // 订单优惠促销
-
-        // 使用优惠券
-        if (isset($couponId) && $couponId > 0) {
-            $payLogic->useCouponById($couponId, $payLogic->getPayList());
-        }
-        // 支付数据
-        $payReturn = $payLogic->toArray();
-        // 商品列表 赠品列表
-        $payList = collection($payLogic->getPayList())->toArray();
-        $goodsList = [];
-        $giftList = $payLogic->getPromGiftList();
-        foreach ($payList as $k => $list) {
-            // 商品列表
-            $goods = $list['goods'];
-            $goodsList[$k] = [
-                'goods_id' => $goods['goods_id'],
-                'goods_sn' => $goods['goods_sn'],
-                'goods_name' => $goods['goods_name'],
-                'goods_remark' => $goods['goods_remark'],
-                'spec_key_name' => $goods['spec_key_name'],
-                'original_img' => $goods['original_img'],
-                'goods_num' => $list['goods_num'],
-                'shop_price' => $goods['shop_price'],
-                'exchange_integral' => $list['use_integral'],
-            ];
-            // 处理显示金额
-            if ($list['use_integral'] != 0) {
-                $goodsList[$k]['exchange_price'] = bcdiv(bcsub(bcmul($list['goods']['shop_price'], 100), bcmul($list['use_integral'], 100)), 100, 2);
+            // 配送物流
+            if (empty($userAddress)) {
+                $payLogic->delivery(0);
             } else {
-                $goodsList[$k]['exchange_price'] = $list['goods']['shop_price'];
+                $payLogic->delivery($userAddress[0]['district']);
             }
-            if (isset($list['gift_goods'])) {
-                $goodsList[$k]['gift_goods'] = $list['gift_goods'];
+            $pay_points = $payLogic->getUsePoint();     // 使用积分
+            if ($this->user['pay_points'] < $pay_points) {
+                return json(['status' => 0, 'msg' => '用户消费积分只有' . $this->user['pay_points']]);
             }
+            $payLogic->usePayPoints($pay_points);
+
+            $give_integral = 0;             // 赠送积分
+            $weight = 0;                    // 产品重量
+            $order_prom_fee = 0;            // 订单优惠促销总价
+            foreach ($cartList['cartList'] as $v) {
+                $goodsInfo = M('Goods')->field('give_integral, weight')->where('goods_id', $v['goods_id'])->find();
+                $give_integral += $goodsInfo['give_integral'];
+                $weight += $goodsInfo['weight'];
+                if (isset($v['is_order_prom']) && $v['is_order_prom'] == 1) {
+                    $order_prom_fee += ($v['use_integral'] + $v['member_goods_price']) * $v['goods_num'];
+                }
+            }
+
+            $payLogic->activity();      // 满单赠品
+            $payLogic->activity2New($order_prom_fee);     // 指定商品赠品 / 订单优惠赠品
+            $payLogic->activity3();     // 订单优惠促销
+
+            // 使用优惠券
+            if (isset($couponId) && $couponId > 0) {
+                $payLogic->useCouponById($couponId, $payLogic->getPayList());
+            }
+            // 支付数据
+            $payReturn = $payLogic->toArray();
+            // 商品列表 赠品列表
+            $payList = collection($payLogic->getPayList())->toArray();
+            $goodsList = [];
+            $giftList = $payLogic->getPromGiftList();
+            foreach ($payList as $k => $list) {
+                // 商品列表
+                $goods = $list['goods'];
+                $goodsList[$k] = [
+                    'goods_id' => $goods['goods_id'],
+                    'goods_sn' => $goods['goods_sn'],
+                    'goods_name' => $goods['goods_name'],
+                    'goods_remark' => $goods['goods_remark'],
+                    'spec_key_name' => $goods['spec_key_name'],
+                    'original_img' => $goods['original_img'],
+                    'goods_num' => $list['goods_num'],
+                    'shop_price' => $goods['shop_price'],
+                    'exchange_integral' => $list['use_integral'],
+                ];
+                // 处理显示金额
+                if ($list['use_integral'] != 0) {
+                    $goodsList[$k]['exchange_price'] = bcdiv(bcsub(bcmul($list['goods']['shop_price'], 100), bcmul($list['use_integral'], 100)), 100, 2);
+                } else {
+                    $goodsList[$k]['exchange_price'] = $list['goods']['shop_price'];
+                }
+                if (isset($list['gift_goods'])) {
+                    $goodsList[$k]['gift_goods'] = $list['gift_goods'];
+                }
+            }
+        } catch (TpshopException $tpE) {
+            return json($tpE->getErrorArr());
         }
         // 组合数据
         $return = [
@@ -1608,8 +1619,8 @@ class Order extends Base
             $cartLogic->setCartType(0);
             try {
                 $buyGoods = $cartLogic->buyNow();
-            } catch (TpshopException $t) {
-                $error = $t->getErrorArr();
+            } catch (TpshopException $tpE) {
+                $error = $tpE->getErrorArr();
                 return json(['status' => 0, 'msg' => $error['msg']]);
             }
             $cartList['cartList'] = [$buyGoods];
@@ -1637,50 +1648,53 @@ class Order extends Base
              * 单个商品 + 购物车 下单
              */
         }
-        $payLogic = new Pay();
-        $payLogic->setUserId($this->user_id);   // 设置支付用户ID
-        // 计算购物车价格
-        $payLogic->payCart($cartList['cartList']);
-        // 检测支付商品购买限制
-        $payLogic->check();
-        // 参与活动促销 加价购活动
+        try {
+            $payLogic = new Pay();
+            $payLogic->setUserId($this->user_id);   // 设置支付用户ID
+            // 计算购物车价格
+            $payLogic->payCart($cartList['cartList']);
+            // 检测支付商品购买限制
+            $payLogic->check();
+            // 参与活动促销 加价购活动
 //        $payLogic->activityPayBefore();
-        $payLogic->goodsPromotion();
+            $payLogic->goodsPromotion();
 
-        // 配送物流
-        if (empty($userAddress)) {
-            $payLogic->delivery(0);
-        } else {
-            $payLogic->delivery($userAddress[0]['district']);
-        }
-        $pay_points = $payLogic->getUsePoint();     // 使用积分
-        if ($this->user['pay_points'] < $pay_points) {
-            return json(['status' => 0, 'msg' => '用户消费积分只有' . $this->user['pay_points']]);
-        }
-        $payLogic->usePayPoints($pay_points);
-        $payLogic->useUserElectronic($userElectronic);  // 使用电子币
-
-        $order_prom_fee = 0;            // 订单优惠促销总价
-        foreach ($cartList['cartList'] as $v) {
-            if (isset($v['is_order_prom']) && $v['is_order_prom'] == 1) {
-                $order_prom_fee += ($v['use_integral'] + $v['member_goods_price']) * $v['goods_num'];
+            // 配送物流
+            if (empty($userAddress)) {
+                $payLogic->delivery(0);
+            } else {
+                $payLogic->delivery($userAddress[0]['district']);
             }
-        }
+            $pay_points = $payLogic->getUsePoint();     // 使用积分
+            if ($this->user['pay_points'] < $pay_points) {
+                return json(['status' => 0, 'msg' => '用户消费积分只有' . $this->user['pay_points']]);
+            }
+            $payLogic->usePayPoints($pay_points);
+            $payLogic->useUserElectronic($userElectronic);  // 使用电子币
 
-        $payLogic->activity();      // 满单赠品
-        $payLogic->activity2New($order_prom_fee);     // 指定商品赠品 / 订单优惠赠品
-        $payLogic->activity3();     // 订单优惠促销
-        list($prom_type, $prom_id) = $payLogic->getPromInfo();
+            $order_prom_fee = 0;            // 订单优惠促销总价
+            foreach ($cartList['cartList'] as $v) {
+                if (isset($v['is_order_prom']) && $v['is_order_prom'] == 1) {
+                    $order_prom_fee += ($v['use_integral'] + $v['member_goods_price']) * $v['goods_num'];
+                }
+            }
 
-        // 使用优惠券
-        if (isset($couponId) && $couponId > 0) {
-            $payLogic->useCouponById($couponId, $payLogic->getPayList());
-        }
-        // 使用兑换券
-        if (isset($exchangeId) && $exchangeId > 0) {
-            $payLogic->useCouponByIdRe($exchangeId);
-        }
+            $payLogic->activity();      // 满单赠品
+            $payLogic->activity2New($order_prom_fee);     // 指定商品赠品 / 订单优惠赠品
+            $payLogic->activity3();     // 订单优惠促销
+            list($prom_type, $prom_id) = $payLogic->getPromInfo();
 
+            // 使用优惠券
+            if (isset($couponId) && $couponId > 0) {
+                $payLogic->useCouponById($couponId, $payLogic->getPayList());
+            }
+            // 使用兑换券
+            if (isset($exchangeId) && $exchangeId > 0) {
+                $payLogic->useCouponByIdRe($exchangeId);
+            }
+        } catch (TpshopException $tpE) {
+            return json($tpE->getErrorArr());
+        }
         // 创建订单
         try {
             Db::startTrans();

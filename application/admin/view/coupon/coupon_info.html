@@ -100,7 +100,7 @@
             </dl>
             <dl class="row">
                 <dt class="tit">
-                    <label><em>*</em>可使用商品：</label>
+                    <label><em>*</em>可使用商品</label>
                 </dt>
                 <dd class="opt">
                     <label>
@@ -247,14 +247,23 @@
                     <p class="notic">使用结束日期</p>
                 </dd>
             </dl>
-
             <dl class="row">
                 <dt class="tit">
-                    <label>状态</label>
+                    <label><em>*</em>状态</label>
                 </dt>
                 <dd class="opt">
-                    <input name="status" type="radio" value="1" <if condition="$coupon['status'] neq 2">checked</if> ><label>有效</label>
+                    <input name="status" type="radio" value="1" <if condition="$coupon['status'] eq 1">checked</if> ><label>有效</label>
                     <input name="status" type="radio" value="2" <if condition="$coupon['status'] eq 2">checked</if> ><label>无效</label>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>是否可叠加优惠</label>
+                    <p class="notic">（不与商品优惠促销、订单优惠促销冲突）</p>
+                </dt>
+                <dd class="opt">
+                    <input name="is_usual" type="radio" value="0" <if condition="$coupon['is_usual'] eq 0">checked</if> ><label>不可以</label>
+                    <input name="is_usual" type="radio" value="1" <if condition="$coupon['is_usual'] eq 1">checked</if> ><label>可以</label>
                 </dd>
             </dl>
             <dl class="row">

@@ -867,33 +867,37 @@ class Pay
     public function useCouponById($coupon_id, $getPayList = array())
     {
         if ($coupon_id > 0) {
-            list($prom_type, $prom_id) = $this->getPromInfo();
-            if ($prom_type != 6 && $prom_id > 0) {
+//            list($prom_type, $prom_id) = $this->getPromInfo();
+//            if ($prom_type != 6 && $prom_id > 0) {
 //                throw new TpshopException('计算订单价格', 0, ['status' => -1, 'msg' => '现金券不能参与活动商品使用！', 'result' => ['']]);
-            }
+//            }
             $couponList = new CouponList();
             $where = array(
                 'uid' => $this->user['user_id'],
-                'id' => $coupon_id
+                'cid' => $coupon_id
             );
             $userCoupon = $couponList->where($where)->find();
             if ($userCoupon) {
                 $coupon = Db::name('coupon')->where(['id' => $userCoupon['cid'], 'status' => 1])->find(); // 获取有效优惠券类型表
-                if ($coupon && $coupon['use_type'] != 5) {
+                if ($coupon) {
                     $this->couponId = $coupon_id;
-                    //优惠券金额
-                    if ($coupon['use_type'] == 4) {
-                        $this->couponPrice = 0;
-                        $goods_ids = Db::name('goods_coupon')->where(array('coupon_id' => $userCoupon['cid']))->getField('goods_id', true);
-                        foreach ($getPayList as $k => $v) {
-                            if (in_array($v['goods_id'], $goods_ids)) {
-                                $dis_price = bcmul(bcdiv(bcmul($v['member_goods_price'], $coupon['money'], 2), 10, 2), $v['goods_num'], 2);
-                                $couponPrice = bcsub(bcmul($v['member_goods_price'], $v['goods_num'], 2), $dis_price, 2);
-                                $this->couponPrice = bcadd($this->couponPrice, $couponPrice, 2);
+                    switch ($coupon['use_type']) {
+                        case 0:
+                        case 1:
+                        case 2:
+                            $this->couponPrice = $coupon['money'];
+                            break;
+                        case 4:
+                            $this->couponPrice = 0;
+                            $goods_ids = Db::name('goods_coupon')->where(array('coupon_id' => $userCoupon['cid']))->getField('goods_id', true);
+                            foreach ($getPayList as $k => $v) {
+                                if (in_array($v['goods_id'], $goods_ids)) {
+                                    $dis_price = bcmul(bcdiv(bcmul($v['member_goods_price'], $coupon['money'], 2), 10, 2), $v['goods_num'], 2);
+                                    $couponPrice = bcsub(bcmul($v['member_goods_price'], $v['goods_num'], 2), $dis_price, 2);
+                                    $this->couponPrice = bcadd($this->couponPrice, $couponPrice, 2);
+                                }
                             }
-                        }
-                    } else {
-                        $this->couponPrice = $coupon['money'];
+                            break;
                     }
                     $this->orderAmount = $this->orderAmount - $this->couponPrice;
                 }
@@ -904,23 +908,18 @@ class Pay
     public function useCouponByIdRe($coupon_id_str)
     {
         if ($coupon_id_str) {
-            list($prom_type, $prom_id) = $this->getPromInfo();
-            /*if ($prom_type != 6 && $prom_id > 0) {
-                throw new TpshopException('计算订单价格', 0, ['status' => -1, 'msg' => '现金券不能参与活动商品使用！', 'result' => ['']]);
-            }*/
-            $couponList = new CouponList();
-
+//            list($prom_type, $prom_id) = $this->getPromInfo();
+//            if ($prom_type != 6 && $prom_id > 0) {
+//                throw new TpshopException('计算订单价格', 0, ['status' => -1, 'msg' => '现金券不能参与活动商品使用！', 'result' => ['']]);
+//            }
             $coupon_id_arr = explode(',', $coupon_id_str);
             $coupon_ids_arr = array();
-
             foreach ($coupon_id_arr as $kfdd => $coupon_id) {
                 $where = array(
                     'uid' => $this->user['user_id'],
-                    'id' => $coupon_id
+                    'cid' => $coupon_id
                 );
-
                 $userCoupon = M('coupon_list')->where($where)->find();
-
                 if ($userCoupon) {
                     $coupon = Db::name('coupon')->where(['id' => $userCoupon['cid'], 'status' => 1])->find(); // 获取有效优惠券类型表
                     if ($coupon && $coupon['use_type'] == 5) {
@@ -956,17 +955,12 @@ class Pay
                             $buyGoods['re_id'] = $coupon_id;
                             $extra_list[$ak] = $buyGoods;
                         }
-
                         $this->payList = array_merge($this->payList, $extra_list);
                     }
-
                     $this->couponIdRe = implode(',', $coupon_ids_arr);
                 }
             }
-
-
         }
-
     }
 
     /**
@@ -1090,8 +1084,8 @@ class Pay
                             break;
                         }
                     }
-                    $this->payList[$k]['prom_id'] = $group_activity['id'];
-                    $this->payList[$k]['prom_type'] = 10;
+//                    $this->payList[$k]['prom_id'] = $group_activity['id'];
+//                    $this->payList[$k]['prom_type'] = 10;
 
                     $promAmount = 0.00;
                     switch ($group_activity['type']) {
