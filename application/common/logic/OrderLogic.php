@@ -463,7 +463,7 @@ class OrderLogic
         $returnData['is_receive'] = $data['is_receive'] ?? 1;
         $returnData['reason'] = $data['return_reason'] ?? '';
         $returnData['describe'] = $data['describe'] ?? '';
-        $imageArr = !empty($data['image_arr']) ? $data['image_arr'] : [];
+        $imageArr = !empty($data['voucher']) ? $data['voucher'] : [];
 
         $confirmTimeConfig = tpCache('shopping.auto_service_date');   // 后台设置多少天内可申请售后
         $confirmTime = $confirmTimeConfig * 24 * 60 * 60;
