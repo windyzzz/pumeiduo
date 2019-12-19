@@ -1598,6 +1598,9 @@ class Order extends Base
         $payPwd = I('pay_pwd', '');                     // 支付密码
         $userElectronic = I('user_electronic', '');     // 使用电子币
 
+        if (!$this->user['paypwd']) {
+            return json(['status' => 0, 'msg' => '请先设置支付密码']);
+        }
         if (!$addressId) {
             return json(['status' => 0, 'msg' => '请先填写收货人信息']);
         }
@@ -1789,7 +1792,7 @@ class Order extends Base
         $order = Db::name('order o')->join('region2 r1', 'r1.id = o.province', 'LEFT')
             ->join('region2 r2', 'r2.id = o.city', 'LEFT')
             ->join('region2 r3', 'r3.id = o.district', 'LEFT')
-            ->where(['order_id' => $orderId])->field('order_id, order_sn, order_status, pay_status, order_amount,
+            ->where(['order_id' => $orderId])->field('order_id, order_sn, user_id, order_status, pay_status, order_amount,
             consignee, mobile, r1.name province_name, city, r2.name city_name, district, r3.name district_name, address')->find();
         if (empty($order)) {
             return json(['status' => 0, 'msg' => '订单不存在']);
@@ -1800,7 +1803,22 @@ class Order extends Base
         if ($order['city_name'] == '直辖市') {
             $order['city_name'] = '';
         }
+        $order['coupon'] = [];  // 订单赠送优惠券
+        if ($order['pay_status'] == 1) {
+            // 查看订单商品里面是否有vip升级套餐，有就显示赠送的优惠券
+            $level = [];
+            $goods = M('order_goods og')->join('goods g', 'g.goods_id = og.goods_id')->where(['og.order_id' => $orderId])->field('zone, distribut_id')->select();
+            if (3 == $goods['zone'] && $goods['distribut_id'] > 0) {
+                $level[] = $goods['distribut_id'];
+            }
+            if (!empty($level)) {
+                $order['coupon'] = M('coupon c')->join('coupon_list cl', 'cl.cid = c.id')
+                    ->where(['uid' => $order['user_id'], 'get_order_id' => $order['order_id']])
+                    ->field('c.id, c.name')->select();
+            }
+        }
         unset($order['order_status']);
+        unset($order['user_id']);
         return json(['status' => 1, 'result' => $order]);
     }
 }

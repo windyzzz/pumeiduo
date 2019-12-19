@@ -343,7 +343,7 @@ class ActivityLogic extends Model
                     //已经领取过
                     $return = ['status' => 2, 'msg' => '您已领取过该优惠券', 'return_url' => $_SERVER['HTTP_REFERER']];
                 } else {
-                    $data = ['uid' => $user_id, 'get_order_id' => $get_order_id, 'cid' => $id, 'type' => 2, 'send_time' => time(), 'status' => 0];
+                    $data = ['uid' => $user_id, 'get_order_id' => $get_order_id, 'cid' => $id, 'type' => 1, 'send_time' => time(), 'status' => 0];
                     M('coupon_list')->add($data);
                     M('coupon')->where(['id' => $id, 'status' => 1])->setInc('send_num');
                     $return = ['status' => 1, 'msg' => '恭喜您，抢到' . $coupon_info['money'] . '元优惠券!', 'return_url' => $_SERVER['HTTP_REFERER'], 'coupon' => $coupon_info];

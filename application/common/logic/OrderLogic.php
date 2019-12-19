@@ -75,7 +75,7 @@ class OrderLogic
         //检查是否未支付的订单
         if (($order['pay_status'] > 0 || $order['order_status'] > 0) && $order['order_amount'] > 0) {
             if ($_SERVER['SERVER_ADDR'] != '61.238.101.138') {
-                return array('status'=>-1,'msg'=>'支付状态或订单状态不允许','result'=>'');
+                return array('status' => -1, 'msg' => '支付状态或订单状态不允许', 'result' => '');
             }
             //获取记录表信息
             //$log = M('account_log')->where(array('order_id'=>$order_id))->find();
@@ -463,7 +463,7 @@ class OrderLogic
         $returnData['is_receive'] = $data['is_receive'] ?? 1;
         $returnData['reason'] = $data['return_reason'] ?? '';
         $returnData['describe'] = $data['describe'] ?? '';
-        $imageArr = !empty($data['voucher']) ? $data['voucher'] : [];
+        $image = !empty($data['voucher']) ? $data['voucher'] : [];
 
         $confirmTimeConfig = tpCache('shopping.auto_service_date');   // 后台设置多少天内可申请售后
         $confirmTime = $confirmTimeConfig * 24 * 60 * 60;
@@ -471,8 +471,12 @@ class OrderLogic
             return ['status' => 0, 'msg' => '已经超过' . $confirmTimeConfig . '天内退货时间'];
         }
 
-        if (!empty($imageArr) && is_array($imageArr)) {
-            $returnData['imgs'] = implode(',', $imageArr);
+        if (!empty($image)) {
+            if (is_array($image)) {
+                $returnData['imgs'] = implode(',', $image);
+            } else {
+                $returnData['imgs'] = $image;
+            }
         }
         $returnData['addtime'] = time();
         $returnData['user_id'] = $order['user_id'];

@@ -1270,7 +1270,7 @@ class UsersLogic extends Model
 
         $list = [];
         foreach ($account_log as $ak => $av) {
-            $key = date('m', $av['change_time']);
+            $key = date('m', strtotime($av['change_time']));
             $list[$key][] = $av;
         }
 
@@ -1314,7 +1314,7 @@ class UsersLogic extends Model
 
         $list = [];
         foreach ($account_log as $ak => $av) {
-            $key = date('m', $av['change_time']);
+            $key = date('m', strtotime($av['change_time']));
             $list[$key][] = $av;
         }
 

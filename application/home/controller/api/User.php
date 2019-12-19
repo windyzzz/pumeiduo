@@ -1460,6 +1460,16 @@ class User extends Base
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
     }
 
+
+    public function electronicNew()
+    {
+        $type = I('type');
+
+        $userLogic = new UsersLogic();
+        $result = $userLogic->get_electronic_log($this->user_id, $type);
+        print_r($result);
+    }
+
     // 用户余额转电子币
     public function exchangeElectronic()
     {
@@ -1627,6 +1637,16 @@ class User extends Base
         $return['lists'] = $result['result'];
 
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
+    }
+
+
+    public function rechargeNew()
+    {
+        $type = I('type', 0);
+
+        $userLogic = new UsersLogic();
+        $result = $userLogic->get_money_log($this->user_id, $type);
+
     }
 
     /**
@@ -2809,8 +2829,8 @@ class User extends Base
             'invite_uid' => $this->user['invite_uid'],
             'is_distribut' => $this->user['is_distribut'],
             'is_lock' => $this->user['is_lock'],
-            'level' => $this->user['level'],
-            'level_name' => $this->user['level_name'],
+            'level' => $this->user['distribut_level'],
+            'level_name' => M('DistributLevel')->where('level_id', $this->user['distribut_level'])->getField('level_name'),
             'is_not_show_jk' => $this->user['is_not_show_jk'],  // 是否提示加入金卡弹窗
             'has_pay_pwd' => $this->user['paypwd'] ? 1 : 0,
             'is_app' => TokenLogic::getValue('is_app', $this->user['token']) ? 1 : 0,
@@ -2825,10 +2845,10 @@ class User extends Base
                 'user_electronic' => $this->user['user_electronic'],
                 'frozen_electronic' => $this->user['frozen_electronic'],
                 'pay_points' => $this->user['pay_points'],
-                'distribut_number' => $this->user['distribut_level'],
-                'distribut_level' => M('DistributLevel')->where('level_id', $this->user['distribut_level'])->getField('level_name'),
-                'distribut_money' => $this->user['distribut_money'],
-                'will_distribut_money' => isset($will_distribut_money['money']) ? $will_distribut_money['money'] : '0.00'
+                'level' => $this->user['distribut_level'],
+                'level_name' => M('DistributLevel')->where('level_id', $this->user['distribut_level'])->getField('level_name'),
+                'distribute_money' => $this->user['distribut_money'],
+                'will_distribute_money' => isset($will_distribut_money['money']) ? $will_distribut_money['money'] : '0.00'
             ];
         }
         if (I('get.is_invite', null)) {
@@ -2856,6 +2876,28 @@ class User extends Base
         $data['sex'] = C('SEX');
 
         return json(['status' => 1, 'msg' => 'success', 'result' => $data]);
+    }
+
+    /**
+     * 资金信息
+     * @return \think\response\Json
+     */
+    public function userWealthNew()
+    {
+        // 输出资金信息
+        $will_distribute_money = M('RebateLog')->field('SUM(money) as money')->where('user_id', $this->user_id)->where('status', 'in', [1, 2])->find();
+        $return = [
+            'user_money' => $this->user['user_money'],
+            'frozen_money' => $this->user['frozen_money'],
+            'user_electronic' => $this->user['user_electronic'],
+            'frozen_electronic' => $this->user['frozen_electronic'],
+            'pay_points' => $this->user['pay_points'],
+            'level' => $this->user['distribut_level'],
+            'level_name' => M('DistributLevel')->where('level_id', $this->user['distribut_level'])->getField('level_name'),
+            'distribute_money' => $this->user['distribut_money'],
+            'will_distribute_money' => isset($will_distribute_money['money']) ? $will_distribute_money['money'] : '0.00'
+        ];
+        return json(['status' => 1, 'result' => $return]);
     }
 
     /**

@@ -1,9 +1,7 @@
 <?php
 
 /**
- *
  *  微信APP支付回调
- *
  */
 
 // 返回成功xml
@@ -87,8 +85,8 @@ if ($orderInfo) {
 
     //签名统一，则更新数据库
     if ($post_sign == $newSign) {
-        M('order')->where(['order_id', $orderInfo['order_id']])->update(['transaction_id' => $post_data['transaction_id']]);
-//        update_pay_status($orderInfo['order_sn'], ['transaction_id' => $post_data['transaction_id']]); // 修改订单支付状态
+//        M('order')->where(['order_id', $orderInfo['order_id']])->update(['transaction_id' => $post_data['transaction_id']]);
+        update_pay_status($orderInfo['order_sn'], ['transaction_id' => $post_data['transaction_id']]); // 修改订单支付状态
         echo $resSuccessXml;
     }
 } else {

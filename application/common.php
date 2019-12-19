@@ -115,7 +115,7 @@ function update_user_distribut($user_id, $order_id)
     //1.判断购买的商品是否包含升级专区的商品 zone == 3
     //且有且只有distribut_id > 0 的商品才更新用户等级
     foreach ($orderGoodsArr as $v) {
-        $goods_info = M('goods')->field('zone,distribut_id')->where(['goods_id' => $v['goods_id']])->find();
+        $goods_info = M('goods')->field('zone, distribut_id')->where(['goods_id' => $v['goods_id']])->find();
         if (3 == $goods_info['zone'] && $goods_info['distribut_id'] > 0) {
             $level[] = $goods_info['distribut_id'];
         }
@@ -132,10 +132,9 @@ function update_user_distribut($user_id, $order_id)
         M('users')->where('user_id', $user_id)->save($update);
         $order = M('order')->where('order_id', $order_id)->find();
         logDistribut($order['order_sn'], $user_id, $update['distribut_level'], $user_info['distribut_level'], 1);
-
+        //2.2购买vip套餐用户领取优惠券
         $CouponLogic = new \app\common\logic\CouponLogic();
         $CouponLogic->sendNewVipUser($user_id, $order_id);
-
     }
 }
 

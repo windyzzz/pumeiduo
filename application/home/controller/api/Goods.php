@@ -216,7 +216,7 @@ class Goods extends Base
         }
         $goods = Db::name('goods')->where('goods_id', $goods_id)->field('goods_id, cat_id, extend_cat_id, goods_sn, goods_name, goods_type, goods_remark, goods_content, 
             brand_id, store_count, comment_count, market_price, shop_price, cost_price, give_integral, exchange_integral, original_img, limit_buy_num,
-            is_on_sale, is_free_shipping, is_recommend, is_new, is_hot, is_virtual, virtual_indate, click_count')->find();
+            is_on_sale, is_free_shipping, is_recommend, is_new, is_hot, is_virtual, virtual_indate, click_count, zone')->find();
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
@@ -377,6 +377,8 @@ class Goods extends Base
             }
         }
         $goods['freight_free'] = tpCache('shopping.freight_free'); // 全场满多少免运费
+        $goods['can_cart'] = $goods['zone'] == 3 ? 0 : 1;   // 更否加入购物车
+        unset($goods['zone']);
         // 组装数据
         $result['goods'] = $goods;
         // 用户收藏
@@ -1123,7 +1125,8 @@ class Goods extends Base
         $where = [
             'pg.is_open' => 1,
             'pg.is_end' => 0,
-            'pg.end_time' => ['>=', time()]
+            'pg.end_time' => ['>=', time()],
+            'g.is_on_sale' => 1
         ];
         if ($promId) {
             $where['pg.id'] = $promId;
@@ -1132,6 +1135,7 @@ class Goods extends Base
             $return['prom_title'] = '';
         }
         $filter_goods_id = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
+            ->join('goods g', 'g.goods_id = gtg.goods_id')
             ->where($where)->getField('gtg.goods_id', true);
         $filter_goods_id = array_unique($filter_goods_id);
 

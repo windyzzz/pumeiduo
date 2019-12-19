@@ -132,7 +132,7 @@ class Login extends Base
         $params = I('get.');
         $params['user_token'] = $this->userToken;
         // 检查登陆
-//        Hook::exec('app\\home\\behavior\\CheckAuth', 'run', $params);
+        Hook::exec('app\\home\\behavior\\CheckAuth', 'run', $params);
         Url::root('/');
         $return['baseUrl'] = url('/', '', '', true);
         session('invite', I('invite', 0));

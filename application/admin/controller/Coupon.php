@@ -249,6 +249,10 @@ class Coupon extends Base
         $cid = I('cid/d');
         if (IS_POST) {
             $coupon = M('coupon')->where('id', $cid)->find();
+            $coupon['type_value'] = explode(',', $coupon['type_value']);
+            if (in_array(5, $coupon['type_value']) || in_array($coupon['use_type'], array(5))) {
+                return json(['status' => -1, 'msg' => '该优惠券不能发放', 'result' => null]);
+            }
             if ($coupon['createnum'] > 0) {
                 $remain = $coupon['createnum'] - $coupon['send_num']; //剩余派发量
                 if ($remain <= 0) {
@@ -257,10 +261,6 @@ class Coupon extends Base
             }
             if ($coupon['send_num'] > 0) {
                 return json(['status' => -1, 'msg' => $coupon['name'] . '已经发放过了', 'result' => null]);
-            }
-            $coupon['type_value'] = explode(',', $coupon['type_value']);
-            if (in_array(5, $coupon['type_value']) || in_array($coupon['use_type'], array(5))) {
-                return json(['status' => -1, 'msg' => '该优惠券不能发放', 'result' => null]);
             }
             if ($coupon['type_value']) {
                 if (in_array(0, $coupon['type_value'])) {
@@ -279,7 +279,7 @@ class Coupon extends Base
                 }
                 foreach ($user_id as $k => $v) {
                     $time = time();
-                    $insert[] = ['cid' => $cid, 'type' => 1, 'uid' => $v['user_id'], 'send_time' => $time];
+                    $insert[] = ['cid' => $cid, 'type' => 4, 'uid' => $v['user_id'], 'send_time' => $time];
                 }
                 DB::name('coupon_list')->insertAll($insert);
                 M('coupon')->where('id', $cid)->setInc('send_num', $able);
