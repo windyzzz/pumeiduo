@@ -227,61 +227,57 @@ class CouponLogic extends Model
         foreach ($userCouponList as $userCoupon => $userCouponItem) {
             foreach ($couponList as $coupon => $couponItem) {
                 if ($userCouponItem['cid'] == $couponItem['id']) {
-                    if ($couponItem['is_usual'] == 1) {
-                        switch ($couponItem['use_type']) {
-                            case 0:
-                                // 全店通用
-                                $tmp = $userCouponItem;
-                                $tmp['coupon'] = $couponItem->append(['use_type_title'])->toArray();
-                                $userCouponArr[] = $tmp;
-                                break;
-                            case 1:
-                                // 限定商品
-                                if (!empty($couponItem['goods_coupon'])) {
-                                    foreach ($couponItem['goods_coupon'] as $goodsCoupon => $goodsCouponItem) {
-                                        if (in_array($goodsCouponItem['goods_id'], $goods_ids)) {
-                                            $tmp = $userCouponItem;
-                                            $tmp['coupon'] = array_merge($couponItem->append(['use_type_title'])->toArray(), $goodsCouponItem->toArray());
-                                            $userCouponArr[] = $tmp;
-                                            break;
-                                        }
+                    switch ($couponItem['use_type']) {
+                        case 0:
+                            // 全店通用
+                            $tmp = $userCouponItem;
+                            $tmp['coupon'] = $couponItem->append(['use_type_title'])->toArray();
+                            $userCouponArr[] = $tmp;
+                            break;
+                        case 1:
+                            // 限定商品
+                            if (!empty($couponItem['goods_coupon'])) {
+                                foreach ($couponItem['goods_coupon'] as $goodsCoupon => $goodsCouponItem) {
+                                    if (in_array($goodsCouponItem['goods_id'], $goods_ids)) {
+                                        $tmp = $userCouponItem;
+                                        $tmp['coupon'] = array_merge($couponItem->append(['use_type_title'])->toArray(), $goodsCouponItem->toArray());
+                                        $userCouponArr[] = $tmp;
+                                        break;
                                     }
                                 }
-                                break;
-                            case 2:
-                                // 限定商品类型
-                                if (!empty($couponItem['goods_coupon'])) {
-                                    foreach ($couponItem['goods_coupon'] as $goodsCoupon => $goodsCouponItem) {
-                                        if (in_array($goodsCouponItem['goods_category_id'], $goods_cat_id)) {
-                                            $tmp = $userCouponItem;
-                                            $tmp['coupon'] = array_merge($couponItem->append(['use_type_title'])->toArray(), $goodsCouponItem->toArray());
-                                            $userCouponArr[] = $tmp;
-                                            break;
-                                        }
+                            }
+                            break;
+                        case 2:
+                            // 限定商品类型
+                            if (!empty($couponItem['goods_coupon'])) {
+                                foreach ($couponItem['goods_coupon'] as $goodsCoupon => $goodsCouponItem) {
+                                    if (in_array($goodsCouponItem['goods_category_id'], $goods_cat_id)) {
+                                        $tmp = $userCouponItem;
+                                        $tmp['coupon'] = array_merge($couponItem->append(['use_type_title'])->toArray(), $goodsCouponItem->toArray());
+                                        $userCouponArr[] = $tmp;
+                                        break;
                                     }
                                 }
-                                break;
-                            case 4:
-                                //
-                                if (!empty($couponItem['goods_coupon'])) {
-                                    foreach ($couponItem['goods_coupon'] as $goodsCoupon => $goodsCouponItem) {
-                                        if (in_array($goodsCouponItem['goods_id'], $goods_ids)) {
-                                            $tmp = $userCouponItem;
-                                            $tmp['coupon'] = array_merge($couponItem->append(['use_type_title'])->toArray(), $goodsCouponItem->toArray());
-                                            $userCouponArr[] = $tmp;
-                                            break;
-                                        }
+                            }
+                            break;
+                        case 4:
+                            //
+                            if (!empty($couponItem['goods_coupon'])) {
+                                foreach ($couponItem['goods_coupon'] as $goodsCoupon => $goodsCouponItem) {
+                                    if (in_array($goodsCouponItem['goods_id'], $goods_ids)) {
+                                        $tmp = $userCouponItem;
+                                        $tmp['coupon'] = array_merge($couponItem->append(['use_type_title'])->toArray(), $goodsCouponItem->toArray());
+                                        $userCouponArr[] = $tmp;
+                                        break;
                                     }
                                 }
-                                break;
-                            case 5:
-                                //
-                                break;
-                            default:
-                                return [];
-                        }
-                    } else {
-
+                            }
+                            break;
+                        case 5:
+                            //
+                            break;
+                        default:
+                            return [];
                     }
                 }
             }

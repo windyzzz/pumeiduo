@@ -617,7 +617,7 @@ class Order extends Base
     }
 
     /*
-     *批量打印发货单
+     * 批量打印发货单
      */
     public function delivery_print()
     {
@@ -734,7 +734,7 @@ class Order extends Base
     }
 
     /*
-     *批量打印快递单
+     * 批量打印快递单
      */
     public function shipping_print_batch()
     {
@@ -759,21 +759,22 @@ class Order extends Base
      */
     public function deliveryHandle()
     {
-        $orderLogic = new OrderLogic();
         $data = I('post.');
-
-
-        $order_id = $data['order_id'];
-        $order = M('order')->field('add_time')->where(array('order_id' => $order_id))->find();
+        echo '<pre>';
+        print_r($data);
+        echo '</pre>';
+        exit();
+//        $order_id = $data['order_id'];
+//        $order = M('order')->field('add_time')->where(array('order_id' => $order_id))->find();
 //        if ($order['add_time'] > order_time()) {
 //            $this->error('新订单不可以发货', U('Admin/Order/delivery_info', ['order_id' => $data['order_id']]));
 //        }
 
+        $orderLogic = new OrderLogic();
         $res = $orderLogic->deliveryHandle($data);
         if (1 == $res['status']) {
             if (2 == $data['send_type'] && !empty($res['printhtml'])) {
                 $this->assign('printhtml', $res['printhtml']);
-
                 return $this->fetch('print_online');
             }
             $this->success('操作成功', U('Admin/Order/delivery_info', ['order_id' => $data['order_id']]));
@@ -790,11 +791,11 @@ class Order extends Base
             $order_id = I('order_id');
         }
 
-        $orderGoodsMdel = new OrderGoods();
+        $orderGoodsModel = new OrderGoods();
         $orderModel = new \app\common\model\Order();
         $orderObj = $orderModel->where(['order_id' => $order_id])->find();
         $order = $orderObj->append(['full_address'])->toArray();
-        $orderGoods = $orderGoodsMdel::all(['order_id' => $order_id, 'is_send' => ['lt', 2]]);
+        $orderGoods = $orderGoodsModel::all(['order_id' => $order_id, 'is_send' => ['lt', 2]]);
 
         if ($id) {
             if (!$orderGoods) {
@@ -809,7 +810,6 @@ class Order extends Base
         if ($id) {
             $order['orderGoods'] = $orderGoods;
             $order['goods_num'] = count($orderGoods);
-
             return $order;
         }
         $delivery_record = M('delivery_doc')->alias('d')->join('__ADMIN__ a', 'a.admin_id = d.admin_id')->where('d.order_id=' . $order_id)->select();
@@ -819,12 +819,10 @@ class Order extends Base
 
         //是否显示发货按钮
         $is_show_de = 1;
-
         if ($order['add_time'] > order_time()) {
-            $is_show_de = 0;
+//            $is_show_de = 0;
         }
         $this->assign('is_show_de', $is_show_de);
-
         $this->assign('order', $order);
         $this->assign('orderGoods', $orderGoods);
         $this->assign('delivery_record', $delivery_record); //发货记录

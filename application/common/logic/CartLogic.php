@@ -447,7 +447,7 @@ class CartLogic extends Model
             return ['status' => -101, 'msg' => '购买活动商品必须先登录', 'result' => ''];
         }
 
-        if ($this->goodsBuyNum > $flashSale['buy_limit']) {
+        if ($flashSale['buy_limit'] != 0 && $this->goodsBuyNum > $flashSale['buy_limit']) {
             return ['status' => -4, 'msg' => '每人限购' . $flashSale['buy_limit'] . '件', 'result' => ''];
         }
         //获取用户购物车的抢购商品
@@ -460,7 +460,7 @@ class CartLogic extends Model
         $userFlashOrderGoodsNum = $flashSaleLogic->getUserFlashOrderGoodsNum($this->user_id); //获取用户抢购已购商品数量
         $flashSalePurchase = $flashSale['goods_num'] - $flashSale['buy_num']; //抢购剩余库存
         $userBuyGoodsNum = $this->goodsBuyNum + $userFlashOrderGoodsNum;
-        if ($userBuyGoodsNum > $flashSale['buy_limit']) {
+        if ($flashSale['buy_limit'] != 0 && $userBuyGoodsNum > $flashSale['buy_limit']) {
             return ['status' => -4, 'msg' => '每人限购' . $flashSale['buy_limit'] . '件，您已下单' . $userFlashOrderGoodsNum . '件' . '购物车已有' . $userCartGoodsNum . '件', 'result' => ''];
         }
         $userWantGoodsNum = $this->goodsBuyNum; //本次要购买的数量加上购物车的本身存在的数量
@@ -643,7 +643,7 @@ class CartLogic extends Model
         $userWantGoodsNum = $this->goodsBuyNum + $userCartGoods['goods_num']; //本次要购买的数量加上购物车的本身存在的数量
         $UserPromOrderGoodsNum = $promGoodsLogic->getUserPromOrderGoodsNum($this->user_id); //获取用户促销已购商品数量
         $userBuyGoodsNum = $userWantGoodsNum + $UserPromOrderGoodsNum; //本次要购买的数量+购物车本身数量+已经买
-        if ($userBuyGoodsNum > $promGoods['buy_limit']) {
+        if ($promGoods['buy_limit'] != 0 && $userBuyGoodsNum > $promGoods['buy_limit']) {
             return ['status' => -4, 'msg' => '每人限购' . $promGoods['buy_limit'] . '件，您已下单' . $UserPromOrderGoodsNum . '件，' . '购物车已有' . $userCartGoodsNum . '件', 'result' => ''];
         }
         $userWantGoodsNum = $this->goodsBuyNum + $userCartGoodsNum; //本次要购买的数量加上购物车的本身存在的数量

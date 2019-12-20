@@ -539,6 +539,7 @@ class ActivityLogic extends Model
         }
         // 活动商品
         $activityGoods = Db::name('cate_activity_goods ag')->join('goods g', 'g.goods_id = ag.goods_id')
+            ->where(['g.is_on_sale' => 1])
             ->field('ag.cate_act_id, ag.goods_id, ag.item_id, g.goods_name, goods_remark, shop_price, exchange_integral, original_img')->select();
         $filter_goods_id = [];
         foreach ($activityGoods as $item) {

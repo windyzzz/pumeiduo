@@ -67,6 +67,7 @@ class Base extends Controller
 
     /**
      * 白名单路径
+     * 绕过登录验证
      * @return array
      */
     private function whiteListPath()
@@ -89,11 +90,13 @@ class Base extends Controller
 
     /**
      * 特殊路径
+     * 可绕过登录验证，且又可以获取用户信息
      * @return array
      */
     private function specialListPath()
     {
         return [
+            'c=api.Goods&a=goodsInfoNew',   // 商品详情
             'c=api.Coupon&a=couponList',   // 领券中心
         ];
     }

@@ -117,6 +117,7 @@ class Message extends Base
                         'finish_time' => !empty($value['finish_time']) ? date('Y.m.d', $value['finish_time']) . '结束' : '',
                         'desc' => $value['description'],
                         'cover_pic' => $value['thumb'],
+                        'message_url' => SITE_URL . '/#/news/news_particulars?article_id=' . $value['article_id']
                     ];
                 }
                 break;
@@ -146,6 +147,7 @@ class Message extends Base
                         'finish_time' => '',
                         'desc' => $value['message'],
                         'cover_pic' => '',
+                        'message_url' => ''
                     ];
                     // 设置已读
                     $userLogic->setMessageForRead(0, $value['message_id'], $this->user);
@@ -161,7 +163,8 @@ class Message extends Base
                     $message[] = [
                         'cate_id' => $cate['id'],
                         'cate_name' => $cate['name'],
-                        'message_list' => $questionList
+                        'message_list' => $questionList,
+                        'message_url' => ''
                     ];
                 }
                 break;
@@ -188,10 +191,9 @@ class Message extends Base
         // 设置已读
         $userLogic = new UsersLogic();
         $userLogic->setArticleForRead($messageId, $this->user);
-        // 由于APP不能解析文章content的html标签，所以直接返回H5的地址给APP
-        $return = [
-            'message_url' => SITE_URL . '/#/news/news_particulars?article_id=' . $messageId
-        ];
+        // 内容
+        $article = M('article')->where(['article_id' => $messageId, 'is_open' => 1])->field('article_id message_id, title, app_content')->find();
+        $return = $article;
         return json(['status' => 1, 'result' => $return]);
     }
 }

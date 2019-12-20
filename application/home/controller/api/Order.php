@@ -1439,6 +1439,8 @@ class Order extends Base
                 'coupon_id' => $coupon['coupon']['id'],
                 'name' => $coupon['coupon']['name'],
                 'money' => $coupon['coupon']['money'],
+                'condition' => $coupon['coupon']['condition'],
+                'is_usual' => $coupon['coupon']['is_usual'],
                 'use_start_time' => date('Y-m-d', $coupon['coupon']['use_start_time']),
                 'use_end_time' => date('Y-m-d', $coupon['coupon']['use_end_time']),
                 'is_selected' => 0
@@ -1510,6 +1512,24 @@ class Order extends Base
             }
             // 支付数据
             $payReturn = $payLogic->toArray();
+            if (!empty($couponList)) {
+                // 筛选优惠券
+                foreach ($couponList as $key => $coupon) {
+                    $canCoupon = true;
+                    if ($coupon['is_usual'] == 0) {
+                        // 不可以叠加优惠
+                        if ($payReturn['order_prom_amount'] > 0) {
+                            $canCoupon = false;
+                        }
+                    }
+                    if (!$canCoupon || $coupon['condition'] > $payReturn['order_amount']) {
+                        unset($couponList[$key]);
+                        continue;
+                    }
+                    unset($couponList[$key]['condition']);
+                    unset($couponList[$key]['is_usual']);
+                }
+            }
             // 商品列表 赠品列表
             $payList = collection($payLogic->getPayList())->toArray();
             $goodsList = [];

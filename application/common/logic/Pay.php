@@ -880,26 +880,35 @@ class Pay
             if ($userCoupon) {
                 $coupon = Db::name('coupon')->where(['id' => $userCoupon['cid'], 'status' => 1])->find(); // 获取有效优惠券类型表
                 if ($coupon) {
-                    $this->couponId = $coupon_id;
-                    switch ($coupon['use_type']) {
-                        case 0:
-                        case 1:
-                        case 2:
-                            $this->couponPrice = $coupon['money'];
-                            break;
-                        case 4:
-                            $this->couponPrice = 0;
-                            $goods_ids = Db::name('goods_coupon')->where(array('coupon_id' => $userCoupon['cid']))->getField('goods_id', true);
-                            foreach ($getPayList as $k => $v) {
-                                if (in_array($v['goods_id'], $goods_ids)) {
-                                    $dis_price = bcmul(bcdiv(bcmul($v['member_goods_price'], $coupon['money'], 2), 10, 2), $v['goods_num'], 2);
-                                    $couponPrice = bcsub(bcmul($v['member_goods_price'], $v['goods_num'], 2), $dis_price, 2);
-                                    $this->couponPrice = bcadd($this->couponPrice, $couponPrice, 2);
-                                }
-                            }
-                            break;
+                    $canCoupon = true;
+                    if ($coupon['is_usual'] == 0) {
+                        // 不可以叠加优惠
+                        if ($this->orderPromAmount > 0) {
+                            $canCoupon = false;
+                        }
                     }
-                    $this->orderAmount = $this->orderAmount - $this->couponPrice;
+                    if ($canCoupon && $coupon['condition'] <= $this->orderAmount) {
+                        $this->couponId = $coupon_id;
+                        switch ($coupon['use_type']) {
+                            case 0:
+                            case 1:
+                            case 2:
+                                $this->couponPrice = $coupon['money'];
+                                break;
+                            case 4:
+                                $this->couponPrice = 0;
+                                $goods_ids = Db::name('goods_coupon')->where(array('coupon_id' => $userCoupon['cid']))->getField('goods_id', true);
+                                foreach ($getPayList as $k => $v) {
+                                    if (in_array($v['goods_id'], $goods_ids)) {
+                                        $dis_price = bcmul(bcdiv(bcmul($v['member_goods_price'], $coupon['money'], 2), 10, 2), $v['goods_num'], 2);
+                                        $couponPrice = bcsub(bcmul($v['member_goods_price'], $v['goods_num'], 2), $dis_price, 2);
+                                        $this->couponPrice = bcadd($this->couponPrice, $couponPrice, 2);
+                                    }
+                                }
+                                break;
+                        }
+                        $this->orderAmount = $this->orderAmount - $this->couponPrice;
+                    }
                 }
             }
         }

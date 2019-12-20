@@ -366,7 +366,8 @@ class GoodsLogic extends Model
     public function get_look_see($goods = [], $userId = null)
     {
         $where = [
-            'is_on_sale' => 1
+            'is_on_sale' => 1,
+            'zone' => 1
         ];
         if ($userId) {
             $where['gv.user_id'] = $userId;
@@ -430,7 +431,8 @@ class GoodsLogic extends Model
         }
 
         $where = [
-            'is_on_sale' => 1
+            'is_on_sale' => 1,
+            'zone' => 1
         ];
         if (!empty($goods)) {
             $where['goods_id'] = ['not in', $goods['goods_id']];

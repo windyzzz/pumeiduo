@@ -377,10 +377,11 @@ class Goods extends Base
             }
         }
         $goods['freight_free'] = tpCache('shopping.freight_free'); // 全场满多少免运费
-        $goods['can_cart'] = $goods['zone'] == 3 ? 0 : 1;   // 更否加入购物车
+        $zone = $goods['zone'];
         unset($goods['zone']);
         // 组装数据
         $result['goods'] = $goods;
+        $result['can_cart'] = $zone == 3 ? 0 : 1;   // 更否加入购物车
         // 用户收藏
         if ($this->user_id) {
             $goodsCollect = $goodsLogic->getCollectGoods($this->user_id);
@@ -899,6 +900,14 @@ class Goods extends Base
                     }
                 }
             }
+            // 价格判断
+            if ($v['can_integral'] == 0) {
+                $flashSaleGoods[$k]['exchange_integral'] = 0;
+            }
+            $flashSaleGoods[$k]['shop_price'] = $v['flash_sale_price'];
+            $flashSaleGoods[$k]['exchange_price'] = $v['flash_sale_price'];
+            unset($flashSaleGoods[$k]['flash_sale_price']);
+            unset($flashSaleGoods[$k]['can_integral']);
         }
         switch ($output) {
             case 'json':
@@ -1076,7 +1085,14 @@ class Goods extends Base
                 $goods_list[$k]['group_buy']['goods_remark'] = $v['goods_remark'];
                 $goods_list[$k]['group_buy']['groupBuy_price'] = $v['group_buy_detail']['price'];
                 $goods_list[$k]['group_buy']['exchange_integral'] = $v['exchange_integral'];
-                unset($goods_list[$k]['group_buy_detail']);
+                // 价格判断
+                if ($v['can_integral'] == 0) {
+                    $goods_list[$k]['group_buy']['exchange_integral'] = 0;
+                }
+                $goods_list[$k]['group_buy']['shop_price'] = $v['group_buy_detail']['price'];
+                $goods_list[$k]['group_buy']['exchange_price'] = $v['group_buy_detail']['price'];
+                unset($goods_list[$k]['group_buy']['groupBuy_price']);
+                unset($goods_list[$k]['group_buy']['can_integral']);
                 $goods_data[] = $goods_list[$k]['group_buy'];
             }
         }
