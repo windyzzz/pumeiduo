@@ -966,10 +966,10 @@ class GoodsLogic extends Model
         $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->limit($page->firstRow . ',' . $page->listRows)->select();
         // 秒杀商品
         $flashSale = Db::name('flash_sale')->where(['goods_id' => ['in', $filter_goods_id]])
-            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->limit($page->firstRow . ',' . $page->listRows)->field('goods_id')->select();
+            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->limit($page->firstRow . ',' . $page->listRows)->field('goods_id, price, can_integral')->select();
         // 团购商品
         $groupBuy = Db::name('group_buy')->where(['goods_id' => ['in', $filter_goods_id]])
-            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->limit($page->firstRow . ',' . $page->listRows)->field('goods_id')->select();
+            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->limit($page->firstRow . ',' . $page->listRows)->field('goods_id, price, can_integral')->select();
         // 促销商品
         $promGoods = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
             ->where(['gtg.goods_id' => ['in', $filter_goods_id], 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
@@ -1025,6 +1025,11 @@ class GoodsLogic extends Model
             if (!empty($groupBuy)) {
                 foreach ($groupBuy as $value) {
                     if ($v['goods_id'] == $value['goods_id']) {
+                        if ($value['can_integral'] == 0) {
+                            $v['exchange_integral'] = 0;    // 不能使用积分兑换
+                        }
+                        $v['shop_price'] = $value['price'];
+                        $goodsList[$k]['shop_price'] = $value['price'];
                         $goodsList[$k]['tags'][0]['title'] = '团购';
                         break;
                     }
@@ -1033,6 +1038,11 @@ class GoodsLogic extends Model
             if (!empty($flashSale)) {
                 foreach ($flashSale as $value) {
                     if ($v['goods_id'] == $value['goods_id']) {
+                        if ($value['can_integral'] == 0) {
+                            $v['exchange_integral'] = 0;    // 不能使用积分兑换
+                        }
+                        $v['shop_price'] = $value['price'];
+                        $goodsList[$k]['shop_price'] = $value['price'];
                         $goodsList[$k]['tags'][0]['title'] = '秒杀';
                         break;
                     }

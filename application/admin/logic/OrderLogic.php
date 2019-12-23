@@ -374,24 +374,27 @@ class OrderLogic
         $orderObj = $orderModel::get(['order_id' => $data['order_id']]);
         $order = $orderObj->append(['full_address', 'orderGoods'])->toArray();
         $orderGoods = $order['orderGoods'];
-        $selectgoods = $data['goods'];
+        $selectGoods = $data['goods'];
 
-        if (1 == $data['shipping']) {
-            if (!$this->updateOrderShipping($data, $order)) {
+        if (1 == $data['shipping_status']) {
+            if (!$this->updateOrderShipping($data, $order, $orderGoods, $selectGoods)) {
                 return ['status' => 0, 'msg' => '操作失败！！'];
             }
         } else {
-            $is_delivery = 0;
+            $update = [
+                'send_type' => $data['send_type'],
+                'delivery_type' => $data['delivery_type']
+            ];
             switch ($data['send_type']) {
                 case 0:
                     // 手动填物流信息
+                    $is_delivery = 0;
                     switch ($data['delivery_type']) {
                         case 1:
                             // 统一发货
                             $deliverData = [
                                 'order_id' => $order['order_id'],
                                 'order_sn' => $order['order_sn'],
-                                'rec_id' => $order['rec_id'],
                                 'user_id' => $order['user_id'],
                                 'admin_id' => session('admin_id'),
                                 'consignee' => $order['consignee'],
@@ -417,22 +420,22 @@ class OrderLogic
                                 if ($v['is_send'] >= 1) {
                                     ++$is_delivery;
                                 }
-                                if (0 == $v['is_send'] && in_array($v['rec_id'], $selectgoods)) {
+                                if (0 == $v['is_send'] && in_array($v['rec_id'], $selectGoods)) {
                                     $res['is_send'] = 1;
                                     $res['delivery_id'] = $docId;
-                                    $r = M('order_goods')->where('rec_id=' . $v['rec_id'])->save($res);
+                                    M('order_goods')->where('rec_id=' . $v['rec_id'])->save($res);
                                     ++$is_delivery;
                                 }
                             }
-
                             break;
                         case 2:
                             // 分开发货
+                            $data['note'] = '';
                             foreach ($data['order_goods'] as $goods) {
                                 $deliverData = [
                                     'order_id' => $order['order_id'],
                                     'order_sn' => $order['order_sn'],
-                                    'rec_id' => $order['rec_id'],
+                                    'rec_id' => $goods['rec_id'],
                                     'user_id' => $order['user_id'],
                                     'admin_id' => session('admin_id'),
                                     'consignee' => $order['consignee'],
@@ -461,40 +464,43 @@ class OrderLogic
                                     if (0 == $v['is_send'] && $v['rec_id'] == $goods['rec_id']) {
                                         $res['is_send'] = 1;
                                         $res['delivery_id'] = $docId;
-                                        $r = M('order_goods')->where('rec_id=' . $v['rec_id'])->save($res);
+                                        M('order_goods')->where('rec_id=' . $v['rec_id'])->save($res);
                                         ++$is_delivery;
                                     }
                                 }
+                                $data['note'] .= $goods['note'] . '，';
                             }
-
+                            $data['note'] = rtrim($data['note'], ',');
                             break;
                         default:
                             return ['status' => 0, 'msg' => '操作失败！！'];
                     }
+                    $update['shipping_code'] = $data['shipping_code'];
+                    $update['shipping_name'] = $data['shipping_name'];
+                    $update['shipping_time'] = time();
+                    if ($is_delivery === 0) {
+                        $update['shipping_status'] = 1;
+                    } elseif ($is_delivery == count($orderGoods)) {
+                        $update['shipping_status'] = 1;
+                    } else {
+                        $update['shipping_status'] = 2;
+                    }
                     break;
                 case 3:
                     // 无需物流
-
+                    $update['shipping_code'] = 'NO_NEED';
+                    $update['shipping_name'] = '无需物流';
+                    $update['shipping_time'] = time();
+                    $update['shipping_status'] = 3;
                     break;
                 default:
                     return ['status' => 0, 'msg' => '操作失败！！'];
             }
-
-            $update['shipping_code'] = $data['shipping_code'];
-            $update['shipping_name'] = $data['shipping_name'];
-            $update['shipping_time'] = time();
-            if ($is_delivery === 0) {
-                $update['shipping_status'] = 1;
-            } elseif ($is_delivery == count($orderGoods)) {
-                $update['shipping_status'] = 1;
-            } else {
-                $update['shipping_status'] = 2;
-            }
             // 更新订单状态
             M('order')->where('order_id=' . $data['order_id'])->save($update);
-            // 操作日志
-            $s = $this->orderActionLog($order['order_id'], 'delivery', $data['note']);
         }
+        // 操作日志
+        $s = $this->orderActionLog($order['order_id'], 'delivery', $data['note']);
 
         // //商家发货, 发送短信给客户
         // $res = checkEnableSendSms("5");
@@ -513,33 +519,147 @@ class OrderLogic
         //       $wechat = new WechatLogic;
         //       $wechat->sendTemplateMsgOnDeliver($data);
 
-        if ($s && $r) {
-            return ['status' => 1, 'printhtml' => isset($result['printhtml']) ? $result['printhtml'] : ''];
+        if ($s) {
+            return ['status' => 1, 'msg' => '发货成功'];
         }
-
         return ['status' => 0, 'msg' => '发货失败'];
     }
 
     /**
-     * 修改订单发货信息.
-     *
+     * 修改订单发货信息
      * @param array $data
      * @param array $order
-     *
-     * @return bool|mixed
+     * @param array $orderGoods
+     * @param array $selectGoods
+     * @return bool
      */
-    public function updateOrderShipping($data = [], $order = [])
+    public function updateOrderShipping($data = [], $order = [], $orderGoods = [], $selectGoods = [])
     {
-        $updata['shipping_code'] = $data['shipping_code'];
-        $updata['shipping_name'] = $data['shipping_name'];
-        M('order')->where(['order_id' => $data['order_id']])->save($updata); //改变物流信息
-        $updata['invoice_no'] = $data['invoice_no'];
-        $delivery_res = M('delivery_doc')->where(['order_id' => $data['order_id']])->save($updata);  //改变售后的信息
-        if ($delivery_res) {
-            return $this->orderActionLog($order['order_id'], '订单修改发货信息', $data['note']); //操作日志
+//        echo '<pre>';
+//        print_r($data);
+//        echo '</pre>';
+//        exit();
+        // 删除之前的记录
+        M('delivery_doc')->where(['order_id' => $data['order_id']])->delete();
+        $update = [
+            'send_type' => $data['send_type'],
+            'delivery_type' => $data['delivery_type']
+        ];
+        switch ($data['send_type']) {
+            case 0:
+                // 手动填物流信息
+                $is_delivery = 0;
+                switch ($data['delivery_type']) {
+                    case 1:
+                        // 统一发货
+                        $deliverData = [
+                            'order_id' => $order['order_id'],
+                            'order_sn' => $order['order_sn'],
+                            'user_id' => $order['user_id'],
+                            'admin_id' => session('admin_id'),
+                            'consignee' => $order['consignee'],
+                            'zipcode' => $order['zipcode'],
+                            'mobile' => $order['mobile'],
+                            'country' => $order['country'],
+                            'province' => $order['province'],
+                            'city' => $order['city'],
+                            'district' => $order['district'],
+                            'address' => $order['address'],
+                            'shipping_code' => $data['shipping_code'],
+                            'shipping_name' => $data['shipping_name'],
+                            'shipping_price' => $order['shipping_price'],
+                            'invoice_no' => $data['invoice_no'],
+                            'note' => $data['note'],
+                            'create_time' => time(),
+                            'send_type' => $data['send_type'],
+                        ];
+                        // 记录物流信息
+                        $docId = M('delivery_doc')->add($deliverData);
+                        // 更新订单商品记录
+                        foreach ($orderGoods as $k => $v) {
+                            if ($v['is_send'] >= 1) {
+                                ++$is_delivery;
+                            }
+                            if (0 == $v['is_send'] && in_array($v['rec_id'], $selectGoods)) {
+                                $res['is_send'] = 1;
+                                $res['delivery_id'] = $docId;
+                                M('order_goods')->where('rec_id=' . $v['rec_id'])->save($res);
+                                ++$is_delivery;
+                            }
+                        }
+                        break;
+                    case 2:
+                        // 分开发货
+                        $data['note'] = '';
+                        foreach ($data['order_goods'] as $goods) {
+                            $deliverData = [
+                                'order_id' => $order['order_id'],
+                                'order_sn' => $order['order_sn'],
+                                'rec_id' => $goods['rec_id'],
+                                'user_id' => $order['user_id'],
+                                'admin_id' => session('admin_id'),
+                                'consignee' => $order['consignee'],
+                                'zipcode' => $order['zipcode'],
+                                'mobile' => $order['mobile'],
+                                'country' => $order['country'],
+                                'province' => $order['province'],
+                                'city' => $order['city'],
+                                'district' => $order['district'],
+                                'address' => $order['address'],
+                                'shipping_code' => $data['shipping_code'],
+                                'shipping_name' => $data['shipping_name'],
+                                'shipping_price' => $order['shipping_price'],
+                                'invoice_no' => $goods['invoice_no'],
+                                'note' => $goods['note'],
+                                'create_time' => time(),
+                                'send_type' => $data['send_type'],
+                            ];
+                            // 记录物流信息
+                            $docId = M('delivery_doc')->add($deliverData);
+                            // 更新订单商品记录
+                            foreach ($orderGoods as $k => $v) {
+                                if ($v['is_send'] >= 1) {
+                                    ++$is_delivery;
+                                }
+                                if (0 == $v['is_send'] && $v['rec_id'] == $goods['rec_id']) {
+                                    $res['is_send'] = 1;
+                                    $res['delivery_id'] = $docId;
+                                    M('order_goods')->where('rec_id=' . $v['rec_id'])->save($res);
+                                    ++$is_delivery;
+                                }
+                            }
+                            $data['note'] .= $goods['note'] . '，';
+                        }
+                        $data['note'] = rtrim($data['note'], ',');
+                        break;
+                    default:
+                        return false;
+                }
+                $update['shipping_code'] = $data['shipping_code'];
+                $update['shipping_name'] = $data['shipping_name'];
+                $update['shipping_time'] = time();
+                if ($is_delivery === 0) {
+                    $update['shipping_status'] = 1;
+                } elseif ($is_delivery == count($orderGoods)) {
+                    $update['shipping_status'] = 1;
+                } else {
+                    $update['shipping_status'] = 2;
+                }
+                break;
+            case 3:
+                // 无需物流
+                $update['shipping_code'] = 'NO_NEED';
+                $update['shipping_name'] = '无需物流';
+                $update['shipping_time'] = time();
+                $update['shipping_status'] = 3;
+                break;
+            default:
+                return false;
         }
-
-        return false;
+        // 更新物流信息
+        M('order')->where(['order_id' => $data['order_id']])->save($update);
+        // 操作日志
+        return $this->orderActionLog($order['order_id'], '订单修改发货信息', $data['note']);
     }
 
     /**

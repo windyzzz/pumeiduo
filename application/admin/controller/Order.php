@@ -760,10 +760,6 @@ class Order extends Base
     public function deliveryHandle()
     {
         $data = I('post.');
-        echo '<pre>';
-        print_r($data);
-        echo '</pre>';
-        exit();
 //        $order_id = $data['order_id'];
 //        $order = M('order')->field('add_time')->where(array('order_id' => $order_id))->find();
 //        if ($order['add_time'] > order_time()) {
@@ -790,34 +786,42 @@ class Order extends Base
         } else {
             $order_id = I('order_id');
         }
-
         $orderGoodsModel = new OrderGoods();
         $orderModel = new \app\common\model\Order();
         $orderObj = $orderModel->where(['order_id' => $order_id])->find();
         $order = $orderObj->append(['full_address'])->toArray();
         $orderGoods = $orderGoodsModel::all(['order_id' => $order_id, 'is_send' => ['lt', 2]]);
-
         if ($id) {
             if (!$orderGoods) {
-                $this->error('所选订单有商品已完成退货或换货'); //已经完成售后的不能再发货
+                $this->error('所选订单有商品已完成退货或换货'); // 已经完成售后的不能再发货
             }
         } else {
             if (!$orderGoods) {
-                $this->error('此订单商品已完成退货或换货'); //已经完成售后的不能再发货
+                $this->error('此订单商品已完成退货或换货'); // 已经完成售后的不能再发货
             }
         }
-
         if ($id) {
             $order['orderGoods'] = $orderGoods;
             $order['goods_num'] = count($orderGoods);
             return $order;
         }
-        $delivery_record = M('delivery_doc')->alias('d')->join('__ADMIN__ a', 'a.admin_id = d.admin_id')->where('d.order_id=' . $order_id)->select();
+        // 物流信息
+        $delivery_record = M('delivery_doc d')->join('__ADMIN__ a', 'a.admin_id = d.admin_id')->where('d.order_id=' . $order_id)->select();
         if ($delivery_record) {
             $order['invoice_no'] = $delivery_record[count($delivery_record) - 1]['invoice_no'];
         }
-
-        //是否显示发货按钮
+        // 处理订单商品独自的物流信息
+        foreach ($orderGoods as $key => $goods) {
+            $orderGoods[$key]['invoice_no'] = '';
+            $orderGoods[$key]['note'] = '';
+            foreach ($delivery_record as $record) {
+                if ($goods['rec_id'] == $record['rec_id']) {
+                    $orderGoods[$key]['invoice_no'] = $record['invoice_no'];
+                    $orderGoods[$key]['note'] = $record['note'];
+                }
+            }
+        }
+        // 是否显示发货按钮
         $is_show_de = 1;
         if ($order['add_time'] > order_time()) {
 //            $is_show_de = 0;
@@ -825,7 +829,7 @@ class Order extends Base
         $this->assign('is_show_de', $is_show_de);
         $this->assign('order', $order);
         $this->assign('orderGoods', $orderGoods);
-        $this->assign('delivery_record', $delivery_record); //发货记录
+        $this->assign('delivery_record', $delivery_record); // 发货记录
         $shipping_list = Db::name('shipping')->field('shipping_name,shipping_code')->where('')->select();
         $this->assign('shipping_list', $shipping_list);
         $express_switch = tpCache('express.express_switch');

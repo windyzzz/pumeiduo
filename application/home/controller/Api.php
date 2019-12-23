@@ -298,7 +298,7 @@ class Api extends Base
     /**
      * 查询物流
      */
-    public function queryExpress($request = [])
+    public function queryExpress($request = [], $out = 'json')
     {
         $type = isset($request['shipping_code']) ? $request['shipping_code'] : I('shipping_code', '');
         $queryNo = isset($request['queryNo']) ? $request['queryNo'] : I('queryNo', '');
@@ -331,9 +331,18 @@ class Api extends Base
             curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
         }
         $output = curl_exec($curl);
+        /*
+        返回参数说明
+        deliverystatus - 0.快递收件(揽件) 1.在途中 2.正在派件 3.已签收 4.派送失败 5.疑难件 6.退件签收
+        */
         $data = json_decode($output, true);
 
-        return json($data);
+        switch ($out){
+            case 'json':
+                return json($data);
+            default:
+                return $data;
+        }
 
         // $express_switch = tpCache('express.express_switch');
         // if($express_switch == 1){

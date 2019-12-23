@@ -25,6 +25,7 @@ use think\Db;
 use think\Hook;
 use think\Page;
 use think\Request;
+use think\Url;
 
 class Order extends Base
 {
@@ -396,6 +397,7 @@ class Order extends Base
             'shipping_time' => $orderInfo['shipping_time'],
             'confirm_time' => $orderInfo['confirm_time'],
             'cancel_time' => $orderInfo['cancel_time'],
+            'delivery_type' => 1,   // 1统一发货 2分开发货
             'delivery' => [
                 'consignee' => $orderInfo['consignee'],
                 'mobile' => $orderInfo['mobile'],
@@ -414,7 +416,7 @@ class Order extends Base
         if ($orderData['delivery']['city_name'] == '直辖区') {
             $orderData['delivery']['city_name'] = '';
         }
-        if ($orderInfo['order_status_code'] == 'WAITCCOMMENT') {
+        if ($orderInfo['order_status_code'] == 'AFTER-SALES' || $orderInfo['order_status_code'] == 'WAITCCOMMENT') {
             $canReturn = $orderInfo['end_sale_time'] > time() ? true : false;   // 能否退货
         } else {
             $canReturn = false;
@@ -434,7 +436,7 @@ class Order extends Base
                 'exchange_integral' => $goods['use_integral'],
                 'exchange_price' => $goods['member_goods_price'],
                 'original_img' => $goods['original_img'],
-                'can_return' => $canReturn == true ? $goods['sale_type'] == 1 ? 1 : 0 : 0,   // sale_type = 1 普通商品
+                'can_return' => $canReturn == true ? $goods['sale_type'] == 1 ? $goods['is_return'] == 1 ? 0 : 1 : 0 : 0,   // sale_type = 1 普通商品
                 'return_status' => $goods['status']
             ];
             $weight = bcadd($weight, $goods['weight'], 2);
@@ -461,7 +463,7 @@ class Order extends Base
     {
         $order_id = I('id/d', 0);
 
-        M('return_goods')->where('id', $id)->update(['status' => 6]);
+        M('return_goods')->where('id', $order_id)->update(['status' => 6]);
 
         return json(['status' => 1, 'msg' => '删除成功', 'result' => null]);
     }
@@ -848,6 +850,7 @@ class Order extends Base
     public function return_goods_list_new()
     {
         $where = 'user_id = ' . $this->user_id;
+        $where .= ' and status != 6';
         // 根据商品名称 或者 订单编号
         $search_key = trim(I('search_key'));
         $bind = [];
@@ -934,9 +937,27 @@ class Order extends Base
     public function return_goods_info_new()
     {
         $returnId = I('return_id', '');
-        $returnGoods = Db::name('return_goods')->where(['id' => $returnId, 'user_id' => $this->user_id])->find();
+        $returnGoods = Db::name('return_goods')->where(['id' => $returnId])->find();
         if (empty($returnGoods)) {
             return json(['status' => 0, 'msg' => '参数错误']);
+        }
+        if ($this->request->isPost()) {
+            if ($returnGoods['status'] == 2) {
+                return json(['status' => 0, 'msg' => '该退货单已提交了发货信息']);
+            }
+            $expressName = I('express_name', '');
+            $expressSn = I('express_sn', '');
+            if (!$expressName || !$expressSn) {
+                return json(['status' => 0, 'msg' => '快递信息不能为空']);
+            }
+            $data['delivery'] = [
+                'express_name' => $expressName,
+                'express_sn' => $expressSn
+            ];
+            $data['delivery'] = serialize($data['delivery']);
+            $data['status'] = 2;
+            M('return_goods')->where(['id' => $returnId, 'user_id' => $this->user_id])->save($data);
+            return json(['status' => 1, 'msg' => '发货提交成功']);
         }
         $orderLogic = new OrderLogic();
         // 订单商品
@@ -954,6 +975,7 @@ class Order extends Base
                 'goods_num' => $orderGoods['goods_num'],
                 'original_img' => $orderGoods['original_img']
             ],
+            'return_id' => $returnGoods['id'],
             'type' => $returnGoods['type'],
             'status' => $returnGoods['status'],
             'verify_time' => $returnGoods['addtime'] + tpCache('shopping.return_verify_date') * 24 * 60 * 60,   // 审核完毕时间
@@ -975,7 +997,13 @@ class Order extends Base
         $return['return_integral'] = $returnGoods['refund_integral'];
         $return['voucher'] = explode(',', $returnGoods['imgs']);
         $return['can_delivery'] = !empty($returnGoods['delivery']) ? 0 : 1;
-        $return['status'] = !empty($returnGoods['delivery']) ? 7 : $return['status'];
+        if (in_array($returnGoods['type'], [1, 2])) {
+            if ($returnGoods['status'] == 1) {
+                if (empty($returnGoods['delivery'])) {
+                    $return['status'] = 7;  // 等待买家退货
+                }
+            }
+        }
         $return['goods_num'] = $returnGoods['goods_num'];
         $return['order_sn'] = Db::name('order')->where(['order_id' => $orderGoods['order_id']])->value('order_sn');
         $return['addtime'] = $returnGoods['addtime'];
@@ -1840,5 +1868,64 @@ class Order extends Base
         unset($order['order_status']);
         unset($order['user_id']);
         return json(['status' => 1, 'result' => $order]);
+    }
+
+
+    public function orderExpress()
+    {
+        $orderId = I('order_id', '');
+        $order = M('order')->where(['order_id' => $orderId])->find();
+        if (empty($order)) {
+            return json(['status' => 0, 'msg' => '订单信息不存在']);
+        }
+        switch ($order['shipping_status']) {
+            case 0:
+                return json(['status' => 0, 'msg' => '订单商品未发货']);
+            case 3:
+                return json(['status' => 0, 'msg' => '订单商品不需要发货']);
+        }
+        switch ($order['delivery_type']) {
+            case 1:
+                // 统一发货
+                $delivery = M('delivery_doc dd')->join('order_goods og', 'og.rec_id = dd.rec_id')
+                    ->join('goods g', 'g.goods_id = og.goods_id')
+                    ->field('dd.rec_id, dd.shipping_code, dd.shipping_name, dd.invoice_no, g.goods_id, g.original_img')
+                    ->where(['dd.order_id' => $orderId])->find();
+                $apiController = new ApiController();
+                $express = $apiController->queryExpress(['shipping_code' => $delivery['shipping_code'], 'queryNo' => $delivery['invoice_no']], 'array');
+                if ($express['status'] != 0) {
+                    return json(['status' => 0, 'msg' => $express['msg']]);
+                }
+
+                break;
+            case 2:
+                // 分开发货
+                $return = [
+                    'order_id' => $orderId,
+                    'order_goods_num' => M('order_goods')->where(['order_id' => $orderId])->count('rec_id'),
+                    'delivery' => []
+                ];
+                $delivery = M('delivery_doc dd')->join('order_goods og', 'og.rec_id = dd.rec_id')
+                    ->join('goods g', 'g.goods_id = og.goods_id')
+                    ->field('dd.rec_id, dd.shipping_code, dd.shipping_name, dd.invoice_no, g.goods_id, g.original_img')
+                    ->where(['dd.order_id' => $orderId])->select();
+                $apiController = new ApiController();
+                foreach ($delivery as $item) {
+                    $express = $apiController->queryExpress(['shipping_code' => $item['shipping_code'], 'queryNo' => $item['invoice_no']], 'array');
+                    if ($express['status'] != 0) {
+                        return json(['status' => 0, 'msg' => $express['msg']]);
+                    }
+                    $return['delivery'][] = [
+                        'status' => $express['result']['deliverystatus'],
+                        'shipping_name' => $item['shipping_name'],
+                        'invoice_no' => $item['invoice_no'],
+                        'express' => $express['result']['list'][0],
+                        'goods_id' => $item['goods_id'],
+                        'original_img' => $item['original_img'],
+                    ];
+                }
+                break;
+        }
+        return json(['status' => 1, 'result' => $return]);
     }
 }

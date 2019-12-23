@@ -598,6 +598,9 @@ class Uploadify extends Base
         if (empty($fileArr) || !is_array($fileArr)) {
             return json(['status' => 0, 'msg' => '请上传图片']);
         }
+        if (count($fileArr) > 4) {
+            return json(['status' => 0, 'msg' => '上传图片请勿超过3张']);
+        }
         $returnUrl = [];
         foreach ($fileArr as $file) {
             $result = $this->validate(

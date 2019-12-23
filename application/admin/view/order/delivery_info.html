@@ -92,7 +92,7 @@
             <h3></h3>
         </div>
         <form id="delivery-form" action="{:U('Admin/order/deliveryHandle')}" method="post">
-            <input type="hidden" name="shipping" value="{$order.shipping_status}">
+            <input type="hidden" name="shipping_status" value="{$order.shipping_status}">
             <input type="hidden" id="shipping_name" name="shipping_name"
                    value="<if condition='$order.shipping_status eq 1'>{$order.shipping_name}<else/>{$shipping_list['0']['shipping_name']}</if>">
             <div class="ncap-order-details">
@@ -119,26 +119,26 @@
                             <dt>发货方式：</dt>
                             <dd>
                                 <select id="send_type" name="send_type" onchange="change_send();">
-                                    <option value="0">手填物流单号</option>
+                                    <option value="0" <if condition="$order.send_type eq 0">selected</if>>手填物流单号</option>
                                     <if condition="($order['shipping_status'] eq 0) && ($express_switch eq 1)">
                                         <option value="1">在线预约发货</option>
                                         <option value="2">电子面单发货</option>
                                     </if>
-                                    <option value="3">无需物流</option>
+                                    <option value="3" <if condition="$order.send_type eq 3">selected</if>>无需物流</option>
                                 </select>
                             </dd>
                             <dt class="delivery_type">发货类型：</dt>
                             <dd class="delivery_type">
                                 <select id="delivery_type" name="delivery_type" onchange="change_delivery_type();">
-                                    <option value="1">统一发货</option>
-                                    <option value="2">分开发货</option>
+                                    <option value="1" <if condition="$order.delivery_type eq 1">selected</if>>统一发货</option>
+                                    <option value="2" <if condition="$order.delivery_type eq 2">selected</if>>分开发货</option>
                                 </select>
                             </dd>
                         </dl>
                         <dl>
                             <dt class="invoice">配送单号：</dt>
                             <dd class="invoice">
-                                <input class="input-txt" name="invoice_no" id="invoice_no" value="{$order.invoice_no}" onkeyup="this.value=this.value.replace(/[^\d]/g,'')">
+                                <input class="input-txt" name="invoice_no" id="invoice_no" value="{$order.invoice_no}">
                             </dd>
                         </dl>
                     </div>
@@ -195,7 +195,7 @@
                             <volist name="orderGoods" id="good">
                                 <tr>
                                     <td class="w30">
-                                        <input type="hidden" name="order_goods[{$good[rec_id]}]['rec_id']" value="{$good[rec_id]}">
+                                        <input type="hidden" name="order_goods[{$good[rec_id]}][rec_id]" value="{$good[rec_id]}">
                                         <div class="goods-thumb">
                                             <a href="{:U('Goods/addEditGoods',array('id'=>$good[goods_id]))}" target="_blank"><img alt="" src="{$good['goods_id']|goods_thum_images=200,200}"/></a>
                                         </div>
@@ -214,10 +214,10 @@
                                         </if>
                                     </td>
                                     <td style="display: none;" class="order_goods_invoice">
-                                        <input class="input-txt" name="order_goods[{$good[rec_id]}]['invoice_no']" id="" value="" onkeyup="this.value=this.value.replace(/[^\d]/g,'')">
+                                        <input class="input-txt" name="order_goods[{$good[rec_id]}][invoice_no]" id="" value="{$good[invoice_no]}">
                                     </td>
                                     <td style="display: none;" class="order_goods_invoice">
-                                        <textarea  name="order_goods[{$good[rec_id]}]['note']" style="" rows="" placeholder=""></textarea>
+                                        <textarea name="order_goods[{$good[rec_id]}][note]" style="" rows="" placeholder="">{$good[note]}</textarea>
                                     </td>
                                 </tr>
                             </volist>
@@ -286,6 +286,32 @@
     </div>
 </div>
 <script type="text/javascript">
+    $(document).ready(function(){
+        var send_type = {$order['send_type']};
+        switch (send_type) {
+            case 0:
+                $('.delivery_type').show();
+                change_delivery_type();
+                var delivery_type = {$order['delivery_type']};
+                switch (delivery_type) {
+                    case 1:
+                        $('.invoice').show();
+                        $('.order_goods_invoice').hide();
+                        break;
+                    case 2:
+                        $('.invoice').hide();
+                        $('.order_goods_invoice').show();
+                        break;
+                }
+                break;
+            case 3:
+                $('.invoice').hide();
+                $('.delivery_type').hide();
+                $('.order_goods_invoice').hide();
+                break;
+        }
+    });
+
     function dosubmit() {
         var delivery_type = $('#delivery_type').val();
         if (delivery_type == 1) {
@@ -294,8 +320,9 @@
                 return;
             }
         }
-        var shipping = $('input[name="shipping"]').val();
-        if (shipping != 1) {
+        var send_type = $('select[name="send_type"]').val();
+        var shipping_status = $('input[name="shipping_status"]').val();
+        if (send_type != 3 && shipping_status != 1) {
             var a = [];
             $('input[name*=goods]').each(function (i, o) {
                 if ($(o).is(':checked')) {
