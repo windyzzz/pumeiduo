@@ -303,7 +303,12 @@ class Api extends Base
         $type = isset($request['shipping_code']) ? $request['shipping_code'] : I('shipping_code', '');
         $queryNo = isset($request['queryNo']) ? $request['queryNo'] : I('queryNo', '');
         if (!$queryNo) {
-            return json(['status' => -1, 'message' => '参数有误', 'result' => '']);
+            switch ($out){
+                case 'json':
+                    return json(['status' => -1, 'message' => '参数有误', 'result' => '']);
+                default:
+                    return ['status' => -1, 'message' => '参数有误', 'result' => ''];
+            }
         }
         $host = 'https://kdwlcxf.market.alicloudapi.com';
         $path = '/kdwlcx';

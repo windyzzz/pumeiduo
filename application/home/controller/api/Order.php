@@ -1877,7 +1877,16 @@ class Order extends Base
     public function express()
     {
         $orderId = I('order_id', '');
-        $order = M('order')->where(['order_id' => $orderId])->find();
+        $recId = I('rec_id', '');
+        if ($orderId) {
+            $where = ['dd.order_id' => $orderId];
+            $order = M('order')->where(['order_id' => $orderId])->find();
+        } elseif ($recId) {
+            $where = ['dd.rec_id' => $recId];
+            $order = M('order_goods og')->join('order o', 'o.order_id = og.order_id')->where(['og.rec_id' => $recId])->field('o.*')->find();
+        } else {
+            return json(['status' => 0, 'msg' => '订单信息不存在']);
+        }
         if (empty($order)) {
             return json(['status' => 0, 'msg' => '订单信息不存在']);
         }
@@ -1887,104 +1896,92 @@ class Order extends Base
             case 3:
                 return json(['status' => 0, 'msg' => '订单商品不需要发货']);
         }
-        switch ($order['delivery_type']) {
-            case 1:
-                // 统一发货
-                $delivery = M('delivery_doc dd')->join('order_goods og', 'og.rec_id = dd.rec_id')
-                    ->join('goods g', 'g.goods_id = og.goods_id')
-                    ->field('dd.rec_id, dd.shipping_code, dd.shipping_name, dd.invoice_no, dd.province, dd.city, dd.district, dd.address, g.goods_id, g.original_img')
-                    ->where(['dd.order_id' => $orderId])->find();
-                $apiController = new ApiController();
-                $express = $apiController->queryExpress(['shipping_code' => $delivery['shipping_code'], 'queryNo' => $delivery['invoice_no']], 'array');
-                if ($express['status'] != 0) {
-                    return json(['status' => 0, 'msg' => $express['msg']]);
-                }
-                $return = [
-                    'delivery_status' => $express['result']['deliverystatus'],
-                    'order_id' => $orderId,
-                    'order_sn' => $order['order_sn'],
-                    'shipping_name' => $delivery['shipping_name'],
-                    'invoice_no' => $delivery['invoice_no'],
-                    'goods_id' => $delivery['goods_id'],
-                    'original_img' => $delivery['original_img'],
-                    'service_phone' => tpCache('shop_info.mobile'),
-                    'province' => Db::name('region2')->where(['id' => $delivery['province']])->value('name'),
-                    'city' => Db::name('region2')->where(['id' => $delivery['city']])->value('name'),
-                    'district' => Db::name('region2')->where(['id' => $delivery['district']])->value('name'),
-                    'address' => $delivery['address'],
-                    'express' => $express['result']['list']
-                ];
-                break;
-            case 2:
-                // 分开发货
-                $return = [
-                    'order_id' => $orderId,
-                    'order_goods_num' => M('order_goods')->where(['order_id' => $orderId])->count('rec_id'),
-                    'delivery' => []
-                ];
-                $delivery = M('delivery_doc dd')->join('order_goods og', 'og.rec_id = dd.rec_id')
-                    ->join('goods g', 'g.goods_id = og.goods_id')
-                    ->field('dd.rec_id, dd.shipping_code, dd.shipping_name, dd.invoice_no, g.goods_id, g.original_img')
-                    ->where(['dd.order_id' => $orderId])->select();
-                $apiController = new ApiController();
-                foreach ($delivery as $item) {
-                    $express = $apiController->queryExpress(['shipping_code' => $item['shipping_code'], 'queryNo' => $item['invoice_no']], 'array');
+        if ($orderId) {
+            switch ($order['delivery_type']) {
+                case 1:
+                    // 统一发货
+                    $delivery = M('delivery_doc dd')->join('order_goods og', 'og.rec_id = dd.rec_id')
+                        ->join('goods g', 'g.goods_id = og.goods_id')
+                        ->field('dd.rec_id, dd.shipping_code, dd.shipping_name, dd.invoice_no, dd.province, dd.city, dd.district, dd.address, g.goods_id, g.original_img')
+                        ->where($where)->find();
+                    $apiController = new ApiController();
+                    $express = $apiController->queryExpress(['shipping_code' => $delivery['shipping_code'], 'queryNo' => $delivery['invoice_no']], 'array');
                     if ($express['status'] != 0) {
                         return json(['status' => 0, 'msg' => $express['msg']]);
                     }
-                    $return['delivery'][] = [
-                        'rec_id' => $item['rec_id'],
-                        'status' => $express['result']['deliverystatus'],
-                        'shipping_name' => $item['shipping_name'],
-                        'invoice_no' => $item['invoice_no'],
-                        'express' => $express['result']['list'][0],
-                        'goods_id' => $item['goods_id'],
-                        'original_img' => $item['original_img'],
+                    $return = [
+                        'delivery_status' => $express['result']['deliverystatus'],
+                        'order_id' => $order['order_id'],
+                        'order_sn' => $order['order_sn'],
+                        'shipping_name' => $delivery['shipping_name'],
+                        'invoice_no' => $delivery['invoice_no'],
+                        'goods_id' => $delivery['goods_id'],
+                        'original_img' => $delivery['original_img'],
+                        'service_phone' => tpCache('shop_info.mobile'),
+                        'province' => Db::name('region2')->where(['id' => $delivery['province']])->value('name'),
+                        'city' => Db::name('region2')->where(['id' => $delivery['city']])->value('name'),
+                        'district' => Db::name('region2')->where(['id' => $delivery['district']])->value('name'),
+                        'address' => $delivery['address'],
+                        'express' => $express['result']['list']
                     ];
-                }
-                break;
+                    break;
+                case 2:
+                    // 分开发货
+                    $return = [
+                        'order_id' => $order['order_id'],
+                        'order_goods_num' => M('order_goods')->where(['order_id' => $order['order_id']])->count('rec_id'),
+                        'delivery' => []
+                    ];
+                    $delivery = M('delivery_doc dd')->join('order_goods og', 'og.rec_id = dd.rec_id')
+                        ->join('goods g', 'g.goods_id = og.goods_id')
+                        ->field('dd.rec_id, dd.shipping_code, dd.shipping_name, dd.invoice_no, g.goods_id, g.original_img')
+                        ->where($where)->select();
+                    $apiController = new ApiController();
+                    foreach ($delivery as $item) {
+                        $express = $apiController->queryExpress(['shipping_code' => $item['shipping_code'], 'queryNo' => $item['invoice_no']], 'array');
+                        if ($express['status'] != 0) {
+                            return json(['status' => 0, 'msg' => $express['msg']]);
+                        }
+                        $return['delivery'][] = [
+                            'rec_id' => $item['rec_id'],
+                            'status' => $express['result']['deliverystatus'],
+                            'shipping_name' => $item['shipping_name'],
+                            'invoice_no' => $item['invoice_no'],
+                            'express' => $express['result']['list'][0],
+                            'goods_id' => $item['goods_id'],
+                            'original_img' => $item['original_img'],
+                        ];
+                    }
+                    break;
+                default:
+                    return json(['status' => 0, 'msg' => '参数错误']);
+            }
+        } elseif ($recId) {
+            $delivery = M('delivery_doc dd')->join('order_goods og', 'og.rec_id = dd.rec_id')
+                ->join('goods g', 'g.goods_id = og.goods_id')
+                ->field('dd.rec_id, dd.shipping_code, dd.shipping_name, dd.invoice_no, dd.province, dd.city, dd.district, dd.address, g.goods_id, g.original_img')
+                ->where($where)->find();
+            $apiController = new ApiController();
+            $express = $apiController->queryExpress(['shipping_code' => $delivery['shipping_code'], 'queryNo' => $delivery['invoice_no']], 'array');
+            if ($express['status'] != 0) {
+                return json(['status' => 0, 'msg' => $express['msg']]);
+            }
+            $return = [
+                'delivery_status' => $express['result']['deliverystatus'],
+                'order_id' => $order['order_id'],
+                'order_sn' => $order['order_sn'],
+                'shipping_name' => $delivery['shipping_name'],
+                'invoice_no' => $delivery['invoice_no'],
+                'goods_id' => $delivery['goods_id'],
+                'original_img' => $delivery['original_img'],
+                'service_phone' => tpCache('shop_info.mobile'),
+                'province' => Db::name('region2')->where(['id' => $delivery['province']])->value('name'),
+                'city' => Db::name('region2')->where(['id' => $delivery['city']])->value('name'),
+                'district' => Db::name('region2')->where(['id' => $delivery['district']])->value('name'),
+                'address' => $delivery['address'],
+                'express' => $express['result']['list']
+            ];
         }
-        return json(['status' => 1, 'result' => $return]);
-    }
-
-    /**
-     * 物流详情
-     * @return \think\response\Json
-     */
-    public function expressDetail()
-    {
-        $recId = I('rec_id', '');
-        $order = M('order_goods og')->join('order o', 'o.order_id = og.order_id')->where(['og.rec_id' => $recId])->field('o.*')->find();
-        if (empty($order)) {
-            return json(['status' => 0, 'msg' => '订单商品记录不存在']);
-        }
-        if ($order['delivery_type'] != 2) {
-            return json(['status' => 0, 'msg' => '该订单不是分开发货']);
-        }
-        $delivery = M('delivery_doc dd')->join('order_goods og', 'og.rec_id = dd.rec_id')
-            ->join('goods g', 'g.goods_id = og.goods_id')
-            ->field('dd.rec_id, dd.shipping_code, dd.shipping_name, dd.invoice_no, dd.province, dd.city, dd.district, dd.address, g.goods_id, g.original_img')
-            ->where(['dd.rec_id' => $recId])->find();
-        $apiController = new ApiController();
-        $express = $apiController->queryExpress(['shipping_code' => $delivery['shipping_code'], 'queryNo' => $delivery['invoice_no']], 'array');
-        if ($express['status'] != 0) {
-            return json(['status' => 0, 'msg' => $express['msg']]);
-        }
-        $return = [
-            'delivery_status' => $express['result']['deliverystatus'],
-            'order_id' => $order['order_id'],
-            'order_sn' => $order['order_sn'],
-            'shipping_name' => $delivery['shipping_name'],
-            'invoice_no' => $delivery['invoice_no'],
-            'goods_id' => $delivery['goods_id'],
-            'original_img' => $delivery['original_img'],
-            'service_phone' => tpCache('shop_info.mobile'),
-            'province' => Db::name('region2')->where(['id' => $delivery['province']])->value('name'),
-            'city' => Db::name('region2')->where(['id' => $delivery['city']])->value('name'),
-            'district' => Db::name('region2')->where(['id' => $delivery['district']])->value('name'),
-            'address' => $delivery['address'],
-            'express' => $express['result']['list']
-        ];
         return json(['status' => 1, 'result' => $return]);
     }
 }
