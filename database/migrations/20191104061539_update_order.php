@@ -47,6 +47,12 @@ class UpdateOrder extends Migrator
             ->update();
 
         $this->table('order')
+            ->changeColumn('pay_status', 'integer', ['default' => 0, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
+                'comment' => '支付状态 0未支付 1已支付 2部分支付 3已退款 4拒绝退款'])
+            ->changeColumn('shipping_status', 'integer', ['default' => 0, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
+                'comment' => '发货状态 0未发货 1已发货 2部分发货 3不需发货'])
+            ->addColumn('send_type', 'integer', ['default' => 0, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
+                'comment' => '发货方式 0自填快递 1在线预约 2电子面单 3无需物流'])
             ->addColumn('delivery_type', 'integer', ['default' => 1, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
                 'comment' => '发货类型：1统一发货 2分开发货'])
             ->update();
