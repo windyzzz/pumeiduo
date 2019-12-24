@@ -397,7 +397,7 @@ class Order extends Base
             'shipping_time' => $orderInfo['shipping_time'],
             'confirm_time' => $orderInfo['confirm_time'],
             'cancel_time' => $orderInfo['cancel_time'],
-            'delivery_type' => 1,   // 1统一发货 2分开发货
+            'delivery_type' => $orderInfo['delivery_type'],   // 1统一发货 2分开发货
             'delivery' => [
                 'consignee' => $orderInfo['consignee'],
                 'mobile' => $orderInfo['mobile'],
@@ -1933,6 +1933,7 @@ class Order extends Base
                         return json(['status' => 0, 'msg' => $express['msg']]);
                     }
                     $return['delivery'][] = [
+                        'rec_id' => $item['rec_id'],
                         'status' => $express['result']['deliverystatus'],
                         'shipping_name' => $item['shipping_name'],
                         'invoice_no' => $item['invoice_no'],
@@ -1950,7 +1951,7 @@ class Order extends Base
      * 物流详情
      * @return \think\response\Json
      */
-    public function orderExpressDetail()
+    public function expressDetail()
     {
         $recId = I('rec_id', '');
         $order = M('order_goods og')->join('order o', 'o.order_id = og.order_id')->where(['og.rec_id' => $recId])->field('o.*')->find();
