@@ -62,7 +62,7 @@ class weixinApp
         $input->SetTime_expire(date('YmdHis', time() + 600));
         $input->SetGoods_tag('tp_wx_app_pay');
         $input->SetTrade_type('APP');
-        $input->SetNotify_url(SITE_URL . '/application/common/callback/wechatApp.php');
+        $input->SetNotify_url(SITE_URL . '/index.php/Home/Callback/wechatApp');
 //        $input->SetOpenid($openId);
 
         require_once 'lib/WxPay.Api.php';
