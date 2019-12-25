@@ -171,12 +171,12 @@ class PlaceOrder
      */
     public function check()
     {
-        $pay_points = $this->pay->getPayPoints();
-        $user_electronic = $this->pay->getUserElectronic();
-        if ($pay_points || $user_electronic) {
+//        $pay_points = $this->pay->getPayPoints();
+//        $user_electronic = $this->pay->getUserElectronic();
+//        if ($pay_points || $user_electronic) {
             $user = $this->pay->getUser();
             if (1 == $user['is_lock']) {
-                throw new TpshopException('提交订单', 0, ['status' => -5, 'msg' => '账号异常已被锁定，不能使用余额支付！', 'result' => '']);
+                throw new TpshopException('提交订单', 0, ['status' => -5, 'msg' => '账号异常已被锁定，不能使用积分或电子币支付！', 'result' => '']);
             }
             if (empty($user['paypwd'])) {
                 throw new TpshopException('提交订单', 0, ['status' => -6, 'msg' => '请先设置支付密码', 'result' => '']);
@@ -187,7 +187,7 @@ class PlaceOrder
             if (systemEncrypt($this->payPsw) !== $user['paypwd']) {
                 throw new TpshopException('提交订单', 0, ['status' => -8, 'msg' => '支付密码错误', 'result' => '']);
             }
-        }
+//        }
     }
 
     private function queueInc()

@@ -195,6 +195,7 @@ class Order extends Base
                     'order_amount' => $list['order_amount'],
                     'shipping_price' => $list['shipping_price'],
                     'add_time' => $list['add_time'],
+                    'delivery_type' => $list['delivery_type'],
                 ],
                 'order_goods' => []     // 订单商品
             ];
@@ -1382,8 +1383,8 @@ class Order extends Base
         $itemId = I('item_id', '');             // 商品规格ID
         $goodsNum = I('goods_num', '');         // 商品数量
         $payType = input('pay_type', 1);        // 结算类型
-        $couponId = I('coupon_id', '');         // 优惠券ID
         $cartIds = I('cart_ids', '');           // 购物车ID组合
+        $couponId = I('coupon_id', '');         // 优惠券ID
 
         $cartLogic = new CartLogic();
         $cartLogic->setUserId($this->user_id);
@@ -1550,7 +1551,7 @@ class Order extends Base
                             $canCoupon = false;
                         }
                     }
-                    if (!$canCoupon || $coupon['condition'] > $payReturn['order_amount']) {
+                    if (!$canCoupon || $coupon['condition'] > $payReturn['goods_price']) {
                         unset($couponList[$key]);
                         continue;
                     }
@@ -1610,7 +1611,216 @@ class Order extends Base
             // 优惠券 兑换券
             'coupon_list' => $couponList,
             'exchange_list' => $exchangeList,
-            // 支付
+            // 价格
+            'user_electronic' => $this->user['user_electronic'],
+            'weight' => $weight . 'g',
+            'goods_fee' => $payReturn['goods_price'],
+            'shipping_price' => $payReturn['shipping_price'],
+            'coupon_price' => $payReturn['coupon_price'],
+            'prom_price' => $payReturn['order_prom_amount'],
+            'electronic_price' => $payReturn['user_electronic'],
+            'pay_points' => $payReturn['pay_points'],
+            'order_amount' => $payReturn['order_amount'],
+            'spare_pay_points' => bcsub($this->user['pay_points'], $payReturn['pay_points'], 2),
+            'give_integral' => $give_integral,
+            'free_shipping_price' => tpCache('shopping.freight_free') <= $payReturn['order_amount'] ? 0 : bcsub(tpCache('shopping.freight_free'), $payReturn['order_amount'], 2)
+        ];
+        return json(['status' => 1, 'result' => $return]);
+    }
+
+    /**
+     * 获取提交订单前的信息（下部分）
+     * @return \think\response\Json
+     */
+    public function orderBeforeInfo2()
+    {
+        $goodsId = I('goods_id', '');           // 商品ID
+        $itemId = I('item_id', '');             // 商品规格ID
+        $goodsNum = I('goods_num', '');         // 商品数量
+        $payType = input('pay_type', 1);        // 结算类型
+        $cartIds = I('cart_ids', '');           // 购物车ID组合
+        $couponId = I('coupon_id', 0);          // 优惠券ID
+        $addressId = I('address_id', '');       // 地址ID
+        $userElectronic = I('user_electronic', '');     // 使用电子币
+        if (!$addressId) {
+            // 用户默认地址
+            $userAddress = get_user_address_list_new($this->user_id, true);
+            if (!empty($userAddress)) {
+                $userAddress = $userAddress[0];
+            }
+        } else {
+            $userAddress = Db::name('UserAddress')->where('address_id', $addressId)->find();
+            if (empty($userAddress)) {
+                return json(['status' => 0, 'msg' => '收货人信息不存在']);
+            }
+        }
+        $cartLogic = new CartLogic();
+        $cartLogic->setUserId($this->user_id);
+        if (!empty($goodsId) && empty($cartIds)) {
+            /*
+             * 单个商品下单
+             */
+            $cartLogic->setGoodsModel($goodsId);
+            $cartLogic->setSpecGoodsPriceModel($itemId);
+            $cartLogic->setGoodsBuyNum($goodsNum);
+            $cartLogic->setType($payType);
+            $cartLogic->setCartType(0);
+            try {
+                $buyGoods = $cartLogic->buyNow();
+            } catch (TpshopException $tpE) {
+                $error = $tpE->getErrorArr();
+                return json(['status' => 0, 'msg' => $error['msg']]);
+            }
+            $cartList['cartList'] = [$buyGoods];
+        } elseif (empty($goodsId) && !empty($cartIds)) {
+            /*
+             * 购物车下单
+             */
+            $cartIds = explode(',', $cartIds);
+            foreach ($cartIds as $k => $v) {
+                $data = [];
+                $data['id'] = $v;
+                $data['selected'] = 1;
+                $cartIds[$k] = $data;
+            }
+            $result = $cartLogic->AsyncUpdateCarts($cartIds);
+            if (1 != $result['status']) {
+                return json(['status' => 0, 'msg' => $result['msg'], 'result' => null]);
+            }
+            if (0 == $cartLogic->getUserCartOrderCount()) {
+                return json(['status' => 0, 'msg' => '你的购物车没有选中商品', 'result' => null]);
+            }
+            $cartList['cartList'] = $cartLogic->getCartList(1); // 获取用户选中的购物车商品
+        } else {
+            /*
+             * 单个商品 + 购物车 下单
+             */
+//            $cartIds = explode(',', $cartIds);
+//            $goodsInfo = $cartLogic->getCartGoods($cartIds, 'c.goods_id, sgp.item_id, c.goods_num, c.type pay_type');
+//            $goodsInfo[] = [
+//                'goods_id' => $goodsId,
+//                'item_id' => $itemId,
+//                'goods_num' => $goodsNum,
+//                'pay_type' => $payType
+//            ];
+//            $buyGoods = [];
+//            foreach ($goodsInfo as $goods) {
+//                $cartLogic->setGoodsModel($goods['goods_id']);
+//                $cartLogic->setSpecGoodsPriceModel($goods['item_id']);
+//                $cartLogic->setGoodsBuyNum($goods['goods_num']);
+//                $cartLogic->setType($goods['pay_type']);
+//                $cartLogic->setCartType(0);
+//                try {
+//                    $buyGoods[] = $cartLogic->buyNow();
+//                } catch (TpshopException $tpE) {
+//                    $error = $tpE->getErrorArr();
+//                    return json(['status' => 0, 'msg' => $error['msg']]);
+//                }
+//            }
+//            $cartList['cartList'] = $buyGoods;
+        }
+        $cartPriceInfo = $cartLogic->getCartPriceInfo($cartList['cartList']);  //初始化数据 商品总额/节约金额/商品总共数量/商品使用积分
+        $cartList = array_merge($cartList, $cartPriceInfo);
+
+        if ($couponId != -1) {
+            $cartGoodsList = get_arr_column($cartList['cartList'], 'goods');
+            $cartGoodsId = get_arr_column($cartGoodsList, 'goods_id');
+            $cartGoodsCatId = get_arr_column($cartGoodsList, 'cat_id');
+            $couponLogic = new CouponLogic();
+            // 用户可用的优惠券列表
+            $userCouponList = $couponLogic->getUserAbleCouponList($this->user_id, $cartGoodsId, $cartGoodsCatId);
+//        $userCouponList = $cartLogic->getCouponCartList($cartList, $userCouponList);
+            $couponList = [];
+            $hasSelected = false;
+            foreach ($userCouponList as $k => $coupon) {
+                $couponList[$k] = [
+                    'coupon_id' => $coupon['coupon']['id'],
+                    'name' => $coupon['coupon']['name'],
+                    'money' => $coupon['coupon']['money'],
+                    'condition' => $coupon['coupon']['condition'],
+                    'is_usual' => $coupon['coupon']['is_usual'],
+                    'use_start_time' => date('Y-m-d', $coupon['coupon']['use_start_time']),
+                    'use_end_time' => date('Y-m-d', $coupon['coupon']['use_end_time']),
+                    'is_selected' => 0
+                ];
+                if ($coupon['coupon']['id'] == $couponId) {
+                    $couponList[$k]['is_selected'] = 1;
+                    $hasSelected = true;
+                }
+            }
+            if (!$hasSelected && !empty($couponList)) {
+                $couponId = $couponList[0]['coupon_id'];    // 默认选中第一张
+            }
+        }
+        try {
+            $payLogic = new Pay();
+            $payLogic->setUserId($this->user_id);   // 设置支付用户ID
+            // 计算购物车价格
+            $payLogic->payCart($cartList['cartList']);
+            // 检测支付商品购买限制
+            $payLogic->check();
+            // 参与活动促销 加价购活动
+//        $payLogic->activityPayBefore();
+            $payLogic->goodsPromotion();
+
+            // 配送物流
+            if (empty($userAddress)) {
+                $payLogic->delivery(0);
+            } else {
+                $payLogic->delivery($userAddress['district']);
+            }
+            $pay_points = $payLogic->getUsePoint();     // 使用积分
+            if ($this->user['pay_points'] < $pay_points) {
+                return json(['status' => 0, 'msg' => '用户消费积分只有' . $this->user['pay_points']]);
+            }
+            $payLogic->usePayPoints($pay_points);
+            $payLogic->useUserElectronic($userElectronic);  // 使用电子币
+
+            $give_integral = 0;             // 赠送积分
+            $weight = 0;                    // 产品重量
+            $order_prom_fee = 0;            // 订单优惠促销总价
+            foreach ($cartList['cartList'] as $v) {
+                $goodsInfo = M('Goods')->field('give_integral, weight')->where('goods_id', $v['goods_id'])->find();
+                $give_integral += $goodsInfo['give_integral'];
+                $weight += $goodsInfo['weight'];
+                if (isset($v['is_order_prom']) && $v['is_order_prom'] == 1) {
+                    $order_prom_fee += ($v['use_integral'] + $v['member_goods_price']) * $v['goods_num'];
+                }
+            }
+
+            $payLogic->activity();      // 满单赠品
+            $payLogic->activity2New($order_prom_fee);     // 指定商品赠品 / 订单优惠赠品
+            $payLogic->activity3();     // 订单优惠促销
+
+            // 使用优惠券
+            if (isset($couponId) && $couponId > 0) {
+                $payLogic->useCouponById($couponId, $payLogic->getPayList());
+            }
+            // 支付数据
+            $payReturn = $payLogic->toArray();
+            if (!empty($couponList)) {
+                // 筛选优惠券
+                foreach ($couponList as $key => $coupon) {
+                    $canCoupon = true;
+                    if ($coupon['is_usual'] == 0) {
+                        // 不可以叠加优惠
+                        if ($payReturn['order_prom_amount'] > 0) {
+                            $canCoupon = false;
+                        }
+                    }
+                    if (!$canCoupon || $coupon['condition'] > $payReturn['order_amount']) {
+                        unset($couponList[$key]);
+                        continue;
+                    }
+                    unset($couponList[$key]['condition']);
+                    unset($couponList[$key]['is_usual']);
+                }
+            }
+        } catch (TpshopException $tpE) {
+            return json($tpE->getErrorArr());
+        }
+        // 组合数据
+        $return = [
             'user_electronic' => $this->user['user_electronic'],
             'weight' => $weight . 'g',
             'goods_fee' => $payReturn['goods_price'],
@@ -1765,6 +1975,10 @@ class Order extends Base
                 'order_id' => $order['order_id'],
                 'order_sn' => $order['order_sn'],
             ];
+            $orderPayStatus = M('order')->where(['order_id' => $return['order_id'], 'order_sn' => $return['order_sn']])->value('pay_status');
+            if ($orderPayStatus == 1) {
+                return json(['status' => 11, 'msg' => '创建订单成功', 'result' => $return]);
+            }
 //            // 预售和抢购暂不支持货到付款
 //            $orderGoodsPromType = M('order_goods')->where(['order_id' => $order['order_id']])->getField('prom_type', true);
 //            $no_cod_order_prom_type = ['4,5']; // 预售订单，虚拟订单不支持货到付款
@@ -1785,7 +1999,7 @@ class Order extends Base
             return json(['status' => 1, 'msg' => '创建订单成功', 'result' => $return]);
         } catch (TpshopException $tpE) {
             Db::rollback();
-            return json(['status' => 0, 'msg' => $tpE->getErrorArr()['msg'] ?? '创建订单失败']);
+            return json(['status' => $tpE->getErrorArr()['status'], 'msg' => $tpE->getErrorArr()['msg'] ?? '创建订单失败']);
         }
     }
 

@@ -1,0 +1,125 @@
+<include file="public/layout" />
+<script src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
+<script type="text/javascript" src="__PUBLIC__/static/js/perfect-scrollbar.min.js"></script>
+<body style="background-color: rgb(255, 255, 255); overflow: auto; cursor: default; -moz-user-select: inherit;">
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+	<div class="fixed-bar">
+		<div class="item-title">
+			<div class="subject">
+				<h3>银行列表</h3>
+			</div>
+		</div>
+	</div>
+	<div class="flexigrid">
+		<div class="mDiv">
+			<div class="ftitle">
+				<h3>银行列表</h3>
+				<h5>(共{$page->totalRows}条记录)</h5>
+			</div>
+			<div title="刷新数据" class="pReload"><i class="fa fa-refresh"></i></div>
+			<form class="navbar-form form-inline" action="{:U('Admin/System/bankList')}" method="get">
+				<div class="sDiv">
+					<div class="sDiv2">
+						<input size="30" name="bank_name" value="{$Request.param.bank_name}" class="qsbox" placeholder="银行名" type="text">
+					</div>
+					<div class="sDiv2">
+						<input type="submit" class="btn" value="搜索" >
+					</div>
+				</div>
+			</form>
+		</div>
+		<div class="hDiv">
+			<div class="hDivBox">
+				<table cellspacing="0" cellpadding="0">
+					<thead>
+					<tr>
+						<th class="sign" axis="col0">
+							<div style="width: 24px;"><i class="ico-check"></i></div>
+						</th>
+						<th align="left"  axis="col3" class="">
+							<div style="text-align: center; width: 150px;" class="">银行名称</div>
+						</th>
+						<th align="left" axis="col4" class="">
+							<div style="text-align: center; width: 100px;" class="">银行编码</div>
+						</th>
+						<th align="left" axis="col4" class="">
+							<div style="text-align: center; width: 100px;" class="">银行图标</div>
+						</th>
+						<th align="center" axis="col5" class="">
+							<div style="text-align: center; width: 80px;" class="">开启状态</div>
+						</th>
+						<th align="left" axis="col1" class="handle" style="display: none;">
+							<div style="text-align: center; width: 250px;">操作</div>
+						</th>
+						<th style="width:100%" axis="col7">
+							<div></div>
+						</th>
+					</tr>
+					</thead>
+				</table>
+			</div>
+		</div>
+		<div class="bDiv" style="height: auto;">
+			<div id="flexigrid">
+				<table>
+					<tbody>
+					<volist name="bank_list" id="bank">
+						<tr>
+							<td class="sign">
+								<div style="width: 24px;"><i class="ico-check"></i></div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 150px;">{$bank.name_cn}</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 100px;">{$bank.name_en}</div>
+							</td>
+							<td>
+								<div style="text-align: center; width: 100px;">
+									<img style="width: 50%;" src="{$bank.icon}">
+								</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 80px;">					
+									<if condition="$bank[status] eq 1">
+										<span class="yes" onClick="changeTableVal('bank','id','{$bank.id}','status',this)" ><i class="fa fa-check-circle"></i>是</span>
+										<else />
+										<span class="no" onClick="changeTableVal('bank','id','{$bank.id}','status',this)" ><i class="fa fa-ban"></i>否</span>
+									</if>
+								</div>
+							</td>
+							<td align="center" class="handle" style="display: none">
+								<div style="text-align: center; width: 250px; max-width:170px;">
+									<a class="btn blue" href="{:U('System/bankInfo', array('id' => $bank['id']))}"><i class="fa fa-search"></i>编辑</a>
+								</div>
+							</td>
+							<td align="" class="" style="width: 100%;">
+								<div>&nbsp;</div>
+							</td>
+						</tr>
+					</volist>
+					</tbody>
+				</table>
+			</div>
+			<div class="iDiv" style="display: none;"></div>
+		</div>
+		<!--分页位置-->
+		{$page->show()} </div>
+</div>
+<script>
+	$(document).ready(function(){
+		// 表格行点击选中切换
+		$('#flexigrid > table>tbody >tr').click(function(){
+			$(this).toggleClass('trSelected');
+		});
+
+		// 点击刷新数据
+		$('.fa-refresh').click(function(){
+			location.href = location.href;
+		});
+	});
+</script>
+</body>
+</html>

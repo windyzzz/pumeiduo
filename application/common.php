@@ -1766,14 +1766,3 @@ function getPayBody($order_id)
 
     return $payBody;
 }
-
-/**
- * 获取星期几
- * @param $time
- * @return string
- */
-function getWeekDay($time)
-{
-    $weekArr = ["日", "一", "二", "三", "四", "五", "六"];
-    return "星期" . $weekArr[date('w', $time)];
-}

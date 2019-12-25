@@ -218,7 +218,6 @@ class CartLogic extends Model
         }
 
         $goodsPromFactory = new GoodsPromFactory();
-
         if ($goodsPromFactory->checkPromType($prom_type)) {
             $goodsPromLogic = $goodsPromFactory->makeModule($this->goods, $this->specGoodsPrice);
             if (!empty($goodsPromLogic)) {
@@ -812,6 +811,7 @@ class CartLogic extends Model
                     unset($cartList[$cartKey]);
                     continue;
                 }
+                $cartList[$cartKey]['item_id'] = $specGoodsPrice['item_id'];
             } else {
                 $specGoodsPrice = SpecGoodsPrice::get(['goods_id' => $cart['goods_id']], '', false);
                 if ($specGoodsPrice) {

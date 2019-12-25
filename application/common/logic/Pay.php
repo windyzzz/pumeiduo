@@ -280,7 +280,6 @@ class Pay
         //4.团购
         //5.加价购
         $district_level = [];
-
         foreach ($pay_list as $k => $v) {
             $goods_info = M('goods')
                 ->field('goods_id,goods_name,distribut_id,zone,limit_buy_num,sale_type,prom_type')
@@ -308,26 +307,26 @@ class Pay
             //3.超值套组
             // $goods_info = M('Goods')->where('goods_id',$v['goods_id'])->getField('sale_type');
 
-            if (2 == $goods_info['sale_type']) {
-                $g_list = M('GoodsSeries')->where('goods_id', $v['goods_id'])->select();
-                /*if ($g_list) {
-                    foreach ($g_list as $gk => $gv) {
-                        $series_goods_info = M('Goods')->field('goods_id,goods_name,store_count')->where('goods_id', $gv['g_id'])->find();
-                        if ($gv['item_id']) {
-                            // 先到规格表里面扣除数量 再重新刷新一个 这件商品的总数量
-                            $SpecGoodsPrice = new \app\common\model\SpecGoodsPrice();
-                            $specGoodsPrice = $SpecGoodsPrice::get(['goods_id' => $gv['g_id'], 'item_id' => $gv['item_id']]);
-                            if ($specGoodsPrice['store_count'] < $v['goods_num'] * $gv['g_number']) {
-                                throw new TpshopException('计算订单价格', 0, ['status' => -1, 'msg' => "购买数量超出套组商品：【{$series_goods_info['goods_name']},{$specGoodsPrice['key_name']}】 库存数量 {$specGoodsPrice['store_count']}", 'result' => '']);
-                            }
-                        } else {
-                            if ($series_goods_info['store_count'] < $v['goods_num'] * $gv['g_number']) {
-                                throw new TpshopException('计算订单价格', 0, ['status' => -1, 'msg' => "购买数量超出套组商品：【{$series_goods_info['goods_name']}】 库存数量 {$series_goods_info['store_count']}", 'result' => '']);
-                            }
-                        }
-                    }
-                }*/
-            }
+//            if (2 == $goods_info['sale_type']) {
+//                $g_list = M('GoodsSeries')->where('goods_id', $v['goods_id'])->select();
+//                if ($g_list) {
+//                    foreach ($g_list as $gk => $gv) {
+//                        $series_goods_info = M('Goods')->field('goods_id,goods_name,store_count')->where('goods_id', $gv['g_id'])->find();
+//                        if ($gv['item_id']) {
+//                            // 先到规格表里面扣除数量 再重新刷新一个 这件商品的总数量
+//                            $SpecGoodsPrice = new \app\common\model\SpecGoodsPrice();
+//                            $specGoodsPrice = $SpecGoodsPrice::get(['goods_id' => $gv['g_id'], 'item_id' => $gv['item_id']]);
+//                            if ($specGoodsPrice['store_count'] < $v['goods_num'] * $gv['g_number']) {
+//                                throw new TpshopException('计算订单价格', 0, ['status' => -1, 'msg' => "购买数量超出套组商品：【{$series_goods_info['goods_name']},{$specGoodsPrice['key_name']}】 库存数量 {$specGoodsPrice['store_count']}", 'result' => '']);
+//                            }
+//                        } else {
+//                            if ($series_goods_info['store_count'] < $v['goods_num'] * $gv['g_number']) {
+//                                throw new TpshopException('计算订单价格', 0, ['status' => -1, 'msg' => "购买数量超出套组商品：【{$series_goods_info['goods_name']}】 库存数量 {$series_goods_info['store_count']}", 'result' => '']);
+//                            }
+//                        }
+//                    }
+//                }
+//            }
 
             // 团购
             $now = time();
@@ -432,7 +431,7 @@ class Pay
         $orderPromId2 = [];
         $giftGoods = [];
         foreach ($goods_list as $k => $v) {
-            if ($v['spec_key']) {
+            if (isset($v['spec_key'])) {
                 $gift2_goods = M('gift2_goods')
                     ->alias('gg')
                     ->field('gg.goods_id,gg.item_id,gg.stock as goods_num,gt.id,gg.buy_stock,g.goods_remark')
@@ -564,7 +563,7 @@ class Pay
         $orderPromId = [];
         $giftGoods = [];
         foreach ($goods_list as $k => $v) {
-            if ($v['spec_key']) {
+            if (isset($v['spec_key'])) {
                 $gift2_goods = M('gift2_goods')
                     ->alias('gg')
                     ->field('gg.goods_id,gg.item_id,gg.stock as goods_num,gt.id,gg.buy_stock,g.goods_remark')
@@ -907,7 +906,7 @@ class Pay
                                 }
                                 break;
                         }
-                        $this->orderAmount = $this->orderAmount - $this->couponPrice;
+                        $this->orderAmount = bcsub($this->orderAmount, $this->couponPrice, 2);
                     }
                 }
             }

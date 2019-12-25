@@ -20,11 +20,12 @@ return [
             // array('name'=>'验证码设置','act'=>'index4','op'=>'System'),
             // array('name'=>'自定义导航栏','act'=>'navigationList','op'=>'System'),
             // array('name'=>'友情链接','act'=>'linkList','op'=>'Article'),
-            ['name' => '清除缓存', 'act' => 'cleanCache', 'op' => 'System'],
             // array('name'=>'自提点','act'=>'index','op'=>'Pickup'),
             ['name' => '运费模板', 'act' => 'index', 'op' => 'Freight'],
             ['name' => '快递公司', 'act' => 'index', 'op' => 'Shipping'],
             ['name' => '节日设置', 'act' => 'icon', 'op' => 'System'],
+            ['name' => '银行列表', 'act' => 'bankList', 'op' => 'System'],
+            ['name' => '清除缓存', 'act' => 'cleanCache', 'op' => 'System'],
         ]],
         ['name' => '会员', 'child' => [
             ['name' => '会员列表', 'act' => 'index', 'op' => 'User'],

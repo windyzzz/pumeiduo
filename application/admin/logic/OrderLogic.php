@@ -468,7 +468,9 @@ class OrderLogic
                                         ++$is_delivery;
                                     }
                                 }
-                                $data['note'] .= $goods['note'] . '，';
+                                if (!empty($goods['note'])) {
+                                    $data['note'] .= $goods['note'] . '，';
+                                }
                             }
                             $data['note'] = rtrim($data['note'], ',');
                             break;

@@ -305,9 +305,9 @@ class Api extends Base
         if (!$queryNo) {
             switch ($out){
                 case 'json':
-                    return json(['status' => -1, 'message' => '参数有误', 'result' => '']);
+                    return json(['status' => -1, 'msg' => '参数有误', 'result' => '']);
                 default:
-                    return ['status' => -1, 'message' => '参数有误', 'result' => ''];
+                    return ['status' => -1, 'msg' => '参数有误', 'result' => ''];
             }
         }
         $host = 'https://kdwlcxf.market.alicloudapi.com';

@@ -30,14 +30,15 @@ class Base extends Controller
             session_destroy();
             $token = Request::instance()->header('user-token', null);
             // 处理url
-            if (in_array(self::getUrl(), self::whiteListPath()) || !$token) {
+            $url = self::getUrl();
+            if (in_array($url, self::whiteListPath()) || !$token) {
                 $this->userToken = TokenLogic::setToken();
                 return true;
             }
-            if (in_array(self::getUrl(), self::specialListPath()) && $token) {
+            if (in_array($url, self::specialListPath()) && $token) {
                 $user = TokenLogic::getValue('user', $token);
                 $this->user = $user;
-                $this->user_id = $user['user_id'];
+                $this->user_id = !empty($user) ? $user['user_id'] : '';
                 $this->userToken = $token;
                 return true;
             }
@@ -84,6 +85,7 @@ class Base extends Controller
             'c=api.Goods&a=getRecommendGoodsList',   // 促销商品
             'c=api.Goods&a=getHotGoodsList',   // 热销商品
             'c=api.Goods&a=getFlashSalesGoodsList',   // 秒杀商品
+            'c=api.Goods&a=look_see',   // 猜你喜欢
             'c=api.Message&a=announce',   // 公告列表
         ];
     }

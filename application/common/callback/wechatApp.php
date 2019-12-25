@@ -39,9 +39,10 @@ if (empty($post) || $post == null || $post == '') {
 
 libxml_disable_entity_loader(true); //禁止引用外部xml实体
 
-$xml = simplexml_load_string($post, 'SimpleXMLElement', LIBXML_NOCDATA);//XML转数组
-
-$post_data = (array)$xml;
+//$xml = simplexml_load_string($post, 'SimpleXMLElement', LIBXML_NOCDATA);//XML转数组
+$xml_object = simplexml_load_string($post); //将文件转换成 对象
+$xml_json = json_encode($xml_object);   //将对象转换个JSON
+$post_data = json_decode($xml_json, true);  //将json转换成数组
 
 /** 解析出来的数组
  *Array
@@ -68,7 +69,7 @@ $post_data = (array)$xml;
 //订单号
 $orderSn = isset($post_data['out_trade_no']) && !empty($post_data['out_trade_no']) ? $post_data['out_trade_no'] : 0;
 //查询订单信息
-$orderInfo = M('order')->where(['order_sn' => $orderSn])->find();
+$orderInfo = db('order')->where(['order_sn' => $orderSn])->find();
 if ($orderInfo) {
     $paymentPlugin = M('Plugin')->where(['code' => 'weixinApp', 'type' => 'payment'])->find(); // 找到微信支付插件的配置
     $config_value = unserialize($paymentPlugin['config_value']); // 配置反序列化
@@ -85,8 +86,8 @@ if ($orderInfo) {
 
     //签名统一，则更新数据库
     if ($post_sign == $newSign) {
-//        M('order')->where(['order_id', $orderInfo['order_id']])->update(['transaction_id' => $post_data['transaction_id']]);
-        update_pay_status($orderInfo['order_sn'], ['transaction_id' => $post_data['transaction_id']]); // 修改订单支付状态
+        M('order')->where(['order_id', $orderInfo['order_id']])->update(['transaction_id' => $post_data['transaction_id']]);
+//        update_pay_status($orderInfo['order_sn'], ['transaction_id' => $post_data['transaction_id']]); // 修改订单支付状态
         echo $resSuccessXml;
     }
 } else {
@@ -94,8 +95,7 @@ if ($orderInfo) {
 }
 
 //阻止微信接口反复回调接口
-$str = $resFailXml;
-echo $str;
+echo $resFailXml;
 
 function MakeSign($params, $key)
 {

@@ -1486,3 +1486,32 @@ function mg_cn_substr($str,$len,$start = 0){
     }
     return $q_str;
 }
+
+/**
+ * 获取星期几
+ * @param $time
+ * @return string
+ */
+function getWeekDay($time)
+{
+    $weekArr = ["日", "一", "二", "三", "四", "五", "六"];
+    return "星期" . $weekArr[date('w', $time)];
+}
+
+/**
+ * url参数拼接
+ * @param $params
+ * @return string
+ */
+function ToUrlParams($params)
+{
+    $string = '';
+    if (!empty($params)) {
+        $array = array();
+        foreach ($params as $key => $value) {
+            $array[] = $key . '=' . $value;
+        }
+        $string = implode("&", $array);
+    }
+    return $string;
+}

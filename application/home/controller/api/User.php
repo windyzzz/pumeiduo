@@ -2879,25 +2879,12 @@ class User extends Base
     }
 
     /**
-     * 资金信息
+     * 用户资金信息
      * @return \think\response\Json
      */
-    public function userWealthNew()
+    public function wealth()
     {
-        // 输出资金信息
-        $will_distribute_money = M('RebateLog')->field('SUM(money) as money')->where('user_id', $this->user_id)->where('status', 'in', [1, 2])->find();
-        $return = [
-            'user_money' => $this->user['user_money'],
-            'frozen_money' => $this->user['frozen_money'],
-            'user_electronic' => $this->user['user_electronic'],
-            'frozen_electronic' => $this->user['frozen_electronic'],
-            'pay_points' => $this->user['pay_points'],
-            'level' => $this->user['distribut_level'],
-            'level_name' => M('DistributLevel')->where('level_id', $this->user['distribut_level'])->getField('level_name'),
-            'distribute_money' => $this->user['distribut_money'],
-            'will_distribute_money' => isset($will_distribute_money['money']) ? $will_distribute_money['money'] : '0.00'
-        ];
-        return json(['status' => 1, 'result' => $return]);
+
     }
 
     /**

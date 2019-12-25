@@ -22,10 +22,11 @@ class Cron extends Controller
     /**
      * 自动上下架
      */
-    function auto_on_out(){
-        M('goods')->where(array('is_area_show'=>1,'is_on_sale'=>1,'out_time'=>array('elt',NOW_TIME)))->data(array('is_on_sale'=>0))->save();
-        M('goods')->where(array('is_area_show'=>1,'is_on_sale'=>0,'is_on_sale2'=>1,'store_count'=>array('gt',0),'on_time'=>array('elt',NOW_TIME),'out_time'=>array('gt',NOW_TIME) ))->data(array('is_on_sale'=>1))->save();
-        M('goods')->where(array('is_area_show|is_on_sale2|store_count'=>0))->data(array('is_on_sale'=>0))->save();
+    function auto_on_out()
+    {
+        M('goods')->where(array('is_area_show' => 1, 'is_on_sale' => 1, 'out_time' => array('elt', NOW_TIME)))->data(array('is_on_sale' => 0))->save();
+        M('goods')->where(array('is_area_show' => 1, 'is_on_sale' => 0, 'is_on_sale2' => 1, 'store_count' => array('gt', 0), 'on_time' => array('elt', NOW_TIME), 'out_time' => array('gt', NOW_TIME)))->data(array('is_on_sale' => 1))->save();
+        M('goods')->where(array('is_area_show|is_on_sale2|store_count' => 0))->data(array('is_on_sale' => 0))->save();
     }
 
     // 检查错误订单积分 上次检查 2018-12-14 15:43
@@ -108,8 +109,8 @@ AND log_id NOT IN
 ");
         foreach ($rows as $key => $value) {
             $update = [];
-            $update['pay_points'] = ['exp', 'pay_points+'.-$value['pay_points']];
-            $update['user_electronic'] = ['exp', 'user_electronic+'.-$value['user_electronic']];
+            $update['pay_points'] = ['exp', 'pay_points+' . -$value['pay_points']];
+            $update['user_electronic'] = ['exp', 'user_electronic+' . -$value['user_electronic']];
             $str = M('users')->where('user_id', $value['user_id'])->update($update);
             // $str = M('users')->where('user_id',$value['user_id'])->fetchSql(1)->update($update);
             // file_put_contents('account_sql.log', $str."\r\n", FILE_APPEND | LOCK_EX);
@@ -162,17 +163,17 @@ AND log_id NOT IN
         if (is_array($goods_list)) {
             foreach ($goods_list as $k => $val) {
                 $is_create = M('orderGoods')
-                ->alias('og')
-                ->join('__ORDER__ o', 'o.order_id = og.order_id', 'left')
-                ->where('og.goods_id', $val['goods_id'])
-                ->where('og.is_send', 1)
-                ->where('o.pay_status', 1)
-                ->where('o.add_time', 'lt', $end_time)
-                ->where('o.add_time', 'gt', $start_time)
-                ->find() ? 'Y' : 'N';
+                    ->alias('og')
+                    ->join('__ORDER__ o', 'o.order_id = og.order_id', 'left')
+                    ->where('og.goods_id', $val['goods_id'])
+                    ->where('og.is_send', 1)
+                    ->where('o.pay_status', 1)
+                    ->where('o.add_time', 'lt', $end_time)
+                    ->where('o.add_time', 'gt', $start_time)
+                    ->find() ? 'Y' : 'N';
                 $strTable .= '<tr>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['goods_sn'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$is_create.'</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['goods_sn'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $is_create . '</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">圃美多商城</td>';
                 $strTable .= '</tr>';
             }
@@ -187,12 +188,12 @@ AND log_id NOT IN
     public function downloadTaozuzuheGoucheng()
     {
         $goods_list = M('Goods')
-        ->field('g.goods_id,g.goods_sn,gsg.goods_sn as g_goods_sn,gs.g_number')
-        ->alias('g')
-        ->join('__GOODS_SERIES__ gs', 'gs.goods_id = g.goods_id', 'left')
-        ->join('__GOODS__ gsg', 'gsg.goods_id = gs.g_id', 'left')
-        ->where('g.sale_type', 2)
-        ->select();
+            ->field('g.goods_id,g.goods_sn,gsg.goods_sn as g_goods_sn,gs.g_number')
+            ->alias('g')
+            ->join('__GOODS_SERIES__ gs', 'gs.goods_id = g.goods_id', 'left')
+            ->join('__GOODS__ gsg', 'gsg.goods_id = gs.g_id', 'left')
+            ->where('g.sale_type', 2)
+            ->select();
         $strTable = '<table width="500" border="1">';
         $strTable .= '<tr>';
         $strTable .= '<td style="text-align:center;font-size:12px;width:120px;">套组代码</td>';
@@ -203,9 +204,9 @@ AND log_id NOT IN
         if (is_array($goods_list)) {
             foreach ($goods_list as $k => $val) {
                 $strTable .= '<tr>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['goods_sn'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['g_goods_sn'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['g_number'].'</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['goods_sn'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['g_goods_sn'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['g_number'] . '</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">圃美多商城</td>';
                 $strTable .= '</tr>';
             }
@@ -222,13 +223,13 @@ AND log_id NOT IN
         $start_time = 1541001600;
         $end_time = 1543593600;
         $goods_list = M('StockLog')
-        ->alias('s')
-        ->field('s.*,g.goods_sn')
-        ->join('__GOODS__ g', 'g.goods_id = s.goods_id', 'left')
-        ->where('s.ctime', 'between', [$start_time, $end_time])
-        ->order('id desc')
+            ->alias('s')
+            ->field('s.*,g.goods_sn')
+            ->join('__GOODS__ g', 'g.goods_id = s.goods_id', 'left')
+            ->where('s.ctime', 'between', [$start_time, $end_time])
+            ->order('id desc')
 //        ->limit(500)
-        ->select();
+            ->select();
         $strTable = '<table width="500" border="1">';
         $strTable .= '<tr>';
         $strTable .= '<td style="text-align:center;font-size:12px;width:120px;">日期</td>';
@@ -252,11 +253,11 @@ AND log_id NOT IN
                 }
                 $day = date('Y-m-d H:i', $val['ctime']);
                 $strTable .= '<tr>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$day.'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['goods_sn'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$str.'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['stock'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;'.$val['order_sn'].'</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $day . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['goods_sn'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $str . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['stock'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;' . $val['order_sn'] . '</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">圃美多商城</td>';
                 $strTable .= '</tr>';
             }
@@ -288,11 +289,11 @@ AND log_id NOT IN
                 }
                 $day = date('Y-m-d H:i', $val['ctime']);
                 $strTable .= '<tr>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$day.'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['goods_sn'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$str.'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['stock'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;'.$val['order_sn'].'</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $day . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['goods_sn'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $str . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['stock'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;' . $val['order_sn'] . '</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">圃美多商城</td>';
                 $strTable .= '</tr>';
             }
@@ -312,11 +313,11 @@ AND log_id NOT IN
         $order_ids = M('Order')->where('shipping_status', 1)->whereBetween('add_time', [$start_time, $end_time])->getField('order_id', true);
 
         $goods_list = M('Order')
-        ->where('shipping_status', 1)
-        ->where('order_id', 'in', $order_ids)
-        // ->limit(50)
-        ->order('order_id desc')
-        ->select();
+            ->where('shipping_status', 1)
+            ->where('order_id', 'in', $order_ids)
+            // ->limit(50)
+            ->order('order_id desc')
+            ->select();
         $strTable = '<table width="500" border="1">';
         $strTable .= '<tr>';
         $strTable .= '<td style="text-align:center;font-size:12px;width:120px;">销售日期</td>';
@@ -339,16 +340,16 @@ AND log_id NOT IN
                 $day = date('Y-m-d H:i:s', $val['pay_time']);
 
                 $strTable .= '<tr>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;'.$day.'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;'.$val['order_sn'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['user_id'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['order_amount'].'</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;' . $day . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;' . $val['order_sn'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['user_id'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['order_amount'] . '</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">0</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['user_electronic'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$use_integral.'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['coupon_price'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['shipping_price'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$total_amount.'</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['user_electronic'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $use_integral . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['coupon_price'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['shipping_price'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $total_amount . '</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">圃美多商城</td>';
                 $strTable .= '</tr>';
@@ -372,16 +373,16 @@ AND log_id NOT IN
                 $day = date('Y-m-d H:i:s', $val['pay_time']);
 
                 $strTable .= '<tr>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;'.$day.'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;'.$val['order_sn'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['user_id'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['order_amount'].'</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;' . $day . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;' . $val['order_sn'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['user_id'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['order_amount'] . '</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">0</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['user_electronic'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$use_integral.'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['coupon_price'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['shipping_price'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$total_amount.'</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['user_electronic'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $use_integral . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['coupon_price'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['shipping_price'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $total_amount . '</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">（退款单）</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">圃美多商城</td>';
                 $strTable .= '</tr>';
@@ -398,16 +399,16 @@ AND log_id NOT IN
                 $day = date('Y-m-d H:i:s', $val['addtime']);
                 $total_amount = $val['refund_money'] + $val['refund_integral'];
                 $strTable .= '<tr>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;'.$day.'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;'.$val['order_sn'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['user_id'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.-$val['refund_money'].'</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;' . $day . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;' . $val['order_sn'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['user_id'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . -$val['refund_money'] . '</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">0</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.-$val['refund_electronic'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.-$val['refund_integral'].'</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . -$val['refund_electronic'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . -$val['refund_integral'] . '</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;"></td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;"></td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.-$total_amount.'</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . -$total_amount . '</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">（有退货退款商品）</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">圃美多商城</td>';
                 $strTable .= '</tr>';
@@ -428,17 +429,16 @@ AND log_id NOT IN
         $order_ids = M('Order')->where('shipping_status', 1)->whereBetween('add_time', [$start_time, $end_time])->getField('order_id', true);
 
         $goods_list = M('OrderGoods')
-        ->alias('og')
-        ->field('og.*,g.stax_price,g.ctax_price,o.order_sn,o.pay_time')
-        ->join('__GOODS__ g', 'g.goods_id = og.goods_id', 'left')
-        ->join('__ORDER__ o', 'o.order_id = og.order_id', 'left')
-        ->where('og.is_send', 1)
-        // ->where('og.use_integral',0)
-        ->where('o.order_id', 'in', $order_ids)
-        ->order('o.order_id desc')
-
-        // ->limit(50)
-        ->select();
+            ->alias('og')
+            ->field('og.*,g.stax_price,g.ctax_price,o.order_sn,o.pay_time')
+            ->join('__GOODS__ g', 'g.goods_id = og.goods_id', 'left')
+            ->join('__ORDER__ o', 'o.order_id = og.order_id', 'left')
+            ->where('og.is_send', 1)
+            // ->where('og.use_integral',0)
+            ->where('o.order_id', 'in', $order_ids)
+            ->order('o.order_id desc')
+            // ->limit(50)
+            ->select();
         $strTable = '<table width="500" border="1">';
         $strTable .= '<tr>';
         $strTable .= '<td style="text-align:center;font-size:12px;width:120px;">产品码</td>';
@@ -460,16 +460,16 @@ AND log_id NOT IN
                 $ctax = $total_price - $total_ctax_price;
                 $day = date('Y-m-d H:i:s', $val['pay_time']);
                 $strTable .= '<tr>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;'.$val['goods_sn'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['goods_name'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['goods_num'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['goods_price'].'</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;' . $val['goods_sn'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['goods_name'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['goods_num'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['goods_price'] . '</td>';
 
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$total_price.'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$total_ctax_price.'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$ctax.'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;'.$val['order_sn'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;'.$day.'</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $total_price . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $total_ctax_price . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $ctax . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;' . $val['order_sn'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;' . $day . '</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">圃美多商城</td>';
                 $strTable .= '</tr>';
@@ -493,16 +493,16 @@ AND log_id NOT IN
                 $ctax = $total_price - $total_ctax_price;
                 $day = date('Y-m-d H:i:s', $val['pay_time']);
                 $strTable .= '<tr>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;'.$val['goods_sn'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['goods_name'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['goods_num'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['goods_price'].'</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;' . $val['goods_sn'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['goods_name'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['goods_num'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['goods_price'] . '</td>';
 
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$total_price.'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$total_ctax_price.'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$ctax.'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;'.$val['order_sn'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;'.$day.'</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $total_price . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $total_ctax_price . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $ctax . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;' . $val['order_sn'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;' . $day . '</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">(退款单)</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">圃美多商城</td>';
                 $strTable .= '</tr>';
@@ -527,32 +527,32 @@ AND log_id NOT IN
                 $day = date('Y-m-d H:i:s', $val['addtime']);
                 if ($val['add_time'] > $start_time) {
                     $strTable .= '<tr>';
-                    $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;'.$val['goods_sn'].'</td>';
-                    $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['goods_name'].'</td>';
-                    $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['goods_num'].'</td>';
-                    $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['goods_price'].'</td>';
+                    $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;' . $val['goods_sn'] . '</td>';
+                    $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['goods_name'] . '</td>';
+                    $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['goods_num'] . '</td>';
+                    $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['goods_price'] . '</td>';
 
-                    $strTable .= '<td style="text-align:center;font-size:12px;">'.$total_price.'</td>';
-                    $strTable .= '<td style="text-align:center;font-size:12px;">'.$total_ctax_price.'</td>';
-                    $strTable .= '<td style="text-align:center;font-size:12px;">'.$ctax.'</td>';
-                    $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;'.$val['order_sn'].'</td>';
-                    $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;'.$day.'</td>';
+                    $strTable .= '<td style="text-align:center;font-size:12px;">' . $total_price . '</td>';
+                    $strTable .= '<td style="text-align:center;font-size:12px;">' . $total_ctax_price . '</td>';
+                    $strTable .= '<td style="text-align:center;font-size:12px;">' . $ctax . '</td>';
+                    $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;' . $val['order_sn'] . '</td>';
+                    $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;' . $day . '</td>';
                     $strTable .= '<td style="text-align:center;font-size:12px;"></td>';
                     $strTable .= '<td style="text-align:center;font-size:12px;">圃美多商城</td>';
                     $strTable .= '</tr>';
                 }
 
                 $strTable .= '<tr>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;'.$val['goods_sn'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['goods_name'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.-$val['goods_num'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.-$val['goods_price'].'</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;' . $val['goods_sn'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['goods_name'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . -$val['goods_num'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . -$val['goods_price'] . '</td>';
 
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.-$total_price.'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.-$total_ctax_price.'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.-$ctax.'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;'.$val['order_sn'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;'.$day.'</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . -$total_price . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . -$total_ctax_price . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . -$ctax . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;' . $val['order_sn'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;' . $day . '</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">(退货退款单)</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">圃美多商城</td>';
                 $strTable .= '</tr>';
@@ -569,8 +569,8 @@ AND log_id NOT IN
     public function downloadProductDetail()
     {
         $goods_list = M('Goods')
-        ->limit(50)
-        ->select();
+            ->limit(50)
+            ->select();
         $GoodsLogic = new \app\admin\logic\GoodsLogic();
         $strTable = '<table width="500" border="1">';
         $strTable .= '<tr>';
@@ -589,11 +589,11 @@ AND log_id NOT IN
                 $third_cat = M('goodsCategory')->where('id', $level_cat[3])->getField('name');
                 $strTable .= '<tr>';
 
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['goods_sn'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['goods_name'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$first_cat.'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$second_cat.'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$third_cat.'</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['goods_sn'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['goods_name'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $first_cat . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $second_cat . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $third_cat . '</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">圃美多商城</td>';
                 $strTable .= '</tr>';
             }
@@ -636,7 +636,7 @@ AND log_id NOT IN
         //     M('task_log')->where('id',$value['id'])->update(['task_reward_desc'=>$task_reward_desc]);
         // }
 
-        echo 'testCode123--追回123456'.date('Y-m-d : H:i:s');
+        echo 'testCode123--追回123456' . date('Y-m-d : H:i:s');
     }
 
     public function bucongOrderLog()
@@ -793,7 +793,7 @@ AND log_id NOT IN
         }
         if ($order_ids) {
             $order_ids = implode(',', $order_ids);
-            echo $order_ids.',';
+            echo $order_ids . ',';
         }
     }
 
@@ -807,8 +807,8 @@ AND log_id NOT IN
         $shop_id = 0;
         //等级id大于2为商铺代理
         $user_info = M('users')->field('distribut_level,user_id,invite_uid')
-        ->where('user_id', $uid)
-        ->find();
+            ->where('user_id', $uid)
+            ->find();
         $res = true;
         if ($where) {
             $res = !in_array($user_info['user_id'], $where);
@@ -865,7 +865,7 @@ AND log_id NOT IN
         $now = time();
         $days = $now - $yesterday;
         $days = $days / 24 / 60 / 60;
-        $days = (int) $days;
+        $days = (int)$days;
         for ($i = 0; $i < $days; ++$i) {
             $time = $yesterday + $i * 24 * 60 * 60;
             $day = date('Y-m-d H:i:s', $time);
@@ -902,10 +902,10 @@ AND log_id NOT IN
                     $shop_free += $v['shop_free'];
                     $sale_free += $v['sale_free'];
                     if ($v['nomal_oid']) {
-                        $nomal_oid .= ','.$v['nomal_oid'];
+                        $nomal_oid .= ',' . $v['nomal_oid'];
                     }
                     if ($v['special_oid']) {
-                        $special_oid .= ','.$v['special_oid'];
+                        $special_oid .= ',' . $v['special_oid'];
                     }
                 }
                 if ($nomal_oid) {
@@ -938,19 +938,19 @@ AND log_id NOT IN
         $today = strtotime(date('Y-m-d'));
         $monthFirstDay = strtotime(date('Y-m-01'));
 
-        $lastMonthLastDay = strtotime(date('Y-m-01').' -1 day'); // 上个月最后一天
+        $lastMonthLastDay = strtotime(date('Y-m-01') . ' -1 day'); // 上个月最后一天
         $lastMonthFirstDay = strtotime(date('Y-m-01', $lastMonthLastDay));  // 上个月第一天
 
         $lastMonthRecrod = M('CommissionLog')->where('create_time', $lastMonthLastDay)->where('type', 'm')->find();
 
         if ($monthFirstDay == $today || !$lastMonthRecrod) {
             $where = [
-               'create_time' => ['between', [$lastMonthFirstDay, $lastMonthLastDay]],
-               'type' => 'd',
-           ];
+                'create_time' => ['between', [$lastMonthFirstDay, $lastMonthLastDay]],
+                'type' => 'd',
+            ];
             $data = M('commission_log')
-               ->where($where)
-               ->select();
+                ->where($where)
+                ->select();
             if ($data) {
                 $total_amount = $real_amount = $order_num = $shop_free = $sale_free = 0;
                 $nomal_oid = $special_oid = '';
@@ -961,10 +961,10 @@ AND log_id NOT IN
                     $shop_free += $v['shop_free'];
                     $sale_free += $v['sale_free'];
                     if ($v['nomal_oid']) {
-                        $nomal_oid .= ','.$v['nomal_oid'];
+                        $nomal_oid .= ',' . $v['nomal_oid'];
                     }
                     if ($v['special_oid']) {
-                        $special_oid .= ','.$v['special_oid'];
+                        $special_oid .= ',' . $v['special_oid'];
                     }
                 }
                 if ($nomal_oid) {
@@ -975,17 +975,17 @@ AND log_id NOT IN
                 }
 
                 $insert_data = [
-                   'total_amount' => $total_amount ?: 0, //应发总金额
-                   'status' => 1,
-                   'create_time' => $lastMonthLastDay,
-                   'order_num' => $order_num,
-                   'sale_free' => $sale_free ?: 0,
-                   'shop_free' => $shop_free ?: 0,
-                   'real_amount' => $real_amount, //实发总金额
-                   'nomal_oid' => $nomal_oid,
-                   'special_oid' => $special_oid,
-                   'type' => 'm',
-               ];
+                    'total_amount' => $total_amount ?: 0, //应发总金额
+                    'status' => 1,
+                    'create_time' => $lastMonthLastDay,
+                    'order_num' => $order_num,
+                    'sale_free' => $sale_free ?: 0,
+                    'shop_free' => $shop_free ?: 0,
+                    'real_amount' => $real_amount, //实发总金额
+                    'nomal_oid' => $nomal_oid,
+                    'special_oid' => $special_oid,
+                    'type' => 'm',
+                ];
                 M('CommissionLog')->add($insert_data);
             }
         }
@@ -1029,7 +1029,7 @@ AND log_id NOT IN
             foreach ($data as $v) {
                 $total_amount += $v['total_money'];
                 $total_sale_amount += $v['money'];
-                $nomal_oid .= $v['order_id'].',';
+                $nomal_oid .= $v['order_id'] . ',';
                 ++$order_num;
             }
             $nomal_oid = substr($nomal_oid, 0, -1);
@@ -1068,10 +1068,10 @@ AND log_id NOT IN
                 $special_oid[] = $sv['order_id'];
             }
             $specialData = M('RebateLog')
-            ->field('order_money as total_money, SUM(money) as money, order_id')
-            ->where('order_id', 'IN', $special_oid)
-            ->group('order_id')
-            ->select();
+                ->field('order_money as total_money, SUM(money) as money, order_id')
+                ->where('order_id', 'IN', $special_oid)
+                ->group('order_id')
+                ->select();
 
             foreach ($specialData as $v) {
                 $total_amount += $v['total_money'];
@@ -1115,7 +1115,7 @@ AND log_id NOT IN
 
         foreach ($insert_data as $v) {
             M('CommissionLog')->add($v);
-            $order_id = $v['nomal_oid'].','.$v['special_oid'];
+            $order_id = $v['nomal_oid'] . ',' . $v['special_oid'];
             if ('' !== $order_id) {
                 $order_id = explode(',', $order_id);
                 M('RebateLog')->where('order_id', 'IN', $order_id)->update(['status' => 5, 'statistics_time' => time()]);
@@ -1152,11 +1152,11 @@ AND log_id NOT IN
         $time = 60 * 60;
 
         $list = M('Order')->field('UNIX_TIMESTAMP() - add_time as test,add_time,UNIX_TIMESTAMP() as now,order_id,user_id')
-        ->where('pay_status', 0)
-        ->where('order_status', 0)
-        ->having("test > {$time}")
-        ->limit(1000)
-        ->select();
+            ->where('pay_status', 0)
+            ->where('order_status', 0)
+            ->having("test > {$time}")
+            ->limit(1000)
+            ->select();
         if ($list) {
             $orderLogic = new \app\common\logic\OrderLogic();
             foreach ($list as $k => $v) {
@@ -1172,13 +1172,14 @@ AND log_id NOT IN
     {
         // 多少天后自动分销记录自动分成
         $switch = tpCache('distribut.switch');
-        if (1 == $switch && file_exists(APP_PATH.'common/logic/DistributLogic.php')) {
+        if (1 == $switch && file_exists(APP_PATH . 'common/logic/DistributLogic.php')) {
             $distributLogic = new \app\common\logic\DistributLogic();
             $distributLogic->auto_confirm(); // 自动确认分成
         }
     }
 
-    function auto_confirm_ceshi(){
+    function auto_confirm_ceshi()
+    {
         $distributLogic = new \app\common\logic\DistributLogic();
         $distributLogic->auto_confirm_ceshi(); // 自动确认分成
     }
@@ -1206,12 +1207,12 @@ AND log_id NOT IN
         if ($list) {
             foreach ($list as $k => $v) {
                 if (M('butt')->where(['id' => $v['id']])->find()) {
-                    Db::connect(config('database.other_db'))->execute('update g_butt set status = 1 where status=0 and id='.$v['id']);
+                    Db::connect(config('database.other_db'))->execute('update g_butt set status = 1 where status=0 and id=' . $v['id']);
                 } else {
                     $v['status'] = 0;
                     $bbutt = M('butt')->add($v);
                     if ($bbutt) {
-                        Db::connect(config('database.other_db'))->execute('update g_butt set status = 1 where status=0 and id='.$v['id']);
+                        Db::connect(config('database.other_db'))->execute('update g_butt set status = 1 where status=0 and id=' . $v['id']);
                     }
                 }
             }
@@ -1257,7 +1258,7 @@ AND log_id NOT IN
 
                     $bool = M('users')->add($data);
                 } elseif (2 == $v['type']) {
-                    $user = M('users')->where(array('user_name' => $buttdata['user_name'],'is_lock'=>0))->field('user_id')->find();
+                    $user = M('users')->where(array('user_name' => $buttdata['user_name'], 'is_lock' => 0))->field('user_id')->find();
 
                     if ($user) {
                         $bool = accountLog($user['user_id'], 0, $buttdata['xiaofei_money'], '电商转入商城', 0, 0, '', $buttdata['customs_money'], 13);
@@ -1274,5 +1275,16 @@ AND log_id NOT IN
                 }
             }
         }
+    }
+
+    /**
+     * 订单支付超时处理
+     */
+    public function orderPayOvertime()
+    {
+        M('order')->where(['order_status' => 0, 'pay_status' => 0, 'add_time' => ['<', time() - 1800]])->update([
+            'order_status' => 3,    // 已取消
+            'cancel_time' => time()
+        ]);
     }
 }

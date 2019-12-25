@@ -15,6 +15,7 @@ use app\admin\logic\GoodsLogic;
 use app\common\logic\ModuleLogic;
 use think\Cache;
 use think\db;
+use think\Page;
 
 class System extends Base
 {
@@ -540,6 +541,25 @@ class System extends Base
         header("Content-type: text/html; charset=utf-8");
         echo "数据已清空,请立即删除这个方法";
         */
+    }
+
+    /**
+     * 银行卡列表
+     * @return \think\response\View
+     */
+    public function bankList()
+    {
+        $bankName = I('bank_name', '');
+        $where = [];
+        if ($bankName) {
+            $where['name_cn'] = ['like', '%' . $bankName . '%'];
+        }
+        $count = M('bank')->where($where)->count();
+        $page = new Page($count, 10);
+        $bankList = M('bank')->where($where)->limit($page->firstRow . ',' . $page->listRows)->select();
+        $this->assign('page', $page);
+        $this->assign('bank_list', $bankList);
+        return view('bank_list');
     }
 
     public function shop_info()
