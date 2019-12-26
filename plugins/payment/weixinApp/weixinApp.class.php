@@ -62,7 +62,7 @@ class weixinApp
         $input->SetTime_expire(date('YmdHis', time() + 600));
         $input->SetGoods_tag('tp_wx_app_pay');
         $input->SetTrade_type('APP');
-        $input->SetNotify_url(SITE_URL . '/index.php/Home/Callback/wechatApp');
+        $input->SetNotify_url(SITE_URL . '/index.php/Home/api.Pay/notifyUrl/pay_code/weixinApp');
 //        $input->SetOpenid($openId);
 
         require_once 'lib/WxPay.Api.php';
@@ -289,7 +289,7 @@ EOF;
     }
 
     // 微信订单退款原路退回
-    public function refund1($order, $refund_money)
+    public function refund($order, $refund_money)
     {
         // $query = $this->Queryorder($order['transaction_id']);
         // dump($query);
@@ -297,6 +297,7 @@ EOF;
         // dump($order);
         // dump($refund_money);
         // exit;
+        require_once 'lib/WxPay.Data.php';
         $input = new WxPayRefund();
         $input->SetAppid($this->config_value['appid']);
         $input->SetMch_id($this->config_value['mchid']);
@@ -309,6 +310,8 @@ EOF;
         $input->SetRefund_fee($refund_money * 100); // 设置退款总金额，订单总金额，单位为分，只能为整数，详见支付金额
         // $input->SetRefund_fee_type(); // 设置货币类型，符合ISO 4217标准的三位字母代码，默认人民币：CNY，其他值列表详见货币类型
         $input->SetOp_user_id($this->config_value['mchid']); // 设置操作员帐号, 默认为商户号
+
+        require_once 'lib/WxPay.Api.php';
         $result = WxPayApi::refund($input);
 
         return $result;

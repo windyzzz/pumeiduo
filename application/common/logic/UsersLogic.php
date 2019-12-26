@@ -298,7 +298,7 @@ class UsersLogic extends Model
         // 查看是否有oauth用户记录
         $oauthUser = M('oauth_users')->where('unionid', $data['unionid'])->where('oauth', 'wechatApp')->find();
         $updateData = [
-            'user_id' => $oauthUser['user_id'],
+            'user_id' => '',
             'openid' => $data['openid'],
             'oauth' => 'wechatApp',
             'unionid' => $data['unionid'],
@@ -307,6 +307,7 @@ class UsersLogic extends Model
         ];
         if ($oauthUser) {
             // 已授权登录过
+            $updateData['user_id'] = $oauthUser['user_id'];
             // 更新数据
             Db::name('oauth_users')->where('unionid', $data['unionid'])->where('oauth', 'wechatApp')->update($updateData);
             if ($oauthUser['user_id'] == 0) {

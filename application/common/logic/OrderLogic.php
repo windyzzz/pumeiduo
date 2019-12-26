@@ -43,18 +43,18 @@ class OrderLogic
         $order = M('order')->where(['order_id' => $order_id, 'user_id' => $user_id])->find();
         //检查是否未支付订单 已支付联系客服处理退款
         if (empty($order)) {
-            return ['status' => -1, 'msg' => '订单不存在', 'result' => ''];
+            return ['status' => 0, 'msg' => '订单不存在', 'result' => ''];
         }
         if (3 == $order['order_status']) {
-            return ['status' => -1, 'msg' => '该订单已取消', 'result' => ''];
+            return ['status' => 0, 'msg' => '该订单已取消', 'result' => ''];
         }
 
         if (1 == $order['shipping_status']) {
-            return ['status' => -1, 'msg' => '该订单已发货，不能取消', 'result' => ''];
+            return ['status' => 0, 'msg' => '该订单已发货，不能取消', 'result' => ''];
         }
 
         if ($order['order_status'] == 1 && $is_admin == false) {
-            return ['status' => -1, 'msg' => '该订单已确认，不能取消订单', 'result' => ''];
+            return ['status' => 0, 'msg' => '该订单已确认，不能取消订单', 'result' => ''];
         }
 
         if ($order['pay_status'] == 1 && $is_admin == false) {//已支付 检查是否是vip升级单
@@ -66,16 +66,14 @@ class OrderLogic
                 ->where(array('o.order_id' => $order_id))
                 ->find();
             if ($has_vip_order) {
-                return ['status' => -1, 'msg' => 'VIP升级套装，不能取消订单', 'result' => ''];
+                return ['status' => 0, 'msg' => 'VIP升级套装，不能取消订单', 'result' => ''];
             }
-
-
         }
 
         //检查是否未支付的订单
         if (($order['pay_status'] > 0 || $order['order_status'] > 0) && $order['order_amount'] > 0) {
             if ($_SERVER['SERVER_ADDR'] != '61.238.101.138') {
-                return array('status' => -1, 'msg' => '支付状态或订单状态不允许', 'result' => '');
+//                return array('status' => 0, 'msg' => '支付状态或订单状态不允许', 'result' => '');
             }
             //获取记录表信息
             //$log = M('account_log')->where(array('order_id'=>$order_id))->find();
@@ -112,14 +110,23 @@ class OrderLogic
                 if ('10000' == $result->code) {
                     $res = true;
                 }
+            } elseif ('weixinApp' == $order['pay_code']) {
+                include_once PLUGIN_PATH . 'payment/weixinApp/weixinApp.class.php';
+                $payment_obj = new \weixinApp();
+                $result = $payment_obj->refund($order, $order['order_amount']);
+                if ($result['return_code'] == 'FAIL') {
+                    return ['status' => 0, 'msg' => $result['return_msg']];
+                } elseif ($result['result_code'] == 'FAIL') {
+                    return ['status' => 0, 'msg' => $result['err_code_des']];
+                }
             } elseif ('' == $order['pay_code']) {
                 $res = true;
             } else {
-                return ['status' => -1, 'msg' => '暂不支付退款方式', 'result' => ''];
+                return ['status' => 0, 'msg' => '暂不支付退款方式', 'result' => ''];
             }
 
             if (!$res) {
-                return ['status' => -1, 'msg' => '退款失败,' . $msg, 'result' => '错误原因:' . $msg];
+                return ['status' => 0, 'msg' => '退款失败,' . $msg, 'result' => '错误原因:' . $msg];
             }
             // 如果有微信公众号 则推送一条消息到微信
             $user = Db::name('OauthUsers')->where(['user_id' => $order['user_id'], 'oauth' => 'weixin', 'oauth_child' => 'mp'])->find();
@@ -157,7 +164,6 @@ class OrderLogic
                 }
             }
         }
-
 
         // $OrderGoods = M('OrderGoods')->field('goods_id')->where('order_id',$order_id)->select();
         // foreach ($OrderGoods as $k => $v) {
@@ -236,7 +242,7 @@ class OrderLogic
 
         logOrder($order_id, $action_note, '取消订单');
         if (!$row) {
-            return ['status' => -1, 'msg' => '操作失败', 'result' => ''];
+            return ['status' => 0, 'msg' => '操作失败', 'result' => ''];
         }
 
         return ['status' => 1, 'msg' => '操作成功', 'result' => ''];

@@ -29,6 +29,7 @@ class UpdateOauthUsers extends Migrator
     public function change()
     {
         $this->table('oauth_users')
+            ->changeColumn('user_id', 'integer', ['null' => true, 'comment' => '用户表ID（未绑定手机情况下为空）'])
             ->addColumn('oauth_data', 'text', ['null' => true, 'comment' => '授权的用户数据'])
             ->update();
     }

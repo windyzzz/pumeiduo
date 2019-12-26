@@ -138,9 +138,9 @@ class Pay
     {
         $point = 0;
         foreach ($this->payList as $v) {
-            $point += $v['goods_num'] * $v['use_integral'];
+            $point = bcadd($point, bcmul($v['goods_num'], $v['use_integral'], 2), 2);
         }
-        $this->payPoints += $point;
+        $this->payPoints = bcadd($this->payPoints, $point, 2);
         return $this->payPoints;
     }
 
@@ -166,14 +166,14 @@ class Pay
     {
         $goodsListCount = count($this->payList);
         for ($payCursor = 0; $payCursor < $goodsListCount; ++$payCursor) {
-            $this->payList[$payCursor]['goods_fee'] = $this->payList[$payCursor]['goods_num'] * $this->payList[$payCursor]['member_goods_price'];    // 小计
-            $this->goodsPrice += $this->payList[$payCursor]['goods_fee']; // 商品总价
+            $this->payList[$payCursor]['goods_fee'] = bcmul($this->payList[$payCursor]['goods_num'], $this->payList[$payCursor]['member_goods_price'], 2);    // 小计
+            $this->goodsPrice = bcadd($this->goodsPrice, $this->payList[$payCursor]['goods_fee'], 2); // 商品总价
             if (array_key_exists('market_price', $this->payList[$payCursor])) {
-                $this->cutFee += $this->payList[$payCursor]['goods_num'] * ($this->payList[$payCursor]['market_price'] - $this->payList[$payCursor]['member_goods_price']); // 共节约
+                $this->cutFee = bcadd($this->cutFee, bcmul($this->payList[$payCursor]['goods_num'], bcsub($this->payList[$payCursor]['market_price'], $this->payList[$payCursor]['member_goods_price'], 2), 2), 2); // 共节约
             }
-            $this->totalNum += $this->payList[$payCursor]['goods_num'];
+            $this->totalNum = bcadd($this->totalNum, $this->payList[$payCursor]['goods_num'], 2);
             if (isset($this->payList[$payCursor]['is_order_prom']) && $this->payList[$payCursor]['is_order_prom'] == 1) {
-                $this->orderPromPrice += ($this->payList[$payCursor]['goods_num'] * $this->payList[$payCursor]['member_goods_price']);
+                $this->orderPromPrice = bcadd($this->orderPromPrice, bcmul($this->payList[$payCursor]['goods_num'], $this->payList[$payCursor]['member_goods_price'], 2), 2);
             }
         }
         $this->orderAmount = $this->goodsPrice;
@@ -678,10 +678,10 @@ class Pay
                 if (!empty($orderProm) && !in_array($orderProm['order_prom_id'], $orderPromId)) {
                     if ($this->orderPromPrice >= $orderProm['order_price']) {
                         // 订单价格满足要求
-                        $this->orderPromPrice = $this->orderPromPrice - $orderProm['discount_price'];
-                        $this->orderAmount = $this->orderAmount - $orderProm['discount_price'];
-                        $this->totalAmount = $this->totalAmount - $orderProm['discount_price'];
-                        $this->orderPromAmount += $orderProm['discount_price'];
+                        $this->orderPromPrice = bcsub($this->orderPromPrice, $orderProm['discount_price'], 2);
+                        $this->orderAmount = bcsub($this->orderAmount, $orderProm['discount_price'], 2);
+                        $this->totalAmount = bcsub($this->totalAmount, $orderProm['discount_price'], 2);
+                        $this->orderPromAmount = bcadd($this->orderPromAmount, $orderProm['discount_price'], 2);
                     }
                     $this->payList[$k]['prom_id'] = $orderProm['order_prom_id'];
                     $this->payList[$k]['prom_type'] = 7;    // 订单合购优惠
@@ -999,8 +999,8 @@ class Pay
 
         if ($ln < $freight_free || 0 == $freight_free) {
             $this->shippingPrice = $GoodsLogic->getFreight($this->payList, $district_id);
-            $this->orderAmount = $this->orderAmount + $this->shippingPrice;
-            $this->totalAmount = $this->totalAmount + $this->shippingPrice;
+            $this->orderAmount = bcadd($this->orderAmount, $this->shippingPrice, 2);
+            $this->totalAmount = bcadd($this->totalAmount, $this->shippingPrice, 2);
         } else {
             $this->shippingPrice = 0;
         }

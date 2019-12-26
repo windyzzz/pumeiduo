@@ -96,8 +96,8 @@ class Order extends Base
             $total_give_integral = 0;
             $order_list[$k]['goods_list'] = $data['result'];
             foreach ($order_list[$k]['goods_list'] as $glk => $glv) {
-                $number_amount += $glv['goods_num'];
-                $total_give_integral += $glv['give_integral'];
+                $number_amount = $number_amount + $glv['goods_num'];
+                $total_give_integral = bcadd($total_give_integral, $glv['give_integral'], 2);
 
                 if ($glv['zone'] == 3) {
                     $order_list[$k]['cancel_btn'] = 0;
@@ -256,7 +256,7 @@ class Order extends Base
 
         $total_give_integral = 0;
         foreach ($order_info['goods_list'] as $gk => $gv) {
-            $total_give_integral += $gv['give_integral'] * $gv['goods_num'];
+            $total_give_integral = bcadd($total_give_integral, bcmul($gv['give_integral'], $gv['goods_num'], 2), 2);
             $order_info['goods_list'][$gk]['can_return'] = $can_return;
         }
         $order_info['total_give_integral'] = $total_give_integral;
@@ -1216,7 +1216,7 @@ class Order extends Base
                     $order_goods[$ok]['integral'] = 0;
                 }
 
-                $order_goods[$ok]['get_price'] = $OrderCommonLogc->getRongMoney(($ov['final_price'] * $ov['goods_num']) * $ov['commission'] / 100, $rv['level'], $ov['add_time'], $ov['goods_id']);
+                $order_goods[$ok]['get_price'] = $OrderCommonLogc->getRongMoney(bcdiv(bcmul(bcmul($ov['final_price'], $ov['goods_num'], 2), $ov['commission'], 2), 100, 2), $rv['level'], $ov['add_time'], $ov['goods_id']);
 
                 //$order_goods[$ok]['get_price'] = round(($ov['final_price'] * $ov['goods_num']) * $ov['commission'] / 100 * $distribut_rate, 2);
                 $order_goods[$ok]['is_freeze'] = M('return_goods')->where('rec_id', $ov['rec_id'])->where('status', 'gt', -1)->where(['status' => ['neq', 4]])->find() ? 1 : 0;
@@ -1288,7 +1288,7 @@ class Order extends Base
                 }
                 //$order_goods[$ok]['get_price'] = round(($ov['final_price'] * $ov['goods_num']) * $ov['commission'] / 100 * $distribut_rate, 2);
 
-                $order_goods[$ok]['get_price'] = $OrderCommonLogc->getRongMoney(($ov['final_price'] * $ov['goods_num']) * $ov['commission'] / 100, $rv['level'], $ov['add_time'], $ov['goods_id']);
+                $order_goods[$ok]['get_price'] = $OrderCommonLogc->getRongMoney(bcdiv(bcmul(bcmul($ov['final_price'], $ov['goods_num'], 2), $ov['commission'], 2), 100, 2), $rv['level'], $ov['add_time'], $ov['goods_id']);
 
                 $order_goods[$ok]['is_freeze'] = M('return_goods')->where('rec_id', $ov['rec_id'])->where('status', 'gt', -1)->where(['status' => ['neq', 4]])->find() ? 1 : 0;
             }
@@ -1524,10 +1524,10 @@ class Order extends Base
             $order_prom_fee = 0;            // 订单优惠促销总价
             foreach ($cartList['cartList'] as $v) {
                 $goodsInfo = M('Goods')->field('give_integral, weight')->where('goods_id', $v['goods_id'])->find();
-                $give_integral += $goodsInfo['give_integral'];
-                $weight += $goodsInfo['weight'];
+                $give_integral = bcadd($give_integral, $goodsInfo['give_integral'], 2);
+                $weight = bcadd($weight, $goodsInfo['weight'], 2);
                 if (isset($v['is_order_prom']) && $v['is_order_prom'] == 1) {
-                    $order_prom_fee += ($v['use_integral'] + $v['member_goods_price']) * $v['goods_num'];
+                    $order_prom_fee = bcadd($order_prom_fee, bcmul(bcadd($v['use_integral'], $v['member_goods_price'], 2), $v['goods_num'], 2), 2);
                 }
             }
 
@@ -1781,10 +1781,10 @@ class Order extends Base
             $order_prom_fee = 0;            // 订单优惠促销总价
             foreach ($cartList['cartList'] as $v) {
                 $goodsInfo = M('Goods')->field('give_integral, weight')->where('goods_id', $v['goods_id'])->find();
-                $give_integral += $goodsInfo['give_integral'];
-                $weight += $goodsInfo['weight'];
+                $give_integral = bcadd($give_integral, $goodsInfo['give_integral'], 2);
+                $weight = bcadd($weight, $goodsInfo['weight'], 2);
                 if (isset($v['is_order_prom']) && $v['is_order_prom'] == 1) {
-                    $order_prom_fee += ($v['use_integral'] + $v['member_goods_price']) * $v['goods_num'];
+                    $order_prom_fee = bcadd($order_prom_fee, bcmul(bcadd($v['use_integral'], $v['member_goods_price'], 2), $v['goods_num'], 2), 2);
                 }
             }
 
@@ -1936,7 +1936,7 @@ class Order extends Base
             $order_prom_fee = 0;            // 订单优惠促销总价
             foreach ($cartList['cartList'] as $v) {
                 if (isset($v['is_order_prom']) && $v['is_order_prom'] == 1) {
-                    $order_prom_fee += ($v['use_integral'] + $v['member_goods_price']) * $v['goods_num'];
+                    $order_prom_fee = bcadd($order_prom_fee, bcmul(bcadd($v['use_integral'], $v['member_goods_price'], 2), $v['goods_num'], 2), 2);
                 }
             }
 
@@ -2069,14 +2069,17 @@ class Order extends Base
         if ($order['pay_status'] == 1) {
             // 查看订单商品里面是否有vip升级套餐，有就显示赠送的优惠券
             $level = [];
-            $goods = M('order_goods og')->join('goods g', 'g.goods_id = og.goods_id')->where(['og.order_id' => $orderId])->field('zone, distribut_id')->select();
-            if (3 == $goods['zone'] && $goods['distribut_id'] > 0) {
-                $level[] = $goods['distribut_id'];
+            $orderGoods = M('order_goods og')->join('goods g', 'g.goods_id = og.goods_id')->where(['og.order_id' => $orderId])->field('zone, distribut_id')->select();
+            foreach ($orderGoods as $goods) {
+                if (3 == $goods['zone'] && $goods['distribut_id'] > 0) {
+                    $level[] = $goods['distribut_id'];
+                }
             }
             if (!empty($level)) {
-                $order['coupon'] = M('coupon c')->join('coupon_list cl', 'cl.cid = c.id')
-                    ->where(['uid' => $order['user_id'], 'get_order_id' => $order['order_id']])
-                    ->field('c.id, c.name')->select();
+                $order['coupon'] = [
+                    'user_type_name' => 'VIP套餐用户',
+                    'coupon_name' => '新晋VIP会员优惠券'
+                ];
             }
         }
         unset($order['order_status']);

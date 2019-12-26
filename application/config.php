@@ -245,7 +245,7 @@ return [
 
     //redis储存数据的时间
     'redis_time' => 86400,
-    'redis_days' => 1,
+    'redis_days' => 7,
 
     //分页配置
     'paginate' => [

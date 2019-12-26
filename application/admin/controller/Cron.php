@@ -1276,15 +1276,4 @@ AND log_id NOT IN
             }
         }
     }
-
-    /**
-     * 订单支付超时处理
-     */
-    public function orderPayOvertime()
-    {
-        M('order')->where(['order_status' => 0, 'pay_status' => 0, 'add_time' => ['<', time() - 1800]])->update([
-            'order_status' => 3,    // 已取消
-            'cancel_time' => time()
-        ]);
-    }
 }

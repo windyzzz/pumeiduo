@@ -21,7 +21,7 @@ class Token
             if (!isset($timeOut)) return json(['status' => 0, 'msg' => '账号已在另一个地方登录']);
             if ($timeOut != 0) {
                 if (time() - $timeOut > 0) {
-                    return ['status' => 0, 'msg' => '请重新登录'];
+                    return json(['status' => 0, 'msg' => '请重新登录']);
                 }
             }
         }

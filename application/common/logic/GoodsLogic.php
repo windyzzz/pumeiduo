@@ -837,7 +837,7 @@ class GoodsLogic extends Model
             $freightLogic->setGoodsModel($temp);
             $freightLogic->setGoodsNum($temp['goods_num']);
             $freightLogic->doCalculation();
-            $freight += $freightLogic->getFreight();
+            $freight = bcadd($freight, $freightLogic->getFreight(), 2);
             unset($temp);
         }
 

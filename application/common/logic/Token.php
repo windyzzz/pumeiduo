@@ -27,10 +27,10 @@ class Token
     public static function checkToken($token)
     {
         $timeOut = Db::name('users')->where(['token' => $token])->value('time_out');
-        if (!isset($timeOut)) return ['status' => -1, 'msg' => '账号已在另一个地方登录'];
+        if (!isset($timeOut)) return ['status' => -999, 'msg' => '账号已在另一个地方登录'];
         if ($timeOut != 0) {
             if (time() - $timeOut > 0) {
-                return ['status' => -1, 'msg' => '请重新登录'];
+                return ['status' => -999, 'msg' => '请重新登录'];
             }
             $newTimeOut = time() + (config('redis_time'));
             Db::name('users')->where(['token' => $token])->setField(['time_out' => $newTimeOut]);

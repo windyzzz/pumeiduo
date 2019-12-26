@@ -134,8 +134,8 @@ class FreightLogic extends Model
     {
         $total_unit = floatval($total_unit);
         if ($total_unit > $freight_config['first_unit']) {
-            $average = ceil(($total_unit - $freight_config['first_unit']) / $freight_config['continue_unit']);
-            $freight_price = $freight_config['first_money'] + $freight_config['continue_money'] * $average;
+            $average = ceil(bcdiv(bcsub($total_unit, $freight_config['first_unit'], 2), $freight_config['continue_unit'], 2));
+            $freight_price = bcadd($freight_config['first_money'], bcmul($freight_config['continue_money'], $average, 2), 2);
         } else {
             $freight_price = $freight_config['first_money'];
         }

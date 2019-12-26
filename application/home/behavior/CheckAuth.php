@@ -47,8 +47,12 @@ class CheckAuth
         // 行为逻辑
         if (session('user')) {
             $session_user = session('user');
-        } elseif ((isset($params['user_token']) && $this->redis->has('user_' . $params['user_token']))) {
-            $session_user = $this->redis->get('user_' . $params['user_token']);
+        } elseif (isset($params['user_token'])) {
+            if ($this->redis->has('user_' . $params['user_token'])) {
+                $session_user = $this->redis->get('user_' . $params['user_token']);
+            } else {
+                $session_user = M('user')->where(['token' => $params['user_token']])->find();
+            }
         }
         if (isset($session_user)) {
             // 原系统进入 或者 APP进入
