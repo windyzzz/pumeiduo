@@ -2886,7 +2886,43 @@ class User extends Base
      */
     public function wealth()
     {
-
+        $type = I('type', 1);
+        $usersLogic = new UsersLogic();
+        switch ($type) {
+            case 1:
+                // 余额
+                $return['amount'] = M('users')->where(['user_id' => $this->user_id])->value('user_money');
+                $result = $usersLogic->get_money_log($this->user_id)['result'];
+                foreach ($result as $res) {
+                    foreach ($res as $log) {
+                        $return['log_list'][] = [
+                            'id' => $log['log_id'],
+                            'title' => $log['desc'],
+                            'amount' => $log['user_money'],
+                            'add_time' => strtotime($log['change_time'])
+                        ];
+                    }
+                }
+                break;
+            case 2:
+                // 电子币
+                $return['amount'] = M('users')->where(['user_id' => $this->user_id])->value('user_electronic');
+                $result = $usersLogic->get_electronic_log($this->user_id)['result'];
+                foreach ($result as $res) {
+                    foreach ($res as $log) {
+                        $return['log_list'][] = [
+                            'id' => $log['log_id'],
+                            'title' => $log['desc'],
+                            'amount' => $log['user_money'],
+                            'add_time' => strtotime($log['change_time'])
+                        ];
+                    }
+                }
+                break;
+            default:
+                return json(['status' => 0, 'msg' => '类型错误']);
+        }
+        return json(['status' => 1, 'result' => $return]);
     }
 
     /**

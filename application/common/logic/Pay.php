@@ -29,20 +29,20 @@ class Pay
     protected $userId;
     protected $user;
 
-    private $totalAmount = 0; //订单总价
-    private $orderAmount = 0; //应付金额
-    private $shippingPrice = 0; //物流费
-    private $goodsPrice = 0; //商品总价
-    private $orderPromPrice = 0; //订单优惠促销商品总价
-    private $cutFee = 0; //共节约多少钱
-    private $totalNum = 0; // 商品总共数量
-    private $integralMoney = 0; //积分抵消金额
-    private $userElectronic = 0; //使用电子币
-    private $payPoints = 0; //使用积分
-    private $couponPrice = 0; //优惠券抵消金额
+    private $totalAmount = '0'; //订单总价
+    private $orderAmount = '0'; //应付金额
+    private $shippingPrice = '0'; //物流费
+    private $goodsPrice = '0'; //商品总价
+    private $orderPromPrice = '0'; //订单优惠促销商品总价
+    private $cutFee = '0'; //共节约多少钱
+    private $totalNum = '0'; // 商品总共数量
+    private $integralMoney = '0'; //积分抵消金额
+    private $userElectronic = '0'; //使用电子币
+    private $payPoints = '0'; //使用积分
+    private $couponPrice = '0'; //优惠券抵消金额
 
     private $orderPromId; //订单优惠ID
-    private $orderPromAmount = 0; //订单优惠金额
+    private $orderPromAmount = '0'; //订单优惠金额
     private $couponId;
 
     private $giftLogic;
@@ -78,9 +78,9 @@ class Pay
         $reduce = tpCache('shopping.reduce');
         if (0 == $order['pay_status'] && 2 == $reduce) {
             $goodsListCount = count($this->payList);
-            for ($payCursor = 0; $payCursor < $goodsListCount; ++$payCursor) {
+            for ($payCursor = '0'; $payCursor < $goodsListCount; ++$payCursor) {
                 $goods_stock = getGoodNum($this->payList[$payCursor]['goods_id'], $this->payList[$payCursor]['spec_key']); // 最多可购买的库存数量
-                if ($goods_stock <= 0 && $this->payList[$payCursor]['goods_num'] > $goods_stock) {
+                if ($goods_stock <= '0' && $this->payList[$payCursor]['goods_num'] > $goods_stock) {
                     throw new TpshopException('计算订单价格', 0, ['status' => -9, 'msg' => $this->payList[$payCursor]['goods_name'] . ',' . $this->payList[$payCursor]['spec_key_name'] . '库存不足,请重新下单', 'result' => '']);
                 }
             }
@@ -119,7 +119,7 @@ class Pay
             throw new TpshopException('计算订单价格', 0, ['status' => -9, 'msg' => '你的购物车没有选中商品', 'result' => '']);
         }
         $discount = $this->getDiscount();
-        for ($goodsCursor = 0; $goodsCursor < $goodsListCount; ++$goodsCursor) {
+        for ($goodsCursor = '0'; $goodsCursor < $goodsListCount; ++$goodsCursor) {
             //优先使用member_goods_price，没有member_goods_price使用goods_price
             if (empty($goods_list[$goodsCursor]['member_goods_price'])) {
                 //积分商品不打折。因为是全积分商品打会员折扣，结算会出现负数
@@ -136,7 +136,7 @@ class Pay
 
     public function getUsePoint()
     {
-        $point = 0;
+        $point = '0';
         foreach ($this->payList as $v) {
             $point = bcadd($point, bcmul($v['goods_num'], $v['use_integral'], 2), 2);
         }
@@ -146,8 +146,8 @@ class Pay
 
     public function getPromInfo()
     {
-        $prom_type = 0;
-        $prom_id = 0;
+        $prom_type = '0';
+        $prom_id = '0';
         foreach ($this->payList as $v) {
             if ($v['prom_type'] > 0) {
                 $prom_type = $v['prom_type'];
@@ -165,7 +165,7 @@ class Pay
     private function Calculation()
     {
         $goodsListCount = count($this->payList);
-        for ($payCursor = 0; $payCursor < $goodsListCount; ++$payCursor) {
+        for ($payCursor = '0'; $payCursor < $goodsListCount; ++$payCursor) {
             $this->payList[$payCursor]['goods_fee'] = bcmul($this->payList[$payCursor]['goods_num'], $this->payList[$payCursor]['member_goods_price'], 2);    // 小计
             $this->goodsPrice = bcadd($this->goodsPrice, $this->payList[$payCursor]['goods_fee'], 2); // 商品总价
             if (array_key_exists('market_price', $this->payList[$payCursor])) {
@@ -254,8 +254,8 @@ class Pay
                     $this->payPoints = $pay_points;
                     $this->integralMoney = $pay_points / $point_rate; //总积分兑换成的金额
                 } else {
-                    $this->payPoints = 0; //需要兑换的总积分
-                    $this->integralMoney = 0; //总积分兑换成的金额
+                    $this->payPoints = '0'; //需要兑换的总积分
+                    $this->integralMoney = '0'; //总积分兑换成的金额
                 }
                 // $this->orderAmount = $this->orderAmount - $this->integralMoney;
             }
@@ -417,15 +417,15 @@ class Pay
         $this->extraLogic->record();
     }
 
-    public function activity2($orderPromPrice = 0)
+    public function activity2($orderPromPrice = '0')
     {
         if ($this->payList) {
-            $goods_list = $this->activity2_goods($this->payList, $orderPromPrice != 0 ? $orderPromPrice : $this->totalAmount);
+            $goods_list = $this->activity2_goods($this->payList, $orderPromPrice != '0' ? $orderPromPrice : $this->totalAmount);
             $this->payList = $goods_list;
         }
     }
 
-    function activity2_goods($goods_list, $orderPromPrice = 0)
+    function activity2_goods($goods_list, $orderPromPrice = '0')
     {
         $orderPromId1 = [];
         $orderPromId2 = [];
@@ -535,7 +535,7 @@ class Pay
 //                    ->where(['op.type' => ['in', '0, 1'], 'is_open' => 1, 'is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])
 //                    ->field('order_prom_id, order_price, discount_price')->find();
 //                if (!empty($orderProm) && !in_array($orderProm['order_prom_id'], $orderPromId2)) {
-//                    if ($cartPrice >= $orderProm['order_price'] && $orderProm['order_price'] != 0) {
+//                    if ($cartPrice >= $orderProm['order_price'] && $orderProm['order_price'] != '0') {
 //                        // 订单价格满足要求
 //                        $discountPrice += $orderProm['discount_price'];
 //                    }
@@ -550,15 +550,15 @@ class Pay
     }
 
 
-    public function activity2New($orderPromPrice = 0)
+    public function activity2New($orderPromPrice = '0')
     {
         if ($this->payList) {
-            $goods_list = $this->activity2_goods_new($this->payList, $orderPromPrice != 0 ? $orderPromPrice : $this->totalAmount);
+            $goods_list = $this->activity2_goods_new($this->payList, $orderPromPrice != '0' ? $orderPromPrice : $this->totalAmount);
             $this->payList = $goods_list;
         }
     }
 
-    function activity2_goods_new($goods_list, $orderPromPrice = 0)
+    function activity2_goods_new($goods_list, $orderPromPrice = '0')
     {
         $orderPromId = [];
         $giftGoods = [];
@@ -700,13 +700,13 @@ class Pay
     public function calcGoodsOrderProm($goodsList, $goodsPrice)
     {
         $orderPromId = [];
-        $goodsDiscount = 0.00;
+        $goodsDiscount = '0';
         foreach ($goodsList as $k => $v) {
             if ($goodsPrice > 0) {
                 if (!empty($v['spec_key'])) {
                     $itemId = M('spec_goods_price')->where(['goods_id' => $v['goods_id'], 'key' => $v['spec_key']])->value('item_id');
                 } else {
-                    $itemId = 0;
+                    $itemId = '0';
                 }
                 // 订单优惠促销（查看是否有优惠价格）
                 $orderProm = Db::name('order_prom_goods opg')->join('order_prom op', 'op.id = opg.order_prom_id')
@@ -818,7 +818,7 @@ class Pay
                 $data['reward_goods_id'] = $av['goods_id'];
                 $data['reward_num'] = $av['goods_num'];
                 $data['type'] = 1;
-                $data['status'] = 0;
+                $data['status'] = '0';
                 $this->extra_reward[] = $data;
             }
             $this->payList = array_merge($this->payList, $extra_list);
@@ -840,7 +840,7 @@ class Pay
             }
             if ($user_electronic > $this->orderAmount) {
                 $this->userElectronic = $this->orderAmount;
-                $this->orderAmount = 0;
+                $this->orderAmount = '0';
             } else {
                 $this->userElectronic = $user_electronic;
                 $this->orderAmount = $this->orderAmount - $this->userElectronic;
@@ -880,7 +880,7 @@ class Pay
                 $coupon = Db::name('coupon')->where(['id' => $userCoupon['cid'], 'status' => 1])->find(); // 获取有效优惠券类型表
                 if ($coupon) {
                     $canCoupon = true;
-                    if ($coupon['is_usual'] == 0) {
+                    if ($coupon['is_usual'] == '0') {
                         // 不可以叠加优惠
                         if ($this->orderPromAmount > 0) {
                             $canCoupon = false;
@@ -895,7 +895,7 @@ class Pay
                                 $this->couponPrice = $coupon['money'];
                                 break;
                             case 4:
-                                $this->couponPrice = 0;
+                                $this->couponPrice = '0';
                                 $goods_ids = Db::name('goods_coupon')->where(array('coupon_id' => $userCoupon['cid']))->getField('goods_id', true);
                                 foreach ($getPayList as $k => $v) {
                                     if (in_array($v['goods_id'], $goods_ids)) {
@@ -958,8 +958,8 @@ class Pay
                             }
                             $cartLogic->setCartType(0);
                             $buyGoods = $cartLogic->buyNow();
-                            $buyGoods['member_goods_price'] = 0;
-                            $buyGoods['use_integral'] = 0;
+                            $buyGoods['member_goods_price'] = '0';
+                            $buyGoods['use_integral'] = '0';
                             $buyGoods['re_id'] = $coupon_id;
                             $extra_list[$ak] = $buyGoods;
                         }
@@ -980,8 +980,8 @@ class Pay
      */
     public function delivery($district_id)
     {
-        if ($district_id === 0) {
-            return $this->shippingPrice = 0;
+        if ($district_id === '0') {
+            return $this->shippingPrice = '0';
         }
         if (!is_int($district_id) && empty($district_id)) {
             throw new TpshopException('计算订单价格', 0, ['status' => -1, 'msg' => '请填写收货信息', 'result' => ['']]);
@@ -1002,7 +1002,7 @@ class Pay
             $this->orderAmount = bcadd($this->orderAmount, $this->shippingPrice, 2);
             $this->totalAmount = bcadd($this->totalAmount, $this->shippingPrice, 2);
         } else {
-            $this->shippingPrice = 0;
+            $this->shippingPrice = '0';
         }
     }
 
@@ -1056,7 +1056,7 @@ class Pay
         //4.团购
         //5.加价购
 //        $district_level = [];
-        $goodsPromAmount = 0;
+        $goodsPromAmount = '0';
 
         foreach ($pay_list as $k => $v) {
 
@@ -1066,7 +1066,7 @@ class Pay
                 ->alias('g')
                 ->field('pg.id, pg.type, pg.goods_num, pg.goods_price, pg.buy_limit, pg.expression')
                 ->where(array('g.goods_id' => $v['goods_id']))
-                ->join('prom_goods pg', "g.promo_id = pg.id and pg.group like '%" . $user_info['distribut_level'] . "%' and pg.start_time <= " . NOW_TIME . " and pg.end_time >= " . NOW_TIME . " and pg.is_end = 0 and pg.is_open = 1 and pg.min_num <= " . $v["goods_num"])
+                ->join('prom_goods pg', "g.promo_id = pg.id and pg.group like '%" . $user_info['distribut_level'] . "%' and pg.start_time <= " . NOW_TIME . " and pg.end_time >= " . NOW_TIME . " and pg.is_end = '0' and pg.is_open = 1 and pg.min_num <= " . $v["goods_num"])
                 ->select();
 
             $is_can_buy = true;
@@ -1095,7 +1095,7 @@ class Pay
 //                    $this->payList[$k]['prom_id'] = $group_activity['id'];
 //                    $this->payList[$k]['prom_type'] = 10;
 
-                    $promAmount = 0.00;
+                    $promAmount = '0';
                     switch ($group_activity['type']) {
                         case 0:
                             // 直接打折
@@ -1134,7 +1134,7 @@ class Pay
                             }
                             break;
                         default:
-                            $promAmount = 0.00;
+                            $promAmount = '0';
                     }
                     $goodsPromAmount = bcadd($goodsPromAmount, $promAmount, 2);
                 }

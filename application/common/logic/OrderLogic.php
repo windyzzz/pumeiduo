@@ -110,24 +110,32 @@ class OrderLogic
                 if ('10000' == $result->code) {
                     $res = true;
                 }
+            } elseif ('alipayApp' == $order['pay_code']) {
+                include_once PLUGIN_PATH . 'payment/alipayApp/alipayApp.class.php';
+                $payment_obj = new \alipayApp();
+                $result = $payment_obj->refund1($order, $order['order_amount'], $action_note);
+                $msg = $result->sub_msg;
+                if ('10000' == $result->code) {
+                    $res = true;
+                }
             } elseif ('weixinApp' == $order['pay_code']) {
                 include_once PLUGIN_PATH . 'payment/weixinApp/weixinApp.class.php';
                 $payment_obj = new \weixinApp();
                 $result = $payment_obj->refund($order, $order['order_amount']);
                 if ($result['return_code'] == 'FAIL') {
-                    return ['status' => 0, 'msg' => $result['return_msg']];
+                    $msg = $result['return_msg'];
                 } elseif ($result['result_code'] == 'FAIL') {
-                    return ['status' => 0, 'msg' => $result['err_code_des']];
+                    $msg = $result['err_code_des'];
                 }
             } elseif ('' == $order['pay_code']) {
                 $res = true;
             } else {
                 return ['status' => 0, 'msg' => '暂不支付退款方式', 'result' => ''];
             }
-
             if (!$res) {
                 return ['status' => 0, 'msg' => '退款失败,' . $msg, 'result' => '错误原因:' . $msg];
             }
+
             // 如果有微信公众号 则推送一条消息到微信
             $user = Db::name('OauthUsers')->where(['user_id' => $order['user_id'], 'oauth' => 'weixin', 'oauth_child' => 'mp'])->find();
             if ($user) {

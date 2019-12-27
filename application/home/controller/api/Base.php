@@ -74,6 +74,7 @@ class Base extends Controller
     private function whiteListPath()
     {
         return [
+            'c=api.Login&a=checkLogin', // 检查登录（旧版）
             'c=api.Login&a=reg', // 用户注册
             'c=api.Login&a=do_login', // 用户登录,
             'c=api.Index&a=indexNew',   // 主页

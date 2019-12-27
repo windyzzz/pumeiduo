@@ -91,6 +91,7 @@
         <div class="titile">
             <h3></h3>
         </div>
+        <!--<form id="delivery-form" action="{:U('Admin/order/deliveryHandle')}" method="post">-->
         <form id="delivery-form" action="{:U('Admin/order/deliveryHandle')}" method="post">
             <input type="hidden" name="shipping_status" value="{$order.shipping_status}">
             <input type="hidden" id="shipping_name" name="shipping_name"
@@ -127,15 +128,15 @@
                                     <option value="3" <if condition="$order.send_type eq 3">selected</if>>无需物流</option>
                                 </select>
                             </dd>
-                            <dt class="delivery_type">发货类型：</dt>
-                            <dd class="delivery_type">
-                                <select id="delivery_type" name="delivery_type" onchange="change_delivery_type();">
-                                    <option value="1" <if condition="$order.delivery_type eq 1">selected</if>>统一发货</option>
-                                    <option value="2" <if condition="$order.delivery_type eq 2">selected</if>>分开发货</option>
-                                </select>
-                            </dd>
-                        </dl>
-                        <dl>
+                            <div style="display: none;">
+                                <dt class="delivery_type">发货类型：</dt>
+                                <dd class="delivery_type">
+                                    <select id="delivery_type" name="delivery_type" onchange="change_delivery_type();">
+                                        <option value="1" <if condition="$order.delivery_type eq 1">selected</if>>统一发货</option>
+                                        <option value="2" <if condition="$order.delivery_type eq 2">selected</if>>分开发货</option>
+                                    </select>
+                                </dd>  
+                            </div>
                             <dt class="invoice">配送单号：</dt>
                             <dd class="invoice">
                                 <input class="input-txt" name="invoice_no" id="invoice_no" value="{$order.invoice_no}">
@@ -235,7 +236,7 @@
                             </dd>
                         </dl>
                         <h3>可执行操作</h3>
-                        <dl class="row">
+                        <dl class="row" style="display: none;">
                             <dt class="tit">
                                 <label for="note"></label>
                             </dt>

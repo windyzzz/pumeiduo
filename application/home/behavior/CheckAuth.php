@@ -51,7 +51,7 @@ class CheckAuth
             if ($this->redis->has('user_' . $params['user_token'])) {
                 $session_user = $this->redis->get('user_' . $params['user_token']);
             } else {
-                $session_user = M('user')->where(['token' => $params['user_token']])->find();
+                $session_user = M('users')->where(['token' => $params['user_token']])->find();
             }
         }
         if (isset($session_user)) {

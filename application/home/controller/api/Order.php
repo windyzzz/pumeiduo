@@ -29,7 +29,7 @@ use think\Url;
 
 class Order extends Base
 {
-    public $user_id = 0;
+    public $user_id = '0';
     public $user = [];
 
     public function __construct()
@@ -92,15 +92,15 @@ class Order extends Base
 
             //$order_list[$k]['total_fee'] = $v['goods_amount'] + $v['shipping_fee'] - $v['integral_money'] -$v['bonus'] - $v['discount']; //订单总额
             $data = $model->get_order_goods($v['order_id']);
-            $number_amount = 0;
-            $total_give_integral = 0;
+            $number_amount = '0';
+            $total_give_integral = '0';
             $order_list[$k]['goods_list'] = $data['result'];
             foreach ($order_list[$k]['goods_list'] as $glk => $glv) {
                 $number_amount = $number_amount + $glv['goods_num'];
                 $total_give_integral = bcadd($total_give_integral, $glv['give_integral'], 2);
 
                 if ($glv['zone'] == 3) {
-                    $order_list[$k]['cancel_btn'] = 0;
+                    $order_list[$k]['cancel_btn'] = '0';
                 }
             }
             $order_list[$k]['number_amount'] = $number_amount;
@@ -195,12 +195,13 @@ class Order extends Base
                     'order_amount' => $list['order_amount'],
                     'shipping_price' => $list['shipping_price'],
                     'add_time' => $list['add_time'],
+                    'pay_end_time' => $list['add_time'] + 3600, // 支付到期时间
                     'delivery_type' => $list['delivery_type'],
                 ],
                 'order_goods' => []     // 订单商品
             ];
-            $goodsNum = 0;          // 商品数量
-            $giveIntegral = 0.00;   // 返还积分
+            $goodsNum = '0';          // 商品数量
+            $giveIntegral = '0';   // 返还积分
             foreach ($orderGoods as $goods) {
                 if ($list['order_id'] == $goods['order_id']) {
                     $orderData[$k]['order_goods'][] = [
@@ -216,8 +217,8 @@ class Order extends Base
                         'original_img' => $goods['original_img'],
                         'is_return' => $goods['is_return']
                     ];
+                    $goodsNum += $goods['goods_num'];
                 }
-                $goodsNum += $goods['goods_num'];
                 $giveIntegral = bcadd($giveIntegral, bcmul($goods['give_integral'], $goods['goods_num']), 2);
             }
             $orderData[$k]['order_info']['total_num'] = $goodsNum;
@@ -254,7 +255,7 @@ class Order extends Base
 
         $can_return = $order_info['end_sale_time'] > time() ? true : false;
 
-        $total_give_integral = 0;
+        $total_give_integral = '0';
         foreach ($order_info['goods_list'] as $gk => $gv) {
             $total_give_integral = bcadd($total_give_integral, bcmul($gv['give_integral'], $gv['goods_num'], 2), 2);
             $order_info['goods_list'][$gk]['can_return'] = $can_return;
@@ -309,7 +310,7 @@ class Order extends Base
         //双十一任务奖励
         $task_log = M('task_log')->where('order_sn', $order_info['order_sn'])->where('task_id', 1)->where('type', 1)->find();
         if (!$task_log) {
-            $task_log['id'] = 0;
+            $task_log['id'] = '0';
         }
         $task_log['created_at'] = date('Y-m-d H:i:s', $task_log['created_at']);
         $order_info['task_reward'] = $task_log;
@@ -338,8 +339,8 @@ class Order extends Base
             $return['coupon_dis'] = $coupon_money . '折';
             $return['coupon_image_url'] = $coupon_info['coupon_image_url'];
         } else {
-            $return['coupon_id'] = 0;
-            $return['is_has_coupon'] = 0;
+            $return['coupon_id'] = '0';
+            $return['is_has_coupon'] = '0';
             $return['coupon_name'] = '';
             $return['coupon_dis'] = '';
             $return['coupon_image_url'] = '';
@@ -369,7 +370,7 @@ class Order extends Base
         if ($orderInfo['shipping_status'] == 1 && $orderInfo['order_status'] == 1) {
             $autoConfirmTime = $orderInfo['shipping_time'] + tpCache('shopping.auto_confirm_date') * 24 * 60 * 60;
         } else {
-            $autoConfirmTime = 0;
+            $autoConfirmTime = '0';
         }
         // 组合数据
         $orderData = [
@@ -394,6 +395,7 @@ class Order extends Base
             'order_amount' => $orderInfo['order_amount'],
             'give_integral' => 0,
             'add_time' => $orderInfo['add_time'],
+            'pay_end_time' => $orderInfo['add_time'] + 3600,    // 支付到期时间
             'pay_time' => $orderInfo['pay_time'],
             'shipping_time' => $orderInfo['shipping_time'],
             'confirm_time' => $orderInfo['confirm_time'],
@@ -422,8 +424,8 @@ class Order extends Base
         } else {
             $canReturn = false;
         }
-        $weight = 0.00;
-        $giveIntegral = 0.00;
+        $weight = '0';
+        $giveIntegral = '0';
         foreach ($orderGoods as $goods) {
             $orderData['goods'][] = [
                 'rec_id' => $goods['rec_id'],
@@ -602,7 +604,7 @@ class Order extends Base
         $comment_info = M('comment')->where(['comment_id' => $comment_id])->find();  //获取点赞用户ID
         $comment_user_id_array = explode(',', $comment_info['zan_userid']);
         if (in_array($user_id, $comment_user_id_array)) {  //判断用户有没点赞过
-            $result['success'] = 0;
+            $result['success'] = '0';
         } else {
             array_push($comment_user_id_array, $user_id);  //加入用户ID
             $comment_user_id_string = implode(',', $comment_user_id_array);
@@ -714,7 +716,7 @@ class Order extends Base
         $region_id[] = tpCache('shop_info.province');
         $region_id[] = tpCache('shop_info.city');
         $region_id[] = tpCache('shop_info.district');
-        $region_id[] = 0;
+        $region_id[] = '0';
         $return_address = M('region2')->where('id in (' . implode(',', $region_id) . ')')->getField('id,name');
         $order_info = array_merge($order, $order_goods);  //合并数组
         $return['return_address'] = $return_address;
@@ -1128,7 +1130,7 @@ class Order extends Base
                 $first_fans_id_arr[] = $fv['user_id'];
             }
         }
-        $second_fans = 0;
+        $second_fans = '0';
         if ($first_fans_id_arr) {
             $second_fans = M('users')->where('invite_uid', 'IN', $first_fans_id_arr)->count();
         }
@@ -1213,7 +1215,7 @@ class Order extends Base
                     $order_goods[$ok]['integral'] = $ov['use_integral'];
                 } else {
                     $order_goods[$ok]['price'] = $goodsInfo['shop_price'];
-                    $order_goods[$ok]['integral'] = 0;
+                    $order_goods[$ok]['integral'] = '0';
                 }
 
                 $order_goods[$ok]['get_price'] = $OrderCommonLogc->getRongMoney(bcdiv(bcmul(bcmul($ov['final_price'], $ov['goods_num'], 2), $ov['commission'], 2), 100, 2), $rv['level'], $ov['add_time'], $ov['goods_id']);
@@ -1284,7 +1286,7 @@ class Order extends Base
                     $order_goods[$ok]['integral'] = $ov['use_integral'];
                 } else {
                     $order_goods[$ok]['price'] = $goodsInfo['shop_price'];
-                    $order_goods[$ok]['integral'] = 0;
+                    $order_goods[$ok]['integral'] = '0';
                 }
                 //$order_goods[$ok]['get_price'] = round(($ov['final_price'] * $ov['goods_num']) * $ov['commission'] / 100 * $distribut_rate, 2);
 
@@ -1519,9 +1521,9 @@ class Order extends Base
             }
             $payLogic->usePayPoints($pay_points);
 
-            $give_integral = 0;             // 赠送积分
-            $weight = 0;                    // 产品重量
-            $order_prom_fee = 0;            // 订单优惠促销总价
+            $give_integral = '0';             // 赠送积分
+            $weight = '0';                    // 产品重量
+            $order_prom_fee = '0';            // 订单优惠促销总价
             foreach ($cartList['cartList'] as $v) {
                 $goodsInfo = M('Goods')->field('give_integral, weight')->where('goods_id', $v['goods_id'])->find();
                 $give_integral = bcadd($give_integral, $goodsInfo['give_integral'], 2);
@@ -1545,7 +1547,7 @@ class Order extends Base
                 // 筛选优惠券
                 foreach ($couponList as $key => $coupon) {
                     $canCoupon = true;
-                    if ($coupon['is_usual'] == 0) {
+                    if ($coupon['is_usual'] == '0') {
                         // 不可以叠加优惠
                         if ($payReturn['order_prom_amount'] > 0) {
                             $canCoupon = false;
@@ -1578,7 +1580,7 @@ class Order extends Base
                     'exchange_integral' => $list['use_integral'],
                 ];
                 // 处理显示金额
-                if ($list['use_integral'] != 0) {
+                if ($list['use_integral'] != '0') {
                     $goodsList[$k]['exchange_price'] = bcdiv(bcsub(bcmul($list['goods']['shop_price'], 100), bcmul($list['use_integral'], 100)), 100, 2);
                 } else {
                     $goodsList[$k]['exchange_price'] = $list['goods']['shop_price'];
@@ -1623,7 +1625,7 @@ class Order extends Base
             'order_amount' => $payReturn['order_amount'],
             'spare_pay_points' => bcsub($this->user['pay_points'], $payReturn['pay_points'], 2),
             'give_integral' => $give_integral,
-            'free_shipping_price' => tpCache('shopping.freight_free') <= $payReturn['order_amount'] ? 0 : bcsub(tpCache('shopping.freight_free'), $payReturn['order_amount'], 2)
+            'free_shipping_price' => tpCache('shopping.freight_free') <= $payReturn['order_amount'] ? '0' : bcsub(tpCache('shopping.freight_free'), $payReturn['order_amount'], 2)
         ];
         return json(['status' => 1, 'result' => $return]);
     }
@@ -1776,9 +1778,9 @@ class Order extends Base
             $payLogic->usePayPoints($pay_points);
             $payLogic->useUserElectronic($userElectronic);  // 使用电子币
 
-            $give_integral = 0;             // 赠送积分
-            $weight = 0;                    // 产品重量
-            $order_prom_fee = 0;            // 订单优惠促销总价
+            $give_integral = '0';             // 赠送积分
+            $weight = '0';                    // 产品重量
+            $order_prom_fee = '0';            // 订单优惠促销总价
             foreach ($cartList['cartList'] as $v) {
                 $goodsInfo = M('Goods')->field('give_integral, weight')->where('goods_id', $v['goods_id'])->find();
                 $give_integral = bcadd($give_integral, $goodsInfo['give_integral'], 2);
@@ -1802,7 +1804,7 @@ class Order extends Base
                 // 筛选优惠券
                 foreach ($couponList as $key => $coupon) {
                     $canCoupon = true;
-                    if ($coupon['is_usual'] == 0) {
+                    if ($coupon['is_usual'] == '0') {
                         // 不可以叠加优惠
                         if ($payReturn['order_prom_amount'] > 0) {
                             $canCoupon = false;
@@ -1832,7 +1834,7 @@ class Order extends Base
             'order_amount' => $payReturn['order_amount'],
             'spare_pay_points' => bcsub($this->user['pay_points'], $payReturn['pay_points'], 2),
             'give_integral' => $give_integral,
-            'free_shipping_price' => tpCache('shopping.freight_free') <= $payReturn['order_amount'] ? 0 : bcsub(tpCache('shopping.freight_free'), $payReturn['order_amount'], 2)
+            'free_shipping_price' => tpCache('shopping.freight_free') <= $payReturn['order_amount'] ? '0' : bcsub(tpCache('shopping.freight_free'), $payReturn['order_amount'], 2)
         ];
         return json(['status' => 1, 'result' => $return]);
     }
@@ -1898,16 +1900,17 @@ class Order extends Base
             }
             $result = $cartLogic->AsyncUpdateCarts($cartIds);
             if (1 != $result['status']) {
-                return json(['status' => 0, 'msg' => $result['msg'], 'result' => null]);
+                return json(['status' => 0, 'msg' => $result['msg']]);
             }
             if (0 == $cartLogic->getUserCartOrderCount()) {
-                return json(['status' => 0, 'msg' => '你的购物车没有选中商品', 'result' => null]);
+                return json(['status' => 0, 'msg' => '你的购物车没有选中商品']);
             }
             $cartList['cartList'] = $cartLogic->getCartList(1); // 获取用户选中的购物车商品
         } else {
             /*
              * 单个商品 + 购物车 下单
              */
+            return json(['status' => 0, 'msg' => '你的购物车没有选中商品']);
         }
         try {
             $payLogic = new Pay();
@@ -1933,7 +1936,7 @@ class Order extends Base
             $payLogic->usePayPoints($pay_points);
             $payLogic->useUserElectronic($userElectronic);  // 使用电子币
 
-            $order_prom_fee = 0;            // 订单优惠促销总价
+            $order_prom_fee = '0';            // 订单优惠促销总价
             foreach ($cartList['cartList'] as $v) {
                 if (isset($v['is_order_prom']) && $v['is_order_prom'] == 1) {
                     $order_prom_fee = bcadd($order_prom_fee, bcmul(bcadd($v['use_integral'], $v['member_goods_price'], 2), $v['goods_num'], 2), 2);
@@ -2123,7 +2126,7 @@ class Order extends Base
                         ->where($where)->find();
                     $apiController = new ApiController();
                     $express = $apiController->queryExpress(['shipping_code' => $delivery['shipping_code'], 'queryNo' => $delivery['invoice_no']], 'array');
-                    if ($express['status'] != 0) {
+                    if ($express['status'] != '0') {
                         return json(['status' => 0, 'msg' => $express['msg']]);
                     }
                     $return = [
@@ -2156,7 +2159,7 @@ class Order extends Base
                     $apiController = new ApiController();
                     foreach ($delivery as $item) {
                         $express = $apiController->queryExpress(['shipping_code' => $item['shipping_code'], 'queryNo' => $item['invoice_no']], 'array');
-                        if ($express['status'] != 0) {
+                        if ($express['status'] != '0') {
                             return json(['status' => 0, 'msg' => $express['msg']]);
                         }
                         $return['delivery'][] = [
@@ -2180,7 +2183,7 @@ class Order extends Base
                 ->where($where)->find();
             $apiController = new ApiController();
             $express = $apiController->queryExpress(['shipping_code' => $delivery['shipping_code'], 'queryNo' => $delivery['invoice_no']], 'array');
-            if ($express['status'] != 0) {
+            if ($express['status'] != '0') {
                 return json(['status' => 0, 'msg' => $express['msg']]);
             }
             $return = [
