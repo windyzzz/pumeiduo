@@ -2996,7 +2996,10 @@ class User extends Base
         return json(['status' => 1, 'result' => ['list' => $bankList]]);
     }
 
-
+    /**
+     * 用户银行信息
+     * @return \think\response\Json
+     */
     public function bankCardInfo()
     {
         if ($this->request->isPost()) {
@@ -3005,19 +3008,77 @@ class User extends Base
             $post['bank_region'] = I('bank_region', '');
             $post['bank_branch'] = I('bank_branch', '');
             $account = I('account', '');
-            $realName = I('real_name', '');
-            $idCard = I('id_card', '');
+            $post['real_name'] = I('real_name', '');
+            $post['id_cart'] = I('id_card', '');
 
             if (empty($bankCode) || empty($bankId)) return json(['status' => 0, 'msg' => '请选择银行']);
-            if ($bankCode != 'Alipay') {
-                if (empty($bankRegion) || empty($bankBranch)) return json(['status' => 0, 'msg' => '请填写银行信息']);
+            if ($bankCode == 'Alipay') {
+                // 支付宝
                 $post['alipay_account'] = $account;
             } else {
+                // 银行
+                if (empty($post['bank_region']) || empty($post['bank_branch'])) return json(['status' => 0, 'msg' => '请填写银行信息']);
                 $post['bank_card'] = $account;
+                $post['bank_name'] = M('bank')->where(['id' => $bankId])->value('name_cn');
             }
-            if (empty($account) || empty($realName))  return json(['status' => 0, 'msg' => '请填写银行信息']);
-            if (!check_id_card($idCard)) return json(['status' => 0, 'msg' => '请填写正确的身份证格式']);
-            
+            if (empty($account) || empty($post['real_name'])) return json(['status' => 0, 'msg' => '请填写银行信息']);
+            if (!check_id_card($post['id_cart'])) return json(['status' => 0, 'msg' => '请填写正确的身份证格式']);
+            Db::startTrans();
+            // 清除旧信息
+            $res = M('users')->where(['user_id' => $this->user_id])->update([
+                'id_cart' => '',
+                'real_name' => '',
+                'bank_name' => '',
+                'bank_region' => '',
+                'bank_branch' => '',
+                'bank_card' => '',
+                'alipay_account' => '',
+            ]);
+            if (!$res) {
+                Db::rollback();
+                return json(['status' => 0, 'msg' => '记录错误']);
+            }
+            // 更新信息
+            $usersLogic = new UsersLogic();
+            if (!$usersLogic->update_info($this->user_id, $post)) {
+                Db::rollback();
+                return json(['status' => 0, 'msg' => '记录失败']);
+            }
+            Db::commit();
+            return json(['status' => 1, 'msg' => '银行卡信息已保存成功']);
         }
+        // 用户银行卡信息
+        $userBankInfo = M('users')->where(['user_id' => $this->user_id])->field('id_cart id_card, real_name, bank_name, bank_region, bank_branch, bank_card, alipay_account')->find();
+        if (!empty($userBankInfo['alipay_account'])) {
+            // 支付宝
+            $bankInfo = M('bank')->where(['name_en' => 'Alipay'])->field('id, name_en')->find();
+            $userBankInfo['bank_id'] = $bankInfo['id'];
+            $userBankInfo['bank_code'] = $bankInfo['name_en'];
+            $userBankInfo['bank_region'] = '';
+            $userBankInfo['bank_branch'] = '';
+            $userBankInfo['account'] = $userBankInfo['alipay_account'];
+        } elseif (!empty($userBankInfo['bank_card'])) {
+            // 银行
+            if (empty($userBankInfo['bank_region']) || empty($userBankInfo['bank_branch'])) {
+                // 之前设置不完善的数据
+                $userBankInfo['bank_id'] = '0';
+                $userBankInfo['bank_code'] = '';
+                $userBankInfo['bank_region'] = '';
+                $userBankInfo['bank_branch'] = $userBankInfo['bank_name'];
+                $userBankInfo['account'] = $userBankInfo['bank_card'];
+            } else {
+                // 后来补充完善的数据
+                $bankInfo = M('bank')->where(['name_cn' => $userBankInfo['bank_name']])->field('id, name_en')->find();
+                $userBankInfo['bank_id'] = $bankInfo['id'];
+                $userBankInfo['bank_code'] = $bankInfo['name_en'];
+                $userBankInfo['account'] = $userBankInfo['bank_card'];
+            }
+        } else {
+            return json(['status' => 0, 'msg' => '用户还没有设置银行卡信息']);
+        }
+        unset($userBankInfo['bank_name']);
+        unset($userBankInfo['bank_card']);
+        unset($userBankInfo['alipay_account']);
+        return json(['status' => 1, 'result' => $userBankInfo]);
     }
 }
