@@ -500,11 +500,24 @@ class User extends Base
      */
     public function address_list_new()
     {
+        // 用户地址
         $addressList = get_user_address_list_new($this->user_id);
-        foreach ($addressList as $key => $value) {
-            $addressList[$key]['tabs'] = Db::name('address_tab')->where(['id' => ['in', explode(',', $value['tabs'])]])->field('id tab_id, name')->select();
+        // 地址标签
+        $addressTab = (new UsersLogic())->getAddressTab($this->user_id);
+        foreach ($addressList as $k1 => $value) {
+            $tabs = explode(',', $value['tabs']);
+            unset($addressList[$k1]['tabs']);
+            foreach ($addressTab as $k2 => $item) {
+                $addressList[$k1]['tabs'][$k2] = [
+                    'tab_id' => $item['tab_id'],
+                    'name' => $item['name'],
+                    'is_selected' => 0
+                ];
+                if (in_array($item['tab_id'], $tabs)) {
+                    $addressList[$k1]['tabs'][$k2]['is_selected'] = 1;
+                }
+            }
         }
-
         return json(['status' => 1, 'msg' => 'success', 'result' => ['list' => $addressList]]);
     }
 
@@ -518,9 +531,23 @@ class User extends Base
         if (!$addressId) {
             return json(['status' => 0, 'msg' => '地址ID错误']);
         }
+        // 用户地址
         $addressList = get_user_address_list_new($this->user_id, false, $addressId);
-        foreach ($addressList as $key => $value) {
-            $addressList[$key]['tabs'] = Db::name('address_tab')->where(['id' => ['in', explode(',', $value['tabs'])]])->field('id tab_id, name')->select();
+        // 地址标签
+        $addressTab = (new UsersLogic())->getAddressTab($this->user_id);
+        foreach ($addressList as $k1 => $value) {
+            $tabs = explode(',', $value['tabs']);
+            unset($addressList[$k1]['tabs']);
+            foreach ($addressTab as $k2 => $item) {
+                $addressList[$k1]['tabs'][$k2] = [
+                    'tab_id' => $item['tab_id'],
+                    'name' => $item['name'],
+                    'is_selected' => 0
+                ];
+                if (in_array($item['tab_id'], $tabs)) {
+                    $addressList[$k1]['tabs'][$k2]['is_selected'] = 1;
+                }
+            }
         }
         return json(['status' => 1, 'msg' => 'success', 'result' => $addressList[0]]);
     }
@@ -2957,5 +2984,40 @@ class User extends Base
             return json(['status' => -11, 'msg' => '你已经是VIP会员了，无法再次购买']);
         }
         return json(['status' => 1]);
+    }
+
+    /**
+     * 银行列表
+     * @return \think\response\Json
+     */
+    public function bankList()
+    {
+        $bankList = M('bank')->where(['status' => 1])->field('id, name_cn name, name_en code, icon')->order('sort desc')->select();
+        return json(['status' => 1, 'result' => ['list' => $bankList]]);
+    }
+
+
+    public function bankCardInfo()
+    {
+        if ($this->request->isPost()) {
+            $bankCode = I('bank_code', '');
+            $bankId = I('bank_id', '');
+            $post['bank_region'] = I('bank_region', '');
+            $post['bank_branch'] = I('bank_branch', '');
+            $account = I('account', '');
+            $realName = I('real_name', '');
+            $idCard = I('id_card', '');
+
+            if (empty($bankCode) || empty($bankId)) return json(['status' => 0, 'msg' => '请选择银行']);
+            if ($bankCode != 'Alipay') {
+                if (empty($bankRegion) || empty($bankBranch)) return json(['status' => 0, 'msg' => '请填写银行信息']);
+                $post['alipay_account'] = $account;
+            } else {
+                $post['bank_card'] = $account;
+            }
+            if (empty($account) || empty($realName))  return json(['status' => 0, 'msg' => '请填写银行信息']);
+            if (!check_id_card($idCard)) return json(['status' => 0, 'msg' => '请填写正确的身份证格式']);
+            
+        }
     }
 }

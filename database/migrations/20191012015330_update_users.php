@@ -42,5 +42,11 @@ class UpdateUsers extends Migrator
             ->addColumn('is_not_show_hb', 'integer', ['limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
                 'default' => 0, 'comment' => '是否永久不显示登录红包 1是 0否'])
             ->update();
+
+        $this->table('users')
+            ->addColumn('bank_region', 'string', ['null' => true, 'comment' => '银行开户地区', 'after' => 'bank_name'])
+            ->addColumn('bank_branch', 'string', ['null' => true, 'comment' => '银行开户支行', 'after' => 'bank_region'])
+            ->addColumn('alipay_account', 'string', ['null' => true, 'comment' => '支付宝账号', 'after' => 'bank_card'])
+            ->update();
     }
 }

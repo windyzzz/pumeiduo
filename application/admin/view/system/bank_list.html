@@ -50,6 +50,9 @@
 						<th align="center" axis="col5" class="">
 							<div style="text-align: center; width: 80px;" class="">开启状态</div>
 						</th>
+						<th align="center" axis="col5" class="">
+							<div style="text-align: center; width: 80px;" class="">排序</div>
+						</th>
 						<th align="left" axis="col1" class="handle" style="display: none;">
 							<div style="text-align: center; width: 250px;">操作</div>
 						</th>
@@ -88,6 +91,14 @@
 										<else />
 										<span class="no" onClick="changeTableVal('bank','id','{$bank.id}','status',this)" ><i class="fa fa-ban"></i>否</span>
 									</if>
+								</div>
+							</td>
+							<td class="sort">
+								<div style="text-align: center; width: 60px;">
+									<input type="text" onKeyUp="this.value=this.value.replace(/[^\d]/g,'')"
+										   onpaste="this.value=this.value.replace(/[^\d]/g,'')"
+										   onblur="changeTableVal('bank','id', '{$bank.id}', 'sort', this)"
+										   size="4" value="{$bank.sort}"/>
 								</div>
 							</td>
 							<td align="center" class="handle" style="display: none">

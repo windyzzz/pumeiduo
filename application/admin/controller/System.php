@@ -556,7 +556,7 @@ class System extends Base
         }
         $count = M('bank')->where($where)->count();
         $page = new Page($count, 10);
-        $bankList = M('bank')->where($where)->limit($page->firstRow . ',' . $page->listRows)->select();
+        $bankList = M('bank')->where($where)->limit($page->firstRow . ',' . $page->listRows)->order('sort DESC')->select();
         $this->assign('page', $page);
         $this->assign('bank_list', $bankList);
         return view('bank_list');
