@@ -242,8 +242,14 @@ class alipayApp
 
     public function refund1($order, $refund_amount, $reason)
     {
-        $this->alipay_config['sign_type'] = $this->config_value['sign_type'];
-
+        $config = [
+            'gatewayUrl' => 'https://openapi.alipay.com/gateway.do',
+            'app_id' => $this->alipay_config['appId'],
+            'merchant_private_key' => $this->alipay_config['rsaPrivateKey'],
+            'alipay_public_key' => $this->alipay_config['alipayrsaPublicKey'],
+            'charset' => $this->alipay_config['charset'],
+            'sign_type' => $this->alipay_config['signType']
+        ];
         // $this->alipay_config['rsaPrivateKeyFilePath']     = __DIR__.'/alipay_public_key_sha256_2017060107396737.txt';
         require_once 'lib/AopClient/wappay/service/AlipayTradeService.php';
         require_once 'lib/AopClient/wappay/buildermodel/AlipayTradeRefundContentBuilder.php';
@@ -266,13 +272,11 @@ class alipayApp
             $out_request_no = trim($order['order_sn'] . rand(100, 999));
 
             $RequestBuilder = new AlipayTradeRefundContentBuilder();
-            // $RequestBuilder->setTradeNo($trade_no);
             $RequestBuilder->setOutTradeNo($out_trade_no);
             $RequestBuilder->setRefundAmount($refund_amount);
             $RequestBuilder->setRefundReason($refund_reason);
             $RequestBuilder->setOutRequestNo($out_request_no);
-            // dump($this->alipay_config);
-            // exit;
+
             $Response = new AlipayTradeService($config);
             $result = $Response->Refund($RequestBuilder);
 
