@@ -3000,6 +3000,10 @@ class User extends Base
      * 用户银行信息
      * @return \think\response\Json
      */
+    /**
+     * 用户银行信息
+     * @return \think\response\Json
+     */
     public function bankCardInfo()
     {
         if ($this->request->isPost()) {
