@@ -90,12 +90,14 @@ class Login extends Base
             $nickname = empty($res['result']['nickname']) ? $username : $res['result']['nickname'];
             setcookie('uname', urlencode($nickname), null, '/');
             setcookie('cn', 0, time() - 3600, '/');
+            // 用户登录后 需要对购物车 一些操作
             $cartLogic = new CartLogic();
             $cartLogic->setUserId($res['result']['user_id']);
             $cartLogic->setUserToken($this->userToken);
-            $cartLogic->doUserLoginHandle(); // 用户登录后 需要对购物车 一些操作
+            $cartLogic->doUserLoginHandle();
+            // 登录后将超时未支付订单给取消掉
             $orderLogic = new OrderLogic();
-            $orderLogic->setUserId($res['result']['user_id']); //登录后将超时未支付订单给取消掉
+            $orderLogic->setUserId($res['result']['user_id']);
             $orderLogic->abolishOrder();
             $user = $res['result'];
             $res['result'] = [
@@ -180,8 +182,6 @@ class Login extends Base
              return json(['status'=>0, 'msg'=>'你已经登录过了', 'result'=>null]);
         }
 
-        $reg_sms_enable = tpCache('sms.regis_sms_enable');
-//        $reg_smtp_enable = tpCache('smtp.regis_smtp_enable');
         if (!$request->isPost()) {
             return json(['status' => 0, 'msg' => '请求方式出错', 'result' => null]);
         }
@@ -200,6 +200,8 @@ class Login extends Base
             }
             // 手机/邮箱验证码检查，如果没以上两种功能默认是图片验证码检查
             if (check_mobile($username)) {
+                $reg_sms_enable = tpCache('sms.regis_sms_enable');
+//        $reg_smtp_enable = tpCache('smtp.regis_smtp_enable');
                 if ($reg_sms_enable) {   //是否开启注册验证码机制
                     //手机功能没关闭
                     $check_code = $logic->check_validate_code($code, $username, 'phone', $session_id, $scene);

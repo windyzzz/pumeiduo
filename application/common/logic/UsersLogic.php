@@ -338,8 +338,12 @@ class UsersLogic extends Model
         if (!$username || !$password) {
             return ['status' => 0, 'msg' => '请填写账号或密码'];
         }
-
-        $user = Db::name('users')->where('mobile', $username)->whereOr('email', $username)->field('password, user_id, mobile, nickname, user_name, is_distribut, is_lock, level, token, type')->find();
+        if (check_mobile($username)) {
+            $user = Db::name('users')->where('mobile', $username)->whereOr('email', $username);
+        } else {
+            $user = Db::name('users')->where('user_id', $username)->whereOr('user_name', $username)->whereOr('email', $username);
+        }
+        $user = $user->field('password, user_id, mobile, nickname, user_name, is_distribut, is_lock, level, token, type')->find();
         if (!$user) {
             $result = ['status' => -1, 'msg' => '账号不存在!'];
         } elseif (systemEncrypt($password) != $user['password']) {
@@ -353,8 +357,13 @@ class UsersLogic extends Model
             $levelName = Db::name('user_level')->where('level_id', $levelId)->getField('level_name');
             // 更新用户token
             if (!$userToken) $userToken = TokenLogic::setToken();
-            Db::name('users')->where('mobile', $username)->whereOr('email', $username)->update(['token' => $userToken, 'time_out' => strtotime('+' . config('redis_days') . ' days')]);
-            $user = Db::name('users')->where('mobile', $username)->whereOr('email', $username)->find();
+            if (check_mobile($username)) {
+                $user = Db::name('users')->where('mobile', $username)->whereOr('email', $username)->find();
+                Db::name('users')->where('mobile', $username)->whereOr('email', $username)->update(['token' => $userToken, 'time_out' => strtotime('+' . config('redis_days') . ' days')]);
+            } else {
+                $user = Db::name('users')->where('user_id', $username)->whereOr('user_name', $username)->whereOr('email', $username)->find();
+                Db::name('users')->where('user_id', $username)->whereOr('user_name', $username)->whereOr('email', $username)->update(['token' => $userToken, 'time_out' => strtotime('+' . config('redis_days') . ' days')]);
+            }
             $user['level_name'] = $levelName;
             $result = ['status' => 1, 'msg' => '登录成功', 'result' => $user];
         }
@@ -825,10 +834,10 @@ class UsersLogic extends Model
             return ['status' => -1, 'msg' => '注册失败'];
         }
         (new Redis())->set('is_new_' . $userToken, 1, 180);
-        // $pay_points = tpCache('basic.reg_integral'); // 会员注册赠送积分
-        // if($pay_points > 0){
-        //     accountLog($user_id, 0,$pay_points, '会员注册赠送积分'); // 记录日志流水
-        // }
+//        $pay_points = tpCache('basic.reg_integral'); // 会员注册赠送积分
+//        if ($pay_points > 0) {
+//            accountLog($user_id, 0, $pay_points, '会员注册赠送积分'); // 记录日志流水
+//        }
         $user = M('users')->where('user_id', $user_id)->find();
         $user = [
             'user_id' => $user['user_id'],

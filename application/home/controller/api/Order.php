@@ -190,7 +190,7 @@ class Order extends Base
                     'order_status' => $list['order_status'],
                     'pay_status' => $list['order_status'],
                     'shipping_status' => $list['order_status'],
-                    'order_status_code' => $orderList[$k]['order_status_code'] == 'AFTER-SALES' ? 'WAITCCOMMENT' : $orderList[$k]['order_status_code'],
+                    'order_status_code' => $orderList[$k]['order_status_code'] == 'AFTER-SALES' || $orderList[$k]['order_status_code'] == 'WAITCCOMMENT' ? 'FINISH' : $orderList[$k]['order_status_code'],
                     'order_status_desc' => $orderList[$k]['order_status_desc'],
                     'order_amount' => $list['order_amount'],
                     'shipping_price' => $list['shipping_price'],
@@ -380,7 +380,7 @@ class Order extends Base
             'order_status' => $orderInfo['order_status'],
             'pay_status' => $orderInfo['order_status'],
             'shipping_status' => $orderInfo['order_status'],
-            'order_status_code' => $orderInfo['order_status_code'] == 'AFTER-SALES' ? 'WAITCCOMMENT' : $orderInfo['order_status_code'],
+            'order_status_code' => $orderInfo['order_status_code'] == 'AFTER-SALES' || $orderInfo['order_status_code'] == 'WAITCCOMMENT' ? 'FINISH' : $orderInfo['order_status_code'],
             'order_status_desc' => $orderInfo['order_status_desc'],
             'pay_code' => $orderInfo['pay_code'],
             'pay_name' => $orderInfo['pay_name'],
@@ -419,7 +419,7 @@ class Order extends Base
         if ($orderData['delivery']['city_name'] == '直辖区') {
             $orderData['delivery']['city_name'] = '';
         }
-        if ($orderInfo['order_status_code'] == 'AFTER-SALES' || $orderInfo['order_status_code'] == 'WAITCCOMMENT') {
+        if ($orderInfo['order_status_code'] == 'AFTER-SALES' || $orderInfo['order_status_code'] == 'WAITCCOMMENT' || $orderInfo['order_status_code'] == 'FINFISH') {
             $canReturn = $orderInfo['end_sale_time'] > time() ? true : false;   // 能否退货
         } else {
             $canReturn = false;
