@@ -143,13 +143,12 @@ class CheckAuth
     {
         // if($_SESSION['openid'])
         //     return ['type'=>2, 'result'=>$_SESSION['data']];
-        $invite = TokenLogic::getCache('invite', $userToken);
         //通过code获得openid
         if (!isset($_GET['code'])) {
             //触发微信返回code码
             //$baseUrl = urlencode('http://'.$_SERVER['HTTP_HOST'].$_SERVER['PHP_SELF'].'?'.$_SERVER['QUERY_STRING']);
             // $baseUrl = urlencode($this->get_url());
-            S('invite_' . $userToken);
+            $invite = S('invite_' . $userToken);
             $file = 'invite.txt';
             file_put_contents($file, '[' . date('Y-m-d H:i:s') . ']  把邀请人信息添加到授权回调地址：' . $invite . "\n", FILE_APPEND | LOCK_EX);
             $baseUrl = urlencode($this->site_url . "/index.php?m=Home&c=api.Login&a=callback&invite=$invite");
@@ -158,7 +157,7 @@ class CheckAuth
             // exit();
             return ['type' => 1, 'result' => $url, 'baseUrl' => $this->site_url];
         }
-        S('invite_' . $userToken);
+        $invite = S('invite_' . $userToken);
         $file = 'invite.txt';
         file_put_contents($file, '[' . date('Y-m-d H:i:s') . ']  授权回来，获取邀请人Session：' . $invite . "\n", FILE_APPEND | LOCK_EX);
         //上面获取到code后这里跳转回来

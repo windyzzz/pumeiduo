@@ -386,9 +386,9 @@ class Pay
         }
 
         // 加价购活动
-//        $this->extraLogic->setUserId($this->userId);
-//        $this->extraLogic->setGoodsList($this->payList);
-//        $this->extra_goods_list = $this->extraLogic->getGoodsList();
+        $this->extraLogic->setUserId($this->userId);
+        $this->extraLogic->setGoodsList($this->payList);
+        $this->extra_goods_list = $this->extraLogic->getGoodsList();
     }
 
     public function activity()
@@ -823,6 +823,63 @@ class Pay
             $this->payList = array_merge($this->payList, $extra_list);
         }
     }
+
+    // 加价购活动（新）
+    public function activityPayBeforeNew($extraGoods = [])
+    {
+        $extra_goods_list = convert_arr_key($this->extra_goods_list, 'goods_id');
+        foreach ($extraGoods as $key => $extra) {
+            if (!isset($this->extra_goods_list[$extra['goods_id']])) {
+                throw new TpshopException('计算订单价格', 0, ['status' => 0, 'msg' => '请求参数非法']);
+            }
+            if ($extra_goods_list[$extra['goods_id']]['store_count'] < 1) {
+                // 库存不足
+                throw new TpshopException('计算订单价格', 0, ['status' => 0, 'msg' => '加价购商品库存不足']);
+            }
+            if ($extra_goods_list[$extra['goods_id']]['goods_num'] < $extra['goods_num']) {
+                throw new TpshopException('计算订单价格', 0, ['status' => 0, 'msg' => '超出购买加价购商品数量']);
+            }
+
+        }
+
+        $cartLogic = new CartLogic();
+        $cartLogic->setUserId($this->userId);
+
+        $extra_list = [];
+        foreach ($want_to_buy_extra_goods as $ak => $av) {
+            $cartLogic->setGoodsModel($av['goods_id']);
+            $cartLogic->setGoodsBuyNum($av['goods_num']);
+            if ($extra_goods_list[$av['goods_id']]['exchange_integral'] > 0) {
+                $cartLogic->setType(1);
+//                    $this->payPoints += $av['goods_num'] * $extra_goods_list[$av['goods_id']]['exchange_integral'];
+            } else {
+                $cartLogic->setType(2);
+            }
+            $cartLogic->setCartType(0);
+            $buyGoods = $cartLogic->buyNow();
+            $buyGoods['member_goods_price'] = $extra_goods_list[$av['goods_id']]['goods_price'];
+            $buyGoods['prom_type'] = $extra_goods_list[$av['goods_id']]['prom_type'];
+            $buyGoods['prom_id'] = $extra_goods_list[$av['goods_id']]['prom_id'];
+
+            $this->orderAmount += $av['goods_num'] * $buyGoods['member_goods_price'];
+            $this->goodsPrice += $av['goods_num'] * $buyGoods['member_goods_price'];
+            $this->totalAmount += $av['goods_num'] * $buyGoods['member_goods_price'];
+
+            $extra_list[$ak] = $buyGoods;
+            $data = [];
+            $data['extra_id'] = $extra_goods_list[$av['goods_id']]['prom_id'];
+            $data['extra_title'] = $extra_goods_list[$av['goods_id']]['extra_title'];
+            $data['extra_reward_id'] = $extra_goods_list[$av['goods_id']]['extra_reward_id'];
+            $data['user_id'] = $this->userId;
+            $data['reward_goods_id'] = $av['goods_id'];
+            $data['reward_num'] = $av['goods_num'];
+            $data['type'] = 1;
+            $data['status'] = '0';
+            $this->extra_reward[] = $data;
+        }
+        $this->payList = array_merge($this->payList, $extra_list);
+    }
+
 
     /**
      * 使用电子币

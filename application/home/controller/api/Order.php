@@ -1507,8 +1507,6 @@ class Order extends Base
             $payLogic->check();
             // 参与活动促销
             $payLogic->goodsPromotion();
-            // 加价购活动
-//            $payLogic->activityPayBefore();
 
             // 配送物流
             if (empty($userAddress)) {
@@ -1562,7 +1560,7 @@ class Order extends Base
                     unset($couponList[$key]['is_usual']);
                 }
             }
-            // 商品列表 赠品列表
+            // 商品列表 赠品列表 加价购列表
             $payList = collection($payLogic->getPayList())->toArray();
             $goodsList = [];
             $giftList = $payLogic->getPromGiftList();
@@ -1589,6 +1587,10 @@ class Order extends Base
                 if (isset($list['gift_goods'])) {
                     $goodsList[$k]['gift_goods'] = $list['gift_goods'];
                 }
+            }
+            if (!empty($payReturn['extra_goods_list'])) {
+                var_dump($payReturn['extra_goods_list']);
+                exit();
             }
         } catch (TpshopException $tpE) {
             return json($tpE->getErrorArr());
@@ -1645,6 +1647,7 @@ class Order extends Base
         $couponId = I('coupon_id', 0);          // 优惠券ID
         $addressId = I('address_id', '');       // 地址ID
         $userElectronic = I('user_electronic', '');     // 使用电子币
+        $extraGoods = I('post.')['extra_goods'];     // 加价购商品
         if (!$addressId) {
             // 用户默认地址
             $userAddress = get_user_address_list_new($this->user_id, true);
@@ -1765,7 +1768,7 @@ class Order extends Base
             // 参与活动促销
             $payLogic->goodsPromotion();
             // 加价购活动
-//            $payLogic->activityPayBefore();
+//            $payLogic->activityPayBeforeNew($extraGoods);
 
             // 配送物流
             if (empty($userAddress)) {

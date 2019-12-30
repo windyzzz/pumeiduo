@@ -78,7 +78,7 @@ class Extra extends Validate
                 if ($goods_info['store_count'] < 1) {
                     return 'goods_id：'.$goods_info['goods_id'].'库存不足';
                 }
-                if ($goods_info['prom_id'] > 0) {
+                if (empty($v['reward_id']) && $goods_info['prom_id'] > 0) {
                     return 'goods_id：'.$goods_info['goods_id'].'参加活动';
                 }
             }

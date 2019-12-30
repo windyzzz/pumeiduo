@@ -205,7 +205,7 @@
         var html = '<tr>' +
             '<td>\\index\\</td>' +
             '<td><div style="display: table;"><div style="display: table-cell;vertical-align: middle;">' +
-            '<input type="number" style="margin: 0 20px;" name="reward[\\index\\][goods_id]" class="goods_id" value=""></div></div></td>' +
+            '<input type="text" style="margin: 0 20px;" onkeyup="this.value=this.value.replace(/[^\\d.]/g,\'\')" name="reward[\\index\\][goods_id]" class="goods_id" value=""></div></div></td>' +
             '<td><input type="number" name="reward[\\index\\][goods_num]" value=""></td>' +
             '<td><a href="javascript:;" class="ncap-btn-mini ncap-btn-red delete">删除</a></td>';
         var h = /\\index\\/g;
@@ -213,37 +213,37 @@
         return html;
     }
 
-    $(document).on('blur','.goods_id',function () {
+    $(document).on('blur', '.goods_id', function () {
         $(this).parent().next().remove();
-        if($(this).parent().next().length == 0 && $(this).val())
-        {
+        if ($(this).parent().next().length == 0 && $(this).val()) {
             $(this).parent().after("<p class='load'>loading...</p>");
             var that = $(this);
             $.ajax({
-                url:"{:U('Goods/getGoodsInfo')}",
-                data:{goods_id:$(this).val()},
-                type:"get",
-                success:function (res) {
+                url: "{:U('Goods/getGoodsInfo')}",
+                data: {goods_id: $(this).val()},
+                type: "get",
+                success: function (res) {
                     that.parent().next().remove();
-                    if(res.status == 1){
+                    if (res.status == 1) {
                         that.parent().after(
                             "<div style='display: table-cell; text-align:left;margin-left: 20px;'>" +
-                            "<span>商品名称："+res.result.goods_name+"</span><br>" +
-                            "<span>商品价格："+res.result.shop_price+"元</span><br>" +
-                            "<span>商品积分："+res.result.exchange_integral+"</span><br>" +
-                            "<span>商品数量："+res.result.store_count+"</span><br>" +
+                            "<span>商品名称：" + res.result.goods_name + "</span><br>" +
+                            "<span>商品价格：" + res.result.shop_price + "元</span><br>" +
+                            "<span>商品积分：" + res.result.exchange_integral + "</span><br>" +
+                            "<span>商品数量：" + res.result.store_count + "</span><br>" +
                             "</div>");
-                    }else{
+                    } else {
                         that.parent().next().remove();
                         that.parent().after("<span style='color: red'>没有对应商品信息!</span>");
                     }
-                },error:function (xhr) {
+                }, error: function (xhr) {
 
                 }
             });
 
         }
-    })
+    });
+
     function verifyForm(){
         $('span.err').hide();
         $.ajax({

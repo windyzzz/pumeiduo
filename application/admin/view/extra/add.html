@@ -1,16 +1,25 @@
-<include file="public/layout" />
+<include file="public/layout"/>
 <style>
-    .err{color:#F00; display:none;}
-    th,td{padding: 10px; text-align: center}
+    .err {
+        color: #F00;
+        display: none;
+    }
+
+    th, td {
+        padding: 10px;
+        text-align: center
+    }
 </style>
 <script src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
 <body style="background-color: #FFF; overflow: auto;">
-<div id="toolTipLayer" style="position: absolute; z-index: 9999; display: none; visibility: visible; left: 95px; top: 573px;"></div>
+<div id="toolTipLayer"
+     style="position: absolute; z-index: 9999; display: none; visibility: visible; left: 95px; top: 573px;"></div>
 <div id="append_parent"></div>
 <div id="ajaxwaitid"></div>
 <div class="page">
     <div class="fixed-bar">
-        <div class="item-title"><a class="back" href="javascript:history.back();" title="返回列表"><i class="fa fa-arrow-circle-o-left"></i></a>
+        <div class="item-title"><a class="back" href="javascript:history.back();" title="返回列表"><i
+                class="fa fa-arrow-circle-o-left"></i></a>
             <div class="subject">
                 <h3>促销管理 - 新增加价购活动</h3>
                 <h5>网站系统加价购活动活动详情页</h5>
@@ -77,16 +86,21 @@
                 <dd class="opt">
                     <select name="cat_id[]" id="cat_id_0" class="small form-control cat_id" data-index="0">
                         <option value="0">请选择商品分类</option>
-                        <foreach name="cat_list" item="v" key="k" >
-                            <option value="{$v['id']}" <if condition="$v['id'] eq $level_cat['1']">selected="selected"</if> >
+                        <foreach name="cat_list" item="v" key="k">
+                            <option value="{$v['id']}"
+                            <if condition="$v['id'] eq $level_cat['1']">selected="selected"</if>
+                            >
                             {$v['name']}
                             </option>
                         </foreach>
                     </select>
-                    <select name="cat_id_2[]" id="cat_id_2_0" onChange="get_category(this.value,'cat_id_3_0','0');getCategoryBindList(this.value)" onclick="get_category(this.value,'cat_id_3_0','0');getCategoryBindList(this.value)" class="small form-control">
+                    <select name="cat_id_2[]" id="cat_id_2_0"
+                            onChange="get_category(this.value,'cat_id_3_0','0');getCategoryBindList(this.value)"
+                            onclick="get_category(this.value,'cat_id_3_0','0');getCategoryBindList(this.value)"
+                            class="small form-control">
                         <option value="0">请选择商品分类</option>
                     </select>
-                    <select name="cat_id_3[]" id="cat_id_3_0" class="small form-control" >
+                    <select name="cat_id_3[]" id="cat_id_3_0" class="small form-control">
                         <option value="0">请选择商品分类</option>
                     </select>
                     <a onclick="addCategory(this)" class="ncap-btn-mini ncap-btn-green">添加商品分类</a>
@@ -96,8 +110,8 @@
             </dl>
             <hr>
             <dl class="row">
-                <dt >
-                <h2>奖励设置</h2>
+                <dt>
+                    <h2>奖励设置</h2>
                 </dt>
             </dl>
             <hr>
@@ -129,16 +143,16 @@
         $('#end_time').layDate();
 
         // 自定义商品分类、全场
-        if($('#cat_ids').val() == 0){
+        if ($('#cat_ids').val() == 0) {
             $('.category').hide();
-        }else{
+        } else {
             $('.category').show();
         }
 
-        $(document).on("change",'#cat_ids',function(){
-            if($(this).val() == 0){
+        $(document).on("change", '#cat_ids', function () {
+            if ($(this).val() == 0) {
                 $('.category').hide();
-            }else{
+            } else {
                 $('.category').show();
             }
         })
@@ -147,10 +161,9 @@
             $(this).parent().parent().remove();
         })
     });
-    var index =  1;
+    var index = 1;
 
-    function addSetting()
-    {
+    function addSetting() {
         var html = repalceHtml(index);
 
         $('.reward_table').append(html);
@@ -159,20 +172,21 @@
     }
 
 
-
-    function repalceHtml(index)
-    {
+    function repalceHtml(index) {
         var html = '<tr>' +
             '<td>\\index\\</td>' +
             '<td><div style="display: table;"><div style="display: table-cell;vertical-align: middle;">' +
-            '<input type="number" style="margin: 0 20px;" name="reward[\\index\\][goods_id]" class="goods_id" value=""></div></div></td>' +
+            '<input type="text" style="margin: 0 20px;" onkeyup="this.value=this.value.replace(/[^\\d.]/g,\'\')" name="reward[\\index\\][goods_id]" class="goods_id" value=""></div>' +
+            '<div></div>' +
+            '</div></td>' +
             '<td><input type="number" name="reward[\\index\\][goods_num]" value=""></td>' +
             '<td><a href="javascript:;" class="ncap-btn-mini ncap-btn-red delete">删除</a></td>';
         var h = /\\index\\/g;
         html = html.replace(h, index);
         return html;
     }
-    function verifyForm(){
+
+    function verifyForm() {
         $('span.err').hide();
         $.ajax({
             type: "POST",
@@ -187,11 +201,11 @@
                     layer.msg(data.msg, {
                         icon: 1,
                         time: 1000
-                    }, function(){
+                    }, function () {
                         window.location.href = "{:U('Admin/Extra/index')}";
                     });
                 } else {
-                    layer.msg(data.msg, {icon: 2,time: 1000});
+                    layer.msg(data.msg, {icon: 2, time: 1000});
                     $.each(data.result, function (index, item) {
                         $('#err_' + index).text(item).show();
                     });
@@ -201,39 +215,38 @@
     }
 
     //选择分类
-    $(function(){
-        $(document).on("change",'.cat_id',function(){
-            get_category($(this).val(),'cat_id_2_'+$(this).data('index'),'0');
-            $('#cat_id_3_'+$(this).data('index')).empty().html("<option value='0'>请选择商品分类</option>");
+    $(function () {
+        $(document).on("change", '.cat_id', function () {
+            get_category($(this).val(), 'cat_id_2_' + $(this).data('index'), '0');
+            $('#cat_id_3_' + $(this).data('index')).empty().html("<option value='0'>请选择商品分类</option>");
         });
-        $(document).on("click",'.cat_id',function(){
-            get_category($(this).val(),'cat_id_2_'+$(this).data('index'),'0');
-            $('#cat_id_3_'+$(this).data('index')).empty().html("<option value='0'>请选择商品分类</option>");
+        $(document).on("click", '.cat_id', function () {
+            get_category($(this).val(), 'cat_id_2_' + $(this).data('index'), '0');
+            $('#cat_id_3_' + $(this).data('index')).empty().html("<option value='0'>请选择商品分类</option>");
         });
-        $(document).on('blur','.goods_id',function () {
-            if($(this).parent().next().length == 0 && $(this).val())
-            {
-                $(this).parent().after("<p class='load'>loading...</p>");
+        $(document).on('blur', '.goods_id', function () {
+            if ($(this).val()) {
+                $(this).parent().next().html("<p class='load'>loading...</p>");
                 var that = $(this);
                 $.ajax({
-                    url:"{:U('Goods/getGoodsInfo')}",
-                    data:{goods_id:$(this).val()},
-                    type:"get",
-                    success:function (res) {
+                    url: "{:U('Goods/getGoodsInfo')}",
+                    data: {goods_id: $(this).val()},
+                    type: "get",
+                    success: function (res) {
                         $('.load').hide();
-                        if(res.status == 1){
-                            that.parent().after(
-                                "<div style='display: table-cell; text-align:left;margin-left: 20px;'>" +
-                                "<span>商品名称："+res.result.goods_name+"</span><br>" +
-                                "<span>商品价格："+res.result.shop_price+"元</span><br>" +
-                                "<span>商品积分："+res.result.exchange_integral+"</span><br>" +
-                                "<span>商品数量："+res.result.store_count+"</span><br>" +
+                        if (res.status == 1) {
+                            that.parent().next().html(
+                                "<div style='display: table-cell; text-align:left; margin-left: 20px;'>" +
+                                "<span>商品名称：" + res.result.goods_name + "</span><br>" +
+                                "<span>商品价格：" + res.result.shop_price + "元</span><br>" +
+                                "<span>商品积分：" + res.result.exchange_integral + "</span><br>" +
+                                "<span>商品数量：" + res.result.store_count + "</span><br>" +
                                 "</div>");
-                        }else{
-                            that.parent().after("<span style='color: red'>没有对应商品信息!</span>");
+                        } else {
+                            that.parent().next().html("<span style='color: red'>没有对应商品信息!</span>");
                         }
-                    },error:function (xhr) {
-                        
+                    }, error: function (xhr) {
+
                     }
                 });
 
@@ -242,47 +255,49 @@
     });
 
     var indexs = 1;
-    function addCategory(btn)
-    {
-        var options = {$cat_list|json_encode};
+
+    function addCategory(btn) {
+        var options = {$cat_list | json_encode
+    }
+        ;
         var vab = '';
         var option;
-        for (option in options){
-            vab += '<option value="'+options[option].id+'">'+options[option].name+'</option>'
+        for (option in options) {
+            vab += '<option value="' + options[option].id + '">' + options[option].name + '</option>'
         }
         var html = '<dl class="row">'
             + '<dt class="tit">'
             + '<label>商品分类</label>'
             + '</dt>'
             + '<dd class="opt">'
-            + '<select name="cat_id[]" id="cat_id_'+ indexs +'" class="small form-control cat_id" data-index="'+indexs+'">'
+            + '<select name="cat_id[]" id="cat_id_' + indexs + '" class="small form-control cat_id" data-index="' + indexs + '">'
             + '<option value="0">请选择商品分类</option>'
-                + vab
+            + vab
             + '</select>'
-            + '<select name="cat_id_2[]" id="cat_id_2_'+ indexs +'" onChange="get_category(this.value,\'cat_id_3_'+ indexs +'\',\'0\');getCategoryBindList(this.value)" onclick="get_category(this.value,\'cat_id_3_'+ indexs +'\',\'0\');getCategoryBindList(this.value)" class="small form-control">'
-                + '<option value="0">请选择商品分类</option>'
+            + '<select name="cat_id_2[]" id="cat_id_2_' + indexs + '" onChange="get_category(this.value,\'cat_id_3_' + indexs + '\',\'0\');getCategoryBindList(this.value)" onclick="get_category(this.value,\'cat_id_3_' + indexs + '\',\'0\');getCategoryBindList(this.value)" class="small form-control">'
+            + '<option value="0">请选择商品分类</option>'
             + '</select>'
-            + '<select name="cat_id_3[]" id="cat_id_3_'+ indexs +'" class="small form-control" >'
-                + '<option value="0">请选择商品分类</option>'
+            + '<select name="cat_id_3[]" id="cat_id_3_' + indexs + '" class="small form-control" >'
+            + '<option value="0">请选择商品分类</option>'
             + '</select>'
             + '<a href="javascript:;" class="ncap-btn-mini ncap-btn-red delete">删除</a>'
             + '</dd>'
             + '</dl>'
-            ;
+        ;
         $(btn).parent().parent().append(html);
         indexs++;
     }
 
-    function getCategoryBindList(val){
+    function getCategoryBindList(val) {
         $.ajax({
-            'url':"{:U('goods/getCategoryBindList')}",
-            'data':{cart_id:val},
-            'dataType':'json',
-            success:function(data){
-                if(data.status == 1){
+            'url': "{:U('goods/getCategoryBindList')}",
+            'data': {cart_id: val},
+            'dataType': 'json',
+            success: function (data) {
+                if (data.status == 1) {
                     var html = '<option value="">所有品牌</option>'
-                    for (var i=0 ;i<data.result.length;i++){
-                        html += '<option value="'+data.result[i].id+'">'+data.result[i].name+'</option>'
+                    for (var i = 0; i < data.result.length; i++) {
+                        html += '<option value="' + data.result[i].id + '">' + data.result[i].name + '</option>'
                     }
                     $('#brand_id').html('');
                     $('#brand_id').html(html);

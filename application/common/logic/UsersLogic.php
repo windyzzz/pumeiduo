@@ -786,7 +786,7 @@ class UsersLogic extends Model
         $map['reg_time'] = time();
         $map['invite_uid'] = $map['will_invite_uid'] = $map['first_leader'] = 0;
 
-        $invite = (new Redis())->get('invite_' . $userToken);
+        $invite = S('invite_' . $userToken);
 
         // 如果找到他老爸还要找他爷爷他祖父等
         if ($invite > 0) {
