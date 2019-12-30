@@ -1546,6 +1546,49 @@ class User extends Base
         return json(['status' => 1, 'msg' => '电子币转帐成功', 'result' => null]);
     }
 
+    /**
+     * 电子币转让（新）
+     * @return \think\response\Json
+     */
+    public function transferElectronicNew()
+    {
+        if ($this->request->isPost()) {
+            $electronic = I('electronic', 0);
+            $toUser = I('user_name', '');
+            $payPwd = I('pay_pwd', '');
+            if ($this->user['paypwd'] !== systemEncrypt($payPwd)) {
+                return json(['status' => 0, 'msg' => '密码错误']);
+            }
+            if ($electronic < 1) {
+                return json(['status' => 0, 'msg' => '转让电子币的数额不能小于1']);
+            }
+            if ($electronic % 100 != 0) {
+                return json(['status' => 0, 'msg' => '转让电子币的数额必须是100的倍数']);
+            }
+            if (!$toUser) {
+                return json(['status' => 0, 'msg' => '缺少转让用户参数']);
+            }
+            if (check_mobile($toUser)) {
+                $toUser = Db::name('users')->where(['mobile' => $toUser])->find();
+            } else {
+                $toUser = Db::name('users')->where(['user_id' => $toUser])->find();
+            }
+            if (!$toUser) {
+                return json(['status' => 0, 'msg' => '无此用户']);
+            }
+            $userElectronic = M('Users')->where('user_id', $this->user_id)->getField('user_electronic');
+            if ($userElectronic < $electronic) {
+                return json(['status' => 0, 'msg' => '你的电子币不够' . $electronic]);
+            }
+            accountLog($this->user_id, 0, -$electronic, '转出电子币给用户' . $toUser['user_id'], 0, 0, '', 0, 12);
+            accountLog($toUser['user_id'], 0, $electronic, '转入电子币From用户' . $this->user_id, 0, 0, '', 0, 12);
+            $userElectronic = M('Users')->where('user_id', $this->user_id)->getField('user_electronic');
+            return json(['status' => 1, 'msg' => '电子币转增成功', 'result' => ['user_electronic' => $userElectronic]]);
+        } else {
+            return json(['status' => 1, 'result' => ['user_electronic' => $this->user['user_electronic']]]);
+        }
+    }
+
     // 用户积分转向其他会员
     public function transferPayPoints()
     {
@@ -1591,6 +1634,9 @@ class User extends Base
             if ($payPoints < 1) {
                 return json(['status' => 0, 'msg' => '转让积分的数额不能小于1']);
             }
+            if ($payPoints % 100 != 0) {
+                return json(['status' => 0, 'msg' => '转让积分的数额必须是100的倍数']);
+            }
             if (!$toUser) {
                 return json(['status' => 0, 'msg' => '缺少转让用户参数']);
             }
@@ -1610,9 +1656,8 @@ class User extends Base
             accountLog($toUser['user_id'], 0, $payPoints, '转入积分From用户' . $this->user_id, 0, 0, '', 0, 12);
             $userPayPoints = M('Users')->where('user_id', $this->user_id)->getField('pay_points');
             return json(['status' => 1, 'msg' => '积分转增成功', 'result' => ['user_pay_points' => $userPayPoints]]);
-        } else {
-            return json(['status' => 1, 'result' => ['user_pay_points' => $this->user['pay_points']]]);
         }
+        return json(['status' => 1, 'result' => ['user_pay_points' => $this->user['pay_points']]]);
     }
 
     public function recharge(Request $request)
@@ -1665,14 +1710,29 @@ class User extends Base
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
     }
 
-
-    public function rechargeNew()
+    /**
+     * 余额充值到电子币
+     * @return \think\response\Json
+     */
+    public function exchangeElectronicNew()
     {
-        $type = I('type', 0);
-
-        $userLogic = new UsersLogic();
-        $result = $userLogic->get_money_log($this->user_id, $type);
-
+        if ($this->request->isPost()) {
+            $amount = I('amount', 0);
+            if ($amount < 1) {
+                return json(['status' => 0, 'msg' => '数额不能小于1']);
+            }
+            $user_money = M('Users')->where('user_id', $this->user_id)->getField('user_money');
+            if ($user_money < $amount) {
+                return json(['status' => 0, 'msg' => '你的余额不够' . $amount]);
+            }
+            accountLog($this->user_id, 0, 0, '用户余额转电子币', 0, 0, '', $amount, 13);
+            accountLog($this->user_id, -$amount, 0, '电子币充值（余额转）', 0, 0, '', 0, 13);
+            return json(['status' => 1, 'msg' => '电子币充值成功']);
+        }
+        return json(['status' => 1, 'result' => [
+            'user_electronic' => $this->user['user_electronic'],
+            'user_money' => $this->user['user_money'],
+        ]]);
     }
 
     /**
@@ -2158,6 +2218,68 @@ class User extends Base
         $return['WITHDRAW_STATUS'] = $WITHDRAW_STATUS;
 
         return json(['status' => 1, 'msg' => '已提交申请', 'result' => $return]);
+    }
+
+    /**
+     * 提现申请（记录）
+     * @return \think\response\Json
+     */
+    public function withdrawal()
+    {
+        if ($this->request->isPost()) {
+            $amount = I('amount', 0);
+            $payPwd = I('pay_pwd', '');
+            if ($amount % 100 != 0) return json(['status' => 0, 'msg' => '提现金额必须是100的倍数']);
+            // 用户信息
+            $user = M('users')->where(['user_id' => $this->user_id])
+                ->field('paypwd, user_money, bank_name, bank_code, bank_region, bank_branch, bank_card, real_name, id_cart')->find();
+            if (empty($user['bank_card'])) {
+                return json(['status' => 0, 'msg' => '用户银行信息不完善']);
+            }
+            if (systemEncrypt($payPwd) != $user['paypwd']) {
+                return json(['status' => 0, 'msg' => '支付密码错误']);
+            }
+            $min = tpCache('basic.min'); // 最少提现额度
+            if ($amount < $min) {
+                return json(['status' => 0, 'msg' => '每次最少提现额度' . $min]);
+            }
+            $need = tpCache('basic.need'); // 满多少才能提现
+            if ($user['user_money'] < $need) {
+                return json(['status' => 0, 'msg' => '账户余额最少达到' . $need . '多少才能提现']);
+            }
+            if ($amount > $user['user_money']) {
+                return json(['status' => 0, 'msg' => '用户余额不足']);
+            }
+            if (M('withdrawals')->where('user_id', $this->user_id)->where('status', 0)->find()) {
+                return json(['status' => 0, 'msg' => '你还有一个提现在审核中，请勿重复提交申请']);
+            }
+            $data = [
+                'user_id' => $this->user_id,
+                'money' => $amount,
+                'create_time' => time(),
+                'bank_name' => $user['bank_name'],
+                'bank_code' => $user['bank_code'],
+                'bank_region' => $user['bank_region'],
+                'bank_branch' => $user['bank_branch'],
+                'bank_card' => $user['bank_card'],
+                'realname' => $user['real_name'],
+                'id_cart' => $user['id_cart'],
+                'taxfee' => bcdiv(bcmul($amount, tpCache('basic.hand_fee'), 2), 100, 2)
+            ];
+            M('withdrawals')->add($data);
+            return json(['status' => 1, 'msg' => '提现申请已提交，请留意到账信息']);
+        }
+        // 获取提现记录
+        $count = M('withdrawals')->where(['user_id' => $this->user_id])->count('id');
+        $page = new Page($count, 10);
+        $withdrawal = M('withdrawals')->where(['user_id' => $this->user_id, 'status' => ['neq', -2]])
+            ->field('id, money, create_time add_time, bank_name, taxfee, status')->limit($page->firstRow . ',' . $page->listRows)->select();
+        foreach ($withdrawal as $key => $item) {
+            $withdrawal[$key]['amount'] = bcsub($item['money'], $item['taxfee'], 2);
+            unset($withdrawal[$key]['money']);
+            unset($withdrawal[$key]['taxfee']);
+        }
+        return json(['status' => 1, 'result' => ['list' => $withdrawal]]);
     }
 
     /**
@@ -2828,9 +2950,12 @@ class User extends Base
             I('post.real_name') ? $post['real_name'] = I('post.real_name') : false;  // 真实姓名
             I('post.id_cart') ? $post['id_cart'] = I('post.id_cart') : false;  // 身份证
             I('post.birthday') ? $post['birthday'] = I('post.birthday') : false;  // 生日
+            if (!check_id_card($post['id_cart'])) {
+                return json(['status' => 0, 'msg' => '身份证填写错误']);
+            }
             $userLogic = new UsersLogic();
             if (!$userLogic->update_info($this->user_id, $post)) {
-                return json(['status' => 0, 'msg' => '操作失败', 'result' => null]);
+                return json(['status' => 0, 'msg' => '操作失败']);
             }
             // 完善资料获得积分
             $is_consummate = $userLogic->is_consummate($this->user_id, $this->user);
@@ -2845,9 +2970,9 @@ class User extends Base
         $data['user'] = [
             'user_id' => $this->user['user_id'],
             'sex' => $this->user['sex'],
-            'nickname' => $this->user['nickname'],
-            'user_name' => $this->user['nickname'],
-            'real_name' => $this->user['user_name'],
+            'nickname' => $this->user['nickname'] ?? $this->user['user_name'],
+            'user_name' => $this->user['user_name'],
+            'real_name' => $this->user['real_name'],
             'id_cart' => $this->user['id_cart'],
             'birthday' => $this->user['birthday'],
             'mobile' => $this->user['mobile'],
@@ -3000,21 +3125,23 @@ class User extends Base
      */
     public function bankCard()
     {
-        $userBankInfo = M('users')->where(['user_id' => $this->user_id])->field('id_cart id_card, bank_name, bank_region, bank_branch, bank_card, alipay_account')->find();
         $return = [
             'bank_id' => '',
             'bank_name' => '',
             'bank_icon' => '',
-            'account' => ''
+            'account' => '',
+            'hand_fee' => tpCache('basic.hand_fee')
         ];
-        if (!empty($userBankInfo['alipay_account'])) {
+        $userBankInfo = M('users')->where(['user_id' => $this->user_id])->field('id_cart id_card, bank_name, bank_code, bank_region, bank_branch, bank_card')->find();
+        if ($userBankInfo['bank_code'] == 'Alipay') {
             // 支付宝
-            $bankInfo = M('bank')->where(['name_en' => 'Alipay'])->field('id, name_cn, icon')->find();
+            $bankInfo = M('bank')->where(['name_en' => $userBankInfo['bank_code']])->field('id, name_cn, icon')->find();
             $return = [
                 'bank_id' => $bankInfo['id'],
                 'bank_name' => $bankInfo['name_cn'],
                 'bank_icon' => $bankInfo['icon'],
-                'account' => $userBankInfo['alipay_account']
+                'account' => $userBankInfo['bank_card'],
+                'hand_fee' => tpCache('basic.hand_fee')
             ];
         } elseif (!empty($userBankInfo['bank_card'])) {
             // 银行
@@ -3028,7 +3155,8 @@ class User extends Base
                     'bank_id' => $bankInfo['id'],
                     'bank_name' => $bankInfo['name_cn'],
                     'bank_icon' => $bankInfo['icon'],
-                    'account' => $userBankInfo['bank_card']
+                    'account' => $userBankInfo['bank_card'],
+                    'hand_fee' => tpCache('basic.hand_fee')
                 ];
             }
         }
@@ -3042,26 +3170,19 @@ class User extends Base
     public function bankCardInfo()
     {
         if ($this->request->isPost()) {
-            $bankCode = I('bank_code', '');
+            $post['bank_code'] = I('bank_code', '');
             $bankId = I('bank_id', '');
             $post['bank_region'] = I('bank_region', '');
             $post['bank_branch'] = I('bank_branch', '');
-            $account = I('account', '');
+            $post['bank_card'] = I('account', '');
             $post['real_name'] = I('real_name', '');
             $post['id_cart'] = I('id_card', '');
 
-            if (empty($bankCode) || empty($bankId)) return json(['status' => 0, 'msg' => '请选择银行']);
-            if ($bankCode == 'Alipay') {
-                // 支付宝
-                $post['alipay_account'] = $account;
-            } else {
-                // 银行
-                if (empty($post['bank_region']) || empty($post['bank_branch'])) return json(['status' => 0, 'msg' => '请填写银行信息']);
-                $post['bank_card'] = $account;
-                $post['bank_name'] = M('bank')->where(['id' => $bankId])->value('name_cn');
-            }
-            if (empty($account) || empty($post['real_name'])) return json(['status' => 0, 'msg' => '请填写银行信息']);
+            if (empty($post['bank_code']) || empty($bankId)) return json(['status' => 0, 'msg' => '请选择银行']);
+            if (empty($post['bank_region']) || empty($post['bank_branch'])) return json(['status' => 0, 'msg' => '请填写银行信息']);
+            if (empty($post['bank_card']) || empty($post['real_name'])) return json(['status' => 0, 'msg' => '请填写银行信息']);
             if (!check_id_card($post['id_cart'])) return json(['status' => 0, 'msg' => '请填写正确的身份证格式']);
+
             $userInfo = M('users')->where(['user_id' => $this->user_id])->field('id_cart, real_name')->find();
             if ($userInfo) {
                 if ($userInfo['id_cart'] != $post['id_cart'] || $userInfo['real_name'] != $post['real_name']) {
@@ -3074,16 +3195,17 @@ class User extends Base
                 'id_cart' => '',
                 'real_name' => '',
                 'bank_name' => '',
+                'bank_code' => '',
                 'bank_region' => '',
                 'bank_branch' => '',
-                'bank_card' => '',
-                'alipay_account' => '',
+                'bank_card' => ''
             ]);
             if (!$res) {
                 Db::rollback();
                 return json(['status' => 0, 'msg' => '记录错误']);
             }
             // 更新信息
+            $post['bank_name'] = M('bank')->where(['id' => $bankId])->value('name_cn');
             $usersLogic = new UsersLogic();
             if (!$usersLogic->update_info($this->user_id, $post)) {
                 Db::rollback();
@@ -3093,17 +3215,16 @@ class User extends Base
             return json(['status' => 1, 'msg' => '银行卡信息已保存成功']);
         }
         // 用户银行卡信息
-        $userBankInfo = M('users')->where(['user_id' => $this->user_id])->field('id_cart id_card, real_name, bank_name, bank_region, bank_branch, bank_card, alipay_account')->find();
-        if (!empty($userBankInfo['alipay_account'])) {
+        $userBankInfo = M('users')->where(['user_id' => $this->user_id])->field('id_cart id_card, real_name, bank_name, bank_code, bank_region, bank_branch, bank_card account')->find();
+        if ($userBankInfo['bank_code'] == 'Alipay') {
             // 支付宝
-            $bankInfo = M('bank')->where(['name_en' => 'Alipay'])->field('id, name_cn, name_en')->find();
+            $bankInfo = M('bank')->where(['name_en' => $userBankInfo['bank_code']])->field('id, name_cn, name_en')->find();
             $userBankInfo['bank_id'] = $bankInfo['id'];
             $userBankInfo['bank_name'] = $bankInfo['name_cn'];
             $userBankInfo['bank_code'] = $bankInfo['name_en'];
             $userBankInfo['bank_region'] = '';
             $userBankInfo['bank_branch'] = '';
-            $userBankInfo['account'] = $userBankInfo['alipay_account'];
-        } elseif (!empty($userBankInfo['bank_card'])) {
+        } elseif (!empty($userBankInfo['account'])) {
             // 银行
             if (empty($userBankInfo['bank_region']) || empty($userBankInfo['bank_branch'])) {
                 // 之前设置不完善的数据
@@ -3112,20 +3233,16 @@ class User extends Base
                 $userBankInfo['bank_code'] = '';
                 $userBankInfo['bank_region'] = '';
                 $userBankInfo['bank_branch'] = $userBankInfo['bank_name'];
-                $userBankInfo['account'] = $userBankInfo['bank_card'];
             } else {
                 // 后来补充完善的数据
                 $bankInfo = M('bank')->where(['name_cn' => $userBankInfo['bank_name']])->field('id, name_cn, name_en')->find();
                 $userBankInfo['bank_id'] = $bankInfo['id'];
                 $userBankInfo['bank_name'] = $bankInfo['name_cn'];
                 $userBankInfo['bank_code'] = $bankInfo['name_en'];
-                $userBankInfo['account'] = $userBankInfo['bank_card'];
             }
         } else {
             return json(['status' => 0, 'msg' => '用户还没有设置银行卡信息']);
         }
-        unset($userBankInfo['bank_card']);
-        unset($userBankInfo['alipay_account']);
         return json(['status' => 1, 'result' => $userBankInfo]);
     }
 }

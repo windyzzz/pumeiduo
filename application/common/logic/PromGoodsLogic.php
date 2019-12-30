@@ -73,10 +73,10 @@ class PromGoodsLogic extends Prom
     {
         switch ($this->promGoods['type']) {
             case 0:
-                $promotionPrice = $Price * $this->promGoods['expression'] / 100; //打折优惠
+                $promotionPrice = bcdiv(bcmul($Price, $this->promGoods['expression'], 2), 100, 2); //打折优惠
                 break;
             case 1:
-                $promotionPrice = $Price - $this->promGoods['expression']; //减价优惠
+                $promotionPrice = bcsub($Price, $this->promGoods['expression'], 2); //减价优惠
                 break;
             case 2:
                 $promotionPrice = $this->promGoods['expression']; //固定金额优惠
@@ -85,7 +85,7 @@ class PromGoodsLogic extends Prom
                 $promotionPrice = $Price; //原价
                 break;
         }
-        $promotionPrice = ($promotionPrice > 0 ? $promotionPrice : 0); //防止出现负数
+        $promotionPrice = ($promotionPrice > 0 ? $promotionPrice : '0'); //防止出现负数
         return $promotionPrice;
     }
 
@@ -212,7 +212,7 @@ class PromGoodsLogic extends Prom
             if ($this->promGoods['buy_limit'] != 0 && $buyGoods['goods_num'] > $this->promGoods['buy_limit']) {
                 throw new TpshopException('促销商品立即购买', 0, ['status' => 0, 'msg' => '每人限购' . $this->promGoods['buy_limit'] . '件', 'result' => '']);
             }
-            $buyGoods['member_goods_price'] = $this->getPromotionPrice($buyGoods['member_goods_price']);
+//            $buyGoods['member_goods_price'] = $this->getPromotionPrice($buyGoods['member_goods_price']);
         }
         $residue_buy_limit = $this->getPromoGoodsResidueGoodsNum($buyGoods['user_id']); //获取用户还能购买商品数量
         $userPromOrderGoodsNum = $this->getUserPromOrderGoodsNum($buyGoods['user_id']); //获取用户已购商品数量

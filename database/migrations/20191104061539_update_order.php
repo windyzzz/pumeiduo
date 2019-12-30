@@ -36,6 +36,8 @@ class UpdateOrder extends Migrator
         $this->table('order_goods')
             ->changeColumn('prom_type', 'integer', ['limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
                 'default' => 0, 'comment' => '0普通订单 1限时抢购 2团购 3 促销优惠 4预售 7合购优惠'])
+            ->addColumn('is_gift', 'integer', ['default' => 0, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
+                'comment' => '是否是赠品', 'after' => 'is_comment'])
             ->update();
 
         $this->table('order')

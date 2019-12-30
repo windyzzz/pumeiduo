@@ -329,6 +329,7 @@ class PlaceOrder
                 $orderGoodsData['prom_type'] = 0; // 0 普通订单,1 限时抢购, 2 团购 , 3 促销优惠
                 $orderGoodsData['prom_id'] = 0; // 活动id
             }
+            $orderGoodsData['is_gift'] = 0;
             array_push($orderGoodsAllData, $orderGoodsData);
 
             if ($payItem['gift2_goods']) {
@@ -360,6 +361,40 @@ class PlaceOrder
                     $orderGoodsData['use_integral'] = 0;
                     $orderGoodsData['prom_type'] = $v['prom_type'];
                     $orderGoodsData['prom_id'] = $v['prom_id'];
+                    $orderGoodsData['is_gift'] = 1;
+                    array_push($orderGoodsAllData, $orderGoodsData);
+                }
+            }
+            if ($payItem['gift_goods']) {
+                foreach ($payItem['gift_goods'] as $k => $v) {
+                    $finalPrice = 0;
+                    $orderGoodsData = array();
+                    $orderGoodsData['order_id'] = $this->order['order_id']; // 订单id
+                    $orderGoodsData['goods_id'] = $v['goods_id']; // 商品id
+                    $orderGoodsData['goods_name'] = $v['goods_name']; // 商品名称
+                    $orderGoodsData['goods_sn'] = $v['goods_sn']; // 商品货号
+                    $orderGoodsData['goods_num'] = $v['goods_num']; // 购买数量
+                    $orderGoodsData['final_price'] = $finalPrice; // 每件商品实际支付价格
+                    $orderGoodsData['goods_price'] = 0; // 商品价
+                    $orderGoodsData['re_id'] = 0;
+                    if (!empty($v['spec_key'])) {
+                        $orderGoodsData['spec_key'] = $v['spec_key']; // 商品规格
+                        $orderGoodsData['spec_key_name'] = $v['spec_key_name']; // 商品规格名称
+                    } else {
+                        $orderGoodsData['spec_key'] = ''; // 商品规格
+                        $orderGoodsData['spec_key_name'] = ''; // 商品规格名称
+                    }
+                    $orderGoodsData['sku'] = $v['sku'] ? $v['sku'] : ''; // sku
+                    $orderGoodsData['member_goods_price'] = 0; // 会员折扣价
+                    $orderGoodsData['cost_price'] = 0; // 成本价
+                    $orderGoodsData['give_integral'] = 0; // 购买商品赠送积分
+                    $orderGoodsData['commission'] = 0;
+                    $orderGoodsData['trade_type'] = $v['trade_type'];
+                    $orderGoodsData['sale_type'] = 1;
+                    $orderGoodsData['use_integral'] = 0;
+                    $orderGoodsData['prom_type'] = $v['prom_type'];
+                    $orderGoodsData['prom_id'] = $v['prom_id'];
+                    $orderGoodsData['is_gift'] = 1;
                     array_push($orderGoodsAllData, $orderGoodsData);
                 }
             }

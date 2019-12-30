@@ -3,7 +3,7 @@
 use think\migration\Migrator;
 use think\migration\db\Column;
 
-class UpdateUsers extends Migrator
+class UpdateWithdrawals extends Migrator
 {
     /**
      * Change Method.
@@ -28,22 +28,7 @@ class UpdateUsers extends Migrator
      */
     public function change()
     {
-        $this->table('users')
-            ->changeColumn('token', 'string', ['limit' => 64, 'null' => true, 'comment' => '用户token', 'after' => 'third_leader'])
-            ->addColumn('time_out', 'integer', ['default' => 0, 'signed' => false, 'comment' => 'token过期时间', 'after' => 'token'])
-            ->update();
-
-        $this->table('users')
-            ->changeColumn('is_consummate', 'integer', ['limit' =>  \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'default' => 0, 'comment' => '完善个人信息已领取收益'])
-            ->changeColumn('is_not_show_jk', 'integer', ['limit' =>  \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'default' => 0, 'comment' => '完是否永久不提示 加入金卡弹窗 1是 0不是'])
-            ->update();
-
-        $this->table('users')
-            ->addColumn('is_not_show_hb', 'integer', ['limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
-                'default' => 0, 'comment' => '是否永久不显示登录红包 1是 0否'])
-            ->update();
-
-        $this->table('users')
+        $this->table('withdrawals')
             ->addColumn('bank_code', 'string', ['limit' => 25, 'null' => true, 'comment' => '银行代码', 'after' => 'bank_name'])
             ->addColumn('bank_region', 'string', ['null' => true, 'comment' => '银行开户地区', 'after' => 'bank_code'])
             ->addColumn('bank_branch', 'string', ['null' => true, 'comment' => '银行开户支行', 'after' => 'bank_region'])

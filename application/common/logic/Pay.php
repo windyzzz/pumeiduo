@@ -306,7 +306,6 @@ class Pay
 
             //3.超值套组
             // $goods_info = M('Goods')->where('goods_id',$v['goods_id'])->getField('sale_type');
-
 //            if (2 == $goods_info['sale_type']) {
 //                $g_list = M('GoodsSeries')->where('goods_id', $v['goods_id'])->select();
 //                if ($g_list) {
@@ -387,9 +386,9 @@ class Pay
         }
 
         // 加价购活动
-        $this->extraLogic->setUserId($this->userId);
-        $this->extraLogic->setGoodsList($this->payList);
-        $this->extra_goods_list = $this->extraLogic->getGoodsList();
+//        $this->extraLogic->setUserId($this->userId);
+//        $this->extraLogic->setGoodsList($this->payList);
+//        $this->extra_goods_list = $this->extraLogic->getGoodsList();
     }
 
     public function activity()

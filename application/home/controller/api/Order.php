@@ -1505,9 +1505,10 @@ class Order extends Base
             $payLogic->payCart($cartList['cartList']);
             // 检测支付商品购买限制
             $payLogic->check();
-            // 参与活动促销 加价购活动
-//        $payLogic->activityPayBefore();
+            // 参与活动促销
             $payLogic->goodsPromotion();
+            // 加价购活动
+//            $payLogic->activityPayBefore();
 
             // 配送物流
             if (empty($userAddress)) {
@@ -1761,9 +1762,10 @@ class Order extends Base
             $payLogic->payCart($cartList['cartList']);
             // 检测支付商品购买限制
             $payLogic->check();
-            // 参与活动促销 加价购活动
-//        $payLogic->activityPayBefore();
+            // 参与活动促销
             $payLogic->goodsPromotion();
+            // 加价购活动
+//            $payLogic->activityPayBefore();
 
             // 配送物流
             if (empty($userAddress)) {
@@ -1919,9 +1921,10 @@ class Order extends Base
             $payLogic->payCart($cartList['cartList']);
             // 检测支付商品购买限制
             $payLogic->check();
-            // 参与活动促销 加价购活动
-//        $payLogic->activityPayBefore();
+            // 参与活动促销
             $payLogic->goodsPromotion();
+            // 加价购活动
+//            $payLogic->activityPayBefore();
 
             // 配送物流
             if (empty($userAddress)) {
