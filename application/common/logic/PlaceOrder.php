@@ -277,7 +277,7 @@ class PlaceOrder
     private function addOrderGoods()
     {
         if ($this->pay->getOrderPromAmount() > 0) {
-            $orderDiscounts = $this->pay->getOrderPromAmount() + $this->pay->getCouponPrice();  //整个订单优惠价钱
+            $orderDiscounts = bcadd($this->pay->getOrderPromAmount(), $this->pay->getCouponPrice(), 2);  //整个订单优惠价钱
         } else {
             $orderDiscounts = $this->pay->getCouponPrice();  //整个订单优惠价钱
         }
@@ -293,8 +293,8 @@ class PlaceOrder
 
         foreach ($payList as $payKey => $payItem) {
             unset($payItem['goods']);
-            $totalPriceToRatio = $payItem['member_goods_price'] / $this->pay->getGoodsPrice();  //商品价格占总价的比例
-            $finalPrice = round($payItem['member_goods_price'] - ($totalPriceToRatio * $orderDiscounts), 3);
+            $totalPriceToRatio = bcdiv($payItem['member_goods_price'], $this->pay->getGoodsPrice(), 2);  //商品价格占总价的比例
+            $finalPrice = bcsub($payItem['member_goods_price'], bcmul($totalPriceToRatio, $orderDiscounts, 2), 2);
             $orderGoodsData = [
                 'order_id' => $this->order['order_id'],         // 订单id
                 'goods_id' => $payItem['goods_id'],             // 商品id
@@ -409,7 +409,7 @@ class PlaceOrder
                 if (!empty($orderProm) && !in_array($orderProm['order_prom_id'], $orderPromId)) {
                     if ($this->order['goods_price'] >= $orderProm['order_price']) {
                         // 订单价格满足要求
-                        $orderDiscount += $orderProm['discount_price'];
+                        $orderDiscount = bcadd($orderDiscount, $orderProm['discount_price'], 2);
                     }
                     $orderPromId[] = $orderProm['order_prom_id'];
                 }
@@ -516,10 +516,10 @@ class PlaceOrder
             $user = $this->pay->getUser();
             $user = Users::get($user['user_id']);
             if ($this->pay->getPayPoints() > 0) {
-                $user->pay_points = $user->pay_points - $this->pay->getPayPoints(); // 消费积分
+                $user->pay_points = bcsub($user->pay_points, $this->pay->getPayPoints(), 2); // 消费积分
             }
             if ($this->pay->getUserElectronic() > 0) {
-                $user->user_electronic = $user->user_electronic - $this->pay->getUserElectronic(); // 抵扣余额
+                $user->user_electronic = bcsub($user->user_electronic, $this->pay->getUserElectronic(), 2); // 抵扣余额
             }
             $user->save();
             $accountLogData = [

@@ -126,7 +126,7 @@ class Pay
                 if ($goods_list[$goodsCursor]['exchange_integral'] > 0) {
                     $goods_list[$goodsCursor]['member_goods_price'] = $goods_list[$goodsCursor]['goods_price'];
                 } else {
-                    $goods_list[$goodsCursor]['member_goods_price'] = $discount * $goods_list[$goodsCursor]['goods_price'];
+                    $goods_list[$goodsCursor]['member_goods_price'] = bcmul($discount, $goods_list[$goodsCursor]['goods_price'], 2);
                 }
             }
         }
@@ -226,7 +226,7 @@ class Pay
                 }
                 if ($use_percent_point > 0 && $use_percent_point < 100) {
                     //计算订单最多使用多少积分
-                    $point_limit = $this->orderAmount * $point_rate * $use_percent_point;
+                    $point_limit = bcmul($this->orderAmount, bcmul($point_rate, $use_percent_point, 2), 2);
                     if ($pay_points > $point_limit) {
                         // throw new TpshopException("计算订单价格",0,['status' => -1, 'msg' => "该笔订单, 您使用的积分不能大于" . $point_limit, 'result' => '']);
                     }
@@ -252,7 +252,7 @@ class Pay
                 //积分兑换流程
                 if ($pay_points <= $this->user['pay_points']) {
                     $this->payPoints = $pay_points;
-                    $this->integralMoney = $pay_points / $point_rate; //总积分兑换成的金额
+                    $this->integralMoney = bcsub($pay_points, $point_rate, 2); //总积分兑换成的金额
                 } else {
                     $this->payPoints = '0'; //需要兑换的总积分
                     $this->integralMoney = '0'; //总积分兑换成的金额
@@ -299,7 +299,7 @@ class Pay
                     ->where('order_status', 'NOT IN', [3, 5])
                     ->where('og.goods_id', $goods_info['goods_id'])
                     ->sum('og.goods_num');
-                if ($buy_num + $v['goods_num'] > $goods_info['limit_buy_num']) {
+                if (bcadd($buy_num, $v['goods_num'], 2) > $goods_info['limit_buy_num']) {
                     throw new TpshopException('计算订单价格', 0, ['status' => -1, 'msg' => "超出商品：【{$goods_info['goods_name']}】 限购数量， 每人限购 {$goods_info['limit_buy_num']} 件", 'result' => '']);
                 }
             }
@@ -353,7 +353,7 @@ class Pay
                             ->where('og.prom_id', $group_activity['id'])
                             ->sum('og.goods_num');
 
-                        if ($buy_num + $v['goods_num'] > $group_activity['buy_limit']) {
+                        if (bcadd($buy_num, $v['goods_num'], 2) > $group_activity['buy_limit']) {
                             throw new TpshopException('计算订单价格', 0, ['status' => -1, 'msg' => "超出团购商品：【{$goods_info['goods_name']}】 限购数量， 每人限购 {$group_activity['buy_limit']} 件", 'result' => '']);
                         }
                     }
@@ -465,7 +465,7 @@ class Pay
                         throw new TpshopException('计算订单价格', 0, ['status' => -51, 'msg' => $goods['goods_name'] . '只剩下' . $goods['store_count'] . '件赠品，请重新下单', 'result' => '']);
                     }
 
-                    $gift2_goods_list[$key]['goods_num'] = $stock * $gift2_goods_list[$key]['goods_num'];
+                    $gift2_goods_list[$key]['goods_num'] = bcmul($stock, $gift2_goods_list[$key]['goods_num'], 2);
                     $gift2_goods_list[$key]['goods_id'] = $goods['goods_id'];
                     $gift2_goods_list[$key]['goods_sn'] = $goods['goods_sn'];
                     $gift2_goods_list[$key]['goods_name'] = $goods['goods_name'];
@@ -536,7 +536,7 @@ class Pay
 //                if (!empty($orderProm) && !in_array($orderProm['order_prom_id'], $orderPromId2)) {
 //                    if ($cartPrice >= $orderProm['order_price'] && $orderProm['order_price'] != '0') {
 //                        // 订单价格满足要求
-//                        $discountPrice += $orderProm['discount_price'];
+//                        $discountPrice = bcadd($discountPrice, $orderProm['discount_price'], 2);
 //                    }
 //                    $orderPromId2[] = $orderProm['order_prom_id'];
 //                }
@@ -597,7 +597,7 @@ class Pay
                         throw new TpshopException('计算订单价格', 0, ['status' => -51, 'msg' => $goods['goods_name'] . '只剩下' . $goods['store_count'] . '件赠品，请重新下单', 'result' => '']);
                     }
 
-                    $gift2_goods_list[$key]['goods_num'] = $stock * $gift2_goods_list[$key]['goods_num'];
+                    $gift2_goods_list[$key]['goods_num'] = bcmul($stock, $gift2_goods_list[$key]['goods_num'], 2);
                     $gift2_goods_list[$key]['goods_id'] = $goods['goods_id'];
                     $gift2_goods_list[$key]['goods_sn'] = $goods['goods_sn'];
                     $gift2_goods_list[$key]['goods_name'] = $goods['goods_name'];
@@ -715,7 +715,7 @@ class Pay
                 if (!empty($orderProm) && !in_array($orderProm['order_prom_id'], $orderPromId)) {
                     if ($goodsPrice >= $orderProm['order_price']) {
                         // 订单价格满足要求
-                        $goodsDiscount += $orderProm['discount_price'];
+                        $goodsDiscount = bcadd($goodsDiscount, $orderProm['discount_price'], 2);
                     }
                     $orderPromId[] = $orderProm['order_prom_id'];
                 }
@@ -804,9 +804,9 @@ class Pay
                 $buyGoods['prom_type'] = $extra_goods_list[$av['goods_id']]['prom_type'];
                 $buyGoods['prom_id'] = $extra_goods_list[$av['goods_id']]['prom_id'];
 
-                $this->orderAmount += $av['goods_num'] * $buyGoods['member_goods_price'];
-                $this->goodsPrice += $av['goods_num'] * $buyGoods['member_goods_price'];
-                $this->totalAmount += $av['goods_num'] * $buyGoods['member_goods_price'];
+                $this->orderAmount = bcadd($this->orderAmount, bcmul($av['goods_num'], $buyGoods['member_goods_price'], 2), 2);
+                $this->goodsPrice = bcadd($this->goodsPrice, bcmul($av['goods_num'], $buyGoods['member_goods_price'], 2), 2);
+                $this->totalAmount = bcadd($this->totalAmount, bcmul($av['goods_num'], $buyGoods['member_goods_price'], 2), 2);
 
                 $extra_list[$ak] = $buyGoods;
                 $data = [];
@@ -861,9 +861,9 @@ class Pay
             $buyGoods['prom_type'] = $extra_goods_list[$av['goods_id']]['prom_type'];
             $buyGoods['prom_id'] = $extra_goods_list[$av['goods_id']]['prom_id'];
 
-            $this->orderAmount += $av['goods_num'] * $buyGoods['member_goods_price'];
-            $this->goodsPrice += $av['goods_num'] * $buyGoods['member_goods_price'];
-            $this->totalAmount += $av['goods_num'] * $buyGoods['member_goods_price'];
+            $this->orderAmount = bcadd($this->orderAmount, bcmul($av['goods_num'], $buyGoods['member_goods_price'], 2), 2);
+            $this->goodsPrice = bcadd($this->goodsPrice, bcmul($av['goods_num'], $buyGoods['member_goods_price'], 2), 2);
+            $this->totalAmount = bcadd($this->totalAmount, bcmul($av['goods_num'], $buyGoods['member_goods_price'], 2), 2);
 
             $extra_list[$ak] = $buyGoods;
             $data = [];
@@ -899,7 +899,7 @@ class Pay
                 $this->orderAmount = '0';
             } else {
                 $this->userElectronic = $user_electronic;
-                $this->orderAmount = $this->orderAmount - $this->userElectronic;
+                $this->orderAmount = bcsub($this->orderAmount, $this->userElectronic, 2);
             }
         }
     }
@@ -911,7 +911,7 @@ class Pay
      */
     public function cutOrderAmount($cut_money)
     {
-        $this->orderAmount = $this->orderAmount - $cut_money;
+        $this->orderAmount = bcsub($this->orderAmount, $cut_money, 2);
     }
 
     /**
@@ -1087,15 +1087,15 @@ class Pay
         $orderProm = Db::name('prom_order')->where($order_prom_where)->order('money desc')->find();
         if ($orderProm) {
             if (0 == $orderProm['type']) {
-                $expressionAmount = round($this->goodsPrice * $orderProm['expression'] / 100, 2); //满额打折
-                $this->orderPromAmount = round($this->goodsPrice - $expressionAmount, 2);
+                $expressionAmount = round(bcdiv(bcmul($this->goodsPrice, $orderProm['expression'], 2), 100, 2), 2); //满额打折
+                $this->orderPromAmount = round(bcsub($this->goodsPrice, $expressionAmount, 2), 2);
                 $this->orderPromId = $orderProm['id'];
             } elseif (1 == $orderProm['type']) {
                 $this->orderPromAmount = $orderProm['expression'];
                 $this->orderPromId = $orderProm['id'];
             }
         }
-        $this->orderAmount = $this->orderAmount - $this->orderPromAmount;
+        $this->orderAmount = bcsub($this->orderAmount, $this->orderPromAmount, 2);
     }
 
     /**
@@ -1143,7 +1143,7 @@ class Pay
                             ->where('og.prom_type', 10)
                             ->sum('og.goods_num');
                         $buy_num = intval($buy_num);
-                        if ($buy_num + $v['goods_num'] > $group_activity['buy_limit']) {
+                        if (bcadd($buy_num, $v['goods_num'], 2) > $group_activity['buy_limit']) {
                             $is_can_buy = false;
                             break;
                         }
