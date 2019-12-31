@@ -446,7 +446,7 @@ class Order extends Base
                     'original_img' => $goods['original_img'],
                     'can_return' => $canReturn == true ? $goods['sale_type'] == 1 ? $goods['is_return'] == 1 ? 0 : 1 : 0 : 0,   // sale_type = 1 普通商品
                     'return_status' => $goods['status'],
-                    'gift_goods' => []
+//                    'gift_goods' => []
                 ];
                 $giveIntegral = bcadd($giveIntegral, bcmul($goods['give_integral'], $goods['goods_num']), 2);
             } else {
@@ -454,21 +454,21 @@ class Order extends Base
                 // 赠品
                 if ($goods['prom_type'] != 7) {
                     if (in_array($idKey, $giftGoodsIds)) {
-                        $orderData['goods'][$idKey]['gift_goods'][] = [
-                            'rec_id' => $goods['rec_id'],
-                            'goods_id' => $goods['goods_id'],
-                            'goods_sn' => $goods['goods_sn'],
-                            'goods_name' => $goods['goods_name'],
-                            'spec_key_name' => $goods['spec_key_name'],
-                            'item_id' => $goods['item_id'],
-                            'goods_num' => $goods['goods_num'],
-                            'shop_price' => $goods['goods_price'],
-                            'exchange_integral' => $goods['use_integral'],
-                            'exchange_price' => $goods['member_goods_price'],
-                            'original_img' => $goods['original_img'],
-                            'can_return' => 0,
-                            'return_status' => '',
-                        ];
+//                        $orderData['goods'][$idKey]['gift_goods'][] = [
+//                            'rec_id' => $goods['rec_id'],
+//                            'goods_id' => $goods['goods_id'],
+//                            'goods_sn' => $goods['goods_sn'],
+//                            'goods_name' => $goods['goods_name'],
+//                            'spec_key_name' => $goods['spec_key_name'],
+//                            'item_id' => $goods['item_id'],
+//                            'goods_num' => $goods['goods_num'],
+//                            'shop_price' => $goods['goods_price'],
+//                            'exchange_integral' => $goods['use_integral'],
+//                            'exchange_price' => $goods['member_goods_price'],
+//                            'original_img' => $goods['original_img'],
+//                            'can_return' => 0,
+//                            'return_status' => '',
+//                        ];
                     }
                 } else {
                     // 订单促销优惠赠品
@@ -500,7 +500,7 @@ class Order extends Base
             $weight = bcadd($weight, $goods['weight'], 2);
         }
         $orderData['goods'] = array_values($orderData['goods']);
-        $orderData['gift_list'] = array_values($promGiftList);
+//        $orderData['gift_list'] = array_values($promGiftList);
         $orderData['weight'] = $weight . 'g';
         $orderData['give_integral'] = $giveIntegral;
         return json(['status' => 1, 'result' => $orderData]);
@@ -1633,6 +1633,7 @@ class Order extends Base
                     'goods_num' => $list['goods_num'],
                     'shop_price' => $goods['shop_price'],
                     'exchange_integral' => $list['use_integral'],
+//                    'gift_goods' => [],
                 ];
                 // 处理显示金额
                 if ($list['use_integral'] != '0') {
@@ -1640,14 +1641,30 @@ class Order extends Base
                 } else {
                     $goodsList[$k]['exchange_price'] = $list['goods']['shop_price'];
                 }
-                if (isset($list['gift_goods'])) {
-                    $goodsList[$k]['gift_goods'] = $list['gift_goods'];
-                }
+//                if (isset($list['gift_goods'])) {
+//                    $goodsList[$k]['gift_goods'] = $list['gift_goods'];
+//                }
             }
-            if (!empty($payReturn['extra_goods_list'])) {
-//                var_dump($payReturn['extra_goods_list']);
-//                exit();
-            }
+//            if (!empty($payReturn['extra_goods_list'])) {
+//                $extraGoods = [];
+//                foreach ($payReturn['extra_goods_list'] as $key => $extra) {
+//                    $extraGoods[$key] = [
+//                        'goods_id' => $extra['goods_id'],
+//                        'goods_name' => $extra['goods_name'],
+//                        'original_img' => $extra['original_img'],
+//                        'shop_price' => $extra['goods_price'],
+//                        'exchange_integral' => $extra['exchange_integral'],
+//                        'exchange_price' => $extra['goods_price'],
+//                        'limit_num' => $extra['goods_num']
+//                    ];
+//                    if ($extra['can_integral'] == 0) {
+//                        // 不能使用积分
+//                        $extraGoods[$key]['shop_price'] = bcadd($extra['goods_price'], $extra['exchange_integral'], 2);
+//                        $extraGoods[$key]['exchange_price'] = bcadd($extra['goods_price'], $extra['exchange_integral'], 2);
+//                        $extraGoods[$key]['exchange_integral'] = '0';
+//                    }
+//                }
+//            }
         } catch (TpshopException $tpE) {
             return json($tpE->getErrorArr());
         }

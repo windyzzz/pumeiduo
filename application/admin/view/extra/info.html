@@ -115,6 +115,7 @@
                     <th>序号</th>
                     <th>商品id</th>
                     <th>商品数量</th>
+                    <th>能否使用积分</th>
                     <th>操作</th>
                     <!-- <th>奖励数量</th>
                     <th>奖励金额</th>
@@ -140,9 +141,10 @@
                                 </div>
                             </div>
                         </td>
-
                         <td><input type="number" name="reward[{$k}][goods_num]" value="{$item.goods_num}"></td>
-
+                        <td><input type="checkbox" name="reward[{$k}][can_integral]" value="{$item.can_integral}" onclick="this.value=(this.value==0)?1:0"
+                            <if condition="$item[can_integral] == 1">checked</if>>
+                        </td>
                         <td><a href="javascript:;" class="ncap-btn-mini ncap-btn-red delete">删除</a></td>
                     </tr>
                 </volist>

@@ -1026,7 +1026,7 @@ class GoodsLogic extends Model
                 foreach ($groupBuy as $value) {
                     if ($v['goods_id'] == $value['goods_id']) {
                         if ($value['can_integral'] == 0) {
-                            $v['exchange_integral'] = 0;    // 不能使用积分兑换
+                            $v['exchange_integral'] = '0';    // 不能使用积分兑换
                         }
                         $v['shop_price'] = $value['price'];
                         $goodsList[$k]['shop_price'] = $value['price'];
@@ -1039,7 +1039,7 @@ class GoodsLogic extends Model
                 foreach ($flashSale as $value) {
                     if ($v['goods_id'] == $value['goods_id']) {
                         if ($value['can_integral'] == 0) {
-                            $v['exchange_integral'] = 0;    // 不能使用积分兑换
+                            $v['exchange_integral'] = '0';    // 不能使用积分兑换
                         }
                         $v['shop_price'] = $value['price'];
                         $goodsList[$k]['shop_price'] = $value['price'];

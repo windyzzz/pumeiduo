@@ -1250,10 +1250,10 @@ class User extends Base
             return json(['status' => -1, 'msg' => '该用户已经选择类型，无法继续选定', 'result' => null]);
         }
         if (1 == $type) {
-//            $pay_points = tpCache('basic.reg_integral'); // 会员注册赠送积分
-//            if ($pay_points > 0) {
-//                accountLog($this->user['user_id'], 0, $pay_points, '会员注册赠送积分', 0, 0, '', 0, 6); // 记录日志流水
-//            }
+            $pay_points = tpCache('basic.reg_integral'); // 会员注册赠送积分
+            if ($pay_points > 0) {
+                accountLog($this->user['user_id'], 0, $pay_points, '会员注册赠送积分', 0, 0, '', 0, 6); // 记录日志流水
+            }
 
             $CouponLogic = new \app\common\logic\CouponLogic();
             $CouponLogic->sendNewUser($this->user['user_id']);
@@ -1288,7 +1288,8 @@ class User extends Base
         }
         $return = [
             'user_id' => $this->user_id,
-            'integral' => $invite_integral,
+            'integral' => $invite_integral ?? '0',
+            'point' => $pay_points ?? '0',
         ];
 
         return json(['status' => 1, 'msg' => '新账号认证成功', 'result' => $return]);

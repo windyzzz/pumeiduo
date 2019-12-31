@@ -834,10 +834,10 @@ class UsersLogic extends Model
             return ['status' => -1, 'msg' => '注册失败'];
         }
         (new Redis())->set('is_new_' . $userToken, 1, 180);
-        $pay_points = tpCache('basic.reg_integral'); // 会员注册赠送积分
-        if ($pay_points > 0) {
-            accountLog($user_id, 0, $pay_points, '会员注册赠送积分'); // 记录日志流水
-        }
+//        $pay_points = tpCache('basic.reg_integral'); // 会员注册赠送积分
+//        if ($pay_points > 0) {
+//            accountLog($user_id, 0, $pay_points, '会员注册赠送积分'); // 记录日志流水
+//        }
         $user = M('users')->where('user_id', $user_id)->find();
         $user = [
             'user_id' => $user['user_id'],
@@ -858,8 +858,7 @@ class UsersLogic extends Model
             'is_not_show_jk' => $user['is_not_show_jk'],  // 是否提示加入金卡弹窗
             'has_pay_pwd' => $user['paypwd'] ? 1 : 0,
             'is_app' => TokenLogic::getValue('is_app', $user['token']) ? 1 : 0,
-            'token' => $user['token'],
-            'point' => $pay_points
+            'token' => $user['token']
         ];
         return ['status' => 1, 'msg' => '注册成功', 'result' => $user];
     }

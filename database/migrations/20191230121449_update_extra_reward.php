@@ -30,6 +30,7 @@ class UpdateExtraReward extends Migrator
     {
         $this->table('extra_reward')
             ->changeColumn('order_num', 'integer', ['default' => 0, 'comment' => '订单数量'])
+            ->addColumn('can_integral', 'integer', ['default' => 0, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'comment' => '能否使用积分', 'after' => 'goods_price'])
             ->update();
     }
 }

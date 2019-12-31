@@ -59,7 +59,7 @@ class Promotion extends Base
         if ($prom_id > 0) {
 
             $GoodsTao = M('gift2_goods')->where(array('promo_id' => $prom_id))->group('goods_id,item_id')->select();
-
+            $prom_goods = [];
             foreach ($GoodsTao as $k => $v) {
                 $prom_goods[$k] = M('Goods')->where('goods_id=' . $v['goods_id'])->find();
                 $prom_goods[$k]['stock'] = $v['stock'];
@@ -70,6 +70,7 @@ class Promotion extends Base
             $this->assign('prom_goods', $prom_goods);
 
             $GoodsTao = M('gift2_goods')->where(array('promo_id' => $prom_id))->group('buy_goods_id,buy_item_id')->select();
+            $buy_goods = [];
             foreach ($GoodsTao as $k => $v) {
                 $buy_goods[$k] = M('Goods')->where('goods_id=' . $v['buy_goods_id'])->find();
                 $buy_goods[$k]['stock'] = $v['buy_stock'];
@@ -96,7 +97,6 @@ class Promotion extends Base
     public function gift2_save()
     {
         $prom_id = I('id/d');
-
         $data = I('post.');
         $title = input('title');
 
@@ -108,9 +108,9 @@ class Promotion extends Base
             ];
             $this->ajaxReturn($return);
         }*/
+
         $data['start_time'] = strtotime($data['start_time']);
         $data['end_time'] = strtotime($data['end_time']);
-
         if ($prom_id) {
             M('gift2')->where(['id' => $prom_id])->save($data);
             $last_id = $prom_id;
@@ -120,11 +120,10 @@ class Promotion extends Base
             adminLog("管理员添加了商品促销 " . $title);
         }
 
-
         M('gift2_goods')->where(array('promo_id' => $last_id))->delete();
+
         $buyGoods = $data['goods2'];
         $promGoods = $data['goods'];
-
         if ($buyGoods) {
             foreach ($buyGoods as $k => $v) {
                 if ($promGoods) {
@@ -135,7 +134,6 @@ class Promotion extends Base
                             'buy_goods_id' => $vval[0],
                             'buy_item_id' => $vval[1],
                             'buy_stock' => $v['stock'],
-
                             'goods_id' => $dfd[0],
                             'item_id' => $dfd[1],
                             'promo_id' => $last_id,

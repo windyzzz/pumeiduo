@@ -282,6 +282,7 @@ class ExtraLogic
                     $goods_info['extra_reward_id'] = $av['reward_id'];
                     $goods_info['extra_title'] = $activity['title'];
                     $goods_info['num'] = 1;
+                    $goods_info['can_integral'] = $av['can_integral'];
                     $arr[$ak] = $goods_info;
                 }
 

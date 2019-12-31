@@ -43,7 +43,7 @@
                     <label><em>*</em>活动参与金额</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" name="price" value="{$info.price}" class="input-txt">
+                    <input type="text" name="price" value="{$info.price}" class="input-txt" onkeyup="this.value=this.value.replace(/[^\d.]/g,'')">
                     <span class="err" id="err_price"></span>
                     <p class="notic">请填写加价购活动参与金额</p>
                 </dd>
@@ -121,6 +121,7 @@
                     <th>序号</th>
                     <th>商品id</th>
                     <th>商品数量</th>
+                    <th>能否使用积分</th>
                     <th>操作</th>
                     <!-- <th>奖励数量</th>
                     <th>奖励金额</th>
@@ -180,6 +181,7 @@
             '<div></div>' +
             '</div></td>' +
             '<td><input type="number" name="reward[\\index\\][goods_num]" value=""></td>' +
+            '<td><input type="checkbox" name="reward[\\index\\][can_integral]" value="1" onclick="this.value=(this.value==0)?1:0" checked></td>' +
             '<td><a href="javascript:;" class="ncap-btn-mini ncap-btn-red delete">删除</a></td>';
         var h = /\\index\\/g;
         html = html.replace(h, index);
