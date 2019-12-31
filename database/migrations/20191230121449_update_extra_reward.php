@@ -3,7 +3,7 @@
 use think\migration\Migrator;
 use think\migration\db\Column;
 
-class UpdateGoods extends Migrator
+class UpdateExtraReward extends Migrator
 {
     /**
      * Change Method.
@@ -28,9 +28,8 @@ class UpdateGoods extends Migrator
      */
     public function change()
     {
-        $this->table('goods')
-            ->changeColumn('prom_type', 'integer', ['limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
-                'default' => 0, 'comment' => '0默认 1抢购 2团购 3优惠促销 4预售 5虚拟(5其实没用) 6拼团 7订单合购优惠 8满单赠品 9指定赠品'])
+        $this->table('extra_reward')
+            ->changeColumn('order_num', 'integer', ['default' => 0, 'comment' => '订单数量'])
             ->update();
     }
 }

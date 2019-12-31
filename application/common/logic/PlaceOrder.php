@@ -174,19 +174,19 @@ class PlaceOrder
 //        $pay_points = $this->pay->getPayPoints();
 //        $user_electronic = $this->pay->getUserElectronic();
 //        if ($pay_points || $user_electronic) {
-            $user = $this->pay->getUser();
-            if (1 == $user['is_lock']) {
-                throw new TpshopException('提交订单', 0, ['status' => -5, 'msg' => '账号异常已被锁定，不能使用积分或电子币支付！', 'result' => '']);
-            }
-            if (empty($user['paypwd'])) {
-                throw new TpshopException('提交订单', 0, ['status' => -6, 'msg' => '请先设置支付密码', 'result' => '']);
-            }
-            if (empty($this->payPsw)) {
-                throw new TpshopException('提交订单', 0, ['status' => -7, 'msg' => '请输入支付密码', 'result' => '']);
-            }
-            if (systemEncrypt($this->payPsw) !== $user['paypwd']) {
-                throw new TpshopException('提交订单', 0, ['status' => -8, 'msg' => '支付密码错误', 'result' => '']);
-            }
+        $user = $this->pay->getUser();
+        if (1 == $user['is_lock']) {
+            throw new TpshopException('提交订单', 0, ['status' => -5, 'msg' => '账号异常已被锁定，不能使用积分或电子币支付！', 'result' => '']);
+        }
+        if (empty($user['paypwd'])) {
+            throw new TpshopException('提交订单', 0, ['status' => -6, 'msg' => '请先设置支付密码', 'result' => '']);
+        }
+        if (empty($this->payPsw)) {
+            throw new TpshopException('提交订单', 0, ['status' => -7, 'msg' => '请输入支付密码', 'result' => '']);
+        }
+        if (systemEncrypt($this->payPsw) !== $user['paypwd']) {
+            throw new TpshopException('提交订单', 0, ['status' => -8, 'msg' => '支付密码错误', 'result' => '']);
+        }
 //        }
     }
 
@@ -295,106 +295,108 @@ class PlaceOrder
             unset($payItem['goods']);
             $totalPriceToRatio = $payItem['member_goods_price'] / $this->pay->getGoodsPrice();  //商品价格占总价的比例
             $finalPrice = round($payItem['member_goods_price'] - ($totalPriceToRatio * $orderDiscounts), 3);
-            $orderGoodsData = array();
-            $orderGoodsData['order_id'] = $this->order['order_id']; // 订单id
-            $orderGoodsData['goods_id'] = $payItem['goods_id']; // 商品id
-            $orderGoodsData['goods_name'] = $payItem['goods_name']; // 商品名称
-            $orderGoodsData['goods_sn'] = $payItem['goods_sn']; // 商品货号
-            $orderGoodsData['goods_num'] = $payItem['goods_num']; // 购买数量
-            $orderGoodsData['final_price'] = $finalPrice; // 每件商品实际支付价格
-            $orderGoodsData['goods_price'] = $payItem['goods_price']; // 商品价
-            $orderGoodsData['re_id'] = isset($payItem['re_id']) ? intval($payItem['re_id']) : 0;
+            $orderGoodsData = [
+                'order_id' => $this->order['order_id'],         // 订单id
+                'goods_id' => $payItem['goods_id'],             // 商品id
+                'goods_name' => $payItem['goods_name'],         // 商品名称
+                'goods_sn' => $payItem['goods_sn'],             // 商品货号
+                'goods_num' => $payItem['goods_num'],           // 购买数量
+                'final_price' => $finalPrice,                   // 每件商品实际支付价格
+                'goods_price' => $payItem['goods_price'],       // 商品价
+                'cost_price' => $goodsArr[$payItem['goods_id']]['cost_price'],          // 成本价,
+                'member_goods_price' => $payItem['member_goods_price'],                 // 会员折扣价
+                'give_integral' => $goodsArr[$payItem['goods_id']]['give_integral'],    // 购买商品赠送积分
+                'spec_key' => '',
+                'spec_key_name' => '',
+                'is_gift' => 0,
+                'gift_goods_id' => 0,
+                'gift_goods_spec_key' => '',
+                'prom_type' => 0,
+                'prom_id' => 0,
+                'sku' => $payItem['sku'] ? $payItem['sku'] : '',                        // sku
+                'use_integral' => $payItem['use_integral'] ?: 0,
+                'commission' => $goodsArr[$payItem['goods_id']]['commission'],
+                'trade_type' => $goodsArr[$payItem['goods_id']]['trade_type'],
+                'sale_type' => $goodsArr[$payItem['goods_id']]['sale_type'],
+                're_id' => isset($payItem['re_id']) ? intval($payItem['re_id']) : 0
+            ];
             if (!empty($payItem['spec_key'])) {
-                $orderGoodsData['spec_key'] = $payItem['spec_key']; // 商品规格
-                $orderGoodsData['spec_key_name'] = $payItem['spec_key_name']; // 商品规格名称
-            } else {
-                $orderGoodsData['spec_key'] = ''; // 商品规格
-                $orderGoodsData['spec_key_name'] = ''; // 商品规格名称
+                $orderGoodsData['spec_key'] = $payItem['spec_key'];
+                $orderGoodsData['spec_key_name'] = $payItem['spec_key_name'];
             }
-            $orderGoodsData['sku'] = $payItem['sku'] ? $payItem['sku'] : ''; // sku
-            $orderGoodsData['member_goods_price'] = $payItem['member_goods_price']; // 会员折扣价
-            $orderGoodsData['cost_price'] = $goodsArr[$payItem['goods_id']]['cost_price']; // 成本价
-            $orderGoodsData['give_integral'] = $goodsArr[$payItem['goods_id']]['give_integral']; // 购买商品赠送积分
-            $orderGoodsData['commission'] = $goodsArr[$payItem['goods_id']]['commission'];
-            $orderGoodsData['trade_type'] = $goodsArr[$payItem['goods_id']]['trade_type'];
-            $orderGoodsData['sale_type'] = $goodsArr[$payItem['goods_id']]['sale_type'];
-            $orderGoodsData['use_integral'] = $payItem['use_integral'] ?: 0;
             if ($orderGoodsData['final_price'] == $orderGoodsData['goods_price']) {
                 $orderGoodsData['use_integral'] = 0;
             }
             if ($payItem['prom_type']) {
                 $orderGoodsData['prom_type'] = $payItem['prom_type']; // 0普通订单 1限时抢购 2团购 3促销优惠 7订单合购优惠
                 $orderGoodsData['prom_id'] = $payItem['prom_id']; // 活动id
-            } else {
-                $orderGoodsData['prom_type'] = 0; // 0 普通订单,1 限时抢购, 2 团购 , 3 促销优惠
-                $orderGoodsData['prom_id'] = 0; // 活动id
             }
-            $orderGoodsData['is_gift'] = 0;
             array_push($orderGoodsAllData, $orderGoodsData);
-
-            if ($payItem['gift2_goods']) {
+            if (!empty($payItem['gift2_goods'])) {
                 foreach ($payItem['gift2_goods'] as $k => $v) {
-                    $finalPrice = 0;
-                    $orderGoodsData = array();
-                    $orderGoodsData['order_id'] = $this->order['order_id']; // 订单id
-                    $orderGoodsData['goods_id'] = $v['goods_id']; // 商品id
-                    $orderGoodsData['goods_name'] = $v['goods_name']; // 商品名称
-                    $orderGoodsData['goods_sn'] = $v['goods_sn']; // 商品货号
-                    $orderGoodsData['goods_num'] = $v['goods_num']; // 购买数量
-                    $orderGoodsData['final_price'] = $finalPrice; // 每件商品实际支付价格
-                    $orderGoodsData['goods_price'] = 0; // 商品价
-                    $orderGoodsData['re_id'] = 0;
+                    $orderGoodsData = [
+                        'order_id' => $this->order['order_id'],         // 订单id
+                        'goods_id' => $v['goods_id'],                   // 商品id
+                        'goods_name' => $v['goods_name'],               // 商品名称
+                        'goods_sn' => $v['goods_sn'],                   // 商品货号
+                        'goods_num' => $v['goods_num'],                 // 购买数量
+                        'final_price' => 0,                             // 每件商品实际支付价格
+                        'goods_price' => 0,                             // 商品价
+                        'cost_price' => 0,
+                        'member_goods_price' => 0,
+                        'give_integral' => 0,
+                        'spec_key' => '',
+                        'spec_key_name' => '',
+                        'is_gift' => 1,
+                        'gift_goods_id' => $payItem['goods_id'],
+                        'gift_goods_spec_key' => $payItem['spec_key'],
+                        'prom_type' => $v['prom_type'],
+                        'prom_id' => $v['prom_id'],
+                        'sku' => $v['sku'] ? $v['sku'] : '',            // sku
+                        'use_integral' => 0,
+                        'commission' => 0,
+                        'trade_type' => $v['trade_type'],
+                        'sale_type' => 1,
+                        're_id' => 0
+                    ];
                     if (!empty($v['spec_key'])) {
-                        $orderGoodsData['spec_key'] = $v['spec_key']; // 商品规格
+                        $orderGoodsData['spec_key'] = $v['spec_key'];           // 商品规格
                         $orderGoodsData['spec_key_name'] = $v['spec_key_name']; // 商品规格名称
-                    } else {
-                        $orderGoodsData['spec_key'] = ''; // 商品规格
-                        $orderGoodsData['spec_key_name'] = ''; // 商品规格名称
                     }
-                    $orderGoodsData['sku'] = $v['sku'] ? $v['sku'] : ''; // sku
-                    $orderGoodsData['member_goods_price'] = 0; // 会员折扣价
-                    $orderGoodsData['cost_price'] = 0; // 成本价
-                    $orderGoodsData['give_integral'] = 0; // 购买商品赠送积分
-                    $orderGoodsData['commission'] = 0;
-                    $orderGoodsData['trade_type'] = $v['trade_type'];
-                    $orderGoodsData['sale_type'] = 1;
-                    $orderGoodsData['use_integral'] = 0;
-                    $orderGoodsData['prom_type'] = $v['prom_type'];
-                    $orderGoodsData['prom_id'] = $v['prom_id'];
-                    $orderGoodsData['is_gift'] = 1;
                     array_push($orderGoodsAllData, $orderGoodsData);
                 }
             }
-            if ($payItem['gift_goods']) {
+            if (!empty($payItem['gift_goods'])) {
                 foreach ($payItem['gift_goods'] as $k => $v) {
-                    $finalPrice = 0;
-                    $orderGoodsData = array();
-                    $orderGoodsData['order_id'] = $this->order['order_id']; // 订单id
-                    $orderGoodsData['goods_id'] = $v['goods_id']; // 商品id
-                    $orderGoodsData['goods_name'] = $v['goods_name']; // 商品名称
-                    $orderGoodsData['goods_sn'] = $v['goods_sn']; // 商品货号
-                    $orderGoodsData['goods_num'] = $v['goods_num']; // 购买数量
-                    $orderGoodsData['final_price'] = $finalPrice; // 每件商品实际支付价格
-                    $orderGoodsData['goods_price'] = 0; // 商品价
-                    $orderGoodsData['re_id'] = 0;
+                    $orderGoodsData = [
+                        'order_id' => $this->order['order_id'],         // 订单id
+                        'goods_id' => $v['goods_id'],                   // 商品id
+                        'goods_name' => $v['goods_name'],               // 商品名称
+                        'goods_sn' => $v['goods_sn'],                   // 商品货号
+                        'goods_num' => $v['goods_num'],                 // 购买数量
+                        'final_price' => 0,                             // 每件商品实际支付价格
+                        'goods_price' => 0,                             // 商品价
+                        'cost_price' => 0,
+                        'member_goods_price' => 0,
+                        'give_integral' => 0,
+                        'spec_key' => '',
+                        'spec_key_name' => '',
+                        'is_gift' => 1,
+                        'gift_goods_id' => $payItem['goods_id'],
+                        'gift_goods_spec_key' => $payItem['spec_key'],
+                        'prom_type' => $v['prom_type'],
+                        'prom_id' => $v['prom_id'],
+                        'sku' => $v['sku'] ? $v['sku'] : '', // sku
+                        'use_integral' => 0,
+                        'commission' => 0,
+                        'trade_type' => $v['trade_type'],
+                        'sale_type' => 1,
+                        're_id' => 0
+                    ];
                     if (!empty($v['spec_key'])) {
                         $orderGoodsData['spec_key'] = $v['spec_key']; // 商品规格
                         $orderGoodsData['spec_key_name'] = $v['spec_key_name']; // 商品规格名称
-                    } else {
-                        $orderGoodsData['spec_key'] = ''; // 商品规格
-                        $orderGoodsData['spec_key_name'] = ''; // 商品规格名称
                     }
-                    $orderGoodsData['sku'] = $v['sku'] ? $v['sku'] : ''; // sku
-                    $orderGoodsData['member_goods_price'] = 0; // 会员折扣价
-                    $orderGoodsData['cost_price'] = 0; // 成本价
-                    $orderGoodsData['give_integral'] = 0; // 购买商品赠送积分
-                    $orderGoodsData['commission'] = 0;
-                    $orderGoodsData['trade_type'] = $v['trade_type'];
-                    $orderGoodsData['sale_type'] = 1;
-                    $orderGoodsData['use_integral'] = 0;
-                    $orderGoodsData['prom_type'] = $v['prom_type'];
-                    $orderGoodsData['prom_id'] = $v['prom_id'];
-                    $orderGoodsData['is_gift'] = 1;
                     array_push($orderGoodsAllData, $orderGoodsData);
                 }
             }
@@ -410,6 +412,42 @@ class PlaceOrder
                         $orderDiscount += $orderProm['discount_price'];
                     }
                     $orderPromId[] = $orderProm['order_prom_id'];
+                }
+            }
+        }
+        // 订单优惠赠品
+        $promGiftList = $this->pay->getPromGiftList();
+        if (!empty($promGiftList)) {
+            foreach ($promGiftList as $prom) {
+                foreach ($prom['goods_list'] as $goods) {
+                    $goodsInfo = M('goods')->where(['goods_id' => $goods['goods_id']])->field('goods_sn, trade_type')->find();
+                    $goodsSpec = M('spec_goods_price')->where(['item_id' => $goods['item_id']])->field('key, key_name')->find();
+                    $orderGoodsData = [
+                        'order_id' => $this->order['order_id'],         // 订单id
+                        'goods_id' => $goods['goods_id'],               // 商品id
+                        'goods_name' => $goods['goods_name'],           // 商品名称
+                        'goods_sn' => $goodsInfo['goods_sn'],           // 商品货号
+                        'goods_num' => $goods['goods_num'],             // 购买数量
+                        'final_price' => 0,                             // 每件商品实际支付价格
+                        'goods_price' => 0,                             // 商品价
+                        'cost_price' => 0,
+                        'member_goods_price' => 0,
+                        'give_integral' => 0,
+                        'spec_key' => $goodsSpec['key'],
+                        'spec_key_name' => $goodsSpec['key_name'],
+                        'is_gift' => 1,
+                        'gift_goods_id' => 0,
+                        'gift_goods_spec_key' => '',
+                        'prom_type' => 7,
+                        'prom_id' => $prom['prom_id'],
+                        'sku' => '',
+                        'use_integral' => 0,
+                        'commission' => 0,
+                        'trade_type' => $goodsInfo['trade_type'],
+                        'sale_type' => 1,
+                        're_id' => 0
+                    ];
+                    array_push($orderGoodsAllData, $orderGoodsData);
                 }
             }
         }

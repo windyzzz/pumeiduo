@@ -400,7 +400,7 @@ class Pay
         $goods_list = $this->giftLogic->getGoodsList();
         if ($goods_list) {
             $this->gift_goods_list = array_values($goods_list);
-            $this->promGiftList = array_values($goods_list);
+//            $this->promGiftList = array_values($goods_list);
             $this->payList = array_merge($this->payList, $goods_list);
         }
     }
@@ -471,7 +471,7 @@ class Pay
                     $gift2_goods_list[$key]['goods_name'] = $goods['goods_name'];
                     $gift2_goods_list[$key]['sku'] = $goods['sku'];
                     $gift2_goods_list[$key]['trade_type'] = $goods['trade_type'];
-                    $gift2_goods_list[$key]['prom_type'] = 100;
+                    $gift2_goods_list[$key]['prom_type'] = 9;
                     $gift2_goods_list[$key]['prom_id'] = $val['id'];
                     $gift2_goods_list[$key]['original_img'] = $goods['original_img'];
 
@@ -603,7 +603,7 @@ class Pay
                     $gift2_goods_list[$key]['goods_name'] = $goods['goods_name'];
                     $gift2_goods_list[$key]['sku'] = $goods['sku'];
                     $gift2_goods_list[$key]['trade_type'] = $goods['trade_type'];
-                    $gift2_goods_list[$key]['prom_type'] = 100;
+                    $gift2_goods_list[$key]['prom_type'] = 9;
                     $gift2_goods_list[$key]['prom_id'] = $val['id'];
                     $gift2_goods_list[$key]['original_img'] = $goods['original_img'];
 
