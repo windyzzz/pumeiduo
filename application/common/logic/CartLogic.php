@@ -174,6 +174,7 @@ class CartLogic extends Model
             'item_id' => empty($this->specGoodsPrice) ? 0 : $this->specGoodsPrice->item_id,
             'zone' => $this->goods['zone']
         ];
+
         // 订单优惠促销（查看是否有赠送商品）
         $orderProm = Db::name('order_prom_goods opg')->join('order_prom op', 'op.id = opg.order_prom_id')
             ->where(['opg.type' => 1, 'goods_id' => $this->goods['goods_id'], 'item_id' => $buyGoods['item_id']])

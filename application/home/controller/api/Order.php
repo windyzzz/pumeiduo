@@ -1645,8 +1645,8 @@ class Order extends Base
 //                    $goodsList[$k]['gift_goods'] = $list['gift_goods'];
 //                }
             }
+//            $extraGoods = [];
 //            if (!empty($payReturn['extra_goods_list'])) {
-//                $extraGoods = [];
 //                foreach ($payReturn['extra_goods_list'] as $key => $extra) {
 //                    $extraGoods[$key] = [
 //                        'goods_id' => $extra['goods_id'],
@@ -1657,10 +1657,10 @@ class Order extends Base
 //                        'exchange_price' => $extra['goods_price'],
 //                        'limit_num' => $extra['goods_num']
 //                    ];
-//                    if ($extra['can_integral'] == 0) {
-//                        // 不能使用积分
-//                        $extraGoods[$key]['shop_price'] = bcadd($extra['goods_price'], $extra['exchange_integral'], 2);
-//                        $extraGoods[$key]['exchange_price'] = bcadd($extra['goods_price'], $extra['exchange_integral'], 2);
+//                    if ($extra['can_integral'] == 1) {
+//                        // 能使用积分
+//                        $extraGoods[$key]['shop_price'] = bcsub($extra['goods_price'], $extra['exchange_integral'], 2);
+//                        $extraGoods[$key]['exchange_price'] = bcsub($extra['goods_price'], $extra['exchange_integral'], 2);
 //                        $extraGoods[$key]['exchange_integral'] = '0';
 //                    }
 //                }
@@ -1686,6 +1686,7 @@ class Order extends Base
                 'goods_list' => $goodsList,
                 'gift_list' => $giftList
             ],
+//            'extra_goods' => $extraGoods,
             // 优惠券 兑换券
             'coupon_list' => $couponList,
             'exchange_list' => $exchangeList,
@@ -2002,7 +2003,7 @@ class Order extends Base
             // 参与活动促销
             $payLogic->goodsPromotion();
             // 加价购活动
-//            $payLogic->activityPayBefore($extraGoods);
+//            $payLogic->activityPayBeforeNew($extraGoods);
 
             // 配送物流
             if (empty($userAddress)) {

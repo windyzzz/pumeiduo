@@ -93,7 +93,7 @@ class ExtraLogic
                 $this->categoryList[0] += $v['member_goods_price'] * $v['goods_num'];
 
                 $extend_cat_id = M('goods')->where('goods_id', $v['goods_id'])->getField('extend_cat_id');
-                if($extend_cat_id){
+                if ($extend_cat_id) {
                     $extend_category = M('GoodsCategory')->where('id', $extend_cat_id)->getField('parent_id_path');
                     $extend_category = explode('_', $extend_category);
                     if (isset($extend_category[1])) {
@@ -130,7 +130,7 @@ class ExtraLogic
                                 unset($enable_cat[$c2k]);
                             }
 
-                            if($c2v == 0){
+                            if ($c2v == 0) {
                                 unset($enable_cat_2[$c2k]);
                             }
                         }
@@ -142,7 +142,7 @@ class ExtraLogic
                                 unset($enable_cat[$c3k]);
                                 unset($enable_cat_2[$c3k]);
                             }
-                            if($c3v == 0){
+                            if ($c3v == 0) {
                                 unset($enable_cat_3[$c3k]);
                             }
                         }
@@ -150,7 +150,6 @@ class ExtraLogic
 
                     $enable_cat = array_merge($enable_cat, $enable_cat_2, $enable_cat_3);
                     $price = 0;
-
 
                     foreach ($this->categoryList as $ck => $cv) {
                         if (in_array($ck, $enable_cat)) {
@@ -166,8 +165,7 @@ class ExtraLogic
             }
 
 
-
-            if(empty($enable_list)){
+            if (empty($enable_list)) {
                 return [];
             }
             // 在可用的活动中根据 优先级顺序排序 优先级顺序（活动价格，是否全场，是否自营，开始时间）
@@ -265,17 +263,18 @@ class ExtraLogic
                         }
                     }
                 }
-            }else{
+            } else {
                 $activity = $enable_list[0];
             }
 
             // 相同规格奖励商品数量累加,商品数据处理
             $goods_list = [];
             if ($activity['extra_reward']) {
+                $arr = [];
                 foreach ($activity['extra_reward'] as $ak => $av) {
                     $goods_info = M('goods')->field('goods_id,goods_name,store_count,original_img,shop_price as goods_price,exchange_integral')->where('goods_id', $av['goods_id'])->find();
 //                    $goods_info['goods_price'] = $av['goods_price'];
-                    $goods_info['goods_price'] =  $goods_info['goods_price'] -  $goods_info['exchange_integral'];
+//                    $goods_info['goods_price'] = $goods_info['goods_price'] - $goods_info['exchange_integral'];
                     $goods_info['goods_num'] = $av['goods_num'];
                     $goods_info['prom_type'] = 6;
                     $goods_info['prom_id'] = $av['extra_id'];
@@ -285,7 +284,6 @@ class ExtraLogic
                     $goods_info['can_integral'] = $av['can_integral'];
                     $arr[$ak] = $goods_info;
                 }
-
                 $goods_list = $arr;
             }
 
@@ -320,7 +318,7 @@ class ExtraLogic
                     M('extra_log')->where('id', $v['id'])->update(['status' => 2]);
                     if ($this->order['pay_status'] > 0) {
                         M('extra_reward')->where('reward_id', $v['extra_reward_id'])->update([
-                            'buy_num' => ['exp', 'buy_num-'.$v['reward_num']],
+                            'buy_num' => ['exp', 'buy_num-' . $v['reward_num']],
                         ]);
                     }
                 }
@@ -337,7 +335,7 @@ class ExtraLogic
                 foreach ($list as $v) {
                     M('extra_log')->where('id', $v['id'])->update(['status' => 1]);
                     M('extra_reward')->where('reward_id', $v['extra_reward_id'])->update([
-                        'buy_num' => ['exp', 'buy_num+'.$v['reward_num']],
+                        'buy_num' => ['exp', 'buy_num+' . $v['reward_num']],
                     ]);
                 }
             }
