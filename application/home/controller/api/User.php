@@ -188,7 +188,7 @@ class User extends Base
      */
     public function accountNew()
     {
-        $result = (new UsersLogic())->get_account_log($this->user_id, 1)['result'];
+        $result = (new UsersLogic())->get_account_log($this->user_id)['result'];
         $return = [
             'user_pay_points' => $this->user['pay_points'],
             'account_log' => []
@@ -1653,8 +1653,8 @@ class User extends Base
             if ($userPayPoints < $payPoints) {
                 return json(['status' => 0, 'msg' => '你的积分不够' . $payPoints]);
             }
-            accountLog($this->user_id, 0, -$payPoints, '转出积分给用户' . $toUser['user_id'], 0, 0, '', 0, 12);
-            accountLog($toUser['user_id'], 0, $payPoints, '转入积分From用户' . $this->user_id, 0, 0, '', 0, 12);
+            accountLog($this->user_id, 0, -$payPoints, '转赠用户' . $toUser['user_id'], 0, 0, '', 0, 12);
+            accountLog($toUser['user_id'], 0, $payPoints, '从用户' . $this->user_id . '获赠', 0, 0, '', 0, 12);
             $userPayPoints = M('Users')->where('user_id', $this->user_id)->getField('pay_points');
             return json(['status' => 1, 'msg' => '积分转增成功', 'result' => ['user_pay_points' => $userPayPoints]]);
         }

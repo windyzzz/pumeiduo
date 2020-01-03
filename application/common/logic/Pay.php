@@ -475,7 +475,7 @@ class Pay
                     $gift2_goods_list[$key]['prom_id'] = $val['id'];
                     $gift2_goods_list[$key]['original_img'] = $goods['original_img'];
 
-                    if ($val['item_id']) {
+                    if (!empty($val['item_id'])) {
                         $spec_goods_price = M('spec_goods_price')->where(array('goods_id' => $val['goods_id'], 'item_id' => $val['item_id']))->field('key,key_name,store_count')->find();
                         $gift2_goods_list[$key]['spec_key'] = $spec_goods_price['key'];
                         $gift2_goods_list[$key]['spec_key_name'] = $spec_goods_price['key_name'];
@@ -497,7 +497,7 @@ class Pay
                 }
             }
             if ($orderPromPrice > 0) {
-                $itemId = isset($v['item_id']) ? $v['item_id'] : 0;
+                $itemId = !empty($v['item_id']) ? $v['item_id'] : 0;
                 // 订单优惠促销（查看是否有赠送商品）
                 $orderProm = Db::name('order_prom_goods opg')->join('order_prom op', 'op.id = opg.order_prom_id')
                     ->where(['opg.type' => 1, 'goods_id' => $v['goods_id'], 'item_id' => $itemId])
@@ -607,7 +607,7 @@ class Pay
                     $gift2_goods_list[$key]['prom_id'] = $val['id'];
                     $gift2_goods_list[$key]['original_img'] = $goods['original_img'];
 
-                    if ($val['item_id']) {
+                    if (!empty($val['item_id'])) {
                         $spec_goods_price = M('spec_goods_price')->where(array('goods_id' => $val['goods_id'], 'item_id' => $val['item_id']))->field('key,key_name,store_count')->find();
                         $gift2_goods_list[$key]['spec_key'] = $spec_goods_price['key'];
                         $gift2_goods_list[$key]['spec_key_name'] = $spec_goods_price['key_name'];
@@ -630,7 +630,7 @@ class Pay
                 $goods_list[$k]['gift_goods'] = [];
             }
             if ($orderPromPrice > 0) {
-                $itemId = isset($v['item_id']) ? $v['item_id'] : 0;
+                $itemId = !empty($v['item_id']) ? $v['item_id'] : 0;
                 // 订单优惠促销（查看是否有赠送商品）
                 $orderProm = Db::name('order_prom_goods opg')->join('order_prom op', 'op.id = opg.order_prom_id')
                     ->where(['opg.type' => 1, 'goods_id' => $v['goods_id'], 'item_id' => $itemId])
