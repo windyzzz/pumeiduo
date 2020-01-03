@@ -34,6 +34,7 @@ class UpdateArticle extends Migrator
             ->addColumn('extend_cate_id', 'integer', ['null' => true, 'comment' => '额外分类ID', 'after' => 'cat_id'])
             ->addColumn('extend_sort', 'integer', ['default' => 0, 'comment' => '额外排序', 'after' => 'extend_cate_id'])
             ->changeColumn('video', 'string', ['null' => 'true', 'comment' => '视频连接'])
+            ->addColumn('relate_article_id', 'integer', ['null' => true, 'comment' => '关联的文章ID', 'after' => 'extend_sort'])
             ->update();
     }
 }

@@ -31,7 +31,7 @@
                 </dt>
                 <dd class="opt">
                     <input type="text" class="input-txt" name="title" value="{$article.title}">
-                    <span class="err" id="err_cat_name"></span>
+                    <span class="err" id="err_title"></span>
                     <p class="notic"></p>
                 </dd>
             </dl>
@@ -51,7 +51,17 @@
                     <label>内容</label>
                 </dt>
                 <dd class="opt" style="height: 100%;">
-                    <textarea name="content" style="width: 50%; height: 100%; line-height: 200%;">{$article.content}</textarea>
+                    <textarea name="app_content" style="width: 50%; height: 100%; line-height: 200%;">{$article.content}</textarea>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>关联的帮助中心文章ID</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" class="input-txt" name="relate_article_id" value="{$article.relate_article_id}">
+                    <span class="err" id="err_relate_article_id"></span>
+                    <p class="notic"></p>
                 </dd>
             </dl>
             <div class="bot">

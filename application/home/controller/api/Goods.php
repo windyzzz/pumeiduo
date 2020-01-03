@@ -97,7 +97,6 @@ class Goods extends Base
         //生成二维码图片
         $filename = 'public/images/qrcode/goods/goods_' . $user_id . '_' . $goods_id . '.png';
         \QRcode::png($value, $filename, $errorCorrectionLevel, $matrixPointSize, 2);
-
     }
 
     /**

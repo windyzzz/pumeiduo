@@ -57,6 +57,13 @@ class Article extends Base
         return $this->fetch();
     }
 
+    public function categoryDel()
+    {
+        $cateId = I('cate_id', '');
+        M('article_cat')->where(['cat_id' => $cateId])->delete();
+        return $this->categoryList();
+    }
+
     public function articleList()
     {
         $Article = M('Article');
@@ -318,6 +325,18 @@ class Article extends Base
         $cateInfo = M('help_center_cate')->where(['id' => $cateId])->find();
         $this->assign('cate_info', $cateInfo);
         return $this->fetch('help_center_cate_info');
+    }
+
+    /**
+     * 删除帮助中心分类
+     * @return mixed
+     */
+    public function helpCenterCateDel()
+    {
+        $cateId = I('cate_id', '');
+        M('help_center_cate')->where(['id' => $cateId])->delete();
+        M('article_cat')->where(['parent_id' => 2, 'extend_cate_id' => $cateId])->update(['extend_cate_id' => NULL]);
+        return $this->helpCenterCate();
     }
 
     /**

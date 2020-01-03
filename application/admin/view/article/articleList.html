@@ -52,6 +52,9 @@
                 <div style="width: 24px;"><i class="ico-check"></i></div>
               </th>
               <th align="left" abbr="article_title" axis="col3" class="">
+                <div style="text-align: left; width: 100px;" class="">ID</div>
+              </th>
+              <th align="left" abbr="article_title" axis="col3" class="">
                 <div style="text-align: left; width: 240px;" class="">标题</div>
               </th>
               <th align="left" abbr="ac_id" axis="col4" class="">
@@ -91,6 +94,9 @@
               <tr>
                 <td class="sign">
                   <div style="width: 24px;"><i class="ico-check"></i></div>
+                </td>
+                <td align="left" class="">
+                  <div style="text-align: left; width: 100px;">{$vo.article_id}</div>
                 </td>
                 <td align="left" class="">
                   <div style="text-align: left; width: 240px;">{$vo.title|getSubstr=0,33}</div>

@@ -1581,8 +1581,8 @@ class User extends Base
             if ($userElectronic < $electronic) {
                 return json(['status' => 0, 'msg' => '你的电子币不够' . $electronic]);
             }
-            accountLog($this->user_id, 0, -$electronic, '转出电子币给用户' . $toUser['user_id'], 0, 0, '', 0, 12);
-            accountLog($toUser['user_id'], 0, $electronic, '转入电子币From用户' . $this->user_id, 0, 0, '', 0, 12);
+            accountLog($this->user_id, 0, 0, '转出电子币给用户' . $toUser['user_id'], 0, 0, '', -$electronic, 12);
+            accountLog($toUser['user_id'], 0, 0, '转入电子币From用户' . $this->user_id, 0, 0, '', $electronic, 12);
             $userElectronic = M('Users')->where('user_id', $this->user_id)->getField('user_electronic');
             return json(['status' => 1, 'msg' => '电子币转增成功', 'result' => ['user_electronic' => $userElectronic]]);
         } else {
@@ -1728,7 +1728,11 @@ class User extends Base
             }
             accountLog($this->user_id, 0, 0, '用户余额转电子币', 0, 0, '', $amount, 13);
             accountLog($this->user_id, -$amount, 0, '电子币充值（余额转）', 0, 0, '', 0, 13);
-            return json(['status' => 1, 'msg' => '电子币充值成功']);
+            $user = M('users')->where(['user_id' => $this->user_id])->field('user_electronic, user_money')->find();
+            return json(['status' => 1, 'msg' => '电子币充值成功', 'result' => [
+                'user_electronic' => $user['user_electronic'],
+                'user_money' => $user['user_money'],
+            ]]);
         }
         return json(['status' => 1, 'result' => [
             'user_electronic' => $this->user['user_electronic'],
@@ -3043,6 +3047,7 @@ class User extends Base
             case 1:
                 // 余额
                 $return['amount'] = M('users')->where(['user_id' => $this->user_id])->value('user_money');
+                $return['log_list'] = [];
                 $result = $usersLogic->get_money_log($this->user_id)['result'];
                 foreach ($result as $res) {
                     foreach ($res as $log) {
@@ -3058,6 +3063,7 @@ class User extends Base
             case 2:
                 // 电子币
                 $return['amount'] = M('users')->where(['user_id' => $this->user_id])->value('user_electronic');
+                $return['log_list'] = [];
                 $result = $usersLogic->get_electronic_log($this->user_id)['result'];
                 foreach ($result as $res) {
                     foreach ($res as $log) {
@@ -3184,12 +3190,6 @@ class User extends Base
             if (empty($post['bank_card']) || empty($post['real_name'])) return json(['status' => 0, 'msg' => '请填写银行信息']);
             if (!check_id_card($post['id_cart'])) return json(['status' => 0, 'msg' => '请填写正确的身份证格式']);
 
-            $userInfo = M('users')->where(['user_id' => $this->user_id])->field('id_cart, real_name')->find();
-            if ($userInfo) {
-                if ($userInfo['id_cart'] != $post['id_cart'] || $userInfo['real_name'] != $post['real_name']) {
-                    return json(['status' => 0, 'msg' => '持卡人信息不匹配']);
-                }
-            }
             Db::startTrans();
             // 清除旧信息
             $res = M('users')->where(['user_id' => $this->user_id])->update([

@@ -785,7 +785,11 @@ class Promotion extends Base
             $data['end_time'] = strtotime($data['end_time']);
             $flashSaleValidate = Loader::validate('FlashSale');
             if (!$flashSaleValidate->batch()->check($data)) {
-                $return = ['status' => 0, 'msg' => '操作失败', 'result' => $flashSaleValidate->getError()];
+                $msg = '';
+                foreach ($flashSaleValidate->getError() as $item) {
+                    $msg .= $item . '，';
+                }
+                $return = ['status' => 0, 'msg' => rtrim($msg, '，')];
                 $this->ajaxReturn($return);
             }
             if ($data['can_integral'] == 1) {

@@ -155,7 +155,12 @@
                     </dd>
                 </dl>
             </if>
-            <div class="bot"><a href="JavaScript:void(0);" onClick="submitForm()" class="ncap-btn-big ncap-btn-green" id="submitBtn">确认提交</a></div>
+            <div class="bot">
+                <a href="JavaScript:void(0);" onClick="submitForm()" class="ncap-btn-big ncap-btn-green" id="submitBtn">确认提交</a>
+                <if condition="$act != 'add'">
+                    <a onclick="if(confirm('确定删除?')==false)return false;" href="{:U('Article/categoryDel', array('cate_id' => $cat_info['cat_id']))}" class="ncap-btn-big ncap-btn-red" id="">删除</a>
+                </if>
+            </div>
         </div>
         <input type="hidden" name="act" value="{$act}">
         <input type="hidden" name="cat_id" value="{$cat_info.cat_id}">

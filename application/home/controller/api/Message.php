@@ -159,12 +159,20 @@ class Message extends Base
                 $message = [];
                 foreach ($questionCate as $cate) {
                     $questionList = M('article')->where(['cat_id' => 81, 'extend_cate_id' => $cate['id'], 'is_open' => 1])
-                        ->order('extend_sort')->field('article_id message_id, title, content')->select();
+                        ->order('extend_sort')->field('article_id message_id, title, app_content content, relate_article_id')->select();
+                    $dataList = [];
+                    foreach ($questionList as $list) {
+                        $dataList[] = [
+                            'message_id' => $list['message_id'],
+                            'title' => $list['title'],
+                            'content' => $list['content'],
+                            'relate_url' => !empty($list['relate_article_id']) ? SITE_URL . '/#/member/help_particulars?article_id=' . $list['relate_article_id'] : '',
+                        ];
+                    }
                     $message[] = [
                         'cate_id' => $cate['id'],
                         'cate_name' => $cate['name'],
-                        'message_list' => $questionList,
-                        'message_url' => ''
+                        'message_list' => $dataList
                     ];
                 }
                 break;

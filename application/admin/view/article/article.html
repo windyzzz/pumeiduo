@@ -147,16 +147,18 @@
                     <p class="notic"></p>
                 </dd>
             </dl>
-            <dl class="row">
-                <dt class="tit">
-                    <label><em>*</em>APP显示内容（与文章内容一致）</label>
-                </dt>
-                <dd class="opt">
-                    <textarea class="" style="width: 80%; height: 100%; line-height: 150%" rows="20" name="app_content" title="">{$info.app_content}</textarea>
-                    <span class="err" id="err_app_content"></span>
-                    <p class="notic"></p>
-                </dd>
-            </dl>
+            <if condition="in_array($info[article_id], [104, 105, 106])">
+                <dl class="row">
+                    <dt class="tit">
+                        <label><em>*</em>APP显示内容（与文章内容一致）</label>
+                    </dt>
+                    <dd class="opt">
+                        <textarea class="" style="width: 80%; height: 100%; line-height: 150%" rows="20" name="app_content" title="">{$info.app_content}</textarea>
+                        <span class="err" id="err_app_content"></span>
+                        <p class="notic"></p>
+                    </dd>
+                </dl>
+            </if>
             <dl class="row">
                 <dt class="tit">
                     <label><em>*</em>文章内容</label>

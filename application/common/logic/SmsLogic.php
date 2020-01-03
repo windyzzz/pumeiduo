@@ -33,6 +33,9 @@ class SmsLogic
     public function sendSms($scene, $sender, $params, $unique_id = 0)
     {
         $smsTemp = M('sms_template')->where('send_scene', $scene)->find();
+        if (!$smsTemp) {
+            $smsTemp = M('sms_template')->where('send_scene', 6)->find();
+        }
 
         $code = !empty($params['code']) ? $params['code'] : false;
         $consignee = !empty($params['consignee']) ? $params['consignee'] : false;

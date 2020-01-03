@@ -10,6 +10,17 @@
             </div>
         </div>
     </div>
+    <div class="explanation" id="explanation">
+        <div class="title" id="checkZoom"><i class="fa fa-lightbulb-o"></i>
+            <h4 title="提示相关设置操作时应注意的要点">操作提示</h4>
+            <span id="explanationZoom" title="收起提示"></span>
+        </div>
+        <ul>
+            <li>分类只会在APP显示</li>
+            <li>新增下级分类要先在文章分类增加，下级是“帮助中心”，然后这里就会在“未分类”显示</li>
+            <li>删除主分类，下级分类会归去“未分类”</li>
+        </ul>
+    </div>
     <form method="post">
         <input type="hidden" name="form_submit" value="ok">
         <div class="flexigrid">
@@ -75,6 +86,7 @@
                                             <if condition="$vo['parent_id'] == -1">
                                                 <ul>
                                                     <li><a href="{:U('Article/helpCenterCateInfo', array('cate_id' => $vo['id']))}">编辑分类信息</a></li>
+                                                    <li><a onclick="if(confirm('确定删除?')==false)return false;" href="{:U('Article/helpCenterCateDel', array('cate_id' => $vo['id']))}">删除分类信息</a></li>
                                                 </ul>
                                             <else/>
                                                 <ul>

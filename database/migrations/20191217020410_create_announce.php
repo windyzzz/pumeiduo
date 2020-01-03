@@ -33,7 +33,7 @@ class CreateAnnounce extends Migrator
             ->addColumn('type', 'integer', ['limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'comment' => '类型：1商品促销'])
             ->addColumn('goods_id', 'integer', ['comment' => '商品ID'])
             ->addColumn('item_id', 'integer', ['null' => true, 'comment' => '商品规格ID'])
-            ->addColumn('goods_num', 'string', ['comment' => '商品名称'])
+            ->addColumn('goods_name', 'string', ['comment' => '商品名称'])
             ->addColumn('is_open', 'integer', ['default' => 1, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY])
             ->addColumn('create_time', 'integer')
             ->create();
