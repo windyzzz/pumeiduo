@@ -3186,7 +3186,7 @@ class User extends Base
             $post['id_cart'] = I('id_card', '');
 
             if (empty($post['bank_code']) || empty($bankId)) return json(['status' => 0, 'msg' => '请选择银行']);
-            if (empty($post['bank_region']) || empty($post['bank_branch'])) return json(['status' => 0, 'msg' => '请填写银行信息']);
+            if ($post['bank_code'] != 'Alipay' && (empty($post['bank_region']) || empty($post['bank_branch']))) return json(['status' => 0, 'msg' => '请填写银行信息']);
             if (empty($post['bank_card']) || empty($post['real_name'])) return json(['status' => 0, 'msg' => '请填写银行信息']);
             if (!check_id_card($post['id_cart'])) return json(['status' => 0, 'msg' => '请填写正确的身份证格式']);
 

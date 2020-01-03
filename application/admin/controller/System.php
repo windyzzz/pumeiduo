@@ -562,6 +562,55 @@ class System extends Base
         return view('bank_list');
     }
 
+    /**
+     * 分享设置
+     * @return \think\response\View
+     */
+    public function shareSetting()
+    {
+        $setting = M('share_setting')->select();
+        return view('share_setting', compact('setting'));
+    }
+
+    /**
+     * 分享设置内容
+     * @return \think\response\View
+     */
+    public function shareInfo()
+    {
+        if ($this->request->isPost()) {
+            $data = I('post.', []);
+            if (empty($data['content'])) $this->ajaxReturn(['status' => 0, 'msg' =>'内容不能为空']);
+            if ($data['is_open'] == 1) {
+                // 先关闭同类型的其他
+                M('share_setting')->where(['type' => $data['type']])->update(['is_open' => 0]);
+            }
+            $id = I('id', '');
+            if ($id) {
+                M('share_setting')->where(['id' => $id])->update($data);
+            } else {
+                M('share_setting')->add($data);
+            }
+            $this->ajaxReturn(['status' => 1, 'msg' => '处理成功']);
+        }
+        $id = I('id', '');
+        if ($id) {
+            $setting = M('share_setting')->where(['id' => $id])->find();
+            $this->assign('setting', $setting);
+        }
+        return view('share_info');
+    }
+
+    /**
+     * 删除分享设置
+     */
+    public function shareDel()
+    {
+        $id = I('id', '');
+        M('share_setting')->where(['id' => $id])->delete();
+        $this->ajaxReturn(['status' => 1, 'msg' => '处理成功']);
+    }
+
     public function shop_info()
     {
     }

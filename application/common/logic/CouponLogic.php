@@ -17,12 +17,20 @@ use think\Db;
 use think\Log;
 use think\Model;
 
-/**
- * 回复
- * Class CatsLogic.
- */
 class CouponLogic extends Model
 {
+    private $order;
+
+    /**
+     * 设置order模型.
+     *
+     * @param $order
+     */
+    public function setOrder($order)
+    {
+        $this->order = $order;
+    }
+
     /**
      * 获取发放有效的优惠券金额.
      *
@@ -440,7 +448,6 @@ class CouponLogic extends Model
         return $newStoreCoupon;
     }
 
-
     /**
      * 获取商品优惠券
      * @param integer $useType
@@ -487,5 +494,34 @@ class CouponLogic extends Model
         }
 
         return $coupon->select();
+    }
+
+    /**
+     * 订单优惠券、兑换券处理
+     */
+    public function doOrderPayAfter()
+    {
+        $order = $this->order;
+        if (!empty($order['coupon_id']) && $order['coupon_id'] != 0) {
+            // 优惠券已使用
+            $listId = M('coupon_list')->where(['cid' => $order['coupon_id'], 'uid' => $order['user_id']])->limit(0, 1)->value('id');
+            M('coupon_list')->where(['id' => $listId])->update([
+                'status' => 1,
+                'use_time' => time()
+            ]);
+            // 优惠券使用数+1
+            M('coupon')->where(['id' => $order['coupon_id']])->setInc('use_num', 1);
+        }
+        $orderGoods = M('order_goods')->where(['order_id' => $order['order_id'], 're_id' => ['neq', 0]])->select();
+        foreach ($orderGoods as $value) {
+            // 兑换券已使用
+            $listId = M('coupon_list')->where(['cid' => $value['re_id'], 'uid' => $order['user_id']])->limit(0, 1)->value('id');
+            M('coupon_list')->where(['id' => $listId])->update([
+                'status' => 1,
+                'use_time' => time()
+            ]);
+            // 兑换券使用数+1
+            M('coupon')->where(['id' => $value['re_id']])->setInc('use_num', 1);
+        }
     }
 }

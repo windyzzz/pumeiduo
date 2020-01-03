@@ -1260,6 +1260,11 @@ function update_pay_status($order_sn, $ext = [])
             $team->doOrderPayAfter();
         }
 
+        // 订单优惠券、兑换券处理
+        $coupon = new \app\common\logic\CouponLogic();
+        $coupon->setOrder($order);
+        $coupon->doOrderPayAfter();
+
         // 双十一任务（随机红包）
         $task = new \app\common\logic\TaskLogic();
         $task->setOrder($order);

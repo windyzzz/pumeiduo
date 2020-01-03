@@ -925,7 +925,8 @@ class Pay
             $couponList = new CouponList();
             $where = array(
                 'uid' => $this->user['user_id'],
-                'cid' => $coupon_id
+                'cid' => $coupon_id,
+                'status' => 0
             );
             $userCoupon = $couponList->where($where)->find();
             if ($userCoupon) {
@@ -977,7 +978,8 @@ class Pay
             foreach ($coupon_id_arr as $kfdd => $coupon_id) {
                 $where = array(
                     'uid' => $this->user['user_id'],
-                    'cid' => $coupon_id
+                    'cid' => $coupon_id,
+                    'status' => 0
                 );
                 $userCoupon = M('coupon_list')->where($where)->find();
                 if ($userCoupon) {

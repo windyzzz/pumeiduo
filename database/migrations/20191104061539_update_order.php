@@ -29,6 +29,7 @@ class UpdateOrder extends Migrator
     public function change()
     {
         $this->table('order')
+            ->addColumn('coupon_id', 'integer', ['null' => true, 'comment' => '优惠券ID', 'after' => 'transaction_id'])
             ->changeColumn('prom_type', 'integer', ['limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
                 'default' => 0, 'comment' => '订单类型：0普通订单 4预售订单 5虚拟订单 6拼团订单 7合购优惠'])
             ->changeColumn('integral', 'decimal', ['default' => 0, 'comment' => '使用积分', 'precision' => 10, 'scale' => 2])

@@ -231,6 +231,7 @@ class PlaceOrder
             'total_amount' => $this->pay->getTotalAmount(), // 订单总额
             'order_amount' => $this->pay->getOrderAmount(), //'应付款金额',
             'add_time' => time(), // 下单时间
+            'coupon_id' => $this->pay->getCouponId()
         ];
         if (!empty($this->userAddress)) {
             $orderData['consignee'] = $this->userAddress['consignee']; // 收货人

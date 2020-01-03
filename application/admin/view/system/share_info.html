@@ -1,0 +1,133 @@
+<include file="public/layout"/>
+<style>
+    dd.opt table {
+        width: 100%;
+    }
+
+    dd.opt tr {
+        border: 1px solid #f4f4f4;
+        padding: 8px;
+    }
+
+    dd.opt tr td {
+        border: 1px solid #f4f4f4;
+    }
+
+    .ys-btn-close {
+        position: relative;
+        top: -12px;
+        left: -16px;
+        width: 18px;
+        height: 18px;
+        border: 1px solid #ccc;
+        line-height: 18px;
+        text-align: center;
+        display: inline-block;
+        border-radius: 50%;
+        z-index: 1;
+        background-color: #fff;
+        cursor: pointer;
+    }
+
+    .selected-group-goods {
+        background-color: #FFF;
+        width: 162px;
+        padding: 9px;
+        margin-bottom: 10px;
+        border: solid 1px #E6E6E6;
+        box-shadow: 2px 2px 0 rgba(153, 153, 153, 0.1);
+    }
+</style>
+<style type="text/css">
+    html, body {
+        overflow: visible;
+    }
+</style>
+
+<body style="background-color: #FFF; overflow: auto;">
+<div id="toolTipLayer" style="position: absolute; z-index: 9999; display: none; visibility: visible; left: 95px; top: 573px;"></div>
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title"><a class="back" href="javascript:history.back();" title="返回列表"><i
+                class="fa fa-arrow-circle-o-left"></i></a>
+            <div class="subject">
+                <h3>反馈类型</h3>
+            </div>
+        </div>
+    </div>
+    <form class="form-horizontal" id="handleposition" method="post">
+        <div class="ncap-form-default">
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>类型</label>
+                </dt>
+                <dd class="opt">
+                    <select name="type">
+                        <option value="1" <if condition="$setting[type] == 1">selected</if> >推荐码</option>
+                        <option value="2" <if condition="$setting[type] == 2">selected</if> >商品</option>
+                        <option value="3" <if condition="$setting[type] == 3">selected</if> >活动文章</option>
+                    </select>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>分享内容</label>
+                </dt>
+                <dd class="opt">
+                    <input style="width: 40%;" type="text" name="content" value="{$setting.content}" />
+                    <p class="notic">链接分享标题内容</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>是否开启</label>
+                </dt>
+                <dd class="opt">
+                    <input style="text-align: center;" type="radio" name="is_open" value="1" <if condition="$setting[is_open] == 1">checked</if>/>
+                    是
+                    <input style="text-align: center;" type="radio" name="is_open" value="0" <if condition="$setting[is_open] == 0">checked</if>/>
+                    否
+                </dd>
+            </dl>
+            <input type="hidden" name="id" value="{$setting.id}">
+            <div class="bot"><a id="submit" class="ncap-btn-big ncap-btn-green">确认提交</a></div>
+        </div>
+    </form>
+</div>
+<script type="text/javascript">
+    $(function () {
+        $(document).on("click", '#submit', function (e) {
+            verifyForm();
+        })
+    });
+    function verifyForm() {
+        $('span.err').hide();
+        $.ajax({
+            type: "POST",
+            url: "{:U('Admin/System/shareInfo')}",
+            data: $('#handleposition').serialize(),
+            async: false,
+            dataType: "json",
+            error: function () {
+                layer.alert("服务器繁忙, 请联系管理员!");
+            },
+            success: function (data) {
+                if (data.status == 1) {
+                    layer.msg(data.msg, {
+                        icon: 1,
+                        time: 1000
+                    }, function () {
+                        location.href = "{:U('Admin/System/shareSetting')}";
+                    });
+                } else {
+                    layer.msg(data.msg, {icon: 2, time: 2000});
+                    $.each(data.result, function (index, item) {
+                        $('#err_' + index).text(item).show();
+                    });
+                }
+            }
+        });
+    }
+</script>
+</body>
+</html>

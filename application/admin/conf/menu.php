@@ -25,6 +25,7 @@ return [
             ['name' => '快递公司', 'act' => 'index', 'op' => 'Shipping'],
             ['name' => '节日设置', 'act' => 'icon', 'op' => 'System'],
             ['name' => '银行列表', 'act' => 'bankList', 'op' => 'System'],
+            ['name' => '分享设置', 'act' => 'shareSetting', 'op' => 'System'],
             ['name' => '清除缓存', 'act' => 'cleanCache', 'op' => 'System'],
         ]],
         ['name' => '会员', 'child' => [

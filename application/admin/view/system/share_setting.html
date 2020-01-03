@@ -1,0 +1,138 @@
+<include file="public/layout"/>
+<body style="background-color: rgb(255, 255, 255); overflow: auto; cursor: default; -moz-user-select: inherit;">
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title">
+            <div class="subject">
+                <h3>分享设置</h3>
+            </div>
+        </div>
+    </div>
+    <div class="flexigrid">
+        <div class="hDiv">
+            <div class="hDivBox">
+                <table cellspacing="0" cellpadding="0">
+                    <thead>
+                    <tr>
+                        <th class="sign" axis="col0">
+                            <div style="width: 24px;"><i class="ico-check"></i></div>
+                        </th>
+                        <th align="left" abbr="article_title" axis="col3" class="">
+                            <div style="text-align: center; width: 50px;" class="">id</div>
+                        </th>
+                        <th align="left" abbr="article_title" axis="col3" class="">
+                            <div style="text-align: center; width: 120px;" class="">类型</div>
+                        </th>
+                        <th align="center" abbr="article_show" axis="col5" class="">
+                            <div style="text-align: center; width: 500px;" class="">内容</div>
+                        </th>
+                        <th align="center" abbr="article_show" axis="col5" class="">
+                            <div style="text-align: center; width: 80px;" class="">是否开启</div>
+                        </th>
+                        <th align="left" axis="col1" class="handle">
+                            <div style="text-align: center; width: 170px;">操作</div>
+                        </th>
+                        <th style="width:100%" axis="col7">
+                            <div></div>
+                        </th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+        <div class="tDiv">
+            <div class="tDiv2">
+                <a href="{:U('System/shareInfo')}">
+                    <div class="fbutton">
+                        <div title="添加设置" class="add">
+                            <span><i class="fa fa-plus"></i>添加设置</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div style="clear:both"></div>
+        </div>
+        <div class="bDiv" style="height: auto;">
+            <div id="flexigrid" cellpadding="0" cellspacing="0" border="0">
+                <table>
+                    <tbody>
+                    <foreach name="setting" item="vo" key="k">
+                        <tr>
+                            <td class="sign">
+                                <div style="width: 24px;"><i class="ico-check"></i></div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 50px;">{$vo.id}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">
+                                    <switch name="$vo[type]">
+                                        <case value="1">推荐码</case>
+                                        <case value="2">商品</case>
+                                        <case value="3">活动文章</case>
+                                    </switch>
+                                </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 500px;"><input type="text" style="width: 80%;" value="{$vo.content}"></div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 80px;">
+                                    <if condition='$vo[is_open] eq 1'>
+                                        <span class="yes"
+                                              onClick="changeTableVal('share_setting','id','{$vo.id}','is_open',this)"><i
+                                                class="fa fa-check-circle"></i>是</span>
+                                        <else/>
+                                        <span class="no"
+                                              onClick="changeTableVal('share_setting','id','{$vo.id}','is_open',this)"><i
+                                                class="fa fa-ban"></i>否</span>
+                                    </if>
+                                </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 170px; max-width:170px;">
+                                    <a class="btn blue" data-id="{$vo['id']}" href="{:U('System/shareInfo', array('id'=>$vo[id]))}"><i class="fa fa-pencil-square-o"></i>编辑</a>
+                                    <a class="btn red del" onclick="javascript:del(this)" data-id="{$vo['id']}"><i class="fa fa-trash-o"></i>删除</a>
+                                </div>
+                            </td>
+                            <td align="" class="" style="width: 100%;">
+                                <div>&nbsp;</div>
+                            </td>
+                        </tr>
+                    </foreach>
+                    </tbody>
+                </table>
+            </div>
+            <div class="iDiv" style="display: none;"></div>
+        </div>
+    </div>
+</div>
+<script>
+    function del(ojb) {
+        var id = $(ojb).data('id');
+        layer.confirm('确认删除？', {btn: ['确定', '取消']}, function () {
+            // 确定
+            $.ajax({
+                url: "{:U('System/shareDel')}",
+                data: {id: id, is_handled: 1},
+                dataType: 'json',
+                success: function (data) {
+                    if (data.status == 1) {
+                        layer.msg(data.msg, {icon: 1, time: 2000}, function () {
+                            location.href = '';
+                        });
+                    } else {
+                        layer.msg(data.msg, {icon: 2, time: 2000});
+                    }
+                }
+            })
+        }, function (index) {
+            // 取消
+            layer.close(index);
+        });
+    }
+</script>
+</body>
+</html>
