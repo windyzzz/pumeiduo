@@ -872,37 +872,42 @@ class UsersLogic extends Model
      */
     public function oauthReg($openid, $username, $password)
     {
-        if (check_mobile($username)) {
-            $exists = M('users')->where('mobile', $username)->find();
-            if ($exists) {
-                return ['status' => -1, 'msg' => '手机号已经存在'];
-            }
-        }
-        $password = htmlspecialchars($password, ENT_NOQUOTES, 'UTF-8', false);
-        if (!check_password($password)) {
-            return ['status' => 0, 'msg' => '密码格式为6-20位字母数字组合'];
-        }
         $oauthUser = M('oauth_users')->where(['openid' => $openid, 'oauth' => 'wechatApp'])->find();
         if (!$oauthUser) {
             return ['status' => 0, 'msg' => 'openid错误'];
         }
         $oauthData = unserialize($oauthUser['oauth_data']);
-        // 用户注册
-        $data = [
-            'mobile' => $username,
-            'password' => systemEncrypt($password),
-            'openid' => $oauthData['openid'],
-            'unionid' => $oauthData['unionid'],
-            'oauth' => $oauthUser['oauth'],
-            'nickname' => $oauthData['nickname'],
-            'head_pic' => !empty($oauthData['headimgurl']) ? $oauthData['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png',
-            'sex' => $oauthData['sex'] ?? 0,
-            'reg_time' => time(),
-            'last_login' => time(),
-            'token' => TokenLogic::setToken(),
-            'time_out' => strtotime('+' . config('redis_days') . ' days')
-        ];
-        $userId = M('users')->add($data);
+        if (check_mobile($username)) {
+            $exists = M('users')->where('mobile', $username)->find();
+            if (!$exists) {
+                //--- 没有账号，注册
+                $password = htmlspecialchars($password, ENT_NOQUOTES, 'UTF-8', false);
+                if (!check_password($password)) {
+                    return ['status' => 0, 'msg' => '密码格式为6-20位字母数字组合'];
+                }
+                // 用户注册
+                $data = [
+                    'mobile' => $username,
+                    'password' => systemEncrypt($password),
+                    'openid' => $oauthData['openid'],
+                    'unionid' => $oauthData['unionid'],
+                    'oauth' => $oauthUser['oauth'],
+                    'nickname' => $oauthData['nickname'],
+                    'head_pic' => !empty($oauthData['headimgurl']) ? $oauthData['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png',
+                    'sex' => $oauthData['sex'] ?? 0,
+                    'reg_time' => time(),
+                    'last_login' => time(),
+                    'token' => TokenLogic::setToken(),
+                    'time_out' => strtotime('+' . config('redis_days') . ' days')
+                ];
+                $userId = M('users')->add($data);
+            } else {
+                //--- 已有账号
+                $userId = $exists['user_id'];
+            }
+        } else {
+            return ['status' => 0, 'msg' => '手机号格式不正确'];
+        }
         // 更新oauth记录
         M('oauth_users')->where(['tu_id' => $oauthUser['tu_id']])->update(['user_id' => $userId]);
 

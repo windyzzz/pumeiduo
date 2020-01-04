@@ -375,6 +375,7 @@ class Goods extends Base
                 }
             }
         }
+        $goods['coupon'] = array_values($goods['coupon']);
         $goods['freight_free'] = tpCache('shopping.freight_free'); // 全场满多少免运费
         $zone = $goods['zone'];
         unset($goods['zone']);
@@ -680,6 +681,7 @@ class Goods extends Base
         $sort_asc = I('get.sort_asc', 'asc'); // 排序
         $filter_param = []; // 筛选数组
         $id = I('get.id/d', 0); // 当前分类id
+        $couponId = I('get.coupon_id', 0); // 优惠券ID
 //        $brand_id = I('get.brand_id', 0);
 //        $spec = I('get.spec', 0); // 规格
 //        $attr = I('get.attr', ''); // 属性
@@ -713,9 +715,11 @@ class Goods extends Base
         // 筛选 品牌 规格 属性 价格
         $cat_id_arr = getCatGrandson($id);
         $goods_where = ['is_on_sale' => 1, 'cat_id|extend_cat_id' => ['in', $cat_id_arr]];
-        $filter_goods_id = Db::name('goods')
-            ->where($goods_where)
-            ->getField('goods_id', true);
+        if ($couponId != 0) {
+            $filter_goods_id = Db::name('goods_coupon')->where(['coupon_id' => $couponId])->getField('goods_id', true);
+        } else {
+            $filter_goods_id = Db::name('goods')->where($goods_where)->getField('goods_id', true);
+        }
 
 //        // 过滤筛选的结果集里面找商品
 //        if ($brand_id || $price) {// 品牌或者价格

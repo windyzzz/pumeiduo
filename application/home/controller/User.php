@@ -227,6 +227,7 @@ class User
             'status' => 0,
         ])->count(); //优惠券数量
 
+        if ($user['distribut_level'] >= 3) $return['type'] = 2; // 直销商
 
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
     }
@@ -1311,7 +1312,7 @@ class User
             //验证成功
             $user = M('Users')
                 ->where('user_name', $username)
-                ->where('password', encrypt($password))
+                ->where('password', systemEncrypt($password))
                 // ->where('is_zhixiao',1)
                 // ->where('is_lock',0)
                 ->find();
@@ -1516,7 +1517,7 @@ class User
         $new_password = I('post.new_password');
         $confirm_password = I('post.confirm_password');
 
-        $old_password = encrypt($old_password);
+        $old_password = systemEncrypt($old_password);
         $old_password_u = M('Users')->where('user_id', $this->user_id)->getField('paypwd');
 
         if ($old_password_u !== $old_password) {

@@ -233,6 +233,7 @@ class User extends Base
 
         $return['distribut_level'] = M('DistributLevel')->where('level_id', $user['distribut_level'])->getField('level_name');
         $return['has_pay_pwd'] = $user['paypwd'] ? 1 : 0;
+        if ($user['distribut_level'] >= 3) $return['type'] = 2; // 直销商
         $return['is_app'] = TokenLogic::getValue('is_app', $this->userToken) ? 1 : 0;
 
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
@@ -643,10 +644,23 @@ class User extends Base
     public function setInviteId(Request $request)
     {
         if ($request->isPost()) {
+
+            if ($this->user['distribut_level'] >= 3) {
+                return json(['status' => 0, 'msg' => '直销商不需要绑定推荐人', 'result' => null]);
+            }
+
+            if ($this->user['invite_uid'] > 0) {
+                return json(['status' => 0, 'msg' => '你已经有推荐人了，不能重复设置', 'result' => null]);
+            }
+
             $id = I('post.id/d');
 
             if ($id < 1) {
                 return json(['status' => 0, 'msg' => '缺少传参', 'result' => null]);
+            }
+
+            if ($id == $this->user_id) {
+                return json(['status' => 0, 'msg' => '不能设置成自己', 'result' => null]);
             }
 
             $userInfo = M('Users')->find($id);
@@ -656,14 +670,6 @@ class User extends Base
 
             if ($this->_hasRelationship($id)) {
                 return json(['status' => 0, 'msg' => '不能绑定和自己有关系的普通会员', 'result' => null]);
-            }
-
-            if ($id == $this->user_id) {
-                return json(['status' => 0, 'msg' => '不能设置成自己', 'result' => null]);
-            }
-
-            if ($this->user['invite_uid'] > 0) {
-                return json(['status' => 0, 'msg' => '你已经有推荐人了，不能重复设置', 'result' => null]);
             }
 
             $data = [];
@@ -1817,7 +1823,6 @@ class User extends Base
                 // ->where('is_zhixiao',1)
                 // ->where('is_lock',0)
                 ->find();
-
             if (!$user) {
                 return json(['status' => -1, 'msg' => '账号不存在，不能绑定']);
             }
@@ -2704,6 +2709,7 @@ class User extends Base
         $taskData = [];
         foreach ($taskList as $task) {
             $taskReward = $taskLogic->taskReward($task['id']);
+            $taskRewardData = [];
             foreach ($taskReward as $k => $reward) {
                 switch ($reward['reward_type']) {
                     case 1:
@@ -2722,13 +2728,14 @@ class User extends Base
                     default:
                         continue;
                 }
-                $taskData[$k] = [
+                $taskRewardData[$k] = [
                     'task_cate' => $reward['task_cate'],
                     'task_id' => $task['id'],
                     'task_title' => $task['title'],
                     'task_icon' => $task['icon'],
                     'reward_id' => $reward['reward_id'],
-                    'task_reward' => $reward_,
+                    'task_reward' => '+' . $reward_,
+                    'task_reward_type' => $reward['reward_type'],
                     'reward_desc' => $reward['description'],
                     'reward_cycle' => $reward['cycle'],
                     'reward_set' => $reward['invite_num'] != 0 ? $reward['invite_num'] : ($reward['order_num'] != 0 ? $reward['order_num'] : 0),
@@ -2748,9 +2755,14 @@ class User extends Base
                     $user_reward_times = M('task_log')
                         ->where(['task_id' => $task['id'], 'task_reward_id' => $reward['reward_id'], 'user_id' => $this->user_id])
                         ->count('id');
-                    $taskData[$k]['user_reward_set'] = $user_reward_times;
-                    $taskData[$k]['user_reward_times'] = $user_reward_times;
+                    $taskRewardData[$k]['user_reward_set'] = $user_reward_times;
+                    $taskRewardData[$k]['user_reward_times'] = $user_reward_times;
                 }
+            }
+            if (empty($taskData)) {
+                $taskData = $taskRewardData;
+            } else {
+                $taskData = array_merge($taskData, $taskRewardData);
             }
         }
         // 任务配置
@@ -2982,13 +2994,14 @@ class User extends Base
             'birthday' => $this->user['birthday'],
             'mobile' => $this->user['mobile'],
             'head_pic' => $this->user['head_pic'],
-            'type' => $this->user['type'],
+            'type' => $this->user['distribut_level'] >= 3 ? 2 : $this->user['type'],
             'invite_uid' => $this->user['invite_uid'],
             'is_distribut' => $this->user['is_distribut'],
             'is_lock' => $this->user['is_lock'],
             'level' => $this->user['distribut_level'],
             'level_name' => M('DistributLevel')->where('level_id', $this->user['distribut_level'])->getField('level_name'),
             'is_not_show_jk' => $this->user['is_not_show_jk'],  // 是否提示加入金卡弹窗
+            'is_not_show_invite' => $this->user['distribut_level'] >= 3 ? 1 : 0,  // 是否隐藏推荐人绑定
             'has_pay_pwd' => $this->user['paypwd'] ? 1 : 0,
             'is_app' => TokenLogic::getValue('is_app', $this->user['token']) ? 1 : 0,
             'token' => $this->user['token']

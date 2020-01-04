@@ -20,16 +20,16 @@ use think\Request;
 
 class User extends Base
 {
-  function jinka()
+    function jinka()
     {
-        $where = array('n.distribut_level'=>array('in',array(2,3)),'n.first_leader'=>array('gt',0));
+        $where = array('n.distribut_level' => array('in', array(2, 3)), 'n.first_leader' => array('gt', 0));
         $user_id = I('user_id');
-        if($user_id){
+        if ($user_id) {
             $where['n.first_leader'] = $user_id;
         }
 
         $distribut_level = I('distribut_level');
-        if($distribut_level){
+        if ($distribut_level) {
             $where['u.distribut_level'] = $distribut_level;
         }
 
@@ -38,46 +38,46 @@ class User extends Base
         $count = M('users')
             ->alias('n')
             ->field('n.first_leader,count(*) as count')
-            ->join('users u','u.user_id = n.first_leader')
+            ->join('users u', 'u.user_id = n.first_leader')
             ->where($where)
             ->group('n.first_leader')
-            ->having("count(*) >= ".$apply_check_num)
+            ->having("count(*) >= " . $apply_check_num)
             ->count();
 
 
-        $page_num = I('page_num',20,'int');
-        $Page  = new Page($count,$page_num);
+        $page_num = I('page_num', 20, 'int');
+        $Page = new Page($count, $page_num);
 
         $list = M('users')
             ->field('n.first_leader,count(*) as count')
             ->alias('n')
-            ->join('users u','u.user_id = n.first_leader')
+            ->join('users u', 'u.user_id = n.first_leader')
             ->where($where)
             ->group('n.first_leader')
-            ->limit($Page->firstRow.','.$Page->listRows)
-            ->having("count(*) >= ".$apply_check_num)
+            ->limit($Page->firstRow . ',' . $Page->listRows)
+            ->having("count(*) >= " . $apply_check_num)
             ->select();
 
-        if($list){
-            $user_ids = get_arr_column($list,'first_leader');
-            $users = M('users')->where(array('user_id'=>array('in',$user_ids)))->getField('user_id,nickname,user_name,distribut_level',true);
+        if ($list) {
+            $user_ids = get_arr_column($list, 'first_leader');
+            $users = M('users')->where(array('user_id' => array('in', $user_ids)))->getField('user_id,nickname,user_name,distribut_level', true);
 
-            $apply_customs = M('apply_customs')->where(array('user_id'=>array('in',$user_ids)))->getField('user_id,status,add_time',true);
+            $apply_customs = M('apply_customs')->where(array('user_id' => array('in', $user_ids)))->getField('user_id,status,add_time', true);
 
-            foreach($list as $k=>$v){
+            foreach ($list as $k => $v) {
                 $list[$k]['user_name'] = $users[$v['first_leader']]['user_name'];
                 $list[$k]['nickname'] = $users[$v['first_leader']]['nickname'];
-                if($users[$v['first_leader']]['distribut_level']==3){
+                if ($users[$v['first_leader']]['distribut_level'] == 3) {
                     $list[$k]['status_show'] = '金卡';
-                }else if(isset($apply_customs[$v['user_id']]['status'])){
+                } else if (isset($apply_customs[$v['user_id']]['status'])) {
                     $list[$k]['status_show'] = '申请中';
-                }else{
+                } else {
                     $list[$k]['status_show'] = 'VIP会员';
                 }
             }
         }
 
-        if(I('is_export')){
+        if (I('is_export')) {
             $strTable = '<table width="500" border="1">';
             $strTable .= '<tr>';
             $strTable .= '<td style="text-align:center;font-size:12px;width:120px;"> 商城用户id</td>';
@@ -92,12 +92,12 @@ class User extends Base
                 foreach ($list as $k => $val) {
                     $orderGoodsNum = 1;
                     $strTable .= '<tr>';
-                    $strTable .= '<td style="text-align:center;font-size:12px;" rowspan="'.$orderGoodsNum.'">&nbsp;'.$val['first_leader'].'</td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="'.$orderGoodsNum.'">'.$val['user_name'].' </td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="'.$orderGoodsNum.'">'.$val['nickname'].' </td>';
+                    $strTable .= '<td style="text-align:center;font-size:12px;" rowspan="' . $orderGoodsNum . '">&nbsp;' . $val['first_leader'] . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['user_name'] . ' </td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['nickname'] . ' </td>';
 
-                    $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="'.$orderGoodsNum.'">'.$val['count'].'</td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="'.$orderGoodsNum.'">'.$val['status_show'].'</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['count'] . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['status_show'] . '</td>';
                     $strTable .= '</tr>';
                 }
             }
@@ -108,97 +108,96 @@ class User extends Base
         }
 
 
-
-
-        $this->assign('distribut_level',$distribut_level);
-        $this->assign('page_num',$page_num);
-        $this->assign('count',$count);
-        $this->assign('user_id',$user_id);
-        $this->assign('show',$Page->show());
-        $this->assign('list',$list);
-        $this->assign('pager',$Page);
+        $this->assign('distribut_level', $distribut_level);
+        $this->assign('page_num', $page_num);
+        $this->assign('count', $count);
+        $this->assign('user_id', $user_id);
+        $this->assign('show', $Page->show());
+        $this->assign('list', $list);
+        $this->assign('pager', $Page);
         return $this->fetch();
     }
 
 
-    function apply_customs(){
+    function apply_customs()
+    {
         $where = array();
-        $status = I('status',-1,'int');
-        if($status!=-1){
+        $status = I('status', -1, 'int');
+        if ($status != -1) {
             $where['status'] = $status;
         }
 
         $user_id = I('user_id');
-        if($user_id){
+        if ($user_id) {
             $where['user_id'] = $user_id;
         }
 
         //时间
-        $field2 = I('field2','');
-        $from_time = I('from_time','');
-        $to_time = I('to_time','');
+        $field2 = I('field2', '');
+        $from_time = I('from_time', '');
+        $to_time = I('to_time', '');
 
-        if($from_time || $to_time){
-            $where[$field2] = whereTime($from_time,$to_time,86399);
+        if ($from_time || $to_time) {
+            $where[$field2] = whereTime($from_time, $to_time, 86399);
         }
-        $this->assign('field2',$field2);
+        $this->assign('field2', $field2);
         //姓名
-        $true_name = I('true_name','');
-        if($true_name){
+        $true_name = I('true_name', '');
+        if ($true_name) {
             $where['true_name'] = $true_name;
         }
 
-        $mobile = I('mobile','');
-        if($mobile){
+        $mobile = I('mobile', '');
+        if ($mobile) {
             $where['mobile'] = $mobile;
         }
 
 
         //账号
-        $id_card = I('id_card','');
-        if($id_card){
+        $id_card = I('id_card', '');
+        if ($id_card) {
             $where['id_card'] = $id_card;
         }
 
         //会员号
-        $referee_user_name = I('referee_user_name','');
-        if($referee_user_name){
-            $user = get_user_info($referee_user_name,5,'','user_id');
-            $where['referee_user_id'] = $user?$user['user_id']:0;
+        $referee_user_name = I('referee_user_name', '');
+        if ($referee_user_name) {
+            $user = get_user_info($referee_user_name, 5, '', 'user_id');
+            $where['referee_user_id'] = $user ? $user['user_id'] : 0;
         }
 
         $count = Db::name('apply_customs')->where($where)->count();
 
-        $page_num = I('page_num',20,'int');
-        $Page  = new Page($count,$page_num);
-        $list = Db::name('apply_customs')->where($where)->order("id desc")->limit($Page->firstRow.','.$Page->listRows)->select();
+        $page_num = I('page_num', 20, 'int');
+        $Page = new Page($count, $page_num);
+        $list = Db::name('apply_customs')->where($where)->order("id desc")->limit($Page->firstRow . ',' . $Page->listRows)->select();
 
         $status_arr = array(
-            0=>'待审核',
-            1=>'已完成',
-            2=>'已撤销'
+            0 => '待审核',
+            1 => '已完成',
+            2 => '已撤销'
         );
-        foreach($list as $k=>$v){
+        foreach ($list as $k => $v) {
             $list[$k]['status_show'] = $status_arr[$v['status']];
-            $list[$k]['add_time_show'] = $v['add_time']?date('Y-m-d H:i:s',$v['add_time']):'';
-            $list[$k]['success_time_show'] = $v['success_time']?date('Y-m-d H:i:s',$v['success_time']):'';
-            $list[$k]['cancel_time_show'] = $v['cancel_time']?date('Y-m-d H:i:s',$v['cancel_time']):'';
+            $list[$k]['add_time_show'] = $v['add_time'] ? date('Y-m-d H:i:s', $v['add_time']) : '';
+            $list[$k]['success_time_show'] = $v['success_time'] ? date('Y-m-d H:i:s', $v['success_time']) : '';
+            $list[$k]['cancel_time_show'] = $v['cancel_time'] ? date('Y-m-d H:i:s', $v['cancel_time']) : '';
         }
 
-        $this->assign('page_num',$page_num);
+        $this->assign('page_num', $page_num);
 
-        $this->assign('true_name',$true_name);
-        $this->assign('user_id',$user_id);
-        $this->assign('id_card',$id_card);
-        $this->assign('referee_user_name',$referee_user_name);
-        $this->assign('to_time',$to_time);
-        $this->assign('from_time',$from_time);
-        $this->assign('show',$Page->show());
-        $this->assign('list',$list);
-        $this->assign('pager',$Page);
-        $this->assign('status',$status);
-        $this->assign('mobile',$mobile);
-        $this->assign('status_arr',$status_arr);
+        $this->assign('true_name', $true_name);
+        $this->assign('user_id', $user_id);
+        $this->assign('id_card', $id_card);
+        $this->assign('referee_user_name', $referee_user_name);
+        $this->assign('to_time', $to_time);
+        $this->assign('from_time', $from_time);
+        $this->assign('show', $Page->show());
+        $this->assign('list', $list);
+        $this->assign('pager', $Page);
+        $this->assign('status', $status);
+        $this->assign('mobile', $mobile);
+        $this->assign('status_arr', $status_arr);
         return $this->fetch();
     }
 
@@ -221,13 +220,13 @@ class User extends Base
             $list = array_reverse($list);
             $user_id_arr = get_arr_column($list, 'user_id');
             if (!empty($user_id_arr)) {
-                $first_leader = DB::query('select first_leader,count(1) as count  from __PREFIX__users where first_leader in('.implode(',', $user_id_arr).')  group by first_leader');
+                $first_leader = DB::query('select first_leader,count(1) as count  from __PREFIX__users where first_leader in(' . implode(',', $user_id_arr) . ')  group by first_leader');
                 $first_leader = convert_arr_key($first_leader, 'first_leader');
 
-                $second_leader = DB::query('select second_leader,count(1) as count  from __PREFIX__users where second_leader in('.implode(',', $user_id_arr).')  group by second_leader');
+                $second_leader = DB::query('select second_leader,count(1) as count  from __PREFIX__users where second_leader in(' . implode(',', $user_id_arr) . ')  group by second_leader');
                 $second_leader = convert_arr_key($second_leader, 'second_leader');
 
-                $third_leader = DB::query('select third_leader,count(1) as count  from __PREFIX__users where third_leader in('.implode(',', $user_id_arr).')  group by third_leader');
+                $third_leader = DB::query('select third_leader,count(1) as count  from __PREFIX__users where third_leader in(' . implode(',', $user_id_arr) . ')  group by third_leader');
                 $third_leader = convert_arr_key($third_leader, 'third_leader');
             }
             $this->assign('first_leader', $first_leader);
@@ -291,7 +290,7 @@ class User extends Base
             $condition['user_id'] = $ausers ? ['in', get_arr_column($ausers, 'user_id')] : -1;
         }
 
-        $sort_order = I('order_by').' '.I('sort');
+        $sort_order = I('order_by') . ' ' . I('sort');
 
         $model = M('users');
         $count = $model->where($condition)->count();
@@ -303,17 +302,17 @@ class User extends Base
             }
         }*/
 
-        $userList = $model->where($condition)->order($sort_order)->limit($Page->firstRow.','.$Page->listRows)->select();
+        $userList = $model->where($condition)->order($sort_order)->limit($Page->firstRow . ',' . $Page->listRows)->select();
 
         $user_id_arr = get_arr_column($userList, 'user_id');
         if (!empty($user_id_arr)) {
-            $first_leader = DB::query('select first_leader,count(1) as count  from __PREFIX__users where first_leader in('.implode(',', $user_id_arr).')  group by first_leader');
+            $first_leader = DB::query('select first_leader,count(1) as count  from __PREFIX__users where first_leader in(' . implode(',', $user_id_arr) . ')  group by first_leader');
             $first_leader = convert_arr_key($first_leader, 'first_leader');
 
-            $second_leader = DB::query('select second_leader,count(1) as count  from __PREFIX__users where second_leader in('.implode(',', $user_id_arr).')  group by second_leader');
+            $second_leader = DB::query('select second_leader,count(1) as count  from __PREFIX__users where second_leader in(' . implode(',', $user_id_arr) . ')  group by second_leader');
             $second_leader = convert_arr_key($second_leader, 'second_leader');
 
-            $third_leader = DB::query('select third_leader,count(1) as count  from __PREFIX__users where third_leader in('.implode(',', $user_id_arr).')  group by third_leader');
+            $third_leader = DB::query('select third_leader,count(1) as count  from __PREFIX__users where third_leader in(' . implode(',', $user_id_arr) . ')  group by third_leader');
             $third_leader = convert_arr_key($third_leader, 'third_leader');
         }
         $this->assign('first_leader', $first_leader);
@@ -355,12 +354,16 @@ class User extends Base
                 exit($this->error('会员不存在'));
             }
 
+            if ($user['distribut_level'] >= 3) {
+                exit($this->error('直销商账号不能合并其他账号'));
+            }
+
             if ($user['merge_uid'] > 0) {
                 exit($this->error('要合并的用户ID此前已经合并过报单系统用户，不能多次合并'));
             }
 
-            $apply_customs = M('apply_customs')->where(['user_id' => $uid,'status'=>0])->find();
-            if($apply_customs){
+            $apply_customs = M('apply_customs')->where(['user_id' => $uid, 'status' => 0])->find();
+            if ($apply_customs) {
                 exit($this->error('该会员在申请金卡，不能进行合并操作'));
             }
 
@@ -374,12 +377,12 @@ class User extends Base
                     exit($this->error('合并报单系统用户ID不能与当前用户ID一致'));
                 }
 
-                if($user_name){
+                if ($user_name) {
                     $c = M('users')->where("user_id = $merge_uid and user_name = '$user_name' and is_lock = 0")->count();
                     !$c && exit($this->error('合并报单系统用户不存在,或者被冻结，不能合并！'));
 
                     $c = M('users')->where("user_id = $merge_uid and user_name = '$user_name' and is_lock = 0")->find();
-                }else{
+                } else {
                     $c = M('users')->where("user_id = $merge_uid and is_lock = 0")->count();
                     !$c && exit($this->error('合并报单系统用户不存在,或者被冻结，不能合并！'));
 
@@ -402,13 +405,12 @@ class User extends Base
                     $this->error('合并的报单系统用户已经新用户被绑定过老用户，不能合并！');
                 }
 
-                if($c['user_name']){
-                    $cusers = M('users')->where(array("user_name"=>$c['user_name']))->count();
-                    if($cusers>=2){
-                        $this->error($c['user_name'].'已合并多次，禁止多次合并');
+                if ($c['user_name']) {
+                    $cusers = M('users')->where(array("user_name" => $c['user_name']))->count();
+                    if ($cusers >= 2) {
+                        $this->error($c['user_name'] . '已合并多次，禁止多次合并');
                     }
                 }
-
 
                 $update = [];
                 $update['invite_uid'] = $update['first_leader'] = $c['first_leader'];
@@ -469,7 +471,7 @@ class User extends Base
             if ('' == $password && '' == $password2) {
                 unset($_POST['password']);
             } else {
-                $_POST['password'] = encrypt($_POST['password']);
+                $_POST['password'] = systemEncrypt($_POST['password']);
             }
             $id = $_POST['invite_uid'];
             $_POST['is_distribut'] = 0;
@@ -477,12 +479,12 @@ class User extends Base
                 $_POST['is_distribut'] = 1;
             }
 
-            if($user['user_name']==''){
-                if($user['distribut_level']!=3 && $_POST['distribut_level']==3){
+            if ($user['user_name'] == '') {
+                if ($user['distribut_level'] != 3 && $_POST['distribut_level'] == 3) {
                     $this->error('不可以设置为金卡级别');
                 }
 
-                if($user['distribut_level']==3 && $_POST['distribut_level']!=3){
+                if ($user['distribut_level'] == 3 && $_POST['distribut_level'] != 3) {
                     $this->error('不可以将金卡级别降低');
                 }
             }
@@ -529,9 +531,9 @@ class User extends Base
 
             $row = M('users')->where(['user_id' => $uid])->save($_POST);
 
-            if($_POST['distribut_level']==1){
+            if ($_POST['distribut_level'] == 1) {
                 //将未发放的提成  改为0
-                M('RebateLog')->where(array('user_id'=>$uid,'status'=>array('in',array(0,1,2))))->update(array('point'=>0,'money'=>0,'remark'=>'降级，追回佣金'));
+                M('RebateLog')->where(array('user_id' => $uid, 'status' => array('in', array(0, 1, 2))))->update(array('point' => 0, 'money' => 0, 'remark' => '降级，追回佣金'));
             }
             // if($row)
             exit($this->success('修改成功'));
@@ -557,7 +559,7 @@ class User extends Base
                 $this->success('添加成功', U('User/index'));
                 exit;
             }
-            $this->error('添加失败,'.$res['msg'], U('User/index'));
+            $this->error('添加失败,' . $res['msg'], U('User/index'));
         }
 
         return $this->fetch();
@@ -716,7 +718,7 @@ class User extends Base
         //获取记录总数
         $count = M('account_log')->where(['user_id' => $user_id])->count();
         $page = new Page($count);
-        $lists = M('account_log')->where(['user_id' => $user_id])->order('change_time desc')->limit($page->firstRow.','.$page->listRows)->select();
+        $lists = M('account_log')->where(['user_id' => $user_id])->order('change_time desc')->limit($page->firstRow . ',' . $page->listRows)->select();
 
         $this->assign('user_id', $user_id);
         $this->assign('page', $page->show());
@@ -798,7 +800,7 @@ class User extends Base
         }
         $count = M('recharge')->where($map)->count();
         $page = new Page($count);
-        $lists = M('recharge')->where($map)->order('ctime desc')->limit($page->firstRow.','.$page->listRows)->select();
+        $lists = M('recharge')->where($map)->order('ctime desc')->limit($page->firstRow . ',' . $page->listRows)->select();
         $this->assign('page', $page->show());
         $this->assign('pager', $page);
         $this->assign('lists', $lists);
@@ -812,7 +814,7 @@ class User extends Base
         $this->assign('act', $act);
         $level_id = I('get.level_id');
         if ($level_id) {
-            $level_info = D('user_level')->where('level_id='.$level_id)->find();
+            $level_info = D('user_level')->where('level_id=' . $level_id)->find();
             $this->assign('info', $level_info);
         }
 
@@ -823,7 +825,7 @@ class User extends Base
     {
         $Ad = M('user_level');
         $p = $this->request->param('p');
-        $res = $Ad->order('level_id')->page($p.',10')->select();
+        $res = $Ad->order('level_id')->page($p . ',10')->select();
         if ($res) {
             foreach ($res as $val) {
                 $list[] = $val;
@@ -862,7 +864,7 @@ class User extends Base
             if (!$userLevelValidate->scene('edit')->batch()->check($data)) {
                 $return = ['status' => 0, 'msg' => '编辑失败', 'result' => $userLevelValidate->getError()];
             } else {
-                $r = D('user_level')->where('level_id='.$data['level_id'])->save($data);
+                $r = D('user_level')->where('level_id=' . $data['level_id'])->save($data);
                 if (false !== $r) {
                     $discount = $data['discount'] / 100;
                     D('users')->where(['level' => $data['level_id']])->save(['discount' => $discount]);
@@ -873,7 +875,7 @@ class User extends Base
             }
         }
         if ('del' == $data['act']) {
-            $r = D('user_level')->where('level_id='.$data['level_id'])->delete();
+            $r = D('user_level')->where('level_id=' . $data['level_id'])->delete();
             if (false !== $r) {
                 $return = ['status' => 1, 'msg' => '删除成功', 'result' => ''];
             } else {
@@ -1048,7 +1050,7 @@ class User extends Base
         $create_time = I('create_time');
         $ids = I('ids');
         $create_time = str_replace('+', ' ', $create_time);
-        $create_time2 = $create_time ? $create_time : date('Y-m-d', strtotime('-1 year')).' - '.date('Y-m-d', strtotime('+1 day'));
+        $create_time2 = $create_time ? $create_time : date('Y-m-d', strtotime('-1 year')) . ' - ' . date('Y-m-d', strtotime('+1 day'));
         $create_time3 = explode(' - ', $create_time2);
         $this->assign('start_time', $create_time3[0]);
         $this->assign('end_time', $create_time3[1]);
@@ -1063,8 +1065,8 @@ class User extends Base
             $where['w.status'] = ['lt', 2];
         }
         $user_id && $where['u.user_id'] = $user_id;
-        $realname && $where['w.realname'] = ['like', '%'.$realname.'%'];
-        $bank_card && $where['w.bank_card'] = ['like', '%'.$bank_card.'%'];
+        $realname && $where['w.realname'] = ['like', '%' . $realname . '%'];
+        $bank_card && $where['w.bank_card'] = ['like', '%' . $bank_card . '%'];
         $export = I('export');
         if (1 == $export) {
             if ($ids) {
@@ -1088,14 +1090,14 @@ class User extends Base
             if (is_array($remittanceList)) {
                 foreach ($remittanceList as $k => $val) {
                     $strTable .= '<tr>';
-                    $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['user_id'].'</td>';
-                    $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['nickname'].'</td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['money'].' </td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['bank_name'].'</td>';
-                    $strTable .= '<td style="vnd.ms-excel.numberformat:@">'.$val['bank_card'].'</td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['realname'].'</td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">'.date('Y-m-d H:i:s', $val['create_time']).'</td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['remark'].'</td>';
+                    $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['user_id'] . '</td>';
+                    $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['nickname'] . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['money'] . ' </td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['bank_name'] . '</td>';
+                    $strTable .= '<td style="vnd.ms-excel.numberformat:@">' . $val['bank_card'] . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['realname'] . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . date('Y-m-d H:i:s', $val['create_time']) . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['remark'] . '</td>';
                     $strTable .= '</tr>';
                 }
             }
@@ -1107,12 +1109,12 @@ class User extends Base
         $count = Db::name('withdrawals')->alias('w')->join('__USERS__ u', 'u.user_id = w.user_id', 'INNER')->where($where)->count();
         $Page = new Page($count, 20);
         $list = Db::name('withdrawals')
-        ->alias('w')
-        ->field('w.*,u.nickname')
-        ->join('__USERS__ u', 'u.user_id = w.user_id', 'INNER')
-        ->where($where)->order('w.id desc')
-        ->limit($Page->firstRow.','.$Page->listRows)
-        ->select();
+            ->alias('w')
+            ->field('w.*,u.nickname')
+            ->join('__USERS__ u', 'u.user_id = w.user_id', 'INNER')
+            ->where($where)->order('w.id desc')
+            ->limit($Page->firstRow . ',' . $Page->listRows)
+            ->select();
 
         $this->assign('create_time', $create_time2);
         $show = $Page->show();
@@ -1205,7 +1207,7 @@ class User extends Base
         }
         $atype = I('atype');
         if (is_array($id)) {
-            $withdrawals = M('withdrawals')->where('id in ('.implode(',', $id).')')->select();
+            $withdrawals = M('withdrawals')->where('id in (' . implode(',', $id) . ')')->select();
         } else {
             $withdrawals = M('withdrawals')->where(['id' => $id])->select();
         }
@@ -1231,7 +1233,7 @@ class User extends Base
         }
         if ($alipay['batch_num'] > 0) {
             //支付宝在线批量付款
-            include_once PLUGIN_PATH.'payment/alipay/alipay.class.php';
+            include_once PLUGIN_PATH . 'payment/alipay/alipay.class.php';
             $alipay_obj = new \alipay();
             $alipay_obj->transfer($alipay);
         }
@@ -1269,7 +1271,7 @@ class User extends Base
     {
         $where = ' 1 = 1 '; // 搜索条件
 
-        ('' !== I('mobile')) && $where = "$where and u.mobile = ".I('mobile');
+        ('' !== I('mobile')) && $where = "$where and u.mobile = " . I('mobile');
 
         $count = M('user_sign')->where($where)->count();
         $Page = new AjaxPage($count, 10);
@@ -1277,13 +1279,13 @@ class User extends Base
         $show = $Page->show();
 
         $list = M('user_sign')
-        ->field('us.*,u.mobile,u.nickname')
-        ->alias('us')
-        ->join('__USERS__ u', 'us.user_id = u.user_id')
-        ->where($where)
-        ->limit($Page->firstRow.','.$Page->listRows)
-        ->order('id desc')
-        ->select();
+            ->field('us.*,u.mobile,u.nickname')
+            ->alias('us')
+            ->join('__USERS__ u', 'us.user_id = u.user_id')
+            ->where($where)
+            ->limit($Page->firstRow . ',' . $Page->listRows)
+            ->order('id desc')
+            ->select();
 
         $this->assign('list', $list);
         $this->assign('page', $show); // 赋值分页输出
@@ -1345,7 +1347,7 @@ class User extends Base
                 'head_pic' => '',
                 'nickname' => ''
             ]);
-            if($o){
+            if ($o) {
                 M('bind_log')->add([
                     'user_id' => $user_id,
                     'bind_user_id' => 0,

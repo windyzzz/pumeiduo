@@ -1527,6 +1527,7 @@ class Order extends Base
                 'name' => $coupon['coupon']['name'],
                 'money' => $coupon['coupon']['money'],
                 'condition' => $coupon['coupon']['condition'],
+                'use_type' => $coupon['coupon']['use_type'],
                 'is_usual' => $coupon['coupon']['is_usual'],
                 'use_start_time' => date('Y-m-d', $coupon['coupon']['use_start_time']),
                 'use_end_time' => date('Y-m-d', $coupon['coupon']['use_end_time']),
@@ -1599,12 +1600,13 @@ class Order extends Base
             // 支付数据
             $payReturn = $payLogic->toArray();
             if (!empty($couponList)) {
+                list($prom_type, $prom_id) = $payLogic->getPromInfo();
                 // 筛选优惠券
                 foreach ($couponList as $key => $coupon) {
                     $canCoupon = true;
                     if ($coupon['is_usual'] == '0') {
                         // 不可以叠加优惠
-                        if ($payReturn['order_prom_amount'] > 0) {
+                        if ($payReturn['order_prom_amount'] > 0 || in_array($prom_type, [1, 2])) {
                             $canCoupon = false;
                         }
                     }
@@ -1612,12 +1614,12 @@ class Order extends Base
                         unset($couponList[$key]);
                         continue;
                     }
-                    unset($couponList[$key]['condition']);
                     unset($couponList[$key]['is_usual']);
                 }
             }
             // 商品列表 赠品列表 加价购列表
             $payList = collection($payLogic->getPayList())->toArray();
+
             $goodsList = [];
             $giftList = $payLogic->getPromGiftList();
             foreach ($payList as $k => $list) {
@@ -1632,8 +1634,9 @@ class Order extends Base
                     'original_img' => $goods['original_img'],
                     'goods_num' => $list['goods_num'],
                     'shop_price' => $goods['shop_price'],
-                    'exchange_integral' => $list['use_integral'],
+                    'exchange_integral' => $list['use_integral'] ?? 0,
                     'exchange_price' => '',
+                    'prom_type' => $list['prom_type'] ?? 0,
                     'gift_goods' => [],
                 ];
                 // 处理显示金额
@@ -1882,10 +1885,11 @@ class Order extends Base
             // 支付数据
             $payReturn = $payLogic->toArray();
             if (!empty($couponList)) {
+                list($prom_type, $prom_id) = $payLogic->getPromInfo();
                 // 筛选优惠券
                 foreach ($couponList as $key => $coupon) {
                     $canCoupon = true;
-                    if ($coupon['is_usual'] == '0') {
+                    if ($coupon['is_usual'] == '0' || in_array($prom_type, [1, 2])) {
                         // 不可以叠加优惠
                         if ($payReturn['order_prom_amount'] > 0) {
                             $canCoupon = false;

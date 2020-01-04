@@ -915,13 +915,9 @@ class Pay
      *
      * @param $coupon_id
      */
-    public function useCouponById($coupon_id, $getPayList = array())
+    public function useCouponById($coupon_id, $payList = array())
     {
         if ($coupon_id > 0) {
-//            list($prom_type, $prom_id) = $this->getPromInfo();
-//            if ($prom_type != 6 && $prom_id > 0) {
-//                throw new TpshopException('计算订单价格', 0, ['status' => -1, 'msg' => '现金券不能参与活动商品使用！', 'result' => ['']]);
-//            }
             $couponList = new CouponList();
             $where = array(
                 'uid' => $this->user['user_id'],
@@ -934,8 +930,9 @@ class Pay
                 if ($coupon) {
                     $canCoupon = true;
                     if ($coupon['is_usual'] == '0') {
+                        list($prom_type, $prom_id) = $this->getPromInfo();
                         // 不可以叠加优惠
-                        if ($this->orderPromAmount > 0) {
+                        if ($this->orderPromAmount > 0 || in_array($prom_type, [1, 2])) {
                             $canCoupon = false;
                         }
                     }
@@ -950,7 +947,7 @@ class Pay
                             case 4:
                                 $this->couponPrice = '0';
                                 $goods_ids = Db::name('goods_coupon')->where(array('coupon_id' => $userCoupon['cid']))->getField('goods_id', true);
-                                foreach ($getPayList as $k => $v) {
+                                foreach ($payList as $k => $v) {
                                     if (in_array($v['goods_id'], $goods_ids)) {
                                         $dis_price = bcmul(bcdiv(bcmul($v['member_goods_price'], $coupon['money'], 2), 10, 2), $v['goods_num'], 2);
                                         $couponPrice = bcsub(bcmul($v['member_goods_price'], $v['goods_num'], 2), $dis_price, 2);
