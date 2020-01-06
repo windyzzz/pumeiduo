@@ -680,17 +680,19 @@ class User extends Base
             M('users')->where('first_leader', $this->user_id)->update(['second_leader' => $data['first_leader'], 'third_leader' => $data['second_leader']]);
             M('users')->where('second_leader', $this->user_id)->update(['third_leader' => $data['first_leader']]);
             M('users')->where(['user_id' => $this->user_id])->save($data);
+            // 更新缓存
+            $user = Db::name('users')->where('user_id', $this->user_id)->find();
+            TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
 
             // 邀请送积分
             $invite_integral = tpCache('basic.invite_integral');
             accountLog($id, 0, $invite_integral, '邀请用户奖励积分', 0, 0, '', 0, 7);
 
             // 邀请任务
-            // $user = M('users')->find($this->user_id);
-            // $TaskLogic = new \app\common\logic\TaskLogic(2);
-            // $TaskLogic->setUser($user);
-            // $TaskLogic->setDistributId($user);
-            // $TaskLogic->doInviteAfter();
+            $TaskLogic = new \app\common\logic\TaskLogic(2);
+            $TaskLogic->setUser($user);
+            $TaskLogic->setDistributId($user);
+            $TaskLogic->doInviteAfter();
 
             return json(['status' => 1, 'msg' => 'success', 'result' => null]);
         }
@@ -1056,13 +1058,16 @@ class User extends Base
 
                 return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
             } elseif (2 == $step) {
-                $check = TokenLogic::getCache('validate_code', $this->user['mobile']);
-                if (empty($check)) {
-                    return json(['status' => 0, 'msg' => '验证码还未验证通过', 'result' => null]);
+                $res = $logic->check_validate_code($code, $old_mobile, 'phone', $session_id, $scene);
+                if (!$res && 1 != $res['status']) {
+                    return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
                 }
-                if ($confirm_mobile != $mobile) {
-                    return json(['status' => 0, 'msg' => '两次输入的手机号码不一样', 'result' => null]);
+
+                //检查原手机是否正确
+                if (1 == $user_info['mobile_validated'] && $old_mobile != $user_info['mobile']) {
+                    return json(['status' => 0, 'msg' => '原手机号码错误', 'result' => null]);
                 }
+
                 //验证有效期
                 if (!$logic->update_email_mobile($mobile, $this->user_id, 2)) {
                     return json(['status' => 0, 'msg' => '手机已存在', 'result' => null]);
@@ -1070,8 +1075,6 @@ class User extends Base
 
                 return json(['status' => 1, 'msg' => '修改成功', 'result' => null]);
             }
-
-            //验证手机和验证码
         }
 
         return json(['status' => -1, 'msg' => '请求方式出错', 'result' => null]);
@@ -2732,7 +2735,6 @@ class User extends Base
                     'task_cate' => $reward['task_cate'],
                     'task_id' => $task['id'],
                     'task_title' => $task['title'],
-                    'task_icon' => $task['icon'],
                     'reward_id' => $reward['reward_id'],
                     'task_reward' => '+' . $reward_,
                     'task_reward_type' => $reward['reward_type'],
@@ -2799,7 +2801,7 @@ class User extends Base
                         break;
                     case 0:
                         // 一次性任务
-                        if ($data['user_reward_times'] >= 0) {
+                        if ($data['user_reward_times'] > 0) {
                             $data['is_finished'] = 1;
                         } else {
                             $data['is_finished'] = 0;

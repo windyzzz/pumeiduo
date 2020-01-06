@@ -598,7 +598,7 @@ function check_email($email)
 }
 
 /**
- *   实现中文字串截取无乱码的方法.
+ * 实现中文字串截取无乱码的方法.
  */
 function getSubstr($string, $start, $length)
 {

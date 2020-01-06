@@ -77,13 +77,13 @@ class Task extends Base
                 ];
                 $this->ajaxReturn($return_arr);
             }
-            $rewardType = [];
-            foreach ($data['reward'] as $reward) {
-                if (!empty($rewardType) && !in_array($reward['reward_type'], $rewardType)) {
-                    $this->ajaxReturn(['status' => -1, 'msg' => '任务奖励类型要统一']);
-                }
-                $rewardType[] = $reward['reward_type'];
-            }
+//            $rewardType = [];
+//            foreach ($data['reward'] as $reward) {
+//                if (!empty($rewardType) && !in_array($reward['reward_type'], $rewardType)) {
+//                    $this->ajaxReturn(['status' => -1, 'msg' => '任务奖励类型要统一']);
+//                }
+//                $rewardType[] = $reward['reward_type'];
+//            }
 
             try {
                 Db::startTrans();

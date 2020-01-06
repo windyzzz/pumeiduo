@@ -376,7 +376,7 @@ class Order extends Base
         $orderData = [
             'order_id' => $orderInfo['order_id'],
             'order_sn' => $orderInfo['order_sn'],
-            'transaction_id' => $orderInfo['transaction_id'],
+            'transaction_id' => $orderInfo['transaction_id'] ?? '',
             'order_status' => $orderInfo['order_status'],
             'pay_status' => $orderInfo['order_status'],
             'shipping_status' => $orderInfo['order_status'],

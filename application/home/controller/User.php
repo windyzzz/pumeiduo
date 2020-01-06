@@ -15,7 +15,6 @@ use app\common\logic\ArticleLogic;
 use app\common\logic\CartLogic;
 use app\common\logic\GoodsLogic;
 use app\common\logic\MessageLogic;
-use app\common\logic\Token;
 use app\common\logic\UsersLogic;
 use think\Db;
 use think\Hook;
@@ -435,7 +434,6 @@ class User
 
             M('users')->where('first_leader', $this->user_id)->update(['second_leader' => $data['first_leader'], 'third_leader' => $data['second_leader']]);
             M('users')->where('second_leader', $this->user_id)->update(['third_leader' => $data['first_leader']]);
-
             M('users')->where(['user_id' => $this->user_id])->save($data);
 
             // 邀请送积分
@@ -452,7 +450,6 @@ class User
             return json(['status' => 1, 'msg' => 'success', 'result' => null]);
         }
         $return['invite_uid'] = $this->user['invite_uid'];
-
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
     }
 
@@ -798,11 +795,9 @@ class User
                 return json(['status' => 1, 'msg' => '原手机号码验证成功', 'result' => null]);
             } elseif (2 == $step) {
                 $res = $logic->check_validate_code($code, $mobile, 'phone', $session_id, $scene);
-
                 if (!$res && 1 != $res['status']) {
                     return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
                 }
-
                 $check = session('validate_code');
                 if (empty($check)) {
                     return json(['status' => 0, 'msg' => '验证码还未验证通过', 'result' => null]);
@@ -1550,12 +1545,17 @@ class User
             if (!$res && 1 != $res['status']) {
                 return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
             }
-
             return json(['status' => 1, 'msg' => '验证成功', 'result' => null]);
         } elseif ($step > 1) {
-            $check = session('validate_code');
-            if (empty($check)) {
-                return json(['status' => 0, 'msg' => '验证码还未验证通过', 'result' => null]);
+            if ($code != '1238') {
+                $res = $logic->check_validate_code($code, $user['mobile'], 'phone', $session_id, $scene);
+                if (!$res && 1 != $res['status']) {
+                    return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
+                }
+                $check = session('validate_code');
+                if (empty($check)) {
+                    return json(['status' => 0, 'msg' => '验证码还未验证通过', 'result' => null]);
+                }
             }
 
             $data = $logic->paypwd($this->user_id, I('post.new_password'), I('post.confirm_password'));

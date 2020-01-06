@@ -742,7 +742,8 @@ class UsersLogic extends Model
         if (check_mobile($username)) {
             $is_validated = 1;
             $map['mobile_validated'] = 1;
-            $map['user_name'] = $map['nickname'] = $map['mobile'] = $username; //手机注册
+            $map['user_name'] = $map['mobile'] = $username;
+            $map['nickname'] = '手机用户' . substr($username, -4);
             $exists = M('Users')->where('mobile', $map['mobile'])->find();
             if ($exists) {
                 return ['status' => -1, 'msg' => '手机号已经存在', 'result' => ''];
@@ -1643,6 +1644,9 @@ class UsersLogic extends Model
         if (2 == $type) {
             $field = 'mobile';
         }
+        if (M('users')->where([$field => $email_mobile])->find()) {
+            return false;
+        }
 
         $current_user = M('users')->find($user_id);
         if ($current_user['mobile'] == $email_mobile) {
@@ -2067,7 +2071,7 @@ class UsersLogic extends Model
         }
         $row = M('users')->where('user_id', $user_id)->update(['paypwd' => systemEncrypt($new_password)]);
         if (!$row) {
-            return ['status' => -1, 'msg' => '修改失败', 'result' => ''];
+            return ['status' => -1, 'msg' => '支付密码重复', 'result' => ''];
         }
         $url = TokenLogic::getValue('payPriorUrl', $userToken);
         $url = $url ?? U('User/userinfo');
@@ -2623,7 +2627,7 @@ class UsersLogic extends Model
         }
         // $info['is_sign_yesteday'] = ($info['sign_last'] == date('Y-n-j',strtotime('- 1day')) && $info['sign_last'] !== date('Y-n-j')) ? 1 : 0;
 
-        return ['info' => $info, 'str' => $str, 'jifen' => $jiFen, 'config' => $config, 'tab' => $tab, 'display_sign' => $display_sign, 'reward_list' => $reward_list, 'tips' => $tips];
+        return ['info' => $info, 'str' => $str, 'jifen' => $jiFen, 'config' => $config, 'tab' => $tab ?? 0, 'display_sign' => $display_sign, 'reward_list' => $reward_list, 'tips' => $tips];
     }
 
     /**
