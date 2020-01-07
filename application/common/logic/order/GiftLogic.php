@@ -66,11 +66,8 @@ class GiftLogic
     public function getGoodsList()
     {
         $goods_list = [];
-
-
         if ($this->activityList)
         {
-
             // 1.先找出所有的商品的分类，相应信息存放在categoryList数组中
             foreach ($this->goodsList as $v)
             {
@@ -177,6 +174,8 @@ class GiftLogic
                         // 符合奖励条件
                         if ($rv['money'] <= $this->money) {
                             $goods_list[] = [
+                                'reward_id' => $rv['reward_id'],
+                                'description' => $rv['description'],
                                 'goods_id' => $v['goods_id'],
                                 'item_id' => $v['item_id'],
                                 'goods_num' => $rv['reward_num'],
@@ -222,6 +221,8 @@ class GiftLogic
                 $cartLogic->setType(2);
                 $cartLogic->setCartType(0);
                 $buyGoods = $cartLogic->buyNow();
+                $buyGoods['gift_reward_id'] = $av['reward_id'];
+                $buyGoods['gift_description'] = $av['description'];
                 $arr[$ak] = $buyGoods;
             }
 

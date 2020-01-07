@@ -30,7 +30,9 @@ class CreateShareSetting extends Migrator
     {
         $this->table('share_setting')
             ->addColumn('type', 'integer', ['limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'comment' => '类型：1推荐码 2商品 3活动文章'])
-            ->addColumn('content', 'string', ['comment' => '分享内容'])
+            ->addColumn('title', 'string', ['comment' => '标题'])
+            ->addColumn('content', 'text', ['comment' => '内容'])
+            ->addColumn('image', 'string', ['null' => true, 'comment' => '图片'])
             ->addColumn('is_open', 'integer', ['default' => 1, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'comment' => '是否开启'])
             ->create();
     }

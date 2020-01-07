@@ -259,7 +259,7 @@ class Api extends Base
         $type = isset($request['shipping_code']) ? $request['shipping_code'] : I('shipping_code', '');
         $queryNo = isset($request['queryNo']) ? $request['queryNo'] : I('queryNo', '');
         if (!$queryNo) {
-            switch ($out){
+            switch ($out) {
                 case 'json':
                     return json(['status' => -1, 'msg' => '参数有误', 'result' => '']);
                 default:
@@ -298,7 +298,7 @@ class Api extends Base
         */
         $data = json_decode($output, true);
 
-        switch ($out){
+        switch ($out) {
             case 'json':
                 return json($data);
             default:

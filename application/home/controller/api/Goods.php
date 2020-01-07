@@ -48,9 +48,10 @@ class Goods extends Base
 
     public function getShareImage()
     {
+        $params['user_token'] = $this->userToken;
         Hook::exec('app\\home\\behavior\\CheckAuth', 'run', $params);
 
-        $user = session('user');
+        $user = $this->user;
         $user_id = $user['user_id'];
 
         $goods_id = I('goods_id/d');
@@ -220,10 +221,6 @@ class Goods extends Base
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
         $goodsLogic = new GoodsLogic();
-        if ($this->user) {
-            // 用户浏览记录
-            $goodsLogic->add_visit_log($this->user_id, $goods);
-        }
         // 判断商品性质
         $flashSale = Db::name('flash_sale fs')->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
             ->where(['fs.goods_id' => $goods_id, 'fs.start_time' => ['<=', time()], 'fs.end_time' => ['>=', time()], 'fs.is_end' => 0])
@@ -283,7 +280,8 @@ class Goods extends Base
         if ($goodsTab) {
             $goods['tabs'] = $goodsTab;
         }
-        $goods['goods_images_list'] = M('GoodsImages')->where('goods_id', $goods_id)->select(); //商品缩略图
+        $goods['goods_images_list'] = M('GoodsImages')->where('goods_id', $goods_id)->select(); // 商品图片列表
+        $goods['share_goods_image'] = !empty($goods['goods_images_list']) ? $goods['goods_images_list'][0]['image_url'] : ''; // 商品分享图
         // 规格参数
         $specData = $goodsLogic->get_spec_new($goods_id, $itemId);
         $goods['spec'] = $specData['spec'];
@@ -377,23 +375,34 @@ class Goods extends Base
         }
         $goods['coupon'] = array_values($goods['coupon']);
         $goods['freight_free'] = tpCache('shopping.freight_free'); // 全场满多少免运费
+        $goods['qr_code'] = ''; // 分享二维码
         $zone = $goods['zone'];
         unset($goods['zone']);
         // 组装数据
         $result['goods'] = $goods;
-        $result['can_cart'] = $zone == 3 ? 0 : 1;   // 更否加入购物车
-        // 用户收藏
+        $result['can_cart'] = $zone == 3 ? 0 : 1;   // 能否加入购物车
+        $result['is_enshrine'] = 0; // 是否收藏
         if ($this->user_id) {
+            // 用户浏览记录
+            $goodsLogic->add_visit_log($this->user_id, $goods);
+            // 用户收藏
             $goodsCollect = $goodsLogic->getCollectGoods($this->user_id);
-        }
-        $result['is_enshrine'] = 0;
-        if (!empty($goodsCollect)) {
-            foreach ($goodsCollect as $value) {
-                if ($goods_id == $value['goods_id']) {
-                    $result['is_enshrine'] = 1;
-                    break;
+            if (!empty($goodsCollect)) {
+                foreach ($goodsCollect as $value) {
+                    if ($goods_id == $value['goods_id']) {
+                        $result['is_enshrine'] = 1;
+                        break;
+                    }
                 }
             }
+            // 分享二维码
+            Url::root('/');
+            $baseUrl = url('/', '', '', true);
+            $filename = 'public/images/qrcode/goods/goods_' . $this->user_id . '_' . $goods_id . '.png';
+            if (!file_exists($filename)) {
+                $this->scerweima($this->user_id, $goods['goods_id']);
+            }
+            $result['goods']['qr_code'] = $baseUrl . $filename;
         }
 
         return json(['status' => 1, 'msg' => 'success', 'result' => $result]);

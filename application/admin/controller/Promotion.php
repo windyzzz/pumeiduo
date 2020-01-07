@@ -964,15 +964,15 @@ class Promotion extends Base
         }
         $promInfo = Db::name('order_prom')->where(['id' => $orderPromId])->find();
         // 活动购买商品
-        $buyGoods = Db::name('order_prom_goods')->where(['order_prom_id' => $orderPromId, 'type' => 1])->select();
-        $buy_goods = [];
-        foreach ($buyGoods as $k => $v) {
-            $buy_goods[$k] = M('Goods')->where('goods_id=' . $v['goods_id'])->find();
-            $buy_goods[$k]['goods_num'] = $v['goods_num'];
-            if ($v['item_id']) {
-                $buy_goods[$k]['SpecGoodsPrice'] = M('SpecGoodsPrice')->where(['item_id' => $v['item_id']])->find();
-            }
-        }
+//        $buyGoods = Db::name('order_prom_goods')->where(['order_prom_id' => $orderPromId, 'type' => 1])->select();
+//        $buy_goods = [];
+//        foreach ($buyGoods as $k => $v) {
+//            $buy_goods[$k] = M('Goods')->where('goods_id=' . $v['goods_id'])->find();
+//            $buy_goods[$k]['goods_num'] = $v['goods_num'];
+//            if ($v['item_id']) {
+//                $buy_goods[$k]['SpecGoodsPrice'] = M('SpecGoodsPrice')->where(['item_id' => $v['item_id']])->find();
+//            }
+//        }
         // 赠送商品
         $giftGoods = Db::name('order_prom_goods')->where(['order_prom_id' => $orderPromId, 'type' => 2])->select();
         $gift_goods = [];
@@ -986,7 +986,7 @@ class Promotion extends Base
         $promInfo['start_time'] = date('Y-m-d H:i:s', $promInfo['start_time']);
         $promInfo['end_time'] = date('Y-m-d H:i:s', $promInfo['end_time']);
         $this->assign('gift_goods', $gift_goods);
-        $this->assign('buy_goods', $buy_goods);
+//        $this->assign('buy_goods', $buy_goods);
         $this->assign('info', $promInfo);
         return $this->fetch();
     }
@@ -1055,8 +1055,8 @@ class Promotion extends Base
             $this->ajaxReturn($return);
         }
 
-        $buyGoods = $data['buy_goods'];
-        unset($data['buy_goods']);
+//        $buyGoods = $data['buy_goods'];
+//        unset($data['buy_goods']);
         $giftGoods = isset($data['gift_goods']) ? $data['gift_goods'] : [];
 
         // 订单优惠数据
@@ -1071,22 +1071,22 @@ class Promotion extends Base
             $orderPromId = Db::name('order_prom')->add($data);
         }
         // 参与活动商品
-        $goodsIds = [];
-        $buyGoodsData = [];
-        foreach ($buyGoods as $key => $value) {
-            $goods_item = explode('_', $key);
-            $goodsIds[] = $goods_item[0];
-            $buyGoodsData[] = [
-                'order_prom_id' => $orderPromId,
-                'type' => 1,
-                'goods_id' => $goods_item[0],
-                'item_id' => isset($goods_item[1]) ? $goods_item[1] : 0
-            ];
-        }
+//        $goodsIds = [];
+//        $buyGoodsData = [];
+//        foreach ($buyGoods as $key => $value) {
+//            $goods_item = explode('_', $key);
+//            $goodsIds[] = $goods_item[0];
+//            $buyGoodsData[] = [
+//                'order_prom_id' => $orderPromId,
+//                'type' => 1,
+//                'goods_id' => $goods_item[0],
+//                'item_id' => isset($goods_item[1]) ? $goods_item[1] : 0
+//            ];
+//        }
         $orderPromGoods = new OrderPromGoodsModel();
-        $orderPromGoods->saveAll($buyGoodsData);
-        // 更新商品活动信息
-        Db::name('goods')->where(['goods_id' => ['in', array_unique($goodsIds)]])->update(['prom_id' => $orderPromId, 'prom_type' => 7]);
+//        $orderPromGoods->saveAll($buyGoodsData);
+//        // 更新商品活动信息
+//        Db::name('goods')->where(['goods_id' => ['in', array_unique($goodsIds)]])->update(['prom_id' => $orderPromId, 'prom_type' => 7]);
         // 赠送商品
         if (!empty($giftGoods)) {
             $giftGoodsData = [];

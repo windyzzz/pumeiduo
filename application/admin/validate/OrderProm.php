@@ -19,7 +19,7 @@ class OrderProm extends Validate
     // 验证规则
     protected $rule = [
         ['title', 'require'],
-        ['buy_goods', 'require'],
+//        ['buy_goods', 'require'],
         ['order_price', 'require|number|checkPrice'],
         ['start_time', 'require'],
         ['end_time', 'require|checkEndTime'],
@@ -29,7 +29,7 @@ class OrderProm extends Validate
     // 错误信息
     protected $message = [
         'title.require' => '活动标题必须',
-        'buy_goods.require' => '请选择参与活动商品',
+//        'buy_goods.require' => '请选择参与活动商品',
         'order_price.require' => '请填写订单满足价格',
         'order_price.number' => '订单满足价格必须是数字',
         'order_price.checkPrice' => '订单满足价格必须大于0',

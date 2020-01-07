@@ -36,7 +36,6 @@ class CheckAuth
         if ($invite > 0) {
             // 是否是邀请
             session('invite', $invite);
-            S('invite_' . $params['user_token'], $invite, 180);
             $file = 'invite.txt';
             file_put_contents($file, '[' . date('Y-m-d H:i:s') . ']  设置新用户邀请人Session：' . $invite . "\n", FILE_APPEND | LOCK_EX);
         }
@@ -67,8 +66,7 @@ class CheckAuth
 
                 if ('weixin' == I('web')) {
                     if (is_array($this->weixin_config)) {
-                        $wxuser = $this->GetOpenid($select_user['token']); //授权获取openid以及微信用户信息
-
+                        $wxuser = $this->GetOpenid(); //授权获取openid以及微信用户信息
                         if (1 == $wxuser['type']) {
                             exit(json_encode(['status' => -1, 'msg' => '你还没有登录呢', 'result' => $wxuser]));
                         }
@@ -110,10 +108,8 @@ class CheckAuth
                         session('user', null);
                     }
                 }
-
                 if (is_array($this->weixin_config)) {
-                    $wxuser = $this->GetOpenid(session_id()); //授权获取openid以及微信用户信息
-
+                    $wxuser = $this->GetOpenid(); //授权获取openid以及微信用户信息
                     if (1 == $wxuser['type']) {
                         exit(json_encode(['status' => -1, 'msg' => '你还没有登录呢', 'result' => $wxuser]));
                     }
@@ -139,7 +135,7 @@ class CheckAuth
         }
     }
 
-    public function GetOpenid($userToken)
+    public function GetOpenid()
     {
         // if($_SESSION['openid'])
         //     return ['type'=>2, 'result'=>$_SESSION['data']];
@@ -148,7 +144,7 @@ class CheckAuth
             //触发微信返回code码
             //$baseUrl = urlencode('http://'.$_SERVER['HTTP_HOST'].$_SERVER['PHP_SELF'].'?'.$_SERVER['QUERY_STRING']);
             // $baseUrl = urlencode($this->get_url());
-            $invite = S('invite_' . $userToken);
+            $invite = session('invite');
             $file = 'invite.txt';
             file_put_contents($file, '[' . date('Y-m-d H:i:s') . ']  把邀请人信息添加到授权回调地址：' . $invite . "\n", FILE_APPEND | LOCK_EX);
             $baseUrl = urlencode($this->site_url . "/index.php?m=Home&c=api.Login&a=callback&invite=$invite");
@@ -157,7 +153,7 @@ class CheckAuth
             // exit();
             return ['type' => 1, 'result' => $url, 'baseUrl' => $this->site_url];
         }
-        $invite = S('invite_' . $userToken);
+        $invite = session('invite');
         $file = 'invite.txt';
         file_put_contents($file, '[' . date('Y-m-d H:i:s') . ']  授权回来，获取邀请人Session：' . $invite . "\n", FILE_APPEND | LOCK_EX);
         //上面获取到code后这里跳转回来
@@ -171,7 +167,6 @@ class CheckAuth
         $data['oauth_child'] = 'mp';
         $_SESSION['openid'] = $data['openid'];
         $data['oauth'] = 'weixin';
-        $data['token'] = $userToken;
         if (isset($data2['unionid'])) {
             $data['unionid'] = $data2['unionid'];
         }

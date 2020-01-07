@@ -35,7 +35,9 @@
                 </dt>
                 <dd class="opt">
                     <select id="prom_type" name="type">
-                        <option value="1" <if condition="$announce_info[type] eq 1">selected</if>>商品促销</option>
+                        <option value="0">请选择</option>
+                        <option value="1" <if condition="$announce_info[type] eq 1">selected</if>>商品活动</option>
+                        <option value="2" <if condition="$announce_info[type] eq 2">selected</if>>系统消息</option>
                     </select>
                     <p class="notic">公告类型</p>
                 </dd>

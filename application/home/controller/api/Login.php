@@ -169,7 +169,7 @@ class Login extends Base
         $params = I('get.');
         $params['web'] = 'weixin';
         $file = 'invite.txt';
-        file_put_contents($file, '['. date('Y-m-d H:i:s').']  获取所有参数GET：'.json_encode($params)."\n", FILE_APPEND | LOCK_EX);
+        file_put_contents($file, '[' . date('Y-m-d H:i:s') . ']  获取所有参数GET：' . json_encode($params) . "\n", FILE_APPEND | LOCK_EX);
         Hook::exec('app\\home\\behavior\\CheckAuth', 'run', $params);
     }
 
@@ -179,7 +179,7 @@ class Login extends Base
     public function reg(Request $request)
     {
         if ($this->user_id > 0) {
-             return json(['status'=>0, 'msg'=>'你已经登录过了', 'result'=>null]);
+            return json(['status' => 0, 'msg' => '你已经登录过了', 'result' => null]);
         }
 
         if (!$request->isPost()) {
@@ -193,29 +193,27 @@ class Login extends Base
         $scene = I('post.scene', 1);
 
         $logic = new UsersLogic();
-        if ($code != '1238') {
-            $session_id = S('mobile_token_' . $username);
-            if (!$session_id) {
-                return json(['status' => 0, 'msg' => '验证码已过期', 'result' => null]);
-            }
-            // 手机/邮箱验证码检查，如果没以上两种功能默认是图片验证码检查
-            if (check_mobile($username)) {
-                $reg_sms_enable = tpCache('sms.regis_sms_enable');
+        $session_id = S('mobile_token_' . $username);
+        if (!$session_id) {
+//            return json(['status' => 0, 'msg' => '验证码已过期', 'result' => null]);
+        }
+        // 手机/邮箱验证码检查，如果没以上两种功能默认是图片验证码检查
+        if (check_mobile($username)) {
+            $reg_sms_enable = tpCache('sms.regis_sms_enable');
 //        $reg_smtp_enable = tpCache('smtp.regis_smtp_enable');
-                if ($reg_sms_enable) {   //是否开启注册验证码机制
-                    //手机功能没关闭
-                    $check_code = $logic->check_validate_code($code, $username, 'phone', $session_id, $scene);
-                    if (1 != $check_code['status']) {
-                        return json($check_code);
-                    }
-                } else {
-                    if (!$this->verifyHandle('user_reg')) {
-                        return json(['status' => -1, 'msg' => '图像验证码错误']);
-                    }
+            if ($reg_sms_enable) {   //是否开启注册验证码机制
+                //手机功能没关闭
+                $check_code = $logic->check_validate_code($code, $username, 'phone', $session_id, $scene);
+                if (1 != $check_code['status']) {
+                    return json($check_code);
                 }
             } else {
-                return json(['status' => -1, 'msg' => '手机号码不合格式']);
+                if (!$this->verifyHandle('user_reg')) {
+                    return json(['status' => -1, 'msg' => '图像验证码错误']);
+                }
             }
+        } else {
+            return json(['status' => -1, 'msg' => '手机号码不合格式']);
         }
 
         // if(check_email($username)){
@@ -318,7 +316,7 @@ class Login extends Base
         Url::root('/');
         $baseUrl = url('/', '', '', true);
 
-        $filename = 'public/images/qrcode/user/user_'.$invite_id.'_big.jpg';
+        $filename = 'public/images/qrcode/user/user_' . $invite_id . '_big.jpg';
 
         if (!file_exists($filename)) {
             $filename = $this->scerweima($invite_id);
@@ -340,10 +338,10 @@ class Login extends Base
             //获取水印图片的宽高
             list($src_w, $src_h) = getimagesize($filename);
 
-//将水印图片复制到目标图片上，最后个参数80是设置透明度，这里实现半透明效果
+            //将水印图片复制到目标图片上，最后个参数80是设置透明度，这里实现半透明效果
             imagecopymerge($img, $src, 242, 665, 0, 0, $src_w, $src_h, 100);
 
-            $image_url = PUBLIC_PATH.'images/qrcode/user/user_'.$invite_id.'_big.jpg';
+            $image_url = PUBLIC_PATH . 'images/qrcode/user/user_' . $invite_id . '_big.jpg';
 
             //fdea60
 
@@ -368,7 +366,7 @@ class Login extends Base
         Url::root('/');
         $baseUrl = url('/', '', '', true);
 
-        $url = $baseUrl.'/#/register?invite='.$user_id;
+        $url = $baseUrl . '/#/register?invite=' . $user_id;
 
         $value = $url;                  //二维码内容
 
@@ -376,7 +374,7 @@ class Login extends Base
         $matrixPointSize = 8;           //生成图片大小
 
         //生成二维码图片
-        $filename = 'public/images/qrcode/user/user_'.$user_id.'_min.png';
+        $filename = 'public/images/qrcode/user/user_' . $user_id . '_min.png';
 
         \QRcode::png($value, $filename, $errorCorrectionLevel, $matrixPointSize, 2);
         return $filename;

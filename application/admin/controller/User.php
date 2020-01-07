@@ -12,6 +12,7 @@
 namespace app\admin\controller;
 
 use app\admin\logic\UsersLogic;
+use app\common\logic\Token as TokenLogic;
 use think\AjaxPage;
 use think\Db;
 use think\Loader;
@@ -536,6 +537,9 @@ class User extends Base
                 M('RebateLog')->where(array('user_id' => $uid, 'status' => array('in', array(0, 1, 2))))->update(array('point' => 0, 'money' => 0, 'remark' => '降级，追回佣金'));
             }
             // if($row)
+            // 更新缓存
+            $user = M('users')->where('user_id', $uid)->find();
+            TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
             exit($this->success('修改成功'));
             // exit($this->error('未作内容修改或修改失败'));
         }

@@ -26,7 +26,13 @@
                             <div style="text-align: center; width: 120px;" class="">类型</div>
                         </th>
                         <th align="center" abbr="article_show" axis="col5" class="">
-                            <div style="text-align: center; width: 500px;" class="">内容</div>
+                            <div style="text-align: center; width: 300px;" class="">标题</div>
+                        </th>
+                        <th align="center" abbr="article_show" axis="col5" class="">
+                            <div style="text-align: center; width: 400px;" class="">内容</div>
+                        </th>
+                        <th align="center" abbr="article_show" axis="col5" class="">
+                            <div style="text-align: center; width: 300px;" class="">标题图片</div>
                         </th>
                         <th align="center" abbr="article_show" axis="col5" class="">
                             <div style="text-align: center; width: 80px;" class="">是否开启</div>
@@ -76,7 +82,23 @@
                                 </div>
                             </td>
                             <td align="left" class="">
-                                <div style="text-align: center; width: 500px;"><input type="text" style="width: 80%;" value="{$vo.content}"></div>
+                                <div style="text-align: center; width: 300px;">{$vo.title}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 400px;">
+                                    <textarea style="width: 80%">{$vo.content}</textarea>
+                                </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 300px;">
+                                    <if condition="$vo[image]">
+                                        <span class="show">
+                                            <a id="img_a" class="nyroModal" rel="gal" href="{$vo.image}">
+                                                <i id="img_i" class="fa fa-picture-o" onmouseover="layer.tips('<img src={$vo.image}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();"></i>
+                                            </a>
+                                        </span>
+                                    </if>
+                                </div>
                             </td>
                             <td align="left" class="">
                                 <div style="text-align: center; width: 80px;">

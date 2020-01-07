@@ -56,7 +56,7 @@
                 </dt>
                 <dd class="opt">
                     <select id="level" name="distribut_level">
-                        <option value="0"> 请选择</option>
+                        <option value="0">请选择</option>
                         <tpshop sql="select * from `__PREFIX__distribut_level`" key="k" item='v'>
                             <option value="{$v[level_id]}"<if condition="$v.level_id eq $info.distribut_level">selected</if>>{$v[level_name]}</option>
                         </tpshop>
@@ -110,7 +110,7 @@
                     <label for="articleForm">活动结束时间</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" class="input-txt" id="finish_time" name="finish_time" value="<if condition='!empty($info[finish_time])'>$info[finish_time]</if>">
+                    <input type="text" class="input-txt" id="finish_time" name="finish_time" value="<if condition='!empty($info[finish_time])'>{$info.finish_time|date='Y-m-d H:i:s', ###}</if>">
                     <span class="add-on input-group-addon">
                         <i class="glyphicon glyphicon-calendar fa fa-calendar"></i>
                     </span>

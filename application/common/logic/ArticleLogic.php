@@ -102,7 +102,7 @@ class ArticleLogic extends Model
      */
     public function getUserArticleNotice($user_info = [])
     {
-        $this->checkPublicArticle();
+        $this->checkPublicArticle($user_info);
         if (empty($user_info)) {
             $user_info = session('user');
         }
@@ -135,10 +135,12 @@ class ArticleLogic extends Model
      * @author dyr
      * @time 2016/09/01
      */
-    public function checkPublicArticle()
+    public function checkPublicArticle($user_info = [])
     {
         $cat_id = I('cat_id', 1);
-        $user_info = session('user');
+        if (empty($user_info)) {
+            $user_info = session('user');
+        }
         $user_article = Db::name('user_article')->where(['user_id' => $user_info['user_id'], 'category' => $cat_id])->select();
         $article_where = [
             'cat_id' => $cat_id,

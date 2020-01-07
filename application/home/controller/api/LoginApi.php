@@ -103,20 +103,18 @@ class LoginApi
         $scene = I('post.scene', 1);
 
         $userLogic = new UsersLogic();
-        if ($code != '1238') {
-            // 验证验证码
-            $sessionId = S('mobile_token_' . $username);
-            if (!$sessionId) {
-                return json(['status' => 0, 'msg' => '验证码已过期']);
+        // 验证验证码
+        $sessionId = S('mobile_token_' . $username);
+        if (!$sessionId) {
+            return json(['status' => 0, 'msg' => '验证码已过期']);
+        }
+        if (check_mobile($username)) {
+            $check_code = $userLogic->check_validate_code($code, $username, 'phone', $sessionId, $scene);
+            if (1 != $check_code['status']) {
+                return json($check_code);
             }
-            if (check_mobile($username)) {
-                $check_code = $userLogic->check_validate_code($code, $username, 'phone', $sessionId, $scene);
-                if (1 != $check_code['status']) {
-                    return json($check_code);
-                }
-            } else {
-                return json(['status' => 0, 'msg' => '手机号码不合格式']);
-            }
+        } else {
+            return json(['status' => 0, 'msg' => '手机号码不合格式']);
         }
         // 授权用户注册
         $res = $userLogic->oauthReg($openid, $username, $password);

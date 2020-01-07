@@ -882,16 +882,22 @@ function taskLog($user_id, $task, $reward, $order_sn = '', $reward_electronic = 
  *
  * @param int $user_id 用户id
  * @param float $user_money 可用余额变动
- * @param int $pay_points 消费积分变动
- * @param int $user_electronic电子币
+ * @param float $pay_points 消费积分变动
  * @param string $desc 变动说明
- * @param   float   distribut_money 分佣金额
+ * @param float $distribut_money 分佣金额
  * @param int $order_id 订单id
  * @param string $order_sn 订单sn
- *
+ * @param float $user_electronic 电子币
+ * @param int $type 分类（0：其他，1：佣金结算，2：积分消费，3：下单消费，4：积分收入（包含：5：下单送积分、6：注册积分、7：邀请积分、8：签到积分、9：其他）、10：订单取消、11：电商转入积分、12：积分互转、13：电子币互转、:14：任务获得（包含：15：电子币、16：积分）
+ * @param bool $isOneself 是否是登录用户本人
  * @return bool
+ * @throws \think\Exception
+ * @throws \think\db\exception\DataNotFoundException
+ * @throws \think\db\exception\ModelNotFoundException
+ * @throws \think\exception\DbException
+ * @throws \think\exception\PDOException
  */
-function accountLog($user_id, $user_money = 0, $pay_points = 0, $desc = '', $distribut_money = 0, $order_id = 0, $order_sn = '', $user_electronic = 0, $type = 0)
+function accountLog($user_id, $user_money = 0.00, $pay_points = 0.00, $desc = '', $distribut_money = 0.00, $order_id = 0, $order_sn = '', $user_electronic = 0.00, $type = 0, $isOneself = true)
 {
     /* 插入帐户变动记录 */
     $account_log = [
@@ -920,12 +926,12 @@ function accountLog($user_id, $user_money = 0, $pay_points = 0, $desc = '', $dis
     $update = Db::name('users')->where('user_id', $user_id)->update($update_data);
     if ($update) {
         M('account_log')->add($account_log);
-        $user = Db::name('users')->where('user_id', $user_id)->find();
-        TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
-
+        if ($isOneself) {
+            $user = Db::name('users')->where('user_id', $user_id)->find();
+            TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
+        }
         return true;
     }
-
     return false;
 }
 

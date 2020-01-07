@@ -101,7 +101,7 @@ class MessageLogic extends Model
      */
     public function getUserMessageNotice($user_info = [])
     {
-        $this->checkPublicMessage();
+        $this->checkPublicMessage($user_info);
         if (empty($user_info)) {
             $user_info = session('user');
         }
@@ -134,9 +134,11 @@ class MessageLogic extends Model
      * @author dyr
      * @time 2016/09/01
      */
-    public function checkPublicMessage()
+    public function checkPublicMessage($user_info = [])
     {
-        $user_info = session('user');
+        if (empty($user_info)) {
+            $user_info = session('user');
+        }
         $user_message = Db::name('user_message')->where(['user_id' => $user_info['user_id'], 'category' => 0])->select();
         $message_where = [
             'category' => 0,

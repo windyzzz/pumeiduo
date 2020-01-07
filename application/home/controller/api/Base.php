@@ -14,6 +14,7 @@ class Base extends Controller
     protected $user_id;
     protected $userToken;
     protected $redis;
+    protected $passAuth = false;
 
     /**
      * 初始化token验证
@@ -33,6 +34,7 @@ class Base extends Controller
             $url = self::getUrl();
             if (in_array($url, self::whiteListPath()) || !$token) {
                 $this->userToken = TokenLogic::setToken();
+                $this->passAuth = true;
                 return true;
             }
             if (in_array($url, self::specialListPath()) && $token) {
@@ -48,10 +50,6 @@ class Base extends Controller
             $this->user = $res['user'];
             $this->user_id = $res['user']['user_id'];
             $this->userToken = $token;
-        } else {
-            // 网页请求
-            session_start();
-            $this->userToken = session_id();
         }
     }
 
@@ -89,6 +87,7 @@ class Base extends Controller
             'c=api.Goods&a=getFlashSalesGoodsList',   // 秒杀商品
             'c=api.Goods&a=look_see',   // 猜你喜欢
             'c=api.Message&a=announce',   // 公告列表
+            'c=api.User&a=findPassword',   // 找回密码（登录前忘记密码）
         ];
     }
 

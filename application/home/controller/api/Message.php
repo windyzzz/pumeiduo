@@ -76,8 +76,8 @@ class Message extends Base
 //        ];
         $return = [
             $activity,
-            $system,
-            $question
+            $question,
+            $system
         ];
         return json(['status' => 1, 'result' => $return]);
     }

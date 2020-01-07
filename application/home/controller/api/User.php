@@ -35,12 +35,15 @@ class User extends Base
     {
         parent::__construct();
         // 1. 检查登陆
-        $params['user_token'] = isset($this->userToken) ? $this->userToken : null;
-        Hook::exec('app\\home\\behavior\\CheckAuth', 'run', $params);
+        if (!$this->passAuth) {
+            $params['user_token'] = isset($this->userToken) ? $this->userToken : null;
+            Hook::exec('app\\home\\behavior\\CheckAuth', 'run', $params);
+        }
         $user = session('user');
         if ($user) {
             $this->user = $user;
             $this->user_id = $user['user_id'];
+            $this->userToken = session_id();
         }
     }
 
@@ -686,7 +689,7 @@ class User extends Base
 
             // 邀请送积分
             $invite_integral = tpCache('basic.invite_integral');
-            accountLog($id, 0, $invite_integral, '邀请用户奖励积分', 0, 0, '', 0, 7);
+            accountLog($id, 0, $invite_integral, '邀请用户奖励积分', 0, 0, '', 0, 7, false);
 
             // 邀请任务
             $TaskLogic = new \app\common\logic\TaskLogic(2);
@@ -1220,19 +1223,23 @@ class User extends Base
      */
     public function findPassword()
     {
+        $mobile = I('mobile', '');
         $code = I('code', '');
-        $session_id = I('unique_id', $this->userToken);
-
+        $session_id = S('mobile_token_' . $mobile);
+        if ($mobile) {
+            $user = M('users')->where(['mobile' => $mobile])->find();
+        }
+        if (empty($user)) {
+            return json(['status' => 0, 'msg' => '账号不存在']);
+        }
         $userLogic = new UsersLogic();
-        if ($code != '1238') {
-            // 验证验证码
-            $res = $userLogic->check_validate_code($code, $this->user['mobile'], 'phone', $session_id, 6);
-            if (1 != $res['status']) {
-                return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
-            }
+        // 验证验证码
+        $res = $userLogic->check_validate_code($code, $user['mobile'], 'phone', $session_id, 6);
+        if (1 != $res['status']) {
+            return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
         }
         // 重置密码
-        $data = $userLogic->resetPassword($this->user_id, I('post.password'), null, true);
+        $data = $userLogic->resetPassword($user['user_id'], I('post.password'), null, true);
         if (-1 == $data['status']) {
             return json(['status' => 0, 'msg' => $data['msg'], 'result' => $data['result']]);
         }
@@ -1281,16 +1288,16 @@ class User extends Base
 
                 // 邀请送积分
                 $invite_integral = tpCache('basic.invite_integral');
-                accountLog($will_invite_uid, 0, $invite_integral, '邀请用户奖励积分', 0, 0, '', 0, 7);
+                accountLog($will_invite_uid, 0, $invite_integral, '邀请用户奖励积分', 0, 0, '', 0, 7, false);
 
                 M('Users')->where('user_id', $this->user_id)->save($data);
 
                 // 邀请任务
-                $user = M('users')->find($this->user_id);
-                $TaskLogic = new \app\common\logic\TaskLogic(2);
-                $TaskLogic->setUser($user);
-                $TaskLogic->setDistributId($user['distribut_level']);
-                $TaskLogic->doInviteAfter();
+//                $user = M('users')->find($this->user_id);
+//                $TaskLogic = new \app\common\logic\TaskLogic(2);
+//                $TaskLogic->setUser($user);
+//                $TaskLogic->setDistributId($user['distribut_level']);
+//                $TaskLogic->doInviteAfter();
             } else {
                 M('Users')->where('user_id', $this->user_id)->save($data);
             }
@@ -1551,7 +1558,7 @@ class User extends Base
         }
         accountLog($user['user_id'], 0, 0, "转出电子币给用户$to_user_id", 0, 0, '', -$electronic, 13);
 
-        accountLog($to_user_id, 0, 0, "来自用户{$user['user_id']}的赠送", 0, 0, '', $electronic, 13);
+        accountLog($to_user_id, 0, 0, "来自用户{$user['user_id']}的赠送", 0, 0, '', $electronic, 13, false);
 
         return json(['status' => 1, 'msg' => '电子币转帐成功', 'result' => null]);
     }
@@ -1591,7 +1598,7 @@ class User extends Base
                 return json(['status' => 0, 'msg' => '你的电子币不够' . $electronic]);
             }
             accountLog($this->user_id, 0, 0, '转出电子币给用户' . $toUser['user_id'], 0, 0, '', -$electronic, 12);
-            accountLog($toUser['user_id'], 0, 0, '转入电子币From用户' . $this->user_id, 0, 0, '', $electronic, 12);
+            accountLog($toUser['user_id'], 0, 0, '转入电子币From用户' . $this->user_id, 0, 0, '', $electronic, 12, false);
             $userElectronic = M('Users')->where('user_id', $this->user_id)->getField('user_electronic');
             return json(['status' => 1, 'msg' => '电子币转增成功', 'result' => ['user_electronic' => $userElectronic]]);
         } else {
@@ -1623,7 +1630,7 @@ class User extends Base
 
         accountLog($user['user_id'], 0, -$pay_points, "转出积分给用户$to_user_id", 0, 0, '', 0, 12);
 
-        accountLog($to_user_id, 0, $pay_points, "转入积分From用户{$user['user_id']}", 0, 0, '', 0, 12);
+        accountLog($to_user_id, 0, $pay_points, "转入积分From用户{$user['user_id']}", 0, 0, '', 0, 12, false);
 
         return json(['status' => 1, 'msg' => '积分转帐成功', 'result' => null]);
     }
@@ -1663,7 +1670,7 @@ class User extends Base
                 return json(['status' => 0, 'msg' => '你的积分不够' . $payPoints]);
             }
             accountLog($this->user_id, 0, -$payPoints, '转赠用户' . $toUser['user_id'], 0, 0, '', 0, 12);
-            accountLog($toUser['user_id'], 0, $payPoints, '从用户' . $this->user_id . '获赠', 0, 0, '', 0, 12);
+            accountLog($toUser['user_id'], 0, $payPoints, '从用户' . $this->user_id . '获赠', 0, 0, '', 0, 12, false);
             $userPayPoints = M('Users')->where('user_id', $this->user_id)->getField('pay_points');
             return json(['status' => 1, 'msg' => '积分转增成功', 'result' => ['user_pay_points' => $userPayPoints]]);
         }
@@ -1810,13 +1817,11 @@ class User extends Base
                 return json(['status' => -1, 'msg' => '手机号码不存在,请输入老用户手机进行绑定', 'result' => null]);
             }
 
-            if ($code != '1238') {
-                //验证手机和验证码
-                $logic = new UsersLogic();
-                $res = $logic->check_validate_code($code, $mobile, 'phone', $session_id, $scene);
-                if (1 != $res['status']) {
-                    return json(['status' => -1, 'msg' => $res['msg']]);
-                }
+            //验证手机和验证码
+            $logic = new UsersLogic();
+            $res = $logic->check_validate_code($code, $mobile, 'phone', $session_id, $scene);
+            if (1 != $res['status']) {
+                return json(['status' => -1, 'msg' => $res['msg']]);
             }
 
             //验证成功
@@ -2040,21 +2045,16 @@ class User extends Base
             if (!$res && 1 != $res['status']) {
                 return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
             }
-
             return json(['status' => 1, 'msg' => '验证成功', 'result' => null]);
         } elseif ($step > 1) {
-            if ($code != '1238') {
-                $check = TokenLogic::getCache('validate_code', $this->user['mobile']);
-                if (empty($check)) {
-                    return json(['status' => 0, 'msg' => '验证码还未验证通过', 'result' => null]);
-                }
+            $res = $logic->check_validate_code($code, $this->user['mobile'], 'phone', $session_id, $scene);
+            if (!$res && 1 != $res['status']) {
+                return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
             }
-
             $data = $logic->paypwd($this->user_id, I('post.new_password'), I('post.confirm_password'), $this->userToken);
             if (-1 == $data['status']) {
                 return json(['status' => 0, 'msg' => $data['msg'], 'result' => null]);
             }
-
             return json(['status' => 1, 'msg' => '重新设置支付密码成功', 'result' => null]);
         }
     }

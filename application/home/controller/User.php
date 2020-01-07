@@ -375,11 +375,7 @@ class User
                 // setcookie('uname',urlencode($post['nickname']),null,'/');
                 return json(['status' => 1, 'msg' => '设置成功', 'result' => null]);
             }
-
-
-            exit;
         }
-
         return json(['status' => -1, 'msg' => $res['msg']]);
     }
 
@@ -438,7 +434,7 @@ class User
 
             // 邀请送积分
             $invite_integral = tpCache('basic.invite_integral');
-            accountLog($id, 0, $invite_integral, '邀请用户奖励积分');
+            accountLog($id, 0, $invite_integral, '邀请用户奖励积分', 0, 0, '', 0, 7, false);
 
             // 邀请任务
             $user = M('users')->find($this->user_id);
@@ -996,11 +992,11 @@ class User
                 M('Users')->where('user_id', $this->user_id)->save($data);
 
                 // 邀请任务
-                $user = M('users')->find($this->user_id);
-                $TaskLogic = new \app\common\logic\TaskLogic(2);
-                $TaskLogic->setUser($user);
-                $TaskLogic->setDistributId($user['distribut_level']);
-                $TaskLogic->doInviteAfter();
+//                $user = M('users')->find($this->user_id);
+//                $TaskLogic = new \app\common\logic\TaskLogic(2);
+//                $TaskLogic->setUser($user);
+//                $TaskLogic->setDistributId($user['distribut_level']);
+//                $TaskLogic->doInviteAfter();
             }
             M('Users')->where('user_id', $this->user_id)->save($data);
         }
@@ -1184,9 +1180,9 @@ class User
         if ($user_electronic < $electronic) {
             return json(['status' => 0, 'msg' => '你的电子币不够' . $electronic, 'result' => null]);
         }
-        accountLog($user['user_id'], 0, 0, "转出电子币给用户$to_user_id", 0, 0, '', -$electronic);
+        accountLog($user['user_id'], 0, 0, "转出电子币给用户$to_user_id", 0, 0, '', -$electronic, 13);
 
-        accountLog($to_user_id, 0, 0, "来自用户{$user['user_id']}的赠送", 0, 0, '', $electronic);
+        accountLog($to_user_id, 0, 0, "来自用户{$user['user_id']}的赠送", 0, 0, '', $electronic, 13, false);
 
         return json(['status' => 1, 'msg' => '电子币转帐成功', 'result' => null]);
     }
@@ -1213,9 +1209,9 @@ class User
             return json(['status' => 0, 'msg' => '你的积分不够' . $pay_points, 'result' => null]);
         }
 
-        accountLog($user['user_id'], 0, -$pay_points, "转出积分给用户$to_user_id", 0, 0, '');
+        accountLog($user['user_id'], 0, -$pay_points, "转出积分给用户$to_user_id", 0, 0, '', 0, 12);
 
-        accountLog($to_user_id, 0, $pay_points, "转入积分From用户{$user['user_id']}", 0, 0, '');
+        accountLog($to_user_id, 0, $pay_points, "转入积分From用户{$user['user_id']}", 0, 0, '', 0, 12, false);
 
         return json(['status' => 1, 'msg' => '积分转帐成功', 'result' => null]);
     }
@@ -1547,15 +1543,13 @@ class User
             }
             return json(['status' => 1, 'msg' => '验证成功', 'result' => null]);
         } elseif ($step > 1) {
-            if ($code != '1238') {
-                $res = $logic->check_validate_code($code, $user['mobile'], 'phone', $session_id, $scene);
-                if (!$res && 1 != $res['status']) {
-                    return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
-                }
-                $check = session('validate_code');
-                if (empty($check)) {
-                    return json(['status' => 0, 'msg' => '验证码还未验证通过', 'result' => null]);
-                }
+            $res = $logic->check_validate_code($code, $user['mobile'], 'phone', $session_id, $scene);
+            if (!$res && 1 != $res['status']) {
+                return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
+            }
+            $check = session('validate_code');
+            if (empty($check)) {
+                return json(['status' => 0, 'msg' => '验证码还未验证通过', 'result' => null]);
             }
 
             $data = $logic->paypwd($this->user_id, I('post.new_password'), I('post.confirm_password'));

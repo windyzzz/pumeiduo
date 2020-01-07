@@ -30,7 +30,7 @@ class CreateAnnounce extends Migrator
     {
         $this->table('announce')
             ->addColumn('title', 'string', ['comment' => '标题'])
-            ->addColumn('type', 'integer', ['limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'comment' => '类型：1商品促销'])
+            ->addColumn('type', 'integer', ['limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'comment' => '类型：1商品活动 2系统消息'])
             ->addColumn('goods_id', 'integer', ['comment' => '商品ID'])
             ->addColumn('item_id', 'integer', ['null' => true, 'comment' => '商品规格ID'])
             ->addColumn('goods_name', 'string', ['comment' => '商品名称'])

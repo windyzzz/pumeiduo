@@ -28,8 +28,9 @@ function convert_arr_key($arr, $key_name)
 
 function systemEncrypt($str)
 {
-    return md5(C('AUTH_CODE').md5($str).'milan');
+    return md5(C('AUTH_CODE') . md5($str) . 'milan');
 }
+
 /**
  * 时间条件.
  *
@@ -49,10 +50,11 @@ function whereTime($add_time_begin, $add_time_end, $add_time = 0)
 
     return $time;
 }
+
 /**
  * 获取数组中的某一列.
  *
- * @param array  $arr      数组
+ * @param array $arr 数组
  * @param string $key_name 列名
  *
  * @return array 返回那一列的数组
@@ -166,25 +168,25 @@ function friend_date($time)
                 $fdate = date('Y年m月d日', $time);
                 break;
             case $d < $td:
-                $fdate = '后天'.date('H:i', $time);
+                $fdate = '后天' . date('H:i', $time);
                 break;
             case $d < 0:
-                $fdate = '明天'.date('H:i', $time);
+                $fdate = '明天' . date('H:i', $time);
                 break;
             case $d < 60:
-                $fdate = $d.'秒前';
+                $fdate = $d . '秒前';
                 break;
             case $d < 3600:
-                $fdate = floor($d / 60).'分钟前';
+                $fdate = floor($d / 60) . '分钟前';
                 break;
             case $d < $dd:
-                $fdate = floor($d / 3600).'小时前';
+                $fdate = floor($d / 3600) . '小时前';
                 break;
             case $d < $yd:
-                $fdate = '昨天'.date('H:i', $time);
+                $fdate = '昨天' . date('H:i', $time);
                 break;
             case $d < $byd:
-                $fdate = '前天'.date('H:i', $time);
+                $fdate = '前天' . date('H:i', $time);
                 break;
             case $d < $md:
                 $fdate = date('m月d日 H:i', $time);
@@ -233,10 +235,10 @@ function get_id_val($arr, $key_name, $key_name2)
 }
 
 // 服务器端IP
- function serverIP()
- {
-     return gethostbyname($_SERVER['SERVER_NAME']);
- }
+function serverIP()
+{
+    return gethostbyname($_SERVER['SERVER_NAME']);
+}
 
 /**
  * 自定义函数递归的复制带有多级子目录的目录
@@ -254,21 +256,21 @@ function recurse_copy($src, $dst)
     @mkdir($dst);
     while (false !== $file = readdir($dir)) {
         if (('.' != $file) && ('..' != $file)) {
-            if (is_dir($src.'/'.$file)) {
-                recurse_copy($src.'/'.$file, $dst.'/'.$file);
+            if (is_dir($src . '/' . $file)) {
+                recurse_copy($src . '/' . $file, $dst . '/' . $file);
             } else {
-                if (file_exists($dst.DIRECTORY_SEPARATOR.$file)) {
-                    if (!is_writeable($dst.DIRECTORY_SEPARATOR.$file)) {
-                        exit($dst.DIRECTORY_SEPARATOR.$file.'不可写');
+                if (file_exists($dst . DIRECTORY_SEPARATOR . $file)) {
+                    if (!is_writeable($dst . DIRECTORY_SEPARATOR . $file)) {
+                        exit($dst . DIRECTORY_SEPARATOR . $file . '不可写');
                     }
-                    @unlink($dst.DIRECTORY_SEPARATOR.$file);
+                    @unlink($dst . DIRECTORY_SEPARATOR . $file);
                 }
-                if (file_exists($dst.DIRECTORY_SEPARATOR.$file)) {
-                    @unlink($dst.DIRECTORY_SEPARATOR.$file);
+                if (file_exists($dst . DIRECTORY_SEPARATOR . $file)) {
+                    @unlink($dst . DIRECTORY_SEPARATOR . $file);
                 }
-                $copyrt = copy($src.DIRECTORY_SEPARATOR.$file, $dst.DIRECTORY_SEPARATOR.$file);
+                $copyrt = copy($src . DIRECTORY_SEPARATOR . $file, $dst . DIRECTORY_SEPARATOR . $file);
                 if (!$copyrt) {
-                    echo 'copy '.$dst.DIRECTORY_SEPARATOR.$file.' failed<br>';
+                    echo 'copy ' . $dst . DIRECTORY_SEPARATOR . $file . ' failed<br>';
                 }
             }
         }
@@ -344,6 +346,7 @@ function combineArray($arr1, $arr2)
 
     return $result;
 }
+
 /**
  * 将二维数组以元素的某个值作为键 并归类数组
  * array( array('name'=>'aa','type'=>'pay'), array('name'=>'cc','type'=>'pay') )
@@ -367,17 +370,17 @@ function group_same_key($arr, $key)
 /**
  * 获取随机字符串.
  *
- * @param int $randLength    长度
- * @param int $addtime       是否加入当前时间戳
+ * @param int $randLength 长度
+ * @param int $addtime 是否加入当前时间戳
  * @param int $includenumber 是否包含数字
  *
  * @return string
  */
 function get_rand_str($randLength = 6, $addtime = 1, $includenumber = 0)
 {
-    if($includenumber==2){
+    if ($includenumber == 2) {
         $chars = '1234567890';
-    }else if ($includenumber) {
+    } else if ($includenumber) {
         $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHJKLMNPQEST123456789';
     } else {
         $chars = 'abcdefghijklmnopqrstuvwxyz';
@@ -389,7 +392,7 @@ function get_rand_str($randLength = 6, $addtime = 1, $includenumber = 0)
     }
     $tokenvalue = $randStr;
     if ($addtime) {
-        $tokenvalue = $randStr.time();
+        $tokenvalue = $randStr . time();
     }
 
     return $tokenvalue;
@@ -400,9 +403,9 @@ function get_rand_str($randLength = 6, $addtime = 1, $includenumber = 0)
  *
  * @param $url string 请求url地址
  * @param $method string 请求方法 get post
- * @param mixed      $postfields post数据数组
- * @param array      $headers    请求header信息
- * @param bool|false $debug      调试开启 默认false
+ * @param mixed $postfields post数据数组
+ * @param array $headers 请求header信息
+ * @param bool|false $debug 调试开启 默认false
  *
  * @return mixed
  */
@@ -496,7 +499,7 @@ function check_mobile($mobile)
 function check_password($password, $type = 'login')
 {
     return true;
-    switch ($type){
+    switch ($type) {
         case 'login':
             // 登录密码 6-20位，要有数字+字母
             $pattern = '/^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{6,20}$/';
@@ -529,7 +532,7 @@ function check_id_card($id)
 
         @preg_match($regx, $id, $arr_split);
         //检查生日日期是否正确
-        $dtm_birth = '19'.$arr_split[2].'/'.$arr_split[3].'/'.$arr_split[4];
+        $dtm_birth = '19' . $arr_split[2] . '/' . $arr_split[3] . '/' . $arr_split[4];
         if (!strtotime($dtm_birth)) {
             return false;
         }
@@ -540,7 +543,7 @@ function check_id_card($id)
 
     $regx = "/^(\d{6})+(\d{4})+(\d{2})+(\d{2})+(\d{3})([0-9]|X)$/";
     @preg_match($regx, $id, $arr_split);
-    $dtm_birth = $arr_split[2].'/'.$arr_split[3].'/'.$arr_split[4];
+    $dtm_birth = $arr_split[2] . '/' . $arr_split[3] . '/' . $arr_split[4];
     if (!strtotime($dtm_birth)) { //检查生日日期是否正确
         return false;
     }
@@ -551,7 +554,7 @@ function check_id_card($id)
     $arr_ch = ['1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2'];
     $sign = 0;
     for ($i = 0; $i < 17; ++$i) {
-        $b = (int) $id[$i];
+        $b = (int)$id[$i];
         $w = $arr_int[$i];
         $sign += $b * $w;
     }
@@ -564,9 +567,11 @@ function check_id_card($id)
     return true;
 }
 
-function check_length($content,$min,$max){
-    return (mb_strlen($content,'utf8')>=$min && mb_strlen($content,'utf8')<=$max)?true:false;
+function check_length($content, $min, $max)
+{
+    return (mb_strlen($content, 'utf8') >= $min && mb_strlen($content, 'utf8') <= $max) ? true : false;
 }
+
 /**
  * 检查固定电话.
  *
@@ -605,7 +610,7 @@ function getSubstr($string, $start, $length)
     if (mb_strlen($string, 'utf-8') > $length) {
         $str = mb_substr($string, $start, $length, 'utf-8');
 
-        return $str.'...';
+        return $str . '...';
     }
 
     return $string;
@@ -617,10 +622,10 @@ function getSubstr($string, $start, $length)
  * @return bool
  */
 /**
-　　* 是否移动端访问访问.
-　　*
-　　* @return bool
-　　*/
+ * 　　* 是否移动端访问访问.
+ * 　　*
+ * 　　* @return bool
+ * 　　*/
 function isMobile()
 {
     // 如果有HTTP_X_WAP_PROFILE则一定是移动设备
@@ -636,7 +641,7 @@ function isMobile()
     if (isset($_SERVER['HTTP_USER_AGENT'])) {
         $clientkeywords = ['nokia', 'sony', 'ericsson', 'mot', 'samsung', 'htc', 'sgh', 'lg', 'sharp', 'sie-', 'philips', 'panasonic', 'alcatel', 'lenovo', 'iphone', 'ipod', 'blackberry', 'meizu', 'android', 'netfront', 'symbian', 'ucweb', 'windowsce', 'palm', 'operamini', 'operamobi', 'openwave', 'nexusone', 'cldc', 'midp', 'wap', 'mobile'];
         // 从HTTP_USER_AGENT中查找手机浏览器的关键字
-        if (preg_match('/('.implode('|', $clientkeywords).')/i', strtolower($_SERVER['HTTP_USER_AGENT']))) {
+        if (preg_match('/(' . implode('|', $clientkeywords) . ')/i', strtolower($_SERVER['HTTP_USER_AGENT']))) {
             return true;
         }
     }
@@ -668,6 +673,7 @@ function is_qq()
 
     return false;
 }
+
 function is_alipay()
 {
     if (false !== strpos($_SERVER['HTTP_USER_AGENT'], 'AlipayClient')) {
@@ -807,7 +813,7 @@ function flash_sale_time_space()
     } else {
         $flash_now_time = $now_time - 1;
     }
-    $flash_sale_time = strtotime($now_day.' '.$flash_now_time.':00:00');
+    $flash_sale_time = strtotime($now_day . ' ' . $flash_now_time . ':00:00');
     $space = 7200;
     $time_space = [
         '1' => ['font' => date('H:i', $flash_sale_time), 'start_time' => $flash_sale_time, 'end_time' => $flash_sale_time + $space],
@@ -823,9 +829,9 @@ function flash_sale_time_space()
 /**
  * 验证码操作(不生成图片).
  *
- * @param array  $inconfig 配置
- * @param sring  $id       要生成验证码的标识
- * @param string $incode   验证码,若为null生成验证码,否则检验验证码
+ * @param array $inconfig 配置
+ * @param sring $id 要生成验证码的标识
+ * @param string $incode 验证码,若为null生成验证码,否则检验验证码
  */
 function capache($inconfig = [], $id = '', $incode = null)
 {
@@ -843,7 +849,7 @@ function capache($inconfig = [], $id = '', $incode = null)
         $key = substr(md5($config['seKey']), 5, 8);
         $str = substr(md5($str), 8, 10);
 
-        return md5($key.$str);
+        return md5($key . $str);
     };
 
     /* 生成验证码 */
@@ -858,14 +864,14 @@ function capache($inconfig = [], $id = '', $incode = null)
         $secode = [];
         $secode['verify_code'] = $code; // 把校验码保存到session
         $secode['verify_time'] = NOW_TIME;  // 验证码创建时间
-        session($key.$id, $secode);
+        session($key . $id, $secode);
 
         return $code_str;
     }
 
     /* 检验验证码 */
     if (is_string($incode)) {
-        $key = $authcode($config['seKey']).$id;
+        $key = $authcode($config['seKey']) . $id;
         // 验证码不能为空
         $secode = session($key);
         if (empty($incode) || empty($secode)) {
@@ -907,6 +913,7 @@ function is_https()
 {
     return isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] && 'off' != $_SERVER['HTTPS'];
 }
+
 function mobile_hide($mobile)
 {
     return substr_replace($mobile, '****', 3, 4);
@@ -932,7 +939,7 @@ function imagecreatefrombmp($filename)
     if (19778 != $FILE['file_type']) {
         return false;
     }
-    $BMP = unpack('Vheader_size/Vwidth/Vheight/vplanes/vbits_per_pixel'.'/Vcompression/Vsize_bitmap/Vhoriz_resolution'.'/Vvert_resolution/Vcolors_used/Vcolors_important', fread($f1, 40));
+    $BMP = unpack('Vheader_size/Vwidth/Vheight/vplanes/vbits_per_pixel' . '/Vcompression/Vsize_bitmap/Vhoriz_resolution' . '/Vvert_resolution/Vcolors_used/Vcolors_important', fread($f1, 40));
     $BMP['colors'] = pow(2, $BMP['bits_per_pixel']);
     if (0 == $BMP['size_bitmap']) {
         $BMP['size_bitmap'] = $FILE['file_size'] - $FILE['bitmap_offset'];
@@ -947,7 +954,7 @@ function imagecreatefrombmp($filename)
     }
     $PALETTE = [];
     if ($BMP['colors'] < 16777216) {
-        $PALETTE = unpack('V'.$BMP['colors'], fread($f1, $BMP['colors'] * 4));
+        $PALETTE = unpack('V' . $BMP['colors'], fread($f1, $BMP['colors'] * 4));
     }
     $IMG = fread($f1, $BMP['size_bitmap']);
     $VIDE = chr(0);
@@ -969,15 +976,15 @@ function imagecreatefrombmp($filename)
                 $COLOR[0] = $R * 256 * 256 + $G * 256 + $B;
                 $COLOR[1] = $color;
             } elseif (24 == $BMP['bits_per_pixel']) {
-                $COLOR = unpack('V', substr($IMG, $P, 3).$VIDE);
+                $COLOR = unpack('V', substr($IMG, $P, 3) . $VIDE);
             } elseif (16 == $BMP['bits_per_pixel']) {
                 $COLOR = unpack('n', substr($IMG, $P, 2));
                 $COLOR[1] = $PALETTE[$COLOR[1] + 1];
             } elseif (8 == $BMP['bits_per_pixel']) {
-                $COLOR = unpack('n', $VIDE.substr($IMG, $P, 1));
+                $COLOR = unpack('n', $VIDE . substr($IMG, $P, 1));
                 $COLOR[1] = $PALETTE[$COLOR[1] + 1];
             } elseif (4 == $BMP['bits_per_pixel']) {
-                $COLOR = unpack('n', $VIDE.substr($IMG, floor($P), 1));
+                $COLOR = unpack('n', $VIDE . substr($IMG, floor($P), 1));
                 if (0 == ($P * 2) % 2) {
                     $COLOR[1] = ($COLOR[1] >> 4);
                 } else {
@@ -985,7 +992,7 @@ function imagecreatefrombmp($filename)
                 }
                 $COLOR[1] = $PALETTE[$COLOR[1] + 1];
             } elseif (1 == $BMP['bits_per_pixel']) {
-                $COLOR = unpack('n', $VIDE.substr($IMG, floor($P), 1));
+                $COLOR = unpack('n', $VIDE . substr($IMG, floor($P), 1));
                 if (0 == ($P * 8) % 8) {
                     $COLOR[1] = $COLOR[1] >> 7;
                 } elseif (1 == ($P * 8) % 8) {
@@ -1018,6 +1025,7 @@ function imagecreatefrombmp($filename)
 
     return $res;
 }
+
 /**
  * 创建bmp格式图片.
  *
@@ -1026,10 +1034,10 @@ function imagecreatefrombmp($filename)
  * @description: create Bitmap-File with GD library
  * @version: 0.1
  *
- * @param resource $im          图像资源
- * @param string   $filename    如果要另存为文件，请指定文件名，为空则直接在浏览器输出
- * @param int      $bit         图像质量(1、4、8、16、24、32位)
- * @param int      $compression 压缩方式，0为不压缩，1使用RLE8压缩算法进行压缩
+ * @param resource $im 图像资源
+ * @param string $filename 如果要另存为文件，请指定文件名，为空则直接在浏览器输出
+ * @param int $bit 图像质量(1、4、8、16、24、32位)
+ * @param int $compression 压缩方式，0为不压缩，1使用RLE8压缩算法进行压缩
  *
  * @return int
  */
@@ -1051,7 +1059,7 @@ function imagebmp(&$im, $filename = '', $bit = 8, $compression = 0)
         $rgb_quad = '';
         for ($i = 0; $i < $colors_num; ++$i) {
             $colors = imagecolorsforindex($im, $i);
-            $rgb_quad .= chr($colors['blue']).chr($colors['green']).chr($colors['red'])."\0";
+            $rgb_quad .= chr($colors['blue']) . chr($colors['green']) . chr($colors['red']) . "\0";
         }
         // 位图数据
         $bmp_data = '';
@@ -1081,8 +1089,7 @@ function imagebmp(&$im, $filename = '', $bit = 8, $compression = 0)
                 }
                 $bmp_data .= $extra;
             }
-        }
-        // RLE8 压缩
+        } // RLE8 压缩
         elseif (1 == $compression && 8 == $bit) {
             for ($j = $height - 1; $j >= 0; --$j) {
                 $last_index = "\0";
@@ -1091,7 +1098,7 @@ function imagebmp(&$im, $filename = '', $bit = 8, $compression = 0)
                     $index = imagecolorat($im, $i, $j);
                     if ($index !== $last_index || $same_num > 255) {
                         if (0 != $same_num) {
-                            $bmp_data .= chr($same_num).chr($last_index);
+                            $bmp_data .= chr($same_num) . chr($last_index);
                         }
                         $last_index = $index;
                         $same_num = 1;
@@ -1136,7 +1143,7 @@ function imagebmp(&$im, $filename = '', $bit = 8, $compression = 0)
         $colors_num = 0;
     }
     // 位图文件头
-    $file_header = 'BM'.pack('V3', 54 + $size_quad + $size_data, 0, 54 + $size_quad);
+    $file_header = 'BM' . pack('V3', 54 + $size_quad + $size_data, 0, 54 + $size_quad);
     // 位图信息头
     $info_header = pack('V3v2V*', 0x28, $width, $height, 1, $bit, $compression, $size_data, 0, 0, $colors_num, 0);
     // 写入文件
@@ -1152,23 +1159,24 @@ function imagebmp(&$im, $filename = '', $bit = 8, $compression = 0)
     }
     // 浏览器输出
     header('Content-Type: image/bmp');
-    echo $file_header.$info_header;
+    echo $file_header . $info_header;
     echo $rgb_quad;
     echo $bmp_data;
 
     return 1;
 }
+
 /**
- * 	作用：array转xml.
+ *    作用：array转xml.
  */
 function arrayToXml($arr)
 {
     $xml = '<xml>';
     foreach ($arr as $key => $val) {
         if (is_numeric($val)) {
-            $xml .= '<'.$key.'>'.$val.'</'.$key.'>';
+            $xml .= '<' . $key . '>' . $val . '</' . $key . '>';
         } else {
-            $xml .= '<'.$key.'><![CDATA['.$val.']]></'.$key.'>';
+            $xml .= '<' . $key . '><![CDATA[' . $val . ']]></' . $key . '>';
         }
     }
     $xml .= '</xml>';
@@ -1231,6 +1239,7 @@ function filter($str)
 
     return $return;
 }
+
 function rebate_status($status)
 {
     $rebate_status = [
@@ -1259,7 +1268,8 @@ function checkIdCard($idcard)
  * @param $codeName 二维码图片
  * @param $fileName string 保存文件名,默认空则直接输入图片
  */
-function createSharePng($gData,$codeName,$fileName = ''){
+function createSharePng($gData, $codeName, $fileName = '')
+{
     //创建画布
     $im = imagecreatetruecolor(618, 1000);
 
@@ -1272,48 +1282,48 @@ function createSharePng($gData,$codeName,$fileName = ''){
     $font_file_bold = "code_png/msyh_bold.ttf";
 
     //设定字体的颜色
-    $font_color_1 = ImageColorAllocate ($im, 140, 140, 140);
-    $font_color_2 = ImageColorAllocate ($im, 28, 28, 28);
-    $font_color_3 = ImageColorAllocate ($im, 129, 129, 129);
-    $font_color_red = ImageColorAllocate ($im, 217, 45, 32);
+    $font_color_1 = ImageColorAllocate($im, 140, 140, 140);
+    $font_color_2 = ImageColorAllocate($im, 28, 28, 28);
+    $font_color_3 = ImageColorAllocate($im, 129, 129, 129);
+    $font_color_red = ImageColorAllocate($im, 217, 45, 32);
 
-    $fang_bg_color = ImageColorAllocate ($im, 254, 216, 217);
+    $fang_bg_color = ImageColorAllocate($im, 254, 216, 217);
 
     //Logo
-    list($l_w,$l_h) = getimagesize('code_png/logo100_100.png');
+    list($l_w, $l_h) = getimagesize('code_png/logo100_100.png');
     $logoImg = @imagecreatefrompng('code_png/logo100_100.png');
     imagecopyresized($im, $logoImg, 245, -10, 0, 0, 150, 150, $l_w, $l_h);
 
     //温馨提示
     // imagettftext($im, 14,0, 100, 130, $font_color_1 ,$font_file, '温馨提示：喜欢长按图片识别二维码即可前往购买');
-    imagettftext($im, 16,0, 255, 130, $font_color_1 ,$font_file, '乐活优选商城');
+    imagettftext($im, 16, 0, 255, 130, $font_color_1, $font_file, '乐活优选商城');
 
     //商品图片
-    list($g_w,$g_h) = getimagesize($gData['pic']);
+    list($g_w, $g_h) = getimagesize($gData['pic']);
     $goodImg = createImageFromFile($gData['pic']);
     // imagecopyresized($im, $goodImg, 0, 185, 0, 0, 618, 618, $g_w, $g_h);
     imagecopyresized($im, $goodImg, 0, 155, 0, 0, 618, 600, $g_w, $g_h);
 
     //二维码
-    list($code_w,$code_h) = getimagesize($codeName);
+    list($code_w, $code_h) = getimagesize($codeName);
     $codeImg = createImageFromFile($codeName);
     imagecopyresized($im, $codeImg, 440, 780, 0, 0, 170, 170, $code_w, $code_h);
 
     //商品描述
-    $theTitle = cn_row_substr($gData['title'],2,12);
-    imagettftext($im, 24,0, 8, 805, $font_color_2 ,$font_file, $theTitle[1]);
-    imagettftext($im, 24,0, 8, 835, $font_color_2 ,$font_file, $theTitle[2]);
+    $theTitle = cn_row_substr($gData['title'], 2, 12);
+    imagettftext($im, 24, 0, 8, 805, $font_color_2, $font_file, $theTitle[1]);
+    imagettftext($im, 24, 0, 8, 835, $font_color_2, $font_file, $theTitle[2]);
 
 //    $fontWidth = imagefontwidth(20);//获取文字宽度
 //    $textWidth = $fontWidth * mb_strlen($gData["price"]);
 //    $x         = ceil((110 - $textWidth) / 2);
 //    $x += 50;
 
-    imagettftext($im, 14,0, 8, 875, $font_color_2 ,$font_file, "会员价￥");
-    imagettftext($im, 28,0, 80, 875, $font_color_red ,$font_file, $gData["price"].' + '.$gData["point"]);
+    imagettftext($im, 14, 0, 8, 875, $font_color_2, $font_file, "会员价￥");
+    imagettftext($im, 28, 0, 80, 875, $font_color_red, $font_file, $gData["price"] . ' + ' . $gData["point"]);
 
     $fontWidth = 22;//获取文字宽度
-    $textWidth = $fontWidth * mb_strlen($gData["price"].' + '.$gData["point"]);
+    $textWidth = $fontWidth * mb_strlen($gData["price"] . ' + ' . $gData["point"]);
 
 
 //    $y         = ceil((110 - $textWidth) / 2);
@@ -1321,13 +1331,13 @@ function createSharePng($gData,$codeName,$fileName = ''){
 
 //    imagettftext($im, 28,0, 198, 875, $font_color_red ,$font_file, '+');
 //    imagettftext($im, 28,0, $y, 875, $font_color_red ,$font_file, $gData["point"]);
-    imagettftext($im, 14,0, $y, 875, $font_color_2 ,$font_file, "积分");
+    imagettftext($im, 14, 0, $y, 875, $font_color_2, $font_file, "积分");
 
-    imagettftext($im, 14,0, 8,910, $font_color_3 ,$font_file, "原价￥".$gData["original_price"]);
+    imagettftext($im, 14, 0, 8, 910, $font_color_3, $font_file, "原价￥" . $gData["original_price"]);
 
-    imagettftext($im, 14,0, 8,940, $font_color_3 ,$font_file, "昵称：".$gData["user_name"]);
+    imagettftext($im, 14, 0, 8, 940, $font_color_3, $font_file, "昵称：" . $gData["user_name"]);
 
-    imagettftext($im, 14,0, 100, 980, $font_color_1 ,$font_file, '温馨提示：喜欢长按图片识别二维码即可前往购买');
+    imagettftext($im, 14, 0, 100, 980, $font_color_1, $font_file, '温馨提示：喜欢长按图片识别二维码即可前往购买');
     //优惠券
     // if($gData['coupon_price']){
     //     imagerectangle ($im, 125 , 950 , 160 , 975 , $font_color_3);
@@ -1340,11 +1350,11 @@ function createSharePng($gData,$codeName,$fileName = ''){
     // }
 
     //输出图片
-    if($fileName){
-        imagepng ($im,$fileName);
-    }else{
+    if ($fileName) {
+        imagepng($im, $fileName);
+    } else {
         Header("Content-Type: image/png");
-        imagepng ($im);
+        imagepng($im);
     }
 
     //释放空间
@@ -1358,16 +1368,17 @@ function createSharePng($gData,$codeName,$fileName = ''){
  * @param $file 图片文件，支持url
  * @return bool|resource    成功返回图片image资源，失败返回false
  */
-function createImageFromFile($file){
-    if(preg_match('/http(s)?:\/\//',$file)){
+function createImageFromFile($file)
+{
+    if (preg_match('/http(s)?:\/\//', $file)) {
         $fileSuffix = getNetworkImgType($file);
-    }else{
+    } else {
         $fileSuffix = pathinfo($file, PATHINFO_EXTENSION);
     }
 
-    if(!$fileSuffix) return false;
+    if (!$fileSuffix) return false;
 
-    switch ($fileSuffix){
+    switch ($fileSuffix) {
         case 'jpeg':
             $theImage = @imagecreatefromjpeg($file);
             break;
@@ -1393,7 +1404,8 @@ function createImageFromFile($file){
  * @param $url  网络图片url,支持不带后缀名url
  * @return bool
  */
-function getNetworkImgType($url){
+function getNetworkImgType($url)
+{
     $ch = curl_init(); //初始化curl
     curl_setopt($ch, CURLOPT_URL, $url); //设置需要获取的URL
     curl_setopt($ch, CURLOPT_NOBODY, 1);
@@ -1405,14 +1417,14 @@ function getNetworkImgType($url){
     curl_close($ch);//关闭资源连接
 
     if ($http_code['http_code'] == 200) {
-        $theImgType = explode('/',$http_code['content_type']);
+        $theImgType = explode('/', $http_code['content_type']);
 
-        if($theImgType[0] == 'image'){
+        if ($theImgType[0] == 'image') {
             return $theImgType[1];
-        }else{
+        } else {
             return false;
         }
-    }else{
+    } else {
         return false;
     }
 }
@@ -1420,31 +1432,32 @@ function getNetworkImgType($url){
 /**
  * 分行连续截取字符串
  * @param $str  需要截取的字符串,UTF-8
- * @param int $row  截取的行数
- * @param int $number   每行截取的字数，中文长度
- * @param bool $suffix  最后行是否添加‘...’后缀
+ * @param int $row 截取的行数
+ * @param int $number 每行截取的字数，中文长度
+ * @param bool $suffix 最后行是否添加‘...’后缀
  * @return array    返回数组共$row个元素，下标1到$row
  */
-function cn_row_substr($str,$row = 1,$number = 10,$suffix = true){
+function cn_row_substr($str, $row = 1, $number = 10, $suffix = true)
+{
     $result = array();
-    for ($r=1;$r<=$row;$r++){
+    for ($r = 1; $r <= $row; $r++) {
         $result[$r] = '';
     }
 
     $str = trim($str);
-    if(!$str) return $result;
+    if (!$str) return $result;
 
     $theStrlen = strlen($str);
 
     //每行实际字节长度
     $oneRowNum = $number * 3;
-    for($r=1;$r<=$row;$r++){
-        if($r == $row and $theStrlen > $r * $oneRowNum and $suffix){
-            $result[$r] = mg_cn_substr($str,$oneRowNum-6,($r-1)* $oneRowNum).'...';
-        }else{
-            $result[$r] = mg_cn_substr($str,$oneRowNum,($r-1)* $oneRowNum);
+    for ($r = 1; $r <= $row; $r++) {
+        if ($r == $row and $theStrlen > $r * $oneRowNum and $suffix) {
+            $result[$r] = mg_cn_substr($str, $oneRowNum - 6, ($r - 1) * $oneRowNum) . '...';
+        } else {
+            $result[$r] = mg_cn_substr($str, $oneRowNum, ($r - 1) * $oneRowNum);
         }
-        if($theStrlen < $r * $oneRowNum) break;
+        if ($theStrlen < $r * $oneRowNum) break;
     }
 
     return $result;
@@ -1455,19 +1468,20 @@ function cn_row_substr($str,$row = 1,$number = 10,$suffix = true){
  * 识别汉字全角符号，全角中文3个字节，半角英文1个字节
  * @param $str  需要切取的字符串
  * @param $len  截取长度[字节]
- * @param int $start    截取开始位置，默认0
+ * @param int $start 截取开始位置，默认0
  * @return string
  */
-function mg_cn_substr($str,$len,$start = 0){
+function mg_cn_substr($str, $len, $start = 0)
+{
     $q_str = '';
-    $q_strlen = ($start + $len)>strlen($str) ? strlen($str) : ($start + $len);
+    $q_strlen = ($start + $len) > strlen($str) ? strlen($str) : ($start + $len);
 
     //如果start不为起始位置，若起始位置为乱码就按照UTF-8编码获取新start
-    if($start and json_encode(substr($str,$start,1)) === false){
-        for($a=0;$a<3;$a++){
+    if ($start and json_encode(substr($str, $start, 1)) === false) {
+        for ($a = 0; $a < 3; $a++) {
             $new_start = $start + $a;
-            $m_str = substr($str,$new_start,3);
-            if(json_encode($m_str) !== false) {
+            $m_str = substr($str, $new_start, 3);
+            if (json_encode($m_str) !== false) {
                 $start = $new_start;
                 break;
             }
@@ -1475,13 +1489,13 @@ function mg_cn_substr($str,$len,$start = 0){
     }
 
     //切取内容
-    for($i=$start;$i<$q_strlen;$i++){
+    for ($i = $start; $i < $q_strlen; $i++) {
         //ord()函数取得substr()的第一个字符的ASCII码，如果大于0xa0的话则是中文字符
-        if(ord(substr($str,$i,1))>0xa0){
-            $q_str .= substr($str,$i,3);
-            $i+=2;
-        }else{
-            $q_str .= substr($str,$i,1);
+        if (ord(substr($str, $i, 1)) > 0xa0) {
+            $q_str .= substr($str, $i, 3);
+            $i += 2;
+        } else {
+            $q_str .= substr($str, $i, 1);
         }
     }
     return $q_str;
