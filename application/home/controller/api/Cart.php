@@ -390,7 +390,7 @@ class Cart extends Base
         // 商品优惠促销
         $discountPrice1 = $Pay->goodsPromotion($goodsList, false, 'amount');
         // 订单优惠促销
-        $discountPrice2 = $Pay->calcGoodsOrderProm($goodsList, $goodsPrice);
+        $discountPrice2 = $Pay->calcGoodsOrderProm($goodsPrice);
         $discountPrice = bcadd($discountPrice1, $discountPrice2, 2);
         unset($res['data']['cart_list']);
         unset($res['data']['goods_fee']);
