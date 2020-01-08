@@ -48,10 +48,4 @@ class Share extends Base
         ];
         return json(['status' => 1, 'result' => $return]);
     }
-
-
-    public function imageShare()
-    {
-
-    }
 }

@@ -141,6 +141,7 @@ class ArticleLogic extends Model
         if (empty($user_info)) {
             $user_info = session('user');
         }
+        if (empty($user_info)) return true;
         $user_article = Db::name('user_article')->where(['user_id' => $user_info['user_id'], 'category' => $cat_id])->select();
         $article_where = [
             'cat_id' => $cat_id,

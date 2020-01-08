@@ -1170,7 +1170,7 @@ function orderBtn($order_id = 0, $order = [])
 //        $btn_arr['return_btn'] = 1; // 退货按钮 (联系客服)
     }
 
-    if (1 == $order['pay_status'] && shipping_status && 4 == $order['order_status']) { // 已完成(已支付, 已发货 , 已完成)
+    if (1 == $order['pay_status'] && 1 == $order['shipping_status'] && 4 == $order['order_status']) { // 已完成(已支付, 已发货 , 已完成)
         $btn_arr['return_btn'] = 1; // 退货按钮
     }
 

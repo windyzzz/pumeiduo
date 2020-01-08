@@ -25,6 +25,7 @@ class Article extends Validate
         'title' => 'require|checkEmpty',
         'cat_id' => 'require|checkEmpty',
         'content' => 'require|checkContent',
+        'message' => 'require|checkContent',
         'link' => 'url',
         'goods_id' => 'require',
     ];
@@ -33,6 +34,7 @@ class Article extends Validate
     protected $message = [
         'title' => '标题不能为空',
         'content' => '内容不能为空',
+        'message' => '内容不能为空',
         'cat_id.require' => '所属分类缺少参数',
         'cat_id.checkEmpty' => '所属分类必须选择',
         'article_id.checkArtcileId' => '系统预定义的文章不能删除',
@@ -45,7 +47,8 @@ class Article extends Validate
         'add' => ['title', 'cat_id', 'content', 'link'],
         'edit' => ['title', 'cat_id', 'content', 'link'],
         'del' => ['article_id'],
-        'announce' => ['title', 'goods_id']
+        'message' => ['title', 'message'],
+        'announce' => ['title', 'goods_id'],
     ];
 
     protected function checkEmpty($value)

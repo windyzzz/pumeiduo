@@ -32,7 +32,7 @@ function navigate_user()
 /**
  *  面包屑导航  用于前台商品
  *
- * @param type $id   商品id  或者是 商品分类id
+ * @param type $id 商品id  或者是 商品分类id
  * @param type $type 默认0是传递商品分类id  id 也可以传递 商品id type则为1
  */
 function navigate_goods($id, $type = 0)
@@ -41,6 +41,7 @@ function navigate_goods($id, $type = 0)
     // 如果传递过来的是
     if (1 == $type) {
         $cat_id = M('goods')->where('goods_id', $id)->getField('cat_id');
+        $cat_id = $cat_id ?? 0;
     }
     $categoryList = M('GoodsCategory')->getField('id,name,parent_id');
 

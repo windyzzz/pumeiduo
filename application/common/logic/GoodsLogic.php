@@ -381,7 +381,7 @@ class GoodsLogic extends Model
         $goods_list = [];
         if ($where['gv.user_id']) {
             $take_goods_list = M('goods')
-                ->field('g.goods_id, g.cat_id, g.goods_name, g.goods_remark, g.original_img, g.shop_price, g.exchange_integral')
+                ->field('g.goods_id, g.cat_id, g.goods_name, g.goods_remark, g.original_img, g.shop_price, g.exchange_integral, g.sale_type')
                 ->alias('g')
                 ->join('__GOODS_VISIT__ gv', 'gv.goods_id = g.goods_id', 'LEFT')
                 ->where($where)
@@ -438,7 +438,7 @@ class GoodsLogic extends Model
             $where['goods_id'] = ['not in', $goods['goods_id']];
         }
         $goods_list = M('goods')
-            ->field('goods_id, cat_id, goods_name, goods_remark, original_img, shop_price, exchange_integral')
+            ->field('goods_id, cat_id, goods_name, goods_remark, original_img, shop_price, exchange_integral, sale_type')
             ->where($where)
             ->where('goods_id', 'in', $ary)
             ->select();

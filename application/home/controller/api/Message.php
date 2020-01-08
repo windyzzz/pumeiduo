@@ -33,10 +33,9 @@ class Message extends Base
      */
     public function announce()
     {
-        $announceList = M('announce')->where(['is_open' => 1])
-            ->limit(0, 3)->order('create_time DESC')
-            ->field('id, title, type, goods_id, item_id')->select();
-        $return = ['list' => $announceList];
+        $messageLogic = new MessageLogic();
+        $messageNotice = $messageLogic->getUserMessageNotice($this->user);
+        $return = ['list' => $messageNotice];
         return json(['status' => 1, 'result' => $return]);
     }
 
@@ -142,7 +141,7 @@ class Message extends Base
                     }
                     $message[] = [
                         'message_id' => $value['message_id'],
-                        'title' => '',
+                        'title' => $value['title'],
                         'publish_time' => $publishTime,
                         'finish_time' => '',
                         'desc' => $value['message'],

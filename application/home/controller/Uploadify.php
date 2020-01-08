@@ -14,6 +14,7 @@ namespace app\home\controller;
 use common\util\File;
 use think\Exception;
 use think\Request;
+use think\Url;
 
 class Uploadify extends Base
 {
@@ -578,7 +579,13 @@ class Uploadify extends Base
                 }
                 $return_url = UPLOAD_PATH . $savePath . $info->getSaveName();
             }
-            $return_data['url'] = $return_url;
+            if (Request::instance()->header('is-app', null)) {
+                Url::root('/');
+                $baseUrl = url('/', '', '', true);
+                $return_data['url'] = $baseUrl . $return_url;
+            } else {
+                $return_data['url'] = $return_url;
+            }
         }
 
         $return_data['title'] = $title;

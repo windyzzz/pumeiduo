@@ -64,11 +64,11 @@ class wechatApp
                         $scope = $res['scope'];
                         $unionid = $res['unionid'];
                     } else {
-                        throw new \think\Exception($res['errmsg']);
+                        throw new \think\Exception('errcode=' . $res['errcode'] . ' | msg=' . $res['errmsg']);
                     }
                     break;
                 default:
-                    throw new \think\Exception($res['errmsg']);
+                    throw new \think\Exception('errcode=' . $res['errcode'] . ' | msg=' . $res['errmsg']);
             }
         }
 
@@ -77,7 +77,7 @@ class wechatApp
         $response = $this->get_contents($url);
         $res = json_decode($response, true);
         if (isset($res['errcode'])) {
-            throw new \think\Exception($res['errmsg']);
+            throw new \think\Exception('errcode=' . $res['errcode'] . ' | msg=' . $res['errmsg']);
         }
         return $res;
     }

@@ -96,8 +96,6 @@
                         <if condition="count($info.category)-1 == $ck">
                             <a onclick="addCategory(this)" class="ncap-btn-mini ncap-btn-green">添加商品分类</a>
                         </if>
-
-
                         <span class="err" id="err_cat_id" style="color:#F00; display:none;"></span>
                     </dd>
                 </dl>
@@ -120,7 +118,6 @@
                     <!-- <th>奖励数量</th>
                     <th>奖励金额</th>
                     <th>奖励商品id</th>
-
                     <th>奖励概率</th>-->
                 </tr>
                 <span id="index" style="display: none;">{$info.extra_reward|count}</span>
@@ -164,8 +161,6 @@
                     <td>100%</td>
                 </tr>-->
             </table>
-
-
             <div><a onclick="addSetting()" class="ncap-btn-big ncap-btn-blue">添加奖励设置</a></div>
             <div class="bot"><a onclick="verifyForm()" class="ncap-btn-big ncap-btn-green">确认提交</a></div>
         </div>
@@ -209,6 +204,7 @@
             '<td><div style="display: table;"><div style="display: table-cell;vertical-align: middle;">' +
             '<input type="text" style="margin: 0 20px;" onkeyup="this.value=this.value.replace(/[^\\d.]/g,\'\')" name="reward[\\index\\][goods_id]" class="goods_id" value=""></div></div></td>' +
             '<td><input type="number" name="reward[\\index\\][goods_num]" value=""></td>' +
+            '<td><input type="checkbox" name="reward[\\index\\][can_integral]" value="0" onclick="this.value=(this.value==0)?1:0"></td>' +
             '<td><a href="javascript:;" class="ncap-btn-mini ncap-btn-red delete">删除</a></td>';
         var h = /\\index\\/g;
         html = html.replace(h, index);

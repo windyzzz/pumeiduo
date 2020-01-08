@@ -833,8 +833,8 @@ class Goods extends Base
         $navigate_cat = navigate_goods($id); // 面包屑导航
         $return['goods_list'] = isset($goodsData) ? $goodsData['goods_list'] : [];
         $return['navigate_cat'] = $navigate_cat;
-        $return['goodsCate'] = $goodsCate;
-        $return['cateArr'] = $cateArr;
+        $return['goodsCate'] = $goodsCate ?? '';
+        $return['cateArr'] = $cateArr ?? [];
         $return['filter_param'] = $filter_param; // 筛选条件
         $return['cat_id'] = $id;
         $return['page'] = $page; // 赋值分页输出
@@ -1010,6 +1010,18 @@ class Goods extends Base
                 } else {
                     $goods_list[$k]['exchange_price'] = $v['shop_price'];
                 }
+
+                // 价格判断
+                if ($v['group_buy']['can_integral'] == 0) {
+                    $goods_list[$k]['exchange_integral'] = '0.00';
+                    $goods_list[$k]['shop_price'] = $v['group_buy_detail']['price'];
+                    $goods_list[$k]['exchange_price'] = $v['group_buy_detail']['price'];
+                } else {
+                    $goods_list[$k]['shop_price'] = bcsub($v['group_buy_detail']['price'], $v['exchange_integral'], 2);
+                    $goods_list[$k]['exchange_price'] = bcsub($v['group_buy_detail']['price'], $v['exchange_integral'], 2);
+                }
+                unset($goods_list[$k]['group_buy']['groupBuy_price']);
+                unset($goods_list[$k]['group_buy']['can_integral']);
                 unset($goods_list[$k]['group_buy_detail']);
             }
             $new_goods_list = [];
@@ -1098,11 +1110,14 @@ class Goods extends Base
                 $goods_list[$k]['group_buy']['groupBuy_price'] = $v['group_buy_detail']['price'];
                 $goods_list[$k]['group_buy']['exchange_integral'] = $v['exchange_integral'];
                 // 价格判断
-                if ($v['can_integral'] == 0) {
-                    $goods_list[$k]['group_buy']['exchange_integral'] = 0;
+                if ($v['group_buy']['can_integral'] == 0) {
+                    $goods_list[$k]['group_buy']['exchange_integral'] = '0.00';
+                    $goods_list[$k]['group_buy']['shop_price'] = $v['group_buy_detail']['price'];
+                    $goods_list[$k]['group_buy']['exchange_price'] = $v['group_buy_detail']['price'];
+                } else {
+                    $goods_list[$k]['group_buy']['shop_price'] = bcsub($v['group_buy_detail']['price'], $v['exchange_integral']);
+                    $goods_list[$k]['group_buy']['exchange_price'] = bcsub($v['group_buy_detail']['price'], $v['exchange_integral']);
                 }
-                $goods_list[$k]['group_buy']['shop_price'] = $v['group_buy_detail']['price'];
-                $goods_list[$k]['group_buy']['exchange_price'] = $v['group_buy_detail']['price'];
                 unset($goods_list[$k]['group_buy']['groupBuy_price']);
                 unset($goods_list[$k]['group_buy']['can_integral']);
                 $goods_data[] = $goods_list[$k]['group_buy'];
@@ -1214,7 +1229,7 @@ class Goods extends Base
         $filter_goods_id = array_unique($filter_goods_id);
         $count = count($filter_goods_id);
         $page = new Page($count, $num);
-        $goodsList = M('goods')->field('goods_id, goods_name, shop_price, exchange_integral, original_img')
+        $goodsList = M('goods')->field('goods_id, cat_id, goods_name, shop_price, exchange_integral, original_img, sale_type')
             ->where('is_new', 1)
             ->where('is_on_sale', 1)
             ->order('sort')
@@ -1352,7 +1367,7 @@ class Goods extends Base
         $filter_goods_id = array_unique($filter_goods_id);
         $count = count($filter_goods_id);
         $page = new Page($count, $num);
-        $goodsList = M('goods')->field('goods_id, goods_name, shop_price, exchange_integral, original_img')
+        $goodsList = M('goods')->field('goods_id, cat_id, goods_name, shop_price, exchange_integral, original_img, sale_type')
             ->where('is_hot', 1)
             ->where('is_on_sale', 1)
             ->order('sort')

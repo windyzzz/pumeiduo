@@ -430,7 +430,12 @@ class Order extends Base
         $promGiftList = [];     // 订单促销优惠赠品
         foreach ($orderGoods as $key => $goods) {
             if ($goods['is_gift'] == 0) {
-                $idKey = $goods['goods_id'] . '_' . $goods['spec_key'];
+                if ($goods['prom_type'] == 6) {
+                    // 加价购
+                    $idKey = $goods['goods_id'] . '_' . $goods['spec_key'] . '_extra';
+                } else {
+                    $idKey = $goods['goods_id'] . '_' . $goods['spec_key'];
+                }
                 $giftGoodsIds[] = $idKey;
                 $orderData['goods'][$idKey] = [
                     'rec_id' => $goods['rec_id'],
@@ -438,7 +443,7 @@ class Order extends Base
                     'goods_sn' => $goods['goods_sn'],
                     'goods_name' => $goods['goods_name'],
                     'spec_key_name' => $goods['spec_key_name'],
-                    'item_id' => $goods['item_id'],
+                    'item_id' => $goods['item_id'] ?? 0,
                     'goods_num' => $goods['goods_num'],
                     'shop_price' => $goods['goods_price'],
                     'exchange_integral' => $goods['use_integral'],
@@ -461,7 +466,7 @@ class Order extends Base
                             'goods_sn' => $goods['goods_sn'],
                             'goods_name' => $goods['goods_name'],
                             'spec_key_name' => $goods['spec_key_name'],
-                            'item_id' => $goods['item_id'],
+                            'item_id' => $goods['item_id'] ?? 0,
                             'goods_num' => $goods['goods_num'],
                             'shop_price' => $goods['goods_price'],
                             'exchange_integral' => $goods['use_integral'],
@@ -487,7 +492,7 @@ class Order extends Base
                         'goods_sn' => $goods['goods_sn'],
                         'goods_name' => $goods['goods_name'],
                         'spec_key_name' => $goods['spec_key_name'] ?? '',
-                        'item_id' => $goods['item_id'] ?? '',
+                        'item_id' => $goods['item_id'] ?? 0,
                         'goods_num' => $goods['goods_num'],
                         'shop_price' => $goods['goods_price'],
                         'exchange_integral' => $goods['use_integral'],
@@ -1670,26 +1675,29 @@ class Order extends Base
                     ];
                 }
             }
-//            $extraGoods = []; // 加价购列表
-//            if (!empty($payReturn['extra_goods_list'])) {
-//                foreach ($payReturn['extra_goods_list'] as $key => $extra) {
-//                    $extraGoods[$key] = [
-//                        'goods_id' => $extra['goods_id'],
-//                        'goods_name' => $extra['goods_name'],
-//                        'original_img' => $extra['original_img'],
-//                        'shop_price' => $extra['goods_price'],
-//                        'exchange_integral' => $extra['exchange_integral'],
-//                        'exchange_price' => $extra['goods_price'],
-//                        'limit_num' => $extra['goods_num']
-//                    ];
-//                    if ($extra['can_integral'] == 1) {
-//                        // 能使用积分
-//                        $extraGoods[$key]['shop_price'] = bcsub($extra['goods_price'], $extra['exchange_integral'], 2);
-//                        $extraGoods[$key]['exchange_price'] = bcsub($extra['goods_price'], $extra['exchange_integral'], 2);
-//                        $extraGoods[$key]['exchange_integral'] = '0';
-//                    }
-//                }
-//            }
+            $extraGoods = []; // 加价购列表
+            if (!empty($payReturn['extra_goods_list'])) {
+                foreach ($payReturn['extra_goods_list'] as $key => $extra) {
+                    $extraGoods[$key] = [
+                        'goods_id' => $extra['goods_id'],
+                        'goods_name' => $extra['goods_name'],
+                        'goods_remark' => $extra['goods_remark'] ?? '',
+                        'original_img' => $extra['original_img'],
+                        'shop_price' => $extra['goods_price'],
+                        'exchange_integral' => $extra['exchange_integral'],
+                        'exchange_price' => $extra['goods_price'],
+                        'buy_limit' => $extra['goods_num'],
+                        'pay_type' => 1
+                    ];
+                    if ($extra['can_integral'] == 0) {
+                        // 不能使用积分
+                        $extraGoods[$key]['shop_price'] = bcsub($extra['goods_price'], $extra['exchange_integral'], 2);
+                        $extraGoods[$key]['exchange_price'] = bcsub($extra['goods_price'], $extra['exchange_integral'], 2);
+                        $extraGoods[$key]['exchange_integral'] = '0';
+                        $extraGoods[$key]['pay_type'] = 2;
+                    }
+                }
+            }
         } catch (TpshopException $tpE) {
             return json($tpE->getErrorArr());
         }
@@ -1711,7 +1719,7 @@ class Order extends Base
                 'goods_list' => array_values($goodsList),
                 'gift_list' => array_values($giftList)
             ],
-//            'extra_goods' => $extraGoods,
+            'extra_goods' => $extraGoods,
             // 优惠券 兑换券
             'coupon_list' => $couponList,
             'exchange_list' => $exchangeList,
@@ -1868,7 +1876,7 @@ class Order extends Base
             // 参与活动促销
             $payLogic->goodsPromotion();
             // 加价购活动
-//            $payLogic->activityPayBeforeNew($extraGoods);
+            $payLogic->activityPayBeforeNew($extraGoods);
 
             // 配送物流
             if (empty($userAddress)) {
@@ -1885,18 +1893,14 @@ class Order extends Base
 
             $give_integral = '0';             // 赠送积分
             $weight = '0';                    // 产品重量
-            $order_prom_fee = '0';            // 订单优惠促销总价
             foreach ($cartList['cartList'] as $v) {
                 $goodsInfo = M('Goods')->field('give_integral, weight')->where('goods_id', $v['goods_id'])->find();
                 $give_integral = bcadd($give_integral, $goodsInfo['give_integral'], 2);
                 $weight = bcadd($weight, $goodsInfo['weight'], 2);
-                if (isset($v['is_order_prom']) && $v['is_order_prom'] == 1) {
-                    $order_prom_fee = bcadd($order_prom_fee, bcmul(bcadd($v['use_integral'], $v['member_goods_price'], 2), $v['goods_num'], 2), 2);
-                }
             }
 
             $payLogic->activity(true);      // 满单赠品
-            $payLogic->activity2New($order_prom_fee);     // 指定商品赠品 / 订单优惠赠品
+            $payLogic->activity2New();     // 指定商品赠品 / 订单优惠赠品
             $payLogic->activity3();     // 订单优惠促销
 
             // 使用优惠券
@@ -2029,7 +2033,7 @@ class Order extends Base
             // 参与活动促销
             $payLogic->goodsPromotion();
             // 加价购活动
-//            $payLogic->activityPayBeforeNew($extraGoods);
+            $payLogic->activityPayBeforeNew($extraGoods);
 
             // 配送物流
             if (empty($userAddress)) {
@@ -2044,15 +2048,8 @@ class Order extends Base
             $payLogic->usePayPoints($pay_points);
             $payLogic->useUserElectronic($userElectronic);  // 使用电子币
 
-            $order_prom_fee = '0';            // 订单优惠促销总价
-            foreach ($cartList['cartList'] as $v) {
-                if (isset($v['is_order_prom']) && $v['is_order_prom'] == 1) {
-                    $order_prom_fee = bcadd($order_prom_fee, bcmul(bcadd($v['use_integral'], $v['member_goods_price'], 2), $v['goods_num'], 2), 2);
-                }
-            }
-
             $payLogic->activity(true);      // 满单赠品
-            $payLogic->activity2New($order_prom_fee);     // 指定商品赠品 / 订单优惠赠品
+            $payLogic->activity2New();     // 指定商品赠品 / 订单优惠赠品
             $payLogic->activity3();     // 订单优惠促销
             list($prom_type, $prom_id) = $payLogic->getPromInfo();
 

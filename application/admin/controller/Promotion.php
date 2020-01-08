@@ -417,7 +417,6 @@ class Promotion extends Base
         $promGoods = $data['goods'];
 //        $tao_goods = array();
         if ($promGoods) {
-
             foreach ($promGoods as $goodsKey => $goodsVal) {
                 $dfd = explode('_', $goodsKey);
                 $tao_goods = array(
@@ -599,7 +598,7 @@ class Promotion extends Base
             // 验证秒杀积分
             $goodsIntegral = Db::name('goods')->where(['goods_id' => $data['goods_id']])->value('exchange_integral');
             if ($goodsIntegral >= $data['price']) {
-                $this->ajaxReturn(['status' => 0, 'msg' => '可兑换商品的积分多于秒杀价格，请不要勾选使用积分']);
+                $this->ajaxReturn(['status' => 0, 'msg' => '可兑换商品的积分多于团购价格，请不要勾选使用积分']);
             }
         }
         if ('del' == $data['act']) {
@@ -633,7 +632,11 @@ class Promotion extends Base
             $data['store_count'] = $goods['store_count'];
         }
         if (!$groupBuyValidate->batch()->check($data)) {
-            $return = ['status' => 0, 'msg' => '操作失败', 'result' => $groupBuyValidate->getError()];
+            $msg = '';
+            foreach ($groupBuyValidate->getError() as $error) {
+                $msg .= $error . '，';
+            }
+            $return = ['status' => 0, 'msg' => rtrim($msg, '，'), 'result' => $groupBuyValidate->getError()];
             $this->ajaxReturn($return);
         }
         $data['rebate'] = number_format($data['price'] / $data['goods_price'] * 10, 1);

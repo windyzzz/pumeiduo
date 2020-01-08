@@ -272,7 +272,7 @@ class ExtraLogic
             if ($activity['extra_reward']) {
                 $arr = [];
                 foreach ($activity['extra_reward'] as $ak => $av) {
-                    $goods_info = M('goods')->field('goods_id,goods_name,store_count,original_img,shop_price as goods_price,exchange_integral')->where('goods_id', $av['goods_id'])->find();
+                    $goods_info = M('goods')->field('goods_id,goods_name,goods_remark,store_count,original_img,shop_price as goods_price,exchange_integral')->where('goods_id', $av['goods_id'])->find();
 //                    $goods_info['goods_price'] = $av['goods_price'];
 //                    $goods_info['goods_price'] = $goods_info['goods_price'] - $goods_info['exchange_integral'];
                     $goods_info['goods_num'] = $av['goods_num'];

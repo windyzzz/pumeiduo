@@ -795,7 +795,7 @@ class Pay
                 $error = $tpE->getErrorArr();
                 throw new TpshopException('计算订单价格', 0, ['status' => 0, 'msg' => $error['msg']]);
             }
-            $buyGoods['member_goods_price'] = $extraGoods['goods_price'];
+//            $buyGoods['member_goods_price'] = $extraGoods['goods_price'];
             $buyGoods['prom_type'] = $extraGoods['prom_type'];
             $buyGoods['prom_id'] = $extraGoods['prom_id'];
             $extraGoodsList[] = $buyGoods;

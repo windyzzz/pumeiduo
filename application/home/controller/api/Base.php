@@ -86,7 +86,6 @@ class Base extends Controller
             'c=api.Goods&a=getHotGoodsList',   // 热销商品
             'c=api.Goods&a=getFlashSalesGoodsList',   // 秒杀商品
             'c=api.Goods&a=look_see',   // 猜你喜欢
-            'c=api.Message&a=announce',   // 公告列表
             'c=api.User&a=findPassword',   // 找回密码（登录前忘记密码）
         ];
     }
@@ -99,6 +98,7 @@ class Base extends Controller
     private function specialListPath()
     {
         return [
+            'c=api.Message&a=announce',   // 公告列表
             'c=api.Goods&a=goodsInfoNew',   // 商品详情
             'c=api.Coupon&a=couponList',   // 领券中心
         ];

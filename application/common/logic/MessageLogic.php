@@ -105,27 +105,32 @@ class MessageLogic extends Model
         if (empty($user_info)) {
             $user_info = session('user');
         }
-        $user_system_message_no_read_where = [
-            'user_id' => $user_info['user_id'],
-            'status' => ['in', [0, 1]],
-            'm.category' => 0,
-        ];
-        $count = Db::name('user_message')
-            ->alias('um')
-            ->join('__MESSAGE__ m', 'um.message_id = m.message_id', 'LEFT')
-            ->where($user_system_message_no_read_where)
-            ->count();
-        $Page = new Page($count, 10);
-        $user_system_message_no_read = Db::name('user_message')
-            ->alias('um')
-            ->field('um.rec_id,um.user_id,um.category,um.message_id,um.status,m.send_time,m.type,m.message')
-            ->join('__MESSAGE__ m', 'um.message_id = m.message_id', 'LEFT')
-            ->where($user_system_message_no_read_where)
-            ->limit($Page->firstRow . ',' . $Page->listRows)
-            ->order('send_time desc')
-            ->select();
-
-        return $user_system_message_no_read;
+        if (!empty($user_info)) {
+            $user_system_message_no_read_where = [
+                'user_id' => $user_info['user_id'],
+                'status' => ['in', [0, 1]],
+                'm.category' => 0,
+            ];
+            $count = Db::name('user_message')
+                ->alias('um')
+                ->join('__MESSAGE__ m', 'um.message_id = m.message_id', 'LEFT')
+                ->where($user_system_message_no_read_where)
+                ->count();
+            $Page = new Page($count, 10);
+            $user_system_message_no_read = Db::name('user_message')
+                ->alias('um')
+                ->field('um.rec_id,um.user_id,um.category,um.message_id,um.status,m.send_time,m.type,m.title,m.message')
+                ->join('__MESSAGE__ m', 'um.message_id = m.message_id', 'LEFT')
+                ->where($user_system_message_no_read_where)
+                ->limit($Page->firstRow . ',' . $Page->listRows)
+                ->order('send_time desc')
+                ->select();
+            return $user_system_message_no_read;
+        } else {
+            $messageNotice = Db::name('message')->where(['type' => 1, 'distribut_level' => 0])
+                ->field('message_id id, title')->limit(0, 3)->order('send_time DESC')->select();
+            return $messageNotice;
+        }
     }
 
     /**
@@ -139,6 +144,7 @@ class MessageLogic extends Model
         if (empty($user_info)) {
             $user_info = session('user');
         }
+        if (empty($user_info)) return true;
         $user_message = Db::name('user_message')->where(['user_id' => $user_info['user_id'], 'category' => 0])->select();
         $message_where = [
             'category' => 0,

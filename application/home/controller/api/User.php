@@ -3001,7 +3001,7 @@ class User extends Base
             'is_distribut' => $this->user['is_distribut'],
             'is_lock' => $this->user['is_lock'],
             'level' => $this->user['distribut_level'],
-            'level_name' => M('DistributLevel')->where('level_id', $this->user['distribut_level'])->getField('level_name'),
+            'level_name' => M('DistributLevel')->where('level_id', $this->user['distribut_level'])->getField('level_name') ?? '普通会员',
             'is_not_show_jk' => $this->user['is_not_show_jk'],  // 是否提示加入金卡弹窗
             'is_not_show_invite' => $this->user['distribut_level'] >= 3 ? 1 : 0,  // 是否隐藏推荐人绑定
             'has_pay_pwd' => $this->user['paypwd'] ? 1 : 0,

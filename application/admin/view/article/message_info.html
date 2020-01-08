@@ -1,0 +1,95 @@
+<include file="public/layout" />
+<style>
+    .err{color:#F00; display:none;}
+</style>
+<script src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
+<body style="background-color: #FFF; overflow: auto;">
+<div id="toolTipLayer" style="position: absolute; z-index: 9999; display: none; visibility: visible; left: 95px; top: 573px;"></div>
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title"><a class="back" href="javascript:history.back();" title="返回列表"><i class="fa fa-arrow-circle-o-left"></i></a>
+            <div class="subject">
+                <h3>系统消息管理</h3>
+                <h5>系统消息详情页</h5>
+            </div>
+        </div>
+    </div>
+    <form class="form-horizontal" id="handleposition" method="post">
+        <input type="hidden" name="message_id" value="{$message_info.message_id}">
+        <input type="hidden" name="category" value="0">
+        <input type="hidden" name="type" value="1">
+        <div class="ncap-form-default">
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>消息标题</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="title" id="title" value="{$message_info.title}" class="input-txt">
+                    <span class="err" id="err_title"></span>
+                    <p class="notic">请填写消息标题</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>消息内容</label>
+                </dt>
+                <dd class="opt">
+                    <textarea name="message" id="message" style="width: 30%; height: 100%; line-height: 150%" rows="5">{$message_info.message}</textarea>
+                    <span class="err" id="err_message"></span>
+                    <p class="notic">请填写消息内容</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>用户接收等级</label>
+                </dt>
+                <dd class="opt">
+                    <select id="prom_type" name="distribut_level">
+                        <option value="0">全部用户</option>
+                        <option value="1" <if condition="$message_info[distribut_level] eq 1">selected</if>>普通会员</option>
+                        <option value="2" <if condition="$message_info[distribut_level] eq 2">selected</if>>VIP</option>
+                        <option value="3" <if condition="$message_info[distribut_level] eq 3">selected</if>>VIP</option>
+                    </select>
+                    <p class="notic">用户接收等级</p>
+                </dd>
+            </dl>
+            <div class="bot"><a onclick="verifyForm()" class="ncap-btn-big ncap-btn-green">确认提交</a></div>
+        </div>
+    </form>
+</div>
+<script type="text/javascript">
+    var ajax_return_status = 1; // 标识ajax 请求是否已经回来 可以进行下一次请求
+    function verifyForm(){
+        $('span.err').hide();
+        if (ajax_return_status == 0) {
+            return false;
+        }
+        ajax_return_status = 0;
+        $.ajax({
+            type: "POST",
+            url: "{:U('Admin/Article/messageInfo')}",
+            data: $('#handleposition').serialize(),
+            dataType: "json",
+            error: function () {
+                layer.alert("服务器繁忙, 请联系管理员!");
+            },
+            success: function (data) {
+                if (data.status == 1) {
+                    layer.msg(data.msg, {icon: 1, time: 1000}, function(){
+                        location.href = "{:U('Admin/Article/messageList')}";
+                    });
+                } else {
+                    layer.msg(data.msg, {icon: 2,time: 1000});
+                    $.each(data.result, function (index, item) {
+                        $('#err_' + index).text(item).show();
+                    });
+                    ajax_return_status = 1;
+                }
+            }
+        });
+    }
+</script>
+</body>
+</html>

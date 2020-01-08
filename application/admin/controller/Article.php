@@ -13,6 +13,7 @@ namespace app\admin\controller;
 
 use app\admin\logic\ArticleCatLogic;
 use app\admin\model\Announce as AnnounceModel;
+use app\admin\model\Message as MessageModel;
 use think\Page;
 
 class Article extends Base
@@ -448,29 +449,29 @@ class Article extends Base
     }
 
     /**
-     * 公告列表
+     * 消息列表
      * @return mixed
      */
-    public function announceList()
+    public function messageList()
     {
-        $count = M('announce')->count();
+        $count = M('message')->count();
         $page = new Page($count, 10);
-        $announceModel = new AnnounceModel();
-        $announceList = $announceModel->limit($page->firstRow . ',' . $page->listRows)->order('create_time DESC')->select();
-        $this->assign('announce_list', $announceList);
+        $messageModel = new MessageModel();
+        $messageList = $messageModel->limit($page->firstRow . ',' . $page->listRows)->order('send_time DESC')->select();
+        $this->assign('message_list', $messageList);
         $this->assign('page', $page);
-        return $this->fetch('announce_list');
+        return $this->fetch('message_list');
     }
 
     /**
-     * 公告内容
+     * 消息内容
      * @return mixed
      */
-    public function announceInfo()
+    public function messageInfo()
     {
         if ($this->request->isPost()) {
             $data = $this->request->post();
-            $result = $this->validate($data, 'Article.announce', [], true);
+            $result = $this->validate($data, 'Article.message', [], true);
             if (true !== $result) {
                 // 验证失败 输出错误信息
                 $validate_error = '';
@@ -479,31 +480,33 @@ class Article extends Base
                 }
                 $this->ajaxReturn(['status' => 0, 'msg' => $validate_error]);
             }
-            if (!empty($data['announce_id'])) {
-                M('announce')->where(['id' => $data['announce_id']])->update($data);
+            $data['send_time'] = time();
+            if (!empty($data['message_id'])) {
+                // 清除用户消息表
+                M('user_message')->where(['message_id' => $data['message_id']])->delete();
+                M('message')->where(['message_id' => $data['message_id']])->update($data);
             } else {
-                unset($data['announce_id']);
-                $data['create_time'] = time();
-                M('announce')->add($data);
+                unset($data['message_id']);
+                M('message')->add($data);
             }
             $this->ajaxReturn(['status' => 1, 'msg' => '操作成功']);
         }
-        $announceId = I('announce_id', '');
-        if ($announceId) {
-            $announce = new AnnounceModel();
-            $announceInfo = $announce->with('goods,specGoodsPrice')->find($announceId);
-            $this->assign('announce_info', $announceInfo);
+        $messageId = I('message_id', '');
+        if ($messageId) {
+            $message = new MessageModel();
+            $messageInfo = $message->find($messageId);
+            $this->assign('message_info', $messageInfo);
         }
-        return $this->fetch('announce_info');
+        return $this->fetch('message_info');
     }
 
     /**
-     * 删除公告
+     * 删除消息
      */
-    public function announceDel()
+    public function messageDel()
     {
-        $announceId = I('announce_id', '');
-        M('announce')->where(['id' => $announceId])->delete();
+        $messageId = I('message_id', '');
+        M('message')->where(['message_id' => $messageId])->delete();
         $this->ajaxReturn(['status' => 1, 'msg' => '删除成功']);
     }
 }
