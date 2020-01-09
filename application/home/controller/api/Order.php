@@ -1487,10 +1487,14 @@ class Order extends Base
                 return json(['status' => 0, 'msg' => '你的购物车没有选中商品', 'result' => null]);
             }
             $cartList['cartList'] = $cartLogic->getCartList(1); // 获取用户选中的购物车商品
+            foreach ($cartList['cartList'] as $key => $cart) {
+                $cartList['cartList'][$key]['member_goods_price'] = $cart['goods_price'];
+            }
         } else {
             /*
              * 单个商品 + 购物车 下单
              */
+            return json(['status' => 0, 'msg' => '暂不支持此下单方式']);
 //            $cartIds = explode(',', $cartIds);
 //            $goodsInfo = $cartLogic->getCartGoods($cartIds, 'c.goods_id, sgp.item_id, c.goods_num, c.type pay_type');
 //            $goodsInfo[] = [
@@ -1805,33 +1809,14 @@ class Order extends Base
                 return json(['status' => 0, 'msg' => '你的购物车没有选中商品', 'result' => null]);
             }
             $cartList['cartList'] = $cartLogic->getCartList(1); // 获取用户选中的购物车商品
+            foreach ($cartList['cartList'] as $key => $cart) {
+                $cartList['cartList'][$key]['member_goods_price'] = $cart['goods_price'];
+            }
         } else {
             /*
              * 单个商品 + 购物车 下单
              */
-//            $cartIds = explode(',', $cartIds);
-//            $goodsInfo = $cartLogic->getCartGoods($cartIds, 'c.goods_id, sgp.item_id, c.goods_num, c.type pay_type');
-//            $goodsInfo[] = [
-//                'goods_id' => $goodsId,
-//                'item_id' => $itemId,
-//                'goods_num' => $goodsNum,
-//                'pay_type' => $payType
-//            ];
-//            $buyGoods = [];
-//            foreach ($goodsInfo as $goods) {
-//                $cartLogic->setGoodsModel($goods['goods_id']);
-//                $cartLogic->setSpecGoodsPriceModel($goods['item_id']);
-//                $cartLogic->setGoodsBuyNum($goods['goods_num']);
-//                $cartLogic->setType($goods['pay_type']);
-//                $cartLogic->setCartType(0);
-//                try {
-//                    $buyGoods[] = $cartLogic->buyNow();
-//                } catch (TpshopException $tpE) {
-//                    $error = $tpE->getErrorArr();
-//                    return json(['status' => 0, 'msg' => $error['msg']]);
-//                }
-//            }
-//            $cartList['cartList'] = $buyGoods;
+            return json(['status' => 0, 'msg' => '暂不支持此下单方式']);
         }
         $cartPriceInfo = $cartLogic->getCartPriceInfo($cartList['cartList']);  //初始化数据 商品总额/节约金额/商品总共数量/商品使用积分
         $cartList = array_merge($cartList, $cartPriceInfo);
@@ -2023,11 +2008,14 @@ class Order extends Base
                 return json(['status' => 0, 'msg' => '你的购物车没有选中商品']);
             }
             $cartList['cartList'] = $cartLogic->getCartList(1); // 获取用户选中的购物车商品
+            foreach ($cartList['cartList'] as $key => $cart) {
+                $cartList['cartList'][$key]['member_goods_price'] = $cart['goods_price'];
+            }
         } else {
             /*
              * 单个商品 + 购物车 下单
              */
-            return json(['status' => 0, 'msg' => '你的购物车没有选中商品']);
+            return json(['status' => 0, 'msg' => '暂不支持此下单方式']);
         }
         try {
             $payLogic = new Pay();

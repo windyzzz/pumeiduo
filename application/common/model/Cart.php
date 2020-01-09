@@ -55,7 +55,7 @@ class Cart extends Model
      */
     public function getGoodsFeeAttr($value, $data)
     {
-        return  round($data['goods_num'] * $data['member_goods_price'], 2);
+        return round($data['goods_num'] * $data['member_goods_price'], 2);
     }
 
     /**

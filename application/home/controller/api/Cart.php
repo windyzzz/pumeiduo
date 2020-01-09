@@ -380,11 +380,14 @@ class Cart extends Base
         // 更新购物车
         $cartLogic = new CartLogic();
         $cartLogic->setUserId($this->user_id);
-        $res = $cartLogic->calcUpdateCart($cartIdArr);
+        $res = $cartLogic->calcUpdateCartNew($cartIdArr);
         if ($res['status'] == 0) {
             return json(['status' => 1, 'msg' => '计算成功', 'result' => $res['data']]);
         }
         $goodsList = $res['data']['cart_list'];     // 选中商品
+        foreach ($goodsList as $key => $goods) {
+            $goodsList[$key]['member_goods_price'] = $goods['goods_price'];
+        }
         $goodsPrice = $res['data']['total_fee'];   // 商品总价
         $Pay = new Pay();
         // 商品优惠促销

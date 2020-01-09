@@ -798,7 +798,6 @@ class CartLogic extends Model
             }
 
             $goods_sn = M('goods')->where(array('goods_id' => $cart['goods_id']))->getField('goods_sn');
-
             if ($goods_sn !== $cart['goods_sn']) {
                 M('cart')->where(array('id' => $cart['id']))->data(array('goods_sn' => $goods_sn))->save();
                 $cartList[$cartKey]['goods_sn'] = $goods_sn;
@@ -844,24 +843,6 @@ class CartLogic extends Model
                     continue;
                 }
             }
-//            $itemId = isset($cartList[$cartKey]['item_id']) ? $cartList[$cartKey]['item_id'] : 0;
-//            // 订单优惠促销（查看是否有赠送商品）
-//            $orderProm = Db::name('order_prom_goods opg')->join('order_prom op', 'op.id = opg.order_prom_id')
-//                ->where(['opg.type' => 1, 'goods_id' => $cart['goods_id'], 'item_id' => $itemId])
-//                ->where(['op.type' => ['in', '0, 2'], 'is_open' => 1, 'is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])
-//                ->field('order_prom_id, order_price')->find();
-//            if ($orderProm) {
-//                $cartList[$cartKey]['is_order_prom'] = 1;
-//            } else {
-//                // 订单优惠促销（查看是否有优惠价格）
-//                $orderProm = Db::name('order_prom_goods opg')->join('order_prom op', 'op.id = opg.order_prom_id')
-//                    ->where(['opg.type' => 1, 'goods_id' => $cart['goods_id'], 'item_id' => $itemId])
-//                    ->where(['op.type' => ['in', '0, 1'], 'is_open' => 1, 'is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])
-//                    ->field('order_prom_id, order_price, discount_price')->find();
-//                if ($orderProm) {
-//                    $cartList[$cartKey]['is_order_prom'] = 1;
-//                }
-//            }
         }
         return $cartList;
     }
@@ -1152,12 +1133,10 @@ class CartLogic extends Model
         if (empty($cartSelectedId)) {
             $cartPriceInfo = $this->getCartPriceInfo();
             $cartPriceInfo['cartList'] = $cartList;
-
             return ['status' => 1, 'msg' => '购物车没选中商品', 'result' => $cartPriceInfo];
         }
 
         $cartList = $Cart->where('id', 'IN', $cartSelectedId)->where($cartWhere)->select();
-
         foreach ($cartList as $cartKey => $cartVal) {
             if (0 == $cartList[$cartKey]['selected']) {
                 $Cart->where('id', 'IN', $cartSelectedId)->where($cartWhere)->update(['selected' => 1]);
@@ -1168,7 +1147,6 @@ class CartLogic extends Model
             $cartList = collection($cartList)->append(['cut_fee', 'total_fee', 'goods_fee'])->toArray();
             $cartPriceInfo = $this->getCartPriceInfo($cartList);
             $cartPriceInfo['cartList'] = $cartList;
-
             return ['status' => 1, 'msg' => '计算成功', 'result' => $cartPriceInfo];
         }
         $cartPriceInfo = $this->getCartPriceInfo();
@@ -1216,6 +1194,41 @@ class CartLogic extends Model
         }
     }
 
+
+    public function calcUpdateCartNew($cartIdArr)
+    {
+        if ($this->user_id) {
+            $where['user_id'] = $this->user_id;
+        } else {
+            $where['session_id'] = $this->session_id;
+        }
+        $cartIds = [];
+        $cartModel = new Cart();
+        foreach ($cartIdArr as $cart) {
+            $cartIds[] = $cart['cart_id'];
+            // 更新购物车
+            $cartModel->where($where)->where(['id' => $cart['cart_id']])->update(['goods_num' => $cart['cart_num'], 'selected' => 1]);
+        }
+        // 更新购物车
+        $cartModel->where($where)->where(['id' => ['not in', $cartIds]])->update(['selected' => 0]);
+        // 购物车数据
+        $cartList = $cartModel->where($where)->where(['id' => ['in', $cartIds]])->select();
+        if ($cartList) {
+            $cartList = collection($cartList)->append(['cut_fee', 'total_fee', 'goods_fee'])->toArray();
+            $cartPriceInfo = $this->getCartPriceInfoNew($cartList);
+            $cartPriceInfo['cart_list'] = $cartList;
+            return ['status' => 1, 'data' => $cartPriceInfo];
+        } else {
+            return ['status' => 0, 'data' => [
+                'total_fee' => 0.00,
+                'goods_num' => 0,
+                'use_integral' => 0,
+                'discount_price' => 0,
+                'can_integral' => 1
+            ]];
+        }
+    }
+
     /**
      * 获取购物车的价格详情.
      *
@@ -1228,13 +1241,27 @@ class CartLogic extends Model
         $total_fee = $goods_fee = $goods_num = $use_integral = 0; //初始化数据。商品总额/节约金额/商品总共数量/商品使用积分
         if ($cartList) {
             foreach ($cartList as $cartKey => $cartItem) {
-                $total_fee += $cartItem['goods_fee'];
-                $goods_fee += $cartItem['cut_fee'];
+                $total_fee = bcadd($total_fee, $cartItem['goods_fee'], 2);;
+                $goods_fee = bcadd($goods_fee, $cartItem['cut_fee'], 2);
                 $goods_num += $cartItem['goods_num'];
-                $use_integral += $cartItem['use_integral'];
+                $use_integral = bcadd($use_integral, $cartItem['use_integral'], 2);
             }
         }
+        return compact('total_fee', 'goods_fee', 'goods_num', 'use_integral');
+    }
 
+
+    public function getCartPriceInfoNew($cartList = null)
+    {
+        $total_fee = $goods_fee = $goods_num = $use_integral = 0; //初始化数据。商品总额/节约金额/商品总共数量/商品使用积分
+        if ($cartList) {
+            foreach ($cartList as $cartKey => $cartItem) {
+                $total_fee = bcadd($total_fee, $cartItem['total_fee'], 2);;
+                $goods_fee = $cartItem['prom_type'] == 0 ? bcadd($goods_fee, $cartItem['goods_fee'], 2) : bcadd($goods_fee, $cartItem['total_fee'], 2);
+                $goods_num += $cartItem['goods_num'];
+                $use_integral = bcadd($use_integral, $cartItem['use_integral'], 2);
+            }
+        }
         return compact('total_fee', 'goods_fee', 'goods_num', 'use_integral');
     }
 
