@@ -84,7 +84,7 @@ class Login extends Base
         if (1 == $res['status']) {
             $res['url'] = htmlspecialchars_decode(I('post.referurl'));
             session('user', $res['result']);
-            $this->redis->set('user_' . $this->userToken, $res['result'], config('redis_time'));
+            $this->redis->set('user_' . $this->userToken, $res['result'], config('REDIS_TIME'));
             setcookie('user_id', $res['result']['user_id'], null, '/');
             setcookie('is_distribut', $res['result']['is_distribut'], null, '/');
             $nickname = empty($res['result']['nickname']) ? $username : $res['result']['nickname'];
@@ -239,7 +239,7 @@ class Login extends Base
             return json($data);
         }
         session('user', $data['result']);
-        $this->redis->set('user_' . $this->userToken, $data['result'], config('redis_time'));
+        $this->redis->set('user_' . $this->userToken, $data['result'], config('REDIS_TIME'));
         setcookie('user_id', $data['result']['user_id'], null, '/');
         setcookie('is_distribut', $data['result']['is_distribut'], null, '/');
         $nickname = empty($data['result']['nickname']) ? $username : $data['result']['nickname'];

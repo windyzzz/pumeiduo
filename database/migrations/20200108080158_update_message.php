@@ -3,7 +3,7 @@
 use think\migration\Migrator;
 use think\migration\db\Column;
 
-class CreateAnnounce extends Migrator
+class UpdateMessage extends Migrator
 {
     /**
      * Change Method.
@@ -28,14 +28,8 @@ class CreateAnnounce extends Migrator
      */
     public function change()
     {
-        $this->table('announce')
-            ->addColumn('title', 'string', ['comment' => '标题'])
-            ->addColumn('type', 'integer', ['limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'comment' => '类型：1商品活动 2系统消息'])
-            ->addColumn('goods_id', 'integer', ['comment' => '商品ID'])
-            ->addColumn('item_id', 'integer', ['null' => true, 'comment' => '商品规格ID'])
-            ->addColumn('goods_name', 'string', ['comment' => '商品名称'])
-            ->addColumn('is_open', 'integer', ['default' => 1, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY])
-            ->addColumn('create_time', 'integer')
-            ->create();
+        $this->table('message')
+            ->addColumn('title', 'string', ['default' => '', 'comment' => '标题', 'after' => 'admin_id'])
+            ->update();
     }
 }

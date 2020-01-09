@@ -32,7 +32,7 @@ class Token
             if (time() - $timeOut > 0) {
                 return ['status' => -999, 'msg' => '请重新登录'];
             }
-            $newTimeOut = time() + (config('redis_time'));
+            $newTimeOut = time() + (config('REDIS_TIME'));
             Db::name('users')->where(['token' => $token])->setField(['time_out' => $newTimeOut]);
         }
         // 是否有用户信息缓存
@@ -41,7 +41,7 @@ class Token
             $user = $redis->get('user_' . $token);
         } else {
             $user = Db::name('users')->where(['token' => $token])->find();
-            $redis->set('user_' . $token, $user, config('redis_time'));
+            $redis->set('user_' . $token, $user, config('REDIS_TIME'));
         }
         return ['status' => 1, 'user' => $user];
     }

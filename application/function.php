@@ -31,9 +31,9 @@ function systemEncrypt($str)
     return md5(C('AUTH_CODE') . md5($str) . 'milan');
 }
 
-function encrypt_shop($time, $user_name)
+function shopEncrypt($time, $user_name)
 {
-    return md5($time . C("AUTH_CODE_SHOP") . md5($user_name));
+    return md5($time . C('AUTH_CODE_SHOP') . md5($user_name));
 }
 
 /**

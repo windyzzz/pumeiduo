@@ -204,9 +204,9 @@ class UsersLogic extends Model
 //        define('SESSION_ID', session_id()); //将当前的session_id保存为常量，供其它方法调用
 
         session('user', $data);
-        $redis->set('user_' . $data['token'], $data, config('redis_time'));
+        $redis->set('user_' . $data['token'], $data, config('REDIS_TIME'));
         session('server', $_SERVER);
-        $redis->set('server_' . $data['token'], $data, config('redis_time'));
+        $redis->set('server_' . $data['token'], $data, config('REDIS_TIME'));
         setcookie('user_id', $data['user_id'], null, '/');
         setcookie('is_distribut', $data['is_distribut'], null, '/');
         setcookie('uname', $data['nickname'], null, '/');
@@ -218,7 +218,7 @@ class UsersLogic extends Model
         $cartLogic->setUserToken($data['token']);
         $cartLogic->doUserLoginHandle();  //用户登录后 需要对购物车 一些操作
 
-        $update_data = ['token' => $data['token'], 'time_out' => strtotime('+' . config('redis_days') . ' days'), 'last_login' => time()];
+        $update_data = ['token' => $data['token'], 'time_out' => strtotime('+' . config('REDIS_DAY') . ' days'), 'last_login' => time()];
         M('users')->where('user_id', $data['user_id'])->save($update_data);
     }
 
@@ -264,13 +264,13 @@ class UsersLogic extends Model
             $map['sex'] = null === $data['sex'] ? 0 : $data['sex'];
             $map['type'] = 0;
             $map['token'] = $userToken;
-            $map['time_out'] = strtotime('+' . config('redis_days') . ' days');
+            $map['time_out'] = strtotime('+' . config('REDIS_DAY') . ' days');
             $row_id1 = Db::name('users')->add($map);    // 注册新用户
             $data['user_id'] = $row_id1;
             $row_id2 = Db::name('OauthUsers')->data($data)->add();  // 记录oauth用户
             $user_info = M('users')->where('user_id', $row_id1)->find();
             session('is_new', 1);
-            (new Redis())->set('is_new_' . $userToken, 1, config('redis_time'));
+            (new Redis())->set('is_new_' . $userToken, 1, config('REDIS_TIME'));
         }
 
         if (!$row_id0 || !$row_id1 || !$row_id2) {
@@ -280,7 +280,7 @@ class UsersLogic extends Model
             Db::commit();
             $this->afterLogin($user_info);
             session('is_app', 1);
-            (new Redis())->set('is_app_' . $userToken, 1, config('redis_time'));
+            (new Redis())->set('is_app_' . $userToken, 1, config('REDIS_TIME'));
             $result = ['status' => 1, 'msg' => '登录成功'];
         }
 
@@ -315,7 +315,7 @@ class UsersLogic extends Model
             } else {
                 // 更新用户token
                 $userToken = TokenLogic::setToken();
-                Db::name('users')->where(['user_id' => $oauthUser['user_id']])->update(['token' => $userToken, 'time_out' => strtotime('+' . config('redis_days') . ' days')]);
+                Db::name('users')->where(['user_id' => $oauthUser['user_id']])->update(['token' => $userToken, 'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')]);
                 $user = Db::name('users')->where(['user_id' => $oauthUser['user_id']])->find();
                 $levelName = Db::name('user_level')->where('level_id', $user['level'])->getField('level_name');
                 $user['level_name'] = $levelName;
@@ -357,7 +357,7 @@ class UsersLogic extends Model
             $save = [
                 'last_login' => time(),
                 'token' => $userToken,
-                'time_out' => strtotime('+' . config('redis_days') . ' days')
+                'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
             ];
             if (check_mobile($username)) {
                 Db::name('users')->where('mobile', $username)->whereOr('email', $username)->update($save);
@@ -626,7 +626,7 @@ class UsersLogic extends Model
 
         $data['push_id'] && $map['push_id'] = $data['push_id'];
         $map['token'] = isset($data['token']) ? $data['token'] : TokenLogic::setToken();
-        $map['time_out'] = strtotime('+' . config('redis_days') . ' days');
+        $map['time_out'] = strtotime('+' . config('REDIS_DAY') . ' days');
         $map['last_login'] = time();
 
         $user = $this->getThirdUser($data);
@@ -830,7 +830,7 @@ class UsersLogic extends Model
 
         $map['push_id'] = $push_id; //推送id
         $map['token'] = $userToken;
-        $map['time_out'] = strtotime('+' . config('redis_days') . ' days');
+        $map['time_out'] = strtotime('+' . config('REDIS_DAY') . ' days');
         $map['last_login'] = time();
         // $user_level =Db::name('user_level')->where('amount = 0')->find(); //折扣
         // $map['discount'] = !empty($user_level) ? $user_level['discount']/100 : 1;  //新注册的会员都不打折
@@ -903,7 +903,7 @@ class UsersLogic extends Model
                     'reg_time' => time(),
                     'last_login' => time(),
                     'token' => TokenLogic::setToken(),
-                    'time_out' => strtotime('+' . config('redis_days') . ' days')
+                    'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
                 ];
                 $userId = M('users')->add($data);
             } else {
@@ -918,7 +918,7 @@ class UsersLogic extends Model
         $save = [
             'last_login' => time(),
             'token' => TokenLogic::setToken(),
-            'time_out' => strtotime('+' . config('redis_days') . ' days')
+            'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
         ];
         M('users')->where(['user_id' => $userId])->update($save);
         $user = M('users')->where(['user_id' => $userId])->find();

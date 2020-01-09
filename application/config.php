@@ -250,13 +250,16 @@ return [
         'list_rows' => 15,
     ],
 
+    // URL
+    'SERVER_URL' => 'http://pmdzdm.qpgame666.com',
+
     // 密码加密串
     'AUTH_CODE' => 'I%H!GA(f^4yx53eSSY*V^2Yk!#5Tfdnlnl&093403Q#)j', //安装完毕之后不要改变，否则所有密码都会出错
     'AUTH_CODE_SHOP' => "0IHP!!*@hh2vCeRVI57YTLB!#$6EWFy#",
 
     //redis储存数据的时间
-    'redis_time' => 86400,
-    'redis_days' => 7,
+    'REDIS_TIME' => 86400,
+    'REDIS_DAY' => 7,
 
     'ORDER_STATUS' => [
         0 => '待确认',

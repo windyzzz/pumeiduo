@@ -62,7 +62,7 @@ class LoginApi
             if ($res['status'] == 1) {
                 // 登录成功
                 $user = $res['result'];
-                (new Redis())->set('user_' . $user['token'], $user, config('redis_time'));
+                (new Redis())->set('user_' . $user['token'], $user, config('REDIS_TIME'));
                 $res['result'] = [
                     'user_id' => $user['user_id'],
                     'sex' => $user['sex'],
@@ -89,7 +89,7 @@ class LoginApi
         } catch (Exception $e) {
             Log::record($e->getMessage());
             return json(['status' => 0, 'msg' => $e->getMessage()]);
-            return json(['status' => 0, 'msg' => '系统繁忙，请重试']);
+//            return json(['status' => 0, 'msg' => '系统繁忙，请重试']);
         }
     }
 

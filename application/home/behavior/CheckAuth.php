@@ -81,7 +81,7 @@ class CheckAuth
             // 合并信息
             $user = array_merge($session_user, $oauth_users);
             session('user', $user);
-            $this->redis->set('user_' . $session_user['token'], $user, config('redis_time'));
+            $this->redis->set('user_' . $session_user['token'], $user, config('REDIS_TIME'));
         } else {
             // $nologin = array(
             //         'login','pop_login','do_login','logout','verify','set_pwd','finished',

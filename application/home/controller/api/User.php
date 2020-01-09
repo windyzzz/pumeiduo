@@ -1951,7 +1951,7 @@ class User extends Base
 
         $user = M('Users')->where('user_id', $user['user_id'])->find();
         session('user', $user);
-        $this->redis->set('user_' . $user['token'], $user, config('redis_time'));
+        $this->redis->set('user_' . $user['token'], $user, config('REDIS_TIME'));
         setcookie('user_id', $user['user_id'], null, '/');
         setcookie('is_distribut', $user['is_distribut'], null, '/');
         $nickname = empty($user['nickname']) ? '第三方用户' : $user['nickname'];
