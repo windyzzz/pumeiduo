@@ -1754,7 +1754,7 @@ class Order extends Base
         $couponId = I('coupon_id', 0);          // 优惠券ID
         $addressId = I('address_id', '');       // 地址ID
         $userElectronic = I('user_electronic', '');     // 使用电子币
-        $extraGoods = I('post.')['extra_goods'];     // 加价购商品
+        $extraGoods = isset(I('post.')['extra_goods']) ? I('post.')['extra_goods'] : [];     // 加价购商品
 
         if (!$addressId) {
             // 用户默认地址
@@ -1969,7 +1969,7 @@ class Order extends Base
         $exchangeId = I('exchange_id', '');             // 兑换券ID
         $payPwd = I('pay_pwd', '');                     // 支付密码
         $userElectronic = I('user_electronic', '');     // 使用电子币
-        $extraGoods = I('post.')['extra_goods'];        // 加价购商品
+        $extraGoods = isset(I('post.')['extra_goods']) ? I('post.')['extra_goods'] : [];     // 加价购商品
         $userNote = I('user_note', '');                 // 用户备注
 
         if (!$this->user['paypwd']) {

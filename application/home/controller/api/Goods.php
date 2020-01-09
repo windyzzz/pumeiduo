@@ -878,6 +878,7 @@ class Goods extends Base
         $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->limit($page->firstRow . ',' . $page->listRows)->select();
         $endTime = 0;
         foreach ($flashSaleGoods as $k => $v) {
+            $flashSaleGoods[$k]['key_name'] = $v['key_name'] ?? '';
             // 最近的结束时间
             if ($k == 0) {
                 $endTime = $v['end_time'];

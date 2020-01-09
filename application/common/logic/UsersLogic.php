@@ -296,7 +296,11 @@ class UsersLogic extends Model
     public function handleAppLoginNew($data)
     {
         // 查看是否有oauth用户记录
-        $oauthUser = M('oauth_users')->where('unionid', $data['unionid'])->where('oauth', 'weixin')->find();
+        $oauthUser = M('oauth_users')->where([
+            'openid' => $data['openid'],
+            'unionid' => $data['unionid'],
+            'oauth' => 'weixin',
+        ])->find();
         $updateData = [
             'user_id' => '',
             'openid' => $data['openid'],
@@ -309,7 +313,11 @@ class UsersLogic extends Model
             // 已授权登录过
             $updateData['user_id'] = $oauthUser['user_id'];
             // 更新数据
-            Db::name('oauth_users')->where('unionid', $data['unionid'])->where('oauth', 'weixin')->update($updateData);
+            Db::name('oauth_users')->where([
+                'openid' => $data['openid'],
+                'unionid' => $data['unionid'],
+                'oauth' => 'weixin',
+            ])->update($updateData);
             if ($oauthUser['user_id'] == 0) {
                 $result = ['status' => 2, 'result' => ['openid' => $data['openid']]]; // 需要绑定手机号
             } else {
