@@ -1633,8 +1633,8 @@ class Order extends Base
                     'goods_id' => $goods['goods_id'],
                     'goods_sn' => $goods['goods_sn'],
                     'goods_name' => $goods['goods_name'],
-                    'goods_remark' => $goods['goods_remark'],
-                    'spec_key_name' => $goods['spec_key_name'],
+                    'goods_remark' => $goods['goods_remark'] ?? $goods['spec_key_name'] ?? '',
+                    'spec_key_name' => $goods['spec_key_name'] ?? '',
                     'original_img' => $goods['original_img'],
                     'goods_num' => $list['goods_num'],
                     'shop_price' => $goods['shop_price'],
@@ -1668,7 +1668,7 @@ class Order extends Base
                             'goods_num' => $gift['goods_num'],
                             'goods_sn' => $gift['goods_sn'],
                             'goods_name' => $gift['goods_name'],
-                            'goods_remark' => $gift['goods']['goods_name'],
+                            'goods_remark' => $gift['goods']['goods_remark'] ?? $gift['goods']['spec_key_name'] ?? '',
                             'original_img' => $gift['goods']['original_img'],
                             'spec_key_name' => $gift['goods']['spec_key_name']
                         ]]
@@ -1836,7 +1836,7 @@ class Order extends Base
         $cartPriceInfo = $cartLogic->getCartPriceInfo($cartList['cartList']);  //初始化数据 商品总额/节约金额/商品总共数量/商品使用积分
         $cartList = array_merge($cartList, $cartPriceInfo);
 
-        if ($couponId != -1) {
+        if (!empty($couponId) && $couponId != -1) {
             $cartGoodsList = get_arr_column($cartList['cartList'], 'goods');
             $cartGoodsId = get_arr_column($cartGoodsList, 'goods_id');
             $cartGoodsCatId = get_arr_column($cartGoodsList, 'cat_id');
@@ -1889,7 +1889,6 @@ class Order extends Base
                 return json(['status' => 0, 'msg' => '用户消费积分只有' . $this->user['pay_points']]);
             }
             $payLogic->usePayPoints($pay_points);
-            $payLogic->useUserElectronic($userElectronic);  // 使用电子币
 
             $give_integral = '0';             // 赠送积分
             $weight = '0';                    // 产品重量
@@ -1907,6 +1906,9 @@ class Order extends Base
             if (isset($couponId) && $couponId > 0) {
                 $payLogic->useCouponById($couponId, $payLogic->getPayList());
             }
+            // 使用电子币
+            $payLogic->useUserElectronic($userElectronic);
+
             // 支付数据
             $payReturn = $payLogic->toArray();
             if (!empty($couponList)) {
@@ -1967,7 +1969,8 @@ class Order extends Base
         $exchangeId = I('exchange_id', '');             // 兑换券ID
         $payPwd = I('pay_pwd', '');                     // 支付密码
         $userElectronic = I('user_electronic', '');     // 使用电子币
-        $extraGoods = I('post.')['extra_goods'];     // 加价购商品
+        $extraGoods = I('post.')['extra_goods'];        // 加价购商品
+        $userNote = I('user_note', '');                 // 用户备注
 
         if (!$this->user['paypwd']) {
             return json(['status' => 0, 'msg' => '请先设置支付密码']);
@@ -1978,6 +1981,9 @@ class Order extends Base
         $address = Db::name('UserAddress')->where('address_id', $addressId)->find();
         if (empty($address)) {
             return json(['status' => 0, 'msg' => '收货人信息不存在']);
+        }
+        if (strlen($userNote) > 50) {
+            return json(['status' => 0, 'msg' => '备注超出限制可输入字符长度']);
         }
 
         $cartLogic = new CartLogic();
@@ -2046,7 +2052,6 @@ class Order extends Base
                 return json(['status' => 0, 'msg' => '用户消费积分只有' . $this->user['pay_points']]);
             }
             $payLogic->usePayPoints($pay_points);
-            $payLogic->useUserElectronic($userElectronic);  // 使用电子币
 
             $payLogic->activity(true);      // 满单赠品
             $payLogic->activity2New();     // 指定商品赠品 / 订单优惠赠品
@@ -2061,6 +2066,8 @@ class Order extends Base
             if (isset($exchangeId) && $exchangeId > 0) {
                 $payLogic->useCouponByIdRe($exchangeId);
             }
+            // 使用电子币
+            $payLogic->useUserElectronic($userElectronic);
         } catch (TpshopException $tpE) {
             return json($tpE->getErrorArr());
         }
@@ -2069,6 +2076,7 @@ class Order extends Base
             Db::startTrans();
             $placeOrder = new PlaceOrder($payLogic);
             $placeOrder->setUserAddress($address);
+            $placeOrder->setUserNote($userNote);
             $placeOrder->setPayPsw($payPwd);
             if (2 == $prom_type) {
                 $placeOrder->addGroupBuyOrder($prom_id);    // 团购订单
@@ -2243,11 +2251,16 @@ class Order extends Base
                     // 物流消息
                     $delivery = M('delivery_doc dd')
                         ->field('dd.rec_id, dd.shipping_code, dd.shipping_name, dd.invoice_no, dd.province, dd.city, dd.district, dd.address')
-                        ->where($where)->find();
+                        ->where($where)->order('id desc')->find();
                     $apiController = new ApiController();
                     $express = $apiController->queryExpress(['shipping_code' => $delivery['shipping_code'], 'queryNo' => $delivery['invoice_no']], 'array');
                     if ($express['status'] != '0') {
-                        return json(['status' => 0, 'msg' => $express['msg']]);
+                        $express['result']['deliverystatus'] = 1;   // 正在派件
+                        $express['result']['expPhone'] = tpCache('shop_info.mobile');
+                        $express['result']['list'][] = [
+                            'time' => date('Y-m-d H:i:s', time()),
+                            'status' => '暂无物流信息'
+                        ];
                     }
                     $return = [
                         'delivery_status' => $express['result']['deliverystatus'],
@@ -2296,7 +2309,11 @@ class Order extends Base
                     foreach ($delivery as $item) {
                         $express = $apiController->queryExpress(['shipping_code' => $item['shipping_code'], 'queryNo' => $item['invoice_no']], 'array');
                         if ($express['status'] != '0') {
-                            return json(['status' => 0, 'msg' => $express['msg']]);
+                            $express['result']['deliverystatus'] = 1;   // 正在派件
+                            $express['result']['list'][] = [
+                                'time' => date('Y-m-d H:i:s', time()),
+                                'status' => '暂无物流信息'
+                            ];
                         }
                         $return['delivery'][] = [
                             'rec_id' => $item['rec_id'],
@@ -2338,11 +2355,16 @@ class Order extends Base
             // 物流信息
             $delivery = M('delivery_doc dd')
                 ->field('dd.rec_id, dd.shipping_code, dd.shipping_name, dd.invoice_no, dd.province, dd.city, dd.district, dd.address')
-                ->where($where)->find();
+                ->where($where)->order('id desc')->find();
             $apiController = new ApiController();
             $express = $apiController->queryExpress(['shipping_code' => $delivery['shipping_code'], 'queryNo' => $delivery['invoice_no']], 'array');
             if ($express['status'] != '0') {
-                return json(['status' => 0, 'msg' => $express['msg']]);
+                $express['result']['deliverystatus'] = 1;   // 正在派件
+                $express['result']['expPhone'] = tpCache('shop_info.mobile');
+                $express['result']['list'][] = [
+                    'time' => date('Y-m-d H:i:s', time()),
+                    'status' => '暂无物流信息'
+                ];
             }
             $return = [
                 'delivery_status' => $express['result']['deliverystatus'],

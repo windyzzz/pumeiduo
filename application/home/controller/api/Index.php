@@ -251,15 +251,4 @@ class Index
         ];
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
     }
-
-    /**
-     * 获取代理商系统地址
-     * @return string
-     */
-    public function getAgentUrl()
-    {
-        $sign = shopEncrypt(time(), 'pmd888');
-        $url = C('SERVER_URL') . '/User/index/login_sign/shop/user_name/pmd888/time/' . time() . '/sign/' . $sign;
-        return json(['status' => 1, 'result' => ['url' => $url]]);
-    }
 }

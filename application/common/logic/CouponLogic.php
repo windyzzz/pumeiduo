@@ -213,7 +213,8 @@ class CouponLogic extends Model
                 // 秒杀商品不能使用优惠券
                 return [];
             }
-            if (3 == $value['zone']) {
+            if (3 == $value['zone'] && $value['distribut_id'] != 0) {
+                // VIP升级套餐
                 return [];
             }
         }
@@ -309,7 +310,8 @@ class CouponLogic extends Model
                 // 秒杀商品不能使用优惠券
                 return [];
             }
-            if (3 == $value['zone']) {
+            if (3 == $value['zone'] && $value['distribut_id'] != 0) {
+                // VIP升级套餐
                 return [];
             }
         }

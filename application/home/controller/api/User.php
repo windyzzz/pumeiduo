@@ -1735,6 +1735,10 @@ class User extends Base
     {
         if ($this->request->isPost()) {
             $amount = I('amount', 0);
+            $payPwd = I('pay_pwd', '');
+            if ($this->user['paypwd'] !== systemEncrypt($payPwd)) {
+                return json(['status' => 0, 'msg' => '密码错误']);
+            }
             if ($amount < 1) {
                 return json(['status' => 0, 'msg' => '数额不能小于1']);
             }
@@ -1855,6 +1859,7 @@ class User extends Base
         // $user_data['mobile'] = $this->user['mobile'];
         $user_data['type'] = 2;
         $user_data['bind_time'] = time();
+        $user_data['time_out'] = strtotime('+' . config('REDIS_DAY') . ' days');
 
         //积分变动
         // if($user['distribut_level'] > 2){ // 网点会员
@@ -1967,14 +1972,25 @@ class User extends Base
         // field('password, user_id, mobile, nickname, user_name, is_distribut, is_lock, level, token, type')
         $returnUser = [
             'user_id' => $user['user_id'],
-            'mobile' => $user['mobile'],
-            'nickname' => $user['nickname'],
+            'sex' => $user['sex'],
+            'nickname' => $user['nickname'] ?? $user['user_name'],
             'user_name' => $user['user_name'],
+            'real_name' => $user['real_name'],
+            'id_cart' => $user['id_cart'],
+            'birthday' => $user['birthday'],
+            'mobile' => $user['mobile'],
+            'head_pic' => $user['head_pic'],
+            'type' => $user['distribut_level'] >= 3 ? 2 : $user['type'],
+            'invite_uid' => $user['invite_uid'],
             'is_distribut' => $user['is_distribut'],
             'is_lock' => $user['is_lock'],
-            'level' => $user['level'],
-            'token' => $user['token'],
-            'type' => $user['type']
+            'level' => $user['distribut_level'],
+            'level_name' => M('DistributLevel')->where('level_id', $user['distribut_level'])->getField('level_name') ?? '普通会员',
+            'is_not_show_jk' => $user['is_not_show_jk'],  // 是否提示加入金卡弹窗
+            'is_not_show_invite' => $user['distribut_level'] >= 3 ? 1 : 0,  // 是否隐藏推荐人绑定
+            'has_pay_pwd' => $user['paypwd'] ? 1 : 0,
+            'is_app' => TokenLogic::getValue('is_app', $user['token']) ? 1 : 0,
+            'token' => $user['token']
         ];
 
         return json(['status' => 1, 'msg' => '绑定成功', 'result' => ['user' => $returnUser]]);
@@ -3085,7 +3101,7 @@ class User extends Base
                         $return['log_list'][] = [
                             'id' => $log['log_id'],
                             'title' => $log['desc'],
-                            'amount' => $log['user_money'],
+                            'amount' => $log['user_electronic'],
                             'add_time' => strtotime($log['change_time'])
                         ];
                     }
@@ -3260,5 +3276,19 @@ class User extends Base
             return json(['status' => 0, 'msg' => '用户还没有设置银行卡信息']);
         }
         return json(['status' => 1, 'result' => $userBankInfo]);
+    }
+
+    /**
+     * 获取代理商系统地址
+     * @return string
+     */
+    public function getAgentUrl()
+    {
+        if ($this->user['distribut_level'] != 3) {
+            return json(['status' => 0, 'msg' => '抱歉，SVIP才能进入']);
+        }
+        $sign = shopEncrypt(time(), $this->user['user_name']);
+        $url = C('SERVER_URL') . '/User/index/login_sign/shop/user_name/' . $this->user['user_name'] . '/time/' . time() . '/sign/' . $sign;
+        return json(['status' => 1, 'result' => ['url' => $url]]);
     }
 }

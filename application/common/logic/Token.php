@@ -26,10 +26,11 @@ class Token
      */
     public static function checkToken($token)
     {
-        $timeOut = Db::name('users')->where(['token' => $token])->value('time_out');
-        if (!isset($timeOut)) return ['status' => -999, 'msg' => '账号已在另一个地方登录'];
-        if ($timeOut != 0) {
-            if (time() - $timeOut > 0) {
+        $userInfo = Db::name('users')->where(['token' => $token])->field('is_lock, time_out')->find();
+        if (!isset($userInfo)) return ['status' => -999, 'msg' => '账号已在另一个地方登录'];
+        if ($userInfo['is_lock'] == 1) return ['status' => 0, 'msg' => '账号已冻结'];
+        if ($userInfo['time_out'] != 0) {
+            if (time() - $userInfo['time_out'] > 0) {
                 return ['status' => -999, 'msg' => '请重新登录'];
             }
             $newTimeOut = time() + (config('REDIS_TIME'));

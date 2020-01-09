@@ -50,9 +50,9 @@
                         <option value="0">全部用户</option>
                         <option value="1" <if condition="$message_info[distribut_level] eq 1">selected</if>>普通会员</option>
                         <option value="2" <if condition="$message_info[distribut_level] eq 2">selected</if>>VIP</option>
-                        <option value="3" <if condition="$message_info[distribut_level] eq 3">selected</if>>VIP</option>
+                        <option value="3" <if condition="$message_info[distribut_level] eq 3">selected</if>>SVIP</option>
                     </select>
-                    <p class="notic">用户接收等级</p>
+                    <p class="notic">用户能看到小于或等于自己等级的文章</p>
                 </dd>
             </dl>
             <div class="bot"><a onclick="verifyForm()" class="ncap-btn-big ncap-btn-green">确认提交</a></div>
