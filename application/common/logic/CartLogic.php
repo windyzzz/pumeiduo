@@ -446,28 +446,25 @@ class CartLogic extends Model
             return ['status' => -101, 'msg' => '购买活动商品必须先登录', 'result' => ''];
         }
 
-        if ($flashSale['buy_limit'] != 0 && $this->goodsBuyNum > $flashSale['buy_limit']) {
-            return ['status' => -4, 'msg' => '每人限购' . $flashSale['buy_limit'] . '件', 'result' => ''];
-        }
         //获取用户购物车的抢购商品
         if (!$this->user_id) {
             $userCartGoods = Cart::get(['user_id' => $this->user_id, 'session_id' => $this->session_id, 'goods_id' => $this->goods['goods_id'], 'spec_key' => ($this->specGoodsPrice['key'] ?: '')]);
         } else {
             $userCartGoods = Cart::get(['user_id' => $this->user_id, 'goods_id' => $this->goods['goods_id'], 'spec_key' => ($this->specGoodsPrice['key'] ?: '')]);
         }
-        $userCartGoodsNum = empty($userCartGoods['goods_num']) ? 0 : $userCartGoods['goods_num']; ///获取用户购物车的抢购商品数量
+        $userCartGoodsNum = empty($userCartGoods['goods_num']) ? 0 : $userCartGoods['goods_num']; //获取用户购物车的抢购商品数量
         $userFlashOrderGoodsNum = $flashSaleLogic->getUserFlashOrderGoodsNum($this->user_id); //获取用户抢购已购商品数量
         $flashSalePurchase = $flashSale['goods_num'] - $flashSale['buy_num']; //抢购剩余库存
-        $userBuyGoodsNum = $this->goodsBuyNum + $userFlashOrderGoodsNum;
+        $userBuyGoodsNum = $this->goodsBuyNum + $userFlashOrderGoodsNum + $userCartGoodsNum;
         if ($flashSale['buy_limit'] != 0 && $userBuyGoodsNum > $flashSale['buy_limit']) {
-            return ['status' => -4, 'msg' => '每人限购' . $flashSale['buy_limit'] . '件，您已下单' . $userFlashOrderGoodsNum . '件' . '购物车已有' . $userCartGoodsNum . '件', 'result' => ''];
+            return ['status' => -4, 'msg' => '每人限购' . $flashSale['buy_limit'] . '件，您已下单' . $userFlashOrderGoodsNum . '件，购物车已有' . $userCartGoodsNum . '件', 'result' => ''];
         }
-        $userWantGoodsNum = $this->goodsBuyNum; //本次要购买的数量加上购物车的本身存在的数量
+        $userWantGoodsNum = $userCartGoodsNum + $this->goodsBuyNum; //本次要购买的数量加上购物车的本身存在的数量
         if ($userWantGoodsNum > 200) {
             $userWantGoodsNum = 200;
         }
         if ($userWantGoodsNum > $flashSalePurchase) {
-            return ['status' => -4, 'msg' => $this->goods['goods_name'] . '，商品库存不足，剩余' . $flashSalePurchase . ',当前购物车已有' . $userCartGoodsNum . '件', 'result' => ''];
+            return ['status' => -4, 'msg' => $this->goods['goods_name'] . '，商品库存不足，剩余' . $flashSalePurchase . '件，当前购物车已有' . $userCartGoodsNum . '件', 'result' => ''];
         }
         $use_integral = 0;
         if (1 == $flashSale['can_integral']) {

@@ -202,7 +202,7 @@ class User extends Base
                     'log_id' => $log['log_id'],
                     'pay_points' => $log['pay_points'],
                     'title' => $log['desc'],
-                    'add_time' => strtotime($log['change_time'])
+                    'add_time' => strtotime($log['change_time']) . ''
                 ];
             }
         }
@@ -1266,6 +1266,18 @@ class User extends Base
             return json(['status' => -1, 'msg' => '该用户已经选择类型，无法继续选定', 'result' => null]);
         }
         if (1 == $type) {
+            // 频繁请求
+            $res = cache($this->user_id);
+            if ($res) {
+                $return = [
+                    'user_id' => $this->user_id,
+                    'integral' => '0',
+                    'point' =>'0',
+                ];
+                return json(['status' => 1, 'msg' => '新账号认证成功', 'result' => $return]);
+            }
+            cache($this->user_id, 1, 5);
+
             $pay_points = tpCache('basic.reg_integral'); // 会员注册赠送积分
             if ($pay_points > 0) {
                 accountLog($this->user['user_id'], 0, $pay_points, '会员注册赠送积分', 0, 0, '', 0, 6); // 记录日志流水
