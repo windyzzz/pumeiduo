@@ -50,10 +50,8 @@
                         <label >商品</label>
                     </dt>
                     <dd class="opt">
-
-                            名称：{$order['goods'][goods_name]}
-                            <p>规格：{$order['goods'][spec_key_name]}</p>
-
+                        名称：{$order['goods'][goods_name]}
+                        <p>规格：{$order['goods'][spec_key_name]}</p>
                     </dd>
                 </dl>
                 <dl class="row">
@@ -70,11 +68,11 @@
                             <label>退款详情</label>
                         </dt>
                         <dd class="opt">
-                            <label>需退还金额 ：<input type="text" name="refund_money" value="{$return_goods['refund_money']}"></label>
+                            <if condition="$order[pay_code] != '' && $order[pay_name] != '电子币支付'">
+                                <label>需退还金额 ：<input type="text" name="refund_money" value="{$return_goods['refund_money']}"></label>
+                            </if>
                             <label>需退还电子币 ：<input type="text" name="refund_electronic" value="{$return_goods['refund_electronic']}"></label>
                             <label>需退还积分：<input type="text" name="refund_integral" value="{$return_goods['refund_integral']}"></label>
-
-
                         </dd>
                     </dl>
                 </if>
@@ -172,16 +170,13 @@
                     <dd class="opt">
                         <form method="post" id='return_money' action="{:U('Order/refund_balance')}">
                             <input type="hidden" name="rec_id" value="{$return_goods[rec_id]}"/>
-
-                                <label>需退还金额 ：<input type="text" name="refund_money" value="{$return_goods['refund_money']}"></label>
-
-
+                                <if condition="$order[pay_code] != '' && $order[pay_name] != '电子币支付'">
+                                     <label>需退还金额 ：<input type="text" name="refund_money" value="{$return_goods['refund_money']}"></label>
+                                </if>
                                 <label>需退还电子币 ：<input type="text" name="refund_electronic" value="{$return_goods['refund_electronic']}"></label>
-
-
                                 <label>需退还积分：<input type="text" name="refund_integral" value="{$return_goods['refund_integral']}"></label>
                             <if condition="$return_goods['type'] eq 1">
-                            <p style="color: red;">请确保用户发货，且收到之后，才确认退款</p>
+                                <p style="color: red;">请确保用户发货，且收到之后，才确认退款</p>
                             </if>
                         </form>
                     </dd>
@@ -192,10 +187,8 @@
                     <label >商品</label>
                 </dt>
                 <dd class="opt">
-
-                        名称：{$order['goods'][goods_name]}
-                        <p>规格：{$order['goods'][spec_key_name]}</p>
-
+                    名称：{$order['goods'][goods_name]}
+                    <p>规格：{$order['goods'][spec_key_name]}</p>
                 </dd>
             </dl>
             <dl class="row">

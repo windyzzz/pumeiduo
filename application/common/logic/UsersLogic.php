@@ -349,7 +349,7 @@ class UsersLogic extends Model
         if (check_mobile($username)) {
             $user = Db::name('users')->where('mobile', $username)->whereOr('email', $username);
         } else {
-            $user = Db::name('users')->where('user_id', $username)->whereOr('user_name', $username)->whereOr('email', $username);
+            $user = Db::name('users')->where('user_id', $username)->whereOr('email', $username);
         }
         $user = $user->field('password, user_id, mobile, nickname, user_name, is_distribut, is_lock, level, token, type')->find();
         if (!$user) {
@@ -371,8 +371,8 @@ class UsersLogic extends Model
                 Db::name('users')->where('mobile', $username)->whereOr('email', $username)->update($save);
                 $user = Db::name('users')->where('mobile', $username)->whereOr('email', $username)->find();
             } else {
-                Db::name('users')->where('user_id', $username)->whereOr('user_name', $username)->whereOr('email', $username)->update($save);
-                $user = Db::name('users')->where('user_id', $username)->whereOr('user_name', $username)->whereOr('email', $username)->find();
+                Db::name('users')->where('user_id', $username)->whereOr('email', $username)->update($save);
+                $user = Db::name('users')->where('user_id', $username)->whereOr('email', $username)->find();
             }
             //查询用户信息之后, 查询用户的登记昵称
             $levelId = $user['level'];

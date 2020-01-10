@@ -208,8 +208,8 @@ class Order extends Base
                         'goods_id' => $goods['goods_id'],
                         'goods_sn' => $goods['goods_sn'],
                         'goods_name' => $goods['goods_name'],
-                        'spec_key_name' => $goods['spec_key_name'],
-                        'item_id' => $goods['item_id'],
+                        'spec_key_name' => $goods['spec_key_name'] ?? '',
+                        'item_id' => $goods['item_id'] ?? '',
                         'goods_num' => $goods['goods_num'],
                         'shop_price' => $goods['goods_price'],
                         'exchange_integral' => $goods['use_integral'],
@@ -442,8 +442,8 @@ class Order extends Base
                     'goods_id' => $goods['goods_id'],
                     'goods_sn' => $goods['goods_sn'],
                     'goods_name' => $goods['goods_name'],
-                    'spec_key_name' => $goods['spec_key_name'],
-                    'item_id' => $goods['item_id'] ?? 0,
+                    'spec_key_name' => $goods['spec_key_name'] ?? '',
+                    'item_id' => $goods['item_id'] ?? '',
                     'goods_num' => $goods['goods_num'],
                     'shop_price' => $goods['goods_price'],
                     'exchange_integral' => $goods['use_integral'],
@@ -465,8 +465,8 @@ class Order extends Base
                             'goods_id' => $goods['goods_id'],
                             'goods_sn' => $goods['goods_sn'],
                             'goods_name' => $goods['goods_name'],
-                            'spec_key_name' => $goods['spec_key_name'],
-                            'item_id' => $goods['item_id'] ?? 0,
+                            'spec_key_name' => $goods['spec_key_name'] ?? '',
+                            'item_id' => $goods['item_id'] ?? '',
                             'goods_num' => $goods['goods_num'],
                             'shop_price' => $goods['goods_price'],
                             'exchange_integral' => $goods['use_integral'],
@@ -492,7 +492,7 @@ class Order extends Base
                         'goods_sn' => $goods['goods_sn'],
                         'goods_name' => $goods['goods_name'],
                         'spec_key_name' => $goods['spec_key_name'] ?? '',
-                        'item_id' => $goods['item_id'] ?? 0,
+                        'item_id' => $goods['item_id'] ?? '',
                         'goods_num' => $goods['goods_num'],
                         'shop_price' => $goods['goods_price'],
                         'exchange_integral' => $goods['use_integral'],
@@ -823,8 +823,8 @@ class Order extends Base
                 'goods_id' => $orderGoods['goods_id'],
                 'goods_sn' => $orderGoods['goods_sn'],
                 'goods_name' => $orderGoods['goods_name'],
-                'spec_key_name' => $orderGoods['spec_key_name'],
-                'item_id' => $orderGoods['item_id'],
+                'spec_key_name' => $orderGoods['spec_key_name'] ?? '',
+                'item_id' => $orderGoods['item_id'] ?? '',
                 'original_img' => $orderGoods['original_img']
             ];
             if ($type != -1) {
@@ -938,8 +938,8 @@ class Order extends Base
                 'goods_id' => $returnGoods['goods_id'],
                 'goods_sn' => $returnGoods['goods_sn'],
                 'goods_name' => $returnGoods['goods_name'],
-                'spec_key_name' => $returnGoods['spec_key_name'],
-                'item_id' => $returnGoods['item_id'],
+                'spec_key_name' => $returnGoods['spec_key_name'] ?? '',
+                'item_id' => $returnGoods['item_id'] ?? '',
                 'goods_num' => $returnGoods['goods_num'],
                 'original_img' => $returnGoods['original_img'],
                 'return_id' => $returnGoods['id'],
@@ -1035,12 +1035,14 @@ class Order extends Base
                 'goods_id' => $orderGoods['goods_id'],
                 'goods_sn' => $orderGoods['goods_sn'],
                 'goods_name' => $orderGoods['goods_name'],
-                'spec_key_name' => $orderGoods['spec_key_name'],
-                'item_id' => $orderGoods['item_id'],
+                'spec_key_name' => $orderGoods['spec_key_name'] ?? '',
+                'item_id' => $orderGoods['item_id'] ?? '',
                 'goods_num' => $orderGoods['goods_num'],
                 'original_img' => $orderGoods['original_img']
             ],
             'return_id' => $returnGoods['id'],
+            'return_title' => '',
+            'return_desc' => '',
             'type' => $returnGoods['type'],
             'status' => $returnGoods['status'],
             'verify_time' => $returnGoods['addtime'] + tpCache('shopping.return_verify_date') * 24 * 60 * 60,   // 审核完毕时间
@@ -1060,7 +1062,7 @@ class Order extends Base
         $return['return_price'] = $returnGoods['refund_money'];
         $return['return_electronic'] = $returnGoods['refund_electronic'];
         $return['return_integral'] = $returnGoods['refund_integral'];
-        $return['voucher'] = explode(',', $returnGoods['imgs']);
+        $return['voucher'] = $returnGoods['imgs'] ? explode(',', $returnGoods['imgs']) : [];
         $return['can_delivery'] = !empty($returnGoods['delivery']) ? 0 : 1;
         if (in_array($returnGoods['type'], [1, 2])) {
             if ($returnGoods['status'] == 1) {
@@ -1074,6 +1076,107 @@ class Order extends Base
         $return['addtime'] = $returnGoods['addtime'];
         $return['pay_code'] = $order['pay_code'];
         $return['pay_name'] = $order['pay_name'];
+        // 根据类型与状态返回提示信息
+        switch ($return['type']) {
+            case 0:
+                switch ($return['status']) {
+                    case -2:
+                        $returnTitle = '买家已取消退货申请';
+                        $returnDesc = '';
+                        break;
+                    case -1:
+                        $returnTitle = '审核未通过，申请取消';
+                        $returnDesc = '有任何疑问请致电客服热线：' . tpCache('shop_info.mobile');
+                        break;
+                    case 0:
+                        $returnTitle = '商家正在审核中……';
+                        $returnDesc = '审核时间还剩下 ' . differTimeStr($return['verify_time'], time());
+                        break;
+                    case 1:
+                        $returnTitle = '审核通过，商家正在退款';
+                        $returnDesc = '审核时间还剩下 ' . differTimeStr($return['verify_time'], time());
+                        break;
+                    case 5:
+                        $returnTitle = '退款成功';
+                        $returnDesc = date('Y' . '年' . 'm' . '月' . 'd' . '日 H:i', $return['refund_time']);
+                        break;
+                    default:
+                        $returnTitle = '';
+                        $returnDesc = '';
+                }
+                break;
+            case 1:
+                switch ($return['status']) {
+                    case -2:
+                        $returnTitle = '买家已取消退货申请';
+                        $returnDesc = '';
+                        break;
+                    case -1:
+                        $returnTitle = '审核未通过，申请取消';
+                        $returnDesc = '有任何疑问请致电客服热线：' . tpCache('shop_info.mobile');
+                        break;
+                    case 0:
+                        $returnTitle = '商家正在审核中……';
+                        $returnDesc = '审核时间还剩下 ' . differTimeStr($return['verify_time'], time());
+                        break;
+                    case 2:
+                        $returnTitle = '买家已退货，等待商家退款';
+                        $returnDesc = '退款时间还剩下 ' . differTimeStr($return['verify_time'], time());
+                        break;
+                    case 5:
+                        $returnTitle = '退款成功';
+                        $returnDesc = date('Y' . '年' . 'm' . '月' . 'd' . '日 H:i', $return['refund_time']);
+                        break;
+                    case 7:
+                        $returnTitle = '审核通过，商家正在退款';
+                        $returnDesc = '审核时间还剩下 ' . differTimeStr($return['verify_time'], time());
+                        break;
+                    default:
+                        $returnTitle = '';
+                        $returnDesc = '';
+                }
+                break;
+            case 2:
+                switch ($return['status']) {
+                    case -2:
+                        $returnTitle = '买家已取消退货申请';
+                        $returnDesc = '';
+                        break;
+                    case -1:
+                        $returnTitle = '审核未通过，申请取消';
+                        $returnDesc = '有任何疑问请致电客服热线：' . tpCache('shop_info.mobile');
+                        break;
+                    case 0:
+                        $returnTitle = '商家正在审核中……';
+                        $returnDesc = '审核时间还剩下 ' . differTimeStr($return['verify_time'], time());
+                        break;
+                    case 2:
+                        $returnTitle = '买家已退货，等待商家换货';
+                        $returnDesc = '换货时间还剩下 ' . differTimeStr($return['verify_time'], time());
+                        break;
+                    case 4:
+                        $returnTitle = '商家已换货';
+                        $returnDesc = '货物已以百米冲刺的速度送往您身边，请注意';
+                        break;
+                    case 5:
+                        $returnTitle = '退款成功';
+                        $returnDesc = date('Y' . '年' . 'm' . '月' . 'd' . '日 H:i', $return['refund_time']);
+                        break;
+                    case 7:
+                        $returnTitle = '审核通过，等待买家退货';
+                        $returnDesc = '审核时间还剩下 ' . differTimeStr($return['verify_time'], time());
+                        break;
+                    default:
+                        $returnTitle = '';
+                        $returnDesc = '';
+                }
+                break;
+            default:
+                $returnTitle = '';
+                $returnDesc = '';
+        }
+        $return['return_title'] = $returnTitle;
+        $return['return_desc'] = $returnDesc;
         return json(['status' => 1, 'result' => $return]);
     }
 
@@ -1668,13 +1771,13 @@ class Order extends Base
                         'title' => $gift['gift_description'],
                         'goods_list' => [[
                             'goods_id' => $gift['goods_id'],
-                            'item_id' => $gift['item_id'],
+                            'item_id' => $gift['item_id'] ?? '',
                             'goods_num' => $gift['goods_num'],
                             'goods_sn' => $gift['goods_sn'],
                             'goods_name' => $gift['goods_name'],
                             'goods_remark' => $gift['goods']['goods_remark'] ?? $gift['goods']['spec_key_name'] ?? '',
                             'original_img' => $gift['goods']['original_img'],
-                            'spec_key_name' => $gift['goods']['spec_key_name']
+                            'spec_key_name' => $gift['goods']['spec_key_name'] ?? ''
                         ]]
                     ];
                 }

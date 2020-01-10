@@ -1775,8 +1775,7 @@ class User extends Base
         $scene = I('post.scene', 6);
         $type = I('post.type', 1);
 
-//        $current_user = M('Users')->find($this->user_id);
-        $current_user = $this->user;
+        $current_user = M('Users')->find($this->user_id);
         if (2 == $current_user['type']) {
             return json(['status' => -1, 'msg' => '老用户无法继续绑定', 'result' => null]);
         }
@@ -1787,68 +1786,61 @@ class User extends Base
         if ($apply_customs) {
             return json(['status' => -1, 'msg' => '您正在申请金卡，不能进行合并操作']);
         }
-        // 账号密码绑定方式
         if (1 == $type) {
+            // 代理商账号密码绑定方式
             if (!$username) {
                 return json(['status' => -1, 'msg' => '用户名不能为空', 'result' => null]);
             }
             if (!$password) {
                 return json(['status' => -1, 'msg' => '密码不能为空', 'result' => null]);
             }
-
-            //验证成功
-            $user = M('Users')
+            $bind_user = M('Users')
                 ->where('user_name', $username)//
                 ->where('password', systemEncrypt($password))
                 // ->where('is_zhixiao',1)
                 // ->where('is_lock',0)
                 ->find();
-            if (!$user) {
+            if (!$bind_user) {
                 return json(['status' => -1, 'msg' => '账号密码错误']);
             }
         } else {
+            // 手机验证码绑定方式
             if (!$mobile) {
                 return json(['status' => -1, 'msg' => '手机号码不能为空', 'result' => null]);
             }
-
             if (!$code) {
                 return json(['status' => -1, 'msg' => '手机验证码不能为空', 'result' => null]);
             }
-
-            //验证手机号码
+            // 验证手机号码
             $is_exists = M('Users')->where('mobile', $mobile)->where('user_name', 'neq', '')->find();
             if (!$is_exists) {
                 return json(['status' => -1, 'msg' => '手机号码不存在,请输入老用户手机进行绑定', 'result' => null]);
             }
-
-            //验证手机和验证码
+            // 验证手机和验证码
             $logic = new UsersLogic();
             $res = $logic->check_validate_code($code, $mobile, 'phone', $session_id, $scene);
             if (1 != $res['status']) {
                 return json(['status' => -1, 'msg' => $res['msg']]);
             }
-
-            //验证成功
-            $user = M('Users')
+            $bind_user = M('Users')
                 ->where('user_name', $username)
                 ->where('mobile', $mobile)
                 // ->where('is_zhixiao',1)
                 // ->where('is_lock',0)
                 ->find();
-            if (!$user) {
+            if (!$bind_user) {
                 return json(['status' => -1, 'msg' => '账号不存在，不能绑定']);
             }
         }
-
-        if ($user['bind_uid'] > 0) {
+        if ($bind_user['bind_uid'] > 0) {
             return json(['status' => -1, 'msg' => '该旧账号已经绑定！']);
         }
-
-        if ($current_user['user_id'] == $user['user_id']) {
+        if ($current_user['user_id'] == $bind_user['user_id']) {
             return json(['status' => -1, 'msg' => '不能绑定自己']);
         }
 
         DB::startTrans();
+        // 更新用户信息
         $user_data = [];
         $user_data['oauth'] = $current_user['oauth'];
         $user_data['openid'] = $current_user['openid'];
@@ -1856,89 +1848,53 @@ class User extends Base
         $user_data['head_pic'] = $current_user['head_pic'];
         $user_data['nickname'] = $current_user['nickname'];
         $user_data['bind_uid'] = $current_user['user_id'];
-        // $user_data['mobile'] = $this->user['mobile'];
+        $user_data['mobile'] = $current_user['mobile'];
         $user_data['type'] = 2;
         $user_data['bind_time'] = time();
         $user_data['time_out'] = strtotime('+' . config('REDIS_DAY') . ' days');
+        M('Users')->where('user_id', $bind_user['user_id'])->update($user_data);
+        M('OauthUsers')->where('user_id', $current_user['user_id'])->update(['user_id' => $bind_user['user_id']]);
+        // 下级推荐人
+//        M('Users')->where('first_leader', $current_user['user_id'])->update(array('first_leader' => $bind_user['user_id']));
+//        M('Users')->where('second_leader', $current_user['user_id'])->update(array('second_leader' => $bind_user['user_id']));
+//        M('Users')->where('third_leader', $current_user['user_id'])->update(array('third_leader' => $bind_user['user_id']));
+//        // 邀请人
+//        M('Users')->where('invite_uid', $current_user['user_id'])->update(array('invite_uid' => $bind_user['user_id']));
 
-        //积分变动
-        // if($user['distribut_level'] > 2){ // 网点会员
-        //      $add_point = $del_point = 0;
-        //      $point_data = M('AccountLog')
-        //          ->where('user_id',$this->user_id)
-        //          ->where('pay_points','neq',0)
-        //          ->select();
-        //      if($point_data){
-        //          foreach ($point_data as $pk => $pv) {
-        //              if($pv['pay_points'] > 0){
-        //                  $log_data = array();
-        //                  $log_data['user_id'] = $user['user_id'];
-        //                  $log_data['pay_points'] = -$pv['pay_points'];
-        //                  $log_data['desc'] = '扣除新会员赠送积分';
-        //                  $log_data['change_time'] = time();
-        //                  M('AccountLog')->add($log_data);
-        //              }else{
-        //                  $del_point += $pv['pay_points'];
-        //              }
-        //          }
-        //      }
-
-        //      if($del_point < 0){
-        //          $p = M('Users')->where('user_id',$user['user_id'])->getField('pay_points');
-
-        //          if(($p + $del_point) <= 0 ){
-
-        //              M('Users')->where('user_id',$user['user_id'])
-        //              ->update(array('pay_points'=>0));
-        //          }else{
-        //              M('Users')->where('user_id',$user['user_id'])
-        //              ->update(array('pay_points'=>['exp',"pay_points+{$del_point}"]));
-        //          }
-
-        //      }
-        // }else{
-        //      $del_point = 0;
-        //      $add_point = M('AccountLog')
-        //      ->where('user_id',$this->user_id)
-        //      ->where('pay_points','neq',0)
-        //      ->getField('SUM(pay_points) as add_point');
-        //      if($add_point > 0){
-        //           M('Users')->where('user_id',$user['user_id'])
-        //           ->update(array('pay_points'=>['exp',"pay_points + {$add_point}"]));
-        //      }
-        // }
+        // 积分变动
+//        $payPoints = M('AccountLog')
+//            ->where('user_id', $current_user['user_id'])
+//            ->where('pay_points', 'gt', 0)
+//            ->where('type', 'neq', 6)// 不要注册积分
+//            ->sum('pay_points');
+//        if ($payPoints > 0) {
+//            accountLog($current_user['user_id'], 0, $payPoints, '账号合并积分', 0, 0, '', 0, 11, false);
+//        }
 
         // 迁移数据
-        // M('Order')->where('user_id',$this->user_id)->update(array('user_id'=>$user['user_id']));
-        // M('AccountLog')->where('user_id',$this->user_id)->update(array('user_id'=>$user['user_id']));
-        // M('Cart')->where('user_id',$this->user_id)->update(array('user_id'=>$user['user_id']));
-        // M('UserAddress')->where('user_id',$this->user_id)->update(array('user_id'=>$user['user_id']));
-        // M('DeliveryDoc')->where('user_id',$this->user_id)->update(array('user_id'=>$user['user_id']));
-        // M('GoodsCollect')->where('user_id',$this->user_id)->update(array('user_id'=>$user['user_id']));
-        // M('GoodsVisit')->where('user_id',$this->user_id)->update(array('user_id'=>$user['user_id']));
-        // M('OrderAction')->where('action_user',$this->user_id)->update(array('action_user'=>$user['user_id']));
-        // M('RebateLog')->where('user_id',$this->user_id)->update(array('user_id'=>$user['user_id']));
-        // M('RebateLog')->where('buy_user_id',$this->user_id)->update(array('buy_user_id'=>$user['user_id']));
-        // M('Recharge')->where('user_id',$this->user_id)->update(array('user_id'=>$user['user_id']));
-        // M('ReturnGoods')->where('user_id',$this->user_id)->update(array('user_id'=>$user['user_id']));
-        // M('UserSign')->where('user_id',$this->user_id)->update(array('user_id'=>$user['user_id']));
-        // M('UserStore')->where('user_id',$this->user_id)->update(array('user_id'=>$user['user_id']));
-        // M('OrderAction')->where('action_user',$this->user_id)->update(array('action_user'=>$user['user_id']));
-        // M('Users')->where('first_leader',$this->user_id)->update(array('first_leader'=>$user['user_id']));
-        // M('Users')->where('second_leader',$this->user_id)->update(array('second_leader'=>$user['user_id']));
-        // M('Users')->where('third_leader',$this->user_id)->update(array('third_leader'=>$user['user_id']));
-        // M('Users')->where('invite_uid',$this->user_id)->update(array('invite_uid'=>$user['user_id']));
-        M('OauthUsers')->where('user_id', $current_user['user_id'])->update(['user_id' => $user['user_id']]);
-        // M('couponList')->where('uid',$this->user_id)->update(array('uid'=>$user['user_id']));
-
-        M('Users')->where('user_id', $user['user_id'])->update($user_data);
+        // M('Order')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
+        // M('AccountLog')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
+        // M('Cart')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
+        // M('UserAddress')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
+        // M('DeliveryDoc')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
+        // M('GoodsCollect')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
+        // M('GoodsVisit')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
+        // M('OrderAction')->where('action_user',$this->user_id)->update(array('action_user'=>$bind_user['user_id']));
+        // M('RebateLog')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
+        // M('RebateLog')->where('buy_user_id',$this->user_id)->update(array('buy_user_id'=>$bind_user['user_id']));
+        // M('Recharge')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
+        // M('ReturnGoods')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
+        // M('UserSign')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
+        // M('UserStore')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
+        // M('OrderAction')->where('action_user',$this->user_id)->update(array('action_user'=>$bind_user['user_id']));
+        // M('couponList')->where('uid',$this->user_id)->update(array('uid'=>$bind_user['user_id']));
 
         // 冻结新账户
         M('Users')->where('user_id', $current_user['user_id'])->update(['is_lock' => 1]);
-
+        // 绑定记录
         M('bind_log')->add([
             'user_id' => $current_user['user_id'],
-            'bind_user_id' => $user['user_id'],
+            'bind_user_id' => $bind_user['user_id'],
             'add_time' => time(),
             'type' => 1,
         ]);
@@ -1954,7 +1910,7 @@ class User extends Base
         session_destroy();
         $this->redis->rm('user_' . $this->userToken);
 
-        $user = M('Users')->where('user_id', $user['user_id'])->find();
+        $user = M('Users')->where('user_id', $current_user['user_id'])->find();
         session('user', $user);
         $this->redis->set('user_' . $user['token'], $user, config('REDIS_TIME'));
         setcookie('user_id', $user['user_id'], null, '/');
@@ -1963,13 +1919,12 @@ class User extends Base
         setcookie('uname', urlencode($nickname), null, '/');
         setcookie('cn', 0, time() - 3600, '/');
         // 登录后将购物车的商品的 user_id 改为当前登录的id
-//        M('cart')->where('session_id', $session_id)->save(['user_id' => $user['user_id']]);
+        M('cart')->where('session_id', $session_id)->save(['user_id' => $user['user_id']]);
 
         $cartLogic = new CartLogic();
         $cartLogic->setUserId($user['user_id']);
         $cartLogic->setUserToken($user['token']);
         $cartLogic->doUserLoginHandle();  //用户登录后 需要对购物车 一些操作
-        // field('password, user_id, mobile, nickname, user_name, is_distribut, is_lock, level, token, type')
         $returnUser = [
             'user_id' => $user['user_id'],
             'sex' => $user['sex'],

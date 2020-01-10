@@ -92,7 +92,7 @@ class Order extends Base
         }
 
         $order_sn = ($keyType && 'order_sn' == $keyType) ? $keywords : I('order_sn');
-        $order_sn ? $condition['order_sn'] = trim($order_sn) : false;
+        $order_sn ? $condition['order_sn'] = ['like', '%' . trim($order_sn) . '%'] : false;
 
         '' != I('order_status') ? $condition['order_status'] = I('order_status') : false;
         '' != I('pay_status') ? $condition['pay_status'] = I('pay_status') : false;
@@ -898,7 +898,7 @@ class Order extends Base
             }
         }
 
-        $this->assign('id', $return_id); // 用户
+        $this->assign('id', $return_id); // 退换货记录ID
         $this->assign('user', $user); // 用户
         $this->assign('return_goods', $return_goods); // 退换货
         $this->assign('order', $order); //退货订单信息

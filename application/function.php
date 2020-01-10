@@ -1534,3 +1534,22 @@ function ToUrlParams($params)
     }
     return $string;
 }
+
+/**
+ * 两个时间的相差
+ * @param $time1
+ * @param $time2
+ * @return string
+ */
+function differTimeStr($time1, $time2)
+{
+    $second = $time1 - $time2;
+    $day = floor($second / (3600 * 24));
+    $second = $second % (3600 * 24);    // 除去整天之后剩余的时间
+    $hour = floor($second / 3600);
+    $second = $second % 3600;   // 除去整小时之后剩余的时间
+    $minute = floor($second / 60);
+    $second = $second % 60; // 除去整分钟之后剩余的时间
+    // 返回字符串
+    return $day . '天' . $hour . '小时' . $minute . '分' . $second . '秒';
+}

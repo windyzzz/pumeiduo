@@ -116,7 +116,7 @@ class Message extends Base
                         'finish_time' => !empty($value['finish_time']) ? date('Y.m.d', $value['finish_time']) . '结束' : '',
                         'desc' => $value['description'],
                         'cover_pic' => $value['thumb'],
-                        'message_url' => SITE_URL . '/#/news/news_particulars?article_id=' . $value['article_id']
+                        'message_url' => SITE_URL . '/#/news/app_news_particulars?article_id=' . $value['article_id']
                     ];
                 }
                 break;
@@ -165,7 +165,7 @@ class Message extends Base
                             'message_id' => $list['message_id'],
                             'title' => $list['title'],
                             'content' => $list['content'],
-                            'relate_url' => !empty($list['relate_article_id']) ? SITE_URL . '/#/member/help_particulars?article_id=' . $list['relate_article_id'] : '',
+                            'relate_url' => !empty($list['relate_article_id']) ? SITE_URL . '/#/app_member/help_particulars?article_id=' . $list['relate_article_id'] : '',
                         ];
                     }
                     $message[] = [

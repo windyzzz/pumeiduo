@@ -232,7 +232,8 @@ class Goods extends Base
                 'price' => $flashSale[0]['price'],
                 'limit_num' => $flashSale[0]['goods_num'],
                 'start_time' => $flashSale[0]['start_time'],
-                'end_time' => $flashSale[0]['end_time']
+                'end_time' => $flashSale[0]['end_time'],
+                'exchange_integral' => '0'
             ];
             $extendGoodsSpec = ['type' => 'flash_sale', 'data' => $flashSale];
         } else {
@@ -247,7 +248,8 @@ class Goods extends Base
                     'group_goods_num' => $groupBuy[0]['group_goods_num'],
                     'limit_num' => bcdiv($groupBuy[0]['goods_num'], $groupBuy[0]['group_goods_num']),
                     'start_time' => $groupBuy[0]['start_time'],
-                    'end_time' => $groupBuy[0]['end_time']
+                    'end_time' => $groupBuy[0]['end_time'],
+                    'exchange_integral' => '0'
                 ];
                 $extendGoodsSpec = ['type' => 'group_buy', 'data' => $groupBuy];
             } else {
@@ -297,7 +299,8 @@ class Goods extends Base
                 'limit_num' => '',
                 'buy_limit' => '',
                 'start_time' => '',
-                'end_time' => ''
+                'end_time' => '',
+                'exchange_integral' => ''
             ];
         }
         if (empty($goods['spec']) || empty($goods['spec_price'])) {
@@ -309,7 +312,7 @@ class Goods extends Base
                 if (isset($goods['spec_price'][$spec['spec_key']])) {
                     // 是否能使用积分
                     if ($spec['can_integral'] == 0) {
-                        $goods['spec_price'][$spec['spec_key']]['exchange_integral'] = 0;
+                        $goods['spec_price'][$spec['spec_key']]['exchange_integral'] = '0';
                     }
                     // 替换价格
                     $goods['spec_price'][$spec['spec_key']]['price'] = $spec['price'];
@@ -322,7 +325,8 @@ class Goods extends Base
                                 'limit_num' => $spec['goods_num'],
                                 'buy_limit' => $spec['buy_limit'],
                                 'start_time' => $spec['start_time'],
-                                'end_time' => $spec['end_time']
+                                'end_time' => $spec['end_time'],
+                                'exchange_integral' => $spec['can_integral'] == 0 ? '0' : $goods['spec_price'][$spec['spec_key']]['exchange_integral']
                             ];
                             break;
                         case 'group_buy':
@@ -333,7 +337,8 @@ class Goods extends Base
                                 'limit_num' => bcdiv($spec['goods_num'], $spec['group_goods_num']),
                                 'buy_limit' => $spec['buy_limit'],
                                 'start_time' => $spec['start_time'],
-                                'end_time' => $spec['end_time']
+                                'end_time' => $spec['end_time'],
+                                'exchange_integral' => $spec['can_integral'] == 0 ? '0' : $goods['spec_price'][$spec['spec_key']]['exchange_integral']
                             ];
                             break;
                         default:

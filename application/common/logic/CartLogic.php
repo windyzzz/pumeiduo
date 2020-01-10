@@ -471,14 +471,16 @@ class CartLogic extends Model
         }
         $use_integral = 0;
         if (1 == $flashSale['can_integral']) {
-            $use_integral = $this->goods['exchange_integral'];
+            if ($this->type == 1) {
+                $use_integral = $this->goods['exchange_integral'];
+            }
         }
         // 如果该商品已经存在购物车
         if ($userCartGoods) {
             $cartResult = $userCartGoods->save([
                 'goods_num' => $userWantGoodsNum,
                 'use_integral' => $use_integral,
-                'member_goods_price' => $flashSale['price'] - $use_integral,
+                'member_goods_price' => bcsub($flashSale['price'], $use_integral, 2),
             ]);
         } else {
             $cartAddFlashSaleData = [
@@ -490,7 +492,7 @@ class CartLogic extends Model
                 'goods_sn' => $this->goods['goods_sn'],   // 商品货号
                 'goods_name' => $this->goods['goods_name'],   // 商品名称
                 'market_price' => $this->goods['market_price'],   // 市场价
-                'member_goods_price' => $flashSale['price'] - $use_integral,  // 会员折扣价 默认为 购买价
+                'member_goods_price' => bcsub($flashSale['price'], $use_integral, 2),  // 会员折扣价 默认为 购买价
                 'goods_num' => $userWantGoodsNum, // 购买数量
                 'add_time' => time(), // 加入购物车时间
                 'prom_type' => 1,   // 0 普通订单,1 限时抢购, 2 团购 , 3 促销优惠
@@ -547,6 +549,9 @@ class CartLogic extends Model
         }
         $userCartGoodsNum = empty($userCartGoods['goods_num']) ? 0 : $userCartGoods['goods_num']; ///获取用户购物车的团购商品数量
         $userWantGoodsNum = $userCartGoodsNum + $this->goodsBuyNum; //购物车加上要加入购物车的商品数量
+        if ($groupBuy['buy_limit'] != 0 && $userWantGoodsNum > $groupBuy['buy_limit']) {
+            return ['status' => -4, 'msg' => '每人限购' . $groupBuy['buy_limit'] . '件，您已下单' . $this->goodsBuyNum . '件，' . '购物车已有' . $userCartGoodsNum . '件', 'result' => ''];
+        }
         $groupBuyPurchase = $groupBuy['goods_num'] - $groupBuy['buy_num']; //团购剩余库存
         if ($userWantGoodsNum > 200) {
             $userWantGoodsNum = 200;
@@ -557,14 +562,16 @@ class CartLogic extends Model
 
         $use_integral = 0;
         if (1 == $groupBuy['can_integral']) {
-            $use_integral = $this->goods['exchange_integral'];
+            if ($this->type == 1) {
+                $use_integral = $this->goods['exchange_integral'];
+            }
         }
         // 如果该商品已经存在购物车
         if ($userCartGoods) {
             $cartResult = $userCartGoods->save([
                 'goods_num' => $userWantGoodsNum,
                 'use_integral' => $use_integral,
-                'member_goods_price' => $groupBuy['price'] - $use_integral,
+                'member_goods_price' => bcsub($groupBuy['price'], $use_integral, 2),
             ]);
         } else {
             $cartAddFlashSaleData = [
@@ -576,7 +583,7 @@ class CartLogic extends Model
                 'goods_sn' => $this->goods['goods_sn'],   // 商品货号
                 'goods_name' => $this->goods['goods_name'],   // 商品名称
                 'market_price' => $this->goods['market_price'],   // 市场价
-                'member_goods_price' => $groupBuy['price'] - $use_integral,  // 会员折扣价 默认为 购买价
+                'member_goods_price' => bcsub($groupBuy['price'], $use_integral, 2),  // 会员折扣价 默认为 购买价
                 'goods_num' => $userWantGoodsNum, // 购买数量
                 'add_time' => time(), // 加入购物车时间
                 'prom_type' => 2,   // 0 普通订单,1 限时抢购, 2 团购 , 3 促销优惠
@@ -1193,7 +1200,6 @@ class CartLogic extends Model
             ]];
         }
     }
-
 
     public function calcUpdateCartNew($cartIdArr)
     {

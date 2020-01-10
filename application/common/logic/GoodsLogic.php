@@ -312,7 +312,7 @@ class GoodsLogic extends Model
             $specData[$value['spec_id']]['type_value'][] = [
                 'item_id' => $value['id'],
                 'item' => $value['item'],
-                'src' => $specImage[$value['id']],
+                'src' => $specImage[$value['id']] ?? '',
                 'is_default' => $isDefault
             ];
         }

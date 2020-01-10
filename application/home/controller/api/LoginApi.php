@@ -88,8 +88,8 @@ class LoginApi
             return json($res);
         } catch (Exception $e) {
             Log::record($e->getMessage());
-            return json(['status' => 0, 'msg' => $e->getMessage()]);
-//            return json(['status' => 0, 'msg' => '系统繁忙，请重试']);
+//            return json(['status' => 0, 'msg' => $e->getMessage()]);
+            return json(['status' => 0, 'msg' => '系统繁忙，请重试']);
         }
     }
 
