@@ -1539,9 +1539,10 @@ function ToUrlParams($params)
  * 两个时间的相差
  * @param $time1
  * @param $time2
+ * @param $seconds
  * @return string
  */
-function differTimeStr($time1, $time2)
+function differTimeStr($time1, $time2, $seconds = false)
 {
     $second = $time1 - $time2;
     $day = floor($second / (3600 * 24));
@@ -1551,5 +1552,8 @@ function differTimeStr($time1, $time2)
     $minute = floor($second / 60);
     $second = $second % 60; // 除去整分钟之后剩余的时间
     // 返回字符串
-    return $day . '天' . $hour . '小时' . $minute . '分' . $second . '秒';
+    if ($seconds) {
+        return $day . '天' . $hour . '小时' . $minute . '分' . $second . '秒';
+    }
+    return $day . '天' . $hour . '小时' . $minute . '分';
 }

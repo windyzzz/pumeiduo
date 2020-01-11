@@ -259,11 +259,36 @@ class Goods extends Base
         // 处理商品详情（抽取图片）
         $contentArr = explode('public', $goods['goods_content']);
         $contentImgArr = [];
+        Url::root('/');
+        $baseUrl = url('/', '', '', true);
         foreach ($contentArr as $key => $value) {
             if ($key == 0) {
                 continue;
             }
-            $contentImgArr[] = 'public' . explode('&quot;', $value)[0];
+            $imageUrl = 'public' . explode('&quot;', $value)[0];
+            $imageIdentify = md5($imageUrl);
+            $contentImage = M('goods_content_images')->where(['goods_id' => $goods_id, 'image_identify' => $imageIdentify])->find();
+            if (!empty($contentImage)) {
+                $contentImgArr[] = [
+                    'url' => $imageUrl,
+                    'width' => $contentImage['width'],
+                    'height' => $contentImage['height']
+                ];
+            } else {
+                $imageSize = getimagesize($baseUrl . $imageUrl);
+                $contentImgArr[] = [
+                    'url' => $imageUrl,
+                    'width' => $imageSize[0] . '',
+                    'height' => $imageSize[1] . ''
+                ];
+                M('goods_content_images')->add([
+                    'goods_id' => $goods_id,
+                    'image_identify' => $imageIdentify,
+                    'width' => $imageSize[0],
+                    'height' => $imageSize[1],
+                    'type' => $imageSize['mime']
+                ]);
+            }
         }
         $goods['content_images_list'] = $contentImgArr;
         if ($goods['brand_id']) {
