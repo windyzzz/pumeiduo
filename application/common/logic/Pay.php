@@ -166,8 +166,13 @@ class Pay
     {
         $goodsListCount = count($this->payList);
         for ($payCursor = '0'; $payCursor < $goodsListCount; ++$payCursor) {
-            $this->payList[$payCursor]['goods_fee'] = bcmul($this->payList[$payCursor]['goods_num'], $this->payList[$payCursor]['member_goods_price'], 2);    // 小计
-            $this->goodsPrice = bcadd($this->goodsPrice, $this->payList[$payCursor]['goods_fee'], 2); // 商品总价
+            if ($this->payList[$payCursor]['prom_type'] != 0) {
+                $this->payList[$payCursor]['prom_goods_fee'] = bcmul($this->payList[$payCursor]['goods_num'], $this->payList[$payCursor]['prom_member_goods_price'], 2);    // 小计
+                $this->goodsPrice = bcadd($this->goodsPrice, $this->payList[$payCursor]['prom_goods_fee'], 2); // 商品总价
+            } else {
+                $this->payList[$payCursor]['goods_fee'] = bcmul($this->payList[$payCursor]['goods_num'], $this->payList[$payCursor]['member_goods_price'], 2);    // 小计
+                $this->goodsPrice = bcadd($this->goodsPrice, $this->payList[$payCursor]['goods_fee'], 2); // 商品总价
+            }
             if (array_key_exists('market_price', $this->payList[$payCursor])) {
                 $this->cutFee = bcadd($this->cutFee, bcmul($this->payList[$payCursor]['goods_num'], bcsub($this->payList[$payCursor]['market_price'], $this->payList[$payCursor]['member_goods_price'], 2), 2), 2); // 共节约
             }
@@ -630,6 +635,12 @@ class Pay
 
     public function activity3()
     {
+        foreach ($this->payList as $payList) {
+            if (3 == $payList['goods']['zone'] && $payList['goods']['distribut_id'] != 0) {
+                // VIP升级套餐
+                return true;
+            }
+        }
         // 订单优惠促销（查看是否有优惠价格）
         $orderProm = M('order_prom')
             ->where(['type' => ['in', '0, 1'], 'is_open' => 1, 'is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])
@@ -1050,8 +1061,11 @@ class Pay
         //5.加价购
 //        $district_level = [];
         $goodsPromAmount = '0';
-
         foreach ($pay_list as $k => $v) {
+            if (3 == $v['goods']['zone'] && $v['goods']['distribut_id'] != 0) {
+                // VIP升级套餐
+                break;
+            }
 
             $goods_info = M('goods')->where(array('goods_id' => $v['goods_id']))->find();
 

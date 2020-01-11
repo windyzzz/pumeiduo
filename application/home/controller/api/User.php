@@ -1267,16 +1267,16 @@ class User extends Base
         }
         if (1 == $type) {
             // 频繁请求
-            $res = cache($this->user_id);
+            $res = cache($this->user_id . 'changeType');
             if ($res) {
                 $return = [
                     'user_id' => $this->user_id,
                     'integral' => '0',
-                    'point' =>'0',
+                    'point' => '0',
                 ];
                 return json(['status' => 1, 'msg' => '新账号认证成功', 'result' => $return]);
             }
-            cache($this->user_id, 1, 5);
+            cache($this->user_id . 'changeType', 1, 5);
 
             $pay_points = tpCache('basic.reg_integral'); // 会员注册赠送积分
             if ($pay_points > 0) {

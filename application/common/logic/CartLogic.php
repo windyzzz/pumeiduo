@@ -1244,7 +1244,7 @@ class CartLogic extends Model
         $total_fee = $goods_fee = $goods_num = $use_integral = 0; //初始化数据。商品总额/节约金额/商品总共数量/商品使用积分
         if ($cartList) {
             foreach ($cartList as $cartKey => $cartItem) {
-                $total_fee = bcadd($total_fee, $cartItem['goods_fee'], 2);;
+                $total_fee = bcadd($total_fee, $cartItem['goods_fee'], 2);
                 $goods_fee = bcadd($goods_fee, $cartItem['cut_fee'], 2);
                 $goods_num += $cartItem['goods_num'];
                 $use_integral = bcadd($use_integral, $cartItem['use_integral'], 2);
@@ -1259,8 +1259,8 @@ class CartLogic extends Model
         $total_fee = $goods_fee = $goods_num = $use_integral = 0; //初始化数据。商品总额/节约金额/商品总共数量/商品使用积分
         if ($cartList) {
             foreach ($cartList as $cartKey => $cartItem) {
-                $total_fee = bcadd($total_fee, $cartItem['total_fee'], 2);;
-                $goods_fee = $cartItem['prom_type'] == 0 ? bcadd($goods_fee, $cartItem['goods_fee'], 2) : bcadd($goods_fee, $cartItem['total_fee'], 2);
+                $total_fee = $cartItem['prom_type'] == 0 ? bcadd($total_fee, $cartItem['total_fee'], 2) : bcadd($goods_fee, $cartItem['goods_fee'], 2);
+                $goods_fee = bcadd($goods_fee, $cartItem['goods_fee'], 2);
                 $goods_num += $cartItem['goods_num'];
                 $use_integral = bcadd($use_integral, $cartItem['use_integral'], 2);
             }

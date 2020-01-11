@@ -1591,6 +1591,7 @@ class Order extends Base
             }
             $cartList['cartList'] = $cartLogic->getCartList(1); // 获取用户选中的购物车商品
             foreach ($cartList['cartList'] as $key => $cart) {
+                $cartList['cartList'][$key]['prom_member_goods_price'] = $cart['member_goods_price'];
                 $cartList['cartList'][$key]['member_goods_price'] = $cart['goods_price'];
             }
         } else {
@@ -1913,6 +1914,7 @@ class Order extends Base
             }
             $cartList['cartList'] = $cartLogic->getCartList(1); // 获取用户选中的购物车商品
             foreach ($cartList['cartList'] as $key => $cart) {
+                $cartList['cartList'][$key]['prom_member_goods_price'] = $cart['member_goods_price'];
                 $cartList['cartList'][$key]['member_goods_price'] = $cart['goods_price'];
             }
         } else {
@@ -2112,6 +2114,7 @@ class Order extends Base
             }
             $cartList['cartList'] = $cartLogic->getCartList(1); // 获取用户选中的购物车商品
             foreach ($cartList['cartList'] as $key => $cart) {
+                $cartList['cartList'][$key]['prom_member_goods_price'] = $cart['member_goods_price'];
                 $cartList['cartList'][$key]['member_goods_price'] = $cart['goods_price'];
             }
         } else {

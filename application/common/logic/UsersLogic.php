@@ -72,7 +72,6 @@ class UsersLogic extends Model
 
     function check_apply_customs($user_id)
     {
-
         $apply_customs = M('apply_customs')->where(array('user_id' => $user_id))->find();
         if ($apply_customs && $apply_customs['status'] == 0) {
             $this->error = '您的申请在审核中，请等待';

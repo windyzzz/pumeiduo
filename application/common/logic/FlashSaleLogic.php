@@ -233,13 +233,13 @@ class FlashSaleLogic extends Prom
     public function buyNow($buyGoods)
     {
         if ($this->checkActivityIsAble()) {
-            if ($buyGoods['goods_num'] > $this->flashSale['buy_limit']) {
+            if ($this->flashSale['buy_limit'] != 0 && $buyGoods['goods_num'] > $this->flashSale['buy_limit']) {
                 throw new TpshopException('抢购商品立即购买', 0, ['status' => 0, 'msg' => '每人限购'.$this->flashSale['buy_limit'].'件', 'result' => '']);
             }
         }
         $userFlashOrderGoodsNum = $this->getUserFlashOrderGoodsNum($buyGoods['user_id']); //获取用户抢购已购商品数量
         $userBuyGoodsNum = $buyGoods['goods_num'] + $userFlashOrderGoodsNum;
-        if ($userBuyGoodsNum > $this->flashSale['buy_limit']) {
+        if ($this->flashSale['buy_limit'] != 0 && $userBuyGoodsNum > $this->flashSale['buy_limit']) {
             throw new TpshopException('抢购商品立即购买', 0, ['status' => 0, 'msg' => '每人限购'.$this->flashSale['buy_limit'].'件，您已下单'.$userFlashOrderGoodsNum.'件', 'result' => '']);
         }
         $flashSalePurchase = $this->flashSale['goods_num'] - $this->flashSale['buy_num']; //抢购剩余库存
