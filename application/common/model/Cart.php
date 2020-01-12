@@ -46,7 +46,7 @@ class Cart extends Model
     }
 
     /**
-     * 商品优惠总额.
+     * 商品结算价格
      *
      * @param $value
      * @param $data

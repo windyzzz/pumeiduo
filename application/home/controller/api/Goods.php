@@ -260,7 +260,8 @@ class Goods extends Base
         $contentArr = explode('public', $goods['goods_content']);
         $contentImgArr = [];
         Url::root('/');
-        $baseUrl = url('/', '', '', true);
+//        $baseUrl = url('/', '', '', true);
+        $baseUrl = 'http://test.pumeiduo.com/';
         foreach ($contentArr as $key => $value) {
             if ($key == 0) {
                 continue;

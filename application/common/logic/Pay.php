@@ -166,13 +166,8 @@ class Pay
     {
         $goodsListCount = count($this->payList);
         for ($payCursor = '0'; $payCursor < $goodsListCount; ++$payCursor) {
-            if ($this->payList[$payCursor]['prom_type'] != 0) {
-                $this->payList[$payCursor]['prom_goods_fee'] = bcmul($this->payList[$payCursor]['goods_num'], $this->payList[$payCursor]['prom_member_goods_price'], 2);    // 小计
-                $this->goodsPrice = bcadd($this->goodsPrice, $this->payList[$payCursor]['prom_goods_fee'], 2); // 商品总价
-            } else {
                 $this->payList[$payCursor]['goods_fee'] = bcmul($this->payList[$payCursor]['goods_num'], $this->payList[$payCursor]['member_goods_price'], 2);    // 小计
                 $this->goodsPrice = bcadd($this->goodsPrice, $this->payList[$payCursor]['goods_fee'], 2); // 商品总价
-            }
             if (array_key_exists('market_price', $this->payList[$payCursor])) {
                 $this->cutFee = bcadd($this->cutFee, bcmul($this->payList[$payCursor]['goods_num'], bcsub($this->payList[$payCursor]['market_price'], $this->payList[$payCursor]['member_goods_price'], 2), 2), 2); // 共节约
             }
