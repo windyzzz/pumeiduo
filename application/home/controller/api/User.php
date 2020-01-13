@@ -1810,10 +1810,10 @@ class User extends Base
                 ->where('user_name', $username)//
                 ->where('password', systemEncrypt($password))
                 // ->where('is_zhixiao',1)
-                // ->where('is_lock',0)
+                ->where('is_lock', 0)
                 ->find();
             if (!$bind_user) {
-                return json(['status' => -1, 'msg' => '账号密码错误']);
+                return json(['status' => -1, 'msg' => '账号不存在或已被冻结，不能绑定']);
             }
         } else {
             // 手机验证码绑定方式
@@ -1838,10 +1838,10 @@ class User extends Base
                 ->where('user_name', $username)
                 ->where('mobile', $mobile)
                 // ->where('is_zhixiao',1)
-                // ->where('is_lock',0)
+                ->where('is_lock', 0)
                 ->find();
             if (!$bind_user) {
-                return json(['status' => -1, 'msg' => '账号不存在，不能绑定']);
+                return json(['status' => -1, 'msg' => '账号不存在或已被冻结，不能绑定']);
             }
         }
         if ($bind_user['bind_uid'] > 0) {
@@ -1850,10 +1850,17 @@ class User extends Base
         if ($current_user['user_id'] == $bind_user['user_id']) {
             return json(['status' => -1, 'msg' => '不能绑定自己']);
         }
+        if ($this->_hasRelationship($bind_user['user_id'])) {
+            return json(['status' => 0, 'msg' => '不能绑定和自己有关系的普通会员']);
+        }
 
         DB::startTrans();
         // 更新用户信息
         $user_data = [];
+        $user_data['distribut_level'] = $current_user['distribut_level'] > $bind_user['distribut_level'] ? $current_user['distribut_level'] : $bind_user['distribut_level'];
+        if ($user_data['distribut_level'] > 1) {
+            $user_data['is_distribut'] = 1;
+        }
         $user_data['oauth'] = $current_user['oauth'];
         $user_data['openid'] = $current_user['openid'];
         $user_data['unionid'] = $current_user['unionid'];
@@ -1865,40 +1872,54 @@ class User extends Base
         $user_data['bind_time'] = time();
         $user_data['time_out'] = strtotime('+' . config('REDIS_DAY') . ' days');
         M('Users')->where('user_id', $bind_user['user_id'])->update($user_data);
+        // 授权登录
         M('OauthUsers')->where('user_id', $current_user['user_id'])->update(['user_id' => $bind_user['user_id']]);
         // 下级推荐人
-//        M('Users')->where('first_leader', $current_user['user_id'])->update(array('first_leader' => $bind_user['user_id']));
-//        M('Users')->where('second_leader', $current_user['user_id'])->update(array('second_leader' => $bind_user['user_id']));
-//        M('Users')->where('third_leader', $current_user['user_id'])->update(array('third_leader' => $bind_user['user_id']));
-//        // 邀请人
-//        M('Users')->where('invite_uid', $current_user['user_id'])->update(array('invite_uid' => $bind_user['user_id']));
-
+        M('Users')->where('first_leader', $current_user['user_id'])->update(array('first_leader' => $bind_user['user_id'], 'invite_uid' => $bind_user['user_id']));
+        M('Users')->where('second_leader', $current_user['user_id'])->update(array('second_leader' => $bind_user['user_id']));
+        M('Users')->where('third_leader', $current_user['user_id'])->update(array('third_leader' => $bind_user['user_id']));
         // 积分变动
-//        $payPoints = M('AccountLog')
-//            ->where('user_id', $current_user['user_id'])
-//            ->where('pay_points', 'gt', 0)
-//            ->where('type', 'neq', 6)// 不要注册积分
-//            ->sum('pay_points');
-//        if ($payPoints > 0) {
-//            accountLog($current_user['user_id'], 0, $payPoints, '账号合并积分', 0, 0, '', 0, 11, false);
-//        }
+        $payPoints = M('AccountLog')
+            ->where('user_id', $current_user['user_id'])
+            ->where('pay_points', 'gt', 0)
+            ->where('type', 'neq', 6)   // 不要注册积分
+            ->sum('pay_points');
+        if ($payPoints > 0) {
+            accountLog($bind_user['user_id'], 0, $payPoints, '账号合并积分', 0, 0, '', 0, 11, false);
+        }
+        // 电子币变动
+        $electronic = M('AccountLog')
+            ->where('user_id', $current_user['user_id'])
+            ->where('user_electronic', 'gt', 0)
+            ->sum('user_electronic');
+        if ($payPoints > 0) {
+            accountLog($bind_user['user_id'], 0, 0, '账号合并电子币', 0, 0, '', $electronic, 11, false);
+        }
+        // 余额变动
+        $userMoney = M('AccountLog')
+            ->where('user_id', $current_user['user_id'])
+            ->where('user_money', 'gt', 0)
+            ->sum('user_money');
+        if ($payPoints > 0) {
+            accountLog($bind_user['user_id'], $userMoney, 0, '账号合并余额', 0, 0, '', 0, 11, false);
+        }
+        // 订单
+        M('Order')->where('user_id', $current_user['user_id'])->update(array('user_id' => $bind_user['user_id']));
+        M('OrderAction')->where('action_user', $current_user['user_id'])->update(array('action_user' => $bind_user['user_id']));
 
         // 迁移数据
-        // M('Order')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
         // M('AccountLog')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
         // M('Cart')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
         // M('UserAddress')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
         // M('DeliveryDoc')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
         // M('GoodsCollect')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
         // M('GoodsVisit')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
-        // M('OrderAction')->where('action_user',$this->user_id)->update(array('action_user'=>$bind_user['user_id']));
         // M('RebateLog')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
         // M('RebateLog')->where('buy_user_id',$this->user_id)->update(array('buy_user_id'=>$bind_user['user_id']));
         // M('Recharge')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
         // M('ReturnGoods')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
         // M('UserSign')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
         // M('UserStore')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
-        // M('OrderAction')->where('action_user',$this->user_id)->update(array('action_user'=>$bind_user['user_id']));
         // M('couponList')->where('uid',$this->user_id)->update(array('uid'=>$bind_user['user_id']));
 
         // 冻结新账户
@@ -1909,6 +1930,7 @@ class User extends Base
             'bind_user_id' => $bind_user['user_id'],
             'add_time' => time(),
             'type' => 1,
+            'way' => 1
         ]);
 
         DB::commit();
@@ -1922,7 +1944,7 @@ class User extends Base
         session_destroy();
         $this->redis->rm('user_' . $this->userToken);
 
-        $user = M('Users')->where('user_id', $current_user['user_id'])->find();
+        $user = M('Users')->where('user_id', $bind_user['user_id'])->find();
         session('user', $user);
         $this->redis->set('user_' . $user['token'], $user, config('REDIS_TIME'));
         setcookie('user_id', $user['user_id'], null, '/');

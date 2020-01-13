@@ -413,6 +413,69 @@ class User extends Base
                     }
                 }
 
+                // 更新用户信息
+                $user_data = [];
+                $user_data['distribut_level'] = $c['distribut_level'] > $user['distribut_level'] ? $c['distribut_level'] : $user['distribut_level'];
+                if ($user_data['distribut_level'] > 1) {
+                    $user_data['is_distribut'] = 1;
+                }
+                $user_data['oauth'] = $c['oauth'];
+                $user_data['openid'] = $c['openid'];
+                $user_data['unionid'] = $c['unionid'];
+                $user_data['head_pic'] = $c['head_pic'];
+                $user_data['nickname'] = $c['nickname'];
+                $user_data['bind_uid'] = $c['user_id'];
+                $user_data['mobile'] = $c['mobile'];
+                $user_data['type'] = 2;
+                $user_data['bind_time'] = time();
+                $user_data['time_out'] = strtotime('+' . config('REDIS_DAY') . ' days');
+                M('Users')->where('user_id', $uid)->update($user_data);
+                // 授权登录
+                M('OauthUsers')->where('user_id', $merge_uid)->update(['user_id' => $uid]);
+                // 下级推荐人
+                M('Users')->where('first_leader', $merge_uid)->update(array('first_leader' => $uid, 'invite_uid' => $uid));
+                M('Users')->where('second_leader', $merge_uid)->update(array('second_leader' => $uid));
+                M('Users')->where('third_leader', $merge_uid)->update(array('third_leader' => $uid));
+                // 积分变动
+                $payPoints = M('AccountLog')
+                    ->where('user_id', $merge_uid)
+                    ->where('pay_points', 'gt', 0)
+                    ->where('type', 'neq', 6)   // 不要注册积分
+                    ->sum('pay_points');
+                if ($payPoints > 0) {
+                    accountLog($uid, 0, $payPoints, '账号合并积分', 0, 0, '', 0, 11, false);
+                }
+                // 电子币变动
+                $electronic = M('AccountLog')
+                    ->where('user_id', $merge_uid)
+                    ->where('user_electronic', 'gt', 0)
+                    ->sum('user_electronic');
+                if ($payPoints > 0) {
+                    accountLog($uid, 0, 0, '账号合并电子币', 0, 0, '', $electronic, 11, false);
+                }
+                // 余额变动
+                $userMoney = M('AccountLog')
+                    ->where('user_id', $merge_uid)
+                    ->where('user_money', 'gt', 0)
+                    ->sum('user_money');
+                if ($payPoints > 0) {
+                    accountLog($uid, $userMoney, 0, '账号合并余额', 0, 0, '', 0, 11, false);
+                }
+                // 订单
+                M('Order')->where('user_id', $merge_uid)->update(array('user_id' => $uid));
+                M('OrderAction')->where('action_user', $merge_uid)->update(array('action_user' => $uid));
+                // 4.冻结报单系统用户
+                M('users')->where(['user_id' => $c['user_id']])->save(['is_lock' => 1]);
+                // 绑定记录
+                M('bind_log')->add([
+                    'user_id' => $c['user_id'],
+                    'bind_user_id' => $user['user_id'],
+                    'add_time' => time(),
+                    'type' => 1,
+                    'way' => 2
+                ]);
+                exit($this->success('合并成功'));
+
                 $update = [];
                 $update['invite_uid'] = $update['first_leader'] = $c['first_leader'];
                 $update['second_leader'] = $c['second_leader'];
@@ -433,18 +496,28 @@ class User extends Base
                     $update['is_distribut'] = 1;
                 }
                 $update['merge_uid'] = $c['user_id'];
+                M('users')->where(['user_id' => $uid])->save($update);
+
                 M('account_log')->where('user_id', $c['user_id'])->update(['user_id' => $uid]);
 
                 // 3.订单
                 M('order')->where('user_id', $c['user_id'])->update(['user_id' => $uid]);
+
                 M('users')->where('first_leader', $c['user_id'])->update(['first_leader' => $uid, 'invite_uid' => $uid]);
                 M('users')->where('second_leader', $c['user_id'])->update(['second_leader' => $uid]);
                 M('users')->where('third_leader', $c['user_id'])->update(['third_leader' => $uid]);
 
-                M('users')->where(['user_id' => $uid])->save($update);
-
                 // 4.冻结报单系统用户
                 M('users')->where(['user_id' => $c['user_id']])->save(['is_lock' => 1]);
+
+                // 绑定记录
+                M('bind_log')->add([
+                    'user_id' => $c['user_id'],
+                    'bind_user_id' => $user['user_id'],
+                    'add_time' => time(),
+                    'type' => 1,
+                    'way' => 2
+                ]);
                 exit($this->success('合并成功'));
             }
         }
@@ -1356,7 +1429,8 @@ class User extends Base
                     'user_id' => $user_id,
                     'bind_user_id' => 0,
                     'add_time' => time(),
-                    'type' => 2,
+                    'type' => 2,    // 1绑定 2解绑
+                    'way' => 2,
                     'openid' => $o['openid'],
                     'unionid' => $o['unionid'],
                     'oauth' => $o['oauth'],
