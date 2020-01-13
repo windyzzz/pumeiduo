@@ -332,7 +332,7 @@ class CartLogic extends Model
         }
         // 如果该商品已经存在购物车
         if ($userCartGoods) {
-            $userWantGoodsNum = $this->goodsBuyNum; //本次要购买的数量加上购物车的本身存在的数量
+            $userWantGoodsNum = $this->goodsBuyNum + $userCartGoods['goods_num']; //本次要购买的数量加上购物车的本身存在的数量
             //如果有阶梯价格,就是用阶梯价格
             if (!empty($this->goods['price_ladder'])) {
                 $goodsLogic = new GoodsLogic();

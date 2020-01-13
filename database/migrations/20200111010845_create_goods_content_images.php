@@ -3,7 +3,7 @@
 use think\migration\Migrator;
 use think\migration\db\Column;
 
-class UpdateExtraReward extends Migrator
+class CreateGoodsContentImages extends Migrator
 {
     /**
      * Change Method.
@@ -28,10 +28,12 @@ class UpdateExtraReward extends Migrator
      */
     public function change()
     {
-        $this->table('extra_reward')
-            ->changeColumn('order_num', 'integer', ['default' => 0, 'comment' => '订单数量'])
-            ->addColumn('can_integral', 'integer', ['default' => 0, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'comment' => '能否使用积分', 'after' => 'goods_price'])
-            ->addColumn('buy_limit', 'integer', ['default' => 0, 'comment' => '每人限购数量', 'after' => 'goods_num'])
-            ->update();
+        $this->table('goods_content_images')
+            ->addColumn('goods_id', 'integer', ['comment' => '商品ID'])
+            ->addColumn('image_identify', 'string', ['limit' => 50, 'comment' => '图标标识（md5加密）'])
+            ->addColumn('width', 'string', ['limit' => 10, 'comment' => '宽度'])
+            ->addColumn('height', 'string', ['limit' => 10, 'comment' => '高度'])
+            ->addColumn('type', 'string', ['limit' => 20, 'comment' => '类型'])
+            ->create();
     }
 }

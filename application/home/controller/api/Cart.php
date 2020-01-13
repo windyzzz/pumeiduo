@@ -215,7 +215,7 @@ class Cart extends Base
                         'spec_key_name' => $v['spec_key_name'],
                         'shop_price' => $v['goods_price'],
                         'exchange_integral' => $v['use_integral'],
-                        'exchange_price' => $v['goods_price'],
+                        'exchange_price' => $v['use_integral'] == 0 ? $v['goods_price'] : bcsub($v['goods_price'], $v['use_integral'] ,2),
                         'goods_num' => $v['goods_num'],
                         'buy_limit' => $promGoods[$key]['buy_limit'],
                         'gift_goods' => $giftGoods
@@ -239,7 +239,7 @@ class Cart extends Base
                         'spec_key_name' => $v['spec_key_name'],
                         'shop_price' => $v['goods_price'],
                         'exchange_integral' => $v['use_integral'],
-                        'exchange_price' => $v['goods_price'],
+                        'exchange_price' => $v['use_integral'] == 0 ? $v['goods_price'] : bcsub($v['goods_price'], $v['use_integral'] ,2),
                         'goods_num' => $v['goods_num'],
                         'buy_limit' => $flashSaleGoods[$key]['buy_limit'],
                         'gift_goods' => $giftGoods
@@ -263,7 +263,7 @@ class Cart extends Base
                         'spec_key_name' => $v['spec_key_name'],
                         'shop_price' => $v['goods_price'],
                         'exchange_integral' => $v['use_integral'],
-                        'exchange_price' => $v['goods_price'],
+                        'exchange_price' => $v['use_integral'] == 0 ? $v['goods_price'] : bcsub($v['goods_price'], $v['use_integral'] ,2),
                         'goods_num' => $v['goods_num'],
                         'buy_limit' => $groupBuyGoods[$key]['buy_limit'],
                         'gift_goods' => $giftGoods
@@ -280,7 +280,7 @@ class Cart extends Base
                         'spec_key_name' => $v['spec_key_name'],
                         'shop_price' => $v['goods_price'],
                         'exchange_integral' => $v['use_integral'],
-                        'exchange_price' => $v['goods_price'],
+                        'exchange_price' => $v['use_integral'] == 0 ? $v['goods_price'] : bcsub($v['goods_price'], $v['use_integral'] ,2),
                         'goods_num' => $v['goods_num'],
                         'gift_goods' => $giftGoods
                     ];

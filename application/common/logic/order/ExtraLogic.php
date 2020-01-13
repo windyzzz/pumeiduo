@@ -276,6 +276,7 @@ class ExtraLogic
 //                    $goods_info['goods_price'] = $av['goods_price'];
 //                    $goods_info['goods_price'] = $goods_info['goods_price'] - $goods_info['exchange_integral'];
                     $goods_info['goods_num'] = $av['goods_num'];
+                    $goods_info['buy_limit'] = $av['buy_limit'];
                     $goods_info['prom_type'] = 6;
                     $goods_info['prom_id'] = $av['extra_id'];
                     $goods_info['extra_reward_id'] = $av['reward_id'];

@@ -1790,7 +1790,7 @@ class Order extends Base
                         'shop_price' => $extra['goods_price'],
                         'exchange_integral' => $extra['exchange_integral'],
                         'exchange_price' => $extra['goods_price'],
-                        'buy_limit' => $extra['goods_num'],
+                        'buy_limit' => $extra['buy_limit'],
                         'pay_type' => 1
                     ];
                     if ($extra['can_integral'] == 0) {

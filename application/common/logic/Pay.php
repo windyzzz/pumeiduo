@@ -166,8 +166,8 @@ class Pay
     {
         $goodsListCount = count($this->payList);
         for ($payCursor = '0'; $payCursor < $goodsListCount; ++$payCursor) {
-                $this->payList[$payCursor]['goods_fee'] = bcmul($this->payList[$payCursor]['goods_num'], $this->payList[$payCursor]['member_goods_price'], 2);    // 小计
-                $this->goodsPrice = bcadd($this->goodsPrice, $this->payList[$payCursor]['goods_fee'], 2); // 商品总价
+            $this->payList[$payCursor]['goods_fee'] = bcmul($this->payList[$payCursor]['goods_num'], $this->payList[$payCursor]['member_goods_price'], 2);    // 小计
+            $this->goodsPrice = bcadd($this->goodsPrice, $this->payList[$payCursor]['goods_fee'], 2); // 商品总价
             if (array_key_exists('market_price', $this->payList[$payCursor])) {
                 $this->cutFee = bcadd($this->cutFee, bcmul($this->payList[$payCursor]['goods_num'], bcsub($this->payList[$payCursor]['market_price'], $this->payList[$payCursor]['member_goods_price'], 2), 2), 2); // 共节约
             }
@@ -408,12 +408,12 @@ class Pay
 
     public function activityRecord($order)
     {
+        // 满单赠品
         $this->giftLogic->setOrder($order);
         $this->giftLogic->record();
-
+        // 加价购
         $this->extraLogic->setOrder($order);
         $this->extraLogic->setRewardInfo($this->extra_reward);
-
         $this->extraLogic->record();
     }
 
@@ -790,6 +790,21 @@ class Pay
             if ($extraGoods['goods_num'] < $extra['goods_num']) {
                 throw new TpshopException('计算订单价格', 0, ['status' => 0, 'msg' => '超出购买加价购商品数量']);
             }
+            if ($extraGoods['buy_limit'] != 0) {
+                // 购买记录
+                $extraLogNum = M('extra_log el')
+                    ->join('order o', 'o.order_sn = el.order_sn')
+                    ->join('order_goods og', 'og.order_id = o.order_id')
+                    ->where([
+                        'el.extra_reward_id' => $extraGoods['extra_reward_id'],
+                        'el.status' => 1,
+                        'og.goods_id' => $extraGoods['goods_id']
+                    ])->sum('og.goods_num');
+                if ($extra['goods_num'] + $extraLogNum > $extraGoods['buy_limit']) {
+                    throw new TpshopException('计算订单价格', 0, ['status' => 0, 'msg' => '超出购买加价购每人限购数量']);
+                }
+            }
+
             $cartLogic->setGoodsModel($extra['goods_id']);
 //            $cartLogic->setSpecGoodsPriceModel($itemId);
             $cartLogic->setGoodsBuyNum($extra['goods_num']);
