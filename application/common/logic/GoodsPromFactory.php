@@ -36,6 +36,8 @@ class GoodsPromFactory
                 return new PromGoodsLogic($goods, $spec_goods_price);
             case 6:
                 return new TeamActivityLogic($goods, $spec_goods_price);
+            default:
+                return [];
         }
     }
 

@@ -1590,6 +1590,12 @@ class Order extends Base
                 return json(['status' => 0, 'msg' => '你的购物车没有选中商品', 'result' => null]);
             }
             $cartList['cartList'] = $cartLogic->getCartList(1); // 获取用户选中的购物车商品
+            foreach ($cartList['cartList'] as $key => $cart) {
+                if ($cart['prom_type'] == 3) {
+                    // 商品促销优惠
+                    $cartList['cartList'][$key]['member_goods_price'] = $cart['goods_price'];
+                }
+            }
         } else {
             /*
              * 单个商品 + 购物车 下单
@@ -1909,6 +1915,12 @@ class Order extends Base
                 return json(['status' => 0, 'msg' => '你的购物车没有选中商品', 'result' => null]);
             }
             $cartList['cartList'] = $cartLogic->getCartList(1); // 获取用户选中的购物车商品
+            foreach ($cartList['cartList'] as $key => $cart) {
+                if ($cart['prom_type'] == 3) {
+                    // 商品促销优惠
+                    $cartList['cartList'][$key]['member_goods_price'] = $cart['goods_price'];
+                }
+            }
         } else {
             /*
              * 单个商品 + 购物车 下单
@@ -2105,6 +2117,12 @@ class Order extends Base
                 return json(['status' => 0, 'msg' => '你的购物车没有选中商品']);
             }
             $cartList['cartList'] = $cartLogic->getCartList(1); // 获取用户选中的购物车商品
+            foreach ($cartList['cartList'] as $key => $cart) {
+                if ($cart['prom_type'] == 3) {
+                    // 商品促销优惠
+                    $cartList['cartList'][$key]['member_goods_price'] = $cart['goods_price'];
+                }
+            }
         } else {
             /*
              * 单个商品 + 购物车 下单

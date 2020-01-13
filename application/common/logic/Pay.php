@@ -1064,30 +1064,20 @@ class Pay
         $user_info = $this->getUser();
         $pay_list = !empty($goodsList) ? $goodsList : $this->payList;
 
-        //1.分销--会员升级区商品购买顺序
-        //2.商品限购
-        //3.超值套组
-        //4.团购
-        //5.加价购
-//        $district_level = [];
         $goodsPromAmount = '0';
+        $promGoodsNum = [];
         foreach ($pay_list as $k => $v) {
             if (3 == $v['goods']['zone'] && $v['goods']['distribut_id'] != 0) {
                 // VIP升级套餐
                 break;
             }
-
-            $goods_info = M('goods')->where(array('goods_id' => $v['goods_id']))->find();
-
             $goods_tao_grade = M('goods_tao_grade')
                 ->alias('g')
                 ->field('pg.id, pg.type, pg.goods_num, pg.goods_price, pg.buy_limit, pg.expression')
                 ->where(array('g.goods_id' => $v['goods_id']))
                 ->join('prom_goods pg', "g.promo_id = pg.id and pg.group like '%" . $user_info['distribut_level'] . "%' and pg.start_time <= " . NOW_TIME . " and pg.end_time >= " . NOW_TIME . " and pg.is_end = '0' and pg.is_open = 1 and pg.min_num <= " . $v["goods_num"])
                 ->select();
-
             $is_can_buy = true;
-
             if ($goods_tao_grade) {
                 foreach ($goods_tao_grade as $key => $group_activity) {
                     if ($this->orderPromId == $group_activity['id']) {
@@ -1111,7 +1101,6 @@ class Pay
                     }
 //                    $this->payList[$k]['prom_id'] = $group_activity['id'];
 //                    $this->payList[$k]['prom_type'] = 10;
-
                     $promAmount = '0';
                     switch ($group_activity['type']) {
                         case 0:
@@ -1119,7 +1108,7 @@ class Pay
                             $member_goods_price = bcdiv(bcmul($v['member_goods_price'], $group_activity['expression'], 2), 100, 2);
                             $promAmount = bcmul(bcsub($v['member_goods_price'], $member_goods_price, 2), $v['goods_num'], 2);
 
-                            $this->payList[$k]['member_goods_price'] = $member_goods_price;
+//                            $this->payList[$k]['member_goods_price'] = $member_goods_price;
                             $this->orderPromId = $group_activity['id'];
                             break;
                         case 1:
@@ -1127,28 +1116,39 @@ class Pay
                             $member_goods_price = bcsub($v['member_goods_price'], $group_activity['expression'], 2);
                             $promAmount = bcmul(bcsub($v['member_goods_price'], $member_goods_price, 2), $v['goods_num'], 2);
 
-                            $this->payList[$k]['member_goods_price'] = $member_goods_price;
+//                            $this->payList[$k]['member_goods_price'] = $member_goods_price;
                             $this->orderPromId = $group_activity['id'];
                             break;
                         case 4:
                             // 满打折
-                            if ($v['goods_num'] >= $group_activity['goods_num']) {
-                                $member_goods_price = bcdiv(bcmul($v['member_goods_price'], $group_activity['expression'], 2), 100, 2);
-                                $promAmount = bcmul(bcsub($v['member_goods_price'], $member_goods_price, 2), $v['goods_num'], 2);
-
-                                $this->payList[$k]['member_goods_price'] = $member_goods_price;
-                                $this->orderPromId = $group_activity['id'];
-                            }
-                            break;
                         case 5:
                             // 满优惠
-                            if ($v['member_goods_price'] >= $group_activity['goods_price']) {
-                                $member_goods_price = bcsub($v['member_goods_price'], $group_activity['expression'], 2);
-                                $promAmount = bcmul(bcsub($v['member_goods_price'], $member_goods_price, 2), $v['goods_num'], 2);
-
-                                $this->payList[$k]['member_goods_price'] = $member_goods_price;
-                                $this->orderPromId = $group_activity['id'];
+                            if (empty($promGoodsNum[$group_activity['id']])) {
+                                $promGoodsNum[$group_activity['id']] = [
+                                    'goods_num' => $v['goods_num'],
+                                    'goods_price' => bcmul($v['member_goods_price'], $v['goods_num'], 2)
+                                ];
+                            } else {
+                                $promGoodsNum[$group_activity['id']]['goods_num'] += $v['goods_num'];
+                                $promGoodsNum[$group_activity['id']]['goods_price'] = bcadd($promGoodsNum[$group_activity['id']]['goods_price'], bcmul($v['member_goods_price'], $v['goods_num'], 2), 2);
                             }
+                            $pay_list[$k]['prom_type'] = 3;
+                            $pay_list[$k]['prom_id'] = $group_activity['id'];
+//                            if ($v['goods_num'] >= $group_activity['goods_num']) {
+//                                $member_goods_price = bcdiv(bcmul($v['member_goods_price'], $group_activity['expression'], 2), 100, 2);
+//                                $promAmount = bcmul(bcsub($v['member_goods_price'], $member_goods_price, 2), $v['goods_num'], 2);
+//
+//                                $this->payList[$k]['member_goods_price'] = $member_goods_price;
+//                                $this->orderPromId = $group_activity['id'];
+//                            }
+                            break;
+//                            if ($v['member_goods_price'] >= $group_activity['goods_price']) {
+//                                $member_goods_price = bcsub($v['member_goods_price'], $group_activity['expression'], 2);
+//                                $promAmount = bcmul(bcsub($v['member_goods_price'], $member_goods_price, 2), $v['goods_num'], 2);
+//
+//                                $this->payList[$k]['member_goods_price'] = $member_goods_price;
+//                                $this->orderPromId = $group_activity['id'];
+//                            }
                             break;
                         default:
                             $promAmount = '0';
@@ -1156,12 +1156,34 @@ class Pay
                     $goodsPromAmount = bcadd($goodsPromAmount, $promAmount, 2);
                 }
             }
+            if (!$is_can_buy) {
+                $goods_info = M('goods')->where(array('goods_id' => $v['goods_id']))->find();
+                throw new TpshopException('计算订单价格', 0, ['status' => -1, 'msg' => "超出活动商品：【{$goods_info['goods_name']}】 限购数量， 每人限购 {$group_activity['buy_limit']} 件", 'result' => '']);
+            }
         }
-
-        if (!$is_can_buy) {
-            throw new TpshopException('计算订单价格', 0, ['status' => -1, 'msg' => "超出活动商品：【{$goods_info['goods_name']}】 限购数量， 每人限购 {$group_activity['buy_limit']} 件", 'result' => '']);
+        // 再计算优惠（满打折、满减价）
+        if (!empty($promGoodsNum)) {
+            foreach ($promGoodsNum as $promId => $prom) {
+                $promInfo = M('prom_goods')->where(['id' => $promId])->field('type, goods_num, goods_price, expression')->find();
+                switch ($promInfo['type']) {
+                    case 4:
+                        if ($prom['goods_num'] >= $promInfo['goods_num']) {
+                            $promAmount = bcdiv(bcmul($prom['goods_price'], $promInfo['expression'], 2), 100, 2);
+                            $promAmount = bcsub($prom['goods_price'], $promAmount, 2);
+                        }
+                        break;
+                    case 5:
+                        if ($prom['goods_price'] >= $promInfo['goods_price']) {
+                            $promAmount = bcsub($prom['goods_price'], $promInfo['expression'], 2);
+                            $promAmount = bcsub($prom['goods_price'], $promAmount, 2);
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                $goodsPromAmount = bcadd($goodsPromAmount, $promAmount, 2);
+            }
         }
-
         switch ($output) {
             case 'log':
                 $this->orderPromAmount = bcadd($this->orderPromAmount, $goodsPromAmount, 2);

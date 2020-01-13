@@ -210,6 +210,7 @@ class CartLogic extends Model
             $buyGoods['spec_key_name'] = $this->specGoodsPrice['key_name']; // 规格 key_name
             $buyGoods['sku'] = $this->specGoodsPrice['sku']; //商品条形码
             $prom_type = $this->specGoodsPrice['prom_type'];
+            $this->goods['prom_type'] = $this->specGoodsPrice['prom_type'];
             $store_count = $this->specGoodsPrice['store_count'];
         }
 
@@ -223,6 +224,13 @@ class CartLogic extends Model
             if (!empty($goodsPromLogic)) {
                 if ($goodsPromLogic->checkActivityIsAble()) {
                     $buyGoods = $goodsPromLogic->buyNow($buyGoods);
+                    if ($prom_type == 3 && 1 == $this->type) {
+                        // 商品促销优惠
+                        $member_goods_price = $buyGoods['member_goods_price'] - $this->goods['exchange_integral'];
+                        $use_integral = $this->goods['exchange_integral'];
+                        $buyGoods['member_goods_price'] = $member_goods_price;
+                        $buyGoods['use_integral'] = $use_integral;
+                    }
                 } else {
                     throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '活动已经结束，无法购买', 'result' => '']);
                 }
@@ -244,7 +252,6 @@ class CartLogic extends Model
                     $member_goods_price = $member_goods_price - $this->goods['exchange_integral'];
                     $use_integral = $this->goods['exchange_integral'];
                 }
-
                 $buyGoods['member_goods_price'] = $member_goods_price;
                 $buyGoods['use_integral'] = $use_integral;
             }
@@ -349,7 +356,7 @@ class CartLogic extends Model
             $member_goods_price = $price;
             $use_integral = 0;
             if (1 == $this->type) {
-                $member_goods_price = $price - $this->goods['exchange_integral'];
+                $member_goods_price = bcsub($price, $this->goods['exchange_integral'], 2);
                 $use_integral = $this->goods['exchange_integral'];
             }
 
@@ -378,7 +385,7 @@ class CartLogic extends Model
             $member_goods_price = $price;
             $use_integral = 0;
             if (1 == $this->type) {
-                $member_goods_price = $price - $this->goods['exchange_integral'];
+                $member_goods_price = bcsub($price, $this->goods['exchange_integral'], 2);
                 $use_integral = $this->goods['exchange_integral'];
             }
             if (!$member_goods_price) {
@@ -634,6 +641,12 @@ class CartLogic extends Model
             $storeCount = $this->goods['store_count'];
         }
         //计算优惠价格
+        $use_integral = 0;
+        if ($this->type == 1) {
+            $use_integral = $this->goods['exchange_integral'];
+        }
+        $priceBefore = bcsub($priceBefore, $use_integral, 2);
+
         $priceAfter = $promGoodsLogic->getPromotionPrice($priceBefore);
         // 查询购物车是否已经存在这商品
         if (!$this->user_id) {
@@ -663,7 +676,11 @@ class CartLogic extends Model
              if($userWantGoodsNum > 200){
                  $userWantGoodsNum = 200;
              }*/
-            $cartResult = $userCartGoods->save(['goods_num' => $userWantGoodsNum, 'goods_price' => $priceBefore, 'member_goods_price' => $priceAfter]);
+            $cartResult = $userCartGoods->save([
+                'goods_num' => $userWantGoodsNum,
+                'goods_price' => $priceBefore,
+                'member_goods_price' => $priceAfter
+            ]);
         } else {
             $cartAddData = [
                 'user_id' => $this->user_id,   // 用户id
@@ -679,6 +696,7 @@ class CartLogic extends Model
                 'goods_num' => $this->goodsBuyNum, // 购买数量
                 'add_time' => time(), // 加入购物车时间
                 'prom_type' => 3,   // 0 普通订单,1 限时抢购, 2 团购 , 3 促销优惠
+                'use_integral' => $use_integral
             ];
             //商品有规格
             if ($this->specGoodsPrice) {
@@ -1210,7 +1228,12 @@ class CartLogic extends Model
         $total_fee = $goods_fee = $goods_num = $use_integral = 0; //初始化数据。商品总额/节约金额/商品总共数量/商品使用积分
         if ($cartList) {
             foreach ($cartList as $cartKey => $cartItem) {
-                $total_fee = bcadd($total_fee, $cartItem['total_fee'], 2);
+                if (in_array($cartItem['prom_type'], [1, 2])) {
+                    // 秒杀 团购
+                    $total_fee = bcadd($total_fee, $cartItem['goods_fee'], 2);
+                } else {
+                    $total_fee = $cartItem['use_integral'] == 0 ? bcadd($total_fee, $cartItem['total_fee'], 2) : bcadd($total_fee, $cartItem['goods_fee'], 2);
+                }
                 $goods_fee = bcadd($goods_fee, $cartItem['goods_fee'], 2);
                 $goods_num += $cartItem['goods_num'];
                 $use_integral = bcadd($use_integral, $cartItem['use_integral'], 2);
