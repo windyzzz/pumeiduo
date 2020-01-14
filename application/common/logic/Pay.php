@@ -1133,6 +1133,7 @@ class Pay
                             }
                             $pay_list[$k]['prom_type'] = 3;
                             $pay_list[$k]['prom_id'] = $group_activity['id'];
+                            $this->orderPromId = $group_activity['id'];
 //                            if ($v['goods_num'] >= $group_activity['goods_num']) {
 //                                $member_goods_price = bcdiv(bcmul($v['member_goods_price'], $group_activity['expression'], 2), 100, 2);
 //                                $promAmount = bcmul(bcsub($v['member_goods_price'], $member_goods_price, 2), $v['goods_num'], 2);

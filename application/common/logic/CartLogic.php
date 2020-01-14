@@ -541,10 +541,9 @@ class CartLogic extends Model
             return $this->addNormalCart();
         }
         //活动进行中
-        if (0 == $this->user_id) {
-            return ['status' => -101, 'msg' => '购买活动商品必须先登录', 'result' => ''];
+        if (!$this->user_id) {
+            return ['status' => -999, 'msg' => '购买活动商品必须先登录', 'result' => ''];
         }
-
         //获取用户购物车的团购商品
         if (!$this->user_id) {
             $userCartGoods = Cart::get(['user_id' => $this->user_id, 'session_id' => $this->session_id, 'goods_id' => $this->goods['goods_id'], 'spec_key' => ($this->specGoodsPrice['key'] ?: '')]);
