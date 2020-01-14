@@ -48,7 +48,7 @@ class Pay
     private $giftLogic;
     private $gift2Logic;
     private $gift_goods_list; // 赠品商品列表
-    private $gift2_goods_list; // 赠品商品列表
+//    private $gift2_goods_list; // 赠品商品列表
 
     private $extraLogic;
     private $extra_goods_list; // 加价购商品列表
@@ -1290,6 +1290,11 @@ class Pay
     public function getPayList()
     {
         return $this->payList;
+    }
+
+    public function getGiftGoodsList()
+    {
+        return $this->gift_goods_list;
     }
 
     public function getPromGiftList()

@@ -231,6 +231,7 @@ class Goods extends Base
                 'type' => 'flash_sale',
                 'price' => $flashSale[0]['price'],
                 'limit_num' => $flashSale[0]['goods_num'],
+                'buy_limit' => $flashSale[0]['buy_limit'],
                 'start_time' => $flashSale[0]['start_time'],
                 'end_time' => $flashSale[0]['end_time'],
                 'exchange_integral' => '0'
@@ -247,6 +248,7 @@ class Goods extends Base
                     'price' => $groupBuy[0]['price'],
                     'group_goods_num' => $groupBuy[0]['group_goods_num'],
                     'limit_num' => bcdiv($groupBuy[0]['goods_num'], $groupBuy[0]['group_goods_num']),
+                    'buy_limit' => $flashSale[0]['buy_limit'],
                     'start_time' => $groupBuy[0]['start_time'],
                     'end_time' => $groupBuy[0]['end_time'],
                     'exchange_integral' => '0'

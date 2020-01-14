@@ -147,7 +147,7 @@
                                     </td>
                                 </if>
                                 <td class="nscs-table-handle">
-                                    <span><a onclick="$(this).parent().parent().parent().remove();" class="btn-grapefruit"><i class="icon-trash"></i><p>删除</p></a></span>
+                                    <span><a onclick="$(this).parent().parent().parent().remove();" class="btn-grapefruit"><i class="icon-trash"></i><p style="cursor: pointer;">删除</p></a></span>
                                 </td>
                             </tr>
                         </foreach>
@@ -442,7 +442,7 @@
                     '<td style="display:none"><input type="checkbox" name="goods_id['+value.goods_id+'][goods_id]" class="goods_id" checked="checked" value="'+value.goods_id+'"/></td>' +
                     '<td>'+value.goods_id+'</td><td>'+value.goods_name+'</td><td>'+value.goods_price+'</td>' +
                     '<td>'+value.store_count+'</td>'+sln+
-                    '<td class="nscs-table-handle"><span><a href="javascript:;" onclick="$(this).parent().parent().parent().remove();" class="btn-grapefruit"><i class="icon-trash"></i><p>删除</p></a></span></td>' +
+                    '<td class="nscs-table-handle"><span><a href="javascript:;" onclick="$(this).parent().parent().parent().remove();" class="btn-grapefruit"><i class="icon-trash"></i><p style="cursor: pointer;">删除</p></a></span></td>' +
                     '</tr>';
         });
         $('#goods_list').append(goods_list_html);

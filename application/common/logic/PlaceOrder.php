@@ -452,6 +452,38 @@ class PlaceOrder
                 }
             }
         }
+        // 满单赠品
+        $giftGoodsList = $this->pay->getGiftGoodsList();
+        if (!empty($giftGoodsList)) {
+            foreach ($giftGoodsList as $giftGoods) {
+                $orderGoodsData = [
+                    'order_id' => $this->order['order_id'],         // 订单id
+                    'goods_id' => $giftGoods['goods_id'],               // 商品id
+                    'goods_name' => $giftGoods['goods_name'],           // 商品名称
+                    'goods_sn' => $giftGoods['goods_sn'],           // 商品货号
+                    'goods_num' => $giftGoods['goods_num'],             // 购买数量
+                    'final_price' => 0,                             // 每件商品实际支付价格
+                    'goods_price' => 0,                             // 商品价
+                    'cost_price' => 0,
+                    'member_goods_price' => 0,
+                    'give_integral' => 0,
+                    'spec_key' => $giftGoods['goods']['spec_key'],
+                    'spec_key_name' => $giftGoods['goods']['spec_key_name'],
+                    'is_gift' => 1,
+                    'gift_goods_id' => 0,
+                    'gift_goods_spec_key' => '',
+                    'prom_type' => 8,
+                    'prom_id' => $giftGoods['gift_reward_id'],
+                    'sku' => '',
+                    'use_integral' => 0,
+                    'commission' => 0,
+                    'trade_type' => $giftGoods['goods']['trade_type'],
+                    'sale_type' => 1,
+                    're_id' => 0
+                ];
+                array_push($orderGoodsAllData, $orderGoodsData);
+            }
+        }
 
         Db::name('order_goods')->insertAll($orderGoodsAllData);
         if ($orderDiscount != 0.00) {

@@ -377,7 +377,7 @@ class User extends Base
 
         if ($is_has_coupon) {
             Db::rollback();
-            return json(['status' => 0, 'msg' => '您已领取，不能重复领取']);
+            return json(['status' => 0, 'msg' => '已经领取过了']);
         }
 
         $bcoupon_list = true;

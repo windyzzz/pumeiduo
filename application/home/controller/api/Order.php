@@ -183,7 +183,7 @@ class Order extends Base
             $orderList[$k] = set_btn_order_status($list);  // 添加属性  包括按钮显示属性 和 订单状态显示属性
             $orderData[$k] = [
                 'type' => 1,
-                'type_value' => '圃美多乐活',
+                'type_value' => '乐活优选',
                 'order_info' => [
                     'order_id' => $list['order_id'],
                     'order_sn' => $list['order_sn'],
@@ -427,6 +427,7 @@ class Order extends Base
         $weight = '0';
         $giveIntegral = '0';
         $giftGoodsIds = [];     // 订单赠品上级商品ID
+        $giftGoodsList = [];    // 满单赠品
         $promGiftList = [];     // 订单促销优惠赠品
         foreach ($orderGoods as $key => $goods) {
             if ($goods['is_gift'] == 0) {
@@ -456,11 +457,19 @@ class Order extends Base
                 ];
                 $giveIntegral = bcadd($giveIntegral, bcmul($goods['give_integral'], $goods['goods_num']), 2);
             } else {
-                $idKey = $goods['gift_goods_id'] . '_' . $goods['gift_goods_spec_key'];
                 // 赠品
-                if ($goods['prom_type'] != 7) {
-                    if (in_array($idKey, $giftGoodsIds)) {
-                        $orderData['goods'][$idKey]['gift_goods'][] = [
+                switch ($goods['prom_type']) {
+                    case 7:
+                        // 订单优惠促销赠品
+                        if (!isset($promGiftList[$goods['prom_id']])) {
+                            $promTitle = M('order_prom')->where(['id' => $goods['prom_id']])->value('title');
+                            $promGiftList[$goods['prom_id']] = [
+                                'prom_id' => $goods['prom_id'],
+                                'title' => $promTitle . '，获赠以下赠品：',
+                                'goods_list' => []
+                            ];
+                        }
+                        $promGiftList[$goods['prom_id']]['goods_list'][] = [
                             'rec_id' => $goods['rec_id'],
                             'goods_id' => $goods['goods_id'],
                             'goods_sn' => $goods['goods_sn'],
@@ -475,38 +484,60 @@ class Order extends Base
                             'can_return' => 0,
                             'return_status' => '',
                         ];
-                    }
-                } else {
-                    // 订单促销优惠赠品
-                    if (!isset($promGiftList[$goods['prom_id']])) {
-                        $promTitle = M('order_prom')->where(['id' => $goods['prom_id']])->value('title');
-                        $promGiftList[$goods['prom_id']] = [
-                            'prom_id' => $goods['prom_id'],
-                            'title' => $promTitle . '，获赠以下赠品：',
-                            'goods_list' => []
+                        break;
+                    case 8:
+                        // 满单赠品
+                        if (!isset($giftGoodsList[$goods['prom_id']])) {
+                            $promTitle = M('gift_reward')->where(['reward_id' => $goods['prom_id']])->value('description');
+                            $giftGoodsList[$goods['prom_id']] = [
+                                'prom_id' => $goods['prom_id'],
+                                'title' => $promTitle . '，获赠以下赠品：',
+                                'goods_list' => []
+                            ];
+                        }
+                        $giftGoodsList[$goods['prom_id']]['goods_list'][] = [
+                            'rec_id' => $goods['rec_id'],
+                            'goods_id' => $goods['goods_id'],
+                            'goods_sn' => $goods['goods_sn'],
+                            'goods_name' => $goods['goods_name'],
+                            'spec_key_name' => $goods['spec_key_name'] ?? '',
+                            'item_id' => $goods['item_id'] ?? '',
+                            'goods_num' => $goods['goods_num'],
+                            'shop_price' => $goods['goods_price'],
+                            'exchange_integral' => $goods['use_integral'],
+                            'exchange_price' => $goods['member_goods_price'],
+                            'original_img' => $goods['original_img'],
+                            'can_return' => 0,
+                            'return_status' => '',
                         ];
-                    }
-                    $promGiftList[$goods['prom_id']]['goods_list'][] = [
-                        'rec_id' => $goods['rec_id'],
-                        'goods_id' => $goods['goods_id'],
-                        'goods_sn' => $goods['goods_sn'],
-                        'goods_name' => $goods['goods_name'],
-                        'spec_key_name' => $goods['spec_key_name'] ?? '',
-                        'item_id' => $goods['item_id'] ?? '',
-                        'goods_num' => $goods['goods_num'],
-                        'shop_price' => $goods['goods_price'],
-                        'exchange_integral' => $goods['use_integral'],
-                        'exchange_price' => $goods['member_goods_price'],
-                        'original_img' => $goods['original_img'],
-                        'can_return' => 0,
-                        'return_status' => '',
-                    ];
+                        break;
+                    case 9:
+                        // 指定赠品
+                        $idKey = $goods['gift_goods_id'] . '_' . $goods['gift_goods_spec_key'];
+                        if (in_array($idKey, $giftGoodsIds)) {
+                            $orderData['goods'][$idKey]['gift_goods'][] = [
+                                'rec_id' => $goods['rec_id'],
+                                'goods_id' => $goods['goods_id'],
+                                'goods_sn' => $goods['goods_sn'],
+                                'goods_name' => $goods['goods_name'],
+                                'spec_key_name' => $goods['spec_key_name'] ?? '',
+                                'item_id' => $goods['item_id'] ?? '',
+                                'goods_num' => $goods['goods_num'],
+                                'shop_price' => $goods['goods_price'],
+                                'exchange_integral' => $goods['use_integral'],
+                                'exchange_price' => $goods['member_goods_price'],
+                                'original_img' => $goods['original_img'],
+                                'can_return' => 0,
+                                'return_status' => '',
+                            ];
+                        }
+                        break;
                 }
             }
             $weight = bcadd($weight, $goods['weight'], 2);
         }
         $orderData['goods'] = array_values($orderData['goods']);
-        $orderData['gift_list'] = array_values($promGiftList);
+        $orderData['gift_list'] = array_merge(array_values($promGiftList), array_values($giftGoodsList));
         $orderData['weight'] = $weight . 'g';
         $orderData['give_integral'] = $giveIntegral;
         return json(['status' => 1, 'result' => $orderData]);
@@ -1796,17 +1827,17 @@ class Order extends Base
                         'goods_remark' => $extra['goods_remark'] ?? '',
                         'original_img' => $extra['original_img'],
                         'shop_price' => $extra['goods_price'],
-                        'exchange_integral' => $extra['exchange_integral'],
+                        'exchange_integral' => '0',
                         'exchange_price' => $extra['goods_price'],
                         'buy_limit' => $extra['buy_limit'],
-                        'pay_type' => 1
+                        'pay_type' => 2
                     ];
-                    if ($extra['can_integral'] == 0) {
-                        // 不能使用积分
+                    if ($extra['can_integral'] == 1) {
+                        // 能够使用积分
                         $extraGoods[$key]['shop_price'] = bcsub($extra['goods_price'], $extra['exchange_integral'], 2);
                         $extraGoods[$key]['exchange_price'] = bcsub($extra['goods_price'], $extra['exchange_integral'], 2);
-                        $extraGoods[$key]['exchange_integral'] = '0';
-                        $extraGoods[$key]['pay_type'] = 2;
+                        $extraGoods[$key]['exchange_integral'] = $extra['exchange_integral'];
+                        $extraGoods[$key]['pay_type'] = 1;
                     }
                 }
             }
@@ -1827,7 +1858,7 @@ class Order extends Base
             // 商品列表 赠品列表
             'order_goods' => [
                 'type' => 1,
-                'type_value' => '圃美多乐活',
+                'type_value' => '乐活优选',
                 'goods_list' => array_values($goodsList),
                 'gift_list' => array_values($giftList)
             ],

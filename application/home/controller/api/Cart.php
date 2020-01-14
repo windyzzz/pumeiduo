@@ -128,7 +128,7 @@ class Cart extends Base
         $cartData = $cartData['cart_list'];
         $cartList = [
             'type' => 1,
-            'type_value' => '圃美多乐活',
+            'type_value' => '乐活优选',
             'goods' => []
         ];
         $promList = [];

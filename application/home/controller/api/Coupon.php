@@ -226,7 +226,7 @@ class Coupon extends Base
         // 检查用户是否已经领取
         $is_has_coupon = M('coupon_list')->where(array('cid' => $couponId, 'uid' => $this->user_id))->field('id')->find();
         if ($is_has_coupon) {
-            return json(['status' => 0, 'msg' => '您已领取，不能重复领取']);
+            return json(['status' => 0, 'msg' => '您已经领取过了']);
         }
         $add = [
             'cid' => $coupon['id'],
