@@ -99,7 +99,7 @@ class MessageLogic extends Model
      *
      * @return array
      */
-    public function getUserMessageNotice($user_info = [])
+    public function getUserMessageNotice($user_info = [], $isIndex = false)
     {
         $this->checkPublicMessage($user_info);
         if (empty($user_info)) {
@@ -111,15 +111,22 @@ class MessageLogic extends Model
                 'status' => ['in', [0, 1]],
                 'm.category' => 0,
             ];
+            if ($isIndex) {
+                $num = 3;
+                $field = 'm.message_id id, m.title';
+            } else {
+                $num = 10;
+                $field = 'um.rec_id,um.user_id,um.category,um.message_id,um.status,m.send_time,m.type,m.title,m.message';
+            }
             $count = Db::name('user_message')
                 ->alias('um')
                 ->join('__MESSAGE__ m', 'um.message_id = m.message_id', 'LEFT')
                 ->where($user_system_message_no_read_where)
                 ->count();
-            $Page = new Page($count, 10);
+            $Page = new Page($count, $num);
             $user_system_message_no_read = Db::name('user_message')
                 ->alias('um')
-                ->field('um.rec_id,um.user_id,um.category,um.message_id,um.status,m.send_time,m.type,m.title,m.message')
+                ->field($field)
                 ->join('__MESSAGE__ m', 'um.message_id = m.message_id', 'LEFT')
                 ->where($user_system_message_no_read_where)
                 ->limit($Page->firstRow . ',' . $Page->listRows)

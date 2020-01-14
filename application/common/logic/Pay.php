@@ -166,8 +166,8 @@ class Pay
     {
         $goodsListCount = count($this->payList);
         for ($payCursor = '0'; $payCursor < $goodsListCount; ++$payCursor) {
-            $this->payList[$payCursor]['goods_fee'] = bcmul($this->payList[$payCursor]['goods_num'], $this->payList[$payCursor]['member_goods_price'], 2);    // 小计
-            $this->goodsPrice = bcadd($this->goodsPrice, $this->payList[$payCursor]['goods_fee'], 2); // 商品总价
+            $goods_fee = $this->payList[$payCursor]['goods_fee'] = bcmul($this->payList[$payCursor]['goods_num'], $this->payList[$payCursor]['member_goods_price'], 2);    // 小计
+            $this->goodsPrice = bcadd($this->goodsPrice, $goods_fee, 2); // 商品总价
             if (array_key_exists('market_price', $this->payList[$payCursor])) {
                 $this->cutFee = bcadd($this->cutFee, bcmul($this->payList[$payCursor]['goods_num'], bcsub($this->payList[$payCursor]['market_price'], $this->payList[$payCursor]['member_goods_price'], 2), 2), 2); // 共节约
             }
@@ -332,12 +332,11 @@ class Pay
             if (2 == $goods_info['prom_type']) {
                 $group_activity = M('group_buy')
                     ->where('goods_id', $v['goods_id'])
-                    ->where('item_id', $v['item_id'])
+                    ->where('item_id', isset($v['item_id']) ? $v['item_id'] : 0)
                     ->where('start_time', 'elt', $now)
                     ->where('end_time', 'egt', $now)
                     ->where('is_end', 0)
                     ->find();
-
                 if ($group_activity) {
                     if ($group_activity['buy_limit'] > 0) {
                         if ($v['goods_num'] > $group_activity['buy_limit']) {

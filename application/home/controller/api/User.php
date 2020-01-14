@@ -1314,6 +1314,9 @@ class User extends Base
                 M('Users')->where('user_id', $this->user_id)->save($data);
             }
         }
+        // 更新缓存
+        $user = Db::name('users')->where('user_id', $this->user_id)->find();
+        TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
         $return = [
             'user_id' => $this->user_id,
             'integral' => $invite_integral ?? '0',
@@ -2904,7 +2907,7 @@ class User extends Base
                 'cate_name' => $taskConfig[$log['task_cate']],
                 'title' => $log['task_title'],
                 'reward' => $reward,
-                'create_time' => $log['finished_at']
+                'create_time' => $log['finished_at'] != 0 ? $log['finished_at'] : $log['created_at']
             ];
         }
         $rewardLog = [

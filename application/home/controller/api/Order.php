@@ -1593,7 +1593,7 @@ class Order extends Base
             foreach ($cartList['cartList'] as $key => $cart) {
                 if ($cart['prom_type'] == 3) {
                     // 商品促销优惠
-                    $cartList['cartList'][$key]['member_goods_price'] = $cart['goods_price'];
+                    $cartList['cartList'][$key]['member_goods_price'] = bcsub($cart['goods_price'], $cart['use_integral'], 2);
                 }
             }
         } else {
@@ -1666,6 +1666,8 @@ class Order extends Base
                 'exchange_id' => $coupon['coupon']['id'],
                 'name' => $coupon['coupon']['name'],
                 'money' => $coupon['coupon']['money'],
+                'condition' => $coupon['coupon']['condition'],
+                'use_type' => $coupon['coupon']['use_type'],
                 'use_start_time' => date('Y-m-d', $coupon['coupon']['use_start_time']),
                 'use_end_time' => date('Y-m-d', $coupon['coupon']['use_end_time']),
                 'is_selected' => $coupon['coupon']['id'] == $couponId ? 1 : 0
@@ -1918,7 +1920,7 @@ class Order extends Base
             foreach ($cartList['cartList'] as $key => $cart) {
                 if ($cart['prom_type'] == 3) {
                     // 商品促销优惠
-                    $cartList['cartList'][$key]['member_goods_price'] = $cart['goods_price'];
+                    $cartList['cartList'][$key]['member_goods_price'] = bcsub($cart['goods_price'], $cart['use_integral'], 2);
                 }
             }
         } else {
@@ -2120,7 +2122,7 @@ class Order extends Base
             foreach ($cartList['cartList'] as $key => $cart) {
                 if ($cart['prom_type'] == 3) {
                     // 商品促销优惠
-                    $cartList['cartList'][$key]['member_goods_price'] = $cart['goods_price'];
+                    $cartList['cartList'][$key]['member_goods_price'] = bcsub($cart['goods_price'], $cart['use_integral'], 2);
                 }
             }
         } else {

@@ -65,27 +65,47 @@ class PromGoodsLogic extends Prom
     /**
      * 计算促销价格。
      *
-     * @param $Price |原价或者规格价格
+     * @param $price |原价或者规格价格
+     * @param $num | 购买数量（包括购物车原本拥有的）
      *
      * @return float
      */
-    public function getPromotionPrice($Price)
+    public function getPromotionPrice($price, $num = 0)
     {
         switch ($this->promGoods['type']) {
             case 0:
-                $promotionPrice = bcdiv(bcmul($Price, $this->promGoods['expression'], 2), 100, 2); //打折优惠
+                // 打折优惠
+                $promotionPrice = bcdiv(bcmul($price, $this->promGoods['expression'], 2), 100, 2);
                 break;
             case 1:
-                $promotionPrice = bcsub($Price, $this->promGoods['expression'], 2); //减价优惠
+                // 减价优惠
+                $promotionPrice = bcsub($price, $this->promGoods['expression'], 2);
                 break;
             case 2:
-                $promotionPrice = $this->promGoods['expression']; //固定金额优惠
+                // 固定金额
+                $promotionPrice = $this->promGoods['expression'];
+                break;
+            case 4:
+                // 满打折优惠
+                if ($num >= $this->promGoods['goods_num']) {
+                    $promotionPrice = bcdiv(bcmul($price, $this->promGoods['expression'], 2), 100, 2);
+                } else {
+                    $promotionPrice = $price; // 原价
+                }
+                break;
+            case 5:
+                // 满减价优惠
+                if ($price >= $this->promGoods['goods_price']) {
+                    $promotionPrice = bcsub($price, $this->promGoods['expression'], 2);
+                } else {
+                    $promotionPrice = $price; // 原价
+                }
                 break;
             default:
-                $promotionPrice = $Price; //原价
+                $promotionPrice = $price; // 原价
                 break;
         }
-        $promotionPrice = ($promotionPrice > 0 ? $promotionPrice : '0'); //防止出现负数
+        $promotionPrice = ($promotionPrice > 0 ? $promotionPrice : '0.00'); //防止出现负数
         return $promotionPrice;
     }
 

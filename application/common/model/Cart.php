@@ -55,7 +55,7 @@ class Cart extends Model
      */
     public function getGoodsFeeAttr($value, $data)
     {
-        return round($data['goods_num'] * $data['member_goods_price'], 2);
+        return bcmul($data['goods_num'], bcsub($data['member_goods_price'], $data['use_integral'], 2), 2);
     }
 
     /**
@@ -68,7 +68,7 @@ class Cart extends Model
      */
     public function getTotalFeeAttr($value, $data)
     {
-        return round($data['goods_num'] * $data['goods_price'], 2);
+        return bcmul($data['goods_num'], bcsub($data['goods_price'], $data['use_integral'], 2), 2);
     }
 
     /**
@@ -81,7 +81,20 @@ class Cart extends Model
      */
     public function getCutFeeAttr($value, $data)
     {
-        return round(($data['goods_num'] * ($data['goods_price'] - $data['member_goods_price'])), 2);
+        return bcmul($data['goods_num'], bcsub(bcsub($data['goods_price'], $data['use_integral'], 2), $data['member_goods_price'], 2), 2);
+    }
+
+    /**
+     * 商品总额优惠.
+     *
+     * @param $value
+     * @param $data
+     *
+     * @return mixed
+     */
+    public function getIntegralAttr($value, $data)
+    {
+        return bcmul($data['use_integral'], $data['goods_num'], 2);
     }
 
     /**

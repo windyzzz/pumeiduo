@@ -34,7 +34,7 @@ class Message extends Base
     public function announce()
     {
         $messageLogic = new MessageLogic();
-        $messageNotice = $messageLogic->getUserMessageNotice($this->user);
+        $messageNotice = $messageLogic->getUserMessageNotice($this->user, true);
         $return = ['list' => $messageNotice];
         return json(['status' => 1, 'result' => $return]);
     }

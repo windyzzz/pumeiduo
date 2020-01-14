@@ -82,7 +82,7 @@ class TaskLogic
             $where['tl.type'] = $type;
         }
         $taskLog = M('task_log tl')->join('task_reward tr', 'tr.reward_id = tl.task_reward_id')
-            ->where($where)->field('tl.*, tr.*')->select();
+            ->where($where)->field('tl.*, tr.*')->order('tl.created_at DESC')->select();
         return $taskLog;
     }
 

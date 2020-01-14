@@ -373,10 +373,6 @@ class UsersLogic extends Model
                 Db::name('users')->where('user_id', $username)->whereOr('email', $username)->update($save);
                 $user = Db::name('users')->where('user_id', $username)->whereOr('email', $username)->find();
             }
-            //查询用户信息之后, 查询用户的登记昵称
-            $levelId = $user['level'];
-            $levelName = Db::name('user_level')->where('level_id', $levelId)->getField('level_name');
-            $user['level_name'] = $levelName;
             $result = ['status' => 1, 'msg' => '登录成功', 'result' => $user];
         }
 
@@ -865,8 +861,8 @@ class UsersLogic extends Model
             'invite_uid' => $user['invite_uid'],
             'is_distribut' => $user['is_distribut'],
             'is_lock' => $user['is_lock'],
-            'level' => $user['level'],
-            'level_name' => $user['level_name'],
+            'level' => $user['distribut_level'],
+            'level_name' => M('DistributLevel')->where('level_id', $user['distribut_level'])->getField('level_name') ?? '普通会员',
             'is_not_show_jk' => $user['is_not_show_jk'],  // 是否提示加入金卡弹窗
             'has_pay_pwd' => $user['paypwd'] ? 1 : 0,
             'is_app' => TokenLogic::getValue('is_app', $user['token']) ? 1 : 0,

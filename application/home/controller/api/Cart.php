@@ -215,7 +215,8 @@ class Cart extends Base
                         'spec_key_name' => $v['spec_key_name'],
                         'shop_price' => $v['goods_price'],
                         'exchange_integral' => $v['use_integral'],
-                        'exchange_price' => $v['use_integral'] == 0 ? $v['goods_price'] : bcsub($v['goods_price'], $v['use_integral'], 2),
+                        'exchange_price' => bcsub($v['goods_price'], $v['use_integral'], 2),
+//                        'exchange_price' => $v['goods_price'],
                         'goods_num' => $v['goods_num'],
                         'buy_limit' => $promGoods[$key]['buy_limit'],
                         'gift_goods' => $giftGoods
@@ -239,7 +240,7 @@ class Cart extends Base
                         'spec_key_name' => $v['spec_key_name'],
                         'shop_price' => $v['goods_price'],
                         'exchange_integral' => $v['use_integral'],
-                        'exchange_price' => $v['use_integral'] == 0 ? $v['goods_price'] : bcsub($v['goods_price'], $v['use_integral'], 2),
+                        'exchange_price' => bcsub($v['member_goods_price'], $v['use_integral'], 2),
                         'goods_num' => $v['goods_num'],
                         'buy_limit' => $flashSaleGoods[$key]['buy_limit'],
                         'gift_goods' => $giftGoods
@@ -263,7 +264,7 @@ class Cart extends Base
                         'spec_key_name' => $v['spec_key_name'],
                         'shop_price' => $v['goods_price'],
                         'exchange_integral' => $v['use_integral'],
-                        'exchange_price' => $v['use_integral'] == 0 ? $v['goods_price'] : bcsub($v['goods_price'], $v['use_integral'], 2),
+                        'exchange_price' => bcsub($v['member_goods_price'], $v['use_integral'], 2),
                         'goods_num' => $v['goods_num'],
                         'buy_limit' => $groupBuyGoods[$key]['buy_limit'],
                         'gift_goods' => $giftGoods
@@ -280,7 +281,7 @@ class Cart extends Base
                         'spec_key_name' => $v['spec_key_name'],
                         'shop_price' => $v['goods_price'],
                         'exchange_integral' => $v['use_integral'],
-                        'exchange_price' => $v['use_integral'] == 0 ? $v['goods_price'] : bcsub($v['goods_price'], $v['use_integral'], 2),
+                        'exchange_price' => bcsub($v['goods_price'], $v['use_integral'], 2),
                         'goods_num' => $v['goods_num'],
                         'gift_goods' => $giftGoods
                     ];
@@ -387,17 +388,19 @@ class Cart extends Base
         $goodsList = $res['data']['cart_list'];     // 选中商品
         $goodsPrice = $res['data']['total_fee'];    // 商品总价
         foreach ($goodsList as $key => $goods) {
-            $goodsList[$key]['member_goods_price'] = $goods['goods_price'];
+            $goodsList[$key]['member_goods_price'] = bcsub($goods['goods_price'], $goods['use_integral'], 2);
         }
-        $Pay = new Pay();
+        $pay = new Pay();
+        $pay->setUserId($this->user_id);
         // 商品优惠促销
-        $discountPrice1 = $Pay->goodsPromotion($goodsList, false, 'amount');
+        $discountPrice1 = $pay->goodsPromotion($goodsList, false, 'amount');
         // 订单优惠促销
-        $discountPrice2 = $Pay->calcGoodsOrderProm(bcsub($goodsPrice, $discountPrice1));
+        $discountPrice2 = $pay->calcGoodsOrderProm(bcsub($goodsPrice, $discountPrice1));
         $discountPrice = bcadd($discountPrice1, $discountPrice2, 2);
         unset($res['data']['cart_list']);
         unset($res['data']['goods_fee']);
         unset($res['data']['total_fee']);
+        unset($res['data']['cut_fee']);
         $result = $res['data'];
         $result['total_fee'] = bcsub($goodsPrice, $discountPrice, 2);
         $result['discount_price'] = $discountPrice;
