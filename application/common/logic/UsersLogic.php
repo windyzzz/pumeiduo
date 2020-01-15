@@ -350,7 +350,7 @@ class UsersLogic extends Model
         } else {
             $user = Db::name('users')->where('user_id', $username)->whereOr('email', $username);
         }
-        $user = $user->field('password, user_id, mobile, nickname, user_name, is_distribut, is_lock, level, token, type')->find();
+        $user = $user->field('password, user_id, mobile, nickname, user_name, is_distribut, is_lock, level, token, type')->order('reg_time DESC')->find();
         if (!$user) {
             $result = ['status' => -1, 'msg' => '账号不存在!'];
         } elseif (systemEncrypt($password) != $user['password']) {
@@ -367,11 +367,11 @@ class UsersLogic extends Model
                 'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
             ];
             if (check_mobile($username)) {
-                Db::name('users')->where('mobile', $username)->whereOr('email', $username)->update($save);
-                $user = Db::name('users')->where('mobile', $username)->whereOr('email', $username)->find();
+                Db::name('users')->where('mobile', $username)->whereOr('email', $username)->where('is_lock', 0)->update($save);
+                $user = Db::name('users')->where('mobile', $username)->whereOr('email', $username)->where('is_lock', 0)->order('reg_time DESC')->find();
             } else {
-                Db::name('users')->where('user_id', $username)->whereOr('email', $username)->update($save);
-                $user = Db::name('users')->where('user_id', $username)->whereOr('email', $username)->find();
+                Db::name('users')->where('user_id', $username)->whereOr('email', $username)->where('is_lock', 0)->update($save);
+                $user = Db::name('users')->where('user_id', $username)->whereOr('email', $username)->where('is_lock', 0)->order('reg_time DESC')->find();
             }
             $result = ['status' => 1, 'msg' => '登录成功', 'result' => $user];
         }

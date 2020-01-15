@@ -365,9 +365,67 @@ class Order extends Base
         $this->assign('order', $order);
         $this->assign('user', $user);
         $split = count($orderGoods) > 1 ? 1 : 0;
+        $buyGoodsNum = 1;   // 要支付购买的商品种类数
         foreach ($orderGoods as $val) {
+            if ($val['is_gift'] == 0 && !in_array($val['prom_type'], [8, 9])) {
+                $buyGoodsNum += 1;
+            }
+        }
+        foreach ($orderGoods as $key => $val) {
             if ($val['goods_num'] > 1) {
                 $split = 1;
+            }
+            if ($val['is_gift'] == 1 && $val['prom_type'] == 0) {
+                $orderGoods[$key]['final_goods_price'] = 0;
+                $orderGoods[$key]['prom_value'] = '无';
+            } else {
+                // 优惠促销
+                switch ($val['prom_type']) {
+                    case 1:
+                        // 秒杀
+                        $orderGoods[$key]['final_goods_price'] = $val['member_goods_price'];
+                        $orderGoods[$key]['prom_value'] = '秒杀';
+                        break;
+                    case 2:
+                        // 团购
+                        $orderGoods[$key]['final_goods_price'] = $val['member_goods_price'];
+                        $orderGoods[$key]['prom_value'] = '秒杀';
+                        break;
+                    case 3:
+                        // 优惠促销
+                        $prom = M('prom_goods')->where(['id' => $val['prom_id']])->field('type, expression')->find();
+                        switch ($prom['type']) {
+                            case 0:
+                            case 4:
+                                // 打折
+                                $orderGoods[$key]['final_goods_price'] = bcdiv(bcmul($val['member_goods_price'], $prom['expression'], 2), 100, 2);
+                                $orderGoods[$key]['prom_value'] = '折扣优惠';
+                                break;
+                            case 1:
+                            case 5:
+                                $expression = bcdiv($prom['expression'], $buyGoodsNum, 2);
+                                // 减价
+                                $orderGoods[$key]['final_goods_price'] = bcsub($val['member_goods_price'], bcdiv($expression, $val['goods_num'], 2), 2);
+                                $orderGoods[$key]['prom_value'] = '减价优惠';
+                                break;
+                            case 2:
+                                // 固定金额
+                                $orderGoods[$key]['final_goods_price'] = $val['member_goods_price'];
+                                $orderGoods[$key]['prom_value'] = '固定金额';
+                                break;
+                        }
+                        break;
+                    case 7:
+                        // 订单优惠促销
+                        $discountPrice = M('order_prom')->where(['id' => $val['prom_id']])->value('discount_price');
+                        $expression = bcdiv($discountPrice, $buyGoodsNum, 2);
+                        $orderGoods[$key]['final_goods_price'] = bcsub($val['member_goods_price'], bcdiv($expression, $val['goods_num'], 2), 2);
+                        $orderGoods[$key]['prom_value'] = '订单优惠促销';
+                        break;
+                    default:
+                        $orderGoods[$key]['final_goods_price'] = 0;
+                        $orderGoods[$key]['prom_value'] = '无';
+                }
             }
         }
         $this->assign('split', $split);
@@ -1723,6 +1781,7 @@ class Order extends Base
             $goodsList[$key]['spec_goods'] = $spec_goods;
         }
         if ($goodsList) {
+            $count = 0;
             //计算商品数量
             foreach ($goodsList as $value) {
                 if ($value['spec_goods']) {

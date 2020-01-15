@@ -96,11 +96,10 @@
         </div>
 
     </div>
-    <div class="ncap-order-style">
+    <div class="ncap-order-style" style="width: 80%;">
         <div class="titile">
             <h3></h3>
         </div>
-
         <div class="ncap-order-details">
             <form id="order-action">
                 <div class="tabs-panels">
@@ -170,8 +169,10 @@
                             <dt>配送方式：</dt>
                             <foreach name="express" item="v">
                                 <dd>
-                                    {$v.shipping_name} -- {$v.invoice_no}<if condition="!empty($v[note])"> -- {$v.note}</if>
-                                </dd><br/>
+                                    {$v.shipping_name} -- {$v.invoice_no}
+                                    <if condition="!empty($v[note])"> -- {$v.note}</if>
+                                </dd>
+                                <br/>
                                 <dt></dt>
                             </foreach>
                         </dl>
@@ -194,6 +195,9 @@
                                 <th>现金价</th>
                                 <th>积分</th>
                                 <th>现金小计</th>
+                                <th>实际结算单价</th>
+                                <th>优惠信息</th>
+                                <th>优惠方案ID</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -201,13 +205,15 @@
                                 <tr>
                                     <td class="w60">{$good.goods_sn}</td>
                                     <td class="w30">
-                                        <div class="goods-thumb"><a><img alt=""
-                                                                         src="{$good['goods_id']|goods_thum_images=200,200}"/>
-                                        </a></div>
+                                        <div class="goods-thumb">
+                                            <a><img alt="" src="{$good['goods_id']|goods_thum_images=200,200}"/></a>
+                                        </div>
                                     </td>
-                                    <td style="text-align: left;"><a>{$good.goods_name}
-                                        <if condition="$good['re_id']"><span style="color:red;">[兑换券]</span></if>
-                                    </a><br/></td>
+                                    <td style="text-align: left;">
+                                        <a>
+                                            {$good.goods_name}<if condition="$good['re_id']"><span style="color:red;">[兑换券]</span></if>
+                                        </a>
+                                    </td>
                                     <td class="w80">{$good.spec_key_name}</td>
                                     <td class="w80">{$good['trade_type'] == 1 ? '仓库自发' : '一件代发'}</td>
                                     <td class="w60">{$good.goods_num}</td>
@@ -215,12 +221,33 @@
                                     <td class="w60">{$good.member_goods_price}</td>
                                     <td class="w60">{$good.use_integral}</td>
                                     <td class="w80">{$good.goods_total}</td>
+                                    <td class="w80">{$good.final_goods_price}</td>
+                                    <td class="w80">{$good.prom_value}</td>
+                                    <td class="w80">
+                                        <switch name="$good[prom_type]">
+                                            <case value="0">无</case>
+                                            <case value="1">
+                                                <a href="{:U('Promotion/flash_sale_info', array('id' => $good['prom_id']))}">{$good.prom_id}</a>
+                                            </case>
+                                            <case value="2">
+                                                <a href="{:U('Promotion/group_buy', array('act' => 'edit', 'id' => $good['prom_id']))}">{$good.prom_id}</a>
+                                            </case>
+                                            <case value="3">
+                                                <a href="{:U('Promotion/prom_goods_info', array('id' => $good['prom_id']))}">{$good.prom_id}</a>
+                                            </case>
+                                            <case value="7">
+                                                <a href="{:U('Promotion/order_prom_info', array('id' => $good['prom_id']))}">{$good.prom_id}</a>
+                                            </case>
+                                        </switch>
+                                    </td>
                                 </tr>
                             </volist>
                         </table>
                     </div>
                     <div class="total-amount contact-info">
                         <h3>订单总额：￥{$order.goods_price}</h3>
+                        &nbsp;
+                        <h3>优惠总额：￥{$order.order_prom_amount + $order.coupon_price}</h3>
                     </div>
                     <if condition="$order['shipping_status'] eq 1">
                         <foreach name="express" item="v">

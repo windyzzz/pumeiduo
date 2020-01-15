@@ -251,6 +251,7 @@ class PlaceOrder
         }
         $orderPromId = $this->pay->getOrderPromId();
         $orderPromAmount = $this->pay->getOrderPromAmount();
+
         if ($orderPromId > 0) {
             $orderData['order_prom_id'] = $orderPromId; //'订单优惠活动id',
             $orderData['order_prom_amount'] = $orderPromAmount; //'订单优惠活动金额,
@@ -292,19 +293,17 @@ class PlaceOrder
         $orderPromId = [];  // 订单优惠促销ID
         $orderDiscount = 0.00;  // 订单优惠金额
 
-        $orderGoodsPrice = $this->pay->getGoodsPrice(); // 原本订单总价
-        $totalPriceToRatio = bcsub(1, bcdiv($orderDiscounts, $orderGoodsPrice, 2), 2);   // 优惠比例
         foreach ($payList as $payKey => $payItem) {
             unset($payItem['goods']);
-//            $totalPriceToRatio = bcdiv($payItem['member_goods_price'], $this->pay->getGoodsPrice(), 2);  //商品价格占总价的比例
-//            $finalPrice = bcsub($payItem['member_goods_price'], bcmul($totalPriceToRatio, $orderDiscounts, 2), 2);
+            $totalPriceToRatio = bcdiv($payItem['member_goods_price'], $this->pay->getGoodsPrice(), 2);  //商品价格占总价的比例
+            $finalPrice = bcsub($payItem['member_goods_price'], bcmul($totalPriceToRatio, $orderDiscounts, 2), 2);
             $orderGoodsData = [
                 'order_id' => $this->order['order_id'],         // 订单id
                 'goods_id' => $payItem['goods_id'],             // 商品id
                 'goods_name' => $payItem['goods_name'],         // 商品名称
                 'goods_sn' => $payItem['goods_sn'],             // 商品货号
                 'goods_num' => $payItem['goods_num'],           // 购买数量
-                'final_price' => bcmul($payItem['member_goods_price'], $totalPriceToRatio, 2),                   // 每件商品实际支付价格
+                'final_price' => $finalPrice,                   // 每件商品实际支付价格
                 'goods_price' => $payItem['goods_price'],       // 商品价
                 'cost_price' => $goodsArr[$payItem['goods_id']]['cost_price'],          // 成本价,
                 'member_goods_price' => $payItem['member_goods_price'],                 // 会员折扣价
@@ -331,8 +330,8 @@ class PlaceOrder
                 $orderGoodsData['use_integral'] = 0;
             }
             if ($payItem['prom_type']) {
-                $orderGoodsData['prom_type'] = $payItem['prom_type']; // 0普通订单 1限时抢购 2团购 3促销优惠 7订单合购优惠
-                $orderGoodsData['prom_id'] = $payItem['prom_id']; // 活动id
+                $orderGoodsData['prom_type'] = $payItem['prom_type'];   // 0普通订单 1限时抢购 2团购 3促销优惠 7订单合购优惠
+                $orderGoodsData['prom_id'] = $payItem['prom_id'];       // 活动id
             }
             array_push($orderGoodsAllData, $orderGoodsData);
             if (!empty($payItem['gift2_goods'])) {
