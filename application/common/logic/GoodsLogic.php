@@ -1080,7 +1080,7 @@ class GoodsLogic extends Model
 
             // 处理显示金额
             if ($v['exchange_integral'] != 0) {
-                $goodsList[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);
+                $goodsList[$k]['exchange_price'] = bcsub($v['shop_price'], $v['exchange_integral'], 2);
             } else {
                 $goodsList[$k]['exchange_price'] = $v['shop_price'];
             }

@@ -1872,7 +1872,7 @@ class Order extends Base
             ],
             'extra_goods' => $extraGoods,
             // 优惠券 兑换券
-            'coupon_list' => $couponList,
+            'coupon_list' => array_values($couponList),
             'exchange_list' => $exchangeList,
             // 价格
             'user_electronic' => $this->user['user_electronic'],

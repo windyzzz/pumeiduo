@@ -289,6 +289,13 @@ class Cart extends Base
                 $goodsIds[] = $v['goods_id'];
             }
         }
+        // 处理秒杀商品归纳
+        $flashSaleList = [];
+        foreach ($promList as $k => $cart) {
+            if ($cart['type'] == 6) {
+                
+            }
+        }
         $return = [
             'cart_list' => $cartList,
             'prom_list' => array_values($promList),

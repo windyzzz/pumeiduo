@@ -954,9 +954,12 @@ class Goods extends Base
             // 价格判断
             if ($v['can_integral'] == 0) {
                 $flashSaleGoods[$k]['exchange_integral'] = 0;
+                $flashSaleGoods[$k]['shop_price'] = $v['flash_sale_price'];
+                $flashSaleGoods[$k]['exchange_price'] = $v['flash_sale_price'];
+            } else {
+                $flashSaleGoods[$k]['shop_price'] = bcsub($v['flash_sale_price'], $v['exchange_integral'], 2);
+                $flashSaleGoods[$k]['exchange_price'] = bcsub($v['flash_sale_price'], $v['exchange_integral'], 2);
             }
-            $flashSaleGoods[$k]['shop_price'] = $v['flash_sale_price'];
-            $flashSaleGoods[$k]['exchange_price'] = $v['flash_sale_price'];
             unset($flashSaleGoods[$k]['flash_sale_price']);
             unset($flashSaleGoods[$k]['can_integral']);
         }
