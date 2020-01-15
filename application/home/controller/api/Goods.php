@@ -222,9 +222,11 @@ class Goods extends Base
         }
         $goodsLogic = new GoodsLogic();
         // 判断商品性质
-        $flashSale = Db::name('flash_sale fs')->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
+        $flashSale = Db::name('flash_sale fs')
+            ->join('goods g', 'g.goods_id = fs.goods_id')
+            ->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
             ->where(['fs.goods_id' => $goods_id, 'fs.start_time' => ['<=', time()], 'fs.end_time' => ['>=', time()], 'fs.is_end' => 0])
-            ->field('fs.goods_id, sgp.key spec_key, fs.price, fs.goods_num, fs.buy_limit, fs.start_time, fs.end_time, fs.can_integral')->select();
+            ->field('fs.goods_id, sgp.key spec_key, fs.price, fs.goods_num, fs.buy_limit, fs.start_time, fs.end_time, fs.can_integral, g.exchange_integral')->select();
         if (!empty($flashSale)) {
             // 秒杀商品
             $goods['nature'] = [
@@ -234,13 +236,15 @@ class Goods extends Base
                 'buy_limit' => $flashSale[0]['buy_limit'],
                 'start_time' => $flashSale[0]['start_time'],
                 'end_time' => $flashSale[0]['end_time'],
-                'exchange_integral' => '0'
+                'exchange_integral' => $flashSale[0]['can_integral'] == 0 ? '0' : $flashSale[0]['exchange_integral']
             ];
             $extendGoodsSpec = ['type' => 'flash_sale', 'data' => $flashSale];
         } else {
-            $groupBuy = Db::name('group_buy gb')->join('spec_goods_price sgp', 'sgp.item_id = gb.item_id', 'LEFT')
+            $groupBuy = Db::name('group_buy gb')
+                ->join('goods g', 'g.goods_id = gb.goods_id')
+                ->join('spec_goods_price sgp', 'sgp.item_id = gb.item_id', 'LEFT')
                 ->where(['gb.goods_id' => $goods_id, 'gb.is_end' => 0, 'gb.start_time' => ['<=', time()], 'gb.end_time' => ['>=', time()]])
-                ->field('gb.goods_id, gb.price, sgp.key spec_key, gb.price, gb.group_goods_num, gb.goods_num, gb.buy_limit, gb.start_time, gb.end_time, gb.can_integral')->select();
+                ->field('gb.goods_id, gb.price, sgp.key spec_key, gb.price, gb.group_goods_num, gb.goods_num, gb.buy_limit, gb.start_time, gb.end_time, gb.can_integral, g.exchange_integral')->select();
             if (!empty($groupBuy)) {
                 // 团购商品
                 $goods['nature'] = [
@@ -251,7 +255,7 @@ class Goods extends Base
                     'buy_limit' => $groupBuy[0]['buy_limit'],
                     'start_time' => $groupBuy[0]['start_time'],
                     'end_time' => $groupBuy[0]['end_time'],
-                    'exchange_integral' => '0'
+                    'exchange_integral' => $groupBuy[0]['can_integral'] == 0 ? '0' : $groupBuy[0]['exchange_integral']
                 ];
                 $extendGoodsSpec = ['type' => 'group_buy', 'data' => $groupBuy];
             } else {

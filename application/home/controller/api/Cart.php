@@ -240,7 +240,7 @@ class Cart extends Base
                         'spec_key_name' => $v['spec_key_name'],
                         'shop_price' => $v['goods_price'],
                         'exchange_integral' => $v['use_integral'],
-                        'exchange_price' => bcsub($v['member_goods_price'], $v['use_integral'], 2),
+                        'exchange_price' => $v['member_goods_price'],
                         'goods_num' => $v['goods_num'],
                         'buy_limit' => $flashSaleGoods[$key]['buy_limit'],
                         'gift_goods' => $giftGoods
@@ -264,7 +264,7 @@ class Cart extends Base
                         'spec_key_name' => $v['spec_key_name'],
                         'shop_price' => $v['goods_price'],
                         'exchange_integral' => $v['use_integral'],
-                        'exchange_price' => bcsub($v['member_goods_price'], $v['use_integral'], 2),
+                        'exchange_price' => $v['member_goods_price'],
                         'goods_num' => $v['goods_num'],
                         'buy_limit' => $groupBuyGoods[$key]['buy_limit'],
                         'gift_goods' => $giftGoods

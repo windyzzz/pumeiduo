@@ -191,7 +191,6 @@ class CartLogic extends Model
 //                $buyGoods['is_order_prom'] = 1;
 //            }
 //        }
-
         if (empty($this->specGoodsPrice)) {
             $buyGoods['goods']['spec_key'] = '';
             $buyGoods['goods']['spec_key_name'] = '';
