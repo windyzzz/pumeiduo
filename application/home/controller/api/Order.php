@@ -218,8 +218,8 @@ class Order extends Base
                         'is_return' => $goods['is_return']
                     ];
                     $goodsNum += $goods['goods_num'];
+                    $giveIntegral = bcadd($giveIntegral, $goods['give_integral'], 2);
                 }
-                $giveIntegral = bcadd($giveIntegral, bcmul($goods['give_integral'], $goods['goods_num']), 2);
             }
             $orderData[$k]['order_info']['total_num'] = $goodsNum;
             $orderData[$k]['order_info']['give_integral'] = $giveIntegral;
@@ -1726,8 +1726,8 @@ class Order extends Base
             }
             $payLogic->usePayPoints($pay_points);
 
-            $give_integral = '0';             // 赠送积分
             $weight = '0';                    // 产品重量
+            $give_integral = '0';             // 赠送积分
 //            $order_prom_fee = '0';            // 订单优惠促销总价
             foreach ($cartList['cartList'] as $v) {
                 $goodsInfo = M('Goods')->field('give_integral, weight')->where('goods_id', $v['goods_id'])->find();
@@ -1736,6 +1736,14 @@ class Order extends Base
 //                if (isset($v['is_order_prom']) && $v['is_order_prom'] == 1) {
 //                    $order_prom_fee = bcadd($order_prom_fee, bcmul(bcadd($v['use_integral'], $v['member_goods_price'], 2), $v['goods_num'], 2), 2);
 //                }
+            }
+            if (!empty($exchangeList)) {
+                // 兑换券商品积分
+                foreach ($exchangeList as $coupon) {
+                    $integral = M('goods_coupon gc')->join('goods g', 'g.goods_id = gc.goods_id')
+                        ->where(['gc.coupon_id' => $coupon['exchange_id']])->sum('g.give_integral');
+                    $give_integral = bcadd($give_integral, $integral, 2);
+                }
             }
 
             $payLogic->activity(true);      // 满单赠品
@@ -1895,6 +1903,7 @@ class Order extends Base
         $payType = input('pay_type', 1);        // 结算类型
         $cartIds = I('cart_ids', '');           // 购物车ID组合
         $couponId = I('coupon_id', 0);          // 优惠券ID
+        $exchangeId = I('exchange_id', 0);      // 兑换券ID
         $addressId = I('address_id', '');       // 地址ID
         $userElectronic = I('user_electronic', '');     // 使用电子币
         $extraGoods = isset(I('post.')['extra_goods']) ? I('post.')['extra_goods'] : [];     // 加价购商品
@@ -1963,36 +1972,6 @@ class Order extends Base
         $cartPriceInfo = $cartLogic->getCartPriceInfo($cartList['cartList']);  //初始化数据 商品总额/节约金额/商品总共数量/商品使用积分
         $cartList = array_merge($cartList, $cartPriceInfo);
 
-        if (!empty($couponId) && $couponId != -1) {
-            $cartGoodsList = get_arr_column($cartList['cartList'], 'goods');
-            $cartGoodsId = get_arr_column($cartGoodsList, 'goods_id');
-            $cartGoodsCatId = get_arr_column($cartGoodsList, 'cat_id');
-            $couponLogic = new CouponLogic();
-            // 用户可用的优惠券列表
-            $userCouponList = $couponLogic->getUserAbleCouponList($this->user_id, $cartGoodsId, $cartGoodsCatId);
-//        $userCouponList = $cartLogic->getCouponCartList($cartList, $userCouponList);
-            $couponList = [];
-            $hasSelected = false;
-            foreach ($userCouponList as $k => $coupon) {
-                $couponList[$k] = [
-                    'coupon_id' => $coupon['coupon']['id'],
-                    'name' => $coupon['coupon']['name'],
-                    'money' => $coupon['coupon']['money'],
-                    'condition' => $coupon['coupon']['condition'],
-                    'is_usual' => $coupon['coupon']['is_usual'],
-                    'use_start_time' => date('Y-m-d', $coupon['coupon']['use_start_time']),
-                    'use_end_time' => date('Y-m-d', $coupon['coupon']['use_end_time']),
-                    'is_selected' => 0
-                ];
-                if ($coupon['coupon']['id'] == $couponId) {
-                    $couponList[$k]['is_selected'] = 1;
-                    $hasSelected = true;
-                }
-            }
-            if (!$hasSelected && !empty($couponList)) {
-                $couponId = $couponList[0]['coupon_id'];    // 默认选中第一张
-            }
-        }
         try {
             $payLogic = new Pay();
             $payLogic->setUserId($this->user_id);   // 设置支付用户ID
@@ -2024,13 +2003,19 @@ class Order extends Base
                 $give_integral = bcadd($give_integral, $goodsInfo['give_integral'], 2);
                 $weight = bcadd($weight, $goodsInfo['weight'], 2);
             }
+            if (!empty($exchangeId) && $exchangeId > 0) {
+                // 兑换券商品积分
+                $integral = M('goods_coupon gc')->join('goods g', 'g.goods_id = gc.goods_id')
+                    ->where(['gc.coupon_id' => $exchangeId])->sum('g.give_integral');
+                $give_integral = bcadd($give_integral, $integral, 2);
+            }
 
             $payLogic->activity(true);      // 满单赠品
             $payLogic->activity2New();     // 指定商品赠品 / 订单优惠赠品
             $payLogic->activity3();     // 订单优惠促销
 
             // 使用优惠券
-            if (isset($couponId) && $couponId > 0) {
+            if (!empty($couponId) && $couponId > 0) {
                 $payLogic->useCouponById($couponId, $payLogic->getPayList());
             }
             // 使用电子币
@@ -2038,25 +2023,6 @@ class Order extends Base
 
             // 支付数据
             $payReturn = $payLogic->toArray();
-            if (!empty($couponList)) {
-                list($prom_type, $prom_id) = $payLogic->getPromInfo();
-                // 筛选优惠券
-                foreach ($couponList as $key => $coupon) {
-                    $canCoupon = true;
-                    if ($coupon['is_usual'] == '0' || in_array($prom_type, [1, 2])) {
-                        // 不可以叠加优惠
-                        if ($payReturn['order_prom_amount'] > 0) {
-                            $canCoupon = false;
-                        }
-                    }
-                    if (!$canCoupon || $coupon['condition'] > $payReturn['order_amount']) {
-                        unset($couponList[$key]);
-                        continue;
-                    }
-                    unset($couponList[$key]['condition']);
-                    unset($couponList[$key]['is_usual']);
-                }
-            }
         } catch (TpshopException $tpE) {
             return json($tpE->getErrorArr());
         }

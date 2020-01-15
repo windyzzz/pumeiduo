@@ -39,6 +39,8 @@ class CreateSuggestion extends Migrator
             ->addColumn('content', 'text', ['comment' => '内容'])
             ->addColumn('is_handled', 'integer', ['default' => 0, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'comment' => '内容'])
             ->addColumn('create_time', 'integer')
+            ->addColumn('admin_id', 'integer', ['null' => true, 'comment' => '处理人管理员ID'])
+            ->addColumn('handled_time', 'integer', ['null' => true, 'comment' => '处理时间'])
             ->create();
     }
 }

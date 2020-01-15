@@ -50,7 +50,8 @@ class Suggestion extends Base
         $count = M('suggestion s')->join('suggestion_cate sc', 'sc.id = s.cate_id')->count();
         $page = new Page($count, 10);
         $suggestion_list = M('suggestion s')->join('suggestion_cate sc', 'sc.id = s.cate_id')
-            ->field('s.id, s.phone, s.content, s.is_handled, s.create_time, sc.name cate_name')
+            ->join('admin a', 'a.admin_id = s.admin_id', 'LEFT')
+            ->field('s.id, s.phone, s.content, s.is_handled, s.create_time, s.handled_time, sc.name cate_name, a.user_name admin_name')
             ->order('s.create_time DESC')->limit($page->firstRow . ',' . $page->listRows)->select();
 
         $this->assign('page', $page);
@@ -65,7 +66,11 @@ class Suggestion extends Base
     {
         $id = I('id', '');
         $is_handled = I('is_handled', 0);
-        M('suggestion')->where(['id' => $id])->update(['is_handled' => $is_handled]);
+        M('suggestion')->where(['id' => $id])->update([
+            'is_handled' => $is_handled,
+            'admin_id' => session('admin_id'),
+            'handled_time' => time()
+        ]);
         $this->ajaxReturn(['status' => 1, 'msg' => '处理成功']);
     }
 
