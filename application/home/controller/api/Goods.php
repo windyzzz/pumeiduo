@@ -895,6 +895,27 @@ class Goods extends Base
      */
     public function getFlashSalesGoodsList($output = 'json')
     {
+        $sort = I('get.sort', '');      // 排序
+        $sort_asc = I('get.sort_asc', '');   // 排序
+        $order = [
+            'fs.end_time' => 'asc'
+        ];
+        if (!empty($sort) && !empty($sort_asc)) {
+            switch ($sort) {
+                case 'sales_sum':
+                    $sort = 'fs.buy_num';
+                    break;
+                case 'shop_price':
+                    $sort = 'fs.price';
+                    break;
+                case 'goods_id':
+                    $sort = 'fs.start_time';
+                    break;
+                default:
+                    $sort = 'fs.end_time';
+            }
+            $order = [$sort => $sort_asc];
+        }
         $where = [
             'fs.start_time' => ['<=', time()],
             'fs.end_time' => ['>=', time()],
@@ -911,7 +932,7 @@ class Goods extends Base
             ->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
             ->where($where)
             ->where(['fs.goods_id' => ['in', $filter_goods_id]])->field('fs.id prom_id, g.goods_id, fs.item_id, g.goods_sn, g.goods_name, g.original_img, g.exchange_integral, fs.price flash_sale_price, fs.title, fs.goods_num, fs.buy_num, sgp.key_name, fs.end_time, fs.can_integral')
-            ->limit($page->firstRow . ',' . $page->listRows)->order('fs.end_time')->select();
+            ->limit($page->firstRow . ',' . $page->listRows)->order($order)->select();
         // 商品标签
         $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->limit($page->firstRow . ',' . $page->listRows)->select();
         $endTime = 0;

@@ -290,12 +290,19 @@ class Cart extends Base
             }
         }
         // 处理秒杀商品归纳
-        $flashSaleList = [];
+        $flashSaleList = [
+            'prom_id' => 0,
+            'type' => 6,
+            'type_value' => '秒杀专区',
+            'goods' => []
+        ];
         foreach ($promList as $k => $cart) {
             if ($cart['type'] == 6) {
-                
+                $flashSaleList['goods'] = array_merge($flashSaleList['goods'], $cart['goods']);
+                unset($promList[$k]);
             }
         }
+        array_unshift($promList, $flashSaleList);
         $return = [
             'cart_list' => $cartList,
             'prom_list' => array_values($promList),
