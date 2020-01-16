@@ -238,6 +238,10 @@ class Login extends Base
         if (1 != $data['status']) {
             return json($data);
         }
+        if (I('pre_reg', '')) {
+            // 预注册不需要登录
+            return json($data);
+        }
         session('user', $data['result']);
         $this->redis->set('user_' . $this->userToken, $data['result'], config('REDIS_TIME'));
         setcookie('user_id', $data['result']['user_id'], null, '/');
@@ -387,5 +391,27 @@ class Login extends Base
         // imagepng($QR, 'qrcode.png');
         // imagedestroy($QR);
         // return '<img src="qrcode.png" alt="使用微信扫描支付">';
+    }
+
+    /**
+     * 获取邀请人信息（H5专用）
+     * @return \think\response\Json
+     */
+    public function getInviteUser()
+    {
+        $inviteId = I('invite', '');
+        if (!$inviteId) {
+            return json(['status' => 0, 'msg' => '请传入邀请人ID']);
+        }
+        $userInfo = M('users')->where(['user_id' => $inviteId])->field('user_id, head_pic')->find();
+        if (empty($userInfo)) {
+            return json(['status' => 0, 'msg' => '邀请人信息不存在']);
+        }
+        if (empty($userInfo['head_pic'])) {
+            Url::root('/');
+            $baseUrl = url('/', '', '', true);
+            $userInfo['head_pic'] = $baseUrl . '/public/images/default_head.png';
+        }
+        return json(['status' => 1, 'result' => $userInfo]);
     }
 }

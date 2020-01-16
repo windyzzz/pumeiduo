@@ -616,7 +616,7 @@ class User extends Base
             if (!$userLogic->update_email_mobile($mobile, $this->user_id, 2)) {
                 return json(['status' => -1, 'msg' => '手机号码已存在！不能绑定该手机号码']);
             }
-            $is_consummate = $logic->is_consummate($this->user_id, $this->user);
+            $is_consummate = $logic->is_consummate($this->user_id);
             if ($is_consummate) {
                 return json(['status' => 1, 'msg' => '设置成功', 'result' => ['point' => $is_consummate]]);
             } else {
@@ -1040,6 +1040,7 @@ class User extends Base
             $old_mobile = I('post.old_mobile');
             $mobile = I('post.mobile');
             $confirm_mobile = I('post.confirm_mobile');
+            if (!$mobile) $mobile = $confirm_mobile;
             $code = I('post.code');
             $scene = I('post.scene', 6);
             $session_id = I('unique_id', $this->userToken);
@@ -1885,7 +1886,7 @@ class User extends Base
         $payPoints = M('AccountLog')
             ->where('user_id', $current_user['user_id'])
             ->where('pay_points', 'gt', 0)
-            ->where('type', 'neq', 6)   // 不要注册积分
+            ->where('type', 'neq', 6)// 不要注册积分
             ->sum('pay_points');
         if ($payPoints > 0) {
             accountLog($bind_user['user_id'], 0, $payPoints, '账号合并积分', 0, 0, '', 0, 11, false);
@@ -2285,7 +2286,7 @@ class User extends Base
                 'bank_card' => $user['bank_card'],
                 'realname' => $user['real_name'],
                 'id_cart' => $user['id_cart'],
-                'taxfee' => bcdiv(bcmul($amount, tpCache('basic.hand_fee'), 2), 100, 2)
+                'taxfee' => tpCache('basic.hand_fee')
             ];
             M('withdrawals')->add($data);
             return json(['status' => 1, 'msg' => '提现申请已提交，请留意到账信息']);
@@ -2985,7 +2986,7 @@ class User extends Base
                 return json(['status' => 0, 'msg' => '操作失败']);
             }
             // 完善资料获得积分
-            $is_consummate = $userLogic->is_consummate($this->user_id, $this->user);
+            $is_consummate = $userLogic->is_consummate($this->user_id);
             if ($is_consummate !== false) {
                 return json(['status' => 1, 'msg' => '操作成功', 'result' => ['point' => $is_consummate]]);
             } else {
@@ -3160,7 +3161,7 @@ class User extends Base
             'bank_name' => '',
             'bank_icon' => '',
             'account' => '',
-            'hand_fee' => tpCache('basic.hand_fee')
+            'hand_fee' => '￥' . tpCache('basic.hand_fee')
         ];
         $userBankInfo = M('users')->where(['user_id' => $this->user_id])->field('id_cart id_card, bank_name, bank_code, bank_region, bank_branch, bank_card')->find();
         if ($userBankInfo['bank_code'] == 'Alipay') {
@@ -3171,7 +3172,7 @@ class User extends Base
                 'bank_name' => $bankInfo['name_cn'],
                 'bank_icon' => $bankInfo['icon'],
                 'account' => $userBankInfo['bank_card'],
-                'hand_fee' => tpCache('basic.hand_fee')
+                'hand_fee' => '￥' . tpCache('basic.hand_fee')
             ];
         } elseif (!empty($userBankInfo['bank_card'])) {
             // 银行
@@ -3186,7 +3187,7 @@ class User extends Base
                     'bank_name' => $bankInfo['name_cn'],
                     'bank_icon' => $bankInfo['icon'],
                     'account' => $userBankInfo['bank_card'],
-                    'hand_fee' => tpCache('basic.hand_fee')
+                    'hand_fee' => '￥' . tpCache('basic.hand_fee')
                 ];
             }
         }

@@ -331,8 +331,7 @@ class ExtraLogic
     {
         if ($this->order) {
             $list = M('extra_log')->where('order_sn', $this->order['order_sn'])->select();
-
-            if ($list) {
+            if (!empty($list)) {
                 foreach ($list as $v) {
                     M('extra_log')->where('id', $v['id'])->update(['status' => 1]);
                     M('extra_reward')->where('reward_id', $v['extra_reward_id'])->update([

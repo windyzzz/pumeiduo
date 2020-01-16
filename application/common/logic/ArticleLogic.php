@@ -146,7 +146,7 @@ class ArticleLogic extends Model
         $article_where = [
             'cat_id' => $cat_id,
             'distribut_level' => ['elt', $user_info['distribut_level']],
-            'publish_time' => ['elt', time()],
+//            'publish_time' => ['elt', time()],
         ];
         if (!empty($user_article)) {
             $user_id_array = get_arr_column($user_article, 'article_id');

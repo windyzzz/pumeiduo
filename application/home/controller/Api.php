@@ -118,6 +118,8 @@ class Api extends Base
                 // 注册 验证手机是否已存在
                 if (M('users')->where(['mobile' => $mobile])->find()) {
                     return json(['status' => 1, 'result' => ['state' => 0, 'msg' => '手机号已存在']]);
+                } else {
+                    return json(['status' => 1, 'result' => ['state' => 1, 'msg' => '手机号不存在']]);
                 }
                 break;
             case 8:
@@ -131,8 +133,9 @@ class Api extends Base
                     return json(['status' => 1, 'result' => ['state' => 2]]);
                 }
                 break;
+            default:
+                return json(['status' => 0, 'msg' => '场景错误']);
         }
-        return json(['status' => 1, 'result' => '']);
     }
 
     /**

@@ -246,6 +246,7 @@ class Cart extends Base
                         'gift_goods' => $giftGoods
                     ];
                 } elseif (isset($groupBuyGoods[$key])) {
+                    continue;
                     // 团购活动
                     $id = 'group_' . $groupBuyGoods[$key]['id'];
                     if (!isset($promList[$id])) {
@@ -269,7 +270,8 @@ class Cart extends Base
                         'buy_limit' => $groupBuyGoods[$key]['buy_limit'],
                         'gift_goods' => $giftGoods
                     ];
-                } else {
+                }
+                else {
                     // 正常普通商品
                     $cartList['goods'][] = [
                         'cart_id' => $v['id'],

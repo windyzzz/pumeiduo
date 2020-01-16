@@ -38,6 +38,9 @@
 							<div style="width: 24px;"><i class="ico-check"></i></div>
 						</th>
 						<th align="left" abbr="article_title" axis="col3" class="">
+							<div style="text-align: left; width: 50px;" class="">ID</div>
+						</th>
+						<th align="left" abbr="article_title" axis="col3" class="">
 							<div style="text-align: left; width: 240px;" class="">活动名称</div>
 						</th>
 						<th align="center" abbr="article_time" axis="col6" class="">
@@ -82,9 +85,11 @@
 								<div style="width: 24px;"><i class="ico-check"></i></div>
 							</td>
 							<td align="left" class="">
+								<div style="text-align: left; width: 50px;">{$vo.id}</div>
+							</td>
+							<td align="left" class="">
 								<div style="text-align: left; width: 240px;">{$vo.title|getSubstr=0,30}</div>
 							</td>
-
 							<td align="left" class="">
 								<div style="text-align: center; width: 120px;">{$vo.start_time|date='Y-m-d',###}</div>
 							</td>

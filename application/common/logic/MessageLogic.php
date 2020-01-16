@@ -157,7 +157,7 @@ class MessageLogic extends Model
             'category' => 0,
             'type' => 1,
             'distribut_level' => ['elt', $user_info['distribut_level']],
-            'send_time' => ['gt', $user_info['reg_time']],
+//            'send_time' => ['gt', $user_info['reg_time']],
         ];
         if (!empty($user_message)) {
             $user_id_array = get_arr_column($user_message, 'message_id');

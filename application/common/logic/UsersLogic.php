@@ -299,7 +299,7 @@ class UsersLogic extends Model
             'openid' => $data['openid'],
             'unionid' => $data['unionid'],
             'oauth' => 'weixin',
-        ])->find();
+        ])->order('tu_id')->find();
         $updateData = [
             'user_id' => '',
             'openid' => $data['openid'],
@@ -312,17 +312,22 @@ class UsersLogic extends Model
             // 已授权登录过
             $updateData['user_id'] = $oauthUser['user_id'];
             // 更新数据
-            Db::name('oauth_users')->where([
-                'openid' => $data['openid'],
-                'unionid' => $data['unionid'],
-                'oauth' => 'weixin',
-            ])->update($updateData);
+            Db::name('oauth_users')->where(['tu_id' => $oauthUser['tu_id']])->update($updateData);
             if ($oauthUser['user_id'] == 0) {
                 $result = ['status' => 2, 'result' => ['openid' => $data['openid']]]; // 需要绑定手机号
             } else {
-                // 更新用户token
+                // 更新用户信息
                 $userToken = TokenLogic::setToken();
-                Db::name('users')->where(['user_id' => $oauthUser['user_id']])->update(['token' => $userToken, 'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')]);
+                $updateData = [
+                    'openid' => $data['openid'],
+                    'unionid' => $data['unionid'],
+                    'nickname' => $data['nickname'],
+                    'head_pic' => !empty($data['headimgurl']) ? $data['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png',
+                    'sex' => $oauthData['sex'] ?? 0,
+                    'token' => $userToken,
+                    'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
+                ];
+                Db::name('users')->where(['user_id' => $oauthUser['user_id']])->update($updateData);
                 $user = Db::name('users')->where(['user_id' => $oauthUser['user_id']])->find();
                 $levelName = Db::name('user_level')->where('level_id', $user['level'])->getField('level_name');
                 $user['level_name'] = $levelName;
@@ -886,8 +891,13 @@ class UsersLogic extends Model
         }
         $oauthData = unserialize($oauthUser['oauth_data']);
         if (check_mobile($username)) {
-            $exists = M('users')->where('mobile', $username)->find();
-            if (!$exists) {
+            $userId = M('users')->where('mobile', $username)->value('user_id');
+            if ($userId) {
+                //--- 已有账号
+                if (M('oauth_users')->where(['user_id' => $userId])->find()) {
+                    return ['status' => 0, 'msg' => '该手机号已绑定了微信号'];
+                }
+            } else {
                 //--- 没有账号，注册
                 $password = htmlspecialchars($password, ENT_NOQUOTES, 'UTF-8', false);
                 if (!check_password($password)) {
@@ -909,21 +919,24 @@ class UsersLogic extends Model
                     'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
                 ];
                 $userId = M('users')->add($data);
-            } else {
-                //--- 已有账号
-                $userId = $exists['user_id'];
             }
         } else {
             return ['status' => 0, 'msg' => '手机号格式不正确'];
         }
         // 更新oauth记录
         M('oauth_users')->where(['tu_id' => $oauthUser['tu_id']])->update(['user_id' => $userId]);
-        $save = [
+        // 更新用户信息
+        $updateData = [
+            'openid' => $oauthData['openid'],
+            'unionid' => $oauthData['unionid'],
+            'oauth' => $oauthUser['oauth'],
+            'nickname' => $oauthData['nickname'],
+            'head_pic' => !empty($oauthData['headimgurl']) ? $oauthData['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png',
             'last_login' => time(),
             'token' => TokenLogic::setToken(),
             'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
         ];
-        M('users')->where(['user_id' => $userId])->update($save);
+        M('users')->where(['user_id' => $userId])->update($updateData);
         $user = M('users')->where(['user_id' => $userId])->find();
         $user = [
             'user_id' => $user['user_id'],
@@ -1763,14 +1776,10 @@ class UsersLogic extends Model
         return true;
     }
 
-    function is_consummate($user_id, $user = [])
+    function is_consummate($user_id)
     {
         // 完善资料获得积分
-        if ($user) {
-            $user_info = $user;
-        } else {
-            $user_info = get_user_info($user_id, 0);
-        }
+        $user_info = get_user_info($user_id, 0);
         if ($user_info['birthday'] && $user_info['id_cart'] && $user_info['real_name'] && $user_info['mobile'] && $user_info['is_consummate'] == 0) {
             $pay_points = tpCache('basic.user_confirm_integral'); // 完善资料赠送积分
             if ($pay_points > 0) {

@@ -1281,11 +1281,6 @@ function update_pay_status($order_sn, $ext = [])
         $task->setOrder($order);
         $task->doOrderPayAfter();
 
-        // // 销售任务（随机红包）
-        // $task2 = new \app\common\logic\TaskLogic(3);
-        // $task2->setOrder($order);
-        // $task2->doOrderPayAfterSell();
-
         // 团购
         if (2 == $order['prom_type']) {
             $prom_id = $order['prom_id'];
