@@ -103,6 +103,7 @@ function update_user_level($user_id)
  * 更新分销等级,折扣，消费总额 BY J.
  *
  * @param $user_id  用户ID
+ * @param $order_id  订单ID
  *
  * @return bool
  */
@@ -128,13 +129,22 @@ function update_user_distribut($user_id, $order_id)
         $level = end($level_list);
         $update['is_distribut'] = 1;
         $update['distribut_level'] = $level['level_id'];
-        $user_info = M('users')->master()->field('user_id,distribut_level,first_leader')->where('user_id', $user_id)->find() ?: 1;
+        $user_info = M('users')->master()->field('user_id, distribut_level, first_leader')->where('user_id', $user_id)->find() ?: 1;
         M('users')->where('user_id', $user_id)->save($update);
         $order = M('order')->where('order_id', $order_id)->find();
         logDistribut($order['order_sn'], $user_id, $update['distribut_level'], $user_info['distribut_level'], 1);
         //2.2购买vip套餐用户领取优惠券
         $CouponLogic = new \app\common\logic\CouponLogic();
         $CouponLogic->sendNewVipUser($user_id, $order_id);
+        //2.3推荐人奖励
+        if (tpCache('distribut.referee_vip_money') != 0) {
+            // 奖励金额
+            accountLog($user_info['first_leader'], tpCache('distribut.referee_vip_money'), 0, '推荐人VIP套组奖励金额', 0, $order_id, '', 0, 14, false);
+        }
+        if (tpCache('distribut.referee_vip_point') != 0) {
+            // 奖励积分
+            accountLog($user_info['first_leader'], 0, tpCache('distribut.referee_vip_point'), '推荐人VIP套组奖励积分', 0, $order_id, '', 0, 14, false);
+        }
     }
 }
 
@@ -1470,31 +1480,28 @@ function confirm_order($id, $user_id = 0)
     M('rebate_log')->where('order_id', $id)->save(['status' => 2, 'confirm' => time()]);
 
     // 邀请任务 (开始)
-    $orderGoodsArr = M('OrderGoods')->where(['order_id' => $id])->select();
-
-    $level = [];
-
-    //1.判断购买的商品是否包含升级专区的商品 zone == 3
-    //且有且只有distribut_id > 0 的商品才更新用户等级
-    foreach ($orderGoodsArr as $v) {
-        $goods_info = M('goods')->field('zone,distribut_id')->where(['goods_id' => $v['goods_id']])->find();
-        if (3 == $goods_info['zone'] && $goods_info['distribut_id'] > 0) {
-            $level[] = $goods_info['distribut_id'];
-        }
-    }
-
-    if ($level) {
-        $level_list = M('distribut_level')->where('level_id', 'in', $level)->order('order_money')->select();
-        $level = end($level_list);
-        $user_info = M('users')->master()->field('user_id,distribut_level,first_leader')->where('user_id', $order['user_id'])->find() ?: 1;
-        if ($user_info['first_leader'] > 0) {
-            $TaskLogic = new app\common\logic\TaskLogic(2);
-            $TaskLogic->setOrder($order);
-            $TaskLogic->setUser($user_info);
-            $TaskLogic->setDistributId($level['level_id']);
-            $TaskLogic->doInviteAfter();
-        }
-    }
+//    $orderGoodsArr = M('OrderGoods')->where(['order_id' => $id])->select();
+//    $level = [];
+//    //1.判断购买的商品是否包含升级专区的商品 zone == 3
+//    //且有且只有distribut_id > 0 的商品才更新用户等级
+//    foreach ($orderGoodsArr as $v) {
+//        $goods_info = M('goods')->field('zone,distribut_id')->where(['goods_id' => $v['goods_id']])->find();
+//        if (3 == $goods_info['zone'] && $goods_info['distribut_id'] > 0) {
+//            $level[] = $goods_info['distribut_id'];
+//        }
+//    }
+//    if ($level) {
+//        $level_list = M('distribut_level')->where('level_id', 'in', $level)->order('order_money')->select();
+//        $level = end($level_list);
+//        $user_info = M('users')->master()->field('user_id,distribut_level,first_leader')->where('user_id', $order['user_id'])->find() ?: 1;
+//        if ($user_info['first_leader'] > 0) {
+//            $TaskLogic = new app\common\logic\TaskLogic(2);
+//            $TaskLogic->setOrder($order);
+//            $TaskLogic->setUser($user_info);
+//            $TaskLogic->setDistributId($level['level_id']);
+//            $TaskLogic->doInviteAfter();
+//        }
+//    }
     // 邀请任务 (结束)
 
     // 销售任务（随机红包）

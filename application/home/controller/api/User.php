@@ -1949,6 +1949,16 @@ class User extends Base
         $this->redis->rm('user_' . $this->userToken);
 
         $user = M('Users')->where('user_id', $bind_user['user_id'])->find();
+        if (empty($user['token'])) {
+            $userToken = TokenLogic::setToken();
+            $updateData = [
+                'last_login' => time(),
+                'token' => $userToken,
+                'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
+            ];
+            M('Users')->where('user_id', $bind_user['user_id'])->update($updateData);
+            $user['token'] = $userToken;
+        }
         session('user', $user);
         $this->redis->set('user_' . $user['token'], $user, config('REDIS_TIME'));
         setcookie('user_id', $user['user_id'], null, '/');
@@ -1958,11 +1968,11 @@ class User extends Base
         setcookie('cn', 0, time() - 3600, '/');
         // 登录后将购物车的商品的 user_id 改为当前登录的id
         M('cart')->where('session_id', $session_id)->save(['user_id' => $user['user_id']]);
-
         $cartLogic = new CartLogic();
         $cartLogic->setUserId($user['user_id']);
         $cartLogic->setUserToken($user['token']);
         $cartLogic->doUserLoginHandle();  //用户登录后 需要对购物车 一些操作
+
         $returnUser = [
             'user_id' => $user['user_id'],
             'sex' => $user['sex'],
@@ -1985,7 +1995,6 @@ class User extends Base
             'is_app' => TokenLogic::getValue('is_app', $user['token']) ? 1 : 0,
             'token' => $user['token']
         ];
-
         return json(['status' => 1, 'msg' => '绑定成功', 'result' => ['user' => $returnUser]]);
     }
 
@@ -2642,7 +2651,6 @@ class User extends Base
                 $return['coupon_name_is_show'] = 0;
             }
 
-
             if (isset($result) && 1 == $result['status']) {
                 M('task_log')->where('id', $reward['id'])->update(['status' => 1, 'finished_at' => time()]);
                 $return['reward_coupon_money'] = $result['coupon']['money'];
@@ -2726,16 +2734,16 @@ class User extends Base
                 switch ($reward['reward_type']) {
                     case 1:
                         // 积分
-                        $reward_ = $reward['reward_num'];
+                        $rewardThing = $reward['reward_num'];
                         break;
                     case 2:
                         // 电子币
-                        $reward_ = $reward['reward_price'] . '元';
+                        $rewardThing = $reward['reward_price'] . '元';
                         break;
                     case 3:
                         // 优惠券
                         $couponIds = explode('-', $reward['reward_coupon_id']);
-                        $reward_ = '优惠券x' . count($couponIds);
+                        $rewardThing = '优惠券x' . count($couponIds);
                         break;
                     default:
                         continue;
@@ -2745,7 +2753,7 @@ class User extends Base
                     'task_id' => $task['id'],
                     'task_title' => $task['title'],
                     'reward_id' => $reward['reward_id'],
-                    'task_reward' => '+' . $reward_,
+                    'task_reward' => '+' . $rewardThing,
                     'task_reward_type' => $reward['reward_type'],
                     'reward_desc' => $reward['description'],
                     'reward_cycle' => $reward['cycle'],
@@ -2754,21 +2762,12 @@ class User extends Base
                     'reward_times' => $reward['reward_times'],
                     'user_reward_times' => 0
                 ];
-                // 查看用户是否已完成任务
-                $userTask = M('user_task')
-                    ->where(['user_id' => $this->user_id, 'task_reward_id' => $reward['reward_id']])
-                    ->where('created_at', 'gt', $task['start_time'])
-                    ->where('created_at', 'lt', $task['end_time'])
-                    ->field('id')
-                    ->find();
-                if ($userTask) {
-                    // 查看用户完成任务的次数
-                    $user_reward_times = M('task_log')
-                        ->where(['task_id' => $task['id'], 'task_reward_id' => $reward['reward_id'], 'user_id' => $this->user_id])
-                        ->count('id');
-                    $taskRewardData[$k]['user_reward_set'] = $user_reward_times;
-                    $taskRewardData[$k]['user_reward_times'] = $user_reward_times;
-                }
+                // 查看用户完成任务次数
+                $userTaskCount = M('user_task')
+                    ->where(['user_id' => $this->user_id, 'task_id' => $task['id'], 'task_reward_id' => $reward['reward_id']])
+                    ->value('finish_num');
+                $taskRewardData[$k]['user_reward_set'] = $userTaskCount ?? 0;
+                $taskRewardData[$k]['user_reward_times'] = $userTaskCount > $taskRewardData[$k]['reward_set'] ? 0 : $taskRewardData[$k]['reward_set'] - $userTaskCount;
             }
             if (empty($taskData)) {
                 $taskData = $taskRewardData;
@@ -2791,26 +2790,9 @@ class User extends Base
             foreach ($taskData as $data) {
                 // 查看该类型的任务是否完成
                 switch ($data['reward_cycle']) {
-                    case -1:
-                        // 没有设定
-                        $logStatus = M('task_log')->where(['task_id' => $data['task_id'], 'task_reward_id' => $data['reward_id'], 'user_id' => $this->user_id])->order('id DESC')->value('status');
-                        if (!$logStatus) {
-                            // 未完成任务
-                            $data['is_finished'] = 0;
-                            $data['is_got'] = 0;
-                        } elseif ($logStatus == 0) {
-                            // 已完成任务，但未领取奖励
-                            $data['is_finished'] = 1;
-                            $data['is_got'] = 0;
-                        } elseif ($logStatus == 1) {
-                            // 已完成任务，已领取奖励，可以继续完成任务
-                            $data['is_finished'] = 0;
-                            $data['is_got'] = 0;
-                        }
-                        break;
                     case 0:
                         // 一次性任务
-                        if ($data['user_reward_times'] > 0) {
+                        if ($data['user_reward_set'] - $data['reward_set'] == 0) {
                             $data['is_finished'] = 1;
                         } else {
                             $data['is_finished'] = 0;
@@ -2825,7 +2807,7 @@ class User extends Base
                     case 1:
                         // 每次（循环）
                         $logStatus = M('task_log')->where(['task_id' => $data['task_id'], 'task_reward_id' => $data['reward_id'], 'user_id' => $this->user_id])->order('id DESC')->value('status');
-                        if (!$logStatus) {
+                        if (is_null($logStatus)) {
                             // 未完成任务
                             $data['is_finished'] = 0;
                             $data['is_got'] = 0;

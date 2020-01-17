@@ -165,7 +165,7 @@ class Message extends Base
                             'message_id' => $list['message_id'],
                             'title' => $list['title'],
                             'content' => $list['content'],
-                            'relate_url' => !empty($list['relate_article_id']) ? SITE_URL . '/#/app_member/help_particulars?article_id=' . $list['relate_article_id'] : '',
+                            'relate_url' => !empty($list['relate_article_id']) ? SITE_URL . '/#/news/app_news_particulars?article_id=' . $list['relate_article_id'] : '',
                         ];
                     }
                     $message[] = [
