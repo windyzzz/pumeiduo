@@ -92,7 +92,7 @@ class Distribute extends Base
         $orderGoods = M('order_goods og')
             ->join('goods g', 'g.goods_id = og.goods_id')
             ->where(['order_id' => ['in', array_unique($orderIds)]])
-            ->field('og.order_id, og.goods_id, og.goods_name, og.spec_key_name, g.original_img, og.goods_num, og.member_goods_price, og.use_integral')->select();
+            ->field('og.order_id, og.goods_id, og.goods_name, og.spec_key_name, g.original_img, og.goods_num, og.final_price, og.member_goods_price, og.use_integral')->select();
         // 提成记录
         $page = new Page(count($orderIds), 10);
         $rebateLog = M('rebate_log rl')
@@ -122,7 +122,7 @@ class Distribute extends Base
                         'goods_num' => $goods['goods_num'],
                         'exchange_price' => $goods['member_goods_price'],
                         'exchange_integral' => $goods['use_integral'],
-                        'commission' => bcmul($goods['member_goods_price'], bcdiv($log['money'], $log['goods_price'], 2), 2)
+                        'commission' => bcdiv(bcmul($goods['final_price'], $log['money'], 2), $log['goods_price'], 2)
                     ];
                 }
             }

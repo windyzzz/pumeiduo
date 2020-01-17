@@ -1692,7 +1692,11 @@ class Order extends Base
         $userExchangeList = $couponLogic->getUserAbleCouponListRe($this->user_id, $cartGoodsId, $cartGoodsCatId);
 //        $userExchangeList = $cartLogic->getCouponCartList($cartList, $userExchangeList);
         $exchangeList = [];
-        foreach ($userExchangeList as $coupon) {
+        $exchangeId = 0;
+        foreach ($userExchangeList as $key => $coupon) {
+            if ($key == 0) {
+                $exchangeId = $coupon['coupon']['id'];
+            }
             $exchangeList[] = [
                 'exchange_id' => $coupon['coupon']['id'],
                 'name' => $coupon['coupon']['name'],
@@ -1701,9 +1705,18 @@ class Order extends Base
                 'use_type' => $coupon['coupon']['use_type'],
                 'use_start_time' => date('Y-m-d', $coupon['coupon']['use_start_time']),
                 'use_end_time' => date('Y-m-d', $coupon['coupon']['use_end_time']),
-                'is_selected' => $coupon['coupon']['id'] == $couponId ? 1 : 0
+                'is_selected' => $key == 0 ? 1 : 0
             ];
         }
+//        $exchangeGoods = [];
+//        if ($exchangeId > 0) {
+//            // 兑换券商品
+//            $exchangeGoods = M('goods_coupon gc')->join('goods g', 'g.goods_id = gc.goods_id')
+//                ->where(['gc.coupon_id' => $exchangeId])->field('g.goods_id, g.goods_name, g.goods_remark, g.original_img')->select();
+//            foreach ($exchangeGoods as $key => $goods) {
+//                $exchangeGoods[$key]['goods_num'] = 1;
+//            }
+//        }
         try {
             $payLogic = new Pay();
             $payLogic->setUserId($this->user_id);   // 设置支付用户ID
@@ -1747,8 +1760,8 @@ class Order extends Base
             }
 
             $payLogic->activity(true);      // 满单赠品
-            $payLogic->activity2New();     // 指定商品赠品 / 订单优惠赠品
-            $payLogic->activity3();     // 订单优惠促销
+            $payLogic->activity2New();      // 指定商品赠品 / 订单优惠赠品
+            $payLogic->activity3();         // 订单优惠促销
 
             // 使用优惠券
             if (isset($couponId) && $couponId > 0) {
@@ -1870,7 +1883,10 @@ class Order extends Base
                 'goods_list' => array_values($goodsList),
                 'gift_list' => array_values($giftList)
             ],
+            // 加价购商品
             'extra_goods' => $extraGoods,
+            // 兑换券商品
+//            'exchange_goods' => $exchangeGoods,
             // 优惠券 兑换券
             'coupon_list' => array_values($couponList),
             'exchange_list' => $exchangeList,
@@ -2003,16 +2019,21 @@ class Order extends Base
                 $give_integral = bcadd($give_integral, $goodsInfo['give_integral'], 2);
                 $weight = bcadd($weight, $goodsInfo['weight'], 2);
             }
-            if (!empty($exchangeId) && $exchangeId > 0) {
-                // 兑换券商品积分
-                $integral = M('goods_coupon gc')->join('goods g', 'g.goods_id = gc.goods_id')
-                    ->where(['gc.coupon_id' => $exchangeId])->sum('g.give_integral');
-                $give_integral = bcadd($give_integral, $integral, 2);
-            }
+//            $exchangeGoods = [];
+//            if (!empty($exchangeId) && $exchangeId > 0) {
+//                // 兑换券商品 兑换券商品积分
+//                $exchangeGoods = M('goods_coupon gc')->join('goods g', 'g.goods_id = gc.goods_id')
+//                    ->where(['gc.coupon_id' => $exchangeId])->field('g.goods_id, g.goods_name, g.goods_remark, g.original_img, g.give_integral')->select();
+//                foreach ($exchangeGoods as $key => $goods) {
+//                    $give_integral = bcadd($give_integral, $goods['give_integral'], 2);
+//                    $exchangeGoods[$key]['goods_num'] = 1;
+//                    unset($exchangeGoods[$key]['give_integral']);
+//                }
+//            }
 
             $payLogic->activity(true);      // 满单赠品
-            $payLogic->activity2New();     // 指定商品赠品 / 订单优惠赠品
-            $payLogic->activity3();     // 订单优惠促销
+            $payLogic->activity2New();      // 指定商品赠品 / 订单优惠赠品
+            $payLogic->activity3();         // 订单优惠促销
 
             // 使用优惠券
             if (!empty($couponId) && $couponId > 0) {
@@ -2028,6 +2049,7 @@ class Order extends Base
         }
         // 组合数据
         $return = [
+//            'exchange_goods' => $exchangeGoods,
             'user_electronic' => $this->user['user_electronic'],
             'weight' => $weight . 'g',
             'goods_fee' => $payReturn['goods_price'],
@@ -2153,8 +2175,8 @@ class Order extends Base
             $payLogic->usePayPoints($pay_points);
 
             $payLogic->activity(true);      // 满单赠品
-            $payLogic->activity2New();     // 指定商品赠品 / 订单优惠赠品
-            $payLogic->activity3();     // 订单优惠促销
+            $payLogic->activity2New();      // 指定商品赠品 / 订单优惠赠品
+            $payLogic->activity3();         // 订单优惠促销
             list($prom_type, $prom_id) = $payLogic->getPromInfo();
 
             // 使用优惠券

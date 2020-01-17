@@ -33,10 +33,7 @@ class DistributLogic
             'status' => 0,
         ];
 
-
-
         // 计算用于分成的总金额
-
         $order_goods = M('OrderGoods')
             ->field('goods_id,goods_num,final_price')
             ->where('order_id', $order['order_id'])
@@ -48,22 +45,23 @@ class DistributLogic
             $goods_info = M('goods')->field('zone,distribut_id,commission')->where(['goods_id' => $ov['goods_id']])->find();
             if (3 == $goods_info['zone'] && $goods_info['distribut_id'] > 0) {
                 $is_vip = true;
-            }else{
-                $distribut_total_money += ($ov['final_price'] * $ov['goods_num']) * $goods_info['commission'] / 100;
+            } else {
+                $distribut_total_money = bcadd($distribut_total_money, bcdiv(bcmul(bcmul($ov['final_price'], $ov['goods_num'], 2), $goods_info['commission'], 2), 100, 2), 2);
             }
         }
 
         $invite_uid = M('Users')->where('user_id', $order['user_id'])->getField('invite_uid');
-        $OrderCommonLogc = new \app\common\logic\OrderLogic();
-        if($is_vip){//vip商品
+        $OrderCommonLogic = new \app\common\logic\OrderLogic();
+        if ($is_vip) {
+            //vip商品
             //$referee_vip_money = tpCache('distribut.referee_vip_money');
 
-            $referee_vip_money = $OrderCommonLogc->getRongMoney(0,1,$order['add_time'],0,true);
+            $referee_vip_money = $OrderCommonLogic->getRongMoney(0, 1, $order['add_time'], 0, true);
 
             $referee_vip_point = tpCache('distribut.referee_vip_point');
 
-            $invite_uid_info = get_user_info($invite_uid,0);
-            if(($referee_vip_money>0 || $referee_vip_point>0) && $invite_uid_info['distribut_level'] >= 2){ //直推人是VIP级别以上 奖励100元+xx积分
+            $invite_uid_info = get_user_info($invite_uid, 0);
+            if (($referee_vip_money > 0 || $referee_vip_point > 0) && $invite_uid_info['distribut_level'] >= 2) { //直推人是VIP级别以上 奖励100元+xx积分
                 $rebate_info['order_money'] = $referee_vip_money;
                 $data = [];
                 $data['user_id'] = $invite_uid;
@@ -74,7 +72,7 @@ class DistributLogic
                 M('rebate_log')->add($data);
             }
 
-        }else{
+        } else {
 
             // $user_distributs = M('users')
             //     ->field('first_leader,second_leader,third_leader')
@@ -87,7 +85,6 @@ class DistributLogic
             $shop_uid = 0;//$this->_getShopUid($invite_uid, 3) //取消店铺奖励
 
 
-
             if ($distribut_total_money > 0) {
                 $rebate_info['order_money'] = $distribut_total_money;
 
@@ -95,7 +92,7 @@ class DistributLogic
                 if ($first_leader > 0) {
                     $data = [];
                     $data['user_id'] = $first_leader;
-                    $data['money'] = $OrderCommonLogc->getRongMoney($distribut_total_money,1,$order['add_time'],0,false);
+                    $data['money'] = $OrderCommonLogic->getRongMoney($distribut_total_money, 1, $order['add_time'], 0, false);
 
                     $data['level'] = 1;
                     $data = array_merge($rebate_info, $data);
@@ -106,7 +103,7 @@ class DistributLogic
                     $data = [];
                     $data['user_id'] = $second_leader;
                     //$data['money'] = $distribut_total_money * tpCache('distribut.second_rate') / 100;
-                    $data['money'] = $OrderCommonLogc->getRongMoney($distribut_total_money,2,$order['add_time'],0,false);
+                    $data['money'] = $OrderCommonLogic->getRongMoney($distribut_total_money, 2, $order['add_time'], 0, false);
 
                     $data['level'] = 2;
                     $data = array_merge($rebate_info, $data);
@@ -117,7 +114,7 @@ class DistributLogic
                     $data = [];
                     $data['user_id'] = $third_leader;
                     //$data['money'] = $distribut_total_money * tpCache('distribut.third_rate') / 100;
-                    $data['money'] = $OrderCommonLogc->getRongMoney($distribut_total_money,3,$order['add_time'],0,false);
+                    $data['money'] = $OrderCommonLogic->getRongMoney($distribut_total_money, 3, $order['add_time'], 0, false);
 
                     $data['level'] = 3;
                     $data = array_merge($rebate_info, $data);
@@ -131,7 +128,7 @@ class DistributLogic
                     $data = [];
                     $data['user_id'] = $shop_uid;
                     //$data['money'] = $distribut_total_money * tpCache('distribut.shop_rate') / 100;
-                    $data['money'] = $OrderCommonLogc->getRongMoney($distribut_total_money,0,$order['add_time'],0,false);
+                    $data['money'] = $OrderCommonLogic->getRongMoney($distribut_total_money, 0, $order['add_time'], 0, false);
 
                     $data['level'] = 0;
                     $data['type'] = 1;
@@ -154,8 +151,8 @@ class DistributLogic
         $shop_id = 0;
         //等级id大于2为商铺代理
         $user_info = M('users')->field('distribut_level,user_id,invite_uid')
-        ->where('user_id', $uid)
-        ->find();
+            ->where('user_id', $uid)
+            ->find();
         $res = true;
         if ($where) {
             $res = !in_array($user_info['user_id'], $where);
@@ -205,7 +202,7 @@ class DistributLogic
     public function auto_confirm_ceshi()
     {
         //确认分成时间
-        $confirm_time = time()+10*86400;
+        $confirm_time = time() + 10 * 86400;
 
         $where0 = [
             'is_distribut' => 0, // 未分成
@@ -235,12 +232,12 @@ class DistributLogic
 
     public function confirmOrder($order_sn, $order_id)
     {
-        $rebateList = M('RebateLog')->field('user_id,money,point')->where(array('order_sn'=>$order_sn,'status'=>array('in',array(0,1,2))))->select();
+        $rebateList = M('RebateLog')->field('user_id,money,point')->where(array('order_sn' => $order_sn, 'status' => array('in', array(0, 1, 2))))->select();
         if ($rebateList) {
             foreach ($rebateList as $rk => $rv) {
                 accountLog($rv['user_id'], $rv['money'], $rv['point'], "订单：{$order_sn} 佣金分成", $rv['money'], $order_id, $order_sn, 0, 1);
             }
-            M('RebateLog')->where(array('order_sn'=>$order_sn,'status'=>array('in',array(0,1,2))))->update(['status' => 3, 'confirm_time' => time()]);
+            M('RebateLog')->where(array('order_sn' => $order_sn, 'status' => array('in', array(0, 1, 2))))->update(['status' => 3, 'confirm_time' => time()]);
         }
 
         M('Order')->where('order_sn', $order_sn)->update(['is_distribut' => 1]);

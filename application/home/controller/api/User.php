@@ -2260,7 +2260,8 @@ class User extends Base
         if ($this->request->isPost()) {
             $amount = I('amount', 0);
             $payPwd = I('pay_pwd', '');
-            if ($amount % 100 != 0) return json(['status' => 0, 'msg' => '提现金额必须是100的倍数']);
+            $moneyMin = tpCache('basic.min');
+            if ($amount % $moneyMin != 0) return json(['status' => 0, 'msg' => '提现金额必须是' . $moneyMin . '的倍数']);
             // 用户信息
             $user = M('users')->where(['user_id' => $this->user_id])
                 ->field('paypwd, user_money, bank_name, bank_code, bank_region, bank_branch, bank_card, real_name, id_cart')->find();
@@ -2270,13 +2271,12 @@ class User extends Base
             if (systemEncrypt($payPwd) != $user['paypwd']) {
                 return json(['status' => 0, 'msg' => '支付密码错误']);
             }
-            $min = tpCache('basic.min'); // 最少提现额度
-            if ($amount < $min) {
-                return json(['status' => 0, 'msg' => '每次最少提现额度' . $min]);
+            if ($amount < $moneyMin) {
+                return json(['status' => 0, 'msg' => '每次最少提现额度' . $moneyMin]);
             }
-            $need = tpCache('basic.need'); // 满多少才能提现
-            if ($user['user_money'] < $need) {
-                return json(['status' => 0, 'msg' => '账户余额最少达到' . $need . '多少才能提现']);
+            $moneyNeed = tpCache('basic.need'); // 满多少才能提现
+            if ($user['user_money'] < $moneyNeed) {
+                return json(['status' => 0, 'msg' => '账户余额最少达到' . $moneyNeed . '多少才能提现']);
             }
             if ($amount > $user['user_money']) {
                 return json(['status' => 0, 'msg' => '用户余额不足']);
@@ -3143,7 +3143,9 @@ class User extends Base
             'bank_name' => '',
             'bank_icon' => '',
             'account' => '',
-            'hand_fee' => '￥' . tpCache('basic.hand_fee')
+            'money_need' => tpCache('basic.need') ?? '0',
+            'money_min' => tpCache('basic.min') ?? '0',
+            'hand_fee' => '￥' . tpCache('basic.hand_fee') ?? '0'
         ];
         $userBankInfo = M('users')->where(['user_id' => $this->user_id])->field('id_cart id_card, bank_name, bank_code, bank_region, bank_branch, bank_card')->find();
         if ($userBankInfo['bank_code'] == 'Alipay') {
@@ -3154,6 +3156,8 @@ class User extends Base
                 'bank_name' => $bankInfo['name_cn'],
                 'bank_icon' => $bankInfo['icon'],
                 'account' => $userBankInfo['bank_card'],
+                'money_need' => tpCache('basic.need') ?? '0',
+                'money_min' => tpCache('basic.min') ?? '0',
                 'hand_fee' => '￥' . tpCache('basic.hand_fee')
             ];
         } elseif (!empty($userBankInfo['bank_card'])) {
@@ -3169,6 +3173,8 @@ class User extends Base
                     'bank_name' => $bankInfo['name_cn'],
                     'bank_icon' => $bankInfo['icon'],
                     'account' => $userBankInfo['bank_card'],
+                    'money_need' => tpCache('basic.need') ?? '0',
+                    'money_min' => tpCache('basic.min') ?? '0',
                     'hand_fee' => '￥' . tpCache('basic.hand_fee')
                 ];
             }
@@ -3248,7 +3254,16 @@ class User extends Base
                 $userBankInfo['bank_code'] = $bankInfo['name_en'];
             }
         } else {
-            return json(['status' => 0, 'msg' => '用户还没有设置银行卡信息']);
+            $userBankInfo = [
+                'id_card' => '',
+                'real_name' => '',
+                'bank_name' => '',
+                'bank_region' => '',
+                'bank_branch' => '',
+                'bank_id' => '',
+                'bank_code' => '',
+                'account' => '',
+            ];
         }
         return json(['status' => 1, 'result' => $userBankInfo]);
     }

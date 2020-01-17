@@ -220,6 +220,7 @@ class Goods extends Base
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
+        $zone = $goods['zone'];
         $goodsLogic = new GoodsLogic();
         // 判断商品性质
         $flashSale = Db::name('flash_sale fs')
@@ -384,37 +385,42 @@ class Goods extends Base
                 }
             }
         }
-        // 促销
-        $goods['promotion'] = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
-            ->where(['gtg.goods_id' => $goods_id, 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
-            ->field('pg.id prom_id, pg.type, pg.title')->select();
-
-        // 优惠券
-        $couponLogic = new CouponLogic();
-        $couponCurrency = $couponLogic->getCoupon(0);    // 通用优惠券
-        $couponIds = [];
-        foreach ($couponCurrency as $item) {
-            $couponIds['not_coupon_id'][] = $item['coupon_id'];
-        }
-        $couponGoods = $couponLogic->getCoupon(null, $goods_id, '', $couponIds);    // 指定商品优惠券
-        foreach ($couponGoods as $k => $item) {
-            $couponIds['not_coupon_id'][] = $item['coupon_id'];
-        }
-        $couponCate = $couponLogic->getCoupon(null, '', $goods['cat_id'], $couponIds);    // 指定分类优惠券
-        $goods['coupon'] = array_merge_recursive($couponCurrency, $couponGoods, $couponCate);
-        if ($this->user && !empty($goods['coupon'])) {
-            // 查看用户是否拥有优惠券
-            foreach ($goods['coupon'] as $k => $coupon) {
-                if (!Db::name('coupon_list')->where(['cid' => $coupon['coupon_id'], 'uid' => $this->user_id, 'status' => 0])->find()) {
-                    unset($goods['coupon'][$k]);
+        if ($zone == 3) {
+            $goods['promotion'] = [];
+            $goods['coupon'] = [];
+        } else {
+            // 促销
+            $goods['promotion'] = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
+                ->where(['gtg.goods_id' => $goods_id, 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
+                ->field('pg.id prom_id, pg.type, pg.title')->select();
+            // 优惠券
+            $couponLogic = new CouponLogic();
+            $couponCurrency = $couponLogic->getCoupon(0);    // 通用优惠券
+            $couponIds = [];
+            foreach ($couponCurrency as $item) {
+                $couponIds['not_coupon_id'][] = $item['coupon_id'];
+            }
+            $couponGoods = $couponLogic->getCoupon(null, $goods_id, '', $couponIds);    // 指定商品优惠券
+            foreach ($couponGoods as $k => $item) {
+                $couponIds['not_coupon_id'][] = $item['coupon_id'];
+            }
+            $couponCate = $couponLogic->getCoupon(null, '', $goods['cat_id'], $couponIds);    // 指定分类优惠券
+            $goods['coupon'] = array_merge_recursive($couponCurrency, $couponGoods, $couponCate);
+            if ($this->user && !empty($goods['coupon'])) {
+                // 查看用户是否拥有优惠券
+                foreach ($goods['coupon'] as $k => $coupon) {
+                    if (!Db::name('coupon_list')->where(['cid' => $coupon['coupon_id'], 'uid' => $this->user_id, 'status' => 0])->find()) {
+                        unset($goods['coupon'][$k]);
+                    }
                 }
             }
+            $goods['coupon'] = array_values($goods['coupon']);
         }
-        $goods['coupon'] = array_values($goods['coupon']);
+        unset($goods['zone']);
+
         $goods['freight_free'] = tpCache('shopping.freight_free'); // 全场满多少免运费
         $goods['qr_code'] = ''; // 分享二维码
-        $zone = $goods['zone'];
-        unset($goods['zone']);
+
         // 组装数据
         $result['goods'] = $goods;
         $result['can_cart'] = $zone == 3 ? 0 : 1;   // 能否加入购物车
