@@ -24,36 +24,38 @@ use think\Db;
  */
 class Pay
 {
-    protected $payList;
-    protected $promGiftList;
     protected $userId;
     protected $user;
+    protected $payList;
 
-    private $totalAmount = '0'; //订单总价
-    private $orderAmount = '0'; //应付金额
-    private $shippingPrice = '0'; //物流费
-    private $goodsPrice = '0'; //商品总价
-//    private $orderPromPrice = '0'; //订单优惠促销商品总价
-    private $cutFee = '0'; //共节约多少钱
-    private $totalNum = '0'; // 商品总共数量
-    private $integralMoney = '0'; //积分抵消金额
-    private $userElectronic = '0'; //使用电子币
-    private $payPoints = '0'; //使用积分
-    private $couponPrice = '0'; //优惠券抵消金额
+    private $totalAmount = '0';             // 订单总价
+    private $orderAmount = '0';             // 应付金额
+    private $shippingPrice = '0';           // 物流费
+    private $goodsPrice = '0';              // 商品总价
+//    private $orderPromPrice = '0';          // 订单优惠促销商品总价
+    private $cutFee = '0';                  // 共节约多少钱
+    private $totalNum = '0';                // 商品总共数量
+    private $integralMoney = '0';           // 积分抵消金额
+    private $userElectronic = '0';          // 使用电子币
+    private $payPoints = '0';               // 使用积分
+    private $couponPrice = '0';             // 优惠券抵消金额
 
-    private $orderPromId; //订单优惠ID
-    private $orderPromAmount = '0'; //订单优惠金额
+    private $orderPromId;                   // 订单优惠ID
+    private $orderPromAmount = '0';         // 订单优惠金额
     private $couponId;
     private $couponIdRe;
 
+    private $promTitleData;                 // 优惠标题数据
+
     private $giftLogic;
     private $gift2Logic;
-    private $gift_goods_list; // 赠品商品列表
-//    private $gift2_goods_list; // 赠品商品列表
+    private $gift_goods_list;               // 赠品商品列表
+//    private $gift2_goods_list;              // 赠品商品列表
+    private $promGiftList;                  // 订单优惠赠品
 
     private $extraLogic;
-    private $extra_goods_list; // 加价购商品列表
-    private $extra_reward; // 加价购商品记录列表
+    private $extra_goods_list;              // 加价购商品列表
+    private $extra_reward;                  // 加价购商品记录列表
 
     public function __construct()
     {
@@ -639,13 +641,22 @@ class Pay
         // 订单优惠促销（查看是否有优惠价格）
         $orderProm = M('order_prom')
             ->where(['type' => ['in', '0, 1'], 'is_open' => 1, 'is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])
-            ->field('id, order_price, discount_price')->select();
+            ->field('id, title, type, order_price, discount_price')->select();
         foreach ($orderProm as $prom) {
             if ($this->totalAmount >= $prom['order_price']) {
                 // 订单价格满足要求
                 $this->orderAmount = bcsub($this->orderAmount, $prom['discount_price'], 2);
                 $this->totalAmount = bcsub($this->totalAmount, $prom['discount_price'], 2);
                 $this->orderPromAmount = bcadd($this->orderPromAmount, $prom['discount_price'], 2);
+                if (in_array($prom['type'], [0, 1])) {
+                    if (!isset($this->promTitleData[8 . '_' . $prom['id']])) {
+                        $this->promTitleData[8 . '_' . $prom['id']] = [
+                            'prom_id' => $prom['id'],
+                            'type' => 8,
+                            'type_value' => $prom['title']
+                        ];
+                    }
+                }
             }
         }
     }
@@ -1077,9 +1088,9 @@ class Pay
             }
             $goods_tao_grade = M('goods_tao_grade')
                 ->alias('g')
-                ->field('pg.id, pg.type, pg.goods_num, pg.goods_price, pg.buy_limit, pg.expression')
-                ->where(array('g.goods_id' => $v['goods_id']))
                 ->join('prom_goods pg', "g.promo_id = pg.id and pg.group like '%" . $user_info['distribut_level'] . "%' and pg.start_time <= " . NOW_TIME . " and pg.end_time >= " . NOW_TIME . " and pg.is_end = '0' and pg.is_open = 1 and pg.min_num <= " . $v["goods_num"])
+                ->where(array('g.goods_id' => $v['goods_id']))
+                ->field('pg.id, pg.title, pg.type, pg.goods_num, pg.goods_price, pg.buy_limit, pg.expression')
                 ->select();
             $is_can_buy = true;
             if ($goods_tao_grade) {
@@ -1123,6 +1134,11 @@ class Pay
 //                            $this->payList[$k]['member_goods_price'] = $member_goods_price;
                             $this->orderPromId = $group_activity['id'];
                             break;
+                        case 2:
+                            // 固定金额
+                            $this->payList[$k]['member_goods_price'] = $group_activity['expression'];
+                            $this->orderPromId = $group_activity['id'];
+                            break;
                         case 4:
                             // 满打折
                         case 5:
@@ -1156,6 +1172,13 @@ class Pay
                             break;
                         default:
                             $promAmount = '0';
+                    }
+                    if (!isset($this->promTitleData[$group_activity['type'] . '_' . $group_activity['id']])) {
+                        $this->promTitleData[$group_activity['type'] . '_' . $group_activity['id']] = [
+                            'prom_id' => $group_activity['id'],
+                            'type' => $group_activity['type'],
+                            'type_value' => $group_activity['title']
+                        ];
                     }
                     $goodsPromAmount = bcadd($goodsPromAmount, $promAmount, 2);
                 }
@@ -1343,6 +1366,7 @@ class Pay
             'gift_goods_list' => $this->gift_goods_list,
             'extra_goods_list' => $this->extra_goods_list,
             'gift_record_list' => $this->giftLogic->getRewardInfo(),
+            'prom_title_data' => array_values($this->promTitleData),
         ];
     }
 }

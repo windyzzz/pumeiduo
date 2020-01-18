@@ -131,9 +131,9 @@ class Cart extends Base
             'type_value' => '乐活优选',
             'goods' => []
         ];
-        $promList = [];
-        $invalidList = [];
-        $goodsIds = [];
+        $promTitleData = [];    // 促销标题列表
+        $promList = [];         // 促销商品列表
+        $invalidList = [];      // 失效商品列表
         if (!empty($cartData)) {
             // 计算购物车金额
             $Pay = new \app\common\logic\Pay();
@@ -204,6 +204,11 @@ class Cart extends Base
                         $promList[$id]['type'] = $promGoods[$key]['type'];
                         $promList[$id]['type_value'] = $promGoods[$key]['title'];
                         $promList[$id]['goods'] = [];
+//                        $promTitleData[] = [
+//                            'prom_id' => $promGoods[$key]['id'],
+//                            'type' => $promGoods[$key]['type'],
+//                            'type_value' => $promGoods[$key]['title'],
+//                        ];
                     }
                     $promList[$id]['goods'][] = [
                         'cart_id' => $v['id'],
@@ -288,7 +293,6 @@ class Cart extends Base
                         'gift_goods' => $giftGoods
                     ];
                 }
-                $goodsIds[] = $v['goods_id'];
             }
         }
         // 处理秒杀商品归纳
@@ -304,9 +308,12 @@ class Cart extends Base
                 unset($promList[$k]);
             }
         }
-        array_unshift($promList, $flashSaleList);
+        if (!empty($flashSaleList['goods'])) {
+            array_unshift($promList, $flashSaleList);
+        }
         $return = [
             'cart_list' => $cartList,
+//            'prom_title_data' => $promTitleData,
             'prom_list' => array_values($promList),
             'invalid_list' => $invalidList,
             'cart_num' => $cartNum
