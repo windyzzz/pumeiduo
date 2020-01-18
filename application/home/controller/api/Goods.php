@@ -406,6 +406,22 @@ class Goods extends Base
             }
             $couponCate = $couponLogic->getCoupon(null, '', $goods['cat_id'], $couponIds);    // 指定分类优惠券
             $goods['coupon'] = array_merge_recursive($couponCurrency, $couponGoods, $couponCate);
+//            if (!empty($goods['coupon'])) {
+//                // 查看用户是否拥有优惠券
+//                if ($this->user) {
+//                    foreach ($goods['coupon'] as $k => $coupon) {
+//                        if (Db::name('coupon_list')->where(['cid' => $coupon['coupon_id'], 'uid' => $this->user_id, 'status' => 0])->find()) {
+//                            $goods['coupon'][$k]['is_received'] = 1;
+//                        } else {
+//                            $goods['coupon'][$k]['is_received'] = 0;
+//                        }
+//                    }
+//                } else {
+//                    foreach ($goods['coupon'] as $k => $coupon) {
+//                        $goods['coupon'][$k]['is_received'] = 0;
+//                    }
+//                }
+//            }
             if ($this->user && !empty($goods['coupon'])) {
                 // 查看用户是否拥有优惠券
                 foreach ($goods['coupon'] as $k => $coupon) {
