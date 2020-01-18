@@ -128,9 +128,9 @@ class Api extends Base
                 if ($user) {
                     //--- 账号已存在
                     // 账号是否已绑定了微信
-                    if (M('oauth_users')->where(['user_id' => $userId])->find()) {
-                        return ['status' => 0, 'msg' => '该手机号已绑定了微信号'];
-                    }
+//                    if (M('oauth_users')->where(['user_id' => $user['user_id']])->find()) {
+//                        return json(['status' => 1, 'result' => ['state' => 0, 'msg' => '手机已绑定了微信账号']]);
+//                    }
                     return json(['status' => 1, 'result' => ['state' => 1]]);
                 } else {
                     //--- 账号不存在
