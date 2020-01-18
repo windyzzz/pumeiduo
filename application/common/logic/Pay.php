@@ -45,7 +45,7 @@ class Pay
     private $couponId;
     private $couponIdRe;
 
-    private $promTitleData;                 // 优惠标题数据
+    private $promTitleData = [];            // 优惠标题数据
 
     private $giftLogic;
     private $gift2Logic;

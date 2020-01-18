@@ -11,7 +11,6 @@
 
 namespace app\home\behavior;
 
-use app\common\logic\Token as TokenLogic;
 use app\common\logic\UsersLogic;
 use app\common\logic\wechat\WechatUtil;
 use think\cache\driver\Redis;

@@ -876,14 +876,14 @@ class Cart extends Base
             $pay_points = $pay->getUsePoint();
             $pay->usePayPoints($pay_points);
             $pay->useUserElectronic($user_electronic); // 电子币
-            $pay->activity();   // 参与活动奖励 例如:赠品活动
+            $pay->activity();    // 参与活动奖励 例如:赠品活动
             $pay->activity2();   // 参与活动奖励 例如:赠品活动
             $pay->activity3();   // 参与活动奖励 例如:订单优惠促销
 
             $coupon = null;
             if ($coupon_id) {
                 $couponList = new CouponList();
-                $userCoupon = $couponList->where(['uid' => $this->user['user_id'], 'id' => $coupon_id])->find();
+                $userCoupon = $couponList->where(['uid' => $this->user['user_id'], 'cid' => $coupon_id])->find();
                 if ($userCoupon) {
                     $coupon = Db::name('coupon')->where(['id' => $userCoupon['cid'], 'status' => 1])->find();
                 }

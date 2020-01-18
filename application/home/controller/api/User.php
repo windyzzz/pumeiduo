@@ -1387,7 +1387,7 @@ class User extends Base
         $goodsLogic = new Goodslogic();
         $goodsLogic->del_visit_log($id);
 
-        return json(['status' => 1, 'msg' => '删除用户足迹成功', 'result' => null]);
+        return json(['status' => 1, 'msg' => '删除用户足迹成功']);
     }
 
     /**

@@ -1731,10 +1731,11 @@ class Order extends Base
 
             // 配送物流
             if (empty($userAddress)) {
-                $payLogic->delivery(0);
+                $payLogic->delivery('0');
             } else {
                 $payLogic->delivery($userAddress[0]['district']);
             }
+
             $pay_points = $payLogic->getUsePoint();     // 使用积分
             if ($this->user['pay_points'] < $pay_points) {
                 return json(['status' => 0, 'msg' => '用户消费积分只有' . $this->user['pay_points']]);
@@ -2006,7 +2007,7 @@ class Order extends Base
 
             // 配送物流
             if (empty($userAddress)) {
-                $payLogic->delivery(0);
+                $payLogic->delivery('0');
             } else {
                 $payLogic->delivery($userAddress['district']);
             }
@@ -2169,7 +2170,7 @@ class Order extends Base
 
             // 配送物流
             if (empty($userAddress)) {
-                $payLogic->delivery(0);
+                $payLogic->delivery('0');
             } else {
                 $payLogic->delivery($userAddress[0]['district']);
             }
