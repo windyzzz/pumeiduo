@@ -126,10 +126,14 @@ class Api extends Base
                 // 授权登录绑定手机
                 $user = M('users')->where(['mobile' => $mobile])->find();
                 if ($user) {
-                    // 账号已存在
+                    //--- 账号已存在
+                    // 账号是否已绑定了微信
+                    if (M('oauth_users')->where(['user_id' => $userId])->find()) {
+                        return ['status' => 0, 'msg' => '该手机号已绑定了微信号'];
+                    }
                     return json(['status' => 1, 'result' => ['state' => 1]]);
                 } else {
-                    // 账号不存在
+                    //--- 账号不存在
                     return json(['status' => 1, 'result' => ['state' => 2]]);
                 }
                 break;

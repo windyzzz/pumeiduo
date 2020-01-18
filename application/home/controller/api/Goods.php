@@ -837,6 +837,69 @@ class Goods extends Base
     }
 
     /**
+     * 商品列表页（新）（包含搜索）
+     */
+    public function goodsListNew()
+    {
+        $sort = I('get.sort', 'goods_id'); // 排序
+        $sort_asc = I('get.sort_asc', 'asc'); // 排序
+
+        $id = I('get.id/d', 0); // 当前分类id
+        $couponId = I('get.coupon_id', 0); // 优惠券ID
+
+        $search = urldecode(trim(I('search', ''))); // 关键字搜索
+        if (!empty($search)) {
+            $SearchWordLogic = new SearchWordLogic();
+            $where = $SearchWordLogic->getSearchWordWhere($search);
+            $where['is_on_sale'] = 1;
+            // 搜索词被搜索数量+1
+            Db::name('search_word')->where('keywords', $search)->setInc('search_num');
+            // 搜索的商品数量
+            $goodsHaveSearchWord = Db::name('goods')->where($where)->count();
+            if ($goodsHaveSearchWord) {
+                $SearchWordIsHave = Db::name('search_word')->where('keywords', $search)->find();
+                if ($SearchWordIsHave) {
+                    Db::name('search_word')->where('id', $SearchWordIsHave['id'])->update(['goods_num' => $goodsHaveSearchWord]);
+                } else {
+                    $SearchWordData = [
+                        'keywords' => $search,
+                        'pinyin_full' => $SearchWordLogic->getPinyinFull($q),
+                        'pinyin_simple' => $SearchWordLogic->getPinyinSimple($q),
+                        'search_num' => 1,
+                        'goods_num' => $goodsHaveSearchWord,
+                    ];
+                    Db::name('search_word')->insert($SearchWordData);
+                }
+            }
+            if ($id) {
+                $cat_id_arr = getCatGrandson($id);
+                $where['cat_id|extend_cat_id'] = ['in', implode(',', $cat_id_arr)];
+            }
+            $search_goods = M('goods')->where($where)->getField('goods_id, cat_id');
+            $filter_goods_id = array_keys($search_goods);
+        } else {
+            // 筛选
+            $cat_id_arr = getCatGrandson($id);
+            $goods_where = ['is_on_sale' => 1, 'cat_id|extend_cat_id' => ['in', $cat_id_arr]];
+            if ($couponId != 0) {
+                $filter_goods_id = Db::name('goods_coupon')->where(['coupon_id' => $couponId])->getField('goods_id', true);
+            } else {
+                $filter_goods_id = Db::name('goods')->where($goods_where)->getField('goods_id', true);
+            }
+        }
+        // 数据
+        $count = count($filter_goods_id);
+        $page = new Page($count, 20);
+        if ($count > 0) {
+            // 获取商品数据
+            $goodsLogic = new GoodsLogic();
+            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sort, $sort_asc, $page, $this->user_id);
+        }
+        $return['goods_list'] = isset($goodsData) ? $goodsData['goods_list'] : [];
+        return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
+    }
+
+    /**
      * 获取超值套组商品列表
      * @param integer $num 获取数量
      * @param string $output 输出格式，默认是json

@@ -137,11 +137,12 @@ function update_user_distribut($user_id, $order_id)
         $CouponLogic = new \app\common\logic\CouponLogic();
         $CouponLogic->sendNewVipUser($user_id, $order_id);
         //2.3推荐人奖励
-        if (tpCache('distribut.referee_vip_money') != 0) {
+        $firstLeaderLevel = M('users')->where(['user_id' => $user_info['first_leader']])->value('distribut_level');
+        if (tpCache('distribut.referee_vip_money') != 0 && in_array($firstLeaderLevel, [2, 3])) {
             // 奖励金额
             accountLog($user_info['first_leader'], tpCache('distribut.referee_vip_money'), 0, '推荐人VIP套组奖励金额', 0, $order_id, '', 0, 14, false);
         }
-        if (tpCache('distribut.referee_vip_point') != 0) {
+        if (tpCache('distribut.referee_vip_point') != 0 && in_array($firstLeaderLevel, [2, 3])) {
             // 奖励积分
             accountLog($user_info['first_leader'], 0, tpCache('distribut.referee_vip_point'), '推荐人VIP套组奖励积分', 0, $order_id, '', 0, 14, false);
         }

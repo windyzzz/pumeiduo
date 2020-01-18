@@ -612,7 +612,6 @@ class GoodsLogic extends Model
             $goodsCate['open_id'] = $parent['id'];
             $goodsCate['select_id'] = $goodsCate['id']; //默认选中分类
         }
-
         return $cateArr;
     }
 
