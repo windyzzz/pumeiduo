@@ -1683,6 +1683,8 @@ class Order extends Base
             if ($coupon['coupon']['id'] == $couponId) {
                 $couponList[$k]['is_selected'] = 1;
                 $hasSelected = true;
+            } elseif ($k == 0) {
+                $couponList[$k]['is_selected'] = 1;
             }
         }
         if (!$hasSelected && !empty($couponList)) {
@@ -1765,7 +1767,7 @@ class Order extends Base
 
             // 使用优惠券
             if (isset($couponId) && $couponId > 0) {
-                $payLogic->useCouponById($couponId, $payLogic->getPayList());
+                $payLogic->useCouponById($couponId, $payLogic->getPayList(), 'no');
             }
             // 支付数据
             $payReturn = $payLogic->toArray();

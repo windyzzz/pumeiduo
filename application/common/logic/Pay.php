@@ -44,6 +44,7 @@ class Pay
     private $orderPromId; //订单优惠ID
     private $orderPromAmount = '0'; //订单优惠金额
     private $couponId;
+    private $couponIdRe;
 
     private $giftLogic;
     private $gift2Logic;
@@ -877,7 +878,7 @@ class Pay
      *
      * @param $coupon_id
      */
-    public function useCouponById($coupon_id, $payList = array())
+    public function useCouponById($coupon_id, $payList = array(), $output = 'throw')
     {
         if ($coupon_id > 0) {
             $couponList = new CouponList();
@@ -921,6 +922,8 @@ class Pay
                         $this->orderAmount = bcsub($this->orderAmount, $this->couponPrice, 2);
                     }
                 }
+            } elseif ($output == 'throw') {
+                throw new TpshopException('计算订单价格', 0, ['status' => 0, 'msg' => '优惠券已被使用']);
             }
         }
     }
@@ -979,6 +982,8 @@ class Pay
                         $this->payList = array_merge($this->payList, $extra_list);
                     }
                     $this->couponIdRe = implode(',', $coupon_ids_arr);
+                } else {
+                    throw new TpshopException('计算订单价格', 0, ['status' => 0, 'msg' => '兑换券已被使用']);
                 }
             }
         }

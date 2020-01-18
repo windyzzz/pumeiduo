@@ -502,14 +502,16 @@ class PlaceOrder
         if ($couponId > 0) {
             $user = $this->pay->getUser();
             $couponList = new CouponList();
-            $userCoupon = $couponList->where(['status' => 0, 'id' => $couponId])->find();
+            $userCoupon = $couponList->where(['cid' => $couponId, 'uid' => $user['user_id'], 'status' => 0])->value('id');
             if ($userCoupon) {
-                $userCoupon->uid = $user['user_id'];
-                $userCoupon->order_id = $this->order['order_id'];
-                $userCoupon->use_time = time();
-                $userCoupon->status = 1;
-                $userCoupon->save();
-                Db::name('coupon')->where('id', $userCoupon['cid'])->setInc('use_num'); // 优惠券的使用数量加一
+                $updateData = [
+                    'uid' => $user['user_id'],
+                    'order_id' => $this->order['order_id'],
+                    'use_time' => time(),
+                    'status' => 1
+                ];
+                Db::name('coupon_list')->where(['cid' => $couponId, 'uid' => $user['user_id'], 'status' => 0])->update($updateData);
+                Db::name('coupon')->where('id', $couponId)->setInc('use_num'); // 优惠券的使用数量加一
             }
         }
     }
@@ -525,14 +527,16 @@ class PlaceOrder
             $couponList = new CouponList();
             $couponIdArr = explode(',', $couponId);
             foreach ($couponIdArr as $k => $couponId) {
-                $userCoupon = $couponList->where(['status' => 0, 'id' => $couponId])->find();
+                $userCoupon = $couponList->where(['cid' => $couponId, 'uid' => $user['user_id'], 'status' => 0])->value('id');
                 if ($userCoupon) {
-                    $userCoupon->uid = $user['user_id'];
-                    $userCoupon->order_id = $this->order['order_id'];
-                    $userCoupon->use_time = time();
-                    $userCoupon->status = 1;
-                    $userCoupon->save();
-                    Db::name('coupon')->where('id', $userCoupon['cid'])->setInc('use_num'); // 优惠券的使用数量加一
+                    $updateData = [
+                        'uid' => $user['user_id'],
+                        'order_id' => $this->order['order_id'],
+                        'use_time' => time(),
+                        'status' => 1
+                    ];
+                    Db::name('coupon_list')->where(['cid' => $couponId, 'uid' => $user['user_id'], 'status' => 0])->update($updateData);
+                    Db::name('coupon')->where('id', $couponId)->setInc('use_num'); // 优惠券的使用数量加一
                 }
             }
 
