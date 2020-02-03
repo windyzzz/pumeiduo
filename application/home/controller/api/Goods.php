@@ -404,32 +404,43 @@ class Goods extends Base
             foreach ($couponGoods as $k => $item) {
                 $couponIds['not_coupon_id'][] = $item['coupon_id'];
             }
-            $couponCate = $couponLogic->getCoupon(null, '', $goods['cat_id'], $couponIds);    // 指定分类优惠券
+            if ($goods['cat_id'] == 0 && $goods['extend_cat_id'] == 0) {
+                $couponCate = [];
+            } else {
+                $cateIds = [];
+                if ($goods['cat_id'] != 0) {
+                    $cateIds[] = $goods['cat_id'];
+                }
+                if ($goods['extend_cat_id'] != 0) {
+                    $cateIds[] = $goods['extend_cat_id'];
+                }
+                $couponCate = $couponLogic->getCoupon(null, '', $cateIds, $couponIds);    // 指定分类优惠券
+            }
             $goods['coupon'] = array_merge_recursive($couponCurrency, $couponGoods, $couponCate);
-//            if (!empty($goods['coupon'])) {
-//                // 查看用户是否拥有优惠券
-//                if ($this->user) {
-//                    foreach ($goods['coupon'] as $k => $coupon) {
-//                        if (Db::name('coupon_list')->where(['cid' => $coupon['coupon_id'], 'uid' => $this->user_id, 'status' => 0])->find()) {
-//                            $goods['coupon'][$k]['is_received'] = 1;
-//                        } else {
-//                            $goods['coupon'][$k]['is_received'] = 0;
-//                        }
-//                    }
-//                } else {
-//                    foreach ($goods['coupon'] as $k => $coupon) {
-//                        $goods['coupon'][$k]['is_received'] = 0;
-//                    }
-//                }
-//            }
-            if ($this->user && !empty($goods['coupon'])) {
+            if (!empty($goods['coupon'])) {
                 // 查看用户是否拥有优惠券
-                foreach ($goods['coupon'] as $k => $coupon) {
-                    if (!Db::name('coupon_list')->where(['cid' => $coupon['coupon_id'], 'uid' => $this->user_id, 'status' => 0])->find()) {
-                        unset($goods['coupon'][$k]);
+                if ($this->user) {
+                    foreach ($goods['coupon'] as $k => $coupon) {
+                        if (Db::name('coupon_list')->where(['cid' => $coupon['coupon_id'], 'uid' => $this->user_id, 'status' => 0])->find()) {
+                            $goods['coupon'][$k]['is_received'] = 1;
+                        } else {
+                            $goods['coupon'][$k]['is_received'] = 0;
+                        }
+                    }
+                } else {
+                    foreach ($goods['coupon'] as $k => $coupon) {
+                        $goods['coupon'][$k]['is_received'] = 0;
                     }
                 }
             }
+//            if ($this->user && !empty($goods['coupon'])) {
+//                // 查看用户是否拥有优惠券
+//                foreach ($goods['coupon'] as $k => $coupon) {
+//                    if (!Db::name('coupon_list')->where(['cid' => $coupon['coupon_id'], 'uid' => $this->user_id, 'status' => 0])->find()) {
+//                        unset($goods['coupon'][$k]);
+//                    }
+//                }
+//            }
             $goods['coupon'] = array_values($goods['coupon']);
         }
         unset($goods['zone']);

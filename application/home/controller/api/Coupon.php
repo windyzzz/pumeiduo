@@ -188,7 +188,7 @@ class Coupon extends Base
                     foreach ($couponGoods as $goods) {
                         if ($coupon['cid'] == $goods['coupon_id']) {
                             $couponList[$k . '_5']['goods_list'][] = [
-                                'goods_id' => $goods['coupon_id'],
+                                'goods_id' => $goods['goods_id'],
                                 'original_img' => $goods['original_img']
                             ];
                         }
