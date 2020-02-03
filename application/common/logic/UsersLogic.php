@@ -355,13 +355,23 @@ class UsersLogic extends Model
         } else {
             $user = Db::name('users')->where('user_id', $username)->whereOr('email', $username);
         }
-        $user = $user->field('password, user_id, mobile, nickname, user_name, is_distribut, is_lock, level, token, type')->order('reg_time DESC')->find();
-        if (!$user) {
-            $result = ['status' => -1, 'msg' => '账号不存在!'];
-        } elseif (systemEncrypt($password) != $user['password']) {
+        $userData = $user->field('user_id, is_lock')->select(); // 手机号登陆的情况下会有多个账号
+        if (empty($userData)) {
+            return ['status' => -1, 'msg' => '账号不存在!'];
+        }
+        // 检验账号有效性
+        $userId = 0;
+        foreach ($userData as $user) {
+            if ($user['is_lock'] == 0) {
+                $userId = $user['user_id'];
+            }
+        }
+        if ($userId == 0) {
+            return ['status' => 0, 'msg' => '该账号已被冻结，请联系客服' . tpCache('shop_info.mobile')];
+        }
+        $user = Db::name('users')->where('user_id', $userId)->field('user_id, password, mobile, nickname, user_name, is_distribut, is_lock, level, token, type')->find();
+        if (systemEncrypt($password) != $user['password']) {
             $result = ['status' => -2, 'msg' => '密码错误!'];
-        } elseif (1 == $user['is_lock']) {
-            $result = ['status' => -3, 'msg' => '账号异常已被锁定！！！'];
         } else {
             unset($user['password']);
             // 更新用户token
@@ -1372,12 +1382,12 @@ class UsersLogic extends Model
     /**
      * 提现记录.
      *
-     * @author lxl 2017-4-26
-     *
      * @param $user_id
      * @param int $withdrawals_status 提现状态 0:申请中 1:申请成功 2:申请失败
      *
      * @return mixed
+     * @author lxl 2017-4-26
+     *
      */
     public function get_withdrawals_log($user_id, $withdrawals_status = '')
     {
@@ -1900,12 +1910,12 @@ class UsersLogic extends Model
     /**
      * 添加自提点.
      *
-     * @author dyr
-     *
      * @param $user_id
      * @param $post
      *
      * @return array
+     * @author dyr
+     *
      */
     public function add_pick_up($user_id, $post)
     {
