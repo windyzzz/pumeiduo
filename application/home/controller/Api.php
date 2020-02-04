@@ -113,10 +113,19 @@ class Api extends Base
     {
         $mobile = I('mobile', '');
         $scene = I('scene', '');
+
+        $userData = M('users')->where('mobile', $mobile)->field('user_id, is_lock')->select(); // 手机号登陆的情况下会有多个账号
+        // 检验账号有效性
+        $userId = 0;
+        foreach ($userData as $user) {
+            if ($user['is_lock'] == 0) {
+                $userId = $user['user_id'];
+            }
+        }
         switch ($scene) {
             case 1:
                 // 注册 验证手机是否已存在
-                if (M('users')->where(['mobile' => $mobile])->find()) {
+                if ($userId != 0) {
                     return json(['status' => 1, 'result' => ['state' => 0, 'msg' => '手机号已存在']]);
                 } else {
                     return json(['status' => 1, 'result' => ['state' => 1, 'msg' => '手机号不存在']]);
@@ -124,17 +133,16 @@ class Api extends Base
                 break;
             case 8:
                 // 授权登录绑定手机
-                $user = M('users')->where(['mobile' => $mobile])->find();
-                if ($user) {
+                if ($userId != 0) {
                     //--- 账号已存在
                     // 账号是否已绑定了微信
-//                    if (M('oauth_users')->where(['user_id' => $user['user_id']])->find()) {
-//                        return json(['status' => 1, 'result' => ['state' => 0, 'msg' => '手机已绑定了微信账号']]);
-//                    }
-                    return json(['status' => 1, 'result' => ['state' => 1]]);
+                    if (M('oauth_users')->where(['user_id' => $userId])->find()) {
+                        return json(['status' => 1, 'result' => ['state' => 0, 'msg' => '手机已绑定了微信账号']]);
+                    }
+                    return json(['status' => 1, 'result' => ['state' => 1, 'msg' => '手机已有账号，不需设置密码']]);
                 } else {
                     //--- 账号不存在
-                    return json(['status' => 1, 'result' => ['state' => 2]]);
+                    return json(['status' => 1, 'result' => ['state' => 2, 'msg' => '手机没有账号，需要设置密码']]);
                 }
                 break;
             default:

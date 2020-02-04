@@ -1682,6 +1682,7 @@ class Order extends Base
             ];
             if ($coupon['coupon']['id'] == $couponId) {
                 $couponList[$k]['is_selected'] = 1;
+                $couponList[0]['is_selected'] = 0;
                 $hasSelected = true;
             } elseif ($k == 0) {
                 $couponList[$k]['is_selected'] = 1;
