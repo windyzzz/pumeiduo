@@ -421,7 +421,7 @@ class Goods extends Base
                 // 查看用户是否拥有优惠券
                 if ($this->user) {
                     foreach ($goods['coupon'] as $k => $coupon) {
-                        if (Db::name('coupon_list')->where(['cid' => $coupon['coupon_id'], 'uid' => $this->user_id, 'status' => 0])->find()) {
+                        if (Db::name('coupon_list')->where(['cid' => $coupon['coupon_id'], 'uid' => $this->user_id])->find()) {
                             $goods['coupon'][$k]['is_received'] = 1;
                         } else {
                             $goods['coupon'][$k]['is_received'] = 0;

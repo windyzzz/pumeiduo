@@ -248,7 +248,7 @@ class CartLogic extends Model
                 $member_goods_price = $buyGoods['member_goods_price'];
                 $use_integral = 0;
                 if (1 == $this->type) {
-                    $member_goods_price = $member_goods_price - $this->goods['exchange_integral'];
+                    $member_goods_price = bcsub($member_goods_price, $this->goods['exchange_integral'], 2);
                     $use_integral = $this->goods['exchange_integral'];
                 }
                 $buyGoods['member_goods_price'] = $member_goods_price;

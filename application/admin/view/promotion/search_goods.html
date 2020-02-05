@@ -95,8 +95,13 @@
                         <tr <if condition='$list.prom_id gt 0'>hidden</if>>
                             <td class="" align="left">
                                 <div style="text-align: left; width: 50px;">
-                                    <input class="checkItem" type="checkbox" name="goods_id[]" value="{$list.goods_id}" data-img="{$list.goods_id|goods_thum_images=160,160}"
-                                           data-name="{$list.goods_name}" data-count="{$list.store_count}" data-price="{$list.shop_price}"/>
+                                    <if condition="$coupon_use_type == 1">
+                                        <input class="checkItem" type="radio" name="goods_id[]" value="{$list.goods_id}" data-img="{$list.goods_id|goods_thum_images=160,160}"
+                                               data-name="{$list.goods_name}" data-count="{$list.store_count}" data-price="{$list.shop_price}"/>
+                                    <else/>
+                                        <input class="checkItem" type="checkbox" name="goods_id[]" value="{$list.goods_id}" data-img="{$list.goods_id|goods_thum_images=160,160}"
+                                               data-name="{$list.goods_name}" data-count="{$list.store_count}" data-price="{$list.shop_price}"/>
+                                    </if>
                                 </div>
                             </td>
                             <td class="" align="left">

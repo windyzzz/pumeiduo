@@ -518,8 +518,13 @@ class Pay
             }
         }
         if (!empty($giftGoods)) {
-            $goods_list[count($goods_list) - 1]['gift2_goods'][] = $giftGoods;
+            if (!empty($goods_list[count($goods_list) - 1]['gift2_goods'])) {
+                $goods_list[count($goods_list) - 1]['gift2_goods'][] = $giftGoods;
+            } else {
+                $goods_list[count($goods_list) - 1]['gift2_goods'] = $giftGoods;
+            }
         }
+
         return $goods_list;
     }
 
@@ -641,7 +646,7 @@ class Pay
         // 订单优惠促销（查看是否有优惠价格）
         $orderProm = M('order_prom')
             ->where(['type' => ['in', '0, 1'], 'is_open' => 1, 'is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])
-            ->field('id, title, type, order_price, discount_price')->select();
+            ->field('id, title, type, order_price, discount_price')->order('discount_price DESC')->select();
         foreach ($orderProm as $prom) {
             if ($this->totalAmount >= $prom['order_price']) {
                 // 订单价格满足要求
@@ -657,6 +662,7 @@ class Pay
                         ];
                     }
                 }
+                break;
             }
         }
     }
@@ -673,11 +679,12 @@ class Pay
         // 订单优惠促销（查看是否有优惠价格）
         $orderProm = M('order_prom')
             ->where(['type' => ['in', '0, 1'], 'is_open' => 1, 'is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])
-            ->field('id, order_price, discount_price')->select();
+            ->field('id, order_price, discount_price')->order('discount_price DESC')->select();
         foreach ($orderProm as $prom) {
             if ($goodsPrice >= $prom['order_price']) {
                 // 订单价格满足要求
                 $goodsDiscount = bcadd($goodsDiscount, $prom['discount_price'], 2);
+                break;
             }
         }
         return $goodsDiscount;
@@ -941,7 +948,7 @@ class Pay
 
     public function useCouponByIdRe($coupon_id_str)
     {
-        if ($coupon_id_str) {
+        if ($coupon_id_str > 0) {
 //            list($prom_type, $prom_id) = $this->getPromInfo();
 //            if ($prom_type != 6 && $prom_id > 0) {
 //                throw new TpshopException('计算订单价格', 0, ['status' => -1, 'msg' => '现金券不能参与活动商品使用！', 'result' => ['']]);

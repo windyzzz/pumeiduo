@@ -694,6 +694,7 @@ class Promotion extends Base
         $tpl = input('tpl', 'search_goods');
         $where = ['store_count' => ['gt', 0], 'is_virtual' => 0, 'is_area_show' => 1];
         $prom_type = input('prom_type/d');
+        $coupon_use_type = input('coupon_use_type', '');
         if ($goods_id) {
             $where['goods_id'] = ['notin', trim($goods_id, ',')];
         }
@@ -759,6 +760,7 @@ class Promotion extends Base
         $this->assign('categoryList', $categoryList);
         $this->assign('page', $Page);
         $this->assign('goodsList', $goodsList);
+        $this->assign('coupon_use_type', $coupon_use_type);
 
         return $this->fetch($tpl);
     }

@@ -413,7 +413,7 @@
         $('.goods_id').each(function(i,o){
             goods_id += $(o).val()+',';
         });
-        var url = '/index.php?m=admin&c=Promotion&a=search_goods&exvirtual=1&nospec=1&goods_id='+goods_id+'&t='+Math.random();
+        var url = '/index.php?m=admin&c=Promotion&a=search_goods&exvirtual=1&nospec=1&goods_id='+goods_id+'&t='+Math.random()+'&coupon_use_type='+new_lnln;
         layer.open({
             type: 2,
             title: '选择商品',
@@ -445,7 +445,11 @@
                     '<td class="nscs-table-handle"><span><a href="javascript:;" onclick="$(this).parent().parent().parent().remove();" class="btn-grapefruit"><i class="icon-trash"></i><p style="cursor: pointer;">删除</p></a></span></td>' +
                     '</tr>';
         });
-        $('#goods_list').append(goods_list_html);
+        if (new_lnln == 1) {
+            $('#goods_list').html(goods_list_html);
+        } else {
+            $('#goods_list').append(goods_list_html);
+        }
     }
 
     function img_call_back(fileurl_tmp)

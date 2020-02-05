@@ -811,7 +811,6 @@ class Cart extends Base
      */
     public function cart3()
     {
-        $params['user_token'] = $this->userToken;
         Hook::exec('app\\home\\behavior\\CheckAuth', 'run', $params);
         Hook::exec('app\\home\\behavior\\CheckValid', 'run', $params);
 
@@ -871,17 +870,17 @@ class Cart extends Base
             $pay->delivery($address['district']);   // 配送物流
 
             $pay->useCouponById($coupon_id, $pay->getPayList());
-
             $pay->useCouponByIdRe($re_id);
-            $pay_points = $pay->getUsePoint();
+
+            $pay_points = $pay->getUsePocalcCartPriceint();
             $pay->usePayPoints($pay_points);
             $pay->useUserElectronic($user_electronic); // 电子币
             $pay->activity();    // 参与活动奖励 例如:赠品活动
-            $pay->activity2();   // 参与活动奖励 例如:赠品活动
-            $pay->activity3();   // 参与活动奖励 例如:订单优惠促销
+            $pay->activity2();   // 指定商品赠品 / 订单优惠赠品
+            $pay->activity3();         // 订单优惠促销
 
             $coupon = null;
-            if ($coupon_id) {
+            if ($coupon_id > 0) {
                 $couponList = new CouponList();
                 $userCoupon = $couponList->where(['uid' => $this->user['user_id'], 'cid' => $coupon_id])->find();
                 if ($userCoupon) {
