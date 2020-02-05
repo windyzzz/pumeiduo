@@ -56,6 +56,7 @@ class Pay
     private $extraLogic;
     private $extra_goods_list;              // 加价购商品列表
     private $extra_reward;                  // 加价购商品记录列表
+    private $extra_price = '0';             // 加价购商品价格
 
     public function __construct()
     {
@@ -186,9 +187,9 @@ class Pay
     /**
      * 设置用户ID.
      *
+     * @param $user_id
      * @throws TpshopException
      *
-     * @param $user_id
      */
     public function setUserId($user_id)
     {
@@ -202,10 +203,10 @@ class Pay
     /**
      * 使用积分.
      *
-     * @throws TpshopException
-     *
      * @param $pay_points
      * @param $is_exchange |是否有使用积分兑换商品流程
+     * @throws TpshopException
+     *
      */
     public function usePayPoints($pay_points, $is_exchange = false)
     {
@@ -268,9 +269,9 @@ class Pay
     /**
      * 检测支付商品购买限制 BY J.
      *
+     * @param $user_electronic
      * @throws TpshopException
      *
-     * @param $user_electronic
      */
     public function check()
     {
@@ -839,9 +840,7 @@ class Pay
             $buyGoods['prom_id'] = $extraGoods['prom_id'];
             $extraGoodsList[] = $buyGoods;
 
-            $this->orderAmount = bcadd($this->orderAmount, bcmul($extra['goods_num'], $buyGoods['member_goods_price'], 2), 2);
-            $this->goodsPrice = bcadd($this->goodsPrice, bcmul($extra['goods_num'], $buyGoods['member_goods_price'], 2), 2);
-            $this->totalAmount = bcadd($this->totalAmount, bcmul($extra['goods_num'], $buyGoods['member_goods_price'], 2), 2);
+            $this->extra_price = bcadd($this->extra_price, bcmul($extra['goods_num'], $buyGoods['member_goods_price'], 2), 2);
 
             // 加价购活动奖励记录
             $data['extra_id'] = $extraGoods['prom_id'];
@@ -855,15 +854,18 @@ class Pay
             $this->extra_reward[] = $data;
         }
         $this->payList = array_merge($this->payList, $extraGoodsList);
+        $this->orderAmount = bcadd($this->orderAmount, $this->extra_price, 2);
+        $this->goodsPrice = bcadd($this->goodsPrice, $this->extra_price, 2);
+        $this->totalAmount = bcadd($this->totalAmount, $this->extra_price, 2);
     }
 
 
     /**
      * 使用电子币
      *
+     * @param $user_electronic
      * @throws TpshopException
      *
-     * @param $user_electronic
      */
     public function useUserElectronic($user_electronic)
     {
@@ -1369,6 +1371,7 @@ class Pay
             'order_amount' => bcadd($this->orderAmount, 0, 2),
             'total_amount' => bcadd($this->totalAmount, 0, 2),
             'goods_price' => bcadd($this->goodsPrice, 0, 2),
+            'extra_price' => $this->extra_price,
             'order_prom_amount' => $this->orderPromAmount,
             'gift_goods_list' => $this->gift_goods_list,
             'extra_goods_list' => $this->extra_goods_list,

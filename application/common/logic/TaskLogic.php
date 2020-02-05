@@ -387,4 +387,87 @@ class TaskLogic
             }
         }
     }
+
+
+    public function loginProfit()
+    {
+        if ($this->checkTaskEnable()) {
+            foreach ($this->task['task_reward'] as $tk => $tv) {
+                // 查看任务存不存在，不存在则创建
+                $user_task = M('user_task')
+                    ->where('user_id', $this->user['first_leader'])
+                    ->where('task_reward_id', $tv['reward_id'])
+                    ->where('status', 0)
+                    ->where('created_at', 'gt', $this->task['start_time'])
+                    ->where('created_at', 'lt', $this->task['end_time'])
+                    ->find();
+
+                $status = 0;
+                if (!$user_task) {
+                    // 如果奖励周期是空的话（只奖励一次），则跳过新增
+                    if (0 == $tv['cycle']) {
+                        $has_task = M('user_task')
+                            ->where('user_id', $this->user['first_leader'])
+                            ->where('task_reward_id', $tv['reward_id'])
+                            ->where('created_at', 'gt', $this->task['start_time'])
+                            ->where('created_at', 'lt', $this->task['end_time'])
+                            ->find();
+                        if ($has_task) {
+                            continue;
+                        }
+                    }
+
+                    if (1 == $tv['invite_num']) {
+                        $status = 1;
+                    }
+                    $data = [
+                        'user_id' => $this->user['first_leader'],
+                        'task_id' => $this->task['id'],
+                        'task_reward_id' => $tv['reward_id'],
+                        // 'task_reward_desc' => $tv['description'],
+                        'finish_num' => 1,
+                        'target_num' => $tv['invite_num'],
+                        'status' => $status,
+                        'invite_uid_list' => $this->user['user_id'],
+                        'order_sn_list' => $order_sn,
+                        'created_at' => time(),
+                        'finished_at' => $status ? time() : 0,
+                    ];
+                    $user_task_id = M('user_task')->insertGetId($data);
+                } else {
+                    $finish_num = $user_task['finish_num'] + 1;
+                    if ($finish_num == $user_task['target_num']) {
+                        $status = 1;
+                    }
+                    if ($user_task['order_sn_list']) {
+                        $order_sn_list = $user_task['order_sn_list'] . ',' . $order_sn;
+                    } else {
+                        $order_sn_list = '';
+                    }
+                    $update = [
+                        'finish_num' => $finish_num,
+                        'status' => $status,
+                        'invite_uid_list' => $user_task['invite_uid_list'] . ',' . $this->user['user_id'],
+                        'order_sn_list' => $order_sn_list,
+                        'finished_at' => $status ? time() : 0,
+                    ];
+                    M('user_task')->where('id', $user_task['id'])->update($update);
+                    $user_task_id = $user_task['id'];
+                }
+                if ($status > 0) {
+                    $reward_price = '0.00';
+                    $reward_num = 0;
+                    $reward_coupon_id = 0;
+                    if (1 == $tv['reward_type']) {
+                        $reward_num = $tv['reward_num'];
+                    } elseif (2 == $tv['reward_type']) {
+                        $reward_price = $tv['reward_price'];
+                    } else {
+                        $reward_coupon_id = $tv['reward_coupon_id'];
+                    }
+                    taskLog($this->user['first_leader'], $this->task, $tv, $order_sn, $reward_price, $reward_num, 1, 0, $reward_coupon_id, $user_task_id);
+                }
+            }
+        }
+    }
 }

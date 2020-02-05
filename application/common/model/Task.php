@@ -25,6 +25,16 @@ class Task extends Model
         return strtotime($value);
     }
 
+    public function setUseStartTimeAttr($value)
+    {
+        return strtotime($value);
+    }
+
+    public function setUseEndTimeAttr($value)
+    {
+        return strtotime($value);
+    }
+
     public function taskReward()
     {
         return $this->hasMany('task_reward', 'task_id', 'id');

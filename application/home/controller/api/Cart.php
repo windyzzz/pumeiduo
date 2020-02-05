@@ -251,6 +251,7 @@ class Cart extends Base
                         'gift_goods' => $giftGoods
                     ];
                 } elseif (isset($groupBuyGoods[$key])) {
+                    $cartNum -= $v['goods_num'];
                     continue;
                     // 团购活动
                     $id = 'group_' . $groupBuyGoods[$key]['id'];
