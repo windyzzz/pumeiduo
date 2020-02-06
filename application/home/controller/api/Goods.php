@@ -1236,53 +1236,31 @@ class Goods extends Base
             'g.is_on_sale' => 1,
         ];
         // 查询满足要求的总记录数
-        $filter_goods_id = $GroupBuy->alias('gb')->join('__GOODS__ g', 'g.goods_id = gb.goods_id')->where($where)->order('gb.sort_order')->getField('g.goods_id', true);
-        $count = count($filter_goods_id);
+        $filter_groupBy_id = $GroupBuy->alias('gb')->join('__GOODS__ g', 'g.goods_id = gb.goods_id')->where($where)->order('gb.sort_order')->getField('gb.id', true);
+        $count = count($filter_groupBy_id);
         $page = new Page($count, $num);
-        $goods_data = [];
-        if ($count > 0) {
-            $Goods = new GoodsModel();
-            $goods_list = $Goods->with(['GroupBuyDetail' => function ($query) use ($filter_goods_id) {
-                $query->alias('gb')->field('gb.*, FROM_UNIXTIME(start_time,"%Y-%m-%d") as start_time, FROM_UNIXTIME(end_time,"%Y-%m-%d") as end_time,
-                (FORMAT((goods_num - buy_num) / goods_num,2)) as num_percent, goods_num - buy_num as store_count, 
-                CASE buy_num >= goods_num WHEN 1 THEN 1 ELSE 0 END AS is_sale_out, group_goods_num - buy_num%group_goods_num as people_num');
-            }])
-                ->where('goods_id', 'in', implode(',', $filter_goods_id))
-                ->field('goods_id, cat_id, extend_cat_id, goods_sn, goods_name, goods_remark, goods_type, brand_id, store_count, comment_count, goods_remark,
-                market_price, shop_price, cost_price, give_integral, exchange_integral, original_img, limit_buy_num, trade_type,
-                is_on_sale, is_free_shipping, is_recommend, is_new, is_hot')
-                ->limit($page->firstRow . ',' . $page->listRows)
-                ->select();
-            $goods_list = collection($goods_list)->toArray();
-
-            foreach ($goods_list as $k => $v) {
-                $goods_list[$k]['group_buy'] = $v['group_buy'] = $v['group_buy_detail'];
-                if (!$v['group_buy']) {
-                    unset($goods_list[$k]);
-                }
-                if (1 == $v['group_buy']['is_sale_out']) {
-                    $goods_list[$k]['group_buy']['percent'] = 1;
-                    $goods_list[$k]['group_buy']['people_num'] = 0;
-                }
-                $goods_list[$k]['group_buy']['original_img'] = $v['original_img'];
-                $goods_list[$k]['group_buy']['goods_remark'] = $v['goods_remark'];
-                $goods_list[$k]['group_buy']['groupBuy_price'] = $v['group_buy_detail']['price'];
-                $goods_list[$k]['group_buy']['exchange_integral'] = $v['exchange_integral'];
-                // 价格判断
-                if ($v['group_buy']['can_integral'] == 0) {
-                    $goods_list[$k]['group_buy']['exchange_integral'] = '0.00';
-                    $goods_list[$k]['group_buy']['shop_price'] = $v['group_buy_detail']['price'];
-                    $goods_list[$k]['group_buy']['exchange_price'] = $v['group_buy_detail']['price'];
-                } else {
-                    $goods_list[$k]['group_buy']['shop_price'] = bcsub($v['group_buy_detail']['price'], $v['exchange_integral']);
-                    $goods_list[$k]['group_buy']['exchange_price'] = bcsub($v['group_buy_detail']['price'], $v['exchange_integral']);
-                }
-                unset($goods_list[$k]['group_buy']['groupBuy_price']);
-                unset($goods_list[$k]['group_buy']['can_integral']);
-                $goods_data[] = $goods_list[$k]['group_buy'];
+        // 获取数据
+        $groupBuyData = $GroupBuy->alias('gb')->join('__GOODS__ g', 'g.goods_id = gb.goods_id')->where(['gb.id' => ['in', implode(',', $filter_groupBy_id)]])
+            ->field('gb.*, FROM_UNIXTIME(gb.start_time,"%Y-%m-%d") as start_time, FROM_UNIXTIME(gb.end_time,"%Y-%m-%d") as end_time,
+                (FORMAT((gb.goods_num - gb.buy_num) / gb.goods_num, 2)) as num_percent, gb.goods_num - gb.buy_num as store_count, 
+                CASE gb.buy_num >= gb.goods_num WHEN 1 THEN 1 ELSE 0 END AS is_sale_out, gb.group_goods_num - gb.buy_num % gb.group_goods_num as people_num,
+                g.original_img, g.goods_remark, g.shop_price, g.exchange_integral')
+            ->limit($page->firstRow . ',' . $page->listRows)
+            ->select();
+        $groupBuyData = collection($groupBuyData)->toArray();
+        foreach ($groupBuyData as $k => $groupBuy) {
+            // 价格判断
+            if ($groupBuy['can_integral'] == 0) {
+                $groupBuyData[$k]['exchange_integral'] = '0';
+                $groupBuyData[$k]['shop_price'] = $groupBuy['price'];
+                $groupBuyData[$k]['exchange_price'] = $groupBuy['price'];
+            } else {
+                $groupBuyData[$k]['shop_price'] = bcsub($groupBuy['price'], $groupBuy['exchange_integral']);
+                $groupBuyData[$k]['exchange_price'] = bcsub($groupBuy['price'], $groupBuy['exchange_integral']);
             }
+            unset($groupBuyData[$k]['can_integral']);
         }
-        $return['goods_list'] = $goods_data;
+        $return['goods_list'] = $groupBuyData;
 
         switch ($output) {
             case 'json':
