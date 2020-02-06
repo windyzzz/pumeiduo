@@ -2623,6 +2623,7 @@ class User extends Base
             ->where('status', 0)
             ->find();
 
+        Db::startTrans();
         if ($reward) {
             if ($reward['reward_integral'] > 0) {
                 accountLog($this->user_id, 0, $reward['reward_integral'], '用户领取任务奖励', 0, 0, $reward['order_sn'], 0, 16);
@@ -2630,39 +2631,49 @@ class User extends Base
             if ($reward['reward_electronic'] > 0) {
                 accountLog($this->user_id, 0, 0, '用户领取任务奖励', 0, 0, $reward['order_sn'], $reward['reward_electronic'], 15);
             }
-            if ($reward['reward_coupon_id'] > 0) {
+            if ($reward['reward_coupon_id'] != 0) {
                 $activityLogic = new \app\common\logic\ActivityLogic();
-                $result = $activityLogic->get_coupon($reward['reward_coupon_id'], $this->user_id);
-            }
-
-            $return['reward_coupon_money'] = '0.00';
-            $return['reward_integral'] = $reward['reward_integral'];
-            $return['reward_electronic'] = $reward['reward_electronic'];
-
-            if ($reward['reward_coupon_id']) {
-                $coupon_info = M('coupon')->where(['id' => $reward['reward_coupon_id']])->find();
-                if ($coupon_info['use_type'] == 4 || $coupon_info['use_type'] == 5) {
-                    $return['coupon_name_is_show'] = 1;
-                    $return['coupon_name'] = $coupon_info['name'];
-                } else {
-                    $return['coupon_name_is_show'] = 0;
+                $rewardCoupon = explode('-', $reward['reward_coupon_id']);
+                foreach ($rewardCoupon as $coupon) {
+                    $result = $activityLogic->get_coupon($coupon, $this->user_id);
+                    if ($result['status'] != 1) {
+                        Db::rollback();
+                        return json(['status' => 0, 'msg' => $result['msg']]);
+                    }
                 }
-            } else {
-                $return['coupon_name_is_show'] = 0;
             }
 
-            if (isset($result) && 1 == $result['status']) {
-                M('task_log')->where('id', $reward['id'])->update(['status' => 1, 'finished_at' => time()]);
-                $return['reward_coupon_money'] = $result['coupon']['money'];
-
-                return json(['status' => 1, 'msg' => $result['msg'], 'result' => $return]);
-            } elseif (isset($result) && 1 != $result['status']) {
-                return json(['status' => 0, 'msg' => $result['msg'], 'result' => $return]);
-            }
             M('task_log')->where('id', $reward['id'])->update(['status' => 1, 'finished_at' => time()]);
 
+            return json(['status' => 1, 'msg' => '用户领取奖励成功']);
 
-            return json(['status' => 1, 'msg' => '用户领取奖励成功', 'result' => $return]);
+//            $return['reward_coupon_money'] = '0.00';
+//            $return['reward_integral'] = $reward['reward_integral'];
+//            $return['reward_electronic'] = $reward['reward_electronic'];
+//
+//            if ($reward['reward_coupon_id']) {
+//                $coupon_info = M('coupon')->where(['id' => $reward['reward_coupon_id']])->find();
+//                if ($coupon_info['use_type'] == 4 || $coupon_info['use_type'] == 5) {
+//                    $return['coupon_name_is_show'] = 1;
+//                    $return['coupon_name'] = $coupon_info['name'];
+//                } else {
+//                    $return['coupon_name_is_show'] = 0;
+//                }
+//            } else {
+//                $return['coupon_name_is_show'] = 0;
+//            }
+//
+//            if (isset($result) && 1 == $result['status']) {
+//                M('task_log')->where('id', $reward['id'])->update(['status' => 1, 'finished_at' => time()]);
+//                $return['reward_coupon_money'] = $result['coupon']['money'];
+//
+//                return json(['status' => 1, 'msg' => $result['msg'], 'result' => $return]);
+//            } elseif (isset($result) && 1 != $result['status']) {
+//                return json(['status' => 0, 'msg' => $result['msg'], 'result' => $return]);
+//            }
+//            M('task_log')->where('id', $reward['id'])->update(['status' => 1, 'finished_at' => time()]);
+//
+//            return json(['status' => 1, 'msg' => '用户领取奖励成功', 'result' => $return]);
         }
 
         return json(['status' => 0, 'msg' => '用户还没有领取该奖励资格', 'result' => '']);

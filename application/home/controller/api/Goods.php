@@ -267,8 +267,7 @@ class Goods extends Base
         $contentArr = explode('public', $goods['goods_content']);
         $contentImgArr = [];
         Url::root('/');
-//        $baseUrl = url('/', '', '', true);
-        $baseUrl = 'http://test.pumeiduo.com/';
+        $baseUrl = url('/', '', '', true);
         foreach ($contentArr as $key => $value) {
             if ($key == 0) {
                 continue;
@@ -466,8 +465,6 @@ class Goods extends Base
                 }
             }
             // 分享二维码
-            Url::root('/');
-            $baseUrl = url('/', '', '', true);
             $filename = 'public/images/qrcode/goods/goods_' . $this->user_id . '_' . $goods_id . '.png';
             if (!file_exists($filename)) {
                 $this->scerweima($this->user_id, $goods['goods_id']);

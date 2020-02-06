@@ -325,7 +325,7 @@ class ActivityLogic extends Model
     public function get_coupon($id, $user_id, $get_order_id = 0)
     {
         if (empty($id)) {
-            $return = ['status' => 0, 'msg' => '参数错误'];
+            return ['status' => 0, 'msg' => '参数错误'];
         }
         if ($user_id) {
             $_SERVER['HTTP_REFERER'] = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : U('Home/Activity/coupon_list');

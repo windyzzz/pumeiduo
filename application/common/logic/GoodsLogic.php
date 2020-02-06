@@ -317,7 +317,9 @@ class GoodsLogic extends Model
             ];
         }
         // 给定默认选中规格
-        if (!$itemId) {
+        if ($itemId) {
+            $itemKey = implode('_', $itemKey);
+        } else {
             foreach ($specData as $k1 => $value) {
                 foreach ($value['type_value'] as $k2 => $item) {
                     if ($k2 == 0) {
