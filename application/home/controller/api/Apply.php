@@ -26,23 +26,31 @@ class Apply extends Base
             $memberNum = tpCache('basic.apply_check_num');      // 申请资格下级人数
             $refereeUserId = $userLogic->nk($this->user['invite_uid'], 3) ?? '无';   // 推荐人
 
-            // 用户已升级的下级
-            $memberCount = M('users')->where(['distribut_level' => ['>=', 2]])->where(['first_leader' => $this->user_id])->count('user_id');
-            if ($memberNum > $memberCount) {
-                $applyStatus = -11; // 不符合资格
+            if ($this->user['distribut_level'] >= 3) {
+                // SVIP显示审核完成
+                $applyStatus = 1;
+                $trueName = $this->user['real_name'];
+                $idCard = $this->user['id_cart'];
+                $mobile = $this->user['mobile'];
             } else {
-                // 获取申请信息
-                $apply = M('apply_customs')->where(['user_id' => $this->user_id])->find();
-                if (!$apply || (isset($apply) && $apply['status'] == 2)) {
-                    // 没有申请 / 申请记录已撤销
-                    $applyStatus = 11;  // 可以申请
-                } elseif ($apply['status'] == 0) {
-                    $applyStatus = $apply['status'];   // 审核中
-                    $trueName = $apply['true_name'];
-                    $idCard = $apply['id_card'];
-                    $mobile = $apply['mobile'];
+                // 用户已升级的下级
+                $memberCount = M('users')->where(['distribut_level' => ['>=', 2]])->where(['first_leader' => $this->user_id])->count('user_id');
+                if ($memberNum > $memberCount) {
+                    $applyStatus = -11; // 不符合资格
                 } else {
-                    $applyStatus = $apply['status'];    // 审核完成
+                    // 获取申请信息
+                    $apply = M('apply_customs')->where(['user_id' => $this->user_id])->find();
+                    if (!$apply || (isset($apply) && $apply['status'] == 2)) {
+                        // 没有申请 / 申请记录已撤销
+                        $applyStatus = 11;  // 可以申请
+                    } elseif ($apply['status'] == 0) {
+                        $applyStatus = $apply['status'];   // 审核中
+                        $trueName = $apply['true_name'];
+                        $idCard = $apply['id_card'];
+                        $mobile = $apply['mobile'];
+                    } else {
+                        $applyStatus = $apply['status'];    // 审核完成
+                    }
                 }
             }
 
