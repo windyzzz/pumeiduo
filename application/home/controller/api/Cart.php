@@ -127,6 +127,8 @@ class Cart extends Base
         $cartNum = $cartData['cart_num'];   // 获取用户购物车商品总数
         $cartData = $cartData['cart_list'];
         $cartList = [
+            'prom_title' => '',
+            'prom_title_data' => [],
             'type' => 1,
             'type_value' => '乐活优选',
             'goods' => []
@@ -312,9 +314,17 @@ class Cart extends Base
         if (!empty($flashSaleList['goods'])) {
             array_unshift($promList, $flashSaleList);
         }
+        // 订单优惠促销（查看是否有优惠价格）
+        $orderProm = M('order_prom')
+            ->where(['type' => ['in', '0, 1'], 'is_open' => 1, 'is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])
+            ->field('id, title')->order('discount_price asc')->select();
+        foreach ($orderProm as $prom) {
+            $promTitleData[] = $prom['title'];
+        }
+        $cartList['prom_title'] = $promTitleData[0];
+        $cartList['prom_title_data'] = $promTitleData;
         $return = [
             'cart_list' => $cartList,
-//            'prom_title_data' => $promTitleData,
             'prom_list' => array_values($promList),
             'invalid_list' => $invalidList,
             'cart_num' => $cartNum

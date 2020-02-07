@@ -1182,13 +1182,13 @@ class Pay
                         default:
                             $promAmount = '0';
                     }
-                    if (!isset($this->promTitleData[$group_activity['type'] . '_' . $group_activity['id']])) {
-                        $this->promTitleData[$group_activity['type'] . '_' . $group_activity['id']] = [
-                            'prom_id' => $group_activity['id'],
-                            'type' => $group_activity['type'],
-                            'type_value' => $group_activity['title']
-                        ];
-                    }
+//                    if (!isset($this->promTitleData[$group_activity['type'] . '_' . $group_activity['id']])) {
+//                        $this->promTitleData[$group_activity['type'] . '_' . $group_activity['id']] = [
+//                            'prom_id' => $group_activity['id'],
+//                            'type' => $group_activity['type'],
+//                            'type_value' => $group_activity['title']
+//                        ];
+//                    }
                     $goodsPromAmount = bcadd($goodsPromAmount, $promAmount, 2);
                 }
             }

@@ -1885,10 +1885,9 @@ class Order extends Base
                 'type' => 1,
                 'type_value' => '乐活优选',
                 'goods_list' => array_values($goodsList),
-                'gift_list' => array_values($giftList)
+                'gift_list' => array_values($giftList),
+                'prom_title_data' => $payReturn['prom_title_data'][0]['type_value']     // 促销标题列表
             ],
-            // 促销标题列表
-//            'prom_title_data' => $payReturn['prom_title_data'],
             // 加价购商品
             'extra_goods' => $extraGoods,
             // 兑换券商品
@@ -2056,7 +2055,7 @@ class Order extends Base
         }
         // 组合数据
         $return = [
-//            'prom_title_data' => $payReturn['prom_title_data'],
+            'prom_title_data' => $payReturn['prom_title_data'][0]['type_value'],
             'exchange_goods' => $exchangeGoods,
             'user_electronic' => $this->user['user_electronic'],
             'weight' => $weight . 'g',

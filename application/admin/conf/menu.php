@@ -182,7 +182,7 @@ return [
             //array('name' => '数据还原', 'act'=>'restore', 'op'=>'Tools'),
         ]],
         ['name' => 'App', 'child' => [
-            ['name' => '安卓APP管理', 'act' => 'index', 'op' => 'MobileApp'],
+            ['name' => '安卓APP管理', 'act' => 'android_audit', 'op' => 'MobileApp'],
             ['name' => '苹果APP管理', 'act' => 'ios_audit', 'op' => 'MobileApp'],
         ]],
     ]],

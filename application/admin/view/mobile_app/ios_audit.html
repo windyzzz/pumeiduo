@@ -24,18 +24,56 @@
     <form method="post" id="handlepost" name="handlepost" method="post">
         <input type="hidden" name="form_submit" value="ok" />
         <div class="ncap-form-default">
-            <dl class="row">
+            <!--<dl class="row">
                 <dt class="tit">APP是否在审核</dt>
                 <dd class="opt">
                     <div class="onoff">
-                        <label for="is_audit1" class="cb-enable <if condition='$config[is_audit] eq 1'>selected</if>">开启</label>
-                        <label for="is_audit0" class="cb-disable <if condition='$config[is_audit] eq 0'>selected</if>">关闭</label>
+                        <label for="is_audit1" class="cb-enable <if condition='$config[is_audit] eq 1'>selected</if>">是</label>
+                        <label for="is_audit0" class="cb-disable <if condition='$config[is_audit] eq 0'>selected</if>">否</label>
                         <input id="is_audit1" name="is_audit" <if condition="$config['is_audit'] eq 1">checked="checked"</if> value="1" type="radio">
                         <input id="is_audit0" name="is_audit" <if condition="$config['is_audit'] eq 0">checked="checked"</if> value="0" type="radio">
                     </div>
                     <p class="notic">用于IOS在审核期间隐藏一些功能以便顺利通关审核.</p>
                 </dd>
-            </dl> 
+            </dl>-->
+            <dl class="row">
+                <dt class="tit">
+                    <label for="app_version">苹果App版本号</label>
+                </dt>
+                <dd class="opt">
+                    <input id="app_version" name="app_version" value="{$config.app_version}" class="input-txt" type="text" />
+                    <p class="notic">请填写苹果App版本号</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label for="app_log">苹果App更新日志</label>
+                </dt>
+                <dd class="opt">
+                    <textarea id="app_log" name="app_log" class="input-txt">{$config.app_log}</textarea>
+                    <p class="notic">请填写苹果App更新日志</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label for="app_version">苹果App下载地址</label>
+                </dt>
+                <dd class="opt">
+                    <input id="app_path" name="app_path" value="{$config.app_path}" class="input-txt" type="text" />
+                    <p class="notic">请填写苹果App下载地址</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">是否强制更新</dt>
+                <dd class="opt">
+                    <div class="onoff">
+                        <label for="is_force1" class="cb-enable <if condition='$config[is_force] eq 1'>selected</if>">是</label>
+                        <label for="is_force0" class="cb-disable <if condition='$config[is_force] eq 0'>selected</if>">否</label>
+                        <input id="is_force1" name="is_force" <if condition="$config['is_force'] eq 1">checked="checked"</if> value="1" type="radio">
+                        <input id="is_force0" name="is_force" <if condition="$config['is_force'] eq 0">checked="checked"</if> value="0" type="radio">
+                    </div>
+                </dd>
+            </dl>
             <div class="bot">
                 <input type="hidden" name="inc_type" value="ios">
                 <a href="JavaScript:void(0);" class="ncap-btn-big ncap-btn-green" onclick="document.handlepost.submit()">确认提交</a>
