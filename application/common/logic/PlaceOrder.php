@@ -571,6 +571,9 @@ class PlaceOrder
                 'type' => 3,
             ];
             Db::name('account_log')->insert($accountLogData);
+            // 使用登录奖励
+            $taskLogic = new TaskLogic(4);
+            $taskLogic->useLoginProfit($order);
         }
     }
 

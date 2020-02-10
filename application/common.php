@@ -901,6 +901,7 @@ function taskLog($user_id, $task, $reward, $order_sn = '', $reward_electronic = 
  * @param float $user_electronic 电子币
  * @param int $type 分类（0：其他，1：佣金结算，2：积分消费，3：下单消费，4：积分收入（包含：5：下单送积分、6：注册积分、7：邀请积分、8：签到积分、9：其他）、10：订单取消、11：电商转入积分、12：积分互转、13：电子币互转、:14：任务获得（包含：15：电子币、16：积分）
  * @param bool $isOneself 是否是登录用户本人
+ * @param int $task_id 任务ID
  * @return bool
  * @throws \think\Exception
  * @throws \think\db\exception\DataNotFoundException
@@ -908,7 +909,7 @@ function taskLog($user_id, $task, $reward, $order_sn = '', $reward_electronic = 
  * @throws \think\exception\DbException
  * @throws \think\exception\PDOException
  */
-function accountLog($user_id, $user_money = 0.00, $pay_points = 0.00, $desc = '', $distribut_money = 0.00, $order_id = 0, $order_sn = '', $user_electronic = 0.00, $type = 0, $isOneself = true)
+function accountLog($user_id, $user_money = 0.00, $pay_points = 0.00, $desc = '', $distribut_money = 0.00, $order_id = 0, $order_sn = '', $user_electronic = 0.00, $type = 0, $isOneself = true, $task_id = 0)
 {
     /* 插入帐户变动记录 */
     $account_log = [
@@ -921,6 +922,7 @@ function accountLog($user_id, $user_money = 0.00, $pay_points = 0.00, $desc = ''
         'order_id' => $order_id,
         'order_sn' => $order_sn,
         'type' => $type,
+        'task_id' => $task_id,
     ];
     /* 更新用户信息 */
 //    $sql = "UPDATE __PREFIX__users SET user_money = user_money + $user_money," .

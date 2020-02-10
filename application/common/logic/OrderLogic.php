@@ -219,6 +219,9 @@ class OrderLogic
         $taskLogic->setOrder($order);
         $taskLogic->returnReward('用户取消订单');
 
+        // 返还使用登录奖励
+        $taskLogic->returnLoginProfit();
+
         // 赠品活动奖励追回
         $giftLogic = new \app\common\logic\order\GiftLogic();
         $giftLogic->setOrder($order);

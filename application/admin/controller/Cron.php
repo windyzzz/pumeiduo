@@ -1276,4 +1276,28 @@ AND log_id NOT IN
             }
         }
     }
+
+    /**
+     * 登录奖励使用过期处理
+     */
+    public function autoInvalidProfit()
+    {
+        $task = M('task')->where(['id' => 4])->find();
+        if (time() >= $task['use_end_time']) {
+            Db::startTrans();
+            // 所有未使用的记录
+            $taskLog = M('task_log')->where(['task_id' => 4, 'status' => 1, 'type' => 1, 'finished_at' => 0])->select();
+            // 更新用户记录
+            foreach ($taskLog as $log) {
+                $payPoints = $log['reward_integral'] != 0 ? -$log['reward_integral'] : 0;
+                $userElectronic = $log['reward_electronic'] != 0 ? -$log['reward_electronic'] : 0;
+                accountLog($log['user_id'], 0, $payPoints, '登录奖励使用过期', 0, 0, 0, $userElectronic, 18, false, 4);
+            }
+            // 更新记录
+            M('task_log')->where(['task_id' => 4, 'status' => 1, 'type' => 1, 'finished_at' => 0])->update([
+                'status' => -1
+            ]);
+            Db::commit();
+        }
+    }
 }

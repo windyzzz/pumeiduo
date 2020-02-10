@@ -3008,8 +3008,15 @@ class User extends Base
             'is_not_show_invite' => $this->user['distribut_level'] >= 3 ? 1 : 0,  // 是否隐藏推荐人绑定
             'has_pay_pwd' => $this->user['paypwd'] ? 1 : 0,
             'is_app' => TokenLogic::getValue('is_app', $this->user['token']) ? 1 : 0,
-            'token' => $this->user['token']
+            'token' => $this->user['token'],
+//            'show_login_profit' => 0
         ];
+        // 登录奖励
+//        $taskLogic = new TaskLogic(4);
+//        $taskLogic->setUser($this->user);
+//        if ($taskLogic->checkTaskEnable() && $taskLogic->checkLoginProfit()) {
+//            $data['user']['show_login_profit'] = 1;
+//        }
         if (I('get.is_wealth', null)) {
             // 输出资金信息
             $will_distribut_money = M('RebateLog')->field('SUM(money) as money')->where('user_id', $this->user_id)->where('status', 'in', [1, 2])->find();
@@ -3291,5 +3298,21 @@ class User extends Base
         $sign = shopEncrypt(time(), $this->user['user_name']);
         $url = C('SERVER_URL') . '/User/index/login_sign/shop/user_name/' . $this->user['user_name'] . '/time/' . time() . '/sign/' . $sign;
         return json(['status' => 1, 'result' => ['url' => $url]]);
+    }
+
+    /**
+     * 登录领取奖励
+     * @return \think\response\Json
+     */
+    public function loginProfit()
+    {
+        $taskLogic = new TaskLogic(4);
+        $taskLogic->setUser($this->user);
+        $res = $taskLogic->checkLoginProfit();
+        if (!$res) {
+            return json(['status' => 0, 'msg' => '您已领取过奖励']);
+        }
+        $res = $taskLogic->loginProfit();
+        return json($res);
     }
 }

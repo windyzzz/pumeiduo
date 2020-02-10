@@ -12,6 +12,7 @@
 namespace app\common\logic;
 
 use app\admin\logic\TaskLogic as TaskService;
+use think\Db;
 
 class TaskLogic
 {
@@ -50,6 +51,7 @@ class TaskLogic
     public function taskList()
     {
         $taskList = M('task t')->join('task_reward tr', 'tr.task_id = t.id')
+            ->where(['t.id' => ['not in', [1, 4]]])
             ->where(['t.is_open' => 1, 't.start_time' => ['<=', time()], 't.end_time' => ['>=', time()]])
             ->group('tr.task_id')->field('t.*, tr.reward_type')->select();
         return $taskList;
@@ -283,7 +285,7 @@ class TaskLogic
 
     public function checkTaskEnable()
     {
-        if (1 != $this->task['is_open'] || $this->task['start_time'] > time() || $this->task['end_time'] < time() || $this->order['add_time'] < $this->task['start_time']) {
+        if (1 != $this->task['is_open'] || $this->task['start_time'] > time() || $this->task['end_time'] < time() || (isset($this->order) && $this->order['add_time'] < $this->task['start_time'])) {
             return false;
         }
 
@@ -388,86 +390,107 @@ class TaskLogic
         }
     }
 
+    /**
+     * 登录领取检测
+     * @return bool
+     */
+    public function checkLoginProfit()
+    {
+        if (M('task_log')->where(['task_id' => $this->task['id'], 'user_id' => $this->user['user_id'], 'status' => ['neq', -1]])->value('id')) {
+            return false;
+        }
+        return true;
+    }
 
+    /**
+     * 登录奖励
+     * @return array
+     */
     public function loginProfit()
     {
         if ($this->checkTaskEnable()) {
-            foreach ($this->task['task_reward'] as $tk => $tv) {
-                // 查看任务存不存在，不存在则创建
-                $user_task = M('user_task')
-                    ->where('user_id', $this->user['first_leader'])
-                    ->where('task_reward_id', $tv['reward_id'])
-                    ->where('status', 0)
-                    ->where('created_at', 'gt', $this->task['start_time'])
-                    ->where('created_at', 'lt', $this->task['end_time'])
-                    ->find();
-
-                $status = 0;
-                if (!$user_task) {
-                    // 如果奖励周期是空的话（只奖励一次），则跳过新增
-                    if (0 == $tv['cycle']) {
-                        $has_task = M('user_task')
-                            ->where('user_id', $this->user['first_leader'])
-                            ->where('task_reward_id', $tv['reward_id'])
-                            ->where('created_at', 'gt', $this->task['start_time'])
-                            ->where('created_at', 'lt', $this->task['end_time'])
-                            ->find();
-                        if ($has_task) {
-                            continue;
-                        }
+            $allStoreCount = 0;
+            foreach ($this->task['task_reward'] as $taskReward) {
+                $allStoreCount += $taskReward['store_count'];
+            }
+            if ($allStoreCount > 0) {
+                $reward = [];
+                $count = rand(1, $allStoreCount);
+                foreach ($this->task['task_reward'] as $taskReward) {
+                    $count -= $taskReward['store_count'];
+                    if ($count <= 0) {
+                        $reward = $taskReward;
+                        break;
                     }
-
-                    if (1 == $tv['invite_num']) {
-                        $status = 1;
-                    }
-                    $data = [
-                        'user_id' => $this->user['first_leader'],
-                        'task_id' => $this->task['id'],
-                        'task_reward_id' => $tv['reward_id'],
-                        // 'task_reward_desc' => $tv['description'],
-                        'finish_num' => 1,
-                        'target_num' => $tv['invite_num'],
-                        'status' => $status,
-                        'invite_uid_list' => $this->user['user_id'],
-                        'order_sn_list' => $order_sn,
-                        'created_at' => time(),
-                        'finished_at' => $status ? time() : 0,
-                    ];
-                    $user_task_id = M('user_task')->insertGetId($data);
-                } else {
-                    $finish_num = $user_task['finish_num'] + 1;
-                    if ($finish_num == $user_task['target_num']) {
-                        $status = 1;
-                    }
-                    if ($user_task['order_sn_list']) {
-                        $order_sn_list = $user_task['order_sn_list'] . ',' . $order_sn;
-                    } else {
-                        $order_sn_list = '';
-                    }
-                    $update = [
-                        'finish_num' => $finish_num,
-                        'status' => $status,
-                        'invite_uid_list' => $user_task['invite_uid_list'] . ',' . $this->user['user_id'],
-                        'order_sn_list' => $order_sn_list,
-                        'finished_at' => $status ? time() : 0,
-                    ];
-                    M('user_task')->where('id', $user_task['id'])->update($update);
-                    $user_task_id = $user_task['id'];
                 }
-                if ($status > 0) {
-                    $reward_price = '0.00';
-                    $reward_num = 0;
-                    $reward_coupon_id = 0;
-                    if (1 == $tv['reward_type']) {
-                        $reward_num = $tv['reward_num'];
-                    } elseif (2 == $tv['reward_type']) {
-                        $reward_price = $tv['reward_price'];
-                    } else {
-                        $reward_coupon_id = $tv['reward_coupon_id'];
+                if ($reward) {
+                    $pay_point = $user_electronic = 0;
+                    list($min, $max) = explode('-', $reward['reward_interval']);
+                    switch ($reward['reward_type']) {
+                        case 1:
+                            // 积分
+                            $pay_point = $min + mt_rand() / mt_getrandmax() * ($max - $min);
+                            $pay_point = bcadd($pay_point, 0, 2);
+                            break;
+                        case 2:
+                            // 电子币
+                            $user_electronic = $min + mt_rand() / mt_getrandmax() * ($max - $min);
+                            $user_electronic = bcadd($user_electronic, 0, 2);
                     }
-                    taskLog($this->user['first_leader'], $this->task, $tv, $order_sn, $reward_price, $reward_num, 1, 0, $reward_coupon_id, $user_task_id);
+                    // 用户资金记录
+                    accountLog($this->user['user_id'], 0, $pay_point, $this->task['title'], 0, 0, 0, $user_electronic, 18, true, $this->task['id']);
+                    // 任务记录
+                    taskLog($this->user['user_id'], $this->task, $reward, 0, $user_electronic, $pay_point, 1, 1);
+                    // 任务奖励更新
+                    M('task_reward')->where('reward_id', $reward['reward_id'])->setDec('store_count');
+                    M('task_reward')->where('reward_id', $reward['reward_id'])->setInc('buy_num');
+                    return ['status' => 1, 'msg' => '领取成功', 'result' => ['profit' => $pay_point != 0 ? $pay_point : $user_electronic]];
+                }
+                return ['status' => 0, 'msg' => '很遗憾，红包已被领取完毕'];
+            } else {
+                return ['status' => 0, 'msg' => '很遗憾，红包已被领取完毕'];
+            }
+        }
+        return ['status' => 0, 'msg' => '活动还未开启'];
+    }
+
+    /**
+     * 使用登录奖励
+     * @param $order
+     */
+    public function useLoginProfit($order)
+    {
+        $userProfit = M('task_log')->where(['task_id' => $this->task['id'], 'user_id' => $order['user_id'], 'status' => 1, 'type' => 1, 'finished_at' => 0])
+            ->field('reward_integral, reward_electronic')->find();
+        if (!empty($userProfit)) {
+            if ($userProfit['reward_integral'] != 0) {
+                // 使用抵扣积分
+                if ($order['integral'] >= $userProfit['reward_integral']) {
+                    M('task_log')->where(['task_id' => $this->task['id'], 'user_id' => $order['user_id'], 'status' => 1, 'type' => 1, 'finished_at' => 0])->update([
+                        'order_sn' => $order['order_sn'],
+                        'finished_at' => time()
+                    ]);
+                }
+            } elseif ($userProfit['reward_electronic'] != 0) {
+                // 使用抵扣电子币
+                if ($order['user_electronic'] >= $userProfit['reward_electronic']) {
+                    M('task_log')->where(['task_id' => $this->task['id'], 'user_id' => $order['user_id'], 'status' => 1, 'type' => 1, 'finished_at' => 0])->update([
+                        'order_sn' => $order['order_sn'],
+                        'finished_at' => time()
+                    ]);
                 }
             }
         }
+    }
+
+    /**
+     * 返还使用登录奖励
+     * @param $order
+     */
+    public function returnLoginProfit()
+    {
+        M('task_log')->where(['user_id' => $this->order['user_id'], 'order_sn' => $this->order['order_sn']])->update([
+            'finished_at' => 0
+        ]);
     }
 }

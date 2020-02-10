@@ -32,6 +32,8 @@ class UpdateTaskLog extends Migrator
             ->changeColumn('reward_coupon_id', 'string', ['limit' => 50, 'default' => '0', 'comment' => '奖励现金券ID，多张用 - 隔开'])
             ->changeColumn('reward_coupon_money', 'string', ['limit' => 100, 'default' => '0', 'comment' => '奖励现金券对应的价值，多张用 - 隔开'])
             ->changeColumn('reward_coupon_name', 'string', ['limit' => 255, 'default' => '0', 'comment' => '奖励现金券名，多张用 - 隔开'])
+            ->changeColumn('status', 'integer', ['default' => 0, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
+                'comment' =>'奖励的领取状态（0：未领取，1：已经领取，-1已取消）'])
             ->update();
     }
 }
