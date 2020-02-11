@@ -315,4 +315,39 @@ class Task extends Base
         downloadExcel($strTable, 'task_log');
         exit();
     }
+
+    /**
+     * 奖励重置
+     */
+    public function reset_reward()
+    {
+        $taskId = I('task_id', '');
+        Db::startTrans();
+        try {
+            // 所有未使用的记录
+            $taskLog = M('task_log')->where(['task_id' => $taskId, 'status' => 1, 'type' => 1, 'finished_at' => 0])->select();
+            // 更新用户记录
+            foreach ($taskLog as $log) {
+                $payPoints = $log['reward_integral'] != 0 ? -$log['reward_integral'] : 0;
+                $userElectronic = $log['reward_electronic'] != 0 ? -$log['reward_electronic'] : 0;
+                accountLog($log['user_id'], 0, $payPoints, '登录奖励重置', 0, 0, 0, $userElectronic, 18, false, 4);
+            }
+            // 更新记录
+            M('task_log')->where(['task_id' => $taskId, 'status' => 1, 'type' => 1, 'finished_at' => 0])->update([
+                'status' => -1
+            ]);
+            // 更新任务奖励
+            M('task_reward')->where(['task_id' => $taskId])->update([
+                'buy_num' => 0,
+                'order_num' => 0,
+            ]);
+            // 关闭任务
+            M('task')->where(['id' => $taskId])->update(['is_open' => 0]);
+            Db::commit();
+            $this->ajaxReturn(['status' => 1, 'msg' => '重置成功']);
+        } catch (Exception $e) {
+            Db::rollback();
+            $this->ajaxReturn(['status' => 0, 'msg' => $e->getMessage()]);
+        }
+    }
 }

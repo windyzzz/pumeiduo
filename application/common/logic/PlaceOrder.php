@@ -106,7 +106,7 @@ class PlaceOrder
             update_pay_status($this->order['order_sn']);
         }
         $this->deductionCoupon(); //扣除优惠券
-        $this->deductionCouponRe(); //扣除优惠券
+        $this->deductionCouponRe(); //扣除兑换券
         $this->changUserPointMoney($this->order); //扣除用户积分余额
         $this->queueDec();
     }

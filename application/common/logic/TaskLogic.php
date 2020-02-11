@@ -489,7 +489,7 @@ class TaskLogic
      */
     public function returnLoginProfit()
     {
-        M('task_log')->where(['user_id' => $this->order['user_id'], 'order_sn' => $this->order['order_sn']])->update([
+        M('task_log')->where(['task_id' => $this->task['id'], 'user_id' => $this->order['user_id'], 'order_sn' => $this->order['order_sn']])->update([
             'finished_at' => 0
         ]);
     }

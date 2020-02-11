@@ -882,7 +882,7 @@ class UsersLogic extends Model
             'has_pay_pwd' => $user['paypwd'] ? 1 : 0,
             'is_app' => TokenLogic::getValue('is_app', $user['token']) ? 1 : 0,
             'token' => $user['token'],
-            'show_login_profit' => 0
+//            'show_login_profit' => 0
         ];
         return ['status' => 1, 'msg' => '注册成功', 'result' => $user];
     }

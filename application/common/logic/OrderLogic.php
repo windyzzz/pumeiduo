@@ -220,6 +220,8 @@ class OrderLogic
         $taskLogic->returnReward('用户取消订单');
 
         // 返还使用登录奖励
+        $taskLogic = new TaskLogic(4);
+        $taskLogic->setOrder($order);
         $taskLogic->returnLoginProfit();
 
         // 赠品活动奖励追回
