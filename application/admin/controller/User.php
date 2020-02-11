@@ -536,6 +536,8 @@ class User extends Base
             exit($this->error('会员不存在'));
         }
         if (IS_POST) {
+            $oldData = $user;
+
             //  会员信息编辑
             $password = I('post.password');
             $password2 = I('post.password2');
@@ -603,18 +605,28 @@ class User extends Base
                 unset($_POST['pay_points']);
             }
 
-            $row = M('users')->where(['user_id' => $uid])->save($_POST);
+            // 更新用户信息
+            M('users')->where(['user_id' => $uid])->save($_POST);
 
             if ($_POST['distribut_level'] == 1) {
                 //将未发放的提成  改为0
                 M('RebateLog')->where(array('user_id' => $uid, 'status' => array('in', array(0, 1, 2))))->update(array('point' => 0, 'money' => 0, 'remark' => '降级，追回佣金'));
             }
-            // if($row)
             // 更新缓存
             $user = M('users')->where('user_id', $uid)->find();
             TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
+
+            $newData = $user;
+            // 记录日志
+            M('users_edit_log')->add([
+                'admin_id' => session('admin_id'),
+                'user_id' => $uid,
+                'old_data' => json_encode($oldData),
+                'new_data' => json_encode($newData),
+                'create_time' => time()
+            ]);
+
             exit($this->success('修改成功'));
-            // exit($this->error('未作内容修改或修改失败'));
         }
 
         $user['first_lower'] = M('users')->where("first_leader = {$user['user_id']}")->count();
@@ -1452,5 +1464,43 @@ class User extends Base
         }
 
         return json(['status' => 0, 'msg' => '输入会员id有误，请检查清楚重新输入', 'result' => null]);
+    }
+
+    /**
+     * 会员信息修改记录
+     * @return mixed
+     */
+    public function usersEditLog()
+    {
+        $count = M('users_edit_log')->count('id');
+        $page = new Page($count, 20);
+        $editLog = M('users_edit_log')->alias('uel')
+            ->join('admin a', 'a.admin_id = uel.admin_id')
+            ->field('uel.*, a.user_name admin_name')
+            ->limit($page->firstRow . ',' . $page->listRows)->order('create_time desc')->select();
+
+        $this->assign('page', $page);
+        $this->assign('edit_log', $editLog);
+        return $this->fetch('edit_log');
+    }
+
+    /**
+     * 会员信息修改记录详情
+     * @return mixed
+     */
+    public function usersEditLogInfo()
+    {
+        $logId = I('log_id', '');
+        $type = I('type', 'old_data');
+        $logInfo = M('users_edit_log')->where(['id' => $logId])->value($type);
+        $user = json_decode($logInfo, true);
+
+        $user['first_lower'] = M('users')->where("first_leader = {$user['user_id']}")->count();
+        $user['second_lower'] = M('users')->where("second_leader = {$user['user_id']}")->count();
+        $user['third_lower'] = M('users')->where("third_leader = {$user['user_id']}")->count();
+
+        $this->assign('type', $type);
+        $this->assign('user', $user);
+        return $this->fetch('users_edit_log_info');
     }
 }

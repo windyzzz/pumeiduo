@@ -41,6 +41,7 @@ return [
             ['name' => '会员签到', 'act' => 'signList', 'op' => 'User'],
             ['name' => '金卡审核', 'act' => 'apply_customs', 'op' => 'User'],
             ['name' => '金卡资格', 'act' => 'jinka', 'op' => 'User'],
+            ['name' => '会员信息修改记录', 'act' => 'usersEditLog', 'op' => 'User'],
         ]],
         ['name' => '广告', 'child' => [
             ['name' => '广告列表', 'act' => 'adList', 'op' => 'Ad'],
