@@ -147,8 +147,8 @@ class Distribute extends Base
         if (!$buyUserId) return json(['status' => 0, 'msg' => '请传入购买者ID']);
 
         $where = [
-            'rl.user_id' => $buyUserId,
-//            'rl.buy_user_id' => $buyUserId,
+            'rl.user_id' => $this->user_id,
+            'rl.buy_user_id' => $buyUserId,
             'rl.status' => ['in', [3, 5]],
         ];
         $rebateLogSum = M('rebate_log rl')->where($where)->sum('rl.money');
@@ -178,8 +178,8 @@ class Distribute extends Base
         $status = I('status', '');
 
         $where = [
-            'rl.user_id' => $buyUserId,
-//            'rl.buy_user_id' => $buyUserId,
+            'rl.user_id' => $this->user_id,
+            'rl.buy_user_id' => $buyUserId,
             'rl.create_time' => ['BETWEEN', [$startAt, $endAt]],
         ];
         if ($status != '') {

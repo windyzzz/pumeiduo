@@ -883,7 +883,7 @@ class Cart extends Base
             $pay->useCouponById($coupon_id, $pay->getPayList());
             $pay->useCouponByIdRe($re_id);
 
-            $pay_points = $pay->getUsePocalcCartPriceint();
+            $pay_points = $pay->getUsePoint();
             $pay->usePayPoints($pay_points);
             $pay->useUserElectronic($user_electronic); // 电子币
             $pay->activity();    // 参与活动奖励 例如:赠品活动
