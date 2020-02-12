@@ -2616,24 +2616,25 @@ class User extends Base
     public function getReward()
     {
         $reward_id = I('reward_id', 0);
-        $reward = M('task_log')
+        $rewardLog = M('task_log')
             ->where('user_id', $this->user_id)
             ->where('task_reward_id', $reward_id)
             ->where('type', 1)
             ->where('status', 0)
             ->find();
 
-        Db::startTrans();
-        if ($reward) {
-            if ($reward['reward_integral'] > 0) {
-                accountLog($this->user_id, 0, $reward['reward_integral'], '用户领取任务奖励', 0, 0, $reward['order_sn'], 0, 16);
+        if ($rewardLog) {
+            $taskReward = M('task_reward')->where(['reward_id' => $rewardLog['task_reward_id']])->find();
+            Db::startTrans();
+            if ($taskReward['reward_num'] > 0) {
+                accountLog($this->user_id, 0, $taskReward['reward_num'], '用户领取任务奖励', 0, 0, $rewardLog['order_sn'], 0, 16);
             }
-            if ($reward['reward_electronic'] > 0) {
-                accountLog($this->user_id, 0, 0, '用户领取任务奖励', 0, 0, $reward['order_sn'], $reward['reward_electronic'], 15);
+            if ($taskReward['reward_price'] > 0) {
+                accountLog($this->user_id, 0, 0, '用户领取任务奖励', 0, 0, $taskReward['order_sn'], $taskReward['reward_price'], 15);
             }
-            if ($reward['reward_coupon_id'] != 0) {
+            if ($taskReward['reward_coupon_id'] != 0) {
                 $activityLogic = new \app\common\logic\ActivityLogic();
-                $rewardCoupon = explode('-', $reward['reward_coupon_id']);
+                $rewardCoupon = explode('-', $taskReward['reward_coupon_id']);
                 foreach ($rewardCoupon as $coupon) {
                     $result = $activityLogic->get_coupon($coupon, $this->user_id);
                     if ($result['status'] != 1) {
@@ -2643,8 +2644,9 @@ class User extends Base
                 }
             }
 
-            M('task_log')->where('id', $reward['id'])->update(['status' => 1, 'finished_at' => time()]);
+            M('task_log')->where('id', $rewardLog['id'])->update(['status' => 1, 'finished_at' => time()]);
 
+            Db::commit();
             return json(['status' => 1, 'msg' => '用户领取奖励成功']);
 
 //            $return['reward_coupon_money'] = '0.00';
@@ -2803,7 +2805,7 @@ class User extends Base
                 switch ($data['reward_cycle']) {
                     case 0:
                         // 一次性任务
-                        if ($data['user_reward_set'] - $data['reward_set'] == 0) {
+                        if ($data['user_reward_set'] >= $data['reward_set']) {
                             $data['is_finished'] = 1;
                         } else {
                             $data['is_finished'] = 0;
