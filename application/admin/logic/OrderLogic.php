@@ -201,7 +201,7 @@ class OrderLogic
                         // 拥有上级
                         // 任务内容
                         $taskReward = Db::name('task_reward')->where(['task_id' => 2])->order('reward_id asc')
-                            ->getField('reward_id, invite_num, reward_coupon_id', true);
+                            ->getField('reward_id, invite_num, reward_coupon_id, cycle', true);
                         $userTask = Db::name('user_task')->where(['user_id' => $userInviteUid, 'task_id' => 2])->order('id asc')->select();
                         if (empty($userTask)) {
                             // 添加用户任务
@@ -230,19 +230,30 @@ class OrderLogic
                             $userTaskId = '';
                             // 更新用户任务
                             foreach ($userTask as $key => $item) {
-                                if ($item['status'] == 0) {
-                                    $k = ($key - 1 >= 0) ? $key - 1 : 0;
-                                    Db::name('user_task')->where(['id' => $item['id']])->update([
-                                        'finish_num' => $item['target_num'],
-                                        'status' => 1,
-                                        'invite_uid_list' => $userTask[$k]['invite_uid_list'] . ',' . $order['user_id'],
-                                        'order_sn_list' => $userTask[$k]['order_sn_list'] . ',' . $order['order_sn'],
-                                        'finished_at' => time()
-                                    ]);
-                                    $rewardId = $item['task_reward_id'];
-                                    $userTaskId = $item['id'];
-                                    break;
+                                $status = 0;
+                                if (isset($taskReward[$item['task_reward_id']])) {
+                                    switch ($taskReward[$item['task_reward_id']]['cycle'] == 1) {
+                                        case 0:
+                                            $status = 1;
+                                            break;
+                                        case 1:
+                                            $status = 0;
+                                            break;
+                                        default:
+                                            $status = 0;
+                                    }
                                 }
+                                $k = ($key - 1 >= 0) ? $key - 1 : 0;
+                                Db::name('user_task')->where(['id' => $item['id']])->update([
+                                    'finish_num' => $item['target_num'],
+                                    'status' => $status,
+                                    'invite_uid_list' => $userTask[$k]['invite_uid_list'] . ',' . $order['user_id'],
+                                    'order_sn_list' => $userTask[$k]['order_sn_list'] . ',' . $order['order_sn'],
+                                    'finished_at' => time()
+                                ]);
+                                $rewardId = $item['task_reward_id'];
+                                $userTaskId = $item['id'];
+                                break;
                             }
                         }
                         // 上级奖励自动发放

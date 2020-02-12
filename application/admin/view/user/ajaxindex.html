@@ -54,6 +54,13 @@
                 <td align="left" class="">
                     <div style="text-align: center; width: 120px;">{$list.reg_time|date='Y-m-d H:i',###}</div>
                 </td>
+                <td align="left" class="">
+                    <div style="text-align: center; width: 120px;">
+                        <if condition="!empty($list['bind_time'])">
+                            {$list.bind_time|date='Y-m-d H:i',###}
+                        </if>
+                    </div>
+                </td>
                 <td align="center" class="handle">
                     <div style="text-align: center; width: 170px; max-width:250px;">
                         <a class="btn blue" href="{:U('Admin/user/detail',array('id'=>$list['user_id']))}"><i class="fa fa-pencil-square-o"></i>详情</a>
