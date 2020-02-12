@@ -508,6 +508,7 @@ class CouponLogic extends Model
             // 优惠券已使用
             $listId = M('coupon_list')->where(['cid' => $order['coupon_id'], 'uid' => $order['user_id']])->limit(0, 1)->value('id');
             M('coupon_list')->where(['id' => $listId])->update([
+                'order_id' => $order['order_id'],
                 'status' => 1,
                 'use_time' => time()
             ]);
@@ -519,6 +520,7 @@ class CouponLogic extends Model
             // 兑换券已使用
             $listId = M('coupon_list')->where(['cid' => $value['re_id'], 'uid' => $order['user_id']])->limit(0, 1)->value('id');
             M('coupon_list')->where(['id' => $listId])->update([
+                'order_id' => $order['order_id'],
                 'status' => 1,
                 'use_time' => time()
             ]);

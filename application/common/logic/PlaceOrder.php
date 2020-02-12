@@ -92,15 +92,12 @@ class PlaceOrder
         $this->check();
         $this->queueInc();
         $this->addOrder();
-
         $this->addOrderGoods();
         Hook::listen('user_add_order', $this->order); //下单行为
         $reduce = tpCache('shopping.reduce');
-
         if (1 == $reduce || empty($reduce)) {
             minus_stock($this->order); //下单减库存
         }
-
         // 如果应付金额为0  可能是余额支付 + 积分 + 优惠券 这里订单支付状态直接变成已支付
         if (0 == $this->order['order_amount']) {
             update_pay_status($this->order['order_sn']);

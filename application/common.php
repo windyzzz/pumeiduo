@@ -131,11 +131,16 @@ function update_user_distribut($user_id, $order_id)
         $update['distribut_level'] = $level['level_id'];
         $user_info = M('users')->master()->field('user_id, distribut_level, first_leader')->where('user_id', $user_id)->find() ?: 1;
         M('users')->where('user_id', $user_id)->save($update);
+        // 更新缓存
+        $user = Db::name('users')->where('user_id', $user_id)->find();
+        TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
         $order = M('order')->where('order_id', $order_id)->find();
         logDistribut($order['order_sn'], $user_id, $update['distribut_level'], $user_info['distribut_level'], 1);
+
         //2.2购买vip套餐用户领取优惠券
         $CouponLogic = new \app\common\logic\CouponLogic();
         $CouponLogic->sendNewVipUser($user_id, $order_id);
+
         //2.3推荐人奖励
         $firstLeaderLevel = M('users')->where(['user_id' => $user_info['first_leader']])->value('distribut_level');
         if (tpCache('distribut.referee_vip_money') != 0 && in_array($firstLeaderLevel, [2, 3])) {
@@ -841,13 +846,24 @@ function tpCache($config_key, $data = [])
 
 function taskLog($user_id, $task, $reward, $order_sn = '', $reward_electronic = 0, $reward_integral = 0, $type = 1, $status = 0, $reward_coupon_id = 0, $user_task_id = 0)
 {
-    $reward_coupon_money = '0.00';
-    $reward_coupon_name = '';
-    if ($reward_coupon_id > 0) {
-        $couponInfo = M('Coupon')->find($reward_coupon_id);
-        if ($couponInfo) {
-            $reward_coupon_money = $couponInfo['money'];
-            $reward_coupon_name = $couponInfo['name'];
+//    $reward_coupon_money = '0.00';
+//    $reward_coupon_name = '';
+//    if ($reward_coupon_id > 0) {
+//        $couponInfo = M('Coupon')->find($reward_coupon_id);
+//        if ($couponInfo) {
+//            $reward_coupon_money = $couponInfo['money'];
+//            $reward_coupon_name = $couponInfo['name'];
+//        }
+//    }
+    $couponName = '';
+    $couponMoney = '';
+    if ($reward_coupon_id != '0') {
+        // 优惠券信息
+        $couponIds = explode('-', $reward_coupon_id);
+        $coupon = Db::name('coupon')->where(['id' => ['in', $couponIds]])->field('id, name, money')->select();
+        foreach ($coupon as $item) {
+            $couponName .= $item['name'] . '-';
+            $couponMoney .= $item['money'] . '-';
         }
     }
 
@@ -862,8 +878,8 @@ function taskLog($user_id, $task, $reward, $order_sn = '', $reward_electronic = 
         'reward_electronic' => $reward_electronic,
         'reward_integral' => $reward_integral,
         'reward_coupon_id' => $reward_coupon_id,
-        'reward_coupon_money' => $reward_coupon_money,
-        'reward_coupon_name' => $reward_coupon_name,
+        'reward_coupon_money' => rtrim($couponMoney, '-'),
+        'reward_coupon_name' => rtrim($couponName, '-'),
         'order_sn' => $order_sn,
         'type' => $type,
         'status' => $status,
@@ -1508,9 +1524,9 @@ function confirm_order($id, $user_id = 0)
     // 邀请任务 (结束)
 
     // 销售任务（随机红包）
-    $task2 = new \app\common\logic\TaskLogic(3);
-    $task2->setOrder($order);
-    $task2->doOrderPayAfterSell();
+//    $task2 = new \app\common\logic\TaskLogic(3);
+//    $task2->setOrder($order);
+//    $task2->doOrderPayAfterSell();
 
     // 记录订单操作日志
     $action_info = [

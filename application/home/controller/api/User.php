@@ -2630,7 +2630,7 @@ class User extends Base
                 accountLog($this->user_id, 0, $taskReward['reward_num'], '用户领取任务奖励', 0, 0, $rewardLog['order_sn'], 0, 16);
             }
             if ($taskReward['reward_price'] > 0) {
-                accountLog($this->user_id, 0, 0, '用户领取任务奖励', 0, 0, $taskReward['order_sn'], $taskReward['reward_price'], 15);
+                accountLog($this->user_id, 0, 0, '用户领取任务奖励', 0, 0, $rewardLog['order_sn'], $taskReward['reward_price'], 15);
             }
             if ($taskReward['reward_coupon_id'] != 0) {
                 $activityLogic = new \app\common\logic\ActivityLogic();
