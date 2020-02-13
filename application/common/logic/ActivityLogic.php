@@ -160,7 +160,7 @@ class ActivityLogic extends Model
             $where['l.status'] = 0;
         } elseif (1 == $type) {
             //已使用
-            $where['l.order_id'] = ['gt', 0];
+//            $where['l.order_id'] = ['gt', 0];
             $where['l.use_time'] = ['gt', 0];
             $where['l.status'] = 1;
         } elseif (2 == $type) {

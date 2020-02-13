@@ -187,7 +187,14 @@
             '<option value="2">电子币</option>' +
             '</select>' +
             '</td>' +
-            '<td><a href="javascript:;" class="ncap-btn-mini ncap-btn-red delete">删除</a></td>';
+            '<td>' +
+            '<select name="reward[{$k}][task_cate]">' +
+            '   <foreach name="task_cate" key="k2" item="v">' +
+            '       <option value="{$k2}" {$item.task_cate== $k2 ? selected : ""}>{$v}</option>' +
+            '   </foreach>' +
+            '</select>' +
+            '</td>';
+            // '<td><a href="javascript:;" class="ncap-btn-mini ncap-btn-red delete">删除</a></td>';
         var h = /\\index\\/g;
         html = html.replace(h, index);
         return html;

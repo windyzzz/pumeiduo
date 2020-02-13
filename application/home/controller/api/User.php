@@ -2772,15 +2772,17 @@ class User extends Base
                     'reward_cycle' => $reward['cycle'],
                     'reward_set' => $reward['invite_num'] != 0 ? $reward['invite_num'] : ($reward['order_num'] != 0 ? $reward['order_num'] : 0),
                     'user_reward_set' => 0,
-                    'reward_times' => $reward['reward_times'],
+                    'reward_times' => 0,
                     'user_reward_times' => 0
                 ];
                 // 查看用户完成任务次数
                 $userTaskCount = M('user_task')
                     ->where(['user_id' => $this->user_id, 'task_id' => $task['id'], 'task_reward_id' => $reward['reward_id']])
                     ->value('finish_num');
-                $taskRewardData[$k]['user_reward_set'] = $userTaskCount ?? 0;
-                $taskRewardData[$k]['user_reward_times'] = $userTaskCount > $taskRewardData[$k]['reward_set'] ? 0 : $taskRewardData[$k]['reward_set'] - $userTaskCount;
+                $times = $userTaskCount >= $taskRewardData[$k]['reward_set'] ? bcdiv($userTaskCount, $taskRewardData[$k]['reward_set']) : 0;
+                $taskRewardData[$k]['user_reward_set'] = $userTaskCount;
+                $taskRewardData[$k]['reward_times'] = $times;
+                $taskRewardData[$k]['user_reward_times'] = $times;
             }
             if (empty($taskData)) {
                 $taskData = $taskRewardData;
@@ -2800,12 +2802,13 @@ class User extends Base
                 'is_all_finished' => 1,     // 分类下的任务是否全部完成
                 'list' => []
             ];
-            foreach ($taskData as $data) {
+            foreach ($taskData as $k2 => $data) {
                 // 查看该类型的任务是否完成
                 switch ($data['reward_cycle']) {
                     case 0:
                         // 一次性任务
                         if ($data['user_reward_set'] >= $data['reward_set']) {
+                            $taskData[$k2]['reward_times'] = 0;
                             $data['is_finished'] = 1;
                         } else {
                             $data['is_finished'] = 0;
@@ -2819,6 +2822,11 @@ class User extends Base
                         break;
                     case 1:
                         // 每次（循环）
+                        $logCount = M('task_log')->where(['task_id' => $data['task_id'], 'task_reward_id' => $data['reward_id'], 'user_id' => $this->user_id, 'finished_at' => 0])->count('id');
+                        $times = $logCount >= $data['reward_set'] ? bcdiv($logCount, $data['reward_set']) : 0;
+                        $taskData[$k2]['user_reward_set'] = $times;
+                        $taskData[$k2]['reward_times'] = $times;
+                        $taskData[$k2]['user_reward_times'] = $times;
                         $logStatus = M('task_log')->where(['task_id' => $data['task_id'], 'task_reward_id' => $data['reward_id'], 'user_id' => $this->user_id])->order('id DESC')->value('status');
                         if (is_null($logStatus)) {
                             // 未完成任务
