@@ -3019,14 +3019,7 @@ class User extends Base
             'has_pay_pwd' => $this->user['paypwd'] ? 1 : 0,
             'is_app' => TokenLogic::getValue('is_app', $this->user['token']) ? 1 : 0,
             'token' => $this->user['token'],
-//            'show_login_profit' => 0
         ];
-        // 登录奖励
-//        $taskLogic = new TaskLogic(4);
-//        $taskLogic->setUser($this->user);
-//        if ($taskLogic->checkTaskEnable() && $taskLogic->checkLoginProfit()) {
-//            $data['user']['show_login_profit'] = 1;
-//        }
         if (I('get.is_wealth', null)) {
             // 输出资金信息
             $will_distribut_money = M('RebateLog')->field('SUM(money) as money')->where('user_id', $this->user_id)->where('status', 'in', [1, 2])->find();
@@ -3311,11 +3304,49 @@ class User extends Base
     }
 
     /**
-     * 登录领取奖励
+     * 检测是否显示登陆奖励
+     * @return \think\response\Json
+     */
+    public function checkLoginProfit()
+    {
+        if ($this->passAuth) {
+            $result = ['status' => 1, 'result' => ['state' => 0]];
+        } else {
+            // 登录奖励
+            $taskLogic = new TaskLogic(4);
+            $taskLogic->setUser($this->user);
+            if ($taskLogic->checkTaskEnable() && $taskLogic->checkLoginProfit()) {
+                $result = ['status' => 1, 'result' => ['state' => 1]];
+            } else {
+                $result = ['status' => 1, 'result' => ['state' => 0]];
+            }
+        }
+        return json($result);
+    }
+
+    /**
+     * 获取登录奖励H5地址
+     * @return \think\response\Json
+     */
+    public function loginProfitUrl()
+    {
+        $url = SITE_URL . '/#/app_redRain?red_token=' . $this->userToken;
+        return json(['status' => 1, 'result' => ['url' => $url]]);
+    }
+
+    /**
+     * 领取登录奖励
      * @return \think\response\Json
      */
     public function loginProfit()
     {
+        return json([
+            'status' => 1,
+            'msg' => '领取成功',
+            'result' => [
+                'profit' => '666.6'
+            ]
+        ]);
         $taskLogic = new TaskLogic(4);
         $taskLogic->setUser($this->user);
         $res = $taskLogic->checkLoginProfit();

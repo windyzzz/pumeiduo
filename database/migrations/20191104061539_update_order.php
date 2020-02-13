@@ -42,6 +42,8 @@ class UpdateOrder extends Migrator
                 'comment' => '发货方式 0自填快递 1在线预约 2电子面单 3无需物流'])
             ->addColumn('delivery_type', 'integer', ['default' => 1, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
                 'comment' => '发货类型：1统一发货 2分开发货'])
+            ->addColumn('source', 'integer', ['default' => 1, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
+                'comment' => '订单来源：1H5 2PC 3APP 4管理后台'])
             ->update();
 
         $this->table('order_goods')

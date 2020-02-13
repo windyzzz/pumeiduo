@@ -2209,9 +2209,9 @@ class Order extends Base
             $placeOrder->setUserNote($userNote);
             $placeOrder->setPayPsw($payPwd);
             if (2 == $prom_type) {
-                $placeOrder->addGroupBuyOrder($prom_id);    // 团购订单
+                $placeOrder->addGroupBuyOrder($prom_id, 3);    // 团购订单
             } else {
-                $placeOrder->addNormalOrder();     // 普通订单
+                $placeOrder->addNormalOrder(3);     // 普通订单
             }
             $cartLogic->clear();    // 清除选中的购物车
             $order = $placeOrder->getOrder();

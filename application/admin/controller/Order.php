@@ -1621,7 +1621,7 @@ class Order extends Base
         $placeOrder->setUserAddress($address);
         $placeOrder->setInvoiceTitle($invoice_title);
         $placeOrder->setTaxpayer($taxpayer);
-        $placeOrder->addNormalOrder();
+        $placeOrder->addNormalOrder(4);
         $order = $placeOrder->getOrder();
         if ($order) {
             M('order_action')->add([

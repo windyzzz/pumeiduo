@@ -514,9 +514,9 @@ class Cart
                 $placeOrder->setTaxpayer($taxpayer);
                 $placeOrder->setPayPsw($payPwd);
                 if (2 == $prom_type) {
-                    $placeOrder->addGroupBuyOrder($prom_id);
+                    $placeOrder->addGroupBuyOrder($prom_id, 2);
                 } else {
-                    $placeOrder->addNormalOrder();
+                    $placeOrder->addNormalOrder(2);
                 }
 
                 $cartLogic->clear();
@@ -792,7 +792,7 @@ class Cart
                 $placeOrder->setUserNote($user_note);
                 $placeOrder->setTaxpayer($taxpayer);
                 $placeOrder->setPayPsw($payPwd);
-                $placeOrder->addNormalOrder();
+                $placeOrder->addNormalOrder(2);
                 $order = $placeOrder->getOrder();
 
                 return json(['status' => 1, 'msg' => '提交订单成功', 'result' => $order['order_id']]);

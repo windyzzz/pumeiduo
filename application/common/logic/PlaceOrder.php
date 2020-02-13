@@ -87,11 +87,11 @@ class PlaceOrder
         $this->promId = $prom_id;
     }
 
-    public function addNormalOrder()
+    public function addNormalOrder($source = '1')
     {
         $this->check();
         $this->queueInc();
-        $this->addOrder();
+        $this->addOrder($source);
         $this->addOrderGoods();
         Hook::listen('user_add_order', $this->order); //下单行为
         $reduce = tpCache('shopping.reduce');
@@ -108,13 +108,13 @@ class PlaceOrder
         $this->queueDec();
     }
 
-    public function addGroupBuyOrder($prom_id)
+    public function addGroupBuyOrder($prom_id, $source = '1')
     {
         $this->setPromType(2);
         $this->setPromId($prom_id);
         $this->check();
         $this->queueInc();
-        $this->addOrder();
+        $this->addOrder($source);
         $this->addOrderGoods();
         Hook::listen('user_add_order', $this->order); //下单行为
         $reduce = tpCache('shopping.reduce');
@@ -130,13 +130,13 @@ class PlaceOrder
         $this->queueDec();
     }
 
-    public function addTeamOrder(TeamActivity $teamActivity)
+    public function addTeamOrder(TeamActivity $teamActivity, $source = '1')
     {
         $this->setPromType(6);
         $this->setPromId($teamActivity['team_id']);
         $this->check();
         $this->queueInc();
-        $this->addOrder();
+        $this->addOrder($source);
         $this->addOrderGoods();
         Hook::listen('user_add_order', $this->order); //下单行为
         if (2 != $teamActivity['team_type']) {
@@ -209,7 +209,7 @@ class PlaceOrder
      *
      * @throws TpshopException
      */
-    private function addOrder()
+    private function addOrder($source = '1')
     {
         $OrderLogic = new OrderLogic();
         $user = $this->pay->getUser();
@@ -228,7 +228,8 @@ class PlaceOrder
             'total_amount' => $this->pay->getTotalAmount(), // 订单总额
             'order_amount' => $this->pay->getOrderAmount(), //'应付款金额',
             'add_time' => time(), // 下单时间
-            'coupon_id' => $this->pay->getCouponId()
+            'coupon_id' => $this->pay->getCouponId(),
+            'source' => $source
         ];
         if (!empty($this->userAddress)) {
             $orderData['consignee'] = $this->userAddress['consignee']; // 收货人

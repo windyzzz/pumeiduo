@@ -120,15 +120,8 @@ class Login extends Base
                 'is_not_show_jk' => $user['is_not_show_jk'],  // 是否提示加入金卡弹窗
                 'has_pay_pwd' => $user['paypwd'] ? 1 : 0,
                 'is_app' => TokenLogic::getValue('is_app', $this->userToken) ? 1 : 0,
-                'token' => $user['token'],
-//                'show_login_profit' => 0
+                'token' => $user['token']
             ];
-//            // 登录奖励
-//            $taskLogic = new TaskLogic(4);
-//            $taskLogic->setUser($this->user);
-//            if ($taskLogic->checkTaskEnable() && $taskLogic->checkLoginProfit()) {
-//                $res['result']['show_login_profit'] = 1;
-//            }
         }
 
         return json($res);
@@ -260,12 +253,6 @@ class Login extends Base
         $cartLogic->setUserId($data['result']['user_id']);
         $cartLogic->setUserToken($this->userToken);
         $cartLogic->doUserLoginHandle(); // 用户登录后 需要对购物车 一些操作
-//        // 登录奖励
-//        $taskLogic = new TaskLogic(4);
-//        $taskLogic->setUser($this->user);
-//        if ($taskLogic->checkTaskEnable() && $taskLogic->checkLoginProfit()) {
-//            $data['result']['show_login_profit'] = 1;
-//        }
         return json($data);
     }
 
