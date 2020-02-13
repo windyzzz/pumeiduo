@@ -77,13 +77,20 @@ class Task extends Base
                 ];
                 $this->ajaxReturn($return_arr);
             }
-//            $rewardType = [];
-//            foreach ($data['reward'] as $reward) {
-//                if (!empty($rewardType) && !in_array($reward['reward_type'], $rewardType)) {
-//                    $this->ajaxReturn(['status' => -1, 'msg' => '任务奖励类型要统一']);
-//                }
-//                $rewardType[] = $reward['reward_type'];
-//            }
+            $rewardCycle = [];
+            $rewardDistributeId = [];
+            foreach ($data['reward'] as $reward) {
+                if (empty($rewardCycle) || empty($rewardDistributeId)) {
+                    $rewardCycle[] = $reward['cycle'];
+                    $rewardDistributeId[] = $reward['distribut_id'];
+                    continue;
+                }
+                if (!in_array($reward['distribut_id'], $rewardDistributeId) && ($reward['cycle'] == 1 || in_array(1, $rewardCycle))) {
+                    $this->ajaxReturn(['status' => -1, 'msg' => '级别不一样周期不能选择每次']);
+                }
+                $rewardCycle[] = $reward['cycle'];
+                $rewardDistributeId[] = $reward['distribut_id'];
+            }
 
             try {
                 Db::startTrans();

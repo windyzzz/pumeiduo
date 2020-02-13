@@ -587,7 +587,12 @@ class TaskLogic
                     // 任务奖励更新
                     M('task_reward')->where('reward_id', $reward['reward_id'])->setDec('store_count');
                     M('task_reward')->where('reward_id', $reward['reward_id'])->setInc('buy_num');
-                    return ['status' => 1, 'msg' => '领取成功', 'result' => ['profit' => $pay_point != 0 ? $pay_point : $user_electronic]];
+                    $result = [
+                        'use_start_time' => date('Y-m-d', $this->task['use_start_time']),
+                        'use_end_time' => date('Y-m-d', $this->task['use_end_time']),
+                        'reward' => $pay_point != 0 ? $pay_point : $user_electronic
+                    ];
+                    return ['status' => 1, 'msg' => '领取成功', 'result' => $result];
                 }
                 return ['status' => 0, 'msg' => '很遗憾，红包已被领取完毕'];
             } else {

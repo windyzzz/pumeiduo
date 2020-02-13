@@ -3330,7 +3330,7 @@ class User extends Base
      */
     public function loginProfitUrl()
     {
-        $url = SITE_URL . '/#/app_redRain?red_token=' . $this->userToken;
+        $url = SITE_URL . '/#/app_redRain?red_token=' . $this->user['token'];
         return json(['status' => 1, 'result' => ['url' => $url]]);
     }
 
@@ -3344,7 +3344,9 @@ class User extends Base
             'status' => 1,
             'msg' => '领取成功',
             'result' => [
-                'profit' => '666.6'
+                'use_start_time' => '2019-12-12',
+                'use_end_time' => '2020-03-12',
+                'reward' => '666.6'
             ]
         ]);
         $taskLogic = new TaskLogic(4);
