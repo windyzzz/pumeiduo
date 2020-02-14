@@ -119,6 +119,20 @@ class Order extends Base
                     }
                 }
             }
+            switch ($v['source']) {
+                case 1:
+                    $orderList[$k]['source'] = 'H5';
+                    break;
+                case 2:
+                    $orderList[$k]['source'] = 'PC';
+                    break;
+                case 3:
+                    $orderList[$k]['source'] = 'APP';
+                    break;
+                case 4:
+                    $orderList[$k]['source'] = '管理后台';
+                    break;
+            }
         }
 
         $field = 'sum(order_amount) as order_amount,sum(goods_price) as goods_price,sum(coupon_price) as coupon_price,sum(integral_money) as integral_money,sum(user_electronic) as user_electronic, sum(order_prom_amount) as order_prom_amount, sum(shipping_price) as shipping_price';

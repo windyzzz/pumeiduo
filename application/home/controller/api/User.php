@@ -3316,22 +3316,20 @@ class User extends Base
             $taskLogic = new TaskLogic(4);
             $taskLogic->setUser($this->user);
             if ($taskLogic->checkTaskEnable() && $taskLogic->checkLoginProfit()) {
-                $result = ['status' => 1, 'result' => ['state' => 1]];
+                $url = SITE_URL . '/#/app_redRain';
+                if (SITE_URL == 'http://test.pumeiduo.com') {
+                    // 测试服
+                    $verifyUrl = 'http://blf.test.meetlan.com/index.php?m=api&c=Release&a=upload&token=' . $this->user['token'];
+                } else {
+                    // 正式服
+                    $verifyUrl = '';
+                }
+                $result = ['status' => 1, 'result' => ['state' => 1, 'url' => $url, 'verify_url' => $verifyUrl]];
             } else {
-                $result = ['status' => 1, 'result' => ['state' => 0]];
+                $result = ['status' => 1, 'result' => ['state' => 0, 'url' => '', 'verify_url' => '']];
             }
         }
         return json($result);
-    }
-
-    /**
-     * 获取登录奖励H5地址
-     * @return \think\response\Json
-     */
-    public function loginProfitUrl()
-    {
-        $url = SITE_URL . '/#/app_redRain?red_token=' . $this->user['token'];
-        return json(['status' => 1, 'result' => ['url' => $url]]);
     }
 
     /**
