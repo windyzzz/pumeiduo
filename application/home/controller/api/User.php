@@ -3339,15 +3339,15 @@ class User extends Base
      */
     public function loginProfit()
     {
-        return json([
-            'status' => 1,
-            'msg' => '领取成功',
-            'result' => [
-                'use_start_time' => '2019-12-12',
-                'use_end_time' => '2020-03-12',
-                'reward' => '666.6'
-            ]
-        ]);
+//        return json([
+//            'status' => 1,
+//            'msg' => '领取成功',
+//            'result' => [
+//                'use_start_time' => '2019-12-12',
+//                'use_end_time' => '2020-03-12',
+//                'reward' => '666.6'
+//            ]
+//        ]);
         $taskLogic = new TaskLogic(4);
         $taskLogic->setUser($this->user);
         $res = $taskLogic->checkLoginProfit();

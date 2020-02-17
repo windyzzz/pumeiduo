@@ -278,9 +278,13 @@ class Cart extends Base
                         'buy_limit' => $groupBuyGoods[$key]['buy_limit'],
                         'gift_goods' => $giftGoods
                     ];
-                }
-                else {
+                } else {
                     // 正常普通商品
+                    if (isset($v['item_id'])) {
+                        $buyLimit = M('spec_goods_price')->where(['item_id' => $v['item_id']])->value('store_count');
+                    } else {
+                        $buyLimit = $v['goods']['store_count'];
+                    }
                     $cartList['goods'][] = [
                         'cart_id' => $v['id'],
                         'goods_id' => $v['goods_id'],
@@ -293,6 +297,7 @@ class Cart extends Base
                         'exchange_integral' => $v['use_integral'],
                         'exchange_price' => bcsub($v['goods_price'], $v['use_integral'], 2),
                         'goods_num' => $v['goods_num'],
+                        'buy_limit' => $buyLimit,
                         'gift_goods' => $giftGoods
                     ];
                 }
