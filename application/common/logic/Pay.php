@@ -398,7 +398,7 @@ class Pay
     {
         // 赠品活动
         $this->giftLogic->setUserId($this->userId);
-        $this->giftLogic->setMoney($this->goodsPrice);
+        $this->giftLogic->setMoney($this->orderAmount);
         $this->giftLogic->setGoodsList($this->payList);
         $goods_list = $this->giftLogic->getGoodsList();
         if ($goods_list) {

@@ -1763,9 +1763,9 @@ class Order extends Base
                 }
             }
 
-            $payLogic->activity(true);      // 满单赠品
             $payLogic->activity2New();      // 指定商品赠品 / 订单优惠赠品
             $payLogic->activity3();         // 订单优惠促销
+            $payLogic->activity(true);      // 满单赠品
 
             // 使用优惠券
             if (isset($couponId) && $couponId > 0) {
@@ -2038,9 +2038,9 @@ class Order extends Base
                 }
             }
 
-            $payLogic->activity(true);      // 满单赠品
             $payLogic->activity2New();      // 指定商品赠品 / 订单优惠赠品
             $payLogic->activity3();         // 订单优惠促销
+            $payLogic->activity(true);      // 满单赠品
 
             // 使用优惠券
             if (!empty($couponId) && $couponId > 0) {

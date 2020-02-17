@@ -491,10 +491,10 @@ class Cart
             $pay_points = $pay->getUsePoint();
             $pay->usePayPoints($pay_points);
             $pay->useUserElectronic($user_electronic); // 电子币
-            $pay->activity();   // 参与活动奖励 例如:赠品活动
 
-
-            $pay->activity2();   // 参与活动奖励 例如:赠品活动
+            $pay->activity2();   // 指定商品赠品 / 订单优惠赠品
+            $pay->activity3();         // 订单优惠促销
+            $pay->activity();    // 参与活动奖励 例如:赠品活动
 
             $coupon = null;
             if ($coupon_id) {

@@ -3316,15 +3316,16 @@ class User extends Base
             $taskLogic = new TaskLogic(4);
             $taskLogic->setUser($this->user);
             if ($taskLogic->checkTaskEnable() && $taskLogic->checkLoginProfit()) {
-                $url = SITE_URL . '/#/app_redRain';
-                if (SITE_URL == 'http://test.pumeiduo.com') {
-                    // 测试服
-                    $verifyUrl = 'http://blf.test.meetlan.com/index.php?m=api&c=Release&a=upload&token=' . $this->user['token'];
-                } else {
-                    // 正式服
-                    $verifyUrl = '';
-                }
-                $result = ['status' => 1, 'result' => ['state' => 1, 'url' => $url, 'verify_url' => $verifyUrl]];
+                $url = SITE_URL . '/#/app_redRain?red_token=' . $this->user['token'];
+//                if (SITE_URL == 'http://test.pumeiduo.com') {
+//                    // 测试服
+//                    $verifyUrl = 'http://blf.test.meetlan.com/index.php?m=api&c=Release&a=upload&token=' . $this->user['token'];
+//                } else {
+//                    // 正式服
+//                    $verifyUrl = '';
+//                }
+//                $result = ['status' => 1, 'result' => ['state' => 1, 'url' => $url, 'verify_url' => $verifyUrl]];
+                $result = ['status' => 1, 'result' => ['state' => 1, 'url' => $url]];
             } else {
                 $result = ['status' => 1, 'result' => ['state' => 0, 'url' => '', 'verify_url' => '']];
             }
