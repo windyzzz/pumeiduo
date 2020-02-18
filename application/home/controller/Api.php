@@ -114,10 +114,13 @@ class Api extends Base
         $mobile = I('mobile', '');
         $scene = I('scene', '');
 
-        $userData = M('users')->where('mobile', $mobile)->field('user_id, is_lock')->select(); // 手机号登陆的情况下会有多个账号
+        $userData = M('users')->where('mobile', $mobile)->field('user_id, is_lock, is_cancel')->select(); // 手机号登陆的情况下会有多个账号
         // 检验账号有效性
         $userId = 0;
         foreach ($userData as $user) {
+            if ($user['is_cancel'] == 1) {
+                continue;
+            }
             if ($user['is_lock'] == 0) {
                 $userId = $user['user_id'];
             }

@@ -415,4 +415,17 @@ class Login extends Base
         }
         return json(['status' => 1, 'result' => $userInfo]);
     }
+
+    /**
+     * 账号注销
+     * @return \think\response\Json
+     */
+    public function do_cancel()
+    {
+        $res = M('users')->where('user_id', $this->user_id)->update(['is_cancel' => 1]);
+        if ($res) {
+            return json(['status' => 1, 'msg' => '注销成功']);
+        }
+        return json(['status' => 0, 'msg' => '注销失败']);
+    }
 }

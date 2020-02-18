@@ -13,6 +13,7 @@ namespace app\admin\controller;
 
 use app\admin\logic\UsersLogic;
 use app\common\logic\Token as TokenLogic;
+use app\common\model\Users;
 use think\AjaxPage;
 use think\Db;
 use think\Loader;
@@ -293,7 +294,8 @@ class User extends Base
 
         $sort_order = I('order_by') . ' ' . I('sort');
 
-        $model = M('users');
+//        $model = M('users');
+        $model = new Users();
         $count = $model->where($condition)->count();
         $Page = new AjaxPage($count, 10);
         //  搜索条件下 分页赋值

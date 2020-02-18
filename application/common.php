@@ -50,7 +50,7 @@ function order_time()
  */
 function get_user_info($user_value, $type = 0, $oauth = '')
 {
-    $map = [];
+    $map = ['is_cancel' => 0];
     if (0 == $type) {
         $map['user_id'] = $user_value;
     } elseif (1 == $type) {

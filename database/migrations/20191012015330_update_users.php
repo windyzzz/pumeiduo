@@ -34,14 +34,18 @@ class UpdateUsers extends Migrator
             ->update();
 
         $this->table('users')
-            ->changeColumn('is_consummate', 'integer', ['limit' =>  \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'default' => 0, 'comment' => '完善个人信息已领取收益'])
-            ->changeColumn('is_not_show_jk', 'integer', ['limit' =>  \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'default' => 0, 'comment' => '完是否永久不提示 加入金卡弹窗 1是 0不是'])
+            ->changeColumn('is_consummate', 'integer', ['limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'default' => 0, 'comment' => '完善个人信息已领取收益'])
+            ->changeColumn('is_not_show_jk', 'integer', ['limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'default' => 0, 'comment' => '完是否永久不提示 加入金卡弹窗 1是 0不是'])
             ->update();
 
         $this->table('users')
             ->addColumn('bank_code', 'string', ['limit' => 25, 'null' => true, 'comment' => '银行代码', 'after' => 'bank_name'])
             ->addColumn('bank_region', 'string', ['null' => true, 'comment' => '银行开户地区', 'after' => 'bank_code'])
             ->addColumn('bank_branch', 'string', ['null' => true, 'comment' => '银行开户支行', 'after' => 'bank_region'])
+            ->update();
+
+        $this->table('users')
+            ->addColumn('is_cancel', 'integer', ['limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'default' => 0, 'comment' => '是否已注销 1是 0否'])
             ->update();
     }
 }

@@ -27,7 +27,7 @@
                     <div style="text-align: center; width: 80px;">{$total_amount}</div>
                 </td>
                 <td align="left" class="">
-                    <div style="text-align: center; width: 50px;">{$list[first_leader]}</div>
+                    <div style="text-align: center; width: 60px;">{$list[first_leader]}</div>
                 </td>
                 <td align="left" class="">
                     <div style="text-align: center; width: 60px;">{$first_leader[$list[user_id]]['count']|default="0"}</div>
@@ -60,6 +60,9 @@
                             {$list.bind_time|date='Y-m-d H:i',###}
                         </if>
                     </div>
+                </td>
+                <td align="left" class="">
+                    <div style="text-align: center; width: 80px;">{$list.status_desc}</div>
                 </td>
                 <td align="center" class="handle">
                     <div style="text-align: center; width: 170px; max-width:250px;">

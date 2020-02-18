@@ -316,22 +316,29 @@ class UsersLogic extends Model
             if ($oauthUser['user_id'] == 0) {
                 $result = ['status' => 2, 'result' => ['openid' => $data['openid']]]; // 需要绑定手机号
             } else {
-                // 更新用户信息
-                $userToken = TokenLogic::setToken();
-                $updateData = [
-                    'openid' => $data['openid'],
-                    'unionid' => $data['unionid'],
-                    'nickname' => $data['nickname'],
-                    'head_pic' => !empty($data['headimgurl']) ? $data['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png',
-                    'sex' => $oauthData['sex'] ?? 0,
-                    'token' => $userToken,
-                    'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
-                ];
-                Db::name('users')->where(['user_id' => $oauthUser['user_id']])->update($updateData);
-                $user = Db::name('users')->where(['user_id' => $oauthUser['user_id']])->find();
-                $levelName = Db::name('user_level')->where('level_id', $user['level'])->getField('level_name');
-                $user['level_name'] = $levelName;
-                $result = ['status' => 1, 'result' => $user];  // 登录成功
+                $user = Db::name('users')->where(['user_id' => $oauthUser['user_id']])->field('is_lock, is_cancel')->find();
+                if ($user['is_lock'] == 1) {
+                    $result = ['status' => 0, 'msg' => '账号已被冻结'];
+                } elseif ($user['is_cancel'] == 1) {
+                    $result = ['status' => 2, 'result' => ['openid' => $data['openid']]]; // 之前的账号已注销，需要重新绑定手机号
+                } else {
+                    // 更新用户信息
+                    $userToken = TokenLogic::setToken();
+                    $updateData = [
+                        'openid' => $data['openid'],
+                        'unionid' => $data['unionid'],
+                        'nickname' => $data['nickname'],
+                        'head_pic' => !empty($data['headimgurl']) ? $data['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png',
+                        'sex' => $oauthData['sex'] ?? 0,
+                        'token' => $userToken,
+                        'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
+                    ];
+                    Db::name('users')->where(['user_id' => $oauthUser['user_id']])->update($updateData);
+                    $user = Db::name('users')->where(['user_id' => $oauthUser['user_id']])->find();
+                    $levelName = Db::name('user_level')->where('level_id', $user['level'])->getField('level_name');
+                    $user['level_name'] = $levelName;
+                    $result = ['status' => 1, 'result' => $user];  // 登录成功
+                }
             }
         } else {
             // 未授权登录过
@@ -351,11 +358,11 @@ class UsersLogic extends Model
             return ['status' => 0, 'msg' => '请填写账号或密码'];
         }
         if (check_mobile($username)) {
-            $user = Db::name('users')->where('mobile', $username)->whereOr('email', $username);
+            $users = Db::name('users')->where('mobile', $username)->where('is_cancel', 0)->whereOr('email', $username);
         } else {
-            $user = Db::name('users')->where('user_id', $username)->whereOr('email', $username);
+            $users = Db::name('users')->where('user_id', $username)->where('is_cancel', 0)->whereOr('email', $username);
         }
-        $userData = $user->field('user_id, is_lock')->select(); // 手机号登陆的情况下会有多个账号
+        $userData = $users->field('user_id, is_lock')->select(); // 手机号登陆的情况下会有多个账号
         if (empty($userData)) {
             return ['status' => -1, 'msg' => '账号不存在!'];
         }
@@ -369,11 +376,10 @@ class UsersLogic extends Model
         if ($userId == 0) {
             return ['status' => 0, 'msg' => '该账号已被冻结，请联系客服' . tpCache('shop_info.mobile')];
         }
-        $user = Db::name('users')->where('user_id', $userId)->field('user_id, password, mobile, nickname, user_name, is_distribut, is_lock, level, token, type')->find();
-        if (systemEncrypt($password) != $user['password']) {
+        $userPassword = Db::name('users')->where('user_id', $userId)->value('password');
+        if (systemEncrypt($password) != $userPassword) {
             $result = ['status' => -2, 'msg' => '密码错误!'];
         } else {
-            unset($user['password']);
             // 更新用户token
             if (!$userToken) $userToken = TokenLogic::setToken();
             $save = [
@@ -381,13 +387,15 @@ class UsersLogic extends Model
                 'token' => $userToken,
                 'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
             ];
-            if (check_mobile($username)) {
-                Db::name('users')->where('mobile', $username)->whereOr('email', $username)->where('is_lock', 0)->update($save);
-                $user = Db::name('users')->where('mobile', $username)->whereOr('email', $username)->where('is_lock', 0)->order('reg_time DESC')->find();
-            } else {
-                Db::name('users')->where('user_id', $username)->whereOr('email', $username)->where('is_lock', 0)->update($save);
-                $user = Db::name('users')->where('user_id', $username)->whereOr('email', $username)->where('is_lock', 0)->order('reg_time DESC')->find();
-            }
+            Db::name('users')->where('user_id', $userId)->update($save);
+            $user = Db::name('users')->where('user_id', $userId)->find();
+//            if (check_mobile($username)) {
+//                Db::name('users')->where('mobile', $username)->whereOr('email', $username)->where('is_lock', 0)->update($save);
+//                $user = Db::name('users')->where('mobile', $username)->whereOr('email', $username)->where('is_lock', 0)->order('reg_time DESC')->find();
+//            } else {
+//                Db::name('users')->where('user_id', $username)->whereOr('email', $username)->where('is_lock', 0)->update($save);
+//                $user = Db::name('users')->where('user_id', $username)->whereOr('email', $username)->where('is_lock', 0)->order('reg_time DESC')->find();
+//            }
             $result = ['status' => 1, 'msg' => '登录成功', 'result' => $user];
         }
 
@@ -767,7 +775,7 @@ class UsersLogic extends Model
             $map['mobile_validated'] = 1;
             $map['user_name'] = $map['mobile'] = $username;
             $map['nickname'] = '手机用户' . substr($username, -4);
-            $exists = M('Users')->where('mobile', $map['mobile'])->find();
+            $exists = M('Users')->where('mobile', $map['mobile'])->where('is_cancel', 0)->find();
             if ($exists) {
                 return ['status' => -1, 'msg' => '手机号已经存在', 'result' => ''];
             }
@@ -901,7 +909,7 @@ class UsersLogic extends Model
         }
         $oauthData = unserialize($oauthUser['oauth_data']);
         if (check_mobile($username)) {
-            $userId = M('users')->where('mobile', $username)->value('user_id');
+            $userId = M('users')->where('mobile', $username)->where('is_cancel', 0)->value('user_id');
             if ($userId) {
                 //--- 已有账号
                 if (M('oauth_users')->where(['user_id' => $userId])->find()) {
