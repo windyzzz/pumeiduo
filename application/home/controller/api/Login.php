@@ -424,7 +424,7 @@ class Login extends Base
     {
         $res = M('users')->where('user_id', $this->user_id)->update(['is_cancel' => 1]);
         if ($res) {
-            return json(['status' => 1, 'msg' => '注销成功']);
+            return json(['status' => 1, 'msg' => '您的账户已注销']);
         }
         return json(['status' => 0, 'msg' => '注销失败']);
     }
