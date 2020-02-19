@@ -35,59 +35,94 @@ class Coupon extends Base
         foreach ($couponData as $k => $coupon) {
             // 检查是否已经领取
             $isReceived = M('coupon_list')->where(array('cid' => $coupon['id'], 'uid' => $this->user_id))->field('id')->find();
-            switch ($coupon['use_type']) {
-                case 1:
-                    // 指定商品可用
-                    foreach ($couponGoods as $goods) {
-                        if ($coupon['id'] == $goods['coupon_id']) {
-                            $couponList[] = [
-                                'coupon_id' => $coupon['id'],
-                                'type_value' => $coupon['type_value'],
-                                'use_type' => $coupon['use_type'],
-                                'name' => $coupon['name'],
-                                'condition' => $coupon['condition'],
-                                'money' => $coupon['money'],
-                                'use_start_time' => $coupon['use_start_time'],
-                                'use_end_time' => $coupon['use_end_time'],
-                                'create_num' => $coupon['create_num'],
-                                'is_received' => $isReceived ? 1 : 0,
-                                'percent' => $coupon['create_num'] > 0 ? bcdiv($coupon['send_num'], $coupon['create_num'], 2) : 0,
-                                'cate_id' => '',
-                                'cate_name' => '',
-                                'goods_id' => $goods['goods_id'],
-                                'goods_name' => $goods['goods_name'],
-                                'original_img' => $goods['original_img']
-                            ];
-                        }
+            // 使用对象
+            if ($coupon['type_value'] == 0) {
+                $target = '全员通用';
+            } else {
+                $target = '';
+                $typeValue = explode(',', $coupon['type_value']);
+                if (in_array('1', $typeValue)) $target .= '注册会员、';
+                if (in_array('2', $typeValue)) $target .= 'VIP、';
+                if (in_array('3', $typeValue)) $target .= 'SVIP、';
+                if (in_array('4', $typeValue)) $target .= '新注册会员、';
+                if (in_array('5', $typeValue)) continue;
+                $target = rtrim($target, '、');
+                $target .= '可用';
+            }
+            if ($coupon['use_type'] == 1) {
+                // 指定商品可用
+                foreach ($couponGoods as $goods) {
+                    if ($coupon['id'] == $goods['coupon_id']) {
+                        $couponList[] = [
+                            'coupon_id' => $coupon['id'],
+                            'type_value' => $coupon['type_value'],
+                            'use_type' => $coupon['use_type'],
+                            'name' => $coupon['name'],
+                            'condition' => $coupon['condition'],
+                            'money' => $coupon['money'],
+                            'use_start_time' => date('Y.m.d', $coupon['use_start_time']),
+                            'use_end_time' => date('Y.m.d', $coupon['use_end_time']),
+                            'create_num' => $coupon['create_num'],
+                            'is_received' => $isReceived ? 1 : 0,
+                            'percent' => $coupon['create_num'] > 0 ? bcdiv($coupon['send_num'], $coupon['create_num'], 2) : 0,
+                            'cate_id' => '',
+                            'cate_name' => '',
+                            'goods_id' => $goods['goods_id'],
+                            'goods_name' => $goods['goods_name'],
+                            'original_img' => $goods['original_img'],
+                            'title' => '￥' . $coupon['money'],
+                            'desc' => '仅限' . $goods['goods_name'] . '可用',
+                            'target' => $target
+                        ];
                     }
-                    break;
-                case 0:
-                    // 全店通用
-                case 2:
-                    // 指定分类可用
-                case 4:
-                    // 指定商品折扣券
-                case 5:
-                    // 兑换商品券
-                    $couponList[$k] = [
-                        'coupon_id' => $coupon['id'],
-                        'type_value' => $coupon['type_value'],
-                        'use_type' => $coupon['use_type'],
-                        'name' => $coupon['name'],
-                        'condition' => $coupon['condition'],
-                        'money' => $coupon['money'],
-                        'use_start_time' => $coupon['use_start_time'],
-                        'use_end_time' => $coupon['use_end_time'],
-                        'create_num' => $coupon['create_num'],
-                        'is_received' => $isReceived ? 1 : 0,
-                        'percent' => $coupon['create_num'] > 0 ? bcdiv($coupon['send_num'], $coupon['create_num'], 2) : 0,
-                        'cate_id' => isset($couponCate[$coupon['id']]) ? $couponCate[$coupon['id']]['cate_id'] : '',
-                        'cate_name' => isset($couponCate[$coupon['id']]) ? $couponCate[$coupon['id']]['cate_name'] : '',
-                        'goods_id' => '',
-                        'goods_name' => '',
-                        'original_img' => ''
-                    ];
-                    break;
+                }
+            } else {
+                $couponList[$k . '-1'] = [
+                    'coupon_id' => $coupon['id'],
+                    'type_value' => $coupon['type_value'],
+                    'use_type' => $coupon['use_type'],
+                    'name' => $coupon['name'],
+                    'condition' => $coupon['condition'],
+                    'money' => $coupon['money'],
+                    'use_start_time' => date('Y.m.d', $coupon['use_start_time']),
+                    'use_end_time' => date('Y.m.d', $coupon['use_end_time']),
+                    'create_num' => $coupon['create_num'],
+                    'is_received' => $isReceived ? 1 : 0,
+                    'percent' => $coupon['create_num'] > 0 ? bcdiv($coupon['send_num'], $coupon['create_num'], 2) : 0,
+                    'cate_id' => isset($couponCate[$coupon['id']]) ? $couponCate[$coupon['id']]['cate_id'] : '',
+                    'cate_name' => isset($couponCate[$coupon['id']]) ? $couponCate[$coupon['id']]['cate_name'] : '',
+                    'goods_id' => '',
+                    'goods_name' => '',
+                    'original_img' => ''
+                ];
+                switch ($coupon['use_type']) {
+                    case 0:
+                        // 全店通用
+                        $title = '￥' . $coupon['money'];
+                        $desc = '满' . $coupon['condition'] . '减' . $coupon['money'];
+                        break;
+                    case 2:
+                        // 指定分类可用
+                        $title = '￥' . $coupon['money'];
+                        $desc = $couponList[$k . '-1']['cate_name'] . '满' . $coupon['condition'] . '可用';
+                        break;
+                    case 4:
+                        // 指定商品折扣券
+                        $title = '满' . $coupon['condition'] . '打' . floatval($coupon['money']) . '折';
+                        $desc = '指定商品满' . $coupon['condition'] . '享受' . floatval($coupon['money']) . '折';
+                        break;
+                    case 5:
+                        // 兑换商品券
+                        $title = $coupon['name'];
+                        $desc = '购买任意商品可用';
+                        break;
+                    default:
+                        continue;
+                        break;
+                }
+                $couponList[$k . '-1']['title'] = $title;
+                $couponList[$k . '-1']['desc'] = $desc;
+                $couponList[$k . '-1']['target'] = $target;
             }
         }
         return json(['status' => 1, 'result' => array_values($couponList)]);
@@ -112,88 +147,93 @@ class Coupon extends Base
         $couponCate = Db::name('goods_coupon gc1')->join('goods_category gc2', 'gc1.goods_category_id = gc2.id')->where(['gc1.coupon_id' => ['in', $couponIds]])->getField('gc1.coupon_id, gc2.id cate_id, gc2.name cate_name', true);
         // 组合数据
         $couponList = [];
-        foreach ($couponData as $coupon) {
-            switch ($coupon['use_type']) {
-                case 0:
-                    // 全店通用
-                case 2:
-                    // 指定分类可用
-                    $couponList[] = [
-                        'id' => $coupon['id'],
-                        'coupon_id' => $coupon['cid'],
-                        'type_value' => $coupon['type_value'],
-                        'use_type' => $coupon['use_type'],
-                        'name' => $coupon['name'],
-                        'condition' => $coupon['condition'],
-                        'money' => $coupon['money'],
-                        'use_start_time' => $coupon['use_start_time'],
-                        'use_end_time' => $coupon['use_end_time'],
-                        'cate_id' => isset($couponCate[$coupon['cid']]) ? $couponCate[$coupon['cid']]['cate_id'] : '',
-                        'cate_name' => isset($couponCate[$coupon['cid']]) ? $couponCate[$coupon['cid']]['cate_name'] : '',
-                        'goods_id' => '',
-                        'goods_name' => '',
-                        'original_img' => '',
-                        'goods_list' => []
-                    ];
-                    break;
-            }
-        }
         foreach ($couponData as $k => $coupon) {
-            switch ($coupon['use_type']) {
-                case 1:
-                    // 指定商品可用
-                    foreach ($couponGoods as $goods) {
-                        if ($coupon['cid'] == $goods['coupon_id']) {
-                            $couponList[] = [
-                                'id' => $coupon['id'],
-                                'coupon_id' => $coupon['cid'],
-                                'type_value' => $coupon['type_value'],
-                                'use_type' => $coupon['use_type'],
-                                'name' => $coupon['name'],
-                                'condition' => $coupon['condition'],
-                                'money' => $coupon['money'],
-                                'use_start_time' => $coupon['use_start_time'],
-                                'use_end_time' => $coupon['use_end_time'],
-                                'cate_id' => '',
-                                'cate_name' => '',
-                                'goods_id' => $goods['goods_id'],
-                                'goods_name' => $goods['goods_name'],
-                                'original_img' => $goods['original_img'],
-                                'goods_list' => []
-                            ];
-                        }
+            if ($coupon['use_type'] == 1) {
+                // 指定商品可用
+                foreach ($couponGoods as $goods) {
+                    if ($coupon['cid'] == $goods['coupon_id']) {
+                        $couponList[] = [
+                            'id' => $coupon['id'],
+                            'coupon_id' => $coupon['cid'],
+                            'type_value' => $coupon['type_value'],
+                            'use_type' => $coupon['use_type'],
+                            'name' => $coupon['name'],
+                            'condition' => $coupon['condition'],
+                            'money' => $coupon['money'],
+                            'use_start_time' => date('Y.m.d', $coupon['use_start_time']),
+                            'use_end_time' => date('Y.m.d', $coupon['use_end_time']),
+                            'cate_id' => '',
+                            'cate_name' => '',
+                            'goods_id' => $goods['goods_id'],
+                            'goods_name' => $goods['goods_name'],
+                            'original_img' => $goods['original_img'],
+                            'goods_list' => [],
+                            'title' => '￥' . $coupon['money'],
+                            'desc' => '仅限' . $goods['goods_name'] . '可用',
+                        ];
                     }
-                    break;
-                case 4:
-                    // 指定商品折扣券
-                case 5:
-                    // 兑换商品券
-                    $couponList[$k . '_5'] = [
-                        'id' => $coupon['id'],
-                        'coupon_id' => $coupon['cid'],
-                        'type_value' => $coupon['type_value'],
-                        'use_type' => $coupon['use_type'],
-                        'name' => $coupon['name'],
-                        'condition' => $coupon['condition'],
-                        'money' => $coupon['money'],
-                        'use_start_time' => $coupon['use_start_time'],
-                        'use_end_time' => $coupon['use_end_time'],
-                        'cate_id' => isset($couponCate[$coupon['cid']]) ? $couponCate[$coupon['cid']]['cate_id'] : '',
-                        'cate_name' => isset($couponCate[$coupon['cid']]) ? $couponCate[$coupon['cid']]['cate_name'] : '',
-                        'goods_id' => '',
-                        'goods_name' => '',
-                        'original_img' => '',
-                        'goods_list' => []
-                    ];
-                    foreach ($couponGoods as $goods) {
-                        if ($coupon['cid'] == $goods['coupon_id']) {
-                            $couponList[$k . '_5']['goods_list'][] = [
-                                'goods_id' => $goods['goods_id'],
-                                'original_img' => $goods['original_img']
-                            ];
+                }
+            } else {
+                $couponList[$k . '-1'] = [
+                    'id' => $coupon['id'],
+                    'coupon_id' => $coupon['cid'],
+                    'type_value' => $coupon['type_value'],
+                    'use_type' => $coupon['use_type'],
+                    'name' => $coupon['name'],
+                    'condition' => $coupon['condition'],
+                    'money' => $coupon['money'],
+                    'use_start_time' => date('Y.m.d', $coupon['use_start_time']),
+                    'use_end_time' => date('Y.m.d', $coupon['use_end_time']),
+                    'cate_id' => isset($couponCate[$coupon['cid']]) ? $couponCate[$coupon['cid']]['cate_id'] : '',
+                    'cate_name' => isset($couponCate[$coupon['cid']]) ? $couponCate[$coupon['cid']]['cate_name'] : '',
+                    'goods_id' => '',
+                    'goods_name' => '',
+                    'original_img' => '',
+                    'goods_list' => []
+                ];
+                switch ($coupon['use_type']) {
+                    case 0:
+                        // 全店通用
+                        $title = '￥' . $coupon['money'];
+                        $desc = '全场商品满' . $coupon['condition'] . '减' . $coupon['money'];
+                        break;
+                    case 2:
+                        // 指定分类可用
+                        $title = '￥' . $coupon['money'];
+                        $desc = $couponList[$k]['cate_name'] . '满' . $coupon['condition'] . '可用';
+                        break;
+                    case 4:
+                        // 指定商品折扣券
+                        $title = '满' . $coupon['condition'] . '打' . floatval($coupon['money']) . '折';
+                        $desc = '指定商品满' . $coupon['condition'] . '享受' . floatval($coupon['money']) . '折';
+                        foreach ($couponGoods as $goods) {
+                            if ($coupon['cid'] == $goods['coupon_id']) {
+                                $couponList[$k . '-1']['goods_list'][] = [
+                                    'goods_id' => $goods['goods_id'],
+                                    'original_img' => $goods['original_img']
+                                ];
+                            }
                         }
-                    }
-                    break;
+                        break;
+                    case 5:
+                        // 兑换商品券
+                        $title = $coupon['name'];
+                        $desc = '购买任意商品可用';
+                        foreach ($couponGoods as $goods) {
+                            if ($coupon['cid'] == $goods['coupon_id']) {
+                                $couponList[$k . '-1']['goods_list'][] = [
+                                    'goods_id' => $goods['goods_id'],
+                                    'original_img' => $goods['original_img']
+                                ];
+                            }
+                        }
+                        break;
+                    default:
+                        continue;
+                        break;
+                }
+                $couponList[$k . '-1']['title'] = $title;
+                $couponList[$k . '-1']['desc'] = $desc;
             }
         }
         return json(['status' => 1, 'result' => array_values($couponList)]);

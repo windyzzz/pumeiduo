@@ -98,11 +98,14 @@ class Coupon extends Base
         $data = I('post.');
         $data['type'] = 1;
         if ($data['type_value'] && isset($data['type'])) {
-            $data['type_value'] = implode(',', $data['type_value']);
+            if (in_array('0', $data['type_value'])) {
+                $data['type_value'] = 0;
+            } else {
+                $data['type_value'] = implode(',', $data['type_value']);
+            }
         } else {
-            $data['type_value'] = '';
+            $data['type_value'] = 0;
         }
-
         $data['send_start_time'] = strtotime($data['send_start_time']);
         $data['send_end_time'] = strtotime($data['send_end_time']);
         $data['use_end_time'] = strtotime($data['use_end_time']);

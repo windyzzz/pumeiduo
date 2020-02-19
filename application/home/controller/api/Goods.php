@@ -437,15 +437,41 @@ class Goods extends Base
                     }
                 }
             }
-//            if ($this->user && !empty($goods['coupon'])) {
-//                // 查看用户是否拥有优惠券
-//                foreach ($goods['coupon'] as $k => $coupon) {
-//                    if (!Db::name('coupon_list')->where(['cid' => $coupon['coupon_id'], 'uid' => $this->user_id, 'status' => 0])->find()) {
-//                        unset($goods['coupon'][$k]);
-//                    }
-//                }
-//            }
             $goods['coupon'] = array_values($goods['coupon']);
+        }
+        foreach ($goods['coupon'] as $k => $coupon) {
+            switch ($coupon['use_type']) {
+                case 0:
+                    // 全店通用
+                    $title = '￥' . $coupon['money'];
+                    $desc = '全场商品满' . $coupon['condition'] . '减' . $coupon['money'];
+                    break;
+                case 1:
+                    // 指定商品
+                    $title = '￥' . $coupon['money'];
+                    $desc = '仅限' . $coupon['goods_name'] . '可用';
+                    break;
+                case 2:
+                    // 指定分类可用
+                    $title = '￥' . $coupon['money'];
+                    $desc = $coupon['cate_name'] . '满' . $coupon['condition'] . '可用';
+                    break;
+                case 4:
+                    // 指定商品折扣券
+                    $title = '满' . $coupon['condition'] . '打' . floatval($coupon['money']) . '折';
+                    $desc = '指定商品满' . $coupon['condition'] . '享受' . floatval($coupon['money']) . '折';
+                    break;
+                case 5:
+                    // 兑换商品券
+                    $title = $coupon['name'];
+                    $desc = '购买任意商品可用';
+                    break;
+                default:
+                    unset($goods['coupon'][$k]);
+                    continue;
+            }
+            $goods['coupon'][$k]['title'] = $title;
+            $goods['coupon'][$k]['desc'] = $desc;
         }
         unset($goods['zone']);
 

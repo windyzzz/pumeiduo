@@ -1676,8 +1676,8 @@ class Order extends Base
                 'condition' => $coupon['coupon']['condition'],
                 'use_type' => $coupon['coupon']['use_type'],
                 'is_usual' => $coupon['coupon']['is_usual'],
-                'use_start_time' => date('Y-m-d', $coupon['coupon']['use_start_time']),
-                'use_end_time' => date('Y-m-d', $coupon['coupon']['use_end_time']),
+                'use_start_time' => date('Y.m.d', $coupon['coupon']['use_start_time']),
+                'use_end_time' => date('Y.m.d', $coupon['coupon']['use_end_time']),
                 'is_selected' => 0
             ];
             if ($coupon['coupon']['id'] == $couponId) {
@@ -1706,8 +1706,8 @@ class Order extends Base
                 'money' => $coupon['coupon']['money'],
                 'condition' => $coupon['coupon']['condition'],
                 'use_type' => $coupon['coupon']['use_type'],
-                'use_start_time' => date('Y-m-d', $coupon['coupon']['use_start_time']),
-                'use_end_time' => date('Y-m-d', $coupon['coupon']['use_end_time']),
+                'use_start_time' => date('Y.m.d', $coupon['coupon']['use_start_time']),
+                'use_end_time' => date('Y.m.d', $coupon['coupon']['use_end_time']),
                 'is_selected' => $key == 0 ? 1 : 0
             ];
         }
@@ -1756,10 +1756,12 @@ class Order extends Base
             }
             if (!empty($exchangeList)) {
                 // 兑换券商品积分
-                foreach ($exchangeList as $coupon) {
+                foreach ($exchangeList as $key => $coupon) {
                     $integral = M('goods_coupon gc')->join('goods g', 'g.goods_id = gc.goods_id')
                         ->where(['gc.coupon_id' => $coupon['exchange_id']])->sum('g.give_integral');
                     $give_integral = bcadd($give_integral, $integral, 2);
+                    $exchangeList[$key]['title'] = $coupon['name'];
+                    $exchangeList[$key]['desc'] = '购买任意商品可用';
                 }
             }
 
@@ -1789,6 +1791,38 @@ class Order extends Base
                         continue;
                     }
                     unset($couponList[$key]['is_usual']);
+                    switch ($coupon['use_type']) {
+                        case 0:
+                            // 全店通用
+                            $title = '￥' . $coupon['money'];
+                            $desc = '全场商品满' . $coupon['condition'] . '减' . $coupon['money'];
+                            break;
+                        case 1:
+                            // 指定商品
+                            $title = '￥' . $coupon['money'];
+                            $desc = '指定商品满' . $coupon['condition'] . '减' . $coupon['money'];
+                            break;
+                        case 2:
+                            // 指定分类可用
+                            $title = '￥' . $coupon['money'];
+                            $desc = '指定分类满' . $coupon['condition'] . '减' . $coupon['money'];
+                            break;
+                        case 4:
+                            // 指定商品折扣券
+                            $title = '满' . $coupon['condition'] . '打' . floatval($coupon['money']) . '折';
+                            $desc = '指定商品满' . $coupon['condition'] . '享受' . floatval($coupon['money']) . '折';
+                            break;
+                        case 5:
+                            // 兑换商品券
+                            $title = $coupon['name'];
+                            $desc = '购买任意商品可用';
+                            break;
+                        default:
+                            unset($couponList[$key]);
+                            continue;
+                    }
+                    $couponList[$key]['title'] = $title;
+                    $couponList[$key]['desc'] = $desc;
                 }
             }
             // 商品列表 赠品列表 加价购列表
