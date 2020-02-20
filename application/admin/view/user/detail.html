@@ -188,6 +188,20 @@
             </dl>
             <dl class="row">
                 <dt class="tit">
+                    <label>注销</label>
+                </dt>
+                <dd class="opt">
+                    <div class="onoff">
+                        <label for="is_cancel1" class="cb-enable <if condition="$user['is_cancel'] eq 1">selected</if>"><span>开启</span></label>
+                        <label for="is_cancel2" class="cb-disable <if condition="$user['is_cancel'] eq 0">selected</if>"><span>关闭</span></label>
+                        <input id="is_cancel1" name="is_cancel" value="1" type="radio" <if condition="$user['is_cancel'] eq 1">checked</if>>
+                        <input id="is_cancel2" name="is_cancel" value="0" type="radio" <if condition="$user['is_cancel'] eq 0">checked</if>>
+                    </div>
+                    <p class="notic">如果注销会员，会员将不能操作资金。但会员能用原手机号注册一个新账号</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
                     <label>分销功能</label>
                 </dt>
                 <dd class="opt">
