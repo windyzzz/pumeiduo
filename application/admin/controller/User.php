@@ -268,7 +268,6 @@ class User extends Base
         if ($distribut_level) {
             $condition['distribut_level'] = $distribut_level;
         }
-
         //关系
         $field1 = I('field1', '');
         $value1 = I('value1', '');
@@ -276,7 +275,6 @@ class User extends Base
             $value1Info = get_user_info($value1, 0, '', 'user_id');
             $condition[$field1] = $value1Info ? $value1Info['user_id'] : -1;
         }
-
         //时间
         $field2 = I('field2', '');
         $from_time = I('from_time', '');
@@ -291,8 +289,22 @@ class User extends Base
             $ausers = M('users')->where([$field3 => $value3])->field('user_id')->select();
             $condition['user_id'] = $ausers ? ['in', get_arr_column($ausers, 'user_id')] : -1;
         }
-
-        $sort_order = I('order_by') . ' ' . I('sort');
+        //用户状态
+        $userStatus = I('user_status', 0);
+        switch ($userStatus) {
+            case 1:
+                $condition['is_lock'] = 1;
+                break;
+            case 2:
+                $condition['is_cancel'] = 1;
+                break;
+        }
+        //排序
+        if (I('order_by') == 'user_status') {
+            $sort_order = 'is_lock ' . I('sort') . ', is_cancel ' . I('sort');
+        } else {
+            $sort_order = I('order_by') . ' ' . I('sort');
+        }
 
 //        $model = M('users');
         $model = new Users();
@@ -442,7 +454,7 @@ class User extends Base
                 $payPoints = M('AccountLog')
                     ->where('user_id', $merge_uid)
                     ->where('pay_points', 'gt', 0)
-                    ->where('type', 'neq', 6)   // 不要注册积分
+                    ->where('type', 'neq', 6)// 不要注册积分
                     ->sum('pay_points');
                 if ($payPoints > 0) {
                     accountLog($uid, 0, $payPoints, '账号合并积分', 0, 0, '', 0, 11, false);

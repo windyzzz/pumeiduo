@@ -1,4 +1,4 @@
-<include file="public/layout" />
+<include file="public/layout"/>
 <script src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
 <body style="background-color: rgb(255, 255, 255); overflow: auto; cursor: default; -moz-user-select: inherit;">
 <div id="append_parent"></div>
@@ -13,7 +13,8 @@
         </div>
     </div>
     <!-- 操作说明 -->
-    <div id="explanation" class="explanation" style="color: rgb(44, 188, 163); background-color: rgb(237, 251, 248); width: 99%; height: 100%;">
+    <div id="explanation" class="explanation"
+         style="color: rgb(44, 188, 163); background-color: rgb(237, 251, 248); width: 99%; height: 100%;">
         <div id="checkZoom" class="title"><i class="fa fa-lightbulb-o"></i>
             <h4 title="提示相关设置操作时应注意的要点">操作提示</h4>
             <span title="收起提示" id="explanationZoom" style="display: block;"></span>
@@ -30,16 +31,14 @@
                 <h5>(共<span id="user_count"></span>条记录)</h5>
             </div>
             <div title="刷新数据" class="pReload"><i class="fa fa-refresh"></i></div>
-            <form class="navbar-form form-inline"  id="search-form2" onsubmit="return false">
+            <form class="navbar-form form-inline" id="search-form2" onsubmit="return false">
                 <input type="hidden" name="order_by" value="user_id">
                 <input type="hidden" name="sort" value="desc">
-                <input type="hidden" name="mobile" value="" id="input-mobile" />
-                <input type="hidden" name="email" value="" id="input-email" />
-                <input type="hidden" name="ids" value=""  />
+                <input type="hidden" name="mobile" value="" id="input-mobile"/>
+                <input type="hidden" name="email" value="" id="input-email"/>
+                <input type="hidden" name="ids" value=""/>
                 <!--分销时查看下级人数都有哪些-->
-
                 <div class="sDiv">
-
                     <div class="sDiv2" style="margin-right: 10px;">
                         <input type="button" class="btn" value="级别">
                         <select name="distribut_level" class="select">
@@ -49,14 +48,14 @@
                             </volist>
                         </select>
                     </div>
-
                     <div class="sDiv2" style="margin-right: 10px;">
                         <select name="field1" class="select">
                             <option value="first_leader">一级推荐人</option>
                             <option value="second_leader">二级推荐人</option>
                             <option value="third_leader">三级推荐人</option>
                         </select>
-                        <input type="text" id="value1" name="value1" style="width:150px;" class="qsbox" placeholder="用户id">
+                        <input type="text" id="value1" name="value1" style="width:150px;" class="qsbox"
+                               placeholder="用户id">
                     </div>
                     <div class="sDiv2" style="margin-right: 10px;">
                         <select name="field2">
@@ -65,25 +64,34 @@
                         </select>
                     </div>
                     <div class="sDiv2" style="margin-right: 10px;">
-                        <input type="text" size="30" id="from_time" name="from_time" value="{$from_time}" placeholder="起始时间" class="qsbox">
+                        <input type="text" size="30" id="from_time" name="from_time" value="{$from_time}"
+                               placeholder="起始时间" class="qsbox">
                     </div>
                     <div class="sDiv2" style="margin-right: 10px;">
-                        <input type="text" size="30" id="to_time" name="to_time" value="{$to_time}" placeholder="截止时间" class="qsbox">
+                        <input type="text" size="30" id="to_time" name="to_time" value="{$to_time}" placeholder="截止时间"
+                               class="qsbox">
                     </div>
-
                     <div class="sDiv2" style="margin-right: 10px;">
                         <select name="field3" class="select">
                             <option value="user_id">ID</option>
                             <option value="user_name">用户名</option>
                             <option value="id_card">身份证</option>
                             <option value="mobile">手机号</option>
-
                         </select>
                         <input type="text" id="value3" name="value3" style="width:150px;" class="qsbox" placeholder="">
                     </div>
-
                     <div class="sDiv2">
                         <input type="submit" class="btn" onclick="ajax_get_table('search-form2',1)" value="搜索">
+                    </div>
+                </div>
+                <div class="sDiv">
+                    <div class="sDiv2" style="margin-right: 10px; margin-top: 10px;">
+                        <input type="button" class="btn" value="状态">
+                        <select name="user_status" class="select">
+                            <option value="0">用户状态</option>
+                            <option value="1">已冻结</option>
+                            <option value="2">已注销</option>
+                        </select>
                     </div>
                 </div>
             </form>
@@ -138,10 +146,10 @@
                         <th align="center" abbr="reg_time" axis="col6" class="">
                             <div style="text-align: center; width: 120px;" class="">注册日期</div>
                         </th>
-                        <th align="center" abbr="reg_time" axis="col6" class="">
+                        <th align="center" abbr="bind_time" axis="col6" class="">
                             <div style="text-align: center; width: 120px;" class="">绑定日期</div>
                         </th>
-                        <th align="center" abbr="reg_time" axis="col6" class="">
+                        <th align="center" abbr="user_status" axis="col6" class="">
                             <div style="text-align: center; width: 80px;" class="">用户状态</div>
                         </th>
                         <th align="center" axis="col1" class="handle">
@@ -157,7 +165,6 @@
         </div>
         <div class="tDiv">
             <div class="tDiv2">
-
                 <div class="fbutton">
                     <a href="javascript:exportUser()">
                         <div class="add" title="添加会员">
@@ -180,7 +187,7 @@
     </div>
 </div>
 <script>
-    $(document).ready(function(){
+    $(document).ready(function () {
         $('#from_time').layDate();
         $('#to_time').layDate();
         // 点击刷新数据
@@ -188,63 +195,63 @@
         var on_sclick = 0;
         $('.hDivBox > table>thead>tr>th').hover(
             function () {
-                if(typeof($(this).attr('abbr')) == "undefined"){
+                if (typeof ($(this).attr('abbr')) == "undefined") {
                     return false;
                 }
                 $(this).addClass('thOver');
-                if($(this).hasClass('sorted')){
-                    if(ssort == 'sdesc'){
+                if ($(this).hasClass('sorted')) {
+                    if (ssort == 'sdesc') {
                         $(this).find('div').removeClass('sdesc');
                         $(this).find('div').addClass('sasc');
-                    }else{
+                    } else {
                         $(this).find('div').removeClass('sasc');
                         $(this).find('div').addClass('sdesc');
                     }
-                }else{
+                } else {
                     $(this).find('div').addClass(ssort);
                 }
             }, function () {
-                    if(typeof($(this).attr('abbr')) == "undefined"){
-                        return false;
-                    }
-                    if(on_sclick == 0){
-                        if($(this).hasClass('sorted')){
-                            if(ssort == 'sdesc'){
-                                $(this).find('div').removeClass('sasc');
-                                $(this).find('div').addClass('sdesc');
-                            }else{
-                                $(this).find('div').removeClass('sdesc');
-                                $(this).find('div').addClass('sasc');
-                            }
-                        }else{
-                            $(this).find('div').removeClass(ssort);
+                if (typeof ($(this).attr('abbr')) == "undefined") {
+                    return false;
+                }
+                if (on_sclick == 0) {
+                    if ($(this).hasClass('sorted')) {
+                        if (ssort == 'sdesc') {
+                            $(this).find('div').removeClass('sasc');
+                            $(this).find('div').addClass('sdesc');
+                        } else {
+                            $(this).find('div').removeClass('sdesc');
+                            $(this).find('div').addClass('sasc');
                         }
+                    } else {
+                        $(this).find('div').removeClass(ssort);
                     }
-                    $(this).removeClass("thOver");
-                    on_sclick = 0;
+                }
+                $(this).removeClass("thOver");
+                on_sclick = 0;
             }
         );
-        $('.hDivBox > table>thead>tr>th').click(function(){
-            if(typeof($(this).attr('abbr')) == "undefined"){
+        $('.hDivBox > table>thead>tr>th').click(function () {
+            if (typeof ($(this).attr('abbr')) == "undefined") {
                 return false;
             }
-            if($(this).hasClass('sorted')){
+            if ($(this).hasClass('sorted')) {
                 $(this).find('div').removeClass(ssort);
-                if(ssort == 'sdesc'){
+                if (ssort == 'sdesc') {
                     ssort = 'sasc';
-                }else{
+                } else {
                     ssort = 'sdesc';
                 }
                 $(this).find('div').addClass(ssort);
                 on_sclick = 1;
-            }else{
+            } else {
                 $('.hDivBox > table>thead>tr>th').removeClass('sorted');
                 $('.hDivBox > table>thead>tr>th').find('div').removeClass(ssort);
                 $(this).addClass('sorted');
                 $(this).find('div').addClass(ssort);
                 var hDivBox_th_index = $(this).index();
-                var flexigrid_tr =   $('#flexigrid > table>tbody>tr')
-                flexigrid_tr.each(function(){
+                var flexigrid_tr = $('#flexigrid > table>tbody>tr')
+                flexigrid_tr.each(function () {
                     $(this).find('td').removeClass('sorted');
                     $(this).children('td').eq(hDivBox_th_index).addClass('sorted');
                 });
@@ -252,46 +259,46 @@
             sort($(this).attr('abbr'));
         });
 
-        $('.fa-refresh').click(function(){
+        $('.fa-refresh').click(function () {
             location.href = location.href;
         });
-        ajax_get_table('search-form2',1);
+        ajax_get_table('search-form2', 1);
 
     });
     //选中全部
-    $('.hDivBox .sign').click(function(){
+    $('.hDivBox .sign').click(function () {
         var sign = $('#flexigrid > table>tbody>tr');
-       if($(this).parent().hasClass('trSelected')){
-           sign.each(function(){
-               $(this).removeClass('trSelected');
-           });
-           $(this).parent().removeClass('trSelected');
-       }else{
-           sign.each(function(){
-               $(this).addClass('trSelected');
-           });
-           $(this).parent().addClass('trSelected');
-       }
+        if ($(this).parent().hasClass('trSelected')) {
+            sign.each(function () {
+                $(this).removeClass('trSelected');
+            });
+            $(this).parent().removeClass('trSelected');
+        } else {
+            sign.each(function () {
+                $(this).addClass('trSelected');
+            });
+            $(this).parent().addClass('trSelected');
+        }
     })
 
     // ajax 抓取页面
-    function ajax_get_table(tab,page){
+    function ajax_get_table(tab, page) {
         var search_key = $.trim($('#search_key').val());
-        if(search_key.length > 0){
-            if(checkEmail(search_key)){
+        if (search_key.length > 0) {
+            if (checkEmail(search_key)) {
                 $('#input-email').val(search_key);
-            }else if(checkMobile(search_key)){
+            } else if (checkMobile(search_key)) {
                 $('#input-mobile').val(search_key);
-            }else{
+            } else {
                 layer.alert('请输入正确的邮箱或者手机号码', {icon: 2});
             }
         }
         cur_page = page; //当前页面 保存为全局变量
         $.ajax({
-            type : "POST",
-            url:"/index.php/Admin/user/ajaxindex/p/"+page,//+tab,
-            data : $('#'+tab).serialize(),// 你的formid
-            success: function(data){
+            type: "POST",
+            url: "/index.php/Admin/user/ajaxindex/p/" + page,//+tab,
+            data: $('#' + tab).serialize(),// 你的formid
+            success: function (data) {
                 $("#ajax_return").html('');
                 $("#ajax_return").append(data);
             }
@@ -299,16 +306,15 @@
     }
 
     //发送邮件
-    function send_mail()
-    {
+    function send_mail() {
         var obj = $('.trSelected');
         var url = "{:U('Admin/User/sendMail')}";
-        if(obj.length > 0){
+        if (obj.length > 0) {
             var check_val = [];
-            obj.each(function(){
+            obj.each(function () {
                 check_val.push($(this).attr('data-id'));
             });
-            url += "?user_id_array="+check_val;
+            url += "?user_id_array=" + check_val;
             layer.open({
                 type: 2,
                 title: '发送邮箱',
@@ -317,22 +323,21 @@
                 area: ['580px', '480px'],
                 content: url
             });
-        }else{
-            layer.msg('请选择会员',{icon:2});
+        } else {
+            layer.msg('请选择会员', {icon: 2});
         }
     }
 
     //发送站内信
-    function send_message()
-    {
+    function send_message() {
         var obj = $('.trSelected');
         var url = "{:U('Admin/User/sendMessage')}";
-        if(obj.length > 0){
+        if (obj.length > 0) {
             var check_val = [];
-            obj.each(function(){
+            obj.each(function () {
                 check_val.push($(this).attr('data-id'));
             });
-            url += "?user_id_array="+check_val;
+            url += "?user_id_array=" + check_val;
             layer.open({
                 type: 2,
                 title: '站内信',
@@ -341,43 +346,42 @@
                 area: ['580px', '480px'],
                 content: url
             });
-        }else{
-            layer.msg('请选择会员',{icon:2});
+        } else {
+            layer.msg('请选择会员', {icon: 2});
         }
 
     }
 
     // 点击排序
-    function sort(field)
-    {
+    function sort(field) {
         $("input[name='order_by']").val(field);
         var v = $("input[name='sort']").val() == 'desc' ? 'asc' : 'desc';
         $("input[name='sort']").val(v);
-        ajax_get_table('search-form2',cur_page);
+        ajax_get_table('search-form2', cur_page);
     }
+
     /**
      * 回调函数
      */
     function call_back(v) {
         layer.closeAll();
         if (v == 1) {
-            layer.msg('发送成功',{icon:1});
+            layer.msg('发送成功', {icon: 1});
         } else {
-            layer.msg('发送失败',{icon:2});
+            layer.msg('发送失败', {icon: 2});
         }
     }
 
-    function exportUser()
-    {
+    function exportUser() {
         var selected_ids = '';
-        $('.trSelected' , '#flexigrid').each(function(i){
-            selected_ids += $(this).data('id')+',';
+        $('.trSelected', '#flexigrid').each(function (i) {
+            selected_ids += $(this).data('id') + ',';
         });
-        if(selected_ids != ''){
-            $('input[name="ids"]').val(selected_ids.substring(0,selected_ids.length-1));
+        if (selected_ids != '') {
+            $('input[name="ids"]').val(selected_ids.substring(0, selected_ids.length - 1));
         }
-        var data =  $('#search-form2').serialize();
-        var action = "{:U('admin/User/export_user')}" + '?' +data;
+        var data = $('#search-form2').serialize();
+        var action = "{:U('admin/User/export_user')}" + '?' + data;
         // $('#search-form2').submit();
         window.location = action;
     }
