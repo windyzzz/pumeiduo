@@ -18,6 +18,7 @@ class Coupon extends Base
         $where = [
             'send_start_time' => array('elt', NOW_TIME),
             'send_end_time' => array('egt', NOW_TIME),
+            'use_end_time' => array('egt', NOW_TIME),
             'status' => 1
         ];
         $field = 'id, name, use_type, type_value, condition, money, createnum create_num, send_num, use_start_time, use_end_time';

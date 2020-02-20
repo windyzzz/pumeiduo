@@ -400,14 +400,24 @@ class TaskLogic
             $order_id = $this->order['order_id'];
             // 查看订单商品
             $goodsIds = Db::name('order_goods')->where(['order_id' => $order_id])->getField('goods_id', true);
-            $goods = Db::name('goods')->where(['goods_id' => ['in', $goodsIds]])->getField('zone', true);
-            foreach ($goods as $value) {
-                if ($value == 3) {
-                    $isVip = 1;
-                    break;
+            $goodsInfo = Db::name('goods')->where(['goods_id' => ['in', $goodsIds]])->field('zone, distribut_id')->select();
+            foreach ($goodsInfo as $value) {
+                if ($value['zone'] == 3 && $value['distribut_id'] > 0) {
+                    $level[] = $value['distribut_id'];
                 }
             }
-            if (isset($isVip) && $isVip == 1) {
+            if (!empty($level)) {
+                $level_list = M('distribut_level')->where('level_id', 'in', $level)->order('order_money')->select();
+                $level = end($level_list);
+                $userInfo = M('users')->master()->field('user_id,distribut_level,first_leader')->where('user_id', $this->order['user_id'])->find() ?: [];
+                if (!empty($userInfo) && $userInfo['first_leader'] > 0) {
+                    $this->user = $userInfo;
+                    $this->distribut_id = $level['level_id'];
+                    $this->doInviteAfter();
+                }
+                return;
+
+
                 // 订单中含有VIP申请套餐
                 $userInviteUid = Db::name('users')->where(['user_id' => $this->order['user_id']])->value('invite_uid');
                 if ($userInviteUid != 0) {
