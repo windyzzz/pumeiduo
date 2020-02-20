@@ -339,7 +339,7 @@ class ActivityLogic extends Model
                 //来晚了，优惠券被抢完了
                 $return = ['status' => 0, 'msg' => '来晚了，优惠券被抢完了', 'return_url' => $_SERVER['HTTP_REFERER']];
             } else {
-                if (M('coupon_list')->where(['cid' => $id, 'uid' => $user_id, 'status' => 0])->find()) {
+                if ($coupon_info['nature'] == 1 && M('coupon_list')->where(['cid' => $id, 'uid' => $user_id, 'status' => 0])->find()) {
                     //已经领取过
                     $return = ['status' => 2, 'msg' => '您已领取过该优惠券', 'return_url' => $_SERVER['HTTP_REFERER']];
                 } else {
@@ -352,7 +352,6 @@ class ActivityLogic extends Model
         } else {
             $return = ['status' => 0, 'msg' => '请先登录', 'return_url' => U('User/login')];
         }
-
         return $return;
     }
 

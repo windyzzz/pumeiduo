@@ -19,7 +19,8 @@ class Coupon extends Base
             'send_start_time' => array('elt', NOW_TIME),
             'send_end_time' => array('egt', NOW_TIME),
             'use_end_time' => array('egt', NOW_TIME),
-            'status' => 1
+            'status' => 1,
+            'nature' => 1
         ];
         $field = 'id, name, use_type, type_value, condition, money, createnum create_num, send_num, use_start_time, use_end_time';
         $couponData = M('coupon')->field($field)->where($where)->order('id desc')->select();
@@ -264,10 +265,12 @@ class Coupon extends Base
                 return json(['status' => 0, 'msg' => '该券已领完']);
             }
         }
-        // 检查用户是否已经领取
-        $is_has_coupon = M('coupon_list')->where(array('cid' => $couponId, 'uid' => $this->user_id))->field('id')->find();
-        if ($is_has_coupon) {
-            return json(['status' => 0, 'msg' => '您已经领取过了']);
+        if ($coupon['nature'] == 1) {
+            // 检查用户是否已经领取
+            $is_has_coupon = M('coupon_list')->where(array('cid' => $couponId, 'uid' => $this->user_id))->field('id')->find();
+            if ($is_has_coupon) {
+                return json(['status' => 0, 'msg' => '您已经领取过了']);
+            }
         }
         $add = [
             'cid' => $coupon['id'],

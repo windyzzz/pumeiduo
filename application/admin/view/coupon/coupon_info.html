@@ -44,6 +44,22 @@
         <div class="ncap-form-default">
             <dl class="row">
                 <dt class="tit">
+                    <label><em>*</em>优惠券种类</label>
+                </dt>
+                <dd class="opt">
+                    <select name="nature">
+                        <option value="1"
+                        <if condition="$coupon[nature] eq 1">selected</if>
+                        >普通领取（或发放）</option>
+                        <option value="2"
+                        <if condition="$coupon[nature] eq 2">selected</if>
+                        >任务赠送</option>
+                    </select>
+                    <p class="notic">任务类型优惠券只能通过任务方式获取</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
                     <label><em>*</em>优惠券名称</label>
                 </dt>
                 <dd class="opt">

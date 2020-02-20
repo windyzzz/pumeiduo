@@ -34,6 +34,8 @@ class UpdateCoupon extends Migrator
                 'comment' => '使用范围：0全店通用 1指定商品可用 2指定分类可用 4折扣商品 5兑换商品', 'after' => 'type_value'])
             ->addColumn('is_usual', 'integer', ['limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'default' => 0,
                 'comment' => '是否可叠加优惠（不与商品优惠促销、订单优惠促销冲突）', 'after' => 'status'])
+            ->addColumn('nature', 'integer', ['limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'default' => 1,
+                'comment' => '优惠券种类：1普通 2任务', 'after' => 'id'])
             ->update();
     }
 }
