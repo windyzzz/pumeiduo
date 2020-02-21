@@ -677,6 +677,7 @@ class User extends Base
 
             $data = [];
             $data['invite_uid'] = $data['first_leader'] = $id;
+            $data['invite_time'] = time();
             $data['second_leader'] = $userInfo['first_leader'];
             $data['third_leader'] = $userInfo['second_leader'];
 
@@ -692,10 +693,10 @@ class User extends Base
             accountLog($id, 0, $invite_integral, '邀请用户奖励积分', 0, 0, '', 0, 7, false);
 
             // 邀请任务
-            $TaskLogic = new \app\common\logic\TaskLogic(2);
-            $TaskLogic->setUser($user);
-            $TaskLogic->setDistributId($user);
-            $TaskLogic->doInviteAfter();
+//            $TaskLogic = new \app\common\logic\TaskLogic(2);
+//            $TaskLogic->setUser($user);
+//            $TaskLogic->setDistributId($user);
+//            $TaskLogic->doInviteAfter();
 
             return json(['status' => 1, 'msg' => 'success', 'result' => null]);
         }
@@ -2265,7 +2266,7 @@ class User extends Base
             // 用户信息
             $user = M('users')->where(['user_id' => $this->user_id])
                 ->field('paypwd, user_money, bank_name, bank_code, bank_region, bank_branch, bank_card, real_name, id_cart')->find();
-            if (empty($user['bank_card'])) {
+            if (empty($user['bank_card']) || empty($user['bank_region']) || empty($user['bank_branch'])) {
                 return json(['status' => 0, 'msg' => '用户银行信息不完善']);
             }
             if (systemEncrypt($payPwd) != $user['paypwd']) {
@@ -3164,6 +3165,7 @@ class User extends Base
             'bank_name' => '',
             'bank_icon' => '',
             'account' => '',
+            'hide_account' => '',
             'money_need' => tpCache('basic.need') ?? '0',
             'money_min' => tpCache('basic.min') ?? '0',
             'hand_fee' => '￥' . tpCache('basic.hand_fee') ?? '0'
@@ -3177,15 +3179,17 @@ class User extends Base
                 'bank_name' => $bankInfo['name_cn'],
                 'bank_icon' => $bankInfo['icon'],
                 'account' => $userBankInfo['bank_card'],
+                'hide_account' => strlen($userBankInfo['bank_card']) > 4 ? hideStr($userBankInfo['bank_card'], 0, 4, 4) : $userBankInfo['bank_card'],
                 'money_need' => tpCache('basic.need') ?? '0',
                 'money_min' => tpCache('basic.min') ?? '0',
                 'hand_fee' => '￥' . tpCache('basic.hand_fee')
             ];
         } elseif (!empty($userBankInfo['bank_card'])) {
             // 银行
-            if (empty($userBankInfo['bank_region']) || empty($userBankInfo['bank_branch'])) {
+            if (empty($userBankInfo['bank_code']) || empty($userBankInfo['bank_region']) || empty($userBankInfo['bank_branch'])) {
                 // 之前设置不完善的数据
-
+                $return['account'] = $userBankInfo['bank_card'];
+                $return['hide_account'] = strlen($userBankInfo['bank_card']) > 4 ? hideStr($userBankInfo['bank_card'], 0, 4, 4) : $userBankInfo['bank_card'];
             } else {
                 // 后来补充完善的数据
                 $bankInfo = M('bank')->where(['name_cn' => $userBankInfo['bank_name']])->field('id, name_cn, icon')->find();
@@ -3194,6 +3198,7 @@ class User extends Base
                     'bank_name' => $bankInfo['name_cn'],
                     'bank_icon' => $bankInfo['icon'],
                     'account' => $userBankInfo['bank_card'],
+                    'hide_account' => strlen($userBankInfo['bank_card']) > 4 ? hideStr($userBankInfo['bank_card'], 0, 4, 4) : $userBankInfo['bank_card'],
                     'money_need' => tpCache('basic.need') ?? '0',
                     'money_min' => tpCache('basic.min') ?? '0',
                     'hand_fee' => '￥' . tpCache('basic.hand_fee')
@@ -3250,6 +3255,8 @@ class User extends Base
         }
         // 用户银行卡信息
         $userBankInfo = M('users')->where(['user_id' => $this->user_id])->field('id_cart id_card, real_name, bank_name, bank_code, bank_region, bank_branch, bank_card account')->find();
+        $userBankInfo['hide_account'] = strlen($userBankInfo['account']) > 4 ? hideStr($userBankInfo['account'], 0, 4, 4) : $userBankInfo['account'];
+        $userBankInfo['hide_id_card'] = strlen($userBankInfo['id_card']) > 4 ? hideStr($userBankInfo['id_card'], 0, 4, 4) : $userBankInfo['id_card'];
         if ($userBankInfo['bank_code'] == 'Alipay') {
             // 支付宝
             $bankInfo = M('bank')->where(['name_en' => $userBankInfo['bank_code']])->field('id, name_cn, name_en')->find();
@@ -3277,6 +3284,7 @@ class User extends Base
         } else {
             $userBankInfo = [
                 'id_card' => '',
+                'hide_id_card' => '',
                 'real_name' => '',
                 'bank_name' => '',
                 'bank_region' => '',
@@ -3284,6 +3292,7 @@ class User extends Base
                 'bank_id' => '',
                 'bank_code' => '',
                 'account' => '',
+                'hide_account' => '',
             ];
         }
         return json(['status' => 1, 'result' => $userBankInfo]);

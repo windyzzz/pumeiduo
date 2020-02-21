@@ -927,13 +927,13 @@ function mobile_hide($mobile)
 /**
  * BMP 创建函数.
  *
- * @author simon
- *
  * @param string $filename path of bmp file
  *
+ * @return resource of GD
  * @example who use,who knows
  *
- * @return resource of GD
+ * @author simon
+ *
  */
 function imagecreatefrombmp($filename)
 {
@@ -1034,17 +1034,17 @@ function imagecreatefrombmp($filename)
 /**
  * 创建bmp格式图片.
  *
- * @author: legend(legendsky@hotmail.com)
- * @link: http://www.ugia.cn/?p=96
- * @description: create Bitmap-File with GD library
- * @version: 0.1
- *
  * @param resource $im 图像资源
  * @param string $filename 如果要另存为文件，请指定文件名，为空则直接在浏览器输出
  * @param int $bit 图像质量(1、4、8、16、24、32位)
  * @param int $compression 压缩方式，0为不压缩，1使用RLE8压缩算法进行压缩
  *
  * @return int
+ * @version: 0.1
+ *
+ * @author: legend(legendsky@hotmail.com)
+ * @link: http://www.ugia.cn/?p=96
+ * @description: create Bitmap-File with GD library
  */
 function imagebmp(&$im, $filename = '', $bit = 8, $compression = 0)
 {
@@ -1556,4 +1556,69 @@ function differTimeStr($time1, $time2, $seconds = false)
         return $day . '天' . $hour . '小时' . $minute . '分' . $second . '秒';
     }
     return $day . '天' . $hour . '小时' . $minute . '分';
+}
+
+/**
+ * +----------------------------------------------------------
+ * 将一个字符串部分字符用*替代隐藏
+ * +----------------------------------------------------------
+ * @param string $string 待转换的字符串
+ * @param int $bengin 起始位置，从0开始计数，当$type=4时，表示左侧保留长度
+ * @param int $len 需要转换成*的字符个数，当$type=4时，表示右侧保留长度
+ * @param int $type 转换类型：0，从左向右隐藏；1，从右向左隐藏；2，从指定字符位置分割前由右向左隐藏；3，从指定字符位置分割后由左向右隐藏；4，保留首末指定字符串
+ * @param string $glue 分割符
+ * +----------------------------------------------------------
+ * @return string 处理后的字符串
+ * +----------------------------------------------------------
+ */
+function hideStr($string, $bengin = 0, $len = 4, $type = 0, $glue = "@")
+{
+    if (empty($string))
+        return false;
+    $array = array();
+    if ($type == 0 || $type == 1 || $type == 4) {
+        $strlen = $length = mb_strlen($string);
+        while ($strlen) {
+            $array[] = mb_substr($string, 0, 1, "utf8");
+            $string = mb_substr($string, 1, $strlen, "utf8");
+            $strlen = mb_strlen($string);
+        }
+    }
+    if ($type == 0) {
+        for ($i = $bengin; $i < ($bengin + $len); $i++) {
+            if (isset($array[$i]))
+                $array[$i] = "*";
+        }
+        $string = implode("", $array);
+    } else if ($type == 1) {
+        $array = array_reverse($array);
+        for ($i = $bengin; $i < ($bengin + $len); $i++) {
+            if (isset($array[$i]))
+                $array[$i] = "*";
+        }
+        $string = implode("", array_reverse($array));
+    } else if ($type == 2) {
+        $array = explode($glue, $string);
+        $array[0] = hideStr($array[0], $bengin, $len, 1);
+        $string = implode($glue, $array);
+    } else if ($type == 3) {
+        $array = explode($glue, $string);
+        $array[1] = hideStr($array[1], $bengin, $len, 0);
+        $string = implode($glue, $array);
+    } else if ($type == 4) {
+        $left = $bengin;
+        $right = $len;
+        $tem = array();
+        for ($i = 0; $i < ($length - $right); $i++) {
+            if (isset($array[$i]))
+                $tem[] = $i >= $left ? "*" : $array[$i];
+        }
+        $array = array_chunk(array_reverse($array), $right);
+        $array = array_reverse($array[0]);
+        for ($i = 0; $i < $right; $i++) {
+            $tem[] = $array[$i];
+        }
+        $string = implode("", $tem);
+    }
+    return $string;
 }

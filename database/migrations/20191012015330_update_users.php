@@ -47,5 +47,9 @@ class UpdateUsers extends Migrator
         $this->table('users')
             ->addColumn('is_cancel', 'integer', ['limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'default' => 0, 'comment' => '是否已注销 1是 0否'])
             ->update();
+
+        $this->table('users')
+            ->addColumn('invite_time', 'integer', ['default' => 0, 'comment' => '设置邀请人时间', 'after' => 'invite_uid'])
+            ->update();
     }
 }

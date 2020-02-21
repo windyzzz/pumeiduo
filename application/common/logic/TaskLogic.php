@@ -320,7 +320,6 @@ class TaskLogic
                         ->where('created_at', 'gt', $this->task['start_time'])
                         ->where('created_at', 'lt', $this->task['end_time'])
                         ->find();
-
                     $status = 0;
                     if (!$user_task) {
                         // 如果奖励周期是空的话（只奖励一次），则跳过新增
@@ -335,7 +334,6 @@ class TaskLogic
                                 continue;
                             }
                         }
-
                         if (1 == $tv['invite_num']) {
                             $status = 1;
                         }
