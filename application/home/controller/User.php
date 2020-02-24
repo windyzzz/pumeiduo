@@ -427,21 +427,21 @@ class User
             $data['invite_uid'] = $data['first_leader'] = $id;
             $data['second_leader'] = $userInfo['first_leader'];
             $data['third_leader'] = $userInfo['second_leader'];
+            M('users')->where(['user_id' => $this->user_id])->save($data);
 
             M('users')->where('first_leader', $this->user_id)->update(['second_leader' => $data['first_leader'], 'third_leader' => $data['second_leader']]);
             M('users')->where('second_leader', $this->user_id)->update(['third_leader' => $data['first_leader']]);
-            M('users')->where(['user_id' => $this->user_id])->save($data);
 
             // 邀请送积分
             $invite_integral = tpCache('basic.invite_integral');
             accountLog($id, 0, $invite_integral, '邀请用户奖励积分', 0, 0, '', 0, 7, false);
 
             // 邀请任务
-            $user = M('users')->find($this->user_id);
-            $TaskLogic = new \app\common\logic\TaskLogic(2);
-            $TaskLogic->setUser($user);
-            $TaskLogic->setDistributId($user);
-            $TaskLogic->doInviteAfter();
+//            $user = M('users')->find($this->user_id);
+//            $TaskLogic = new \app\common\logic\TaskLogic(2);
+//            $TaskLogic->setUser($user);
+//            $TaskLogic->setDistributId($user);
+//            $TaskLogic->doInviteAfter();
 
             return json(['status' => 1, 'msg' => 'success', 'result' => null]);
         }

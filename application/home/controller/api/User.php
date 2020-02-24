@@ -2777,9 +2777,9 @@ class User extends Base
                     'user_reward_times' => 0
                 ];
                 // 查看用户完成任务次数
-                $userTaskCount = M('user_task')
-                    ->where(['user_id' => $this->user_id, 'task_id' => $task['id'], 'task_reward_id' => $reward['reward_id']])
-                    ->value('finish_num');
+                $userTaskCount = M('task_log')
+                    ->where(['user_id' => $this->user_id, 'task_id' => $task['id'], 'task_reward_id' => $reward['reward_id'], 'finished_at' => 0])
+                    ->count('id');
                 $times = $userTaskCount >= $taskRewardData[$k]['reward_set'] ? bcdiv($userTaskCount, $taskRewardData[$k]['reward_set']) : 0;
                 $taskRewardData[$k]['user_reward_set'] = $userTaskCount;
                 $taskRewardData[$k]['reward_times'] = $times;
