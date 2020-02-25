@@ -1,21 +1,9 @@
 <?php
 
-/*
- * This file is part of the J project.
- *
- * (c) J <775893055@qq.com>
- *
- * This source file is subject to the MIT license that is bundled
- * with this source code in the file LICENSE.
- */
-
 namespace app\common\logic;
 
 require_once './vendor/jpush/jpush/autoload.php';
 
-/**
- * Class orderLogic.
- */
 class PushLogic
 {
     private $jpush = null;
@@ -28,16 +16,41 @@ class PushLogic
         }
         if ($c['jpush_app_key'] && $c['jpush_master_secret']) {
             $this->jpush = new \JPush\Client($c['jpush_app_key'], $c['jpush_master_secret']);
-            //$this->jpush = new \JPush\Client('e3e4c1a919f5781357e7f693', 'c9bfba5714254d6d41d677aa');
         }
     }
 
     /**
-     * 推送消息.
-     *
-     * @param array $data     发送的数据
-     * @param type  $all      1向所有用户发送，0,向指定用户发送
-     * @param array $push_ids 推送id
+     * 用户绑定push_id
+     * @param $userId
+     * @param $pushId
+     * @return bool
+     */
+    public function bindPushId($userId, $pushId)
+    {
+        // 查找push_id是否已绑定
+        $user = M('users')->where(['push_id' => $pushId])->find();
+        if ($user) {
+            if ($userId == $user['user_id']) {
+                // 绑定用户和当前用户相同
+                return true;
+            } else {
+                // 更新这个push_id的绑定用户
+                M('users')->where(['user_id' => $userId])->update(['push_id' => $pushId]);
+                // 清除原本用户push_id
+                M('users')->where(['user_id' => $user['user_id']])->update(['push_id' => 0]);
+            }
+        } else {
+            M('users')->where(['user_id' => $userId])->update(['push_id' => $pushId]);
+        }
+        return true;
+    }
+
+    /**
+     * 推送消息
+     * @param array $data 发送的数据
+     * @param int $all 1向所有用户发送 0向指定用户发送
+     * @param array $push_ids
+     * @return array
      */
     public function push($data, $all = 0, $push_ids = [])
     {
@@ -47,40 +60,34 @@ class PushLogic
                     unset($push_ids[$k]);
                 }
             }
-            if (!$push_ids) {
-                return ['status' => 1, 'msg' => '用户的推送ID无效，但不影响'];
+            if (empty($push_ids)) {
+                return ['status' => 0, 'msg' => '用户的推送ID无效'];
             }
         }
-
         if (!$this->jpush) {
-            return ['status' => -1, 'msg' => '推送初始化不成功！'];
+            return ['status' => 0, 'msg' => '推送初始化失败'];
         } elseif (!$all && !$push_ids) {
-            return ['status' => -1, 'msg' => '个体推送时没有指定用户！'];
+            return ['status' => 0, 'msg' => '个体推送时没有指定用户！'];
         }
-
         $data = json_encode($data, JSON_UNESCAPED_UNICODE);
-        $push = $this->jpush->push()
-                ->setPlatform('all')
-                ->message($data);
+        $push = $this->jpush->push()->setPlatform('all')->message($data);
         if ($all) {
             $push = $push->addAllAudience();
         } else {
             $push = $push->addRegistrationId($push_ids);
         }
-
         try {
             $response = $push->send();
             if (200 != $response['http_code']) {
                 return ['status' => -1, 'msg' => "http错误码:{$response['http_code']}", 'result' => $response];
             }
-
             return ['status' => 1, 'msg' => '已推送', 'result' => $response];
         } catch (\JPush\Exceptions\APIConnectionException $e) {
-            return ['status' => -1, 'msg' => $e->getMessage()];
+            return ['status' => 0, 'msg' => $e->getMessage()];
         } catch (\JPush\Exceptions\APIRequestException $e) {
-            return ['status' => -1, 'msg' => $e->getMessage()];
+            return ['status' => 0, 'msg' => $e->getMessage()];
         } catch (\Exception $e) {
-            return ['status' => -1, 'msg' => $e->getMessage()];
+            return ['status' => 0, 'msg' => $e->getMessage()];
         }
     }
 }

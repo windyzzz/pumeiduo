@@ -15,6 +15,7 @@ use app\common\logic\ArticleLogic;
 use app\common\logic\CartLogic;
 use app\common\logic\GoodsLogic;
 use app\common\logic\MessageLogic;
+use app\common\logic\PushLogic;
 use app\common\logic\TaskLogic;
 use app\common\logic\Token as TokenLogic;
 use app\common\logic\UsersLogic;
@@ -3361,5 +3362,17 @@ class User extends Base
         }
         $res = $taskLogic->loginProfit();
         return json($res);
+    }
+
+    /**
+     * 用户绑定push_id
+     * @return \think\response\Json
+     */
+    public function bindPushId()
+    {
+        $pushId = I('push_id', 0);
+        if ($pushId == 0) return json(['status' => 0, 'msg' => '参数错误']);
+        (new PushLogic())->bindPushId($this->user_id, $pushId);
+        return json(['status' => 1, 'msg' => '绑定成功']);
     }
 }
