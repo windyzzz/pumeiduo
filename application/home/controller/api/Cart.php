@@ -169,10 +169,15 @@ class Cart extends Base
             }
             // 组装数据
             foreach ($cartData as $k => $v) {
+                if (isset($v['item_id'])) {
+                    $storeCount = M('spec_goods_price')->where(['item_id' => $v['item_id']])->value('store_count');
+                } else {
+                    $storeCount = $v['goods']['store_count'];
+                }
                 $key = $v['goods_id'] . '_' . $v['spec_key'];
                 // 赠品
                 $giftGoods = [];
-                if (isset($v['gift2_goods'])) {
+//                if (isset($v['gift2_goods'])) {
 //                    foreach ($v['gift2_goods'] as $gift) {
 //                        $giftGoods[] = [
 //                            'goods_id' => $gift['goods_id'],
@@ -184,7 +189,7 @@ class Cart extends Base
 //                            'goods_num' => $gift['goods_num'],
 //                        ];
 //                    }
-                }
+//                }
                 if (empty($v['goods']) || 1 != $v['goods']['is_on_sale']) {
                     $cartNum -= $v['goods_num'];
                     // 已失效商品
@@ -223,9 +228,9 @@ class Cart extends Base
                         'shop_price' => $v['goods_price'],
                         'exchange_integral' => $v['use_integral'],
                         'exchange_price' => bcsub($v['goods_price'], $v['use_integral'], 2),
-//                        'exchange_price' => $v['goods_price'],
                         'goods_num' => $v['goods_num'],
                         'buy_limit' => $promGoods[$key]['buy_limit'],
+                        'store_count' => $storeCount,
                         'gift_goods' => $giftGoods
                     ];
                 } elseif (isset($flashSaleGoods[$key])) {
@@ -250,6 +255,7 @@ class Cart extends Base
                         'exchange_price' => $v['member_goods_price'],
                         'goods_num' => $v['goods_num'],
                         'buy_limit' => $flashSaleGoods[$key]['buy_limit'],
+                        'store_count' => $storeCount,
                         'gift_goods' => $giftGoods
                     ];
                 } elseif (isset($groupBuyGoods[$key])) {
@@ -276,15 +282,11 @@ class Cart extends Base
                         'exchange_price' => $v['member_goods_price'],
                         'goods_num' => $v['goods_num'],
                         'buy_limit' => $groupBuyGoods[$key]['buy_limit'],
+                        'store_count' => $storeCount,
                         'gift_goods' => $giftGoods
                     ];
                 } else {
                     // 正常普通商品
-                    if (isset($v['item_id'])) {
-                        $buyLimit = M('spec_goods_price')->where(['item_id' => $v['item_id']])->value('store_count');
-                    } else {
-                        $buyLimit = $v['goods']['store_count'];
-                    }
                     $cartList['goods'][] = [
                         'cart_id' => $v['id'],
                         'goods_id' => $v['goods_id'],
@@ -297,7 +299,8 @@ class Cart extends Base
                         'exchange_integral' => $v['use_integral'],
                         'exchange_price' => bcsub($v['goods_price'], $v['use_integral'], 2),
                         'goods_num' => $v['goods_num'],
-                        'buy_limit' => $buyLimit,
+                        'buy_limit' => $v['goods']['limit_buy_num'],
+                        'store_count' => $storeCount,
                         'gift_goods' => $giftGoods
                     ];
                 }

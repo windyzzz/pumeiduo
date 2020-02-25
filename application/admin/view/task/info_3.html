@@ -14,6 +14,22 @@
                 <h3>促销管理 - 编辑任务</h3>
                 <h5>网站系统任务活动详情页</h5>
             </div>
+            <!-- 操作说明 -->
+            <div id="explanation" class="explanation" style="color: rgb(44, 188, 163); background-color: rgb(237, 251, 248); width: 99%; height: 100%;">
+                <div id="checkZoom" class="title"><i class="fa fa-lightbulb-o"></i>
+                    <h4 title="提示相关设置操作时应注意的要点">操作提示</h4>
+                    <span title="收起提示" id="explanationZoom" style="display: block;"></span>
+                </div>
+                <ul>
+                    <li>
+                        新增任务逻辑 —— 累加（每次的情况下） <br>
+                        例如：用户的第一个设置任务A已完成1人（1次机会），新增第二个设置任务B为邀请1人，此时设置任务B未完成（需要后续有完成任务才能更新） <br>
+                        再完成1人（实际2人），设置任务A会变成 2（2次机会），设置任务B会变成 0 + 2 = 2（2次机会） <br>
+                        再完成1人（实际3人），设置任务A会变成 3（3次机会），设置任务B会变成 2 + 1 = 3（3次机会） <br>
+                        再完成1人（实际4人），设置任务A会变成 4（4次机会），设置任务B会变成 3 + 1 = 4（4次机会） <br>
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
     <form class="form-horizontal" id="handleposition" method="post" onsubmit="return false;">

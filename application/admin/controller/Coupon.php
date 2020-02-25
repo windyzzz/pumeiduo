@@ -252,6 +252,9 @@ class Coupon extends Base
         $cid = I('cid/d');
         if (IS_POST) {
             $coupon = M('coupon')->where('id', $cid)->find();
+            if ($coupon['nature'] != 1) {
+                return json(['status' => -1, 'msg' => '该优惠券不能发放', 'result' => null]);
+            }
             $coupon['type_value'] = explode(',', $coupon['type_value']);
             if (in_array(5, $coupon['type_value']) || in_array($coupon['use_type'], array(5))) {
                 return json(['status' => -1, 'msg' => '该优惠券不能发放', 'result' => null]);

@@ -115,12 +115,10 @@ class TaskLogic
         if ($uid < 1) {
             return false;
         }
-
         $order_sn = '';
         if ($this->order) {
             $order_sn = $this->order['order_sn'];
         }
-
         foreach ($this->task['task_reward'] as $tk => $tv) {
             if ($tv['distribut_id'] == $this->user['distribut_level'] || 0 == $tv['distribut_id']) {
                 //1.查看任务存不存在，不存在则创建
@@ -131,8 +129,9 @@ class TaskLogic
                     ->where('created_at', 'gt', $this->task['start_time'])
                     ->where('created_at', 'lt', $this->task['end_time'])
                     ->find();
-
                 $status = 0;
+                $user_task_id = 0;
+                $passAdd = 0;
                 if (!$user_task) {
                     // 如果奖励周期是空的话（只奖励一次），则跳过新增
                     if (0 == $tv['cycle']) {
@@ -146,24 +145,102 @@ class TaskLogic
                             continue;
                         }
                     }
-
+                    if (isset($this->task['task_reward'][$tk - 1])) {
+                        $exTaskReward = $this->task['task_reward'][$tk - 1];
+                        // 新增任务
+                        $has_task = M('user_task')
+                            ->where('user_id', $this->user['first_leader'])
+                            ->where('task_reward_id', $tv['reward_id'])
+                            ->where('created_at', 'gt', $this->task['start_time'])
+                            ->where('created_at', 'lt', $this->task['end_time'])
+                            ->find();
+                        if (!$has_task) {
+                            // 将前一个任务的记录添加到新任务
+                            $exUserTask = M('user_task')
+                                ->where('user_id', $this->user['first_leader'])
+                                ->where('task_reward_id', $exTaskReward['reward_id'])
+                                ->where('created_at', 'gt', $this->task['start_time'])
+                                ->where('created_at', 'lt', $this->task['end_time'])
+                                ->select();
+                            $nowUserTaskUid = '';
+                            $nowUserTaskSn = '';
+                            $finishCount = 0;
+                            foreach ($exUserTask as $exk => $ext) {
+                                $nowUserTaskUid .= $ext['invite_uid_list'] . ',';
+                                $nowUserTaskSn .= $ext['order_sn_list'] . ',';
+                                $finishCount += $ext['finish_num'];
+                                if ($finishCount % $tv['order_num'] == 0) {
+                                    // 完成任务
+                                    $user_task_id = M('user_task')->add([
+                                        'user_id' => $this->user['first_leader'],
+                                        'task_id' => $this->task['id'],
+                                        'task_reward_id' => $tv['reward_id'],
+                                        'finish_num' => $finishCount,
+                                        'target_num' => $tv['order_num'],
+                                        'status' => 1,
+                                        'invite_uid_list' => rtrim($nowUserTaskUid, ','),
+                                        'order_sn_list' => rtrim($nowUserTaskSn, ','),
+                                        'created_at' => time(),
+                                        'finished_at' => time(),
+                                    ]);
+                                    // 奖励记录
+                                    $nowUserTaskSn = explode(',', rtrim($nowUserTaskSn, ','));
+                                    $nowUserTaskSn = $nowUserTaskSn[count($nowUserTaskSn) - 1];
+                                    $reward_price = '0.00';
+                                    $reward_num = 0;
+                                    $reward_coupon_id = 0;
+                                    if (1 == $tv['reward_type']) {
+                                        $reward_num = $tv['reward_num'];
+                                    } elseif (2 == $tv['reward_type']) {
+                                        $reward_price = $tv['reward_price'];
+                                    } else {
+                                        $reward_coupon_id = $tv['reward_coupon_id'];
+                                    }
+                                    taskLog($this->user['first_leader'], $this->task, $tv, $nowUserTaskSn, $reward_price, $reward_num, 1, 0, $reward_coupon_id, $user_task_id);
+                                    if (0 == $tv['cycle']) {
+                                        break;
+                                    }
+                                    $nowUserTaskUid = '';
+                                    $nowUserTaskSn = '';
+                                    $finishCount = 0;
+                                    $passAdd = 1;   // 不需要再添加奖励记录
+                                } elseif (($exk + 1) == count($exUserTask)) {
+                                    $user_task_id = M('user_task')->add([
+                                        'user_id' => $this->user['first_leader'],
+                                        'task_id' => $this->task['id'],
+                                        'task_reward_id' => $tv['reward_id'],
+                                        'finish_num' => $finishCount,
+                                        'target_num' => $tv['order_num'],
+                                        'status' => 0,
+                                        'invite_uid_list' => rtrim($nowUserTaskUid, ','),
+                                        'order_sn_list' => rtrim($nowUserTaskSn, ','),
+                                        'created_at' => time(),
+                                        'finished_at' => 0,
+                                    ]);
+                                }
+                            }
+                        } elseif (1 == $tv['order_num']) {
+                            $status = 1;
+                        }
+                    }
                     if (1 == $tv['order_num']) {
                         $status = 1;
                     }
-                    $data = [
-                        'user_id' => $uid,
-                        'task_id' => $this->task['id'],
-                        'task_reward_id' => $tv['reward_id'],
-                        // 'task_reward_desc' => $tv['description'],
-                        'finish_num' => 1,
-                        'target_num' => $tv['order_num'],
-                        'status' => $status,
-                        'invite_uid_list' => $this->user['user_id'],
-                        'order_sn_list' => $order_sn,
-                        'created_at' => time(),
-                        'finished_at' => $status ? time() : 0,
-                    ];
-                    $user_task_id = M('user_task')->insertGetId($data);
+                    if ($user_task_id == 0) {
+                        $data = [
+                            'user_id' => $uid,
+                            'task_id' => $this->task['id'],
+                            'task_reward_id' => $tv['reward_id'],
+                            'finish_num' => 1,
+                            'target_num' => $tv['order_num'],
+                            'status' => $status,
+                            'invite_uid_list' => $this->user['user_id'],
+                            'order_sn_list' => $order_sn,
+                            'created_at' => time(),
+                            'finished_at' => $status ? time() : 0,
+                        ];
+                        $user_task_id = M('user_task')->insertGetId($data);
+                    }
                 } else {
                     // 必须是不同的粉丝
                     $invite_uid_list = explode(',', $user_task['invite_uid_list']);
@@ -189,7 +266,7 @@ class TaskLogic
                     M('user_task')->where('id', $user_task['id'])->update($update);
                     $user_task_id = $user_task['id'];
                 }
-                if ($status > 0) {
+                if ($status > 0 && $passAdd == 0) {
                     $reward_price = '0.00';
                     $reward_num = 0;
                     $reward_coupon_id = 0;
@@ -286,10 +363,10 @@ class TaskLogic
 
     public function checkTaskEnable()
     {
-        if (1 != $this->task['is_open'] || $this->task['start_time'] > time() || $this->task['end_time'] < time() || (isset($this->order) && $this->order['add_time'] < $this->task['start_time'])) {
+        $time = isset($this->order) ? $this->order['add_time'] : time();
+        if (1 != $this->task['is_open'] || $this->task['start_time'] > $time || $this->task['end_time'] < $time) {
             return false;
         }
-
         return true;
     }
 
@@ -298,7 +375,6 @@ class TaskLogic
         if ($this->checkTaskEnable()) {
             return $this->task;
         }
-
         return false;
     }
 
@@ -309,7 +385,6 @@ class TaskLogic
             if ($this->order) {
                 $order_sn = $this->order['order_sn'];
             }
-
             foreach ($this->task['task_reward'] as $tk => $tv) {
                 if ($tv['distribut_id'] == $this->distribut_id || 0 == $tv['distribut_id']) {
                     //1.查看任务存不存在，不存在则创建
@@ -339,80 +414,79 @@ class TaskLogic
                         if (isset($this->task['task_reward'][$tk - 1])) {
                             $exTaskReward = $this->task['task_reward'][$tk - 1];
                             // 新增任务
-                            if ($exTaskReward['invite_num'] <= $tv['invite_num']) {
-                                $has_task = M('user_task')
+                            $has_task = M('user_task')
+                                ->where('user_id', $this->user['first_leader'])
+                                ->where('task_reward_id', $tv['reward_id'])
+                                ->where('created_at', 'gt', $this->task['start_time'])
+                                ->where('created_at', 'lt', $this->task['end_time'])
+                                ->find();
+                            if (!$has_task) {
+                                // 将前一个任务的记录添加到新任务
+                                $exUserTask = M('user_task')
                                     ->where('user_id', $this->user['first_leader'])
-                                    ->where('task_reward_id', $tv['reward_id'])
+                                    ->where('task_reward_id', $exTaskReward['reward_id'])
                                     ->where('created_at', 'gt', $this->task['start_time'])
                                     ->where('created_at', 'lt', $this->task['end_time'])
-                                    ->find();
-                                if (!$has_task) {
-                                    // 将前一个任务的记录添加到新任务
-                                    $exUserTask = M('user_task')
-                                        ->where([
+                                    ->select();
+                                $nowUserTaskUid = '';
+                                $nowUserTaskSn = '';
+                                $finishCount = 0;
+                                foreach ($exUserTask as $exk => $ext) {
+                                    $nowUserTaskUid .= $ext['invite_uid_list'] . ',';
+                                    $nowUserTaskSn .= $ext['order_sn_list'] . ',';
+                                    $finishCount += $ext['finish_num'];
+                                    if ($finishCount % $tv['invite_num'] == 0) {
+                                        // 完成任务
+                                        $user_task_id = M('user_task')->add([
                                             'user_id' => $this->user['first_leader'],
-                                            'task_reward_id' => $exTaskReward['reward_id']
-                                        ])
-                                        ->where('created_at', 'gt', $this->task['start_time'])
-                                        ->where('created_at', 'lt', $this->task['end_time'])
-                                        ->select();
-                                    $nowUserTaskUid = '';
-                                    $nowUserTaskSn = '';
-                                    $finishCount = 0;
-                                    foreach ($exUserTask as $exk => $ext) {
-                                        $nowUserTaskUid .= $ext['invite_uid_list'] . ',';
-                                        $nowUserTaskSn .= $ext['order_sn_list'] . ',';
-                                        $finishCount += $ext['finish_num'];
-                                        if ($finishCount % $tv['invite_num'] == 0) {
-                                            // 完成任务
-                                            $user_task_id = M('user_task')->add([
-                                                'user_id' => $this->user['first_leader'],
-                                                'task_id' => $this->task['id'],
-                                                'task_reward_id' => $tv['reward_id'],
-                                                'finish_num' => $finishCount,
-                                                'target_num' => $tv['invite_num'],
-                                                'status' => 1,
-                                                'invite_uid_list' => rtrim($nowUserTaskUid, ','),
-                                                'order_sn_list' => rtrim($nowUserTaskSn, ','),
-                                                'created_at' => time(),
-                                                'finished_at' => time(),
-                                            ]);
-                                            // 奖励记录
-                                            $nowUserTaskSn = explode(',', rtrim($nowUserTaskSn, ','));
-                                            $nowUserTaskSn = $nowUserTaskSn[count($nowUserTaskSn) - 1];
-                                            $reward_price = '0.00';
-                                            $reward_num = 0;
-                                            $reward_coupon_id = 0;
-                                            if (1 == $tv['reward_type']) {
-                                                $reward_num = $tv['reward_num'];
-                                            } elseif (2 == $tv['reward_type']) {
-                                                $reward_price = $tv['reward_price'];
-                                            } else {
-                                                $reward_coupon_id = $tv['reward_coupon_id'];
-                                            }
-                                            taskLog($this->user['first_leader'], $this->task, $tv, $nowUserTaskSn, $reward_price, $reward_num, 1, 0, $reward_coupon_id, $user_task_id);
-                                            $nowUserTaskUid = '';
-                                            $nowUserTaskSn = '';
-                                            $finishCount = 0;
-                                            $passAdd = 1;   // 不需要再添加奖励记录
-                                        } elseif (($exk + 1) == count($exUserTask)) {
-                                            $user_task_id = M('user_task')->add([
-                                                'user_id' => $this->user['first_leader'],
-                                                'task_id' => $this->task['id'],
-                                                'task_reward_id' => $tv['reward_id'],
-                                                'finish_num' => $finishCount,
-                                                'target_num' => $tv['invite_num'],
-                                                'status' => 0,
-                                                'invite_uid_list' => rtrim($nowUserTaskUid, ','),
-                                                'order_sn_list' => rtrim($nowUserTaskSn, ','),
-                                                'created_at' => time(),
-                                                'finished_at' => 0,
-                                            ]);
+                                            'task_id' => $this->task['id'],
+                                            'task_reward_id' => $tv['reward_id'],
+                                            'finish_num' => $finishCount,
+                                            'target_num' => $tv['invite_num'],
+                                            'status' => 1,
+                                            'invite_uid_list' => rtrim($nowUserTaskUid, ','),
+                                            'order_sn_list' => rtrim($nowUserTaskSn, ','),
+                                            'created_at' => time(),
+                                            'finished_at' => time(),
+                                        ]);
+                                        // 奖励记录
+                                        $nowUserTaskSn = explode(',', rtrim($nowUserTaskSn, ','));
+                                        $nowUserTaskSn = $nowUserTaskSn[count($nowUserTaskSn) - 1];
+                                        $reward_price = '0.00';
+                                        $reward_num = 0;
+                                        $reward_coupon_id = 0;
+                                        if (1 == $tv['reward_type']) {
+                                            $reward_num = $tv['reward_num'];
+                                        } elseif (2 == $tv['reward_type']) {
+                                            $reward_price = $tv['reward_price'];
+                                        } else {
+                                            $reward_coupon_id = $tv['reward_coupon_id'];
                                         }
+                                        taskLog($this->user['first_leader'], $this->task, $tv, $nowUserTaskSn, $reward_price, $reward_num, 1, 0, $reward_coupon_id, $user_task_id);
+                                        if (0 == $tv['cycle']) {
+                                            break;
+                                        }
+                                        $nowUserTaskUid = '';
+                                        $nowUserTaskSn = '';
+                                        $finishCount = 0;
+                                        $passAdd = 1;   // 不需要再添加奖励记录
+                                    } elseif (($exk + 1) == count($exUserTask)) {
+                                        $user_task_id = M('user_task')->add([
+                                            'user_id' => $this->user['first_leader'],
+                                            'task_id' => $this->task['id'],
+                                            'task_reward_id' => $tv['reward_id'],
+                                            'finish_num' => $finishCount,
+                                            'target_num' => $tv['invite_num'],
+                                            'status' => 0,
+                                            'invite_uid_list' => rtrim($nowUserTaskUid, ','),
+                                            'order_sn_list' => rtrim($nowUserTaskSn, ','),
+                                            'created_at' => time(),
+                                            'finished_at' => 0,
+                                        ]);
                                     }
-                                } elseif (1 == $tv['invite_num']) {
-                                    $status = 1;
                                 }
+                            } elseif (1 == $tv['invite_num']) {
+                                $status = 1;
                             }
                         } elseif (1 == $tv['invite_num']) {
                             $status = 1;
@@ -493,129 +567,6 @@ class TaskLogic
                     $this->user = $userInfo;
                     $this->distribut_id = $level['level_id'];
                     $this->doInviteAfter();
-                }
-                return;
-
-                // 订单中含有VIP申请套餐
-                $userInviteUid = Db::name('users')->where(['user_id' => $this->order['user_id']])->value('invite_uid');
-                if ($userInviteUid != 0) {
-                    // 拥有上级
-                    // 任务内容
-                    $taskReward = Db::name('task_reward')->where(['task_id' => 2])->order('reward_id asc')
-                        ->getField('reward_id, invite_num, reward_coupon_id, cycle', true);
-                    $userTask = Db::name('user_task')->where(['user_id' => $userInviteUid, 'task_id' => 2])->order('id asc')->select();
-                    if (empty($userTask)) {
-                        // 添加用户任务
-                        $data = [];
-                        foreach ($taskReward as $item) {
-                            $data[] = [
-                                'user_id' => $userInviteUid,
-                                'task_id' => 2,
-                                'task_reward_id' => $item['reward_id'],
-                                'finish_num' => 1,
-                                'target_num' => $item['invite_num'],
-                                'status' => $item['invite_num'] == 1 ? 1 : 0,
-                                'invite_uid_list' => $this->order['user_id'],
-                                'order_sn_list' => $this->order['order_sn'],
-                                'created_at' => time(),
-                                'finished_at' => $item['invite_num'] == 1 ? time() : 0
-                            ];
-                        }
-                        $userTask = new UserTask();
-                        $res = $userTask->saveAll($data);
-                        $taskReward = array_values($taskReward);
-                        $rewardId = $taskReward[0]['reward_id'];
-                        $userTaskId = $res[0]['id'];
-                    } else {
-                        $rewardId = '';
-                        $userTaskId = '';
-                        // 更新用户任务
-                        foreach ($userTask as $key => $item) {
-                            $status = 0;
-                            if (isset($taskReward[$item['task_reward_id']])) {
-                                switch ($taskReward[$item['task_reward_id']]['cycle'] == 1) {
-                                    case 0:
-                                        $status = 1;
-                                        break;
-                                    case 1:
-                                        $status = 0;
-                                        break;
-                                    default:
-                                        $status = 0;
-                                }
-                            }
-                            $k = ($key - 1 >= 0) ? $key - 1 : 0;
-                            Db::name('user_task')->where(['id' => $item['id']])->update([
-                                'finish_num' => $item['target_num'],
-                                'status' => $status,
-                                'invite_uid_list' => $userTask[$k]['invite_uid_list'] . ',' . $this->order['user_id'],
-                                'order_sn_list' => $userTask[$k]['order_sn_list'] . ',' . $this->order['order_sn'],
-                                'finished_at' => time()
-                            ]);
-                            $rewardId = $item['task_reward_id'];
-                            $userTaskId = $item['id'];
-                            break;
-                        }
-                    }
-                    if (!empty($rewardId) && !empty($userTaskId)) {
-                        // 任务记录
-                        $taskReward = Db::name('task_reward')->where(['reward_id' => $rewardId])->find();
-                        $task = Db::name('task')->where(['id' => 2])->field('id, title')->find();
-                        taskLog($userInviteUid, $task, $taskReward, $this->order['order_sn'], $taskReward['reward_price'], $taskReward['reward_num'], 1, 0, $taskReward['reward_coupon_id'], $userTaskId);
-
-//                            // 上级奖励自动发放
-//                            $taskReward = Db::name('task_reward')->where(['reward_id' => $rewardId])->find();
-//                            if ($taskReward['reward_num'] > 0) {
-//                                // 积分
-//                                accountLog($userInviteUid, 0, $taskReward['reward_num'], '用户领取任务奖励', 0, 0, $this->order['order_sn'], 0, 16);
-//                            }
-//                            if ($taskReward['reward_price'] > 0) {
-//                                // 电子币
-//                                accountLog($userInviteUid, 0, 0, '用户领取任务奖励', 0, 0, $this->order['order_sn'], $taskReward['reward_price'], 15);
-//                            }
-//                            $couponName = '';
-//                            $couponMoney = '';
-//                            if ($taskReward['reward_coupon_id'] != '0') {
-//                                // 优惠券
-//                                $couponIds = explode('-', $taskReward['reward_coupon_id']);
-//                                $coupon = Db::name('coupon')->where(['id' => ['in', $couponIds]])->field('id, name, money')->select();
-//                                $couponData = [];
-//                                foreach ($coupon as $item) {
-//                                    $couponName .= $item['name'] . '-';
-//                                    $couponMoney .= $item['money'] . '-';
-//                                    $couponData[] = [
-//                                        'cid' => $item['id'],
-//                                        'type' => 3,    // 邀请
-//                                        'uid' => $userInviteUid,
-//                                        'order_id' => 0,
-//                                        'get_order_id' => $order_id,
-//                                        'send_time' => time()
-//                                    ];
-//                                }
-//                                // 优惠券记录
-//                                $couponList = new CouponList();
-//                                $couponList->saveAll($couponData);
-//                            }
-//                            // 任务记录
-//                            Db::name('task_log')->add([
-//                                'task_id' => 2,
-//                                'user_task_id' => $userTaskId,
-//                                'task_title' => Db::name('task')->where(['id' => 2])->value('title'),
-//                                'task_reward_id' => $taskReward['reward_id'],
-//                                'task_reward_desc' => $taskReward['description'],
-//                                'user_id' => $userInviteUid,
-//                                'order_sn' => $this->order['order_sn'],
-//                                'reward_electronic' => $taskReward['reward_price'],
-//                                'reward_integral' => $taskReward['reward_num'],
-//                                'reward_coupon_id' => $taskReward['reward_coupon_id'],
-//                                'reward_coupon_money' => rtrim($couponMoney, '-') ?? 0.00,
-//                                'reward_coupon_name' => rtrim($couponName, '-'),
-//                                'status' => 1,  // 自动领取
-//                                'type' => 1,
-//                                'created_at' => time(),
-//                                'finished_at' => time()
-//                            ]);
-                    }
                 }
             }
         }

@@ -2305,7 +2305,8 @@ class User extends Base
         $count = M('withdrawals')->where(['user_id' => $this->user_id])->count('id');
         $page = new Page($count, 10);
         $withdrawal = M('withdrawals')->where(['user_id' => $this->user_id, 'status' => ['neq', -2]])
-            ->field('id, money, create_time add_time, bank_name, taxfee, status')->limit($page->firstRow . ',' . $page->listRows)->select();
+            ->field('id, money, create_time add_time, bank_name, taxfee, status')
+            ->limit($page->firstRow . ',' . $page->listRows)->order('add_time desc')->select();
         foreach ($withdrawal as $key => $item) {
             $withdrawal[$key]['amount'] = bcsub($item['money'], $item['taxfee'], 2);
             unset($withdrawal[$key]['money']);

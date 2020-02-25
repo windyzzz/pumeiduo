@@ -220,6 +220,7 @@ class Goods extends Base
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
+        $goods['buy_limit'] = $goods['limit_buy_num'];
         $zone = $goods['zone'];
         $goodsLogic = new GoodsLogic();
         // 判断商品性质
@@ -323,6 +324,7 @@ class Goods extends Base
         // 规格参数价格
         $goods['spec_price'] = $goodsLogic->get_spec_price($goods_id);
         foreach ($goods['spec_price'] as $key => $spec) {
+            $goods['spec_price'][$key]['buy_limit'] = $goods['limit_buy_num'];
             $goods['spec_price'][$key]['exchange_integral'] = $goods['exchange_integral'];     // 是否能使用积分
             $goods['spec_price'][$key]['activity'] = [
                 'type' => '',
@@ -420,6 +422,10 @@ class Goods extends Base
                 // 查看用户是否拥有优惠券
                 if ($this->user) {
                     foreach ($goods['coupon'] as $k => $coupon) {
+                        if ($coupon['nature'] != 1) {
+                            unset($goods['coupon'][$k]);
+                            continue;
+                        }
                         $userCoupon = Db::name('coupon_list')->where(['cid' => $coupon['coupon_id'], 'uid' => $this->user_id])->find();
                         if ($userCoupon) {
                             if ($userCoupon['status'] == 1) {
@@ -440,6 +446,10 @@ class Goods extends Base
             $goods['coupon'] = array_values($goods['coupon']);
         }
         foreach ($goods['coupon'] as $k => $coupon) {
+            if ($coupon['nature'] != 1) {
+                unset($goods['coupon'][$k]);
+                continue;
+            }
             switch ($coupon['use_type']) {
                 case 0:
                     // 全店通用
@@ -695,6 +705,7 @@ class Goods extends Base
     public function collect_goods_new()
     {
         $goodsIds = I('goods_ids', null);
+
         if (!$goodsIds) {
             return json(['status' => 0, 'msg' => '请至少选择一个商品', 'result' => '']);
         }

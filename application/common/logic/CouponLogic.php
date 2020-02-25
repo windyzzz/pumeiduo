@@ -460,7 +460,10 @@ class CouponLogic extends Model
      */
     public function getCoupon($useType = 0, $goodsId = null, $catId = null, $ext = [])
     {
-        $where = [];
+        $where = [
+            'send_start_time' => ['<', time()],
+            'send_end_time' => ['>', time()],
+        ];
         if ($useType === 0) {
             // 全店通用
             $where['c.use_type'] = $useType;
@@ -481,6 +484,9 @@ class CouponLogic extends Model
                 $where['gc.goods_category_id'] = $catId;
             }
         }
+        if (isset($ext['nature'])) {
+            $where['c.nature'] = ['in', $ext['nature']];
+        }
         if (isset($ext['not_coupon_id'])) {
             $where['c.id'] = ['not in', $ext['not_coupon_id']];
         }
@@ -489,7 +495,7 @@ class CouponLogic extends Model
             ->join('goods g', 'g.goods_id = gc.goods_id', 'LEFT')
             ->join('goods_category gcc', 'gcc.id = gc.goods_category_id', 'LEFT')
             ->where($where)->where(['c.status' => 1, 'c.use_start_time' => ['<=', time()], 'c.use_end_time' => ['>=', time()]])
-            ->field('c.id coupon_id, c.name, c.money, c.condition, FROM_UNIXTIME(c.use_start_time,"%Y.%m.%d") as use_start_time, FROM_UNIXTIME(c.use_end_time,"%Y.%m.%d") as use_end_time, c.use_type, gc.goods_id, g.goods_name, g.original_img, gc.goods_category_id cat_id, gcc.name cat_name');
+            ->field('c.id coupon_id, c.nature, c.name, c.money, c.condition, FROM_UNIXTIME(c.use_start_time,"%Y.%m.%d") as use_start_time, FROM_UNIXTIME(c.use_end_time,"%Y.%m.%d") as use_end_time, c.use_type, gc.goods_id, g.goods_name, g.original_img, gc.goods_category_id cat_id, gcc.name cat_name');
         if (isset($ext['limit'])) {
             // 限制数量
             $coupon = $coupon->limit($ext['limit']['offset'], $ext['limit']['length']);

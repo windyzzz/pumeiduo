@@ -183,16 +183,16 @@ class OrderLogic
 
                 return true;
             case 'confirm': //确认订单
-                $updata['order_status'] = 0;
+                $updata['order_status'] = 1;
                 $order = Db::name('order')->where(['order_id' => $order_id])->field('order_id, order_sn, user_id, add_time')->find();
                 // 推荐任务
                 $task1 = new \app\common\logic\TaskLogic(2);
                 $task1->setOrder($order);
                 $task1->inviteProfit();
                 // 销售任务（随机红包）
-//                $task2 = new \app\common\logic\TaskLogic(3);
-//                $task2->setOrder($order);
-//                $task2->doOrderPayAfterSell();
+                $task2 = new \app\common\logic\TaskLogic(3);
+                $task2->setOrder($order);
+                $task2->doOrderPayAfterSell();
                 break;
             case 'cancel': //取消确认
                 $updata['order_status'] = 0;

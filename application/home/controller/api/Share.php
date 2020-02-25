@@ -22,29 +22,36 @@ class Share extends Base
             case 1:
                 // 推荐码
                 $url = $baseUrl . '#/register?invite=' . $this->user_id;
+                $title = '推荐码分享';
+                $content = '推荐码分享';
+                $image = '';
                 break;
             case 2:
                 // 商品
                 if (!$goodsId || $goodsId <= 0) return json(['status' => 0, 'msg' => '商品ID错误']);
                 $url = $baseUrl . '#/goods/goods_details?goods_id=' . $goodsId . '&cart_type=0&invite=' . $this->user_id;
+                $goodsInfo = M('goods')->where(['goods_id' => $goodsId])->field('goods_name, goods_remark, original_img')->find();
+                $title = $goodsInfo['goods_name'];
+                $content = !empty($goodsInfo['goods_remark']) ? $goodsInfo['goods_remark'] : $goodsInfo['goods_name'];
+                $image = $baseUrl . $goodsInfo['original_img'];
                 break;
             case 3:
                 // 活动文章
                 if (!$articleId || $articleId <= 0) return json(['status' => 0, 'msg' => '文章ID错误']);
                 $url = $baseUrl . '#/news/news_particulars?article_id=' . $articleId . '&invite=' . $this->user_id;
+                $articleInfo = M('article')->where(['article_id' => $articleId])->field('title, description')->find();
+                $title = $articleInfo['title'];
+                $content = $articleInfo['description'];
+                $image = $baseUrl . tpCache('share.article_logo');
                 break;
             default:
                 return json(['status' => 0, 'msg' => '类型错误']);
         }
-        $shareSetting = M('share_setting')->where(['type' => $type, 'is_open' => 1])->find();
-        if (empty($shareSetting)) {
-            return json(['status' => 0, 'msg' => '分享内容不存在，请管理员到后台添加']);
-        }
         $return = [
             'url' => $url,
-            'title' => $shareSetting['title'],
-            'content' => $shareSetting['content'],
-            'image' => $shareSetting['image'] ? $baseUrl . $shareSetting['image'] : ''
+            'title' => $title,
+            'content' => $content,
+            'image' => $image
         ];
         return json(['status' => 1, 'result' => $return]);
     }

@@ -1667,8 +1667,10 @@ class Order extends Base
         $userCouponList = $couponLogic->getUserAbleCouponList($this->user_id, $cartGoodsId, $cartGoodsCatId);
 //        $userCouponList = $cartLogic->getCouponCartList($cartList, $userCouponList);
         $couponList = [];
-        $hasSelected = false;
         foreach ($userCouponList as $k => $coupon) {
+            if ($k == 0) {
+                $couponList[$k]['is_selected'] = 1;
+            }
             $couponList[$k] = [
                 'coupon_id' => $coupon['coupon']['id'],
                 'name' => $coupon['coupon']['name'],
@@ -1680,15 +1682,8 @@ class Order extends Base
                 'use_end_time' => date('Y.m.d', $coupon['coupon']['use_end_time']),
                 'is_selected' => 0
             ];
-            if ($coupon['coupon']['id'] == $couponId) {
-                $couponList[$k]['is_selected'] = 1;
-                $couponList[0]['is_selected'] = 0;
-                $hasSelected = true;
-            } elseif ($k == 0) {
-                $couponList[$k]['is_selected'] = 1;
-            }
         }
-        if (!$hasSelected && !empty($couponList)) {
+        if (!empty($couponList)) {
             $couponId = $couponList[0]['coupon_id'];    // 默认选中第一张
         }
         // 用户可用的兑换券列表
@@ -1888,6 +1883,7 @@ class Order extends Base
                         'shop_price' => $extra['goods_price'],
                         'exchange_integral' => '0',
                         'exchange_price' => $extra['goods_price'],
+                        'store_count' => $extra['goods_num'],
                         'buy_limit' => $extra['buy_limit'],
                         'pay_type' => 2
                     ];
