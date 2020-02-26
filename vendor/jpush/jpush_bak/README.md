@@ -2,9 +2,9 @@
 
 这是 JPush REST API 的 PHP 版本封装开发包，是由极光推送官方提供的，一般支持最新的 API 功能。
 
-对应的 REST API 文档: https://docs.jiguang.cn/jpush/server/push/server_overview/
+对应的 REST API 文档: http://docs.jiguang.cn/server/server_overview/
 
-> 支持的 PHP 版本: 5.3.3 ～ 5.6.x, 7.x
+> 支持的 PHP 版本: 5.3.3 ～ 5.6.x, 7.0.x
 
 > 若需要兼容 PHP 5.3.3 以下版本，可以使用 [v3 分支的代码](https://github.com/jpush/jpush-api-php-client/tree/v3)。
 因为运行 Composer 需要 PHP 5.3.2+ 以上版本，所以其不提供 Composer 支持，
@@ -18,7 +18,7 @@
 
 ```json
 "require": {
-    "jpush/jpush": "*"
+    "jpush/jpush": "v3.5.*"
 }
 ```
 
@@ -44,7 +44,6 @@ require 'path_to_sdk/autoload.php';
 - [Schedule API](https://github.com/jpush/jpush-api-php-client/blob/master/doc/api.md#schedule-api)
 - [Exception Handle](https://github.com/jpush/jpush-api-php-client/blob/master/doc/api.md#schedule-api)
 - [HTTP/2 Support](https://github.com/jpush/jpush-api-php-client/blob/master/doc/http2.md)
-- [Group Push](https://github.com/jpush/jpush-api-php-client/blob/master/doc/grouppush.md)
 
 #### 初始化
 

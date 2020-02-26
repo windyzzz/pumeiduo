@@ -5,10 +5,6 @@ use InvalidArgumentException;
 class ReportPayload {
     private static $EFFECTIVE_TIME_UNIT = array('HOUR', 'DAY', 'MONTH');
 
-    const REPORT_URL = 'https://report.jpush.cn/v3/received';
-    const MESSAGES_URL = 'https://report.jpush.cn/v3/messages';
-    const USERS_URL = 'https://report.jpush.cn/v3/users';
-
     private $client;
 
     /**
@@ -31,8 +27,40 @@ class ReportPayload {
             throw new InvalidArgumentException("Invalid msg_ids");
         }
 
-        $url = ReportPayload::REPORT_URL . $queryParams;
+        $url = $this->client->makeURL('report') . 'received' . $queryParams;
         return Http::get($this->client, $url);
+    }
+
+    /*
+     送达统计详情（新）
+     https://docs.jiguang.cn/jpush/server/push/rest_api_v3_report/#_7
+    */
+    public function getReceivedDetail($msgIds) {
+        $queryParams = '?msg_ids=';
+        if (is_array($msgIds) && !empty($msgIds)) {
+            $msgIdsStr = implode(',', $msgIds);
+            $queryParams .= $msgIdsStr;
+        } elseif (is_string($msgIds)) {
+            $queryParams .= $msgIds;
+        } else {
+            throw new InvalidArgumentException("Invalid msg_ids");
+        }
+
+        $url = $this->client->makeURL('report') . 'received/detail' . $queryParams;
+        return Http::get($this->client, $url);
+    }
+
+    public function getMessageStatus($msgId, $rids, $data = null) {
+        $url = $this->client->makeURL('report') . 'status/message';
+        $registrationIds = is_array($rids) ? $rids : array($rids);
+        $body = [
+            'msg_id' => $msgId,
+            'registration_ids' => $registrationIds
+        ];
+        if (!is_null($data)) {
+            $body['data'] = $data;
+        }
+        return Http::post($this->client, $url, $body);
     }
 
     public function getMessages($msgIds) {
@@ -46,7 +74,26 @@ class ReportPayload {
             throw new InvalidArgumentException("Invalid msg_ids");
         }
 
-        $url = ReportPayload::MESSAGES_URL . $queryParams;
+        $url = $this->client->makeURL('report') . 'messages/' .$queryParams;
+        return Http::get($this->client, $url);
+    }
+
+    /*
+     消息统计详情（VIP 专属接口，新）
+     https://docs.jiguang.cn/jpush/server/push/rest_api_v3_report/#vip_1
+    */
+    public function getMessagesDetail($msgIds) {
+        $queryParams = '?msg_ids=';
+        if (is_array($msgIds) && !empty($msgIds)) {
+            $msgIdsStr = implode(',', $msgIds);
+            $queryParams .= $msgIdsStr;
+        } elseif (is_string($msgIds)) {
+            $queryParams .= $msgIds;
+        } else {
+            throw new InvalidArgumentException("Invalid msg_ids");
+        }
+
+        $url = $this->client->makeURL('report') . 'messages/detail' .$queryParams;
         return Http::get($this->client, $url);
     }
 
@@ -56,7 +103,7 @@ class ReportPayload {
             throw new InvalidArgumentException('Invalid time unit');
         }
 
-        $url = ReportPayload::USERS_URL . '?time_unit=' . $time_unit . '&start=' . $start . '&duration=' . $duration;
+        $url = $this->client->makeURL('report') . 'users/?time_unit=' . $time_unit . '&start=' . $start . '&duration=' . $duration;
         return Http::get($this->client, $url);
     }
 }

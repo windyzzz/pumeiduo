@@ -4,6 +4,7 @@ use InvalidArgumentException;
 
 class SchedulePayload {
 
+    const SCHEDULES_URL = 'https://api.jpush.cn/v3/schedules';
     private $client;
 
     /**
@@ -30,7 +31,7 @@ class SchedulePayload {
         $payload['trigger'] = array("single"=>$trigger);
         $payload['push'] = $push_payload;
 
-        $url = $this->client->makeURL('schedule');
+        $url = SchedulePayload::SCHEDULES_URL;
         return Http::post($this->client, $url, $payload);
     }
 
@@ -50,7 +51,7 @@ class SchedulePayload {
         $payload['trigger'] = array("periodical"=>$trigger);
         $payload['push'] = $push_payload;
 
-        $url = $this->client->makeURL('schedule');
+        $url = SchedulePayload::SCHEDULES_URL;
         return Http::post($this->client, $url, $payload);
     }
 
@@ -95,7 +96,7 @@ class SchedulePayload {
             throw new InvalidArgumentException('Invalid schedule, name, enabled, trigger, push can not all be null');
         }
 
-        $url = $this->client->makeURL('schedule') . "/" . $schedule_id;
+        $url = SchedulePayload::SCHEDULES_URL . "/" . $schedule_id;
 
         return Http::put($this->client, $url, $payload);
 
@@ -142,7 +143,7 @@ class SchedulePayload {
             throw new InvalidArgumentException('Invalid schedule, name, enabled, trigger, push can not all be null');
         }
 
-        $url = $this->client->makeURL('schedule') . "/" . $schedule_id;
+        $url = SchedulePayload::SCHEDULES_URL . "/" . $schedule_id;
         return Http::put($this->client, $url, $payload);
     }
 
@@ -150,7 +151,7 @@ class SchedulePayload {
         if (!is_int($page)) {
             $page = 1;
         }
-        $url = $this->client->makeURL('schedule') . "?page=" . $page;
+        $url = SchedulePayload::SCHEDULES_URL . "?page=" . $page;
         return Http::get($this->client, $url);
     }
 
@@ -158,7 +159,7 @@ class SchedulePayload {
         if (!is_string($schedule_id)) {
             throw new InvalidArgumentException('Invalid schedule id');
         }
-        $url = $this->client->makeURL('schedule') . "/" . $schedule_id;
+        $url = SchedulePayload::SCHEDULES_URL . "/" . $schedule_id;
         return Http::get($this->client, $url);
     }
 
@@ -166,17 +167,8 @@ class SchedulePayload {
         if (!is_string($schedule_id)) {
             throw new InvalidArgumentException('Invalid schedule id');
         }
-        $url = $this->client->makeURL('schedule') . "/" . $schedule_id;
+        $url = SchedulePayload::SCHEDULES_URL . "/" . $schedule_id;
         return Http::delete($this->client, $url);
     }
-
-    public function getMsgIds($schedule_id) {
-        if (!is_string($schedule_id)) {
-            throw new InvalidArgumentException('Invalid schedule id');
-        }
-        $url = $this->client->makeURL('schedule') . '/' . $schedule_id . '/msg_ids';
-        return Http::get($this->client, $url);
-    }
-
 }
 

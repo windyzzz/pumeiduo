@@ -2,6 +2,8 @@
 
 namespace app\common\logic;
 
+use app\common\logic\Token as TokenLogic;
+
 require_once './vendor/jpush/jpush/autoload.php';
 
 class PushLogic
@@ -43,6 +45,39 @@ class PushLogic
             M('users')->where(['user_id' => $userId])->update(['push_id' => $pushId]);
         }
         return true;
+    }
+
+    /**
+     * 用户绑定push_tag
+     * @param $user
+     * @param bool $isFirst
+     * @return bool
+     */
+    public function bindPushTag($user, $isFirst = true)
+    {
+        switch ($user['distribut_level']) {
+            case 1:
+                $tag = 'member';
+                break;
+            case 2:
+                $tag = 'vip';
+                break;
+            case 3:
+                $tag = 'svip';
+                break;
+            default:
+                return true;
+        }
+        if ($isFirst) {
+            // 首次绑定
+            if (!empty($user['push_tag'])) {
+                return true;
+            } else {
+                M('users')->where(['user_id' => $user])->update(['push_tag' => $tag]);
+            }
+        } else {
+            M('users')->where(['user_id' => $user])->update(['push_tag' => $tag]);
+        }
     }
 
     /**

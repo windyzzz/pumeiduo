@@ -51,5 +51,9 @@ class UpdateUsers extends Migrator
         $this->table('users')
             ->addColumn('invite_time', 'integer', ['default' => 0, 'comment' => '设置邀请人时间', 'after' => 'invite_uid'])
             ->update();
+
+        $this->table('users')
+            ->addColumn('push_tag', 'string', ['limit' => 50, 'null' => true, 'comment' => '推送标签', 'after' => 'push_id'])
+            ->update();
     }
 }

@@ -32,21 +32,14 @@ $client = new \JPush\Client($app_key, $master_secret, $log_path);
 $push = $client->push();
 ```
 
-通过 [JPush Push API](https://docs.jiguang.cn/jpush/server/push/rest_api_v3_push/) 我们知道，一个 PushPayload 是由以下几个部分构成的：
+通过 [JPush Push API](http://docs.jiguang.cn/server/rest_api_v3_push) 我们知道，一个 PushPayload 是由以下几个部分构成的：
 
-- Cid
 - Platform
 - Audience
 - Notification
 - Message
 - SmsContent
 - Options
-
-#### Cid
-
-```php
-$push->setCid($cid);
-```
 
 #### Platform
 
@@ -70,7 +63,7 @@ $push->addTag('tag1');
 $push->addTag(['tag1', 'tag2']);
 ```
 
-其他诸如 `addAlias()`, `addRegistrationId()`, `addTagAnd()`, `addTagNot()`, `addSegmentId()`, `addAbtest()` 的使用方法与 `addTag()` 类似，在此不做赘述。
+其他诸如 `addAlias()`, `addRegistrationId()`, `addTagAnd()` 的使用方法与 `addTag()` 类似，在此不做赘述。
 
 #### Notification
 
@@ -83,7 +76,7 @@ $push->setNotificationAlert('alert');
 
 ```php
 // iosNotification($alert = '', array $notification = array())
-// 数组 $notification 的键支持 'sound', 'badge', 'content-available', 'mutable-content', category', 'extras', 'thread-id' 中的一个或多个
+// 数组 $notification 的键支持 'sound', 'badge', 'content-available', 'mutable-content', category', 'extras' 中的一个或多个
 
 // 调用示例
 $push->iosNotification();
@@ -109,14 +102,14 @@ $push->iosNotification('hello', [
 | content-available | 表示推送唤醒，仅接受 true 表示为 Background Remote Notification，若不填默认表示普通的 Remote Notification |
 | mutable-content | 表示通知扩展, 仅接受 true 表示支持 iOS10 的 UNNotificationServiceExtension, 若不填默认表示普通的 Remote Notification |
 | category | IOS8才支持。设置 APNs payload 中的 'category' 字段值 |
-| thread-id	 | 表示通知分组，ios 的远程通知通过该属性来对通知进行分组，同一个 thread-id 的通知归为一组 |
 | extras | 表示扩展字段，接受一个数组，自定义 Key/value 信息以供业务使用 |
 
 **Android Notification**
 
 ```php
 // androidNotification($alert = '', array $notification = array())
-// 调用示例同 IOS，数组 $notification 的键支持 'title', 'builder_id', 'priority', 'category', 'style', 'alert_type', 'big_text', 'inbox', 'big_pic_path', 'large_icon', 'intent', 'extras' 中的一个或多个
+// 调用示例同 IOS，数组 $notification 的键支持 'title', 'builder_id', 'priority', 'category', 'style', 'alert_type', 'big_text', 'inbox', 'big_pic_path', 'extras' 中的一个或多个
+
 ```
 
 参数说明:
@@ -133,8 +126,6 @@ $push->iosNotification('hello', [
 | big_text | 表示大文本通知栏样式，当 style = 1 时可用，内容会被通知栏以大文本的形式展示出来，支持 api 16 以上的 rom |
 | inbox | 表示文本条目通知栏样式，接受一个数组，当 style = 2 时可用，数组的每个 key 对应的 value 会被当作文本条目逐条展示，支持 api 16 以上的 rom |
 | big_pic_path | 表示大图片通知栏样式，当 style = 3 时可用，可以是网络图片 url，或本地图片的 path，目前支持 .jpg 和 .png 后缀的图片。图片内容会被通知栏以大图片的形式展示出来。如果是 http／https 的 url，会自动下载；如果要指定开发者准备的本地图片就填 sdcard 的相对路径，支持 api 16 以上的 rom |
-| large_icon | 表示通知栏大图标，图标路径可以是以 http 或 https 开头的网络图片，如："http:jiguang.cn/logo.png"，图标大小不超过 30k； 也可以是位于 drawable 资源文件夹的图标路径，如："R.drawable.lg_icon"；|
-| intent | 表示扩展字段，接受一个数组，自定义 Key/value 信息以供业务使用 |
 | extras | 表示扩展字段，接受一个数组，自定义 Key/value 信息以供业务使用 |
 
 **WinPhone Notification**
@@ -181,17 +172,6 @@ $push->message('Hello JPush', [
 #### Sms Message
 
 ```php
-$push->setSms($delay_time, $temp_id, array $temp_para = [])
-```
-
-参数说明:
-* delay_time: 表示短信发送的延迟时间，单位为秒，不能超过 24 小时(即大于等于 0 小于等于 86400)。仅对 android 平台有效。
-* temp_id: 短信补充的内容模板 ID。没有填写该字段即表示不使用短信补充功能。
-* temp_para: 短信模板中的参数
-
-##### 已弃用
-
-```php
 $push->setSmsMessage($content, $delay_time)
 ```
 
@@ -203,7 +183,7 @@ $push->setSmsMessage($content, $delay_time)
 
 ```php
 // options(array $opts = array())
-// 数组 $opts 的键支持 'sendno', 'time_to_live', 'override_msg_id', 'apns_production', 'big_push_duration', 'apns_collapse_id' 中的一个或多个
+// 数组 $opts 的键支持 'sendno', 'time_to_live', 'override_msg_id', 'apns_production', 'big_push_duration' 中的一个或多个
 ```
 
 参数说明:
@@ -213,8 +193,7 @@ $push->setSmsMessage($content, $delay_time)
 | sendno | 表示推送序号，纯粹用来作为 API 调用标识，API 返回时被原样返回，以方便 API 调用方匹配请求与返回 |
 | time_to_live | 表示离线消息保留时长(秒)，推送当前用户不在线时，为该用户保留多长时间的离线消息，以便其上线时再次推送。默认 86400 （1 天），最长 10 天。设置为 0 表示不保留离线消息，只有推送当前在线的用户可以收到 |
 | override_msg_id | 表示要覆盖的消息ID，如果当前的推送要覆盖之前的一条推送，这里填写前一条推送的 msg_id 就会产生覆盖效果 |
-| apns_production | 表示 APNs 是否生产环境，True 表示推送生产环境，False 表示要推送开发环境；如果不指定则默认为推送开发环境 |
-| apns_collapse_id | APNs 新通知如果匹配到当前通知中心有相同 apns-collapse-id 字段的通知，则会用新通知内容来更新它，并使其置于通知中心首位；collapse id 长度不可超过 64 bytes|
+| apns_production | 表示APNs是否生产环境，True 表示推送生产环境，False 表示要推送开发环境；如果不指定则默认为推送生产环境 |
 | big_push_duration | 表示定速推送时长(分钟)，又名缓慢推送，把原本尽可能快的推送速度，降低下来，给定的 n 分钟内，均匀地向这次推送的目标用户推送。最大值为1400.未设置则不是定速推送 |
 
 #### Common Method
@@ -229,7 +208,6 @@ $push->send();
 
 ```php
 $response = $push()
-    ->setCid('xxxxxx')
     ->setPlatform(['ios', 'android'])
     ->addTag(['tag1', 'tag2'])
     ->setNotificationAlert('Hello, JPush')
@@ -251,7 +229,6 @@ $response = $push()
     ->send();
 
 // OR 也可以提前准备好所有的参数，然后链式调用，这样代码可读性更好一点
-$cid = 'xxxxxx';
 $platform = array('ios', 'android');
 $alert = 'Hello JPush';
 $tag = array('tag1', 'tag2');
@@ -268,7 +245,7 @@ $ios_notification = array(
 );
 $android_notification = array(
     'title' => 'hello jpush',
-    'builder_id' => 2,
+    'build_id' => 2,
     'extras' => array(
         'key' => 'value',
         'jiguang'
@@ -289,8 +266,7 @@ $options = array(
     'override_msg_id' => 100,
     'big_push_duration' => 100
 );
-$response = $push->setCid($cid)
-    ->setPlatform($platform)
+$response = $push->setPlatform($platform)
     ->addTag($tag)
     ->addRegistrationId($regId)
     ->iosNotification($alert, $ios_notification)
@@ -298,12 +274,6 @@ $response = $push->setCid($cid)
     ->message($content, $message)
     ->options($options)
     ->send();
-```
-
-#### 获取 Cid
-
-```php
-$push->getCid($count = 1, $type = 'push');
 ```
 
 ## Report API
@@ -318,17 +288,6 @@ $push->getCid($count = 1, $type = 'push');
 $report->getReceived('msg_id');
 // OR
 $report->getReceived(['msg_id1', 'msg_id2']);
-```
-
-#### 送达状态查询
-
-```php
-$msg_id0 = 66666666666;
-$report->getMessageStatus($msg_id0, 'rid0');
-# OR
-$report->getMessageStatus($msg_id0, ['rid0', 'rid1']);
-#OR
-$report->getMessageStatus($msg_id0, ['rid0', 'rid1'], '2017-12-21');
 ```
 
 #### 获取消息统计
@@ -382,13 +341,9 @@ $device->addTags($registration_id, ['tag1', 'tag2']);
 $device->removeTags($registration_id, 'tags');
 // OR
 $device->removeTags($registration_id,  ['tag1', 'tag2']);
-// 清空所有 tag
-$device->clearTags($registration_id);
-
 // 更新 mobile
 $device->updateMoblie($registration_id, '13800138000');
-// 取消手机绑定
-$device->clearMobile($registration_id);
+
 
 // getDevicesStatus($registrationId)
 // 获取在线用户的登录状态（VIP专属接口）,支持字符串和数组两种参数
@@ -470,14 +425,11 @@ $schedule->getSchedule($schedule_id);
 
 // 删除指定定时任务
 $schedule->deleteSchedule($schedule_id);
-
-// 获取定时任务对应的所有 msg_id
-$schedule->getMsgIds($schedule_id);
 ```
 
 ## Exception Handle
 
-当 API 请求发生错误时，SDK 将抛出异常，Pushpayload 具体错误代码请参考[ API 错误代码表](https://docs.jiguang.cn/jpush/server/push/rest_api_v3_push/#_19)。
+当 API 请求发生错误时，SDK 将抛出异常，Pushpayload 具体错误代码请参考[ API 错误代码表](http://docs.jiguang.cn/server/rest_api_v3_push/#http)。
 PHP SDK 主要抛出两个异常 `\JPush\Exceptions\APIConnectionException` 和 `\JPush\Exceptions\APIRequestException` 分别对应请求连接产生的异常和请求响应的异常。
 这两种异常都需要捕获，为简单起见，也可以捕获他们的父类异常 `JPush\Exceptions\JPushException`（见 README）。另外 APIRequestException 异常还提供其他方法供开发者调用。
 

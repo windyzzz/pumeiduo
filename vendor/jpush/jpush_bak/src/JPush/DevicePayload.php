@@ -3,6 +3,13 @@ namespace JPush;
 use InvalidArgumentException;
 
 class DevicePayload {
+
+    const DEVICE_URL = 'https://device.jpush.cn/v3/devices/';
+    const DEVICE_STATUS_URL = 'https://device.jpush.cn/v3/devices/status/';
+    const TAG_URL = 'https://device.jpush.cn/v3/tags/';
+    const IS_IN_TAG_URL = 'https://device.jpush.cn/v3/tags/{tag}/registration_ids/{registration_id}';
+    const ALIAS_URL = 'https://device.jpush.cn/v3/aliases/';
+
     private $client;
 
     /**
@@ -15,7 +22,7 @@ class DevicePayload {
     }
 
     public function getDevices($registrationId) {
-        $url = $this->client->makeURL('device') . $registrationId;
+        $url = DevicePayload::DEVICE_URL . $registrationId;
         return Http::get($this->client, $url);
     }
 
@@ -32,16 +39,6 @@ class DevicePayload {
     }
     public function updateMoblie($registration_id, $mobile) {
         return $this->updateDevice($registration_id, null, $mobile);
-    }
-
-    public function clearMobile($registrationId) {
-        $url = $this->client->makeURL('device') . $registrationId;
-        return Http::post($this->client, $url, ['mobile' => '']);
-    }
-
-    public function clearTags($registrationId) {
-        $url = $this->client->makeURL('device') . $registrationId;
-        return Http::post($this->client, $url, ['tags' => '']);
     }
 
     public function updateDevice($registrationId, $alias = null, $mobile = null, $addTags = null, $removeTags = null) {
@@ -97,12 +94,12 @@ class DevicePayload {
             $payload['tags'] = $tags;
         }
 
-        $url = $this->client->makeURL('device') . $registrationId;
+        $url = DevicePayload::DEVICE_URL . $registrationId;
         return Http::post($this->client, $url, $payload);
     }
 
     public function getTags() {
-        $url = $this->client->makeURL('tag');
+        $url = DevicePayload::TAG_URL;
         return Http::get($this->client, $url);
     }
 
@@ -114,7 +111,10 @@ class DevicePayload {
         if (!is_string($tag)) {
             throw new InvalidArgumentException("Invalid tag");
         }
-        $url = $this->client->makeURL('tag') . $tag . '/registration_ids/' . $registrationId;
+
+        $url = str_replace('{tag}', $tag, self::IS_IN_TAG_URL);
+        $url = str_replace('{registration_id}', $registrationId, $url);
+
         return Http::get($this->client, $url);
     }
 
@@ -156,7 +156,7 @@ class DevicePayload {
             }
         }
 
-        $url = $this->client->makeURL('tag') . $tag;
+        $url = DevicePayload::TAG_URL . $tag;
         $payload = array('registration_ids'=>$registrationId);
         return Http::post($this->client, $url, $payload);
     }
@@ -165,7 +165,7 @@ class DevicePayload {
         if (!is_string($tag)) {
             throw new InvalidArgumentException("Invalid tag");
         }
-        $url = $this->client->makeURL('tag') . $tag;
+        $url = DevicePayload::TAG_URL . $tag;
         return Http::delete($this->client, $url);
     }
 
@@ -174,7 +174,7 @@ class DevicePayload {
             throw new InvalidArgumentException("Invalid alias");
         }
 
-        $url = $this->client->makeURL('alias') . $alias;
+        $url = self::ALIAS_URL . $alias;
 
         if (!is_null($platform)) {
             if (is_array($platform)) {
@@ -200,7 +200,7 @@ class DevicePayload {
         if (!is_string($alias)) {
             throw new InvalidArgumentException("Invalid alias");
         }
-        $url = $this->client->makeURL('alias') . $alias;
+        $url = self::ALIAS_URL . $alias;
         return Http::delete($this->client, $url);
     }
 
@@ -218,7 +218,7 @@ class DevicePayload {
             throw new InvalidArgumentException('Invalid registration_id');
         }
         $payload['registration_ids'] = $registrationId;
-        $url = $this->client->makeURL('device') . 'status';
+        $url = DevicePayload::DEVICE_STATUS_URL;
         return Http::post($this->client, $url, $payload);
     }
 }

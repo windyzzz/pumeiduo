@@ -5,21 +5,17 @@ use InvalidArgumentException;
 class PushPayload {
 
     private static $EFFECTIVE_DEVICE_TYPES = array('ios', 'android', 'winphone');
+    const PUSH_URL = 'https://api.jpush.cn/v3/push';
+    const PUSH_VALIDATE_URL = 'https://api.jpush.cn/v3/push/validate';
 
     private $client;
-    private $url;
-
-    private $cid;
     private $platform;
 
     private $audience;
     private $tags;
     private $tagAnds;
-    private $tagNots;
     private $alias;
     private $registrationIds;
-    private $segmentIds;
-    private $abtests;
 
     private $notificationAlert;
     private $iosNotification;
@@ -35,18 +31,6 @@ class PushPayload {
      */
     function __construct($client) {
         $this->client = $client;
-        $url = $this->client->is_group() ? 'grouppush' : 'push';
-        $this->url = $this->client->makeURL('push') . $url;
-    }
-
-    public function getCid($count = 1, $type = 'push') {
-        $url = $this->client->makeURL('push') . 'push/cid?count=' . $count . '&type=' . $type;
-        return Http::get($this->client, $url);
-    }
-
-    public function setCid($cid) {
-        $this->cid = trim($cid);
-        return $this;
     }
 
     public function setPlatform($platform) {
@@ -80,53 +64,101 @@ class PushPayload {
     }
 
     public function addTag($tag) {
-        return $this->updateAudience('tags', $tag, 'tag');
+        if (is_null($this->tags)) {
+            $this->tags = array();
+        }
+
+        if (is_array($tag)) {
+            foreach($tag as $_tag) {
+                if (!is_string($_tag)) {
+                    throw new InvalidArgumentException("Invalid tag value");
+                }
+                if (!in_array($_tag, $this->tags)) {
+                    array_push($this->tags, $_tag);
+                }
+            }
+        } else if (is_string($tag)) {
+            if (!in_array($tag, $this->tags)) {
+                array_push($this->tags, $tag);
+            }
+        } else {
+            throw new InvalidArgumentException("Invalid tag value");
+        }
+
+        return $this;
+
     }
 
     public function addTagAnd($tag) {
-        return $this->updateAudience('tagAnds', $tag, 'tag_and');
-    }
+        if (is_null($this->tagAnds)) {
+            $this->tagAnds = array();
+        }
 
-    public function addTagNot($tag) {
-        return $this->updateAudience('tagNots', $tag, 'tag_not');
+        if (is_array($tag)) {
+            foreach($tag as $_tag) {
+                if (!is_string($_tag)) {
+                    throw new InvalidArgumentException("Invalid tag_and value");
+                }
+                if (!in_array($_tag, $this->tagAnds)) {
+                    array_push($this->tagAnds, $_tag);
+                }
+            }
+        } else if (is_string($tag)) {
+            if (!in_array($tag, $this->tagAnds)) {
+                array_push($this->tagAnds, $tag);
+            }
+        } else {
+            throw new InvalidArgumentException("Invalid tag_and value");
+        }
+
+        return $this;
     }
 
     public function addAlias($alias) {
-        return $this->updateAudience('alias', $alias, 'alias');
+        if (is_null($this->alias)) {
+            $this->alias = array();
+        }
+
+        if (is_array($alias)) {
+            foreach($alias as $_alias) {
+                if (!is_string($_alias)) {
+                    throw new InvalidArgumentException("Invalid alias value");
+                }
+                if (!in_array($_alias, $this->alias)) {
+                    array_push($this->alias, $_alias);
+                }
+            }
+        } else if (is_string($alias)) {
+            if (!in_array($alias, $this->alias)) {
+                array_push($this->alias, $alias);
+            }
+        } else {
+            throw new InvalidArgumentException("Invalid alias value");
+        }
+
+        return $this;
     }
 
     public function addRegistrationId($registrationId) {
-        return $this->updateAudience('registrationIds', $registrationId, 'registration_id');
-    }
-
-    public function addSegmentId($segmentId) {
-        return $this->updateAudience('segmentIds', $segmentId, 'segment');
-    }
-
-    public function addAbtest($abtest) {
-        return $this->updateAudience('abtests', $abtest, 'abtest');
-    }
-
-    private function updateAudience($key, $value, $name) {
-        if (is_null($this->$key)) {
-            $this->$key = array();
+        if (is_null($this->registrationIds)) {
+            $this->registrationIds = array();
         }
 
-        if (is_array($value)) {
-            foreach($value as $v) {
-                if (!is_string($v)) {
-                    throw new InvalidArgumentException("Invalid $name value");
+        if (is_array($registrationId)) {
+            foreach($registrationId as $_registrationId) {
+                if (!is_string($_registrationId)) {
+                    throw new InvalidArgumentException("Invalid registration_id value");
                 }
-                if (!in_array($v, $this->$key)) {
-                    array_push($this->$key, $v);
+                if (!in_array($_registrationId, $this->registrationIds)) {
+                    array_push($this->registrationIds, $_registrationId);
                 }
             }
-        } else if (is_string($value)) {
-            if (!in_array($value, $this->$key)) {
-                array_push($this->$key, $value);
+        } else if (is_string($registrationId)) {
+            if (!in_array($registrationId, $this->registrationIds)) {
+                array_push($this->registrationIds, $registrationId);
             }
         } else {
-            throw new InvalidArgumentException("Invalid $name value");
+            throw new InvalidArgumentException("Invalid registration_id value");
         }
 
         return $this;
@@ -185,14 +217,15 @@ class PushPayload {
         return $this;
     }
 
-    public function setSms($delay_time, $temp_id, array $temp_para = []) {
+    public function setSmsMessage($content, $delay_time = 0) {
         $sms = array();
-        $sms['temp_id'] = $temp_id;
-        $sms['delay_time'] = ($delay_time === 0 || (is_int($delay_time) && $delay_time > 0 && $delay_time <= 86400)) ? $delay_time : 0;
-
-        if (!empty($temp_para)) {
-            $sms['temp_para'] = $temp_para;
+        if (is_string($content) && mb_strlen($content) < 480) {
+            $sms['content'] = $content;
+        } else {
+            throw new InvalidArgumentException('Invalid sms content, sms content\'s length must in [0, 480]');
         }
+
+        $sms['delay_time'] = ($delay_time === 0 || (is_int($delay_time) && $delay_time > 0 && $delay_time <= 86400)) ? $delay_time : 0;
 
         $this->smsMessage = $sms;
         return $this;
@@ -207,10 +240,6 @@ class PushPayload {
         }
         $payload["platform"] = $this->platform;
 
-        if (!is_null($this->cid)) {
-            $payload['cid'] = $this->cid;
-        }
-
         // validate audience
         $audience = array();
         if (!is_null($this->tags)) {
@@ -219,21 +248,13 @@ class PushPayload {
         if (!is_null($this->tagAnds)) {
             $audience["tag_and"] = $this->tagAnds;
         }
-        if (!is_null($this->tagNots)) {
-            $audience["tag_not"] = $this->tagNots;
-        }
         if (!is_null($this->alias)) {
             $audience["alias"] = $this->alias;
         }
         if (!is_null($this->registrationIds)) {
             $audience["registration_id"] = $this->registrationIds;
         }
-        if (!is_null($this->segmentIds)) {
-            $audience["segment"] = $this->segmentIds;
-        }
-        if (!is_null($this->abtests)) {
-            $audience["abtest"] = $this->abtests;
-        }
+
         if (is_null($this->audience) && count($audience) <= 0) {
             throw new InvalidArgumentException("audience must be set");
         } else if (!is_null($this->audience) && count($audience) > 0) {
@@ -289,14 +310,14 @@ class PushPayload {
             $payload['notification'] = $notification;
         }
 
-        if (!is_null($this->message)) {
+        if (count($this->message) > 0) {
             $payload['message'] = $this->message;
         }
         if (!array_key_exists('notification', $payload) && !array_key_exists('message', $payload)) {
             throw new InvalidArgumentException('notification and message can not all be null');
         }
 
-        if (!is_null($this->smsMessage)) {
+        if (count($this->smsMessage)) {
             $payload['sms_message'] = $this->smsMessage;
         }
 
@@ -320,11 +341,12 @@ class PushPayload {
     }
 
     public function send() {
-        return Http::post($this->client, $this->url, $this->build());
+        $url = PushPayload::PUSH_URL;
+        return Http::post($this->client, $url, $this->build());
     }
 
     public function validate() {
-        $url = $this->client->makeURL('push') . '/push/validate';
+        $url = PushPayload::PUSH_VALIDATE_URL;
         return Http::post($this->client, $url, $this->build());
     }
 
@@ -334,38 +356,28 @@ class PushPayload {
 
     # new methods
     public function iosNotification($alert = '', array $notification = array()) {
+        # $required_keys = array('sound', 'badge', 'content-available', 'mutable-content', category', 'extras');
         $ios = array();
         $ios['alert'] = (is_string($alert) || is_array($alert)) ? $alert : '';
         if (!empty($notification)) {
-            if (isset($notification['sound'])) {
-                if (is_string($notification['sound']) || is_array($notification['sound'])) {
-                    $ios['sound'] = $notification['sound'];
-                } else {
-                    unset($notification['sound']);
-                }
+            if (isset($notification['sound']) && is_string($notification['sound'])) {
+                $ios['sound'] = $notification['sound'];
             }
-            if (isset($notification['content-available'])) {
-                if (is_bool($notification['content-available'])) {
-                    $ios['content-available'] = $notification['content-available'];
-                } else {
-                    unset($notification['content-available']);
-                }
+            if (isset($notification['badge'])) {
+                $ios['badge'] = (int)$notification['badge'] ? $notification['badge'] : 0;
             }
-            if (isset($notification['mutable-content'])) {
-                if (is_bool($notification['mutable-content'])) {
-                    $ios['mutable-content'] = $notification['mutable-content'];
-                } else {
-                    unset($notification['mutable-content']);
-                }
+            if (isset($notification['content-available']) && is_bool($notification['content-available']) && $notification['content-available']) {
+                $ios['content-available'] = $notification['content-available'];
             }
-            if (isset($notification['extras'])) {
-                if (is_array($notification['extras']) && !empty($notification['extras'])) {
-                    $ios['extras'] = $notification['extras'];
-                } else {
-                    unset($notification['extras']);
-                }
+            if (isset($notification['mutable-content']) && is_bool($notification['mutable-content']) && $notification['mutable-content']) {
+                $ios['mutable-content'] = $notification['mutable-content'];
             }
-            $ios = array_merge($notification, $ios);
+            if (isset($notification['category']) && is_string($notification['category'])) {
+                $ios['category'] = $notification['category'];
+            }
+            if (isset($notification['extras']) && is_array($notification['extras']) && !empty($notification['extras'])) {
+                $ios['extras'] = $notification['extras'];
+            }
         }
         if (!isset($ios['sound'])) {
             $ios['sound'] = '';
@@ -378,59 +390,41 @@ class PushPayload {
     }
 
     public function androidNotification($alert = '', array $notification = array()) {
+        # $required_keys = array('title', 'builder_id', 'priority', 'category', 'style',
+        #                        'alert_type', 'big_text', 'inbox', 'big_pic_path', 'extras');
         $android = array();
         $android['alert'] = is_string($alert) ? $alert : '';
         if (!empty($notification)) {
-            if (isset($notification['builder_id'])) {
-                if (is_int($notification['builder_id'])) {
-                    $android['builder_id'] = $notification['builder_id'];
-                } else {
-                    unset($notification['builder_id']);
-                }
+            if (isset($notification['title']) && is_string($notification['title'])) {
+                $android['title'] = $notification['title'];
             }
-            if (isset($notification['priority'])) {
-                if (is_int($notification['priority'])) {
-                    $android['priority'] = $notification['priority'];
-                } else {
-                    unset($notification['priority']);
-                }
+            if (isset($notification['builder_id']) && is_int($notification['builder_id'])) {
+                $android['builder_id'] = $notification['builder_id'];
             }
-            if (isset($notification['style'])) {
-                if (is_int($notification['style'])) {
-                    $android['style'] = $notification['style'];
-                } else {
-                    unset($notification['style']);
-                }
+            if (isset($notification['extras']) && is_array($notification['extras']) && !empty($notification['extras'])) {
+                $android['extras'] = $notification['extras'];
             }
-            if (isset($notification['alert_type'])) {
-                if (is_int($notification['alert_type'])) {
-                    $android['alert_type'] = $notification['alert_type'];
-                } else {
-                    unset($notification['alert_type']);
-                }
+            if (isset($notification['priority']) && is_int($notification['priority'])) {
+                $android['priority'] = $notification['priority'];
             }
-            if (isset($notification['inbox'])) {
-                if (is_array($notification['inbox']) && !empty($notification['inbox'])) {
-                    $android['inbox'] = $notification['inbox'];
-                } else {
-                    unset($notification['inbox']);
-                }
+            if (isset($notification['category']) && is_string($notification['category'])) {
+                $android['category'] = $notification['category`'];
             }
-            if (isset($notification['intent'])) {
-                if (is_array($notification['intent']) && !empty($notification['intent'])) {
-                    $android['intent'] = $notification['intent'];
-                } else {
-                    unset($notification['intent']);
-                }
+            if (isset($notification['style']) && is_int($notification['style'])) {
+                $android['style'] = $notification['style'];
             }
-            if (isset($notification['extras'])) {
-                if (is_array($notification['extras']) && !empty($notification['extras'])) {
-                    $android['extras'] = $notification['extras'];
-                } else {
-                    unset($notification['extras']);
-                }
+            if (isset($notification['big_text']) && is_string($notification['big_text'])) {
+                $android['big_text'] = $notification['big_text'];
             }
-            $android = array_merge($notification, $android);
+            if (isset($notification['inbox']) && is_array($notification['inbox'])) {
+                $android['inbox'] = $notification['inbox'];
+            }
+            if (isset($notification['big_pic_path']) && is_string($notification['big_pic_path'])) {
+                $android['big_pic_path'] = $notification['big_pic_path'];
+            }
+            if (isset($notification['alert_type']) && is_int($notification['alert_type'])) {
+                $android['alert_type'] = $notification['alert_type'];
+            }
         }
         $this->androidNotification = $android;
         return $this;
@@ -458,31 +452,27 @@ class PushPayload {
     }
 
     public function options(array $opts = array()) {
-        # $required_keys = array('sendno', 'time_to_live', 'override_msg_id', 'apns_production', 'apns_collapse_id', 'big_push_duration');
+        # $required_keys = array('sendno', 'time_to_live', 'override_msg_id', 'apns_production', 'big_push_duration');
         $options = array();
-        if (isset($opts['sendno'])) {
+        if (isset($opts['sendno']) && is_int($opts['sendno'])) {
             $options['sendno'] = $opts['sendno'];
         } else {
             $options['sendno'] = $this->generateSendno();
         }
-        if (isset($opts['time_to_live']) && $opts['time_to_live'] <= 864000 && $opts['time_to_live'] >= 0) {
+        if (isset($opts['time_to_live']) && is_int($opts['time_to_live']) && $opts['time_to_live'] <= 864000 && $opts['time_to_live'] >= 0) {
             $options['time_to_live'] = $opts['time_to_live'];
         }
-        if (isset($opts['override_msg_id'])) {
+        if (isset($opts['override_msg_id']) && is_long($opts['override_msg_id'])) {
             $options['override_msg_id'] = $opts['override_msg_id'];
         }
-        if (isset($opts['apns_production'])) {
-            $options['apns_production'] = (bool)$opts['apns_production'];
+        if (isset($opts['apns_production']) && is_bool($opts['apns_production'])) {
+            $options['apns_production'] = $opts['apns_production'];
         } else {
             $options['apns_production'] = false;
         }
-        if (isset($opts['apns_collapse_id'])) {
-            $options['apns_collapse_id'] = $opts['apns_collapse_id'];
-        }
-        if (isset($opts['big_push_duration']) && $opts['big_push_duration'] <= 1400 && $opts['big_push_duration'] >= 0) {
+        if (isset($opts['big_push_duration']) && is_int($opts['big_push_duration']) && $opts['big_push_duration'] <= 1400 && $opts['big_push_duration'] >= 0) {
             $options['big_push_duration'] = $opts['big_push_duration'];
         }
-        $options = array_merge($opts, $options);
         $this->options = $options;
 
         return $this;
@@ -639,11 +629,6 @@ class PushPayload {
         return $this;
     }
 
-    public function setSmsMessage($smsMessage) {
-        $this->smsMessage = $smsMessage;
-        return $this;
-    }
-
     public function setOptions($sendno=null, $time_to_live=null, $override_msg_id=null, $apns_production=null, $big_push_duration=null) {
         $options = array();
 
@@ -688,39 +673,5 @@ class PushPayload {
 
         $this->options = $options;
         return $this;
-    }
-
-    /*
-     针对RegID方式批量单推
-     https://docs.jiguang.cn/jpush/server/push/rest_api_v3_push/#vip
-    */
-    public function batchPushByRegid(array $singlePayloads) {
-        $body = array(
-            "pushlist"=>array()
-        );
-        $response = $this -> getCid(count($singlePayloads), 'push');
-        $cidlist = $response['body']['cidlist'];
-        foreach ($cidlist as $i => $cid) {
-            $body["pushlist"][$cid] = $singlePayloads[$i];
-        }
-        $url = $this->client->makeURL('push') . 'push/batch/regid/single';
-        return Http::post($this->client, $url, $body);
-    }
-
-    /*
-     针对Alias方式批量单推
-     https://docs.jiguang.cn/jpush/server/push/rest_api_v3_push/#vip
-    */
-    public function batchPushByAlias(array $singlePayloads) {
-        $body = array(
-            "pushlist"=>array()
-        );
-        $response = $this -> getCid(count($singlePayloads), 'push');
-        $cidlist = $response['body']['cidlist'];
-        foreach ($cidlist as $i => $cid) {
-            $body["pushlist"][$cid] = $singlePayloads[$i];
-        }
-        $url = $this->client->makeURL('push') . 'push/batch/alias/single';
-        return Http::post($this->client, $url, $body);
     }
 }
