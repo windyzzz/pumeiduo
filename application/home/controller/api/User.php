@@ -3320,9 +3320,9 @@ class User extends Base
      */
     public function checkLoginProfit()
     {
-//        $url = SITE_URL . '/#/app_redRain?red_token=' . $this->user['token'];
-//        $result = ['status' => 1, 'result' => ['state' => 1, 'url' => $url]];
-//        return json($result);
+        $url = SITE_URL . '/#/app_redRain?red_token=' . $this->user['token'];
+        $result = ['status' => 1, 'result' => ['state' => 0, 'url' => $url]];
+        return json($result);
         if ($this->passAuth) {
             $result = ['status' => 1, 'result' => ['state' => 0]];
         } else {
@@ -3333,7 +3333,7 @@ class User extends Base
                 $url = SITE_URL . '/#/app_redRain?red_token=' . $this->user['token'];
                 $result = ['status' => 1, 'result' => ['state' => 1, 'url' => $url]];
             } else {
-                $result = ['status' => 1, 'result' => ['state' => 0, 'url' => '', 'verify_url' => '']];
+                $result = ['status' => 1, 'result' => ['state' => 0, 'url' => '']];
             }
         }
         return json($result);
@@ -3345,15 +3345,15 @@ class User extends Base
      */
     public function loginProfit()
     {
-//        return json([
-//            'status' => 1,
-//            'msg' => '领取成功',
-//            'result' => [
-//                'use_start_time' => '2019-12-12',
-//                'use_end_time' => '2020-03-12',
-//                'reward' => '666.6'
-//            ]
-//        ]);
+        return json([
+            'status' => 1,
+            'msg' => '领取成功',
+            'result' => [
+                'use_start_time' => '2019-12-12',
+                'use_end_time' => '2020-03-12',
+                'reward' => '666.6'
+            ]
+        ]);
         $taskLogic = new TaskLogic(4);
         $taskLogic->setUser($this->user);
         $res = $taskLogic->checkLoginProfit();

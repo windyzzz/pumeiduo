@@ -1,0 +1,258 @@
+<include file="public/layout"/>
+<style>
+    .err {
+        color: #F00;
+        display: none;
+    }
+</style>
+<script src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
+<body style="background-color: #FFF; overflow: auto;">
+<div id="toolTipLayer"
+     style="position: absolute; z-index: 9999; display: none; visibility: visible; left: 95px; top: 573px;"></div>
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title"><a class="back" href="javascript:history.back();" title="返回列表"><i
+                class="fa fa-arrow-circle-o-left"></i></a>
+            <div class="subject">
+                <h3>推送消息管理</h3>
+                <h5>推送消息详情页</h5>
+            </div>
+        </div>
+    </div>
+    <form class="form-horizontal" id="handleposition" method="post">
+        <input type="hidden" name="push_id" value="{$push_info.id}">
+        <div class="ncap-form-default">
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>消息标题</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="title" id="title" value="{$push_info.title}" class="input-txt">
+                    <span class="err" id="err_title"></span>
+                    <p class="notic">请填写消息标题</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>消息简介</label>
+                </dt>
+                <dd class="opt">
+                    <textarea name="desc" id="desc" style="width: 30%; height: 100%; line-height: 150%" rows="3">{$push_info.desc}</textarea>
+                    <span class="err" id="err_desc"></span>
+                    <p class="notic">请填写消息简介</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>推送范围</label>
+                </dt>
+                <dd class="opt">
+                    <select name="distribute_level" id="distribute_level">
+                        <option value="0">全部用户</option>
+                        <option value="1" <if condition="$push_info[distribute_level] eq 1">selected</if> >普通会员</option>
+                        <option value="2" <if condition="$push_info[distribute_level] eq 2">selected</if> >VIP</option>
+                        <option value="3" <if condition="$push_info[distribute_level] eq 3">selected</if> >SVIP</option>
+                    </select>
+                    <p class="notic">针对某等级用户的推送</p>
+                </dd>
+            </dl>
+            <dl class="row timed">
+                <dt class="tit">
+                    <label><em>*</em>推送时间</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" id="push_time" name="push_time"
+                           value="<?php if(!empty($push_info[push_time])) echo date('Y-m-d H:i:s', $push_info[push_time]); ?>"
+                           class="input-txt">
+                    <span class="err" id="err_push_time"></span>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>推送类型</label>
+                </dt>
+                <dd class="opt">
+                    <select name="type" id="push_type">
+                        <option value="1" <if condition="$push_info[type] eq 1">selected</if> >公告</option>
+                        <option value="2" <if condition="$push_info[type] eq 2">selected</if> >活动消息</option>
+                        <option value="3" <if condition="$push_info[type] eq 3">selected</if> >优惠券</option>
+                        <option value="4" <if condition="$push_info[type] eq 4">selected</if> >商品</option>
+                        <option value="5" <if condition="$push_info[type] eq 5">selected</if> >首页</option>
+                    </select>
+                    <p class="notic">用户点击推送后跳转的页面</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>推送关联</label>
+                </dt>
+                <dd class="opt">
+                    <select name="type_id" id="push_type_id">
+                        <option value="0">请选择</option>
+                    </select>
+                </dd>
+            </dl>
+            <dl class="row" style="display: none;">
+                <dt class="tit">
+                    <label><em>*</em>商品编号</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="goods_sn" id="goods_sn" value="{$push_info.goods_sn}" class="input-txt">
+                    <span class="err" id="err_goods_sn"></span>
+                    <p class="notic">请填写商品编号</p>
+                </dd>
+            </dl>
+            <div class="bot"><a onclick="verifyForm()" class="ncap-btn-big ncap-btn-green">确认提交</a></div>
+        </div>
+    </form>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#push_time').layDate();
+        var push_type = $('#push_type').find("option:selected").val();
+        if (push_type == '4') {
+            $('#push_type_id').parent().parent().hide();
+            $('#goods_sn').parent().parent().show();
+        } else {
+            $('#push_type_id').parent().parent().show();
+            $('#goods_sn').parent().parent().hide();
+            var push_type_id = "{$push_info.type_id}";
+            var url = '';
+            var data = '';
+            switch (push_type) {
+                case '1':
+                    // 公告
+                    url = "{:U('Admin/Article/ajaxMessageList')}";
+                    data = {distribute_level: $('#distribute_level').find('option:selected').val()};
+                    break;
+                case '2':
+                    // 活动消息
+                    url = "{:U('Admin/Article/ajaxArticleList')}";
+                    data = {cate_id: 1, distribute_level: $('#distribute_level').find('option:selected').val()};
+                    break;
+                default:
+                    $('#push_type_id').parent().parent().hide();
+                    return;
+            }
+            $.ajax({
+                type: 'GET',
+                url: url,
+                data: data,
+                dataType: 'json',
+                error: function () {
+                    layer.alert("服务器繁忙, 请联系管理员!");
+                },
+                success: function (data) {
+                    if (data.status == 1) {
+                        if (data.result.length == 0) {
+                            var option = '<option value="0">请选择</option>';
+                        } else {
+                            var option = '';
+                            $.each(data.result, function(index, item) {
+                                if (push_type_id == item.id) {
+                                    option = option + '<option value="'  +item.id + '" selected>' + item.title + '</option>';
+                                } else {
+                                    option = option + '<option value="'  +item.id + '">' + item.title + '</option>';
+                                }
+                            });
+                        }
+                        $('#push_type_id').html(option);
+                    }
+                }
+            });
+        }
+    });
+
+    /**
+     * 类型选择处理
+     */
+    $('#distribute_level').change(function () {
+        selectContact();
+    });
+
+    /**
+     * 类型选择处理
+     */
+    $('#push_type').change(function () {
+        selectContact();
+    });
+
+    /**
+     * 选择处理
+     */
+    function selectContact() {
+        var push_type = $('#push_type').find("option:selected").val();
+        if (push_type == '4') {
+            $('#push_type_id').parent().parent().hide();
+            $('#goods_sn').parent().parent().show();
+        } else {
+            $('#push_type_id').parent().parent().show();
+            $('#goods_sn').parent().parent().hide();
+            var url = '';
+            var data = '';
+            switch (push_type) {
+                case '1':
+                    // 公告
+                    url = "{:U('Admin/Article/ajaxMessageList')}";
+                    data = {distribute_level: $('#distribute_level').find('option:selected').val()};
+                    break;
+                case '2':
+                    // 活动消息
+                    url = "{:U('Admin/Article/ajaxArticleList')}";
+                    data = {cate_id: 1, distribute_level: $('#distribute_level').find('option:selected').val()};
+                    break;
+                default:
+                    $('#push_type_id').parent().parent().hide();
+                    return;
+            }
+            $.ajax({
+                type: 'GET',
+                url: url,
+                data: data,
+                dataType: 'json',
+                error: function () {
+                    layer.alert("服务器繁忙, 请联系管理员!");
+                },
+                success: function (data) {
+                    if (data.status == 1) {
+                        if (data.result.length == 0) {
+                            var option = '<option value="0">请选择</option>';
+                        } else {
+                            var option = '';
+                            $.each(data.result, function(index, item) {
+                                option = option + '<option value="'  +item.id + '">' + item.title + '</option>';
+                            });
+                        }
+                        $('#push_type_id').html(option);
+                    }
+                }
+            });
+        }
+    }
+
+    function verifyForm() {
+        $('span.err').hide();
+        $.ajax({
+            type: "POST",
+            url: "{:U('Admin/Article/pushInfo')}",
+            data: $('#handleposition').serialize(),
+            dataType: "json",
+            error: function () {
+                layer.alert("服务器繁忙, 请联系管理员!");
+            },
+            success: function (data) {
+                if (data.status == 1) {
+                    layer.msg(data.msg, {icon: 1, time: 1000}, function () {
+                        location.href = "{:U('Admin/Article/pushList')}";
+                    });
+                } else {
+                    layer.msg(data.msg, {icon: 2, time: 3000});
+                }
+            }
+        });
+    }
+</script>
+</body>
+</html>

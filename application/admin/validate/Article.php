@@ -27,7 +27,8 @@ class Article extends Validate
         'content' => 'require|checkContent',
         'message' => 'require|checkContent',
         'link' => 'url',
-        'goods_id' => 'require',
+        'desc' => 'require|checkEmpty',
+        'push_time' => 'require',
     ];
 
     //错误消息
@@ -37,9 +38,10 @@ class Article extends Validate
         'message' => '内容不能为空',
         'cat_id.require' => '所属分类缺少参数',
         'cat_id.checkEmpty' => '所属分类必须选择',
-        'article_id.checkArtcileId' => '系统预定义的文章不能删除',
+        'article_id.checkArticleId' => '系统预定义的文章不能删除',
         'link.url' => '链接格式错误',
-        'goods_id' => '请选择商品',
+        'desc' => '简介不能为空',
+        'push_time' => '推送时间不能为空',
     ];
 
     //验证场景
@@ -48,7 +50,7 @@ class Article extends Validate
         'edit' => ['title', 'cat_id', 'content', 'link'],
         'del' => ['article_id'],
         'message' => ['title', 'message'],
-        'announce' => ['title', 'goods_id'],
+        'push' => ['title', 'desc', 'push_time'],
     ];
 
     protected function checkEmpty($value)
@@ -59,7 +61,6 @@ class Article extends Validate
         if (empty($value)) {
             return false;
         }
-
         return true;
     }
 
@@ -71,7 +72,6 @@ class Article extends Validate
         if (empty($value)) {
             return false;
         }
-
         return true;
     }
 }

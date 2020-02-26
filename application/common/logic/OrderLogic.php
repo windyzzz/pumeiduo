@@ -1045,7 +1045,8 @@ class OrderLogic
             ->join('order_goods og', 'og.rec_id = rg.rec_id')
             ->join('goods g', 'g.goods_id = og.goods_id')
             ->join('spec_goods_price sgp', 'sgp.goods_id = og.goods_id AND sgp.`key` = og.spec_key', 'LEFT')
-            ->where($where)->field('rg.*, og.goods_sn, og.goods_name, og.spec_key_name, sgp.item_id, g.original_img');
+            ->where($where)->field('rg.*, og.goods_sn, og.goods_name, og.spec_key_name, sgp.item_id, g.original_img')
+            ->order('addtime desc');
         if ($page) {
             $returnGoods = $returnGoods->limit($page->firstRow . ',' . $page->listRows);
         }

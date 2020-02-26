@@ -60,13 +60,8 @@
     </form>
 </div>
 <script type="text/javascript">
-    var ajax_return_status = 1; // 标识ajax 请求是否已经回来 可以进行下一次请求
     function verifyForm(){
         $('span.err').hide();
-        if (ajax_return_status == 0) {
-            return false;
-        }
-        ajax_return_status = 0;
         $.ajax({
             type: "POST",
             url: "{:U('Admin/Article/messageInfo')}",
@@ -81,11 +76,10 @@
                         location.href = "{:U('Admin/Article/messageList')}";
                     });
                 } else {
-                    layer.msg(data.msg, {icon: 2,time: 1000});
+                    layer.msg(data.msg, {icon: 2,time: 3000});
                     $.each(data.result, function (index, item) {
                         $('#err_' + index).text(item).show();
                     });
-                    ajax_return_status = 1;
                 }
             }
         });

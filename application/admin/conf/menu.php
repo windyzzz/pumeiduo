@@ -52,6 +52,7 @@ return [
             ['name' => '帮助中心分类', 'act' => 'helpCenterCate', 'op' => 'Article'],
             ['name' => '常见问题', 'act' => 'questionCate', 'op' => 'Article'],
             ['name' => '系统消息', 'act' => 'messageList', 'op' => 'Article'],
+            ['name' => '消息推送', 'act' => 'pushList', 'op' => 'Article'],
             // array('name' => '帮助管理', 'act'=>'help_list', 'op'=>'Article'),
             // array('name' =>'友情链接',  'act'=>'linkList','op'=>'Article'),
             // array('name' => '公告管理', 'act'=>'notice_list', 'op'=>'Article'),

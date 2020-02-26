@@ -12,8 +12,8 @@
 namespace app\admin\controller;
 
 use app\admin\logic\ArticleCatLogic;
-use app\admin\model\Announce as AnnounceModel;
 use app\admin\model\Message as MessageModel;
+use app\admin\model\Push as PushModel;
 use think\Page;
 
 class Article extends Base
@@ -97,6 +97,21 @@ class Article extends Base
         $this->assign('list', $list); // 赋值数据集
         $this->assign('pager', $pager); // 赋值分页输出
         return $this->fetch('articleList');
+    }
+
+    /**
+     * ajax文章列表
+     */
+    public function ajaxArticleList()
+    {
+        $cateId = I('cate_id', 0);
+        $distributeLevel = I('distribute_level', 0);
+        $articleList = M('article')->where([
+            'cat_id' => $cateId,
+            'distribut_level' => $distributeLevel,
+            'publish_time' => ['>=', strtotime('-30 day')]
+        ])->field('article_id id, title')->select();
+        $this->ajaxReturn(['status' => 1, 'result' => $articleList]);
     }
 
     public function article()
@@ -464,6 +479,19 @@ class Article extends Base
     }
 
     /**
+     * ajax消息列表
+     */
+    public function ajaxMessageList()
+    {
+        $distributeLevel = I('distribute_level', 0);
+        $messageList = M('message')->where([
+            'distribut_level' => $distributeLevel,
+            'send_time' => ['>=', strtotime('-30 day')]
+        ])->field('message_id id, title')->order('send_time desc')->select();
+        $this->ajaxReturn(['status' => 1, 'result' => $messageList]);
+    }
+
+    /**
      * 消息内容
      * @return mixed
      */
@@ -476,7 +504,7 @@ class Article extends Base
                 // 验证失败 输出错误信息
                 $validate_error = '';
                 foreach ($result as $key => $value) {
-                    $validate_error .= $value . ',';
+                    $validate_error .= $value . '，';
                 }
                 $this->ajaxReturn(['status' => 0, 'msg' => $validate_error]);
             }
@@ -507,6 +535,114 @@ class Article extends Base
     {
         $messageId = I('message_id', '');
         M('message')->where(['message_id' => $messageId])->delete();
+        $this->ajaxReturn(['status' => 1, 'msg' => '删除成功']);
+    }
+
+    /**
+     * 推送消息列表
+     * @return mixed
+     */
+    public function pushList()
+    {
+        $count = M('push')->count();
+        $page = new Page($count, 10);
+        $pushModel = new PushModel();
+        $pushList = $pushModel->limit($page->firstRow . ',' . $page->listRows)->order('create_time DESC')->select();
+        foreach ($pushList as $k => $item) {
+            switch ($item['type']) {
+                case 1:
+                    // 公告
+                    $typeValue = M('message')->where(['message_id' => $item['type_id']])->value('title');
+                    $pushList[$k]['type_value'] = '<textarea style="width: 80%; height: 100%; line-height: 150%;" rows="3">' . $typeValue . '</textarea>';
+                    break;
+                case 2:
+                    // 活动消息
+                    $typeValue = M('article')->where(['article_id' => $item['type_id']])->value('title');
+                    $pushList[$k]['type_value'] = '<a target="_blank" href="/index.php/Admin/Article/article/act/edit/article_id/' . $item['type_id'] . '">' . $typeValue . '</a>';
+                    break;
+                case 4:
+                    // 商品
+                    $typeValue = M('goods')->where(['goods_id' => $item['type_id']])->value('goods_name');
+                    $pushList[$k]['type_value'] = '<a target="_blank" href="/index.php/Admin/Goods/addEditGoods/id/' . $item['type_id'] . '">' . $typeValue . '</a>';
+                    break;
+                default:
+                    $pushList[$k]['type_value'] = '';
+            }
+        }
+        $this->assign('push_list', $pushList);
+        $this->assign('page', $page);
+        return $this->fetch('push_list');
+    }
+
+    /**
+     * 推送消息详情
+     * @return mixed
+     */
+    public function pushInfo()
+    {
+        if ($this->request->isPost()) {
+            $data = $this->request->post();
+            $result = $this->validate($data, 'Article.push', [], true);
+            if (true !== $result) {
+                // 验证失败 输出错误信息
+                $validate_error = '';
+                foreach ($result as $key => $value) {
+                    $validate_error .= $value . '，';
+                }
+                $this->ajaxReturn(['status' => 0, 'msg' => $validate_error]);
+            }
+            $data['push_time'] = strtotime($data['push_time']);
+            switch ($data['type']) {
+                case 1:
+                    // 公告
+                case 2:
+                    // 活动消息
+                case 3:
+                    // 优惠券
+                    unset($data['goods_sn']);
+                    break;
+                case 4:
+                    // 商品
+                    $data['type_id'] = M('goods')->where(['goods_sn' => $data['goods_sn']])->value('goods_id');
+                    unset($data['goods_sn']);
+                    break;
+                case 5:
+                    // 首页
+                    unset($data['goods_sn']);
+                    $data['type_id'] = 0;
+                    break;
+            }
+            if (!empty($data['push_id'])) {
+                // 清除用户消息表
+                M('push')->where(['id' => $data['push_id']])->update($data);
+            } else {
+                unset($data['push_id']);
+                $data['create_time'] = time();
+                M('push')->add($data);
+            }
+            $this->ajaxReturn(['status' => 1, 'msg' => '操作成功']);
+        }
+        $pushId = I('push_id', '');
+        if ($pushId) {
+            $pushModel = new PushModel();
+            $pushInfo = $pushModel->find($pushId);
+            if ($pushInfo['type'] == 4) {
+                $pushInfo['goods_sn'] = M('goods')->where(['goods_id' => $pushInfo['type_id']])->value('goods_sn');
+            } else {
+                $pushInfo['goods_sn'] = '';
+            }
+            $this->assign('push_info', $pushInfo);
+        }
+        return $this->fetch('push_info');
+    }
+
+    /**
+     * 删除推送消息
+     */
+    public function pushDel()
+    {
+        $pushId = I('push_id', '');
+        M('push')->where(['id' => $pushId])->delete();
         $this->ajaxReturn(['status' => 1, 'msg' => '删除成功']);
     }
 }
