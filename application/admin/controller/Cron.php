@@ -11,6 +11,7 @@
 
 namespace app\admin\controller;
 
+use app\common\logic\PushLogic;
 use app\common\logic\wechat\WechatUtil;
 use think\Controller;
 use think\Db;
@@ -1298,6 +1299,89 @@ AND log_id NOT IN
                 'status' => -1
             ]);
             Db::commit();
+        }
+    }
+
+    /**
+     * 消息推送
+     */
+    public function autoPushMessage()
+    {
+        $where = [
+            'push_time' => ['<=', time()],
+            'status' => 0
+        ];
+        $pushList = M('push')->where($where)->field('id, type, type_id, item_id, title, desc, distribute_level')->order('push_time asc')->select();
+//        print_r($pushList);
+//        exit();
+        if (!empty($pushList)) {
+            $pushIds = [];
+            $pushLogic = new PushLogic();
+            foreach ($pushList as $push) {
+                // 标题内容数据
+                $contentData = [
+                    'title' => $push['title'],
+                    'desc' => $push['desc']
+                ];
+                // 点击处理数据
+                switch ($push['type']) {
+                    case 2:
+                        // 活动消息
+                        $value = [
+                            'message_url' => SITE_URL . '/#/news/app_news_particulars?article_id=' . $push['type_id']
+                        ];
+                        break;
+                    case 4:
+                        // 商品
+                        $value = [
+                            'goods_id' => $push['type_id'],
+                            'item_id' => $push['item_id']
+                        ];
+                        break;
+                    default:
+                        $value = [];
+                }
+                $extraData = [
+                    'type' => $push['type'],
+                    'value' => $value
+                ];
+                // 标签
+                $all = 0;
+                $pushTags = [];
+                switch ($push['distribute_level']) {
+                    case 0:
+                        $all = 1;   // 全部人发送
+                        break;
+                    case 1:
+                        $pushTags[] = 'member';
+                        break;
+                    case 2:
+                        $pushTags[] = 'vip';
+                        break;
+                    case 3:
+                        $pushTags[] = 'svip';
+                        break;
+                }
+                // 发送消息
+                $res = $pushLogic->push($contentData, $extraData, 1, [], $pushTags);
+                if ($res['status'] !== 1) {
+                    // 错误日志记录
+                    M('push_log')->add([
+                        'push_id' => $push['id'],
+                        'user_push_ids' => '',
+                        'user_push_tags' => $pushTags,
+                        'error_msg' => $res['msg'],
+                        'error_response' => isset($res['result']) ? $res['result'] : '',
+                        'create_time' => time()
+                    ]);
+                } else {
+                    print_r($res);
+                    exit();
+                    $pushIds[] = $push['id'];
+                }
+            }
+            // 更新消息发送状态
+//            M('push')->where(['id' => ['in', $pushIds]])->update(['status' => 1]);
         }
     }
 }

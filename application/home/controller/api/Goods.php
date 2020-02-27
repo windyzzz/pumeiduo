@@ -238,6 +238,7 @@ class Goods extends Base
                 'buy_limit' => $flashSale[0]['buy_limit'],
                 'start_time' => $flashSale[0]['start_time'],
                 'end_time' => $flashSale[0]['end_time'],
+                'now_time' => time(),
                 'exchange_integral' => $flashSale[0]['can_integral'] == 0 ? '0' : $flashSale[0]['exchange_integral']
             ];
             $extendGoodsSpec = ['type' => 'flash_sale', 'data' => $flashSale];
@@ -257,6 +258,7 @@ class Goods extends Base
                     'buy_limit' => $groupBuy[0]['buy_limit'],
                     'start_time' => $groupBuy[0]['start_time'],
                     'end_time' => $groupBuy[0]['end_time'],
+                    'now_time' => time() . '',
                     'exchange_integral' => $groupBuy[0]['can_integral'] == 0 ? '0' : $groupBuy[0]['exchange_integral']
                 ];
                 $extendGoodsSpec = ['type' => 'group_buy', 'data' => $groupBuy];
@@ -334,6 +336,7 @@ class Goods extends Base
                 'buy_limit' => '',
                 'start_time' => '',
                 'end_time' => '',
+                'now_time' => time() . '',
                 'exchange_integral' => ''
             ];
         }
@@ -360,6 +363,7 @@ class Goods extends Base
                                 'buy_limit' => $spec['buy_limit'],
                                 'start_time' => $spec['start_time'],
                                 'end_time' => $spec['end_time'],
+                                'now_time' => time() . '',
                                 'exchange_integral' => $spec['can_integral'] == 0 ? '0' : $goods['spec_price'][$spec['spec_key']]['exchange_integral']
                             ];
                             break;
@@ -372,6 +376,7 @@ class Goods extends Base
                                 'buy_limit' => $spec['buy_limit'],
                                 'start_time' => $spec['start_time'],
                                 'end_time' => $spec['end_time'],
+                                'now_time' => time() . '',
                                 'exchange_integral' => $spec['can_integral'] == 0 ? '0' : $goods['spec_price'][$spec['spec_key']]['exchange_integral']
                             ];
                             break;
@@ -428,7 +433,8 @@ class Goods extends Base
                         }
                         $userCoupon = Db::name('coupon_list')->where(['cid' => $coupon['coupon_id'], 'uid' => $this->user_id])->find();
                         if ($userCoupon) {
-                            if ($userCoupon['status'] == 1) {
+                            if ($userCoupon['status'] == 1 || $userCoupon['status'] == 2) {
+                                // 已使用 或 已过期
                                 unset($goods['coupon'][$k]);
                             } else {
                                 $goods['coupon'][$k]['is_received'] = 1;
@@ -443,45 +449,45 @@ class Goods extends Base
                     }
                 }
             }
-            $goods['coupon'] = array_values($goods['coupon']);
-        }
-        foreach ($goods['coupon'] as $k => $coupon) {
-            if ($coupon['nature'] != 1) {
-                unset($goods['coupon'][$k]);
-                continue;
-            }
-            switch ($coupon['use_type']) {
-                case 0:
-                    // 全店通用
-                    $title = '￥' . $coupon['money'];
-                    $desc = '全场商品满' . $coupon['condition'] . '减' . $coupon['money'];
-                    break;
-                case 1:
-                    // 指定商品
-                    $title = '￥' . $coupon['money'];
-                    $desc = '仅限' . $coupon['goods_name'] . '可用';
-                    break;
-                case 2:
-                    // 指定分类可用
-                    $title = '￥' . $coupon['money'];
-                    $desc = $coupon['cate_name'] . '满' . $coupon['condition'] . '可用';
-                    break;
-                case 4:
-                    // 指定商品折扣券
-                    $title = '满' . $coupon['condition'] . '打' . floatval($coupon['money']) . '折';
-                    $desc = '指定商品满' . $coupon['condition'] . '享受' . floatval($coupon['money']) . '折';
-                    break;
-                case 5:
-                    // 兑换商品券
-                    $title = $coupon['name'];
-                    $desc = '购买任意商品可用';
-                    break;
-                default:
+            foreach ($goods['coupon'] as $k => $coupon) {
+                if ($coupon['nature'] != 1) {
                     unset($goods['coupon'][$k]);
                     continue;
+                }
+                switch ($coupon['use_type']) {
+                    case 0:
+                        // 全店通用
+                        $title = '￥' . $coupon['money'];
+                        $desc = '全场商品满' . $coupon['condition'] . '减' . $coupon['money'];
+                        break;
+                    case 1:
+                        // 指定商品
+                        $title = '￥' . $coupon['money'];
+                        $desc = '仅限' . $coupon['goods_name'] . '可用';
+                        break;
+                    case 2:
+                        // 指定分类可用
+                        $title = '￥' . $coupon['money'];
+                        $desc = $coupon['cate_name'] . '满' . $coupon['condition'] . '可用';
+                        break;
+                    case 4:
+                        // 指定商品折扣券
+                        $title = '满' . $coupon['condition'] . '打' . floatval($coupon['money']) . '折';
+                        $desc = '指定商品满' . $coupon['condition'] . '享受' . floatval($coupon['money']) . '折';
+                        break;
+                    case 5:
+                        // 兑换商品券
+                        $title = $coupon['name'];
+                        $desc = '购买任意商品可用';
+                        break;
+                    default:
+                        unset($goods['coupon'][$k]);
+                        continue;
+                }
+                $goods['coupon'][$k]['title'] = $title;
+                $goods['coupon'][$k]['desc'] = $desc;
             }
-            $goods['coupon'][$k]['title'] = $title;
-            $goods['coupon'][$k]['desc'] = $desc;
+            $goods['coupon'] = array_values($goods['coupon']);
         }
         unset($goods['zone']);
 
@@ -1126,7 +1132,7 @@ class Goods extends Base
             case 'json':
                 return json(['status' => 1, 'msg' => 'success', 'result' => ['now_time' => time() . '', 'end_time' => $endTime, 'goods_list' => $flashSaleGoods]]);
             default:
-                return ['now_time' => time(), 'end_time' => $endTime, 'goods_list' => $flashSaleGoods];
+                return ['now_time' => time() . '', 'end_time' => $endTime, 'goods_list' => $flashSaleGoods];
         }
     }
 

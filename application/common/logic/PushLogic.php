@@ -50,44 +50,55 @@ class PushLogic
     /**
      * 用户绑定push_tag
      * @param $user
-     * @param bool $isFirst
-     * @return bool
+     * @return array
      */
-    public function bindPushTag($user, $isFirst = true)
+    public function bindPushTag($user)
     {
         switch ($user['distribut_level']) {
             case 1:
-                $tag = 'member';
+                $levelTag = 'member';
                 break;
             case 2:
-                $tag = 'vip';
+                $levelTag = 'vip';
                 break;
             case 3:
-                $tag = 'svip';
+                $levelTag = 'svip';
                 break;
             default:
-                return true;
+                return ['status' => 1];
         }
-        if ($isFirst) {
-            // 首次绑定
-            if (!empty($user['push_tag'])) {
-                return true;
-            } else {
-                M('users')->where(['user_id' => $user])->update(['push_tag' => $tag]);
-            }
+        $userTag = explode(',', $user['push_tag']); // 用户推送tag，顺序第一个为等级
+        if (in_array($levelTag, $userTag)) {
+            // 不需要更新
+            return ['status' => 1];
         } else {
-            M('users')->where(['user_id' => $user])->update(['push_tag' => $tag]);
+            $newTag = [];
+            foreach ($userTag as $k => $tag) {
+                switch ($k) {
+                    case 0:
+                        $newTag[] = $levelTag;
+                        break;
+                    default:
+                        $newTag[] = $tag;
+                }
+            }
+            $newTag = implode($newTag, ',');
+            M('users')->where(['user_id' => $user['user_id']])->update(['push_tag' => $newTag]);
+            return ['status' => 2];
         }
     }
 
     /**
      * 推送消息
-     * @param array $data 发送的数据
+     * @param array $data 标题内容数据
+     * @param array $extra 点击处理数据
      * @param int $all 1向所有用户发送 0向指定用户发送
      * @param array $push_ids
+     * @param array $push_tags
+     * @param string $alias
      * @return array
      */
-    public function push($data, $all = 0, $push_ids = [])
+    public function push($data, $extra = [], $all = 0, $push_ids = [], $push_tags = [], $alias = '')
     {
         if ($push_ids && is_array($push_ids)) {
             foreach ($push_ids as $k => $p) {
@@ -99,18 +110,59 @@ class PushLogic
                 return ['status' => 0, 'msg' => '用户的推送ID无效'];
             }
         }
+        if ($push_tags && is_array($push_tags)) {
+            foreach ($push_tags as $k => $p) {
+                if (empty($p)) {
+                    unset($push_tags[$k]);
+                }
+            }
+            if (empty($push_tags)) {
+                return ['status' => 0, 'msg' => '用户的推送TAG无效'];
+            }
+        }
         if (!$this->jpush) {
             return ['status' => 0, 'msg' => '推送初始化失败'];
-        } elseif (!$all && !$push_ids) {
-            return ['status' => 0, 'msg' => '个体推送时没有指定用户！'];
         }
-        $data = json_encode($data, JSON_UNESCAPED_UNICODE);
-        $push = $this->jpush->push()->setPlatform('all')->message($data);
+        if (!$all && empty($push_ids) && empty($push_tags) && empty($alias)) {
+            return ['status' => 0, 'msg' => '非全体推送时没有指定用户标识！'];
+        }
+        $push = $this->jpush->push()->setPlatform('all');
         if ($all) {
+            // 全体发送
             $push = $push->addAllAudience();
         } else {
-            $push = $push->addRegistrationId($push_ids);
+            if (!empty($push_ids)) {
+                $push = $push->addRegistrationId($push_ids);
+            }
+            if (!empty($push_tags)) {
+                $push = $push->addTag($push_tags);
+            }
+            if (!empty($alias)) {
+                $push = $push->addAlias($alias);
+            }
         }
+        $push = $push->iosNotification(
+            [
+                'title' => $data['title'],
+                'body' => $data['desc']
+            ],
+            [
+                'sound' => '1',
+                'badge' => 0,   // ios角标数
+                'content-available' => true,
+                'category' => 'JPush',
+                'extras' => $extra,
+            ]
+        );
+//            ->androidNotification(
+//            [
+//                'title' => $data['title'],
+//                'body' => $data['desc']
+//            ],
+//            [
+//                'extras' => $extra,
+//            ]
+//        );
         try {
             $response = $push->send();
             if (200 != $response['http_code']) {

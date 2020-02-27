@@ -163,9 +163,6 @@ class Article
     {
         $cateId = I('cate_id', '');
         $keyword = I('keyword', '');
-        if (!$cateId) {
-            return json(['status' => 0, 'msg' => '参数错误']);
-        }
         $articleList = (new ArticleLogic())->getArticleListByCateId($cateId, $keyword);
         // 由于APP不能解析文章content的html标签，所以直接返回H5的地址给APP
         foreach ($articleList as $key => $item) {

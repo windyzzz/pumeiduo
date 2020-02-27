@@ -604,6 +604,7 @@ class Article extends Base
                 case 4:
                     // 商品
                     $data['type_id'] = M('goods')->where(['goods_sn' => $data['goods_sn']])->value('goods_id');
+                    $data['item_id'] = 0;
                     unset($data['goods_sn']);
                     break;
                 case 5:

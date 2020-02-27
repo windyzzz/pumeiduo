@@ -113,7 +113,7 @@ class OrderLogic
             } elseif ('alipayApp' == $order['pay_code']) {
                 include_once PLUGIN_PATH . 'payment/alipayApp/alipayApp.class.php';
                 $payment_obj = new \alipayApp();
-                $result = $payment_obj->refund1($order, $order['order_amount'], $action_note);
+                $result = $payment_obj->refund($order, $order['order_amount'], $action_note);
                 $msg = $result->sub_msg;
                 if ('10000' == $result->code) {
                     $res = true;
@@ -126,6 +126,8 @@ class OrderLogic
                     $msg = $result['return_msg'];
                 } elseif ($result['result_code'] == 'FAIL') {
                     $msg = $result['err_code_des'];
+                } else {
+                    $res = true;
                 }
             } elseif ('' == $order['pay_code']) {
                 $res = true;
@@ -133,6 +135,7 @@ class OrderLogic
                 return ['status' => 0, 'msg' => '暂不支付退款方式', 'result' => ''];
             }
             if (!$res) {
+                $msg = isset($msg) ? $msg : '支付平台退款错误';
                 return ['status' => 0, 'msg' => '退款失败,' . $msg, 'result' => '错误原因:' . $msg];
             }
 

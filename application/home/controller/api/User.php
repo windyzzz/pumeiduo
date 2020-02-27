@@ -1951,6 +1951,11 @@ class User extends Base
         $this->redis->rm('user_' . $this->userToken);
 
         $user = M('Users')->where('user_id', $bind_user['user_id'])->find();
+        // 更新用户推送tags
+        $res = (new PushLogic())->bindPushTag($user);
+        if ($res['status'] == 2) {
+            $user = Db::name('users')->where('user_id', $user['user_id'])->find();
+        }
         if (empty($user['token'])) {
             $userToken = TokenLogic::setToken();
             $updateData = [
@@ -1995,7 +2000,8 @@ class User extends Base
             'is_not_show_invite' => $user['distribut_level'] >= 3 ? 1 : 0,  // 是否隐藏推荐人绑定
             'has_pay_pwd' => $user['paypwd'] ? 1 : 0,
             'is_app' => TokenLogic::getValue('is_app', $user['token']) ? 1 : 0,
-            'token' => $user['token']
+            'token' => $user['token'],
+            'jpush_tags' => [$user['push_tag']]
         ];
         return json(['status' => 1, 'msg' => '绑定成功', 'result' => ['user' => $returnUser]]);
     }
@@ -3320,9 +3326,6 @@ class User extends Base
      */
     public function checkLoginProfit()
     {
-        $url = SITE_URL . '/#/app_redRain?red_token=' . $this->user['token'];
-        $result = ['status' => 1, 'result' => ['state' => 0, 'url' => $url]];
-        return json($result);
         if ($this->passAuth) {
             $result = ['status' => 1, 'result' => ['state' => 0]];
         } else {
@@ -3345,15 +3348,6 @@ class User extends Base
      */
     public function loginProfit()
     {
-        return json([
-            'status' => 1,
-            'msg' => '领取成功',
-            'result' => [
-                'use_start_time' => '2019-12-12',
-                'use_end_time' => '2020-03-12',
-                'reward' => '666.6'
-            ]
-        ]);
         $taskLogic = new TaskLogic(4);
         $taskLogic->setUser($this->user);
         $res = $taskLogic->checkLoginProfit();

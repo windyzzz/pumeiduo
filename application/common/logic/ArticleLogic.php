@@ -612,8 +612,11 @@ class ArticleLogic extends Model
 
     public function getArticleListByCateId($cateId, $keyword = '')
     {
-        $where = ['cat_id' => $cateId, 'is_open' => 1];
+        $where = ['is_open' => 1];
         $whereOr = [];
+        if ($cateId) {
+            $where['cat_id'] = $cateId;
+        }
         if ($keyword) {
             $whereOr['title'] = ['like', '%' . $keyword . '%'];
             $whereOr['content'] = ['like', '%' . $keyword . '%'];

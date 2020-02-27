@@ -32,6 +32,7 @@ class CreatePush extends Migrator
             ->addColumn('type', 'integer', ['limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
                 'comment' => '类型：1公告 2活动消息 3优惠券 4商品 5首页'])
             ->addColumn('type_id', 'integer', ['default' => 0, 'comment' => '关联ID（根据类型关联）'])
+            ->addColumn('item_id', 'integer', ['default' => 0, 'comment' => '商品规格ID'])
             ->addColumn('title', 'string', ['default' => '', 'comment' => '标题'])
             ->addColumn('desc', 'string', ['default' => '', 'comment' => '简介'])
             ->addColumn('distribute_level', 'integer', ['default' => 0, 'comment' => '推送范围（会员等级），0为全部'])

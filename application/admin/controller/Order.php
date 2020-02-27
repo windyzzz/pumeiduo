@@ -1147,7 +1147,7 @@ class Order extends Base
                 } else {
                     $this->ajaxReturn(['status' => 0, 'msg' => $result['return_msg'], 'url' => '']);
                 }
-            } else {
+            } elseif ('alipayMobile' == $order['pay_code']) {
                 include_once PLUGIN_PATH . 'payment/alipayMobile/alipayMobile.class.php';
                 $payment_obj = new \alipayMobile();
                 $result = $payment_obj->refund1($order, $data['refund_money'], '售后订单退款');
@@ -1158,6 +1158,33 @@ class Order extends Base
                     $this->ajaxReturn(['status' => 1, 'msg' => '退款成功', 'url' => '']);
                 } else {
                     $this->ajaxReturn(['status' => 0, 'msg' => $msg, 'url' => '']);
+                }
+            } elseif ('alipayApp' == $order['pay_code']) {
+                include_once PLUGIN_PATH . 'payment/alipayApp/alipayApp.class.php';
+                $payment_obj = new \alipayApp();
+                $result = $payment_obj->refund($order, $order['order_amount'], '售后订单退款');
+                $msg = $result->sub_msg;
+                if ('10000' == $result->code) {
+                    $refundLogic = new RefundLogic();
+                    $refundLogic->updateRefundGoods($return_goods['rec_id']); //订单商品售后退款
+                    $this->ajaxReturn(['status' => 1, 'msg' => '退款成功', 'url' => '']);
+                } else {
+                    $this->ajaxReturn(['status' => 0, 'msg' => $msg, 'url' => '']);
+                }
+            } elseif ('weixinApp' == $order['pay_code']) {
+                include_once PLUGIN_PATH . 'payment/weixinApp/weixinApp.class.php';
+                $payment_obj = new \weixinApp();
+                $result = $payment_obj->refund($order, $order['order_amount']);
+                if ($result['return_code'] == 'FAIL') {
+                    $msg = $result['return_msg'];
+                    $this->ajaxReturn(['status' => 0, 'msg' => $msg, 'url' => '']);
+                } elseif ($result['result_code'] == 'FAIL') {
+                    $msg = $result['err_code_des'];
+                    $this->ajaxReturn(['status' => 0, 'msg' => $msg, 'url' => '']);
+                } else {
+                    $refundLogic = new RefundLogic();
+                    $refundLogic->updateRefundGoods($return_goods['rec_id']); //订单商品售后退款
+                    $this->ajaxReturn(['status' => 1, 'msg' => '退款成功', 'url' => '']);
                 }
             }
         } else {

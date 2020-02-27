@@ -391,7 +391,7 @@ class Order extends Base
             'prom_price' => $orderInfo['order_prom_amount'],
             'electronic_price' => $orderInfo['user_electronic'],
             'pay_points' => $orderInfo['integral'],
-            'total_amount' => bcadd($orderInfo['goods_price'], $orderInfo['shipping_price']),
+            'total_amount' => bcadd($orderInfo['goods_price'], $orderInfo['shipping_price'], 2),
             'order_amount' => $orderInfo['order_amount'],
             'give_integral' => 0,
             'add_time' => $orderInfo['add_time'],
@@ -2132,8 +2132,8 @@ class Order extends Base
         if (!$addressId) {
             return json(['status' => 0, 'msg' => '请先填写收货人信息']);
         }
-        $address = Db::name('UserAddress')->where('address_id', $addressId)->find();
-        if (empty($address)) {
+        $userAddress = Db::name('UserAddress')->where('address_id', $addressId)->find();
+        if (empty($userAddress)) {
             return json(['status' => 0, 'msg' => '收货人信息不存在']);
         }
         if (strlen($userNote) > 50) {
@@ -2205,7 +2205,7 @@ class Order extends Base
             if (empty($userAddress)) {
                 $payLogic->delivery('0');
             } else {
-                $payLogic->delivery($userAddress[0]['district']);
+                $payLogic->delivery($userAddress['district']);
             }
             $pay_points = $payLogic->getUsePoint();     // 使用积分
             if ($this->user['pay_points'] < $pay_points) {
@@ -2235,7 +2235,7 @@ class Order extends Base
         try {
             Db::startTrans();
             $placeOrder = new PlaceOrder($payLogic);
-            $placeOrder->setUserAddress($address);
+            $placeOrder->setUserAddress($userAddress);
             $placeOrder->setUserNote($userNote);
             $placeOrder->setPayPsw($payPwd);
             if (2 == $prom_type) {
@@ -2342,6 +2342,7 @@ class Order extends Base
             $order['city_name'] = '';
         }
         $order['coupon'] = [];  // 订单赠送优惠券
+        $order['jpush_tags'] = [];    // 用户推送标签
         if ($order['pay_status'] == 1) {
             // 查看订单商品里面是否有vip升级套餐，有就显示赠送的优惠券
             $level = [];
@@ -2356,6 +2357,20 @@ class Order extends Base
                     'user_type_name' => 'VIP套餐用户',
                     'coupon_name' => '新晋VIP会员优惠券'
                 ];
+                switch ($this->user['distribut_level']){
+                    case 1:
+                        $tag = 'member';
+                        break;
+                    case 2:
+                        $tag = 'vip';
+                        break;
+                    case 3:
+                        $tag = 'svip';
+                        break;
+                    default:
+                        $tag = [];
+                }
+                $order['jpush_tags'][] = $tag;
             }
         }
         unset($order['order_status']);

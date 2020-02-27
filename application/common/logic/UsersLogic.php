@@ -335,6 +335,13 @@ class UsersLogic extends Model
                     ];
                     Db::name('users')->where(['user_id' => $oauthUser['user_id']])->update($updateData);
                     $user = Db::name('users')->where(['user_id' => $oauthUser['user_id']])->find();
+                    // 更新用户推送tags
+                    $res = (new PushLogic())->bindPushTag($user);
+                    if ($res['status'] == 2) {
+                        $user = Db::name('users')->where('user_id', $user['user_id'])->find();
+                    }
+                    // 更新用户缓存
+                    (new Redis())->set('user_' . $user['token'], $user, config('REDIS_TIME'));
                     $levelName = Db::name('user_level')->where('level_id', $user['level'])->getField('level_name');
                     $user['level_name'] = $levelName;
                     $result = ['status' => 1, 'result' => $user];  // 登录成功
@@ -371,6 +378,7 @@ class UsersLogic extends Model
         foreach ($userData as $user) {
             if ($user['is_lock'] == 0) {
                 $userId = $user['user_id'];
+                break;
             }
         }
         if ($userId == 0) {
@@ -389,16 +397,13 @@ class UsersLogic extends Model
             ];
             Db::name('users')->where('user_id', $userId)->update($save);
             $user = Db::name('users')->where('user_id', $userId)->find();
-//            if (check_mobile($username)) {
-//                Db::name('users')->where('mobile', $username)->whereOr('email', $username)->where('is_lock', 0)->update($save);
-//                $user = Db::name('users')->where('mobile', $username)->whereOr('email', $username)->where('is_lock', 0)->order('reg_time DESC')->find();
-//            } else {
-//                Db::name('users')->where('user_id', $username)->whereOr('email', $username)->where('is_lock', 0)->update($save);
-//                $user = Db::name('users')->where('user_id', $username)->whereOr('email', $username)->where('is_lock', 0)->order('reg_time DESC')->find();
-//            }
+            // 更新用户推送tags
+            $res = (new PushLogic())->bindPushTag($user);
+            if ($res['status'] == 2) {
+                $user = Db::name('users')->where('user_id', $userId)->find();
+            }
             $result = ['status' => 1, 'msg' => '登录成功', 'result' => $user];
         }
-
         return $result;
     }
 
@@ -762,7 +767,7 @@ class UsersLogic extends Model
      *
      * @return array
      */
-    public function reg($username, $password, $password2, $push_id = 0, $invite = 0, $nickname = '', $head_pic = '', $userToken = null)
+    public function reg($username, $password, $password2, $push_id = 0, $invite = 0, $nickname = '', $head_pic = '', $userToken = null, $source = 1)
     {
         $is_validated = 0;
 //        if (check_email($username)) {
@@ -870,6 +875,11 @@ class UsersLogic extends Model
 //            accountLog($user_id, 0, $pay_points, '会员注册赠送积分'); // 记录日志流水
 //        }
         $user = M('users')->where('user_id', $user_id)->find();
+        // 更新用户推送tags
+        $res = (new PushLogic())->bindPushTag($user);
+        if ($res['status'] == 2) {
+            $user = Db::name('users')->where('user_id', $user_id)->find();
+        }
         $user = [
             'user_id' => $user['user_id'],
             'sex' => $user['sex'],
@@ -889,7 +899,8 @@ class UsersLogic extends Model
             'is_not_show_jk' => $user['is_not_show_jk'],  // 是否提示加入金卡弹窗
             'has_pay_pwd' => $user['paypwd'] ? 1 : 0,
             'is_app' => TokenLogic::getValue('is_app', $user['token']) ? 1 : 0,
-            'token' => $user['token']
+            'token' => $user['token'],
+            'jpush_tags' => [$user['push_tag']]
         ];
         return ['status' => 1, 'msg' => '注册成功', 'result' => $user];
     }
@@ -956,6 +967,11 @@ class UsersLogic extends Model
         ];
         M('users')->where(['user_id' => $userId])->update($updateData);
         $user = M('users')->where(['user_id' => $userId])->find();
+        // 更新用户推送tags
+        $res = (new PushLogic())->bindPushTag($user);
+        if ($res['status'] == 2) {
+            $user = Db::name('users')->where('user_id', $user['user_id'])->find();
+        }
         $user = [
             'user_id' => $user['user_id'],
             'sex' => $user['sex'],
@@ -975,7 +991,8 @@ class UsersLogic extends Model
             'is_not_show_jk' => $user['is_not_show_jk'],  // 是否提示加入金卡弹窗
             'has_pay_pwd' => $user['paypwd'] ? 1 : 0,
             'is_app' => TokenLogic::getValue('is_app', $user['token']) ? 1 : 0,
-            'token' => $user['token']
+            'token' => $user['token'],
+            'jpush_tags' => [$user['push_tag']]
         ];
         return ['status' => 1, 'msg' => '注册成功', 'result' => $user];
     }

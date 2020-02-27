@@ -120,7 +120,8 @@ class Login extends Base
                 'is_not_show_jk' => $user['is_not_show_jk'],  // 是否提示加入金卡弹窗
                 'has_pay_pwd' => $user['paypwd'] ? 1 : 0,
                 'is_app' => TokenLogic::getValue('is_app', $this->userToken) ? 1 : 0,
-                'token' => $user['token']
+                'token' => $user['token'],
+                'jpush_tags' => [$user['push_tag']]
             ];
         }
 

@@ -62,7 +62,6 @@ class LoginApi
             if ($res['status'] == 1) {
                 // 登录成功
                 $user = $res['result'];
-                (new Redis())->set('user_' . $user['token'], $user, config('REDIS_TIME'));
                 $res['result'] = [
                     'user_id' => $user['user_id'],
                     'sex' => $user['sex'],
@@ -82,7 +81,8 @@ class LoginApi
                     'is_not_show_jk' => $user['is_not_show_jk'],  // 是否提示加入金卡弹窗
                     'has_pay_pwd' => $user['paypwd'] ? 1 : 0,
                     'is_app' => TokenLogic::getValue('is_app', $user['token']) ? 1 : 0,
-                    'token' => $user['token']
+                    'token' => $user['token'],
+                    'jpush_tags' => [$user['push_tag']]
                 ];
             }
             return json($res);

@@ -53,6 +53,13 @@ class UpdateUsers extends Migrator
             ->update();
 
         $this->table('users')
+            ->addColumn('reg_source', 'integer', ['default' => 1, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
+                'comment' => '注册来源：1H5 2PC 3APP 4管理后台', 'after' => 'reg_time'])
+            ->addColumn('last_login_source', 'integer', ['default' => 1, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
+                'comment' => '最后一次登录来源：1H5 2PC 3APP', 'after' => 'last_login'])
+            ->update();
+
+        $this->table('users')
             ->addColumn('push_tag', 'string', ['limit' => 50, 'null' => true, 'comment' => '推送标签', 'after' => 'push_id'])
             ->update();
     }
