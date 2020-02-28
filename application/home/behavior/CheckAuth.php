@@ -116,10 +116,10 @@ class CheckAuth
 
                     $logic = new UsersLogic();
 
-                    $data = $logic->thirdLogin($wxuser);
+                    $data = $logic->thirdLogin($wxuser, 1);
 
                     if (1 == $data['status']) {
-                        $logic->afterLogin($data['result']);
+                        $logic->afterLogin($data['result'], 1);
 
                         header("Location: $this->site_url"); // 跳转到微信授权页面 需要用户确认登录的页面
                         exit();

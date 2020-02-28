@@ -52,7 +52,7 @@ class LoginApi
         $data = $this->class_obj->respon();
 
         $logic = new UsersLogic();
-        $data = $logic->thirdLogin($data);
+        $data = $logic->thirdLogin($data, 2);
 
         if (1 != $data['status']) {
             return json(['status' => 0, 'msg' => $data['msg'], 'result' => null]);

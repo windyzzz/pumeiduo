@@ -142,28 +142,27 @@ class PushLogic
                 $push = $push->addAlias($alias);
             }
         }
-        $push = $push->iosNotification(
-            [
-                'title' => $data['title'],
-                'body' => $data['desc']
-            ],
-            [
-                'sound' => '1',
-                'badge' => 0,   // ios角标数
-                'content-available' => true,
-                'category' => 'JPush',
-                'extras' => $extra,
-            ]
-        );
-//            ->androidNotification(
+        $push = $push
+//            ->iosNotification(
 //            [
 //                'title' => $data['title'],
 //                'body' => $data['desc']
 //            ],
 //            [
+//                'sound' => '1',
+//                'badge' => 0,   // ios角标数
+//                'content-available' => true,
+//                'category' => 'JPush',
 //                'extras' => $extra,
 //            ]
 //        );
+            ->androidNotification(
+                $data['desc'],
+                [
+                    'title' => $data['title'],
+                    'extras' => $extra,
+                ]
+            );
         try {
             $response = $push->send();
             if (200 != $response['http_code']) {

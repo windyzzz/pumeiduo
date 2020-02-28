@@ -55,6 +55,9 @@
                     <div style="text-align: center; width: 120px;">{$list.reg_time|date='Y-m-d H:i',###}</div>
                 </td>
                 <td align="left" class="">
+                    <div style="text-align: center; width: 120px;">{$list.reg_source_desc}</div>
+                </td>
+                <td align="left" class="">
                     <div style="text-align: center; width: 120px;">
                         <if condition="!empty($list['bind_time'])">
                             {$list.bind_time|date='Y-m-d H:i',###}
@@ -63,6 +66,12 @@
                 </td>
                 <td align="left" class="">
                     <div style="text-align: center; width: 80px;">{$list.status_desc}</div>
+                </td>
+                <td align="left" class="">
+                    <div style="text-align: center; width: 120px;">{$list.last_login|date='Y-m-d H:i',###}</div>
+                </td>
+                <td align="left" class="">
+                    <div style="text-align: center; width: 120px;"><a href="{:U(userLoginLog, array('user_id' => $list[user_id]))}">{$list.last_login_source_desc}</a></div>
                 </td>
                 <td align="center" class="handle">
                     <div style="text-align: center; width: 170px; max-width:250px;">

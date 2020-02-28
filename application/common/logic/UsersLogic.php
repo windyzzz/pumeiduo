@@ -197,7 +197,7 @@ class UsersLogic extends Model
     /*
      * 登录/注册之后的操作
      * */
-    public function afterLogin($data)
+    public function afterLogin($data, $source = 1)
     {
         $redis = new Redis();
 //        define('SESSION_ID', session_id()); //将当前的session_id保存为常量，供其它方法调用
@@ -217,7 +217,7 @@ class UsersLogic extends Model
         $cartLogic->setUserToken($data['token']);
         $cartLogic->doUserLoginHandle();  //用户登录后 需要对购物车 一些操作
 
-        $update_data = ['token' => $data['token'], 'time_out' => strtotime('+' . config('REDIS_DAY') . ' days'), 'last_login' => time()];
+        $update_data = ['token' => $data['token'], 'time_out' => strtotime('+' . config('REDIS_DAY') . ' days'), 'last_login' => time(), 'last_login_source' => $source];
         M('users')->where('user_id', $data['user_id'])->save($update_data);
     }
 
@@ -277,7 +277,7 @@ class UsersLogic extends Model
             $result = ['status' => -2, 'msg' => '系统繁忙，请稍后再试。'];
         } else {
             Db::commit();
-            $this->afterLogin($user_info);
+            $this->afterLogin($user_info, 3);
             session('is_app', 1);
             (new Redis())->set('is_app_' . $userToken, 1, config('REDIS_TIME'));
             $result = ['status' => 1, 'msg' => '登录成功'];
@@ -404,6 +404,13 @@ class UsersLogic extends Model
                 $user = Db::name('users')->where('user_id', $userId)->find();
             }
             $result = ['status' => 1, 'msg' => '登录成功', 'result' => $user];
+            // 登录记录
+            M('user_login_log')->add([
+                'user_id' => $userId,
+                'login_ip' => request()->ip(),
+                'login_time' => time(),
+                'source' => $source
+            ]);
         }
         return $result;
     }
@@ -466,7 +473,7 @@ class UsersLogic extends Model
             $levelName = M('user_level')->where('level_id', $levelId)->getField('level_name');
             $user['level_name'] = $levelName;
             $user['token'] = md5(time() . mt_rand(1, 999999999));
-            $data = ['token' => $user['token'], 'last_login' => time()];
+            $data = ['token' => $user['token'], 'last_login' => time(), 'last_login_source' => 3];
             $push_id && $data['push_id'] = $push_id;
             M('users')->where('user_id', $user['user_id'])->save($data);
             $result = ['status' => 1, 'msg' => '登陆成功', 'result' => $user];
@@ -595,8 +602,9 @@ class UsersLogic extends Model
         M('OauthUsers')->save(['oauth' => $oauth, 'openid' => $openid, 'user_id' => $ruser['user_id'], 'unionid' => $unionid, 'oauth_child' => $thirdOauth['oauth_child']]);
         $ruser['token'] = md5(time() . mt_rand(1, 999999999));
         $ruser['last_login'] = time();
+        $ruser['last_login_source'] = 1;
 
-        M('Users')->where('user_id', $ruser['user_id'])->save(['token' => $ruser['token'], 'last_login' => $ruser['last_login']]);
+        M('Users')->where('user_id', $ruser['user_id'])->save(['token' => $ruser['token'], 'last_login' => $ruser['last_login'], 'last_login_source' => $ruser['last_login_source']]);
 
         return ['status' => 1, 'msg' => '绑定成功', 'result' => $ruser];
     }
@@ -649,7 +657,7 @@ class UsersLogic extends Model
     /*
      * 第三方登录: (第一种方式:第三方账号直接创建账号, 不需要额外绑定账号)
      */
-    public function thirdLogin($data = [])
+    public function thirdLogin($data = [], $source)
     {
         // Log::record('微信登录：第三方返回来的数据：'.json_encode($data));
         if (!$data['openid'] || !$data['oauth']) {
@@ -660,6 +668,7 @@ class UsersLogic extends Model
         $map['token'] = isset($data['token']) ? $data['token'] : TokenLogic::setToken();
         $map['time_out'] = strtotime('+' . config('REDIS_DAY') . ' days');
         $map['last_login'] = time();
+        $map['last_login_source'] = $source;
 
         $user = $this->getThirdUser($data);
         if (!$user) {
@@ -729,6 +738,7 @@ class UsersLogic extends Model
             Db::name('users')->where('user_id', $user['user_id'])->save($map);
             $user['token'] = $map['token'];
             $user['last_login'] = $map['last_login'];
+            $user['last_login_source'] = $map['last_login_source'];
         }
 
         return ['status' => 1, 'msg' => '登陆成功', 'result' => $user];
@@ -865,6 +875,7 @@ class UsersLogic extends Model
         $map['token'] = $userToken;
         $map['time_out'] = strtotime('+' . config('REDIS_DAY') . ' days');
         $map['last_login'] = time();
+        $map['last_login_source'] = $source;
         // $user_level =Db::name('user_level')->where('amount = 0')->find(); //折扣
         // $map['discount'] = !empty($user_level) ? $user_level['discount']/100 : 1;  //新注册的会员都不打折
         $user_id = M('users')->insertGetId($map);

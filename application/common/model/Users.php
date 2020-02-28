@@ -37,4 +37,28 @@ class Users extends Model
         }
 //        return '正常';
     }
+
+    /**
+     * 用户注册来源
+     * @param $value
+     * @param $data
+     * @return mixed
+     */
+    public function getRegSourceDescAttr($value, $data)
+    {
+        $source = ['1' => '微信', '2' => 'PC', '3' => 'APP'];
+        return $source[$data['reg_source']];
+    }
+
+    /**
+     * 用户最后登录来源
+     * @param $value
+     * @param $data
+     * @return mixed
+     */
+    public function getLastLoginSourceDescAttr($value, $data)
+    {
+        $source = ['1' => '微信', '2' => 'PC', '3' => 'APP'];
+        return $source[$data['last_login_source']];
+    }
 }

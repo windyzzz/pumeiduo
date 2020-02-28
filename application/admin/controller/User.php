@@ -13,7 +13,8 @@ namespace app\admin\controller;
 
 use app\admin\logic\UsersLogic;
 use app\common\logic\Token as TokenLogic;
-use app\common\model\Users;
+use app\common\model\UserLoginLog as UserLoginLogModel;
+use app\common\model\Users as UsersModel;
 use think\AjaxPage;
 use think\Db;
 use think\Loader;
@@ -307,7 +308,7 @@ class User extends Base
         }
 
 //        $model = M('users');
-        $model = new Users();
+        $model = new UsersModel();
         $count = $model->where($condition)->count();
         $Page = new AjaxPage($count, 10);
         //  搜索条件下 分页赋值
@@ -545,7 +546,8 @@ class User extends Base
     public function detail()
     {
         $uid = I('get.id');
-        $user = D('users')->where(['user_id' => $uid])->find();
+        $usersModel = new UsersModel();
+        $user = $usersModel->where(['user_id' => $uid])->find();
         if (!$user) {
             exit($this->error('会员不存在'));
         }
@@ -707,49 +709,54 @@ class User extends Base
 
         $strTable = '<table width="500" border="1">';
         $strTable .= '<tr>';
-        $strTable .= '<td style="text-align:center;font-size:12px;width:120px;">父级ID</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;width:120px;">会员ID</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;width:120px;">用户名</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="100">会员昵称</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">会员等级</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">累计消费</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;width:120px;">父级ID</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">手机号</td>';
-        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">注册时间</td>';
-        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">最后登陆</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">余额</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">积分</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">电子币</td>';
-        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">累计消费</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">注册时间</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">注册来源</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">最后登陆时间</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">最后登陆来源</td>';
         $strTable .= '</tr>';
 
         // 会员订单数据
-        $user_total_amount = M('order')->where('order_status', 'in', [1, 2, 4])->group('user_id')->getField('user_id, sum(order_amount)', true);
+        $user_total_amount = M('order')->where('order_status', 'in', [1, 2, 4])->group('user_id')->getField('user_id, sum(order_amount) + sum(user_electronic)', true);
         // 等级列表
         $level_list = M('distribut_level')->getField('level_id, level_name');
+        // 来源
+        $source = ['1' => '微信', '2' => 'PC', '3' => 'APP'];
         // 用户数据
         $count = M('users')->count();
         $p = ceil($count / 5000);
         for ($i = 0; $i < $p; ++$i) {
             $start = $i * 5000;
             $userList = M('users')->where($condition)
-                ->field('user_id, first_leader, user_name, nickname, distribut_level, mobile, reg_time, last_login, user_money, pay_points, user_electronic')
+                ->field('user_id, first_leader, user_name, nickname, distribut_level, mobile, reg_time, reg_source, last_login, last_login_source, user_money, pay_points, user_electronic')
                 ->order('user_id')->limit($start, 5000)->select();
             if (is_array($userList)) {
                 foreach ($userList as $k => $val) {
-//                    $total_amount = M('order')->where('user_id', $val['user_id'])->where('order_status', 'in', [1, 2, 4])->sum('order_amount');
                     $strTable .= '<tr>';
-                    $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['first_leader'] . '</td>';
                     $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['user_id'] . '</td>';
                     $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['user_name'] . '</td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['nickname'] . ' </td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $level_list[$val['distribut_level']] . '</td>';
+                    $totalAmount = isset($user_total_amount[$val['user_id']]) ? $user_total_amount[$val['user_id']] : "0.00";
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $totalAmount . ' </td>';
+                    $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['first_leader'] . '</td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['mobile'] . '</td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">' . date('Y-m-d H:i', $val['reg_time']) . '</td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">' . date('Y-m-d H:i', $val['last_login']) . '</td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['user_money'] . '</td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['pay_points'] . ' </td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['user_electronic'] . ' </td>';
-                    $totalAmount = isset($user_total_amount[$val['user_id']]) ? $user_total_amount[$val['user_id']] : "0.00";
-                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $totalAmount . ' </td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . date('Y-m-d H:i', $val['reg_time']) . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $source[$val['reg_source']] . ' </td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . date('Y-m-d H:i', $val['last_login']) . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $source[$val['last_login_source']] . ' </td>';
                     $strTable .= '</tr>';
                 }
                 unset($userList);
@@ -1516,5 +1523,23 @@ class User extends Base
         $this->assign('type', $type);
         $this->assign('user', $user);
         return $this->fetch('users_edit_log_info');
+    }
+
+    /**
+     * 用户登录记录
+     * @return mixed
+     */
+    public function userLoginLog()
+    {
+        $userId = I('user_id', 0);
+        $where = ['user_id' => $userId];
+        $userLoginLog = new UserLoginLogModel();
+        $count = $userLoginLog->where($where)->count();
+        $page = new Page($count, 10);
+        $loginLog = $userLoginLog->where($where)->order('login_time desc')->limit($page->firstRow . ',' . $page->listRows)->select();
+        $this->assign('page', $page);
+        $this->assign('user_id', $userId);
+        $this->assign('login_log', $loginLog);
+        return $this->fetch('login_log');
     }
 }
