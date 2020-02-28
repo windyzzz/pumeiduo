@@ -38,26 +38,27 @@
                         <th class="sign" axis="col0">
                             <div style="width: 24px;"><i class="ico-check"></i></div>
                         </th>
-                        <th align="left" abbr="article_title" axis="col3" class="">
+                        <th align="left" abbr="coupon_name" axis="col3" class="">
                             <div style="text-align: left; width: 240px;" class="">优惠券名称</div>
                         </th>
-                        <th align="left" abbr="ac_id" axis="col4" class="">
+                        <th align="left" abbr="send_type" axis="col4" class="">
                             <div style="text-align: center; width: 80px;" class="">发放类型</div>
                         </th>
-                        <th align="center" abbr="article_show" axis="col5" class="">
+                        <th align="center" abbr="order_sn" axis="col5" class="">
                             <div style="text-align: center; width: 150px;" class="">订单号</div>
                         </th>
-                        <th align="center" abbr="article_time" axis="col6" class="">
+                        <th align="center" abbr="user_id" axis="col6" class="">
                             <div style="text-align: center; width: 120px;" class="">所属用户</div>
                         </th>
-                        <th align="center" abbr="article_time" axis="col6" class="">
+                        <th align="center" abbr="send_time" axis="col6" class="">
+                            <div style="text-align: center; width: 120px;" class="">领取（发放）时间</div>
+                        </th>
+                        <th align="center" abbr="use_time" axis="col6" class="">
                             <div style="text-align: center; width: 120px;" class="">使用时间</div>
                         </th>
-                        <if condition="($type eq 3)">
-                            <th align="center" abbr="article_time" axis="col6" class="">
-                                <div style="text-align: center; width: 120px;" class="">优惠券码</div>
-                            </th>
-                        </if>
+                        <th align="center" abbr="code" axis="col6" class="">
+                            <div style="text-align: center; width: 120px;" class="">优惠券码</div>
+                        </th>
                         <th align="left" axis="col1" class="handle">
                             <div style="text-align: center; width: 150px;">操作</div>
                         </th>
@@ -103,6 +104,9 @@
                                 <div style="text-align: center; width: 120px;">{$list.nickname}</div>
                             </td>
                             <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">{$list.send_time|date='Y-m-d H:i',###}</div>
+                            </td>
+                            <td align="left" class="">
                                 <div style="text-align: center; width: 120px;">
                                     <if condition="$list[use_time] gt 0">
                                         {$list.use_time|date='Y-m-d H:i',###}
@@ -111,11 +115,9 @@
                                     </if>
                                 </div>
                             </td>
-                            <if condition="($list[type] eq 3) and ($list[code] neq '')">
                             <td align="left" class="">
                                 <div style="text-align: center; width: 120px;">{$list.code}</div>
                             </td>
-                            </if>
                             <td align="left" class="handle">
                                 <div style="text-align: center; width: 170px; max-width:170px;">
                                     <a class="btn red" href="{:U('Admin/Coupon/coupon_list_del',array('id'=>$list['id']))}"><i class="fa fa-trash-o"></i>删除</a>

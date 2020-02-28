@@ -143,20 +143,19 @@ class PushLogic
             }
         }
         $push = $push
-//            ->iosNotification(
-//            [
-//                'title' => $data['title'],
-//                'body' => $data['desc']
-//            ],
-//            [
-//                'sound' => '1',
-//                'badge' => 0,   // ios角标数
-//                'content-available' => true,
-//                'category' => 'JPush',
-//                'extras' => $extra,
-//            ]
-//        );
-            ->androidNotification(
+            ->iosNotification(
+                [
+                    'title' => $data['title'],
+                    'body' => $data['desc']
+                ],
+                [
+                    'sound' => '1',
+                    'badge' => 0,   // ios角标数
+                    'content-available' => true,
+                    'category' => 'JPush',
+                    'extras' => $extra,
+                ]
+            )->androidNotification(
                 $data['desc'],
                 [
                     'title' => $data['title'],

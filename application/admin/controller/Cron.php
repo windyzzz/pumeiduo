@@ -1362,8 +1362,10 @@ AND log_id NOT IN
                         $pushTags[] = 'svip';
                         break;
                 }
+                $pushTags = ['member'];
+                $pushTags = ['vip'];
                 // 发送消息
-                $res = $pushLogic->push($contentData, $extraData, 1, [], $pushTags);
+                $res = $pushLogic->push($contentData, $extraData, $all, [], $pushTags);
                 if ($res['status'] !== 1) {
                     // 错误日志记录
                     M('push_log')->add([

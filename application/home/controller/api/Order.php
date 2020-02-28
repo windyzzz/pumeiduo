@@ -1743,7 +1743,7 @@ class Order extends Base
 //            $order_prom_fee = '0';            // 订单优惠促销总价
             foreach ($cartList['cartList'] as $v) {
                 $goodsInfo = M('Goods')->field('give_integral, weight')->where('goods_id', $v['goods_id'])->find();
-                $give_integral = bcadd($give_integral, $goodsInfo['give_integral'], 2);
+                $give_integral = bcadd($give_integral, bcmul($goodsInfo['give_integral'], $v['goods_num'], 2), 2);
                 $weight = bcadd($weight, $goodsInfo['weight'], 2);
 //                if (isset($v['is_order_prom']) && $v['is_order_prom'] == 1) {
 //                    $order_prom_fee = bcadd($order_prom_fee, bcmul(bcadd($v['use_integral'], $v['member_goods_price'], 2), $v['goods_num'], 2), 2);
@@ -1753,7 +1753,7 @@ class Order extends Base
                 // 兑换券商品积分
                 foreach ($exchangeList as $key => $coupon) {
                     $integral = M('goods_coupon gc')->join('goods g', 'g.goods_id = gc.goods_id')
-                        ->where(['gc.coupon_id' => $coupon['exchange_id']])->sum('g.give_integral');
+                        ->where(['gc.coupon_id' => $coupon['exchange_id']])->sum('g.give_integral * gc.number');
                     $give_integral = bcadd($give_integral, $integral, 2);
                     $exchangeList[$key]['title'] = $coupon['name'];
                     $exchangeList[$key]['desc'] = '购买任意商品可用';
@@ -2053,16 +2053,16 @@ class Order extends Base
             $weight = '0';                    // 产品重量
             foreach ($cartList['cartList'] as $v) {
                 $goodsInfo = M('Goods')->field('give_integral, weight')->where('goods_id', $v['goods_id'])->find();
-                $give_integral = bcadd($give_integral, $goodsInfo['give_integral'], 2);
+                $give_integral = bcadd($give_integral, bcmul($goodsInfo['give_integral'], $v['goods_num'], 2), 2);
                 $weight = bcadd($weight, $goodsInfo['weight'], 2);
             }
             $exchangeGoods = [];
             if (!empty($exchangeId) && $exchangeId > 0) {
                 // 兑换券商品 兑换券商品积分
                 $exchangeGoods = M('goods_coupon gc')->join('goods g', 'g.goods_id = gc.goods_id')
-                    ->where(['gc.coupon_id' => $exchangeId])->field('g.goods_id, g.goods_name, g.goods_remark, g.original_img, g.give_integral')->select();
+                    ->where(['gc.coupon_id' => $exchangeId])->field('g.goods_id, g.goods_name, g.goods_remark, g.original_img, g.give_integral, gc.number')->select();
                 foreach ($exchangeGoods as $key => $goods) {
-                    $give_integral = bcadd($give_integral, $goods['give_integral'], 2);
+                    $give_integral = bcadd($give_integral, bcmul($goods['give_integral'], $goods['number'], 2), 2);
                     $exchangeGoods[$key]['goods_num'] = 1;
                     unset($exchangeGoods[$key]['give_integral']);
                 }

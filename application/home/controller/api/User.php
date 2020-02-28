@@ -1813,7 +1813,7 @@ class User extends Base
                 return json(['status' => -1, 'msg' => '密码不能为空', 'result' => null]);
             }
             $bind_user = M('Users')
-                ->where('user_name', $username)//
+                ->whereOr(['user_id' => $username, 'user_name' => $username])
                 ->where('password', systemEncrypt($password))
                 // ->where('is_zhixiao',1)
                 ->where('is_lock', 0)
@@ -2744,6 +2744,7 @@ class User extends Base
      */
     public function userTask()
     {
+        $userDistributeLevel = M('users')->where(['user_id' => $this->user_id])->value('distribut_level');
         $taskLogic = new TaskLogic(0);
         // 任务列表
         $taskList = $taskLogic->taskList();
@@ -2753,6 +2754,9 @@ class User extends Base
             $taskReward = $taskLogic->taskReward($task['id']);
             $taskRewardData = [];
             foreach ($taskReward as $k => $reward) {
+                if ($reward['distribut_id'] != 0 && $reward['distribut_id'] != $userDistributeLevel) {
+                    continue;
+                }
                 switch ($reward['reward_type']) {
                     case 1:
                         // 积分
