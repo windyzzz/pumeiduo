@@ -240,7 +240,7 @@ class alipayApp
         }
     }
 
-    public function refund1($order, $refund_amount, $reason)
+    public function refund($order, $refund_amount, $reason)
     {
         $config = [
             'gatewayUrl' => 'https://openapi.alipay.com/gateway.do',
@@ -250,17 +250,15 @@ class alipayApp
             'charset' => $this->alipay_config['charset'],
             'sign_type' => $this->alipay_config['signType']
         ];
-        // $this->alipay_config['rsaPrivateKeyFilePath']     = __DIR__.'/alipay_public_key_sha256_2017060107396737.txt';
-        require_once 'lib/AopClient/wappay/service/AlipayTradeService.php';
-        require_once 'lib/AopClient/wappay/buildermodel/AlipayTradeRefundContentBuilder.php';
-        require 'lib/AopClient/config.php';
+//        $this->alipay_config['rsaPrivateKeyFilePath'] = __DIR__ . '/alipay_public_key_sha256_2017060107396737.txt';
+
         if (!empty($order['order_sn'])) {
+            require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . './lib/AopClient/wappay/buildermodel/AlipayTradeRefundContentBuilder.php';
+            require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . './lib/AopClient/wappay/service/AlipayTradeService.php';
+
             //商户订单号和支付宝交易号不能同时为空。 trade_no、  out_trade_no如果同时存在优先取trade_no
             //商户订单号，和支付宝交易号二选一
             $out_trade_no = trim($order['order_sn']);
-
-            //支付宝交易号，和商户订单号二选一
-            // $trade_no = trim($order['order_sn']);
 
             //退款金额，不能大于订单总金额
             $refund_amount = trim($refund_amount);
