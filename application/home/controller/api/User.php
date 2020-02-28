@@ -3005,6 +3005,15 @@ class User extends Base
                 return json(['status' => 1, 'msg' => '操作成功', 'result' => ['point' => '0']]);
             }
         }
+        // 更新用户推送tags
+        $updateJpushTags = 0;
+        $res = (new PushLogic())->bindPushTag($this->user);
+        if ($res['status'] == 2) {
+            $updateJpushTags = 1;
+            $this->user = Db::name('users')->where('user_id', $this->user['user_id'])->find();
+            // 更新缓存
+            $this->redis->set('user_' . $this->user['token'], $this->user, config('REDIS_TIME'));
+        }
         $data = [];
         // 用户信息
         $data['user'] = [
@@ -3028,6 +3037,10 @@ class User extends Base
             'has_pay_pwd' => $this->user['paypwd'] ? 1 : 0,
             'is_app' => TokenLogic::getValue('is_app', $this->user['token']) ? 1 : 0,
             'token' => $this->user['token'],
+            'jpush_tags' => explode(',', $this->user['push_tag']),
+            'action_after_update' => [
+                'update_jpush_tags' => $updateJpushTags
+            ]
         ];
         if (I('get.is_wealth', null)) {
             // 输出资金信息

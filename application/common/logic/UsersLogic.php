@@ -359,7 +359,7 @@ class UsersLogic extends Model
     /*
      * 登陆
      */
-    public function login($username, $password, $userToken = null)
+    public function login($username, $password, $userToken = null, $source = 1)
     {
         if (!$username || !$password) {
             return ['status' => 0, 'msg' => '请填写账号或密码'];
@@ -392,6 +392,7 @@ class UsersLogic extends Model
             if (!$userToken) $userToken = TokenLogic::setToken();
             $save = [
                 'last_login' => time(),
+                'last_login_source' => $source,
                 'token' => $userToken,
                 'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
             ];
@@ -821,6 +822,7 @@ class UsersLogic extends Model
 
         $map['password'] = systemEncrypt($password);
         $map['reg_time'] = time();
+        $map['reg_source'] = $source;
         $map['invite_uid'] = $map['will_invite_uid'] = $map['first_leader'] = 0;
 
         if (!$invite) $invite = S('invite_' . $userToken);

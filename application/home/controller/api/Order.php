@@ -2342,7 +2342,9 @@ class Order extends Base
             $order['city_name'] = '';
         }
         $order['coupon'] = [];  // 订单赠送优惠券
-        $order['jpush_tags'] = [];    // 用户推送标签
+        $order['action_after_pay'] = [
+            'update_jpush_tags' => []
+        ];    // 用户支付后处理
         if ($order['pay_status'] == 1) {
             // 查看订单商品里面是否有vip升级套餐，有就显示赠送的优惠券
             $level = [];
@@ -2357,20 +2359,9 @@ class Order extends Base
                     'user_type_name' => 'VIP套餐用户',
                     'coupon_name' => '新晋VIP会员优惠券'
                 ];
-                switch ($this->user['distribut_level']){
-                    case 1:
-                        $tag = 'member';
-                        break;
-                    case 2:
-                        $tag = 'vip';
-                        break;
-                    case 3:
-                        $tag = 'svip';
-                        break;
-                    default:
-                        $tag = [];
-                }
-                $order['jpush_tags'][] = $tag;
+                $order['action_after_pay'] = [
+                    'update_jpush_tags' => explode(',', $this->user['push_tag'])
+                ];
             }
         }
         unset($order['order_status']);

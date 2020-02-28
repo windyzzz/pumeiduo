@@ -121,7 +121,7 @@ class Order extends Base
             }
             switch ($v['source']) {
                 case 1:
-                    $orderList[$k]['source'] = 'H5';
+                    $orderList[$k]['source'] = '微信';
                     break;
                 case 2:
                     $orderList[$k]['source'] = 'PC';

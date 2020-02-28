@@ -15,6 +15,7 @@ class Base extends Controller
     protected $userToken;
     protected $redis;
     protected $passAuth = false;
+    protected $isApp = false;
 
     /**
      * 初始化token验证
@@ -24,8 +25,8 @@ class Base extends Controller
     {
         parent::__construct();
         $this->redis = new Redis();
-        $isApp = Request::instance()->header('is-app', null);
-        if ($isApp == 1) {
+        $this->isApp = Request::instance()->header('is-app', null);
+        if ($this->isApp == 1) {
             // APP请求
             session_start();
             session_destroy();

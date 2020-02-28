@@ -72,6 +72,7 @@ class PushLogic
             // 不需要更新
             return ['status' => 1];
         } else {
+            // 需要更新
             $newTag = [];
             foreach ($userTag as $k => $tag) {
                 switch ($k) {

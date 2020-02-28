@@ -87,7 +87,7 @@ class PlaceOrder
         $this->promId = $prom_id;
     }
 
-    public function addNormalOrder($source = '1')
+    public function addNormalOrder($source = 1)
     {
         $this->check();
         $this->queueInc();
@@ -108,7 +108,7 @@ class PlaceOrder
         $this->queueDec();
     }
 
-    public function addGroupBuyOrder($prom_id, $source = '1')
+    public function addGroupBuyOrder($prom_id, $source = 1)
     {
         $this->setPromType(2);
         $this->setPromId($prom_id);
@@ -130,7 +130,7 @@ class PlaceOrder
         $this->queueDec();
     }
 
-    public function addTeamOrder(TeamActivity $teamActivity, $source = '1')
+    public function addTeamOrder(TeamActivity $teamActivity, $source = 1)
     {
         $this->setPromType(6);
         $this->setPromId($teamActivity['team_id']);
@@ -209,7 +209,7 @@ class PlaceOrder
      *
      * @throws TpshopException
      */
-    private function addOrder($source = '1')
+    private function addOrder($source = 1)
     {
         $OrderLogic = new OrderLogic();
         $user = $this->pay->getUser();

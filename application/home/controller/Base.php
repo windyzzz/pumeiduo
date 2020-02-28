@@ -23,6 +23,7 @@ class Base extends Controller
     protected $user;
     protected $user_id;
     protected $userToken;
+    protected $isApp = false;
 
     /*
      * 初始化操作
@@ -44,8 +45,8 @@ class Base extends Controller
 
         $this->public_assign();
 
-        $isApp = Request::instance()->header('is-app', null);
-        if ($isApp == 1) {
+        $this->isApp = Request::instance()->header('is-app', null);
+        if ($this->isApp == 1) {
             // APP请求
             session_start();
             session_destroy();

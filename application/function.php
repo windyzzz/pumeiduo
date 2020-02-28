@@ -935,7 +935,7 @@ function mobile_hide($mobile)
  * @author simon
  *
  */
-function imagecreatefrombmp($filename)
+function imagecreatefrombmp_my($filename)
 {
     if (!$f1 = fopen($filename, 'rb')) {
         return false;
@@ -1046,7 +1046,7 @@ function imagecreatefrombmp($filename)
  * @link: http://www.ugia.cn/?p=96
  * @description: create Bitmap-File with GD library
  */
-function imagebmp(&$im, $filename = '', $bit = 8, $compression = 0)
+function imagebmp_my(&$im, $filename = '', $bit = 8, $compression = 0)
 {
     if (!in_array($bit, [1, 4, 8, 16, 24, 32])) {
         $bit = 8;

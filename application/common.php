@@ -9,6 +9,7 @@
  * with this source code in the file LICENSE.
  */
 
+use app\common\logic\PushLogic;
 use app\common\logic\Token as TokenLogic;
 use app\common\logic\wechat\WechatUtil;
 use think\Db;
@@ -131,8 +132,13 @@ function update_user_distribut($user_id, $order_id)
         $update['distribut_level'] = $level['level_id'];
         $user_info = M('users')->master()->field('user_id, distribut_level, first_leader')->where('user_id', $user_id)->find() ?: 1;
         M('users')->where('user_id', $user_id)->save($update);
-        // 更新缓存
         $user = Db::name('users')->where('user_id', $user_id)->find();
+        // 更新用户推送tags
+        $res = (new PushLogic())->bindPushTag($user);
+        if ($res['status'] == 2) {
+            $user = Db::name('users')->where('user_id', $user_id)->find();
+        }
+        // 更新缓存
         TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
         $order = M('order')->where('order_id', $order_id)->find();
         logDistribut($order['order_sn'], $user_id, $update['distribut_level'], $user_info['distribut_level'], 1);
