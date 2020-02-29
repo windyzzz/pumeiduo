@@ -646,4 +646,18 @@ class Article extends Base
         M('push')->where(['id' => $pushId])->delete();
         $this->ajaxReturn(['status' => 1, 'msg' => '删除成功']);
     }
+
+    /**
+     * 推送错误日志
+     * @return mixed
+     */
+    public function pushLog()
+    {
+        $count = M('push_log')->count();
+        $page = new Page($count, 10);
+        $pushLog = M('push_log')->limit($page->firstRow . ',' . $page->listRows)->order('create_time DESC')->select();
+        $this->assign('page', $page);
+        $this->assign('push_log', $pushLog);
+        return $this->fetch('push_log');
+    }
 }

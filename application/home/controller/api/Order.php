@@ -368,7 +368,7 @@ class Order extends Base
         $orderGoods = $userLogic->get_order_goods($orderInfo['order_id'])['result'];
         // 自动确认时间
         if ($orderInfo['shipping_status'] == 1 && $orderInfo['order_status'] == 1) {
-            $autoConfirmTime = $orderInfo['shipping_time'] + tpCache('shopping.auto_confirm_date') * 24 * 60 * 60;
+            $autoConfirmTime = $orderInfo[ 'shipping_time'] + tpCache('shopping.auto_confirm_date') * 24 * 60 * 60;
         } else {
             $autoConfirmTime = '0';
         }

@@ -1312,8 +1312,6 @@ AND log_id NOT IN
             'status' => 0
         ];
         $pushList = M('push')->where($where)->field('id, type, type_id, item_id, title, desc, distribute_level')->order('push_time asc')->select();
-//        print_r($pushList);
-//        exit();
         if (!empty($pushList)) {
             $pushIds = [];
             $pushLogic = new PushLogic();
@@ -1362,28 +1360,26 @@ AND log_id NOT IN
                         $pushTags[] = 'svip';
                         break;
                 }
-                $pushTags = ['member'];
-                $pushTags = ['vip'];
                 // 发送消息
                 $res = $pushLogic->push($contentData, $extraData, $all, [], $pushTags);
                 if ($res['status'] !== 1) {
+                    // 更新消息发送状态
+                    M('push')->where(['id' => $push['id']])->update(['status' => -1]);
                     // 错误日志记录
                     M('push_log')->add([
                         'push_id' => $push['id'],
                         'user_push_ids' => '',
-                        'user_push_tags' => $pushTags,
+                        'user_push_tags' => implode(',', $pushTags),
                         'error_msg' => $res['msg'],
-                        'error_response' => isset($res['result']) ? $res['result'] : '',
+                        'error_response' => isset($res['result']) ? serialize($res['result']) : '',
                         'create_time' => time()
                     ]);
                 } else {
-                    print_r($res);
-                    exit();
                     $pushIds[] = $push['id'];
                 }
             }
             // 更新消息发送状态
-//            M('push')->where(['id' => ['in', $pushIds]])->update(['status' => 1]);
+            M('push')->where(['id' => ['in', $pushIds]])->update(['status' => 1]);
         }
     }
 }
