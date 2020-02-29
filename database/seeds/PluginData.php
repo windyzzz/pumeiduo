@@ -46,6 +46,6 @@ class PluginData extends Seeder
             'bank_code' => 'N;',
             'scene' => 3
         ];
-//        $this->table('plugin')->insert($data)->save();
+        $this->table('plugin')->insert($data)->save();
     }
 }

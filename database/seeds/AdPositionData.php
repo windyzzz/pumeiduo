@@ -2,7 +2,7 @@
 
 use think\migration\Seeder;
 
-class ArticleData extends Seeder
+class AdPositionData extends Seeder
 {
     /**
      * Run Method.
@@ -15,13 +15,14 @@ class ArticleData extends Seeder
     public function run()
     {
         $data = [
-            'article_id' => 106,
-            'cat_id' => 80,
-            'title' => '申请金卡-协议',
-            'content' => '内容补充',
-            'app_content' => '内容补充',
-            'add_time' => time(),
-            'publish_time' => time(),
+            'position_id' => 61,
+            'position_name' => '“我的分享”广告栏',
+            'ad_width' => 343,
+            'ad_height' => 96,
+            'position_desc' => '',
+            'position_style' => '',
+            'is_open' => 1,
+            'category_id' => 0,
         ];
         $this->table('article')->insert($data)->save();
     }

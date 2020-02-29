@@ -198,7 +198,7 @@ class Login extends Base
         $logic = new UsersLogic();
         $session_id = S('mobile_token_' . $username);
         if (!$session_id) {
-//            return json(['status' => 0, 'msg' => '验证码已过期', 'result' => null]);
+            return json(['status' => 0, 'msg' => '验证码已过期', 'result' => null]);
         }
         // 手机/邮箱验证码检查，如果没以上两种功能默认是图片验证码检查
         if (check_mobile($username)) {

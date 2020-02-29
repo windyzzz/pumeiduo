@@ -18,6 +18,6 @@ class TaskConfigData extends Seeder
             'banner' => '',
             'config_value' => serialize(C('TASK_CATE'))
         ];
-//        $this->table('task_config')->insert($data)->save();
+        $this->table('task_config')->insert($data)->save();
     }
 }

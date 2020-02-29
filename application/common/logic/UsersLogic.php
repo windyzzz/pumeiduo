@@ -2230,9 +2230,6 @@ class UsersLogic extends Model
      */
     public function check_validate_code($code, $sender, $type = 'email', $session_id = 0, $scene = -1)
     {
-        if ($code == '1238') {
-            return ['status' => 1, 'msg' => '验证成功'];
-        }
         $timeOut = time();
         $inValid = true;  //验证码失效
 

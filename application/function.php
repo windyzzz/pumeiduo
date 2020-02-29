@@ -503,7 +503,6 @@ function check_mobile($mobile)
  */
 function check_password($password, $type = 'login')
 {
-    return true;
     switch ($type) {
         case 'login':
             // 登录密码 6-20位，要有数字+字母

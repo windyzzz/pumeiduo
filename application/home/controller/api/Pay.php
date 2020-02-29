@@ -35,9 +35,9 @@ class Pay extends Base
         if (empty($order) || $order['order_status'] > 1) {
             return json(['status' => 0, 'msg' => '非法操作！']);
         }
-//        if (time() - $order['add_time'] > 1800) {
-//            return json(['status' => 0, 'msg' => '此订单在30分钟内不支付已作废，不能支付，请重新下单!']);
-//        }
+        if (time() - $order['add_time'] > 1800) {
+            return json(['status' => 0, 'msg' => '此订单在30分钟内不支付已作废，不能支付，请重新下单!']);
+        }
         if ($order['pay_status'] == 1) {
             return json(['status' => 0, 'msg' => '此订单，已完成支付!']);
         }
