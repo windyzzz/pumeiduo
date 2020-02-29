@@ -430,3 +430,20 @@
   )),
    'sign' => 'FOPyJdxCckGGRQHsplyvchF/yYUiLU8ADuDDT8OzwShqbnnJ2xOK6q7Iuut6ZWsnYVvroa0QEE+JRJ494nowveMjepLdceOskwmeGhAqUwgN3njceBnP3hwbIJ9ciQaDRh4tx9stFk67jnI7i8B3STWn3pCmpC2R/3oK/az3bNag7heNy/785E1aZW9ZhMjfZU0Z9zL5hVEJSgkKRQASnbDMkQrhe7MeQjVqakFg8G2L63VpH9+beLx52t4k6h3OopiNCJ2S+6QpBc2YDbdApfzhAJNjD7fLD9PK247BepPPYOno26y7TLiJXsGyXrKrOnTXjmonlhNpU2cL/sCtMw==',
 ))
+2020-02-29 10:05:38  {"out_trade_no":"202002290948305910","refund_amount":"0.01","refund_reason":"您取消了订单","out_request_no":"202002290948305910502"}
+2020-02-29 10:05:40  response: stdClass::__set_state(array(
+   'alipay_trade_refund_response' => 
+  stdClass::__set_state(array(
+     'code' => '10000',
+     'msg' => 'Success',
+     'buyer_logon_id' => '159******61',
+     'buyer_user_id' => '2088702114723566',
+     'fund_change' => 'Y',
+     'gmt_refund_pay' => '2020-02-29 10:05:39',
+     'out_trade_no' => '202002290948305910',
+     'refund_fee' => '0.01',
+     'send_back_fee' => '0.00',
+     'trade_no' => '2020022922001423561424798414',
+  )),
+   'sign' => 'NFA77clqRJSmcXujWe/mD+hDSRnNEL2iA09zWdwa6jgAI/QEb0VX/RXfZd9W01RVJdcIqzoB217dVigDAizSoPAYK3y1n6H9U9c3/IQGvs4ZRmh6h2/tbdAT/vDbi/BOBaoI4BEO5G7HTaSJofxpQ0sVUWqkfemp3tvkIxI2dM4r97/UowKI4k3Inu7amk3vbJrf4sAQD/RWjJIVbgAMfjDsSj+6Z/FRruZjuZxvLSKuTYnCfzk4D2EFxb4q8vooPRg1kNyUvGintadeuNKERvVsGf8yPiDk6dyavgTjXaz0Pio+ZMyrkl92VLpgkNEfJgFK+qqUauZGK/gz74HO/w==',
+))

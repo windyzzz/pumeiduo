@@ -61,6 +61,7 @@ class Lotus
 				trigger_error("invalid [default store dir]: " . $this->defaultStoreDir);
 			}
 		}
+
 		if (!$this->devMode)
 		{
 			/**
@@ -110,7 +111,6 @@ class Lotus
 			is_dir($this->app_dir . 'action') && $autoloader->autoloadPath[] = $this->app_dir . 'action';
 			is_dir($this->app_dir . 'lib') && $autoloader->autoloadPath[] = $this->app_dir . 'lib';
 		}
-
 		if (!$this->devMode)
 		{
 			$autoloader->storeHandle = $this->coreCacheHandle;
