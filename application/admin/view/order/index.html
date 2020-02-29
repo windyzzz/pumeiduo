@@ -294,6 +294,11 @@
         $('#search-form2').submit();
     }
 
+    $('.qsbox').keydown(function (e) {
+        if (e.keyCode === 13) {
+            ajax_get_table('search-form2',1);
+        }
+    });
 
 </script>
 </body>
