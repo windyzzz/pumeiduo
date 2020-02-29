@@ -16,8 +16,10 @@ class MobileApp extends Base
     public function android_audit()
     {
         $inc_type = 'android';
+        $config = tpCache($inc_type);
+        $config['download_link'] = !empty($config['app_path']) ? SITE_URL . '/' . $config['app_path'] : '';
         $this->assign('inc_type', $inc_type);
-        $this->assign('config', tpCache($inc_type)); //当前配置项
+        $this->assign('config', $config); //当前配置项
         return $this->fetch();
     }
 

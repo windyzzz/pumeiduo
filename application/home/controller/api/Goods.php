@@ -802,6 +802,9 @@ class Goods extends Base
             json(['status' => 1, 'msg' => 'success', 'result' => $html]);
         }
         $sort = I('get.sort', 'goods_id'); // 排序
+        if ($sort == 'shop_price') {
+            $sort = 'shop_price - exchange_integral';   // 现金价格
+        }
         $sort_asc = I('get.sort_asc', 'asc'); // 排序
         $filter_param = []; // 筛选数组
         $id = I('get.id/d', 0); // 当前分类id
