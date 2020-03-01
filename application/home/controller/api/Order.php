@@ -1668,9 +1668,6 @@ class Order extends Base
 //        $userCouponList = $cartLogic->getCouponCartList($cartList, $userCouponList);
         $couponList = [];
         foreach ($userCouponList as $k => $coupon) {
-            if ($k == 0) {
-                $couponList[$k]['is_selected'] = 1;
-            }
             $couponList[$k] = [
                 'coupon_id' => $coupon['coupon']['id'],
                 'name' => $coupon['coupon']['name'],
@@ -1810,8 +1807,11 @@ class Order extends Base
                     $couponList[$key]['desc'] = $desc;
                 }
             }
-            $couponList = array_values($couponList);
-            $couponId = !empty($couponList) ? $couponList[0]['coupon_id'] : 0;
+            if (!empty($couponList)) {
+                $couponList = array_values($couponList);
+                $couponList[0]['is_selected'] = 1;
+                $couponId = $couponList[0]['coupon_id'];
+            }
             // 使用优惠券
             if (isset($couponId) && $couponId > 0) {
                 $payLogic->useCouponById($couponId, $payLogic->getPayList(), 'no');
