@@ -269,7 +269,7 @@ class Login extends Base
         setcookie('user_id', '', time() - 3600, '/');
         setcookie('PHPSESSID', '', time() - 3600, '/');
         session_unset();
-//        session_destroy();
+        session_destroy();
         //$this->success("退出成功",U('Home/Index/index'));
         if ($this->userToken) {
             (new UsersLogic())->logout($this->userToken);

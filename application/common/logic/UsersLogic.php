@@ -657,7 +657,7 @@ class UsersLogic extends Model
     /*
      * 第三方登录: (第一种方式:第三方账号直接创建账号, 不需要额外绑定账号)
      */
-    public function thirdLogin($data = [], $source)
+    public function thirdLogin($data = [], $source = 1)
     {
         // Log::record('微信登录：第三方返回来的数据：'.json_encode($data));
         if (!$data['openid'] || !$data['oauth']) {
