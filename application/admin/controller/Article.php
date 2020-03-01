@@ -603,7 +603,11 @@ class Article extends Base
                     break;
                 case 4:
                     // 商品
-                    $data['type_id'] = M('goods')->where(['goods_sn' => $data['goods_sn']])->value('goods_id');
+                    $goodsId = M('goods')->where(['goods_sn' => $data['goods_sn']])->value('goods_id');
+                    if (empty($goodsId)) {
+                        $this->ajaxReturn(['status' => 0, 'msg' => '商品不存在']);
+                    }
+                    $data['type_id'] = $goodsId;
                     $data['item_id'] = 0;
                     unset($data['goods_sn']);
                     break;

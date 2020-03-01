@@ -153,7 +153,7 @@ class PushLogic
                     'badge' => 0,   // ios角标数
                     'content-available' => true,
                     'category' => 'JPush',
-                    'extras' => $extra,
+                    'extras' => $extra
                 ]
             )->androidNotification(
                 $data['desc'],
@@ -161,7 +161,9 @@ class PushLogic
                     'title' => $data['title'],
                     'extras' => $extra,
                 ]
-            );
+            )->options([
+                'apns_production' => true   // 生成环境
+            ]);
         try {
             $response = $push->send();
             if (200 != $response['http_code']) {

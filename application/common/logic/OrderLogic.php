@@ -148,6 +148,7 @@ class OrderLogic
             }
         }
 
+        Db::startTrans();
         if ($order['pay_status'] > 0) {
 
             M('order')->where(['order_id' => $order['order_id']])->save(['pay_status' => 3, 'cancel_time' => time()]); //更改订单状态
@@ -258,9 +259,11 @@ class OrderLogic
 
         logOrder($order_id, $action_note, '取消订单');
         if (!$row) {
+            Db::rollback();
             return ['status' => 0, 'msg' => '操作失败', 'result' => ''];
         }
 
+        Db::commit();
         return ['status' => 1, 'msg' => '操作成功', 'result' => ''];
     }
 

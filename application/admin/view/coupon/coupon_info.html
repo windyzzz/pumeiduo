@@ -202,7 +202,7 @@
                 <dd class="opt">
                     <input type="text" id="money" name="money"  onpaste="this.value=this.value.replace(/[^\d.]/g,'')" onkeyup="this.value=this.value.replace(/[^\d.]/g,'')" value="{$coupon.money}" class="input-txt">
                     <span class="err" id="err_money"></span>
-                    <p class="notic">优惠券可抵扣金额，选择了折扣商品，则为折扣数值</p>
+                    <p class="notic">优惠券可抵扣金额，选择了折扣商品，则为折扣数值（例如打八折，此数值为8）</p>
                 </dd>
             </dl>
             <dl class="row" id="condition_row" style="display:<if condition='$coupon[use_type] neq 5'>;<else/>none;</if>">

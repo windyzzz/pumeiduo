@@ -50,7 +50,6 @@ class Coupon extends Base
         if ($cid) {
             $coupon = M('coupon')->where(['id' => $cid])->find();
             $coupon['type_value_arr'] = explode(',', $coupon['type_value']);
-            // dump();
             if (empty($coupon)) {
                 $this->error('代金券不存在');
             } else {
@@ -105,6 +104,15 @@ class Coupon extends Base
             }
         } else {
             $data['type_value'] = 0;
+        }
+        if (in_array($data['use_type'], [0, 1, 2])) {
+            if ($data['money'] >= $data['condition']) {
+                $this->ajaxReturn(['status' => 0, 'msg' => '优惠券面值不能大于消费金额']);
+            }
+        } elseif ($data['use_type'] == 4) {
+            if ($data['money'] >= 10) {
+                $this->ajaxReturn(['status' => 0, 'msg' => '折扣数值不能超过10']);
+            }
         }
         $data['send_start_time'] = strtotime($data['send_start_time']);
         $data['send_end_time'] = strtotime($data['send_end_time']);

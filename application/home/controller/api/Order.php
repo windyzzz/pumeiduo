@@ -1683,9 +1683,6 @@ class Order extends Base
                 'is_selected' => 0
             ];
         }
-        if (!empty($couponList)) {
-            $couponId = $couponList[0]['coupon_id'];    // 默认选中第一张
-        }
         // 用户可用的兑换券列表
         $userExchangeList = $couponLogic->getUserAbleCouponListRe($this->user_id, $cartGoodsId, $cartGoodsCatId);
 //        $userExchangeList = $cartLogic->getCouponCartList($cartList, $userExchangeList);
@@ -1762,14 +1759,7 @@ class Order extends Base
 
             $payLogic->activity2New();      // 指定商品赠品 / 订单优惠赠品
             $payLogic->activity3();         // 订单优惠促销
-            $payLogic->activity(true);      // 满单赠品
 
-            // 使用优惠券
-            if (isset($couponId) && $couponId > 0) {
-                $payLogic->useCouponById($couponId, $payLogic->getPayList(), 'no');
-            }
-            // 支付数据
-            $payReturn = $payLogic->toArray();
             if (!empty($couponList)) {
                 list($prom_type, $prom_id) = $payLogic->getPromInfo();
                 // 筛选优惠券
@@ -1777,11 +1767,11 @@ class Order extends Base
                     $canCoupon = true;
                     if ($coupon['is_usual'] == '0') {
                         // 不可以叠加优惠
-                        if ($payReturn['order_prom_amount'] > 0 || in_array($prom_type, [1, 2])) {
+                        if ($payLogic->getOrderPromAmount() > 0 || in_array($prom_type, [1, 2])) {
                             $canCoupon = false;
                         }
                     }
-                    if (!$canCoupon || $coupon['condition'] > $payReturn['goods_price']) {
+                    if (!$canCoupon || $coupon['condition'] > $payLogic->getGoodsPrice()) {
                         unset($couponList[$key]);
                         continue;
                     }
@@ -1820,6 +1810,17 @@ class Order extends Base
                     $couponList[$key]['desc'] = $desc;
                 }
             }
+            $couponList = array_values($couponList);
+            $couponId = !empty($couponList) ? $couponList[0]['coupon_id'] : 0;
+            // 使用优惠券
+            if (isset($couponId) && $couponId > 0) {
+                $payLogic->useCouponById($couponId, $payLogic->getPayList(), 'no');
+            }
+
+            $payLogic->activity(true);      // 满单赠品
+
+            // 支付数据
+            $payReturn = $payLogic->toArray();
             // 商品列表 赠品列表 加价购列表
             $payList = collection($payLogic->getPayList())->toArray();
 
@@ -1924,7 +1925,7 @@ class Order extends Base
             // 兑换券商品
             'exchange_goods' => $exchangeGoods,
             // 优惠券 兑换券
-            'coupon_list' => array_values($couponList),
+            'coupon_list' => $couponList,
             'exchange_list' => $exchangeList,
             // 价格
             'user_electronic' => $this->user['user_electronic'],
@@ -2070,12 +2071,14 @@ class Order extends Base
 
             $payLogic->activity2New();      // 指定商品赠品 / 订单优惠赠品
             $payLogic->activity3();         // 订单优惠促销
-            $payLogic->activity(true);      // 满单赠品
 
             // 使用优惠券
             if (!empty($couponId) && $couponId > 0) {
                 $payLogic->useCouponById($couponId, $payLogic->getPayList());
             }
+
+            $payLogic->activity(true);      // 满单赠品
+
             // 使用电子币
             $payLogic->useUserElectronic($userElectronic);
 
