@@ -2081,12 +2081,39 @@ class Order extends Base
 
             // 支付数据
             $payReturn = $payLogic->toArray();
+
+            $giftList = $payLogic->getPromGiftList();   // 订单优惠促销赠品
+            $giftGoodsList = $payReturn['gift_goods_list']; // 满单赠品
+            if (!empty($giftGoodsList)) {
+                foreach ($giftGoodsList as $gift) {
+                    $giftList[] = [
+                        'prom_id' => $gift['gift_reward_id'],
+                        'title' => $gift['gift_description'],
+                        'goods_list' => [[
+                            'goods_id' => $gift['goods_id'],
+                            'item_id' => $gift['item_id'] ?? '',
+                            'goods_num' => $gift['goods_num'],
+                            'goods_sn' => $gift['goods_sn'],
+                            'goods_name' => $gift['goods_name'],
+                            'goods_remark' => $gift['goods']['goods_remark'] ?? $gift['goods']['spec_key_name'] ?? '',
+                            'original_img' => $gift['goods']['original_img'],
+                            'spec_key_name' => $gift['goods']['spec_key_name'] ?? ''
+                        ]]
+                    ];
+                }
+            }
         } catch (TpshopException $tpE) {
             return json($tpE->getErrorArr());
         }
         // 组合数据
         $return = [
+//            // 赠品列表
+//            'order_goods' => [
+//                'gift_list' => array_values($giftList)
+//            ],
+            // 促销标题列表
             'prom_title_data' => !empty($payReturn['prom_title_data']) ? $payReturn['prom_title_data'][0]['type_value'] : '',   // 促销标题列表
+            // 兑换券商品
             'exchange_goods' => $exchangeGoods,
             'user_electronic' => $this->user['user_electronic'],
             'weight' => $weight . 'g',

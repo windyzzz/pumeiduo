@@ -503,7 +503,7 @@ class Pay
             ->where(['type' => ['in', '0, 2'], 'is_open' => 1, 'is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])
             ->field('id, title, order_price')->select();
         foreach ($orderProm as $prom) {
-            if ($this->totalAmount >= $prom['order_price']) {
+            if ($this->orderAmount >= $prom['order_price']) {
                 // 订单价格满足要求
                 $giftGoodsList = Db::name('order_prom_goods opg')->join('goods g', 'g.goods_id = opg.goods_id')
                     ->join('spec_goods_price sgp', 'sgp.item_id = opg.item_id', 'LEFT')->where(['opg.order_prom_id' => $prom['id'], 'opg.type' => 2])
@@ -615,7 +615,7 @@ class Pay
             ->where(['type' => ['in', '0, 2'], 'is_open' => 1, 'is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])
             ->field('id, title, order_price')->select();
         foreach ($orderProm as $prom) {
-            if ($this->totalAmount >= $prom['order_price']) {
+            if ($this->orderAmount >= $prom['order_price']) {
                 $giftGoods[$prom['id']] = [
                     'prom_id' => $prom['id'],
                     'title' => $prom['title'] . '，获赠以下赠品：'
@@ -649,7 +649,7 @@ class Pay
             ->where(['type' => ['in', '0, 1'], 'is_open' => 1, 'is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])
             ->field('id, title, type, order_price, discount_price')->order('discount_price DESC')->select();
         foreach ($orderProm as $prom) {
-            if ($this->totalAmount >= $prom['order_price']) {
+            if ($this->orderAmount >= $prom['order_price']) {
                 // 订单价格满足要求
                 $this->orderAmount = bcsub($this->orderAmount, $prom['discount_price'], 2);
                 $this->totalAmount = bcsub($this->totalAmount, $prom['discount_price'], 2);
