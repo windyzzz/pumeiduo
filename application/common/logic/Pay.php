@@ -54,6 +54,7 @@ class Pay
     private $promGiftList;                  // 订单优惠赠品
 
     private $extraLogic;
+    private $extra_goods_ids = [];          // 加价购商品ID
     private $extra_goods_list;              // 加价购商品列表
     private $extra_reward;                  // 加价购商品记录列表
     private $extra_price = '0';             // 加价购商品价格
@@ -824,6 +825,7 @@ class Pay
                 }
             }
 
+            $this->extra_goods_ids[] = $extra['goods_id'];
             $cartLogic->setGoodsModel($extra['goods_id']);
 //            $cartLogic->setSpecGoodsPriceModel($itemId);
             $cartLogic->setGoodsBuyNum($extra['goods_num']);
@@ -1338,6 +1340,11 @@ class Pay
     public function getPromGiftList()
     {
         return $this->promGiftList;
+    }
+
+    public function getExtraGoodsIds()
+    {
+        return $this->extra_goods_ids;
     }
 
     public function getCouponId()

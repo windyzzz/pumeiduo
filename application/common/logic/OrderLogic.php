@@ -174,6 +174,25 @@ class OrderLogic
                 } elseif (2 == $level) {
                     M('rebate_log')->where('user_id', $user_id)->where('type', 1)->update(['money' => 0, 'point' => 0, 'confirm_time' => time(), 'remark' => '取消订单，追回佣金']);
                 }
+
+                // 推荐人奖励追回
+                $firstLeaderAccount = M('account_log')->where([
+                    'order_id' => $order_id,
+                    'type' => 14
+                ])->whereOr([
+                    'user_money' => ['>', 0],
+                    'pay_points' => ['>', 0]
+                ])->select();
+                if (!empty($firstLeaderAccount)) {
+                    foreach ($firstLeaderAccount as $account) {
+                        if ($account['user_money'] > 0) {
+                            accountLog($account['user_id'], -$account['user_money'], 0, '推荐人VIP套组奖励金额追回', 0, $order_id, '', 0, 14, false);
+                        }
+                        if ($account['pay_points']) {
+                            accountLog($account['user_id'], 0, -$account['pay_points'], '推荐人VIP套组奖励积分追回', 0, $order_id, '', 0, 14, false);
+                        }
+                    }
+                }
             }
         }
 
