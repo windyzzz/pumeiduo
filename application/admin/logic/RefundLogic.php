@@ -25,7 +25,7 @@ class RefundLogic extends Model
         $order_goods = M('order_goods')->where(['rec_id' => $rec_id])->find();
         $return_goods = M('return_goods')->where(['rec_id' => $rec_id])->find();
         $updata = ['refund_type' => $refund_type, 'refund_time' => time(), 'status' => 5];
-        //使用积分或者余额抵扣部分原路退还
+        //使用积分或者电子币抵扣部分原路退还
         if (($return_goods['refund_integral'] > 0 || $return_goods['refund_electronic'] > 0)) {
             accountLog($return_goods['user_id'], 0, $return_goods['refund_integral'], '用户申请商品退款', 0, $return_goods['order_id'], $return_goods['order_sn'], $return_goods['refund_electronic'], 19);
         }

@@ -653,7 +653,6 @@ class Pay
             if ($this->orderAmount >= $prom['order_price']) {
                 // 订单价格满足要求
                 $this->orderAmount = bcsub($this->orderAmount, $prom['discount_price'], 2);
-                $this->totalAmount = bcsub($this->totalAmount, $prom['discount_price'], 2);
                 $this->orderPromAmount = bcadd($this->orderPromAmount, $prom['discount_price'], 2);
                 if (in_array($prom['type'], [0, 1])) {
                     if (!isset($this->promTitleData[8 . '_' . $prom['id']])) {
@@ -1227,8 +1226,6 @@ class Pay
             case 'log':
                 $this->orderPromAmount = bcadd($this->orderPromAmount, $goodsPromAmount, 2);
                 $this->orderAmount = bcsub($this->orderAmount, $goodsPromAmount, 2);
-//                $this->goodsPrice = bcsub($this->goodsPrice, $goodsPromAmount, 2);
-//                $this->totalAmount = bcsub($this->totalAmount, $goodsPromAmount, 2);
                 break;
             case 'amount':
                 return $goodsPromAmount;

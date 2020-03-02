@@ -1591,6 +1591,9 @@ class User extends Base
             $electronic = I('electronic', 0);
             $toUser = I('user_name', '');
             $payPwd = I('pay_pwd', '');
+            if (empty($this->user['paypwd'])) {
+                return json(['status' => 0, 'msg' => '未设置支付密码']);
+            }
             if ($this->user['paypwd'] !== systemEncrypt($payPwd)) {
                 return json(['status' => 0, 'msg' => '密码错误']);
             }
@@ -1663,6 +1666,9 @@ class User extends Base
             $payPoints = I('pay_points', 0);
             $toUser = I('user_name', '');
             $payPwd = I('pay_pwd', '');
+            if (empty($this->user['paypwd'])) {
+                return json(['status' => 0, 'msg' => '未设置支付密码']);
+            }
             if ($this->user['paypwd'] !== systemEncrypt($payPwd)) {
                 return json(['status' => 0, 'msg' => '密码错误']);
             }
@@ -1754,6 +1760,9 @@ class User extends Base
         if ($this->request->isPost()) {
             $amount = I('amount', 0);
             $payPwd = I('pay_pwd', '');
+            if (empty($this->user['paypwd'])) {
+                return json(['status' => 0, 'msg' => '未设置支付密码']);
+            }
             if ($this->user['paypwd'] !== systemEncrypt($payPwd)) {
                 return json(['status' => 0, 'msg' => '密码错误']);
             }

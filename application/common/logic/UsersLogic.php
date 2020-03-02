@@ -296,10 +296,10 @@ class UsersLogic extends Model
     {
         // 查看是否有oauth用户记录
         $oauthUser = M('oauth_users')->where([
-            'openid' => $data['openid'],
+//            'openid' => $data['openid'],
             'unionid' => $data['unionid'],
             'oauth' => 'weixin',
-        ])->order('tu_id')->find();
+        ])->order('tu_id desc')->find();
         $updateData = [
             'user_id' => '',
             'openid' => $data['openid'],
@@ -316,8 +316,10 @@ class UsersLogic extends Model
             if ($oauthUser['user_id'] == 0) {
                 $result = ['status' => 2, 'result' => ['openid' => $data['openid']]]; // 需要绑定手机号
             } else {
-                $user = Db::name('users')->where(['user_id' => $oauthUser['user_id']])->field('is_lock, is_cancel')->find();
-                if ($user['is_lock'] == 1) {
+                $user = Db::name('users')->where(['user_id' => $oauthUser['user_id']])->field('mobile, is_lock, is_cancel')->find();
+                if (empty($user['mobile'])) {
+                    $result = ['status' => 2, 'result' => ['openid' => $data['openid']]]; // 需要绑定手机号
+                } elseif ($user['is_lock'] == 1) {
                     $result = ['status' => 0, 'msg' => '账号已被冻结'];
                 } elseif ($user['is_cancel'] == 1) {
                     $result = ['status' => 2, 'result' => ['openid' => $data['openid']]]; // 之前的账号已注销，需要重新绑定手机号

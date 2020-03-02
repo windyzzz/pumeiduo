@@ -859,23 +859,28 @@ class Order extends Base
                 'original_img' => $orderGoods['original_img']
             ];
             if ($type != -1) {
+//                // 退还金额
+//                $goodsReturnPrice = bcmul($orderGoods['final_price'], $orderGoods['goods_num'], 2);    // 要退的商品总价 商品购买单价 * 申请数量
+//                $orderAmount = bcsub(bcsub($order['goods_price'], $order['order_prom_amount'], 2), $order['coupon_price'], 2);    // 用户实际使用金额
+//                $priceRate = bcdiv($goodsReturnPrice, $orderAmount, 2);
+//                $returnPrice = bcmul($priceRate, bcsub($orderAmount, $order['shipping_price'], 2), 2);
+//                if ($order['user_electronic'] > 0) {
+//                    // 退换电子币
+//                    $shippingRate = bcdiv($order['shipping_price'], $order['total_amount']);
+//                    $userElectronic = bcsub($order['user_electronic'], bcmul($order['user_electronic'], $shippingRate, 2), 2);
+//                }
+//                $goodsReturnIntegral = bcmul($orderGoods['use_integral'], $orderGoods['goods_num'], 2); // 要退的商品积分 商品购买积分 * 申请数量
+//                $orderIntegral = $order['integral'];    // 用户实际使用积分
+//                if ($orderIntegral > 0) {
+//                    // 退还积分
+//                    $integralRate = bcdiv($goodsReturnIntegral, $orderIntegral, 2);
+//                    $returnIntegral = bcmul($integralRate, bcsub($orderIntegral, $order['shipping_price'], 2), 2);
+//                }
                 // 退还金额
-                $goodsReturnPrice = bcmul($orderGoods['final_price'], $orderGoods['goods_num'], 2);    // 要退的商品总价 商品购买单价 * 申请数量
-                $orderAmount = bcsub(bcsub($order['goods_price'], $order['order_prom_amount'], 2), $order['coupon_price'], 2);    // 用户实际使用金额
-                $priceRate = bcdiv($goodsReturnPrice, $orderAmount, 2);
-                $returnPrice = bcmul($priceRate, bcsub($orderAmount, $order['shipping_price'], 2), 2);
-                if ($order['user_electronic'] > 0) {
-                    // 退换电子币
-                    $shippingRate = bcdiv($order['shipping_price'], $order['total_amount']);
-                    $userElectronic = bcsub($order['user_electronic'], bcmul($order['user_electronic'], $shippingRate, 2), 2);
-                }
-                $goodsReturnIntegral = bcmul($orderGoods['use_integral'], $orderGoods['goods_num'], 2); // 要退的商品积分 商品购买积分 * 申请数量
-                $orderIntegral = $order['integral'];    // 用户实际使用积分
-                if ($orderIntegral > 0) {
-                    // 退还积分
-                    $integralRate = bcdiv($goodsReturnIntegral, $orderIntegral, 2);
-                    $returnIntegral = bcmul($integralRate, bcsub($orderIntegral, $order['shipping_price'], 2), 2);
-                }
+                $orderAmount = bcadd($order['order_amount'], $order['user_electronic'], 2); // 支付总金额，包含电子币
+                $priceRate = bcdiv($orderGoods['member_goods_price'], $order['goods_price'], 2);    // 商品价格占比
+                $returnPrice = bcmul($orderAmount, $priceRate, 2);
+
                 // 公司地址
                 $provinceName = Db::name('region2')->where(['id' => tpCache('shop_info.province')])->value('name');
                 $cityName = Db::name('region2')->where(['id' => tpCache('shop_info.city')])->value('name');
@@ -1586,7 +1591,7 @@ class Order extends Base
 
         $cartLogic = new CartLogic();
         $cartLogic->setUserId($this->user_id);
-        if (!empty($goodsId) && empty($cartIds)) {
+        if (!empty($goodsId) && empty(trim($cartIds))) {
             /*
              * 单个商品下单
              */
@@ -1602,7 +1607,7 @@ class Order extends Base
                 return json(['status' => 0, 'msg' => $error['msg']]);
             }
             $cartList['cartList'] = [$buyGoods];
-        } elseif (empty($goodsId) && !empty($cartIds)) {
+        } elseif (empty($goodsId) && !empty(trim($cartIds))) {
             /*
              * 购物车下单
              */
@@ -1976,7 +1981,7 @@ class Order extends Base
         }
         $cartLogic = new CartLogic();
         $cartLogic->setUserId($this->user_id);
-        if (!empty($goodsId) && empty($cartIds)) {
+        if (!empty($goodsId) && empty(trim($cartIds))) {
             /*
              * 单个商品下单
              */
@@ -1992,7 +1997,7 @@ class Order extends Base
                 return json(['status' => 0, 'msg' => $error['msg']]);
             }
             $cartList['cartList'] = [$buyGoods];
-        } elseif (empty($goodsId) && !empty($cartIds)) {
+        } elseif (empty($goodsId) && !empty(trim($cartIds))) {
             /*
              * 购物车下单
              */
