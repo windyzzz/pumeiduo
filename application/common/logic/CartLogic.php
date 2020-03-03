@@ -1231,7 +1231,11 @@ class CartLogic extends Model
             foreach ($cartList as $cartKey => $cartItem) {
                 if (in_array($cartItem['prom_type'], [1, 2])) {
                     // 秒杀 团购
-                    $total_fee = bcadd($total_fee, $cartItem['goods_fee'], 2);
+                    if ($cartItem['use_integral'] == 0) {
+                        $total_fee = bcadd($total_fee, $cartItem['goods_fee'], 2);
+                    } else {
+                        $total_fee = bcadd($total_fee, $cartItem['member_goods_price'], 2);
+                    }
                 } else {
                     $total_fee = bcadd($total_fee, $cartItem['total_fee'], 2);
                 }

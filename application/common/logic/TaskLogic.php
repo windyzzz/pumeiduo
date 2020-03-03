@@ -115,12 +115,13 @@ class TaskLogic
         if ($uid < 1) {
             return false;
         }
+        $uLevel = M('users')->where(['user_id' => $uid])->value('distribut_level');
         $order_sn = '';
         if ($this->order) {
             $order_sn = $this->order['order_sn'];
         }
         foreach ($this->task['task_reward'] as $tk => $tv) {
-            if ($tv['distribut_id'] == $this->user['distribut_level'] || 0 == $tv['distribut_id']) {
+            if ($tv['distribut_id'] == $uLevel || 0 == $tv['distribut_id']) {
                 //1.查看任务存不存在，不存在则创建
                 $user_task = M('user_task')
                     ->where('user_id', $uid)
@@ -149,7 +150,7 @@ class TaskLogic
                         $exTaskReward = $this->task['task_reward'][$tk - 1];
                         // 新增任务
                         $has_task = M('user_task')
-                            ->where('user_id', $this->user['first_leader'])
+                            ->where('user_id', $uid)
                             ->where('task_reward_id', $tv['reward_id'])
                             ->where('created_at', 'gt', $this->task['start_time'])
                             ->where('created_at', 'lt', $this->task['end_time'])
@@ -157,7 +158,7 @@ class TaskLogic
                         if (!$has_task) {
                             // 将前一个任务的记录添加到新任务
                             $exUserTask = M('user_task')
-                                ->where('user_id', $this->user['first_leader'])
+                                ->where('user_id', $uid)
                                 ->where('task_reward_id', $exTaskReward['reward_id'])
                                 ->where('created_at', 'gt', $this->task['start_time'])
                                 ->where('created_at', 'lt', $this->task['end_time'])
@@ -172,7 +173,7 @@ class TaskLogic
                                 if ($finishCount % $tv['order_num'] == 0) {
                                     // 完成任务
                                     $user_task_id = M('user_task')->add([
-                                        'user_id' => $this->user['first_leader'],
+                                        'user_id' => $uid,
                                         'task_id' => $this->task['id'],
                                         'task_reward_id' => $tv['reward_id'],
                                         'finish_num' => $finishCount,
@@ -196,7 +197,7 @@ class TaskLogic
                                     } else {
                                         $reward_coupon_id = $tv['reward_coupon_id'];
                                     }
-                                    taskLog($this->user['first_leader'], $this->task, $tv, $nowUserTaskSn, $reward_price, $reward_num, 1, 0, $reward_coupon_id, $user_task_id);
+                                    taskLog($uid, $this->task, $tv, $nowUserTaskSn, $reward_price, $reward_num, 1, 0, $reward_coupon_id, $user_task_id);
                                     if (0 == $tv['cycle']) {
                                         break;
                                     }
@@ -206,7 +207,7 @@ class TaskLogic
                                     $passAdd = 1;   // 不需要再添加奖励记录
                                 } elseif (($exk + 1) == count($exUserTask)) {
                                     $user_task_id = M('user_task')->add([
-                                        'user_id' => $this->user['first_leader'],
+                                        'user_id' => $uid,
                                         'task_id' => $this->task['id'],
                                         'task_reward_id' => $tv['reward_id'],
                                         'finish_num' => $finishCount,
@@ -378,18 +379,19 @@ class TaskLogic
         return false;
     }
 
-    public function doInviteAfter()
+    public function doInviteAfter($uid)
     {
         if ($this->checkTaskEnable()) {
+            $uLevel = M('users')->where(['user_id' => $uid])->value('distribut_level');
             $order_sn = '';
             if ($this->order) {
                 $order_sn = $this->order['order_sn'];
             }
             foreach ($this->task['task_reward'] as $tk => $tv) {
-                if ($tv['distribut_id'] == $this->distribut_id || 0 == $tv['distribut_id']) {
+                if ($tv['distribut_id'] == $uLevel || 0 == $tv['distribut_id']) {
                     //1.查看任务存不存在，不存在则创建
                     $user_task = M('user_task')
-                        ->where('user_id', $this->user['first_leader'])
+                        ->where('user_id', $uid)
                         ->where('task_reward_id', $tv['reward_id'])
                         ->where('status', 0)
                         ->where('created_at', 'gt', $this->task['start_time'])
@@ -402,7 +404,7 @@ class TaskLogic
                         // 如果奖励周期是空的话（只奖励一次），则跳过新增
                         if (0 == $tv['cycle']) {
                             $has_task = M('user_task')
-                                ->where('user_id', $this->user['first_leader'])
+                                ->where('user_id', $uid)
                                 ->where('task_reward_id', $tv['reward_id'])
                                 ->where('created_at', 'gt', $this->task['start_time'])
                                 ->where('created_at', 'lt', $this->task['end_time'])
@@ -415,7 +417,7 @@ class TaskLogic
                             $exTaskReward = $this->task['task_reward'][$tk - 1];
                             // 新增任务
                             $has_task = M('user_task')
-                                ->where('user_id', $this->user['first_leader'])
+                                ->where('user_id', $uid)
                                 ->where('task_reward_id', $tv['reward_id'])
                                 ->where('created_at', 'gt', $this->task['start_time'])
                                 ->where('created_at', 'lt', $this->task['end_time'])
@@ -423,7 +425,7 @@ class TaskLogic
                             if (!$has_task) {
                                 // 将前一个任务的记录添加到新任务
                                 $exUserTask = M('user_task')
-                                    ->where('user_id', $this->user['first_leader'])
+                                    ->where('user_id', $uid)
                                     ->where('task_reward_id', $exTaskReward['reward_id'])
                                     ->where('created_at', 'gt', $this->task['start_time'])
                                     ->where('created_at', 'lt', $this->task['end_time'])
@@ -438,7 +440,7 @@ class TaskLogic
                                     if ($finishCount % $tv['invite_num'] == 0) {
                                         // 完成任务
                                         $user_task_id = M('user_task')->add([
-                                            'user_id' => $this->user['first_leader'],
+                                            'user_id' => $uid,
                                             'task_id' => $this->task['id'],
                                             'task_reward_id' => $tv['reward_id'],
                                             'finish_num' => $finishCount,
@@ -462,7 +464,7 @@ class TaskLogic
                                         } else {
                                             $reward_coupon_id = $tv['reward_coupon_id'];
                                         }
-                                        taskLog($this->user['first_leader'], $this->task, $tv, $nowUserTaskSn, $reward_price, $reward_num, 1, 0, $reward_coupon_id, $user_task_id);
+                                        taskLog($uid, $this->task, $tv, $nowUserTaskSn, $reward_price, $reward_num, 1, 0, $reward_coupon_id, $user_task_id);
                                         if (0 == $tv['cycle']) {
                                             break;
                                         }
@@ -472,7 +474,7 @@ class TaskLogic
                                         $passAdd = 1;   // 不需要再添加奖励记录
                                     } elseif (($exk + 1) == count($exUserTask)) {
                                         $user_task_id = M('user_task')->add([
-                                            'user_id' => $this->user['first_leader'],
+                                            'user_id' => $uid,
                                             'task_id' => $this->task['id'],
                                             'task_reward_id' => $tv['reward_id'],
                                             'finish_num' => $finishCount,
@@ -493,7 +495,7 @@ class TaskLogic
                         }
                         if ($user_task_id == 0) {
                             $data = [
-                                'user_id' => $this->user['first_leader'],
+                                'user_id' => $uid,
                                 'task_id' => $this->task['id'],
                                 'task_reward_id' => $tv['reward_id'],
                                 'finish_num' => 1,
@@ -537,7 +539,7 @@ class TaskLogic
                         } else {
                             $reward_coupon_id = $tv['reward_coupon_id'];
                         }
-                        taskLog($this->user['first_leader'], $this->task, $tv, $order_sn, $reward_price, $reward_num, 1, 0, $reward_coupon_id, $user_task_id);
+                        taskLog($uid, $this->task, $tv, $order_sn, $reward_price, $reward_num, 1, 0, $reward_coupon_id, $user_task_id);
                     }
                 }
             }
@@ -556,17 +558,15 @@ class TaskLogic
             $goodsInfo = Db::name('goods')->where(['goods_id' => ['in', $goodsIds]])->field('zone, distribut_id')->select();
             foreach ($goodsInfo as $value) {
                 if ($value['zone'] == 3 && $value['distribut_id'] > 0) {
-                    $level[] = $value['distribut_id'];
+                    $levelUp = true;
+                    break;
                 }
             }
-            if (!empty($level)) {
-                $level_list = M('distribut_level')->where('level_id', 'in', $level)->order('order_money')->select();
-                $level = end($level_list);
+            if (!empty($levelUp)) {
                 $userInfo = M('users')->master()->field('user_id, distribut_level, first_leader')->where('user_id', $this->order['user_id'])->find() ?: [];
                 if (!empty($userInfo) && $userInfo['first_leader'] > 0) {
                     $this->user = $userInfo;
-                    $this->distribut_id = $level['level_id'];
-                    $this->doInviteAfter();
+                    $this->doInviteAfter($userInfo['first_leader']);
                 }
             }
         }

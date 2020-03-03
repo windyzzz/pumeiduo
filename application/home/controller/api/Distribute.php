@@ -3,6 +3,7 @@
 namespace app\home\controller\api;
 
 
+use app\common\logic\OrderLogic;
 use think\Page;
 
 class Distribute extends Base
@@ -90,9 +91,10 @@ class Distribute extends Base
         $orderIds = M('rebate_log rl')->where($where)->getField('rl.order_id', true);
         // 订单商品列表
         $orderGoods = M('order_goods og')
+            ->join('order o', 'o.order_id = og.order_id')
             ->join('goods g', 'g.goods_id = og.goods_id')
-            ->where(['order_id' => ['in', array_unique($orderIds)]])
-            ->field('og.order_id, og.goods_id, og.goods_name, og.spec_key_name, g.original_img, og.goods_num, og.final_price, og.member_goods_price, og.use_integral')->select();
+            ->where(['og.order_id' => ['in', array_unique($orderIds)]])
+            ->field('og.order_id, og.goods_id, og.goods_name, og.spec_key_name, g.original_img, og.goods_num, og.final_price, og.member_goods_price, og.use_integral, og.commission, o.add_time')->select();
         // 提成记录
         $page = new Page(count($orderIds), 10);
         $rebateLog = M('rebate_log rl')
@@ -100,6 +102,7 @@ class Distribute extends Base
             ->where($where)->field('rl.*, u.nickname buy_user_nickname, u.user_name buy_user_username, u.head_pic buy_user_head')
             ->limit($page->firstRow . ',' . $page->listRows)->order('create_time DESC')->select();
         $list = [];
+        $OrderLogic = new OrderLogic();
         foreach ($rebateLog as $k => $log) {
             $list[$k] = [
                 'log_id' => $log['id'],
@@ -122,7 +125,7 @@ class Distribute extends Base
                         'goods_num' => $goods['goods_num'],
                         'exchange_price' => $goods['member_goods_price'],
                         'exchange_integral' => $goods['use_integral'],
-                        'commission' => bcdiv(bcmul($goods['final_price'], $log['money'], 2), $log['goods_price'], 2)
+                        'commission' => bcadd($OrderLogic->getRongMoney(bcdiv(bcmul(bcmul($goods['final_price'], $goods['goods_num'], 2), $goods['commission'], 2), 100, 2), $log['level'], $goods['add_time'], $goods['goods_id']), 0, 2)
                     ];
                 }
             }
@@ -189,15 +192,17 @@ class Distribute extends Base
         $orderIds = M('rebate_log rl')->where($where)->getField('rl.order_id', true);
         // 订单商品列表
         $orderGoods = M('order_goods og')
+            ->join('order o', 'o.order_id = og.order_id')
             ->join('goods g', 'g.goods_id = og.goods_id')
-            ->where(['order_id' => ['in', array_unique($orderIds)]])
-            ->field('og.order_id, og.goods_id, og.goods_name, og.spec_key_name, g.original_img, og.goods_num, og.member_goods_price, og.use_integral')->select();
+            ->where(['og.order_id' => ['in', array_unique($orderIds)]])
+            ->field('og.order_id, og.goods_id, og.goods_name, og.spec_key_name, g.original_img, og.goods_num, og.final_price, og.member_goods_price, og.use_integral, og.commission, o.add_time')->select();
         // 提成记录
         $page = new Page(count($orderIds), 10);
         $rebateLog = M('rebate_log rl')
             ->where($where)->field('rl.*')
             ->limit($page->firstRow . ',' . $page->listRows)->order('create_time DESC')->select();
         $list = [];
+        $OrderLogic = new OrderLogic();
         foreach ($rebateLog as $k => $log) {
             $list[$k] = [
                 'log_id' => $log['id'],
@@ -218,7 +223,7 @@ class Distribute extends Base
                         'goods_num' => $goods['goods_num'],
                         'exchange_price' => $goods['member_goods_price'],
                         'exchange_integral' => $goods['use_integral'],
-                        'commission' => bcmul($goods['member_goods_price'], bcdiv($log['money'], $log['goods_price'], 2), 2)
+                        'commission' => bcadd($OrderLogic->getRongMoney(bcdiv(bcmul(bcmul($goods['final_price'], $goods['goods_num'], 2), $goods['commission'], 2), 100, 2), $log['level'], $goods['add_time'], $goods['goods_id']), 0, 2)
                     ];
                 }
             }

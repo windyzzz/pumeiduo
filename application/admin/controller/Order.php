@@ -391,7 +391,7 @@ class Order extends Base
                 $split = 1;
             }
             if ($val['is_gift'] == 1 && $val['prom_type'] == 0) {
-                $orderGoods[$key]['final_goods_price'] = 0;
+                $orderGoods[$key]['final_goods_price'] = 0.00;
                 $orderGoods[$key]['prom_value'] = '无';
             } else {
                 // 优惠促销
@@ -438,7 +438,7 @@ class Order extends Base
                         $orderGoods[$key]['prom_value'] = '订单优惠促销';
                         break;
                     default:
-                        $orderGoods[$key]['final_goods_price'] = 0;
+                        $orderGoods[$key]['final_goods_price'] = $val['member_goods_price'];
                         $orderGoods[$key]['prom_value'] = '无';
                 }
             }

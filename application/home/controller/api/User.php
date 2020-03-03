@@ -752,8 +752,12 @@ class User extends Base
         if (1 != $data['status']) {
             return json(['status' => 0, 'msg' => '添加地址失败,' . $data['msg'], 'result' => null]);
         }
-
-        return json(['status' => 1, 'msg' => '添加地址成功', 'result' => null]);
+        $addressList = get_user_address_list_new($this->user_id, false, $data['result']);
+        $address = $addressList[0];
+        unset($address['zipcode']);
+        unset($address['is_pickup']);
+        unset($address['tabs']);
+        return json(['status' => 1, 'msg' => '添加地址成功', 'result' => ['user_address' => $address]]);
     }
 
     /*
@@ -774,8 +778,12 @@ class User extends Base
         if (1 != $data['status']) {
             return json(['status' => 0, 'msg' => '修改地址失败,' . $data['msg'], 'result' => null]);
         }
-
-        return json(['status' => 1, 'msg' => '修改地址成功', 'result' => null]);
+        $addressList = get_user_address_list_new($this->user_id, false, $data['result']);
+        $address = $addressList[0];
+        unset($address['zipcode']);
+        unset($address['is_pickup']);
+        unset($address['tabs']);
+        return json(['status' => 1, 'msg' => '修改地址成功', 'result' => ['user_address' => $address]]);
     }
 
     /*

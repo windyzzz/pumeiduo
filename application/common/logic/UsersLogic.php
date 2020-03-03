@@ -934,53 +934,64 @@ class UsersLogic extends Model
             return ['status' => 0, 'msg' => 'openid错误'];
         }
         $oauthData = unserialize($oauthUser['oauth_data']);
+        $isReg = false;
         if (check_mobile($username)) {
             $userId = M('users')->where('mobile', $username)->where('is_cancel', 0)->value('user_id');
             if ($userId) {
-                //--- 已有账号
+                //--- 手机已有账号
                 if (M('oauth_users')->where(['user_id' => $userId])->find()) {
                     return ['status' => 0, 'msg' => '该手机号已绑定了微信号'];
                 }
             } else {
-                //--- 没有账号，注册
+                //--- 手机没有账号
                 $password = htmlspecialchars($password, ENT_NOQUOTES, 'UTF-8', false);
                 if (!check_password($password)) {
                     return ['status' => 0, 'msg' => '密码格式为6-20位字母数字组合'];
                 }
-                // 用户注册
-                $data = [
-                    'mobile' => $username,
-                    'password' => systemEncrypt($password),
-                    'openid' => $oauthData['openid'],
-                    'unionid' => $oauthData['unionid'],
-                    'oauth' => $oauthUser['oauth'],
-                    'nickname' => $oauthData['nickname'],
-                    'head_pic' => !empty($oauthData['headimgurl']) ? $oauthData['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png',
-                    'sex' => $oauthData['sex'] ?? 0,
-                    'reg_time' => time(),
-                    'last_login' => time(),
-                    'token' => TokenLogic::setToken(),
-                    'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
-                ];
-                $userId = M('users')->add($data);
+                if ($oauthUser['user_id'] != 0) {
+                    //--- 微信之前已绑定了账号（H5微信授权）
+                    $userId = $oauthUser['user_id'];
+                } else {
+                    // 用户注册
+                    $isReg = true;
+                    $data = [
+                        'mobile' => $username,
+                        'password' => systemEncrypt($password),
+                        'openid' => $oauthData['openid'],
+                        'unionid' => $oauthData['unionid'],
+                        'oauth' => $oauthUser['oauth'],
+                        'nickname' => $oauthData['nickname'],
+                        'head_pic' => !empty($oauthData['headimgurl']) ? $oauthData['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png',
+                        'sex' => $oauthData['sex'] ?? 0,
+                        'reg_time' => time(),
+                        'last_login' => time(),
+                        'token' => TokenLogic::setToken(),
+                        'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
+                    ];
+                    $userId = M('users')->add($data);
+                }
             }
         } else {
             return ['status' => 0, 'msg' => '手机号格式不正确'];
         }
         // 更新oauth记录
         M('oauth_users')->where(['tu_id' => $oauthUser['tu_id']])->update(['user_id' => $userId]);
-        // 更新用户信息
-        $updateData = [
-            'openid' => $oauthData['openid'],
-            'unionid' => $oauthData['unionid'],
-            'oauth' => $oauthUser['oauth'],
-            'nickname' => $oauthData['nickname'],
-            'head_pic' => !empty($oauthData['headimgurl']) ? $oauthData['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png',
-            'last_login' => time(),
-            'token' => TokenLogic::setToken(),
-            'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
-        ];
-        M('users')->where(['user_id' => $userId])->update($updateData);
+        if (!$isReg) {
+            // 更新用户信息
+            $updateData = [
+                'mobile' => $username,
+                'password' => systemEncrypt($password),
+                'openid' => $oauthData['openid'],
+                'unionid' => $oauthData['unionid'],
+                'oauth' => $oauthUser['oauth'],
+                'nickname' => $oauthData['nickname'],
+                'head_pic' => !empty($oauthData['headimgurl']) ? $oauthData['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png',
+                'last_login' => time(),
+                'token' => TokenLogic::setToken(),
+                'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
+            ];
+            M('users')->where(['user_id' => $userId])->update($updateData);
+        }
         $user = M('users')->where(['user_id' => $userId])->find();
         // 更新用户推送tags
         $res = (new PushLogic())->bindPushTag($user);
