@@ -278,10 +278,10 @@ class Coupon extends Base
             }
             if ($coupon['type_value']) {
                 if (in_array(0, $coupon['type_value'])) {
-                    $user_id = M('users')->field('user_id')->where('is_lock', 'neq', 1)->select();
+                    $user_id = M('users')->field('user_id')->where('is_lock', 'neq', 1)->where('is_cancel', 'neq', 1)->select();
                 } else {
                     $user_id = M('users')->field('user_id')
-                        ->where('distribut_level', 'IN', $coupon['type_value'])// 分销商等级？？？
+                        ->where('distribut_level', 'IN', $coupon['type_value']) // 会员等级
                         ->where('is_lock', 'neq', 1)
                         ->select();
                 }

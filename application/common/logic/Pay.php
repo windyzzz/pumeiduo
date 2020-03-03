@@ -202,6 +202,15 @@ class Pay
     }
 
     /**
+     * 设置购物商品列表
+     * @param $goodsList
+     */
+    public function setPayList($goodsList)
+    {
+        $this->payList = $goodsList;
+    }
+
+    /**
      * 使用积分.
      *
      * @param $pay_points
@@ -676,6 +685,20 @@ class Pay
      */
     public function calcGoodsOrderProm($goodsPrice)
     {
+        foreach ($this->payList as $payList) {
+            if (isset($payList['goods'])) {
+                if (3 == $payList['goods']['zone'] && $payList['goods']['distribut_id'] != 0) {
+                    // VIP升级套餐
+                    return '0.00';
+                }
+            } else {
+                $goods = M('goods')->where(['goods_id' => $payList['goods_id']])->field('zone, distribut_id')->find();
+                if (3 == $goods['zone'] && $goods['distribut_id'] != 0) {
+                    // VIP升级套餐
+                    return '0.00';
+                }
+            }
+        }
         $goodsDiscount = '0.00';
         // 订单优惠促销（查看是否有优惠价格）
         $orderProm = M('order_prom')
@@ -1092,9 +1115,17 @@ class Pay
         $goodsPromAmount = '0';
         $promGoodsNum = [];
         foreach ($pay_list as $k => $v) {
-            if (3 == $v['goods']['zone'] && $v['goods']['distribut_id'] != 0) {
-                // VIP升级套餐
-                break;
+            if (isset($v['goods'])) {
+                if (3 == $v['goods']['zone'] && $v['goods']['distribut_id'] != 0) {
+                    // VIP升级套餐
+                    break;
+                }
+            } else {
+                $goods = M('goods')->where(['goods_id' => $v['goods_id']])->field('zone, distribut_id')->find();
+                if (3 == $goods['zone'] && $goods['distribut_id'] != 0) {
+                    // VIP升级套餐
+                    break;
+                }
             }
             $goods_tao_grade = M('goods_tao_grade')
                 ->alias('g')

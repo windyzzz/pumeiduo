@@ -433,7 +433,7 @@ class Cart extends Base
             $goodsList[$key]['member_goods_price'] = bcsub($goods['goods_price'], $goods['use_integral'], 2);
         }
         $pay = new Pay();
-        $pay->setUserId($this->user_id);
+        $pay->setPayList($goodsList);
         // 商品优惠促销
         $discountPrice1 = $pay->goodsPromotion($goodsList, false, 'amount');
         // 订单优惠促销
@@ -557,7 +557,7 @@ class Cart extends Base
      */
     public function getCartNum()
     {
-        $num = M('Cart')->where('user_id', $this->user_id)->sum('goods_num');
+        $num = M('Cart')->where('user_id', $this->user_id)->count('id');
 
         return json(['status' => 1, 'msg' => 'ok', 'result' => $num]);
     }

@@ -20,7 +20,8 @@ class Coupon extends Base
             'send_end_time' => array('egt', NOW_TIME),
             'use_end_time' => array('egt', NOW_TIME),
             'status' => 1,
-            'nature' => 1
+            'nature' => 1,
+            'type_value' => ['not in', [4, 5]]  // 新用户、新VIP，通过其他方式获取
         ];
         $field = 'id, name, use_type, type_value, condition, money, createnum create_num, send_num, use_start_time, use_end_time';
         $couponData = M('coupon')->field($field)->where($where)->order('id desc')->select();
