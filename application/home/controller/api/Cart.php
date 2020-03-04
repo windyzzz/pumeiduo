@@ -557,7 +557,11 @@ class Cart extends Base
      */
     public function getCartNum()
     {
-        $num = M('Cart')->where('user_id', $this->user_id)->count('id');
+        if ($this->user_id) {
+            $num = M('Cart')->where('user_id', $this->user_id)->count('id');
+        } else {
+            $num = 0;
+        }
 
         return json(['status' => 1, 'msg' => 'ok', 'result' => $num]);
     }

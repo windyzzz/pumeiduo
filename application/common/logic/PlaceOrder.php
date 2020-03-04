@@ -11,6 +11,7 @@
 
 namespace app\common\logic;
 
+use app\common\logic\Token as TokenLogic;
 use app\common\model\CouponList;
 use app\common\model\Order;
 use app\common\model\TeamActivity;
@@ -247,18 +248,24 @@ class PlaceOrder
         if (!empty($this->taxpayer)) {
             $orderData['taxpayer'] = $this->taxpayer; //'发票纳税人识别号',
         }
-        $orderPromId = $this->pay->getOrderPromId();
-        $orderPromAmount = $this->pay->getOrderPromAmount();
-
-        if ($orderPromId > 0) {
+        $orderPromIds = $this->pay->getOrderPromIds();
+        if (!empty($orderPromIds)) {
+            $orderPromId = '';
+            if (isset($orderPromIds['goods_prom'])) {
+                $orderPromId .= 'goods_prom: ' . implode(',', $orderPromIds['goods_prom']) . '; ';
+            }
+            if (isset($orderPromIds['order_prom'])) {
+                $orderPromId .= 'order_prom: ' . implode(',', $orderPromIds['order_prom']) . '; ';
+            }
             $orderData['order_prom_id'] = $orderPromId; //'订单优惠活动id',
-            $orderData['order_prom_amount'] = $orderPromAmount; //'订单优惠活动金额,
         }
-        if ($this->promType) {
-            $orderData['prom_type'] = $this->promType; //订单类型
-        }
+        $orderPromAmount = $this->pay->getOrderPromAmount();
+        $orderData['order_prom_amount'] = $orderPromAmount; //'订单优惠活动金额,
         if ($this->promId > 0) {
             $orderData['prom_id'] = $this->promId; //活动id
+        }
+        if ($this->promType) {
+            $orderData['prom_type'] = $this->promType; //活动订单类型
         }
         if ($orderData['integral'] > 0 || $orderData['user_electronic'] > 0) {
             $orderData['pay_name'] = $orderData['user_electronic'] ? '电子币支付' : '积分兑换'; //支付方式，可能是余额支付或积分兑换，后面其他支付方式会替换
@@ -572,6 +579,9 @@ class PlaceOrder
             // 使用登录奖励
             $taskLogic = new TaskLogic(4);
             $taskLogic->useLoginProfit($order);
+            // 更新缓存
+            $user = Db::name('users')->where('user_id', $user['user_id'])->find();
+            TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
         }
     }
 

@@ -821,6 +821,27 @@ class User extends Base
         return json(['status' => 1, 'msg' => '操作成功', 'result' => null]);
     }
 
+    /**
+     * 检测地址
+     * @return \think\response\Json
+     */
+    public function checkAddress()
+    {
+        $id = I('get.id/d');
+        $addressId = Db::name('user_address')->where(['user_id' => $this->user_id, 'address_id' => $id])->value('address_id');
+        if ($addressId) {
+            $return = ['need_update' => 0, 'user_address' => []];
+        } else {
+            $addressList = get_user_address_list_new($this->user_id, true);
+            $address = $addressList[0];
+            unset($address['zipcode']);
+            unset($address['is_pickup']);
+            unset($address['tabs']);
+            $return = ['need_update' => 1, 'user_address' => $address];
+        }
+        return json(['status' => 1, 'result' => $return]);
+    }
+
     // 个人信息
     public function info(Request $request)
     {
@@ -1810,7 +1831,7 @@ class User extends Base
         $scene = I('post.scene', 6);
         $type = I('post.type', 1);
 
-        $current_user = M('Users')->find($this->user_id);
+        $current_user = M('Users')->where(['user_id' => $this->user_id])->find();
         if (2 == $current_user['type']) {
             return json(['status' => -1, 'msg' => '老用户无法继续绑定', 'result' => null]);
         }
@@ -3366,7 +3387,7 @@ class User extends Base
             // 登录奖励
             $taskLogic = new TaskLogic(4);
             $taskLogic->setUser($this->user);
-            if ($taskLogic->checkTaskEnable() && $taskLogic->checkLoginProfit()) {
+            if ($taskLogic->checkTaskEnable(true) && $taskLogic->checkLoginProfit()) {
                 $url = SITE_URL . '/#/app_redRain?red_token=' . $this->user['token'];
                 $result = ['status' => 1, 'result' => ['state' => 1, 'url' => $url]];
             } else {

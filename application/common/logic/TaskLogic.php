@@ -362,10 +362,13 @@ class TaskLogic
         }
     }
 
-    public function checkTaskEnable()
+    public function checkTaskEnable($useTimeLimit = false)
     {
         $time = isset($this->order) ? $this->order['add_time'] : time();
         if (1 != $this->task['is_open'] || $this->task['start_time'] > $time || $this->task['end_time'] < $time) {
+            return false;
+        }
+        if ($useTimeLimit && $this->task['use_end_time'] < $time) {
             return false;
         }
         return true;

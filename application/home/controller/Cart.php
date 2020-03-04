@@ -481,7 +481,7 @@ class Cart
             $pay->check(); // 加价购活动
             $pay->activityPayBefore(); // 参与活动促销 加价购活动
 
-            $pay->orderPromotion();
+//            $pay->orderPromotion();
             $pay->goodsPromotion();
             $pay->delivery($address['district']);
 

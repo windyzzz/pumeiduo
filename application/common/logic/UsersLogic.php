@@ -367,9 +367,9 @@ class UsersLogic extends Model
             return ['status' => 0, 'msg' => '请填写账号或密码'];
         }
         if (check_mobile($username)) {
-            $users = Db::name('users')->where('mobile', $username)->where('is_cancel', 0)->whereOr('email', $username);
+            $users = Db::name('users')->where('is_cancel', 0)->where(['mobile' => $username])->whereOr(['email' => $username]);
         } else {
-            $users = Db::name('users')->where('user_id', $username)->where('is_cancel', 0)->whereOr('email', $username);
+            $users = Db::name('users')->where('is_cancel', 0)->where(['user_id' => $username])->whereOr(['email' => $username]);
         }
         $userData = $users->field('user_id, is_lock')->select(); // 手机号登陆的情况下会有多个账号
         if (empty($userData)) {
@@ -1730,7 +1730,7 @@ class UsersLogic extends Model
         if (2 == $type) {
             $field = 'mobile';
         }
-        if (M('users')->where([$field => $email_mobile])->find()) {
+        if (M('users')->where([$field => $email_mobile, 'is_cancel' => 0])->find()) {
             return false;
         }
 

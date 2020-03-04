@@ -156,12 +156,12 @@ class Order extends Base
         if (I('type')) {
             $where .= C(strtoupper(I('get.type')));
         }
-        $where .= ' and prom_type < 5 '; // 虚拟拼团订单不列出来
+        $where .= ' AND prom_type < 5 '; // 虚拟拼团订单不列出来
         // 搜索订单 根据商品名称 或者 订单编号
         $search_key = trim(I('search_key'));
         $bind = [];
         if ($search_key) {
-            $where .= ' and (order_sn like :search_key1 or order_id in (select order_id from `' . C('database.prefix') . 'order_goods` where goods_name like :search_key2) ) ';
+            $where .= ' AND (order_sn like :search_key1 or order_id in (select order_id from `' . C('database.prefix') . 'order_goods` where goods_name like :search_key2) ) ';
             $bind['search_key1'] = "%$search_key%";
             $bind['search_key2'] = "%$search_key%";
         }
@@ -368,7 +368,7 @@ class Order extends Base
         $orderGoods = $userLogic->get_order_goods($orderInfo['order_id'])['result'];
         // 自动确认时间
         if ($orderInfo['shipping_status'] == 1 && $orderInfo['order_status'] == 1) {
-            $autoConfirmTime = $orderInfo[ 'shipping_time'] + tpCache('shopping.auto_confirm_date') * 24 * 60 * 60;
+            $autoConfirmTime = $orderInfo['shipping_time'] + tpCache('shopping.auto_confirm_date') * 24 * 60 * 60;
         } else {
             $autoConfirmTime = '0';
         }
@@ -2318,7 +2318,10 @@ class Order extends Base
             } else {
                 $placeOrder->addNormalOrder(3);     // 普通订单
             }
-            $cartLogic->clear();    // 清除选中的购物车
+            if (empty($goodsId) && !empty($cartIds)) {
+                // 清除选中的购物车
+                $cartLogic->clear();
+            }
             $order = $placeOrder->getOrder();
             $payLogic->activityRecord($order);  // 记录
             Db::commit();
@@ -2623,6 +2626,39 @@ class Order extends Base
                 'express' => $express['result']['list']
             ];
         }
+        return json(['status' => 1, 'result' => $return]);
+    }
+
+    /**
+     * 订单数量统计
+     * @return \think\response\Json
+     */
+    public function getOrderNum()
+    {
+        $return = [
+            'WAITPAY' => 0,
+            'WAITSEND' => 0,
+            'WAITRECEIVE' => 0,
+            'FINISH' => 0,
+            'RETURN' => 0,
+        ];
+        // 订单数据
+        $where = 'user_id = ' . $this->user_id . ' AND deleted != 1 AND prom_type < 5'; // 虚拟拼团订单不列出来
+        $orderData = M('order')->where($where)->field('order_id, pay_status, order_status, shipping_status, pay_code')->select();
+        foreach ($orderData as $order) {
+            if ($order['pay_status'] == 0 && $order['order_status'] == 0 && $order['pay_code'] != 'cod') {
+                $return['WAITPAY'] += 1;
+            } elseif (($order['pay_status'] == 1 || $order['pay_code'] == 'cod') && $order['shipping_status'] != 1 && in_array($order['order_status'], [0, 1])) {
+                $return['WAITSEND'] += 1;
+            } elseif ($order['shipping_status'] == 1 && $order['order_status'] == 1) {
+                $return['WAITRECEIVE'] += 1;
+            } elseif ($order['order_status'] == 2 || $order['order_status'] == 4 || $order['order_status'] == 6) {
+                $return['FINISH'] += 1;
+            }
+        }
+        // 退换货数据
+        $where = 'user_id = ' . $this->user_id . ' AND status != 6';
+        $return['RETURN'] = M('return_goods')->where($where)->count('id');
         return json(['status' => 1, 'result' => $return]);
     }
 }

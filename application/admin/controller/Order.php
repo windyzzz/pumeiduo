@@ -515,7 +515,7 @@ class Order extends Base
                 $oldPay->setUserId($order['user_id']);
                 $oldPay->payOrder($oldArr);
                 $oldPay->delivery($order['district']);
-                $oldPay->orderPromotion();
+//                $oldPay->orderPromotion();
             } catch (TpshopException $t) {
                 $error = $t->getErrorArr();
                 $this->error($error['msg']);
@@ -548,7 +548,7 @@ class Order extends Base
                     $newPay->setUserId($order['user_id']);
                     $newPay->payGoodsList($goods);
                     $newPay->delivery($order['district']);
-                    $newPay->orderPromotion();
+//                    $newPay->orderPromotion();
                 } catch (TpshopException $t) {
                     $error = $t->getErrorArr();
                     $this->error($error['msg']);
@@ -1702,7 +1702,7 @@ class Order extends Base
             $pay->setUserId($user_id);
             $pay->payGoodsList($order_goods);
             $pay->delivery($address['district']);
-            $pay->orderPromotion();
+//            $pay->orderPromotion();
         } catch (TpshopException $t) {
             $error = $t->getErrorArr();
             $this->error($error['msg']);
@@ -1796,7 +1796,7 @@ class Order extends Base
                 $pay->setUserId($order['user_id']);
                 $pay->payOrder($goodsArr);
                 $pay->delivery($order['district']);
-                $pay->orderPromotion();
+//                $pay->orderPromotion();
             } catch (TpshopException $t) {
                 $error = $t->getErrorArr();
                 $this->error($error['msg']);
