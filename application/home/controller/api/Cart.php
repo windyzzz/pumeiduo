@@ -86,6 +86,9 @@ class Cart extends Base
             $cartList = $Pay->activity2_goods($cartList);
 
             foreach ($cartList as $k => $v) {
+                if ($v['prom_type'] == 2) {
+                    continue;
+                }
                 if ($goods_tao_grade[$v['goods_id']]) {
                     $prom_list[$goods_tao_grade[$v['goods_id']]['id']]['list'][$k] = $v;
                     $prom_list[$goods_tao_grade[$v['goods_id']]['id']]['prom']['is_prom_goods_type'] = $goods_tao_grade[$v['goods_id']]['type'];
@@ -217,6 +220,21 @@ class Cart extends Base
 //                            'type_value' => $promGoods[$key]['title'],
 //                        ];
                     }
+                    $buyLimit = $promGoods[$key]['buy_limit'];
+                    if ($buyLimit != 0) {
+                        // 订单中已购买过的数量
+                        $orderGoodsNum = M('order_goods og')->join('order o', 'o.order_id = og.order_id')
+                            ->where([
+                                'o.order_status' => ['not in', [3, 5]],
+                                'o.user_id' => $this->user_id,
+                                'og.goods_id' => $v['goods_id'],
+                                'og.spec_key' => $v['spec_key'],
+                                'og.prom_type' => 3,
+                                'og.prom_id' => $promGoods[$key]['id']
+                            ])->sum('goods_num');
+                        $buyLimit = $buyLimit - $orderGoodsNum;
+                        if ($buyLimit <= 0) continue;
+                    }
                     $promList[$id]['goods'][] = [
                         'cart_id' => $v['id'],
                         'goods_id' => $v['goods_id'],
@@ -229,7 +247,7 @@ class Cart extends Base
                         'exchange_integral' => $v['use_integral'],
                         'exchange_price' => bcsub($v['goods_price'], $v['use_integral'], 2),
                         'goods_num' => $v['goods_num'],
-                        'buy_limit' => $promGoods[$key]['buy_limit'],
+                        'buy_limit' => $buyLimit,
                         'store_count' => $storeCount,
                         'gift_goods' => $giftGoods
                     ];
@@ -241,6 +259,21 @@ class Cart extends Base
                         $promList[$id]['type'] = 6;
                         $promList[$id]['type_value'] = $flashSaleGoods[$key]['title'];
                         $promList[$id]['goods'] = [];
+                    }
+                    $buyLimit = $flashSaleGoods[$key]['buy_limit'];
+                    if ($buyLimit != 0) {
+                        // 订单中已购买过的数量
+                        $orderGoodsNum = M('order_goods og')->join('order o', 'o.order_id = og.order_id')
+                            ->where([
+                                'o.order_status' => ['not in', [3, 5]],
+                                'o.user_id' => $this->user_id,
+                                'og.goods_id' => $v['goods_id'],
+                                'og.spec_key' => $v['spec_key'],
+                                'og.prom_type' => 1,
+                                'og.prom_id' => $flashSaleGoods[$key]['id']
+                            ])->sum('goods_num');
+                        $buyLimit = $buyLimit - $orderGoodsNum;
+                        if ($buyLimit <= 0) continue;
                     }
                     $promList[$id]['goods'][] = [
                         'cart_id' => $v['id'],
@@ -254,7 +287,7 @@ class Cart extends Base
                         'exchange_integral' => $v['use_integral'],
                         'exchange_price' => $v['member_goods_price'],
                         'goods_num' => $v['goods_num'],
-                        'buy_limit' => $flashSaleGoods[$key]['buy_limit'],
+                        'buy_limit' => $buyLimit,
                         'store_count' => $storeCount,
                         'gift_goods' => $giftGoods
                     ];
@@ -511,7 +544,7 @@ class Cart extends Base
     {
         $cartId = I('cart_id', '');
         $cartNum = I('cart_num', '');
-        if (empty($cartId) || empty($cartNum)) {
+        if (empty($cartId) || empty($cartNum) || $cartId == 0 || $cartNum == 0) {
             return json(['status' => 0, 'msg' => '参数错误']);
         }
         // 更新购物车
@@ -558,7 +591,7 @@ class Cart extends Base
     public function getCartNum()
     {
         if ($this->user_id) {
-            $num = M('Cart')->where('user_id', $this->user_id)->count('id');
+            $num = M('Cart')->where('user_id', $this->user_id)->where('prom_type', 'neq', 2)->count('id');
         } else {
             $num = 0;
         }

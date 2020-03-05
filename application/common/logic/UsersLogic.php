@@ -1911,7 +1911,7 @@ class UsersLogic extends Model
         $map['user_id'] = $user_id;
         $map['address_id'] = ['neq', $insert_id];
 
-        if (1 == $post['is_default']) {
+        if (isset($post['is_default']) && 1 == $post['is_default']) {
             M('user_address')->where($map)->save(['is_default' => 0]);
         }
         if (!$address_id) {

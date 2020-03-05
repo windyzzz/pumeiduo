@@ -1215,6 +1215,7 @@ class User extends Base
             $cartLogic->setUserId($this->user_id);
             $cartLogic->setUserToken($this->userToken);
             $cartLogic->setGoodsModel($collect['goods_id']);
+            $cartLogic->setGoodsBuyNum(1);
             $cartLogic->addGoodsToCart();
             Db::commit();
             return json(['status' => 1, 'msg' => '添加成功', 'result' => null]);

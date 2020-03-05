@@ -1234,7 +1234,7 @@ class CartLogic extends Model
                     if ($cartItem['use_integral'] == 0) {
                         $total_fee = bcadd($total_fee, $cartItem['goods_fee'], 2);
                     } else {
-                        $total_fee = bcadd($total_fee, $cartItem['member_goods_price'], 2);
+                        $total_fee = bcadd($total_fee, bcmul($cartItem['member_goods_price'], $cartItem['goods_num'], 2), 2);
                     }
                 } else {
                     $total_fee = bcadd($total_fee, $cartItem['total_fee'], 2);
