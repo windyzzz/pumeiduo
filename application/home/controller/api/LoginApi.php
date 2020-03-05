@@ -84,6 +84,13 @@ class LoginApi
                     'token' => $user['token'],
                     'jpush_tags' => [$user['push_tag']]
                 ];
+                // 登录记录
+                M('user_login_log')->add([
+                    'user_id' => $user['user_id'],
+                    'login_ip' => request()->ip(),
+                    'login_time' => time(),
+                    'source' => 3
+                ]);
             }
             return json($res);
         } catch (Exception $e) {
@@ -121,7 +128,6 @@ class LoginApi
                 return json(['status' => 0, 'msg' => '手机号码不合格式']);
             }
         }
-
         // 授权用户注册
         $res = $userLogic->oauthReg($openid, $username, $password);
         return json($res);

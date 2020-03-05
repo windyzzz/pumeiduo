@@ -24,6 +24,6 @@ class AdPositionData extends Seeder
             'is_open' => 1,
             'category_id' => 0,
         ];
-        $this->table('article')->insert($data)->save();
+        $this->table('ad_position')->insert($data)->save();
     }
 }

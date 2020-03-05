@@ -36,6 +36,21 @@ class System
     }
 
     /**
+     * H5获取苹果安卓APP下载链接
+     * @return \think\response\Json
+     */
+    public function downLink()
+    {
+        $androidUrl = SITE_URL . tpCache('android.app_path');
+        $iosUrl = tpCache('ios.app_path');
+        $return = [
+            'android_url' => $androidUrl,
+            'ios_url' => $iosUrl,
+        ];
+        return json(['status' => 1, 'result' => $return]);
+    }
+
+    /**
      * 检测更新
      * @return \think\response\Json
      */

@@ -927,6 +927,9 @@ class Pay
     {
         if ($coupon_id > 0) {
             $couponList = new CouponList();
+            if ($coupon_id > 1000) {
+                $coupon_id = M('coupon_list')->where(['id' => $coupon_id])->value('cid');
+            }
             $where = array(
                 'uid' => $this->user['user_id'],
                 'cid' => $coupon_id,
@@ -983,6 +986,9 @@ class Pay
             $coupon_id_arr = explode(',', $coupon_id_str);
             $coupon_ids_arr = array();
             foreach ($coupon_id_arr as $kfdd => $coupon_id) {
+                if ($coupon_id > 1000) {
+                    $coupon_id = M('coupon_list')->where(['id' => $coupon_id])->value('cid');
+                }
                 $where = array(
                     'uid' => $this->user['user_id'],
                     'cid' => $coupon_id,

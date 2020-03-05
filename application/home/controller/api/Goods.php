@@ -400,15 +400,15 @@ class Goods extends Base
                 ->where(['gtg.goods_id' => $goods_id, 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
                 ->field('pg.id prom_id, pg.type, pg.title')->select();
             // 优惠券
+            $ext['not_type_value'] = [4, 5];
             $couponLogic = new CouponLogic();
-            $couponCurrency = $couponLogic->getCoupon(0);    // 通用优惠券
-            $couponIds = [];
+            $couponCurrency = $couponLogic->getCoupon(0, null, null, $ext);    // 通用优惠券
             foreach ($couponCurrency as $item) {
-                $couponIds['not_coupon_id'][] = $item['coupon_id'];
+                $ext['not_coupon_id'][] = $item['coupon_id'];
             }
-            $couponGoods = $couponLogic->getCoupon(null, $goods_id, '', $couponIds);    // 指定商品优惠券
+            $couponGoods = $couponLogic->getCoupon(null, $goods_id, '', $ext);    // 指定商品优惠券
             foreach ($couponGoods as $k => $item) {
-                $couponIds['not_coupon_id'][] = $item['coupon_id'];
+                $ext['not_coupon_id'][] = $item['coupon_id'];
             }
             if ($goods['cat_id'] == 0 && $goods['extend_cat_id'] == 0) {
                 $couponCate = [];
@@ -420,7 +420,7 @@ class Goods extends Base
                 if ($goods['extend_cat_id'] != 0) {
                     $cateIds[] = $goods['extend_cat_id'];
                 }
-                $couponCate = $couponLogic->getCoupon(null, '', $cateIds, $couponIds);    // 指定分类优惠券
+                $couponCate = $couponLogic->getCoupon(null, '', $cateIds, $ext);    // 指定分类优惠券
             }
             $goods['coupon'] = array_merge_recursive($couponCurrency, $couponGoods, $couponCate);
             if (!empty($goods['coupon'])) {

@@ -485,9 +485,15 @@ class CouponLogic extends Model
             }
         }
         if (isset($ext['nature'])) {
+            // 优惠券性质（普通、任务）
             $where['c.nature'] = ['in', $ext['nature']];
         }
+        if (isset($ext['not_type_value'])) {
+            // 过滤的优惠券发放方式
+            $where['c.type_value'] = ['not in', $ext['not_type_value']];
+        }
         if (isset($ext['not_coupon_id'])) {
+            // 过滤的优惠券ID
             $where['c.id'] = ['not in', $ext['not_coupon_id']];
         }
         $coupon = Db::name('coupon')->alias('c')

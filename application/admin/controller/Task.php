@@ -80,18 +80,12 @@ class Task extends Base
             $rewardCycle = [];
             $rewardDistributeId = [];
             foreach ($data['reward'] as $reward) {
-                if (empty($rewardCycle) || empty($rewardDistributeId)) {
-                    $rewardCycle[] = $reward['cycle'];
-                    $rewardDistributeId[] = $reward['distribut_id'];
-                    continue;
-                }
-                if (!in_array($reward['distribut_id'], $rewardDistributeId) && ($reward['cycle'] == 1 || in_array(1, $rewardCycle))) {
-                    $this->ajaxReturn(['status' => -1, 'msg' => '级别不一样周期不能选择每次']);
-                }
                 $rewardCycle[] = $reward['cycle'];
                 $rewardDistributeId[] = $reward['distribut_id'];
+                if (in_array(0, $rewardDistributeId) && (in_array(1, $rewardDistributeId) || in_array(2, $rewardDistributeId) || in_array(3, $rewardDistributeId)) && in_array(1, $rewardCycle)) {
+                    $this->ajaxReturn(['status' => -1, 'msg' => '级别中有“全体”，但其他级别不全是“全体”，周期不能选择每次']);
+                }
             }
-
             try {
                 Db::startTrans();
                 $this->service->store($data);

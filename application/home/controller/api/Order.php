@@ -2419,24 +2419,37 @@ class Order extends Base
         if ($order['city_name'] == '直辖市') {
             $order['city_name'] = '';
         }
-        $order['coupon'] = [];  // 订单赠送优惠券
+        // 订单赠送优惠券
+        $order['coupon'] = [
+            'have_coupon' => 0,
+            'user_type_name' => '',
+            'coupon_name' => ''
+        ];
+        // 用户支付后处理
         $order['action_after_pay'] = [
             'update_jpush_tags' => []
-        ];    // 用户支付后处理
+        ];
         if ($order['pay_status'] == 1) {
             // 查看订单商品里面是否有vip升级套餐，有就显示赠送的优惠券
-            $level = [];
+            $levelUp = false;
             $orderGoods = M('order_goods og')->join('goods g', 'g.goods_id = og.goods_id')->where(['og.order_id' => $orderId])->field('zone, distribut_id')->select();
             foreach ($orderGoods as $goods) {
                 if (3 == $goods['zone'] && $goods['distribut_id'] > 0) {
-                    $level[] = $goods['distribut_id'];
+                    $levelUp = true;
+                    break;
                 }
             }
-            if (!empty($level)) {
-                $order['coupon'] = [
-                    'user_type_name' => 'VIP套餐用户',
-                    'coupon_name' => '新晋VIP会员优惠券'
-                ];
+            if ($levelUp) {
+                // 查看是否有赠送优惠券
+                $hasCoupon = M('coupon_list')->where(['uid' => $order['user_id'], 'get_order_id' => $order['order_id']])->value('cid');
+                if (!empty($hasCoupon)) {
+                    $order['coupon'] = [
+                        'have_coupon' => 1,
+                        'user_type_name' => 'VIP套餐用户',
+                        'coupon_name' => '新晋VIP会员优惠券'
+                    ];
+                }
+                // 变更用户push_tags
                 $order['action_after_pay'] = [
                     'update_jpush_tags' => explode(',', $this->user['push_tag'])
                 ];

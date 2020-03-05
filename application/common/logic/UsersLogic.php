@@ -280,6 +280,12 @@ class UsersLogic extends Model
             $this->afterLogin($user_info, 3);
             session('is_app', 1);
             (new Redis())->set('is_app_' . $userToken, 1, config('REDIS_TIME'));
+            M('user_login_log')->add([
+                'user_id' => $row_id1,
+                'login_ip' => request()->ip(),
+                'login_time' => time(),
+                'source' => 1
+            ]);
             $result = ['status' => 1, 'msg' => '登录成功'];
         }
 
@@ -743,6 +749,14 @@ class UsersLogic extends Model
             $user['last_login_source'] = $map['last_login_source'];
         }
 
+        // 登录记录
+        M('user_login_log')->add([
+            'user_id' => $user['user_id'],
+            'login_ip' => request()->ip(),
+            'login_time' => time(),
+            'source' => $source
+        ]);
+
         return ['status' => 1, 'msg' => '登陆成功', 'result' => $user];
     }
 
@@ -917,6 +931,13 @@ class UsersLogic extends Model
             'token' => $user['token'],
             'jpush_tags' => [$user['push_tag']]
         ];
+        // 登录记录
+        M('user_login_log')->add([
+            'user_id' => $user['user_id'],
+            'login_ip' => request()->ip(),
+            'login_time' => time(),
+            'source' => $source
+        ]);
         return ['status' => 1, 'msg' => '注册成功', 'result' => $user];
     }
 
@@ -1020,6 +1041,13 @@ class UsersLogic extends Model
             'token' => $user['token'],
             'jpush_tags' => [$user['push_tag']]
         ];
+        // 登录记录
+        M('user_login_log')->add([
+            'user_id' => $user['user_id'],
+            'login_ip' => request()->ip(),
+            'login_time' => time(),
+            'source' => 3
+        ]);
         return ['status' => 1, 'msg' => '注册成功', 'result' => $user];
     }
 
