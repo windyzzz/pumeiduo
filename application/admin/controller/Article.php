@@ -508,6 +508,7 @@ class Article extends Base
                 }
                 $this->ajaxReturn(['status' => 0, 'msg' => $validate_error]);
             }
+            $data['admin_id'] = session('admin_id');
             $data['send_time'] = time();
             if (!empty($data['message_id'])) {
                 // 清除用户消息表

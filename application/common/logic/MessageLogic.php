@@ -111,9 +111,11 @@ class MessageLogic extends Model
                 'status' => ['in', [0, 1]],
                 'm.category' => 0,
             ];
+            $where['m.title'] = ['neq', ''];
             if ($isIndex) {
                 $num = 3;
                 $field = 'm.message_id id, m.title';
+                $where['m.send_time'] = ['BETWEEN', [strtotime("-1 month"), time()]];  // 一个月内
             } else {
                 $num = 10;
                 $field = 'um.rec_id,um.user_id,um.category,um.message_id,um.status,m.send_time,m.type,m.title,m.message';
@@ -122,6 +124,7 @@ class MessageLogic extends Model
                 ->alias('um')
                 ->join('__MESSAGE__ m', 'um.message_id = m.message_id', 'LEFT')
                 ->where($user_system_message_no_read_where)
+                ->where($where)
                 ->count();
             $Page = new Page($count, $num);
             $user_system_message_no_read = Db::name('user_message')
@@ -129,13 +132,18 @@ class MessageLogic extends Model
                 ->field($field)
                 ->join('__MESSAGE__ m', 'um.message_id = m.message_id', 'LEFT')
                 ->where($user_system_message_no_read_where)
+                ->where($where)
                 ->limit($Page->firstRow . ',' . $Page->listRows)
                 ->order('send_time desc')
                 ->select();
             return $user_system_message_no_read;
         } else {
-            $messageNotice = Db::name('message')->where(['type' => 1, 'distribut_level' => 0])
-                ->field('message_id id, title')->limit(0, 3)->order('send_time DESC')->select();
+            $messageNotice = Db::name('message')->where([
+                'type' => 1,
+                'distribut_level' => 0,
+                'title' => ['neq', ''],
+                'send_time' => ['BETWEEN', [strtotime("-1 month"), time()]]  // 一个月内
+            ])->field('message_id id, title')->limit(0, 3)->order('send_time DESC')->select();
             return $messageNotice;
         }
     }
@@ -157,7 +165,7 @@ class MessageLogic extends Model
             'category' => 0,
             'type' => 1,
             'distribut_level' => ['elt', $user_info['distribut_level']],
-//            'send_time' => ['gt', $user_info['reg_time']],
+//            'send_time' => ['BETWEEN', [strtotime("-1 month"), time()]]  // 一个月内
         ];
         if (!empty($user_message)) {
             $user_id_array = get_arr_column($user_message, 'message_id');

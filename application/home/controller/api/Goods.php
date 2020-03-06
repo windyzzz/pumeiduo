@@ -1003,7 +1003,7 @@ class Goods extends Base
         }
         // 筛选 品牌 规格 属性 价格
         $cat_id_arr = getCatGrandson($id);
-        $goods_where = ['is_on_sale' => 1, 'sale_type' => 2, 'cat_id' => ['in', $cat_id_arr]];
+        $goods_where = ['is_on_sale' => 1, 'sale_type' => 2, 'cat_id' => ['in', $cat_id_arr], 'zone' => ['neq', 3], 'distribut_id' => 0];
         $filter_goods_id = Db::name('goods')->where($goods_where)->cache(true)->getField('goods_id', true);
 
         $count = count($filter_goods_id);
