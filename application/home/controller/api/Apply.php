@@ -64,7 +64,7 @@ class Apply extends Base
                 'service_phone' => tpCache('shop_info.mobile'),
                 'card_num' => $this->user['user_name'],
                 'notice' => M('article')->where(['article_id' => 105])->value('app_content'),
-                'card_cover' => tpCache('basic.apply_card_cover')
+                'card_cover' => tpCache('basic.apply_card_cover') ?? ''
             ];
             return json(['status' => 1, 'result' => $return]);
         }

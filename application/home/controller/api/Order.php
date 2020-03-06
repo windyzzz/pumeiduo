@@ -859,27 +859,22 @@ class Order extends Base
                 'original_img' => $orderGoods['original_img']
             ];
             if ($type != -1) {
-//                // 退还金额
-//                $goodsReturnPrice = bcmul($orderGoods['final_price'], $orderGoods['goods_num'], 2);    // 要退的商品总价 商品购买单价 * 申请数量
-//                $orderAmount = bcsub(bcsub($order['goods_price'], $order['order_prom_amount'], 2), $order['coupon_price'], 2);    // 用户实际使用金额
-//                $priceRate = bcdiv($goodsReturnPrice, $orderAmount, 2);
-//                $returnPrice = bcmul($priceRate, bcsub($orderAmount, $order['shipping_price'], 2), 2);
-//                if ($order['user_electronic'] > 0) {
-//                    // 退换电子币
-//                    $shippingRate = bcdiv($order['shipping_price'], $order['total_amount']);
-//                    $userElectronic = bcsub($order['user_electronic'], bcmul($order['user_electronic'], $shippingRate, 2), 2);
-//                }
-//                $goodsReturnIntegral = bcmul($orderGoods['use_integral'], $orderGoods['goods_num'], 2); // 要退的商品积分 商品购买积分 * 申请数量
-//                $orderIntegral = $order['integral'];    // 用户实际使用积分
-//                if ($orderIntegral > 0) {
-//                    // 退还积分
-//                    $integralRate = bcdiv($goodsReturnIntegral, $orderIntegral, 2);
-//                    $returnIntegral = bcmul($integralRate, bcsub($orderIntegral, $order['shipping_price'], 2), 2);
-//                }
-                // 退还金额
-                $orderAmount = bcadd($order['order_amount'], $order['user_electronic'], 2); // 支付总金额，包含电子币
-                $priceRate = bcdiv($orderGoods['member_goods_price'], $order['goods_price'], 2);    // 商品价格占比
-                $returnPrice = bcmul($orderAmount, $priceRate, 2);
+                $useApplyReturnMoney = bcmul($orderGoods['final_price'], $orderGoods['goods_num'], 2);    // 要退的总价 商品购买单价*申请数量
+                $userExpenditureMoney = bcsub(bcsub($order['goods_price'], $order['order_prom_amount'], 2), $order['coupon_price'], 2);    // 用户实际使用金额
+                $rate = bcdiv($useApplyReturnMoney, $userExpenditureMoney, 2);
+                $shippingRate = bcdiv($order['shipping_price'], $order['total_amount'], 2);
+                $userElectronic = bcsub($order['user_electronic'], bcmul($order['user_electronic'], $shippingRate, 2), 2);
+                // 该退积分支付
+                $refundIntegral = bcmul($orderGoods['use_integral'], $orderGoods['goods_num'], 2);
+                // 该退电子币
+                $refundElectronic = bcmul($rate, $userElectronic, 2);
+                if ($order['order_amount'] > 0) {
+                    $orderAmount = bcadd($order['order_amount'], $order['paid_money'], 2);   // 三方支付总额，预售要退定金
+                    if ($orderAmount > $order['shipping_price']) {
+                        // 退款金额
+                        $refundMoney = bcmul($rate, bcsub($orderAmount, $order['shipping_price'], 2), 2);
+                    }
+                }
 
                 // 公司地址
                 $provinceName = Db::name('region2')->where(['id' => tpCache('shop_info.province')])->value('name');
@@ -898,9 +893,9 @@ class Order extends Base
                     $return['return_contact'] = tpCache('shop_info.contact');
                     $return['return_mobile'] = tpCache('shop_info.mobile');
                     $return['return_address'] = isset($address) ? $address : '';
-                    $return['return_price'] = isset($returnPrice) ? $returnPrice : 0;
-                    $return['return_electronic'] = isset($userElectronic) ? $userElectronic : 0;
-                    $return['return_integral'] = isset($returnIntegral) ? $returnIntegral : 0;
+                    $return['return_price'] = isset($refundMoney) ? $refundMoney : isset($refundElectronic) ? $refundElectronic : 0;
+                    $return['return_electronic'] = isset($refundElectronic) ? $refundElectronic : 0;
+                    $return['return_integral'] = isset($refundIntegral) ? $refundIntegral : 0;
                     break;
                 default:
                     return json(['status' => 0, 'msg' => '参数错误']);
@@ -1095,7 +1090,7 @@ class Order extends Base
         $return['return_address'] = $address;
         $return['return_reason'] = $returnGoods['reason'];
         $return['describe'] = $returnGoods['describe'];
-        $return['return_price'] = $returnGoods['refund_money'];
+        $return['return_price'] = $returnGoods['refund_money'] != 0 ? $returnGoods['refund_money'] : $returnGoods['refund_electronic'];
         $return['return_electronic'] = $returnGoods['refund_electronic'];
         $return['return_integral'] = $returnGoods['refund_integral'];
         $return['voucher'] = $returnGoods['imgs'] ? explode(',', $returnGoods['imgs']) : [];

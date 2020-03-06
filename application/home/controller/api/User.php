@@ -1927,7 +1927,7 @@ class User extends Base
         $payPoints = M('AccountLog')
             ->where('user_id', $current_user['user_id'])
             ->where('pay_points', 'gt', 0)
-            ->where('type', 'neq', 6)// 不要注册积分
+            ->where('type', 'neq', 6)   // 不要注册积分
             ->sum('pay_points');
         if ($payPoints > 0) {
             accountLog($bind_user['user_id'], 0, $payPoints, '账号合并积分', 0, 0, '', 0, 11, false);
@@ -1937,7 +1937,7 @@ class User extends Base
             ->where('user_id', $current_user['user_id'])
             ->where('user_electronic', 'gt', 0)
             ->sum('user_electronic');
-        if ($payPoints > 0) {
+        if ($electronic > 0) {
             accountLog($bind_user['user_id'], 0, 0, '账号合并电子币', 0, 0, '', $electronic, 11, false);
         }
         // 余额变动
@@ -1945,7 +1945,7 @@ class User extends Base
             ->where('user_id', $current_user['user_id'])
             ->where('user_money', 'gt', 0)
             ->sum('user_money');
-        if ($payPoints > 0) {
+        if ($userMoney > 0) {
             accountLog($bind_user['user_id'], $userMoney, 0, '账号合并余额', 0, 0, '', 0, 11, false);
         }
         // 订单
@@ -3382,15 +3382,43 @@ class User extends Base
      */
     public function checkLoginProfit()
     {
+        if ($this->user_id == 36410) {
+            // APP审核账号
+            return json(['status' => 1, 'result' => ['state' => 0]]);
+        }
         if ($this->passAuth) {
             $result = ['status' => 1, 'result' => ['state' => 0]];
         } else {
             // 登录奖励
             $taskLogic = new TaskLogic(4);
-            $taskLogic->setUser($this->user);
-            if ($taskLogic->checkTaskEnable(true) && $taskLogic->checkLoginProfit()) {
-                $url = SITE_URL . '/#/app_redRain?red_token=' . $this->user['token'];
-                $result = ['status' => 1, 'result' => ['state' => 1, 'url' => $url]];
+            if ($taskLogic->checkTaskEnable(true)) {
+                if (!empty($this->user['bind_uid']) || $this->user['bind_uid'] != 0) {
+                    // 是绑定的旧账号
+                    $userId = $this->user['bind_uid'];
+                    $taskLogic->setUserId($userId);
+                    if ($taskLogic->checkLoginProfit()) {
+                        //--- 新账号未领取过奖励
+                        $taskLogic->setUserId($this->user_id);
+                        if ($taskLogic->checkLoginProfit()) {
+                            $url = SITE_URL . '/#/app_redRain?red_token=' . $this->user['token'];
+                            $result = ['status' => 1, 'result' => ['state' => 1, 'url' => $url]];
+                        } else {
+                            $result = ['status' => 1, 'result' => ['state' => 0, 'url' => '']];
+                        }
+                    } else {
+                        //--- 新账号已领取过奖励，因此旧账号不能获取奖励
+                        $result = ['status' => 1, 'result' => ['state' => 0, 'url' => '']];
+                    }
+                } else {
+                    // 普通账号
+                    $taskLogic->setUserId($this->user_id);
+                    if ($taskLogic->checkLoginProfit()) {
+                        $url = SITE_URL . '/#/app_redRain?red_token=' . $this->user['token'];
+                        $result = ['status' => 1, 'result' => ['state' => 1, 'url' => $url]];
+                    } else {
+                        $result = ['status' => 1, 'result' => ['state' => 0, 'url' => '']];
+                    }
+                }
             } else {
                 $result = ['status' => 1, 'result' => ['state' => 0, 'url' => '']];
             }
@@ -3406,6 +3434,7 @@ class User extends Base
     {
         $taskLogic = new TaskLogic(4);
         $taskLogic->setUser($this->user);
+        $taskLogic->setUserId($this->user_id);
         $res = $taskLogic->checkLoginProfit();
         if (!$res) {
             return json(['status' => 0, 'msg' => '您已领取过奖励']);

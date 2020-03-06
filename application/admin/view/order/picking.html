@@ -33,6 +33,7 @@
 					<b>支付方式：</b> {$order.pay_name|default="其他"}<br/>                    
                     <b>配送方式：</b> {$order.shipping_name}<br/>
                     <b>用户备注：</b> {$order.user_note}<br/>
+                    <b>订单来源：</b> {$order.source_desc}<br/>
                 </td>
             </tr>
             </tbody>
@@ -82,7 +83,7 @@
             </volist>
             </tbody>
             <tfoot>
-            <tr><td colspan="5" class="text-center"><input class="btn btn-default noprint" type="submit" onclick="window.print();" value="打印"></td></tr>
+            <tr><td colspan="6" class="text-center"><input class="btn btn-default noprint" type="submit" onclick="window.print();" value="打印"></td></tr>
             </tfoot>
         </table>
     </div>

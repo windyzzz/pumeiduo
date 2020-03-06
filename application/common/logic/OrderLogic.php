@@ -434,28 +434,55 @@ class OrderLogic
         $order_goods = M('order_goods')->where(['rec_id' => $rec_id])->find();
         $data['goods_id'] = $order_goods['goods_id'];
         $data['spec_key'] = $order_goods['spec_key'];
+//        if ($data['type'] < 2) {
+//            $useRapplyReturnMoney = $order_goods['final_price'] * $data['goods_num'];    //要退的总价 商品购买单价*申请数量
+//            $userExpenditureMoney = $order['goods_price'] - $order['order_prom_amount'] - $order['coupon_price'];    //用户实际使用金额
+//            $rate = round($useRapplyReturnMoney / $userExpenditureMoney, 2);
+//            $shipping_rate = $order['shipping_price'] / $order['total_amount'];
+//            $user_electronic = round($order['user_electronic'] - $order['user_electronic'] * $shipping_rate, 2);
+//
+//            // $data['refund_integral'] = floor($rate*$order['integral']);//该退积分支付
+//            $data['refund_integral'] = $order_goods['use_integral'] * $order_goods['goods_num']; //该退积分支付
+//            $data['refund_electronic'] = $rate * $user_electronic; //该退电子币
+//            // $integralDeductionMoney = $data['refund_integral']/tpCache('shopping.point_rate') ;  //积分抵了多少钱，要扣掉
+//            $integralDeductionMoney = $data['refund_integral'];  //积分抵了多少钱，要扣掉
+//            if ($order['order_amount'] > 0) {
+//                $order_amount = $order['order_amount'] + $order['paid_money'];   //三方支付总额，预售要退定金
+//                if ($order_amount > $order['shipping_price']) {
+//                    $data['refund_money'] = round($rate * ($order_amount - $order['shipping_price']), 2); //退款金额
+//                    $data['refund_deposit'] = $rate * $order['user_money'];
+//                } else {
+//                    $data['refund_deposit'] = round($rate * ($order['user_money'] - $order['shipping_price'] + $order['paid_money']) - $integralDeductionMoney, 2); //该退余额支付部分
+//                }
+//            } else {
+//                $data['refund_deposit'] = round($useRapplyReturnMoney - $integralDeductionMoney, 2); //该退余额支付部分
+//            }
+//        }
         if ($data['type'] < 2) {
-            $useRapplyReturnMoney = $order_goods['final_price'] * $data['goods_num'];    //要退的总价 商品购买单价*申请数量
-            $userExpenditureMoney = $order['goods_price'] - $order['order_prom_amount'] - $order['coupon_price'];    //用户实际使用金额
-            $rate = round($useRapplyReturnMoney / $userExpenditureMoney, 2);
-            $shipping_rate = $order['shipping_price'] / $order['total_amount'];
-            $user_electronic = round($order['user_electronic'] - $order['user_electronic'] * $shipping_rate, 2);
-
-            // $data['refund_integral'] = floor($rate*$order['integral']);//该退积分支付
-            $data['refund_integral'] = $order_goods['use_integral'] * $order_goods['goods_num']; //该退积分支付
-            $data['refund_electronic'] = $rate * $user_electronic; //该退电子币
-            // $integralDeductionMoney = $data['refund_integral']/tpCache('shopping.point_rate') ;  //积分抵了多少钱，要扣掉
-            $integralDeductionMoney = $data['refund_integral'];  //积分抵了多少钱，要扣掉
+            $useApplyReturnMoney = bcmul($order_goods['final_price'], $data['goods_num'], 2);    // 要退的总价 商品购买单价*申请数量
+            $userExpenditureMoney = bcsub(bcsub($order['goods_price'], $order['order_prom_amount'], 2), $order['coupon_price'], 2);    // 用户实际使用金额
+            $rate = bcdiv($useApplyReturnMoney, $userExpenditureMoney, 2);
+            $shippingRate = bcdiv($order['shipping_price'], $order['total_amount'], 2);
+            $userElectronic = bcsub($order['user_electronic'], bcmul($order['user_electronic'], $shippingRate, 2), 2);
+            // 该退积分支付
+            $data['refund_integral'] = bcmul($order_goods['use_integral'], $order_goods['goods_num'], 2);
+            // 该退电子币
+            $data['refund_electronic'] = bcmul($rate, $userElectronic, 2);
+            $integralDeductionMoney = $data['refund_integral'];  // 积分抵了多少钱，要扣掉
             if ($order['order_amount'] > 0) {
-                $order_amount = $order['order_amount'] + $order['paid_money'];   //三方支付总额，预售要退定金
-                if ($order_amount > $order['shipping_price']) {
-                    $data['refund_money'] = round($rate * ($order_amount - $order['shipping_price']), 2); //退款金额
-                    $data['refund_deposit'] = $rate * $order['user_money'];
+                $orderAmount = bcadd($order['order_amount'], $order['paid_money'], 2);   // 三方支付总额，预售要退定金
+                if ($orderAmount > $order['shipping_price']) {
+                    // 退款金额
+                    $data['refund_money'] = bcmul($rate, bcsub($orderAmount, $order['shipping_price'], 2), 2);
+                    // 退款余额
+                    $data['refund_deposit'] = bcmul($rate, $order['user_money'], 2);
                 } else {
-                    $data['refund_deposit'] = round($rate * ($order['user_money'] - $order['shipping_price'] + $order['paid_money']) - $integralDeductionMoney, 2); //该退余额支付部分
+                    // 该退余额支付部分
+                    $data['refund_deposit'] = bcsub(bcmul($rate * bcadd(bcadd($order['user_money'], $order['shipping_price'], 2), $order['paid_money'], 2), 2), $integralDeductionMoney, 2);
                 }
             } else {
-                $data['refund_deposit'] = round($useRapplyReturnMoney - $integralDeductionMoney, 2); //该退余额支付部分
+                // 该退余额支付部分
+                $data['refund_deposit'] = bcsub($useApplyReturnMoney, $integralDeductionMoney, 2);
             }
         }
 
@@ -528,25 +555,36 @@ class OrderLogic
         $returnData['order_sn'] = $order['order_sn'];
         $orderGoods = M('order_goods')->where(['rec_id' => $recId])->find();
         $returnData['goods_id'] = $orderGoods['goods_id'];
+        $returnData['goods_num'] = $orderGoods['goods_num'];
         $returnData['spec_key'] = $orderGoods['spec_key'];
         $returnData['spec_key_name'] = $orderGoods['spec_key_name'];
 
-        // 退还金额
-        $goodsReturnPrice = bcmul($orderGoods['final_price'], $orderGoods['goods_num'], 2);    // 要退的商品总价 商品购买单价 * 申请数量
-        $orderAmount = bcsub(bcsub($order['goods_price'], $order['order_prom_amount'], 2), $order['coupon_price'], 2);    // 用户实际使用金额
-        $priceRate = bcdiv($goodsReturnPrice, $orderAmount, 2);
-        $returnData['refund_money'] = bcmul($priceRate, bcsub($orderAmount, $order['shipping_price'], 2), 2);
-        if ($order['user_electronic'] > 0) {
-            // 退换电子币
-            $shippingRate = bcdiv($order['shipping_price'], $order['total_amount']);
-            $returnData['refund_electronic'] = bcsub($order['user_electronic'], bcmul($order['user_electronic'], $shippingRate, 2), 2);
-        }
-        $goodsReturnIntegral = bcmul($orderGoods['use_integral'], $orderGoods['goods_num'], 2); // 要退的商品积分 商品购买积分 * 申请数量
-        $orderIntegral = $order['integral'];    // 用户实际使用积分
-        if ($orderIntegral > 0) {
-            // 退还积分
-            $integralRate = bcdiv($goodsReturnIntegral, $orderIntegral, 2);
-            $returnData['refund_integral'] = bcmul($integralRate, bcsub($orderIntegral, $order['shipping_price'], 2), 2);
+        if ($type < 2) {
+            $useApplyReturnMoney = bcmul($orderGoods['final_price'], $orderGoods['goods_num'], 2);    // 要退的总价 商品购买单价*申请数量
+            $userExpenditureMoney = bcsub(bcsub($order['goods_price'], $order['order_prom_amount'], 2), $order['coupon_price'], 2);    // 用户实际使用金额
+            $rate = bcdiv($useApplyReturnMoney, $userExpenditureMoney, 2);
+            $shippingRate = bcdiv($order['shipping_price'], $order['total_amount'], 2);
+            $userElectronic = bcsub($order['user_electronic'], bcmul($order['user_electronic'], $shippingRate, 2), 2);
+            // 该退积分支付
+            $returnData['refund_integral'] = bcmul($orderGoods['use_integral'], $orderGoods['goods_num'], 2);
+            // 该退电子币
+            $returnData['refund_electronic'] = bcmul($rate, $userElectronic, 2);
+            $integralDeductionMoney = $returnData['refund_integral'];  // 积分抵了多少钱，要扣掉
+            if ($order['order_amount'] > 0) {
+                $orderAmount = bcadd($order['order_amount'], $order['paid_money'], 2);   // 三方支付总额，预售要退定金
+                if ($orderAmount > $order['shipping_price']) {
+                    // 退款金额
+                    $returnData['refund_money'] = bcmul($rate, bcsub($orderAmount, $order['shipping_price'], 2), 2);
+                    // 退款余额
+                    $returnData['refund_deposit'] = bcmul($rate, $order['user_money'], 2);
+                } else {
+                    // 该退余额支付部分
+                    $returnData['refund_deposit'] = bcsub(bcmul($rate * bcadd(bcadd($order['user_money'], $order['shipping_price'], 2), $order['paid_money'], 2), 2), $integralDeductionMoney, 2);
+                }
+            } else {
+                // 该退余额支付部分
+                $returnData['refund_deposit'] = bcsub($useApplyReturnMoney, $integralDeductionMoney, 2);
+            }
         }
 
         // 佣金处理

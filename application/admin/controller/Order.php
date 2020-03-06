@@ -678,6 +678,20 @@ class Order extends Base
         $order['city'] = getRegionName($order['city']);
         $order['district'] = getRegionName($order['district']);
         $order['full_address'] = $order['province'] . ' ' . $order['city'] . ' ' . $order['district'] . ' ' . $order['address'];
+        switch ($order['source']) {
+            case 1:
+                $order['source_desc'] = '微信';
+                break;
+            case 2:
+                $order['source_desc'] = 'PC';
+                break;
+            case 3:
+                $order['source_desc'] = 'APP';
+                break;
+            case 4:
+                $order['source_desc'] = '管理后台';
+                break;
+        }
         if ($id) {
             return $order;
         }
@@ -700,11 +714,27 @@ class Order extends Base
         $orderObj = $orderModel->whereIn('order_id', $order_ids)->select();
         if ($orderObj) {
             $order = collection($orderObj)->append(['orderGoods', 'full_address'])->toArray();
+        } else {
+            $order = [];
         }
         $total_amount = 0;
 
         foreach ($order as $k => $v) {
-            $order_length = count($v['orderGoods']);
+            switch ($v['source']) {
+                case 1:
+                    $order[$k]['source_desc'] = '微信';
+                    break;
+                case 2:
+                    $order[$k]['source_desc'] = 'PC';
+                    break;
+                case 3:
+                    $order[$k]['source_desc'] = 'APP';
+                    break;
+                case 4:
+                    $order[$k]['source_desc'] = '管理后台';
+                    break;
+            }
+//            $order_length = count($v['orderGoods']);
             foreach ($v['orderGoods'] as $gk => $gv) {
                 $goods_info = M('Goods')
                     ->alias('g')->field('s.suppliers_name,g.trade_type')

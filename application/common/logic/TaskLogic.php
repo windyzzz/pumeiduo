@@ -20,6 +20,7 @@ class TaskLogic
     private $task;
     private $order;
     private $user;
+    private $userId;
     private $distribut_id;
 
     public function __construct($id = 1)
@@ -38,6 +39,11 @@ class TaskLogic
     public function setUser($user)
     {
         $this->user = $user;
+    }
+
+    public function setUserId($userId)
+    {
+        $this->userId = $userId;
     }
 
     public function setDistributId($distribut_id)
@@ -581,7 +587,7 @@ class TaskLogic
      */
     public function checkLoginProfit()
     {
-        if (M('task_log')->where(['task_id' => $this->task['id'], 'user_id' => $this->user['user_id'], 'status' => ['neq', -1]])->value('id')) {
+        if (M('task_log')->where(['task_id' => $this->task['id'], 'user_id' => $this->userId, 'status' => ['neq', -1]])->value('id')) {
             return false;
         }
         return true;

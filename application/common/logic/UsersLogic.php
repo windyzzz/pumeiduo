@@ -302,7 +302,6 @@ class UsersLogic extends Model
     {
         // 查看是否有oauth用户记录
         $oauthUser = M('oauth_users')->where([
-//            'openid' => $data['openid'],
             'unionid' => $data['unionid'],
             'oauth' => 'weixin',
         ])->order('tu_id desc')->find();
