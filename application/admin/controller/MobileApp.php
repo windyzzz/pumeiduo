@@ -32,6 +32,7 @@ class MobileApp extends Base
             tpCache($inc_type, ['app_version' => $param['app_version']]);
             tpCache($inc_type, ['app_log' => $param['app_log']]);
             tpCache($inc_type, ['app_path' => $param['app_path']]);
+            tpCache($inc_type, ['is_update' => $param['is_update']]);
             tpCache($inc_type, ['is_force' => $param['is_force']]);
         }
         $this->assign('inc_type', $inc_type);
@@ -69,6 +70,7 @@ class MobileApp extends Base
 
         tpCache($inc_type, ['app_version' => $param['app_version']]);
         tpCache($inc_type, ['app_log' => $param['app_log']]);
+        tpCache($inc_type, ['is_update' => $param['is_update']]);
         tpCache($inc_type, ['is_force' => $param['is_force']]);
 
         if (!$file) {

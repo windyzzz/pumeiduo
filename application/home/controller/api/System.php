@@ -58,25 +58,41 @@ class System
     {
         $type = I('type', '');
         $version = I('version', '');
+        if (empty($version)) {
+            return json(['status' => 0, 'msg' => '请传入版本号']);
+        }
+        $version = explode('.', $version);
+        $appVersion = '';
+        foreach ($version as $item) {
+            $appVersion .= $item * 10;
+        }
         switch ($type) {
             case 'ios':
-                $iosVersion = tpCache('ios.app_version');
-                if ($version == $iosVersion) {
+                $version = explode('.', tpCache('ios.app_version'));
+                $iosVersion = '';
+                foreach ($version as $item) {
+                    $iosVersion .= $item * 10;
+                }
+                if ($appVersion == $iosVersion) {
                     $result['state'] = 0;   // 无需更新
                 } else {
-                    $result['state'] = 1;   // 需更新
+                    $result['state'] = tpCache('ios.is_update') ? (int)tpCache('ios.is_update') : 0;    // 是否需要更新
                 }
-                $result['is_force'] = tpCache('ios.is_force');  // 是否强制更新
+                $result['is_force'] = tpCache('ios.is_force') ? (int)tpCache('ios.is_force') : 0;  // 是否强制更新
                 $result['app_url'] = tpCache('ios.app_path');
                 break;
             case 'android':
-                $androidVersion = tpCache('android.app_version');
-                if ($version == $androidVersion) {
+                $version = explode('.', tpCache('ios.app_version'));
+                $androidVersion = '';
+                foreach ($version as $item) {
+                    $androidVersion .= $item * 10;
+                }
+                if ($appVersion == $androidVersion) {
                     $result['state'] = 0;   // 无需更新
                 } else {
-                    $result['state'] = 1;   // 需更新
+                    $result['state'] = tpCache('ios.is_update') ? (int)tpCache('ios.is_update') : 0;    // 是否需要更新
                 }
-                $result['is_force'] = tpCache('android.is_force');  // 是否强制更新
+                $result['is_force'] = tpCache('android.is_force') ? (int)tpCache('android.is_force') : 0;  // 是否强制更新
                 Url::root('/');
                 $baseUrl = url('/', '', '', true);
                 $result['app_url'] = $baseUrl . tpCache('android.app_path');
