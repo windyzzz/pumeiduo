@@ -112,7 +112,7 @@ class Login extends Base
                 'birthday' => $user['birthday'],
                 'mobile' => $user['mobile'],
                 'head_pic' => $user['head_pic'],
-                'type' => $user['type'],
+                'type' => $user['distribut_level'] >= 3 ? 2 : $user['type'],
                 'invite_uid' => $user['invite_uid'],
                 'is_distribut' => $user['is_distribut'],
                 'is_lock' => $user['is_lock'],

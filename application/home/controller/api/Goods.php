@@ -1325,18 +1325,16 @@ class Goods extends Base
      * 获取推荐（促销）商品列表
      * @param $num
      * @param string $output
+     * @param int $taskId
      * @return array|\think\response\Json
      */
-    public function getRecommendGoodsList($num = '20', $output = 'json')
+    public function getRecommendGoodsList($num = '20', $output = 'json', $taskId = 0)
     {
         $key = md5($_SERVER['REQUEST_URI'] . I('start_price') . '_' . I('end_price'));
         $html = S($key);
         if (!empty($html)) {
             json(['status' => 1, 'msg' => 'success', 'result' => $html]);
         }
-
-        $promId = I('get.prom_id', null);
-
         $sort = I('get.sort', 'goods_id'); // 排序
         $sort_asc = I('get.sort_asc', 'asc'); // 排序
         $filter_param = []; // 筛选数组
@@ -1350,26 +1348,52 @@ class Goods extends Base
             $cateArr = $goodsLogic->get_goods_cate($goodsCate);
         }
         // 筛选 品牌 规格 属性 价格
-//        $cat_id_arr = getCatGrandson($id);
+        $cat_id_arr = getCatGrandson($id);
 //        $goods_where = ['is_on_sale' => 1, 'is_recommend' => 1, 'cat_id' => ['in', $cat_id_arr]];
 //        $filter_goods_id = Db::name('goods')->where($goods_where)->cache(true)->getField('goods_id', true);
-        $where = [
-            'pg.is_open' => 1,
-            'pg.is_end' => 0,
-            'pg.end_time' => ['>=', time()],
-            'g.is_on_sale' => 1
-        ];
-        if ($promId) {
-            $where['pg.id'] = $promId;
-            $return['prom_title'] = Db::name('prom_goods')->where(['id' => $promId])->value('title');
-        } else {
-            $return['prom_title'] = '';
-        }
-        $filter_goods_id = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
-            ->join('goods g', 'g.goods_id = gtg.goods_id')
-            ->where($where)->getField('gtg.goods_id', true);
-        $filter_goods_id = array_unique($filter_goods_id);
 
+        $promId = I('get.prom_id', null);
+        if ($promId) {
+            $return['prom_title'] = Db::name('prom_goods')->where(['id' => $promId])->value('title');
+            $where = [
+                'pg.id' => $promId,
+                'pg.is_open' => 1,
+                'pg.is_end' => 0,
+                'pg.end_time' => ['>=', time()],
+                'g.is_on_sale' => 1,
+                'g.cat_id' => ['in', $cat_id_arr]
+            ];
+            $filter_goods_id = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
+                ->join('goods g', 'g.goods_id = gtg.goods_id')
+                ->where($where)->getField('gtg.goods_id', true);
+            $filter_goods_id = array_unique($filter_goods_id);
+        } else {
+            if ($taskId > 0) {
+                $taskLogic = new TaskLogic($taskId);
+                $task_info = $taskLogic->getTaskInfo();
+                if ($task_info) {
+                    $filter_goods_id = explode(',', $task_info['goods_id_list']);
+                } else {
+                    $where = [
+                        'is_on_sale' => 1,
+                        'is_recommend' => 1,
+                        'zone' => ['neq', 3],
+                        'distribut_id' => 0
+                    ];
+                    $filter_goods_id = Db::name('goods')->where($where)->getField('goods_id', true);
+                    $filter_goods_id = array_unique($filter_goods_id);
+                }
+            } else {
+                $where = [
+                    'is_on_sale' => 1,
+                    'is_recommend' => 1,
+                    'zone' => ['neq', 3],
+                    'distribut_id' => 0
+                ];
+                $filter_goods_id = Db::name('goods')->where($where)->getField('goods_id', true);
+                $filter_goods_id = array_unique($filter_goods_id);
+            }
+        }
         $count = count($filter_goods_id);
         $page = new Page($count, $num);
         if ($count > 0) {
@@ -1476,7 +1500,7 @@ class Goods extends Base
             // 商品标识
             $goodsList[$k]['tags'] = [];
             // 第一类，活动类（优先级：秒杀” > ”团购“ > ”套组“ > “自营”）
-            $goodsList[$k]['tags'][0] = ['type' => 'activity', 'title' => '自营'];
+//            $goodsList[$k]['tags'][0] = ['type' => 'activity', 'title' => '自营'];
             if ($v['sale_type'] == 2) {
                 $goodsList[$k]['tags'][0]['title'] = '套组';
             }
@@ -1614,7 +1638,7 @@ class Goods extends Base
             // 商品标识
             $goodsList[$k]['tags'] = [];
             // 第一类，活动类（优先级：秒杀” > ”团购“ > ”套组“ > “自营”）
-            $goodsList[$k]['tags'][0] = ['type' => 'activity', 'title' => '自营'];
+//            $goodsList[$k]['tags'][0] = ['type' => 'activity', 'title' => '自营'];
             if ($v['sale_type'] == 2) {
                 $goodsList[$k]['tags'][0]['title'] = '套组';
             }
@@ -2059,7 +2083,7 @@ class Goods extends Base
             // 商品标识
             $lookSee[$k]['tags'] = [];
             // 第一类，活动类（优先级：秒杀” > ”团购“ > ”套组“ > “自营”）
-            $lookSee[$k]['tags'][0] = ['type' => 'activity', 'title' => '自营'];
+//            $lookSee[$k]['tags'][0] = ['type' => 'activity', 'title' => '自营'];
             if ($v['sale_type'] == 2) {
                 $lookSee[$k]['tags'][0]['title'] = '套组';
             }

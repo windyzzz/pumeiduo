@@ -117,7 +117,6 @@ class Index
                 ->select();
         }
 
-
         foreach ($list as $k => $v) {
             $list[$k]['is_enshrine'] = 0;
             $list[$k]['tabs'] = M('GoodsTab')->where('goods_id', $v['goods_id'])->select();
@@ -238,7 +237,7 @@ class Index
         // 新品列表
         $newGoods = $goodsController->getNewGoodsList(20, 'array');
         // 促销商品
-        $recommendGoods = $goodsController->getRecommendGoodsList(20, 'array');
+        $recommendGoods = $goodsController->getRecommendGoodsList(20, 'array', 1);
         // 热销商品
         $hotGoods = $goodsController->getHotGoodsList(20, 'array');
 

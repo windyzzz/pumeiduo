@@ -349,8 +349,6 @@ class UsersLogic extends Model
                     }
                     // 更新用户缓存
                     (new Redis())->set('user_' . $user['token'], $user, config('REDIS_TIME'));
-                    $levelName = Db::name('user_level')->where('level_id', $user['level'])->getField('level_name');
-                    $user['level_name'] = $levelName;
                     $result = ['status' => 1, 'result' => $user];  // 登录成功
                 }
             }
@@ -918,7 +916,7 @@ class UsersLogic extends Model
             'birthday' => $user['birthday'],
             'mobile' => $user['mobile'],
             'head_pic' => $user['head_pic'],
-            'type' => $user['type'],
+            'type' => $user['distribut_level'] >= 3 ? 2 : $user['type'],
             'invite_uid' => $user['invite_uid'],
             'is_distribut' => $user['is_distribut'],
             'is_lock' => $user['is_lock'],
@@ -971,6 +969,30 @@ class UsersLogic extends Model
                 if ($oauthUser['user_id'] != 0) {
                     //--- 微信之前已绑定了账号（H5微信授权）
                     $userId = $oauthUser['user_id'];
+                    $userInfo = M('users')->where(['user_id' => $userId])->field('user_id, is_lock, is_cancel')->find();
+                    if (empty($userInfo)) {
+                        // 账号被删了，重新注册
+                        $isReg = true;
+                        $data = [
+                            'mobile' => $username,
+                            'password' => systemEncrypt($password),
+                            'openid' => $oauthData['openid'],
+                            'unionid' => $oauthData['unionid'],
+                            'oauth' => $oauthUser['oauth'],
+                            'nickname' => $oauthData['nickname'],
+                            'head_pic' => !empty($oauthData['headimgurl']) ? $oauthData['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png',
+                            'sex' => $oauthData['sex'] ?? 0,
+                            'reg_time' => time(),
+                            'last_login' => time(),
+                            'token' => TokenLogic::setToken(),
+                            'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
+                        ];
+                        $userId = M('users')->add($data);
+                    } elseif ($userInfo['is_lock'] == 1) {
+                        return ['status' => 0, 'msg' => '微信绑定的账号已被冻结'];
+                    } elseif ($userInfo['is_cancel'] == 1) {
+                        return ['status' => 0, 'msg' => '微信绑定的账号已被注销'];
+                    }
                 } else {
                     // 用户注册
                     $isReg = true;
@@ -1028,12 +1050,12 @@ class UsersLogic extends Model
             'birthday' => $user['birthday'],
             'mobile' => $user['mobile'],
             'head_pic' => $user['head_pic'],
-            'type' => $user['type'],
+            'type' => $user['distribut_level'] >= 3 ? 2 : $user['type'],
             'invite_uid' => $user['invite_uid'],
             'is_distribut' => $user['is_distribut'],
             'is_lock' => $user['is_lock'],
-            'level' => $user['level'],
-            'level_name' => $user['level_name'],
+            'level' => $user['distribut_level'],
+            'level_name' => M('DistributLevel')->where('level_id', $user['distribut_level'])->getField('level_name') ?? '普通会员',
             'is_not_show_jk' => $user['is_not_show_jk'],  // 是否提示加入金卡弹窗
             'has_pay_pwd' => $user['paypwd'] ? 1 : 0,
             'is_app' => TokenLogic::getValue('is_app', $user['token']) ? 1 : 0,

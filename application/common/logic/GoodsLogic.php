@@ -1023,7 +1023,7 @@ class GoodsLogic extends Model
             // 商品标识
             $goodsList[$k]['tags'] = [];
             // 第一类，活动类（优先级：“秒杀” > “团购” > “套组” > “自营”）
-            $goodsList[$k]['tags'][0] = ['type' => 'activity', 'title' => '自营'];
+//            $goodsList[$k]['tags'][0] = ['type' => 'activity', 'title' => '自营'];
             if ($v['sale_type'] == 2) {
                 $goodsList[$k]['tags'][0]['title'] = '套组';
             }
@@ -1533,7 +1533,7 @@ class GoodsLogic extends Model
 
         //如果是分销商的升级商品，则不能使用积分
         foreach ($goodsList as $goodsKey => $goodsVal) {
-            $max_discount_integral += (3 == $goodsVal['zone'] && $goodsVal['distribut_id'] > 0) ? 0 : $goodsArr[$goodsKey]['goods_fee'];
+            $max_discount_integral += (3 == $goodsVal['zone'] && $goodsVal['distribut_id'] > 0) ? 0 : $goodsArr[$goodsKey]['member_goods_price'];
         }
 
         return $max_discount_integral;

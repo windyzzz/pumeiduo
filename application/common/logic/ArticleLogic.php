@@ -110,6 +110,8 @@ class ArticleLogic extends Model
             'user_id' => $user_info['user_id'],
             'status' => ['in', [0, 1]],
             'm.is_open' => 1,
+            'm.title' => ['neq', ''],
+            'm.publish_time' => ['BETWEEN', [strtotime("-3 month"), time()]]  // 三个月内
         ];
         $count = Db::name('user_article')
             ->alias('um')
