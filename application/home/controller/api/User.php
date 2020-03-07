@@ -1918,6 +1918,7 @@ class User extends Base
         $user_data['time_out'] = strtotime('+' . config('REDIS_DAY') . ' days');
         M('Users')->where('user_id', $bind_user['user_id'])->update($user_data);
         // 授权登录
+        M('OauthUsers')->where('user_id', $bind_user['user_id'])->delete();
         M('OauthUsers')->where('user_id', $current_user['user_id'])->update(['user_id' => $bind_user['user_id']]);
         // 下级推荐人
         M('Users')->where('first_leader', $current_user['user_id'])->update(array('first_leader' => $bind_user['user_id'], 'invite_uid' => $bind_user['user_id']));

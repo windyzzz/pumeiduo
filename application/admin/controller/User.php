@@ -374,7 +374,7 @@ class User extends Base
                 exit($this->error('直销商账号不能合并其他账号'));
             }
 
-            if ($user['merge_uid'] > 0) {
+            if ($user['bind_uid'] > 0) {
                 exit($this->error('要合并的用户ID此前已经合并过报单系统用户，不能多次合并'));
             }
 
@@ -405,7 +405,6 @@ class User extends Base
                     $c = M('users')->where("user_id = $merge_uid and is_lock = 0")->find();
                 }
 
-
                 // 开始合并用户信息
 
                 // 1.粉丝数据
@@ -434,23 +433,24 @@ class User extends Base
                 if ($user_data['distribut_level'] > 1) {
                     $user_data['is_distribut'] = 1;
                 }
-                $user_data['oauth'] = $c['oauth'];
-                $user_data['openid'] = $c['openid'];
-                $user_data['unionid'] = $c['unionid'];
-                $user_data['head_pic'] = $c['head_pic'];
-                $user_data['nickname'] = $c['nickname'];
-                $user_data['bind_uid'] = $c['user_id'];
-                $user_data['mobile'] = $c['mobile'];
+                $user_data['invite_uid'] = $user_data['first_leader'] = $c['first_leader'];
+                $user_data['second_leader'] = $c['second_leader'];
+                $user_data['third_leader'] = $c['third_leader'];
+                $user_data['user_name'] = $c['user_name'];
                 $user_data['type'] = 2;
                 $user_data['bind_time'] = time();
                 $user_data['time_out'] = strtotime('+' . config('REDIS_DAY') . ' days');
                 M('Users')->where('user_id', $uid)->update($user_data);
                 // 授权登录
-                M('OauthUsers')->where('user_id', $merge_uid)->update(['user_id' => $uid]);
+//                M('OauthUsers')->where('user_id', $merge_uid)->delete();
                 // 下级推荐人
-                M('Users')->where('first_leader', $merge_uid)->update(array('first_leader' => $uid, 'invite_uid' => $uid));
-                M('Users')->where('second_leader', $merge_uid)->update(array('second_leader' => $uid));
-                M('Users')->where('third_leader', $merge_uid)->update(array('third_leader' => $uid));
+                if ($user['invite_uid'] != $c['invite_uid']) {
+                    M('users')->where('first_leader', $uid)->update(['second_leader' => $user_data['first_leader'], 'third_leader' => $user_data['second_leader']]);
+                    M('users')->where('second_leader', $uid)->update(['third_leader' => $user_data['first_leader']]);
+                }
+                M('users')->where('first_leader', $merge_uid)->update(['first_leader' => $uid, 'invite_uid' => $uid]);
+                M('users')->where('second_leader', $merge_uid)->update(['second_leader' => $uid]);
+                M('users')->where('third_leader', $merge_uid)->update(['third_leader' => $uid]);
                 // 积分变动
                 $payPoints = M('AccountLog')
                     ->where('user_id', $merge_uid)
@@ -479,12 +479,12 @@ class User extends Base
                 // 订单
                 M('Order')->where('user_id', $merge_uid)->update(array('user_id' => $uid));
                 M('OrderAction')->where('action_user', $merge_uid)->update(array('action_user' => $uid));
-                // 4.冻结报单系统用户
-                M('users')->where(['user_id' => $c['user_id']])->save(['is_lock' => 1]);
+                // 冻结报单系统用户
+                M('users')->where(['user_id' => $merge_uid])->save(['is_lock' => 1]);
                 // 绑定记录
                 M('bind_log')->add([
-                    'user_id' => $c['user_id'],
-                    'bind_user_id' => $user['user_id'],
+                    'user_id' => $merge_uid,
+                    'bind_user_id' => $uid,
                     'add_time' => time(),
                     'type' => 1,
                     'way' => 2

@@ -1301,15 +1301,15 @@ class User
             }
 
             //验证成功
-            $user = M('Users')
+            $bind_user = M('Users')
                 ->where('user_name', $username)
                 ->where('password', systemEncrypt($password))
                 // ->where('is_zhixiao',1)
                 // ->where('is_lock',0)
+                ->where('is_lock', 0)
                 ->find();
-
-            if (!$user) {
-                return json(['status' => -1, 'msg' => '账号密码错误']);
+            if (!$bind_user) {
+                return json(['status' => -1, 'msg' => '账号不存在或已被冻结，不能绑定']);
             }
         } else {
             if (!$mobile) {
@@ -1333,25 +1333,113 @@ class User
             }
 
             //验证成功
-            $user = M('Users')
+            $bind_user = M('Users')
                 ->where('user_name', $username)
                 ->where('mobile', $mobile)
                 // ->where('is_zhixiao',1)
                 // ->where('is_lock',0)
                 ->find();
-
-            if (!$user) {
-                return json(['status' => -1, 'msg' => '账号不存在，不能绑定']);
+            if (!$bind_user) {
+                return json(['status' => -1, 'msg' => '账号不存在或已被冻结，不能绑定']);
             }
         }
 
-        if ($user['bind_uid'] > 0) {
+        if ($bind_user['bind_uid'] > 0) {
             return json(['status' => -1, 'msg' => '该旧账号已经绑定！']);
         }
 
-        if ($current_user['user_id'] == $user['user_id']) {
+        if ($current_user['user_id'] == $bind_user['user_id']) {
             return json(['status' => -1, 'msg' => '不能绑定自己']);
         }
+
+        DB::startTrans();
+        // 更新用户信息
+        $user_data = [];
+        $user_data['distribut_level'] = $current_user['distribut_level'] > $bind_user['distribut_level'] ? $current_user['distribut_level'] : $bind_user['distribut_level'];
+        if ($user_data['distribut_level'] > 1) {
+            $user_data['is_distribut'] = 1;
+        }
+        $user_data['oauth'] = $current_user['oauth'];
+        $user_data['openid'] = $current_user['openid'];
+        $user_data['unionid'] = $current_user['unionid'];
+        $user_data['head_pic'] = $current_user['head_pic'];
+        $user_data['nickname'] = $current_user['nickname'];
+        $user_data['bind_uid'] = $current_user['user_id'];
+        $user_data['mobile'] = $current_user['mobile'];
+        $user_data['type'] = 2;
+        $user_data['bind_time'] = time();
+        $user_data['time_out'] = strtotime('+' . config('REDIS_DAY') . ' days');
+        M('Users')->where('user_id', $bind_user['user_id'])->update($user_data);
+        // 授权登录
+        M('OauthUsers')->where('user_id', $bind_user['user_id'])->delete();
+        M('OauthUsers')->where('user_id', $current_user['user_id'])->update(['user_id' => $bind_user['user_id']]);
+        // 下级推荐人
+        M('Users')->where('first_leader', $current_user['user_id'])->update(array('first_leader' => $bind_user['user_id'], 'invite_uid' => $bind_user['user_id']));
+        M('Users')->where('second_leader', $current_user['user_id'])->update(array('second_leader' => $bind_user['user_id']));
+        M('Users')->where('third_leader', $current_user['user_id'])->update(array('third_leader' => $bind_user['user_id']));
+        // 积分变动
+        $payPoints = M('AccountLog')
+            ->where('user_id', $current_user['user_id'])
+            ->where('pay_points', 'gt', 0)
+            ->where('type', 'neq', 6)   // 不要注册积分
+            ->sum('pay_points');
+        if ($payPoints > 0) {
+            accountLog($bind_user['user_id'], 0, $payPoints, '账号合并积分', 0, 0, '', 0, 11, false);
+        }
+        // 电子币变动
+        $electronic = M('AccountLog')
+            ->where('user_id', $current_user['user_id'])
+            ->where('user_electronic', 'gt', 0)
+            ->sum('user_electronic');
+        if ($electronic > 0) {
+            accountLog($bind_user['user_id'], 0, 0, '账号合并电子币', 0, 0, '', $electronic, 11, false);
+        }
+        // 余额变动
+        $userMoney = M('AccountLog')
+            ->where('user_id', $current_user['user_id'])
+            ->where('user_money', 'gt', 0)
+            ->sum('user_money');
+        if ($userMoney > 0) {
+            accountLog($bind_user['user_id'], $userMoney, 0, '账号合并余额', 0, 0, '', 0, 11, false);
+        }
+        // 订单
+        M('Order')->where('user_id', $current_user['user_id'])->update(array('user_id' => $bind_user['user_id']));
+        M('OrderAction')->where('action_user', $current_user['user_id'])->update(array('action_user' => $bind_user['user_id']));
+        // 冻结新账户
+        M('Users')->where('user_id', $current_user['user_id'])->update(['is_lock' => 1]);
+        // 绑定记录
+        M('bind_log')->add([
+            'user_id' => $current_user['user_id'],
+            'bind_user_id' => $bind_user['user_id'],
+            'add_time' => time(),
+            'type' => 1,
+            'way' => 1
+        ]);
+
+        DB::commit();
+        setcookie('uname', '', time() - 3600, '/');
+        setcookie('cn', '', time() - 3600, '/');
+        setcookie('user_id', '', time() - 3600, '/');
+        setcookie('user', '', time() - 3600, '/');
+        setcookie('PHPSESSID', '', time() - 3600, '/');
+        session_unset();
+        session_destroy();
+
+        $user = M('Users')->where('user_id', $bind_user['user_id'])->find();
+        session('user', $user);
+        setcookie('user_id', $user['user_id'], null, '/');
+        setcookie('is_distribut', $user['is_distribut'], null, '/');
+        $nickname = empty($user['nickname']) ? '第三方用户' : $user['nickname'];
+        setcookie('uname', urlencode($nickname), null, '/');
+        setcookie('cn', 0, time() - 3600, '/');
+        // 登录后将购物车的商品的 user_id 改为当前登录的id
+        M('cart')->where('session_id', $session_id)->save(['user_id' => $user['user_id']]);
+
+        $cartLogic = new CartLogic();
+        $cartLogic->doUserLoginHandle($session_id, $user['user_id']);  //用户登录后 需要对购物车 一些操作
+
+        return json(['status' => 1, 'msg' => '绑定成功']);
+
 
         $user_data = [];
         $user_data['oauth'] = $current_user['oauth'];
