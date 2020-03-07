@@ -451,7 +451,7 @@ class Order extends Base
                     'exchange_price' => $goods['member_goods_price'],
                     'original_img' => $goods['original_img'],
 //                    'can_return' => $canReturn == true ? $goods['sale_type'] == 1 ? $goods['is_return'] == 1 ? 0 : 1 : 0 : 0,   // sale_type = 1 普通商品
-                    'can_return' => $canReturn == true ? $goods['is_return'] == 1 ? 0 : 1 : 0,
+                    'can_return' => $canReturn == true ? ($goods['is_return'] == 1 || $goods['re_id'] > 0) ? 0 : 1 : 0,
                     'return_status' => $goods['status'] ?? '',
                     'gift_goods' => []
                 ];

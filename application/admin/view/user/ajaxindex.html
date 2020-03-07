@@ -3,6 +3,13 @@
         <tbody>
         <volist name="userList" id="list">
             <tr data-id="{$list['user_id']}">
+                <td align="center" class="handle">
+                    <div style="text-align: center; width: 180px; max-width:250px;">
+                        <a class="btn blue" href="{:U('Admin/user/detail',array('id'=>$list['user_id']))}"><i class="fa fa-pencil-square-o"></i>详情</a>
+                        <a class="btn blue" href="{:U('Admin/user/account_log',array('id'=>$list['user_id']))}"><i class="fa fa-search"></i>资金</a>
+                        <a class="btn blue" onclick="delfun(this)" data-url="{:U('Admin/user/delete',array('id'=>$list['user_id']))}"><i class="fa fa-steam"></i>删除</a>
+                    </div>
+                </td>
                 <td class="sign">
                     <div style="width: 24px;"><i class="ico-check"></i></div>
                 </td>
@@ -72,13 +79,6 @@
                 </td>
                 <td align="left" class="">
                     <div style="text-align: center; width: 120px;"><a href="{:U(userLoginLog, array('user_id' => $list[user_id]))}">{$list.last_login_source_desc}</a></div>
-                </td>
-                <td align="center" class="handle">
-                    <div style="text-align: center; width: 170px; max-width:250px;">
-                        <a class="btn blue" href="{:U('Admin/user/detail',array('id'=>$list['user_id']))}"><i class="fa fa-pencil-square-o"></i>详情</a>
-                        <a class="btn blue" href="{:U('Admin/user/account_log',array('id'=>$list['user_id']))}"><i class="fa fa-search"></i>资金</a>
-                        <a class="btn blue" onclick="delfun(this)" data-url="{:U('Admin/user/delete',array('id'=>$list['user_id']))}"><i class="fa fa-steam"></i>删除</a>
-                    </div>
                 </td>
                 <td align="" class="" style="width: 100%;">
                     <div>&nbsp;</div>

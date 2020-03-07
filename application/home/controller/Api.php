@@ -112,7 +112,7 @@ class Api extends Base
     public function checkPhone()
     {
         $mobile = I('mobile', '');
-        $scene = I('scene', '');
+        $scene = I('scene', 1);
 
         $userData = M('users')->where('mobile', $mobile)->field('user_id, is_lock, is_cancel')->select(); // 手机号登陆的情况下会有多个账号
         // 检验账号有效性

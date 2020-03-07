@@ -28,8 +28,8 @@ class Token
     {
         $userInfo = Db::name('users')->where(['token' => $token])->field('is_lock, time_out, is_cancel')->find();
         if (!isset($userInfo)) return ['status' => -999, 'msg' => '账号已在另一个地方登录'];
-        if ($userInfo['is_lock'] == 1) return ['status' => 0, 'msg' => '账号已冻结'];
-        if ($userInfo['is_cancel'] == 1) return ['status' => 0, 'msg' => '账号已注销'];
+        if ($userInfo['is_lock'] == 1) return ['status' => -999, 'msg' => '账号已冻结'];
+        if ($userInfo['is_cancel'] == 1) return ['status' => -999, 'msg' => '账号已注销'];
         if ($userInfo['time_out'] != 0 && time() - $userInfo['time_out'] > 0) return ['status' => -999, 'msg' => '请重新登录'];
         // 是否有用户信息缓存
         $redis = new Redis();
