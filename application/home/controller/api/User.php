@@ -1824,7 +1824,6 @@ class User extends Base
      */
     public function bindOldUser()
     {
-        $session_id = $this->userToken;
         $username = I('post.username', '');
         $password = I('post.password', '');
         $mobile = I('post.mobile', '');
@@ -1855,10 +1854,15 @@ class User extends Base
                 ->whereOr(['user_id' => $username, 'user_name' => $username])
                 ->where('password', systemEncrypt($password))
                 // ->where('is_zhixiao',1)
-                ->where('is_lock', 0)
                 ->find();
-            if (!$bind_user) {
-                return json(['status' => -1, 'msg' => '账号不存在或已被冻结，不能绑定']);
+            if (empty($bind_user)) {
+                return json(['status' => -1, 'msg' => '账号不存在，不能绑定']);
+            }
+            if ($bind_user['is_lock'] == 1) {
+                return json(['status' => -1, 'msg' => '账号已被冻结，不能绑定']);
+            }
+            if ($bind_user['is_cancel'] == 1) {
+                return json(['status' => -1, 'msg' => '账号已被注销，不能绑定']);
             }
         } else {
             // 手机验证码绑定方式
@@ -1874,19 +1878,27 @@ class User extends Base
                 return json(['status' => -1, 'msg' => '手机号码不存在,请输入老用户手机进行绑定', 'result' => null]);
             }
             // 验证手机和验证码
+            $session_id = S('mobile_token_' . $mobile);
+            if (!$session_id) {
+                return json(['status' => 0, 'msg' => '验证码已过期']);
+            }
             $logic = new UsersLogic();
             $res = $logic->check_validate_code($code, $mobile, 'phone', $session_id, $scene);
             if (1 != $res['status']) {
                 return json(['status' => -1, 'msg' => $res['msg']]);
             }
             $bind_user = M('Users')
-                ->where('user_name', $username)
                 ->where('mobile', $mobile)
                 // ->where('is_zhixiao',1)
-                ->where('is_lock', 0)
                 ->find();
-            if (!$bind_user) {
-                return json(['status' => -1, 'msg' => '账号不存在或已被冻结，不能绑定']);
+            if (empty($bind_user)) {
+                return json(['status' => -1, 'msg' => '账号不存在，不能绑定']);
+            }
+            if ($bind_user['is_lock'] == 1) {
+                return json(['status' => -1, 'msg' => '账号已被冻结，不能绑定']);
+            }
+            if ($bind_user['is_cancel'] == 1) {
+                return json(['status' => -1, 'msg' => '账号已被注销，不能绑定']);
             }
         }
         if ($bind_user['bind_uid'] > 0) {

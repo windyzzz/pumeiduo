@@ -35,7 +35,7 @@ class RefundLogic extends Model
         }
         M('return_goods')->where(['rec_id' => $rec_id])->save($updata); //更新退款申请状态
         M('order_goods')->where(['rec_id' => $rec_id])->save(['is_send' => 3]); //修改订单商品状态
-        if (1 == $return_goods['is_receive']) {
+//        if (1 == $return_goods['is_receive']) {
             //赠送积分追回
             if ($order_goods['give_integral'] > 0) {
                 $user = get_user_info($return_goods['user_id']);
@@ -63,7 +63,7 @@ class RefundLogic extends Model
                     M('coupon')->where(['id' => $coupon_info['cid']])->setDec('send_num'); //优惠券追回
                 }
             }
-        }
+//        }
         //退还使用的优惠券
         $order_goods_count = M('order_goods')->where(['order_id' => $return_goods['order_id']])->sum('goods_num');
         $return_goods_count = M('return_goods')->where(['order_id' => $return_goods['order_id']])->sum('goods_num');
