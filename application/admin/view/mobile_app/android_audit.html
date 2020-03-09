@@ -42,31 +42,31 @@
                     <p class="notic">请填写安卓App更新日志</p>
                 </dd>
             </dl>
-            <dl class="row">
+            <!--<dl class="row">
                 <dt class="tit">
                     <label for="app_path">安卓App</label>
                 </dt>
                 <dd class="opt">
-                <!--<div class="input-file-show">
+                <div class="input-file-show">
                         <span class="type-file-box">
                             <input type="text" id="app_path" name="app_path" value="{$config.app_path}" class="type-file-text">
                             <input type="button" name="button" id="button1" value="选择上传..." class="type-file-button">
                             <input class="type-file-file" onClick="appUploadify(1,'','','img_call_back','Admin','MobileApp', 'upload')" size="30" hidefocus="true">
                         </span>
-                    </div>-->
+                    </div>
                     <input id="app_path" value="{$config.app_path}" class="input-txt" type="text" disabled/>
                     <input type="file" name="app_path">
                     <span class="err"></span>
                     <p class="notic">上传安卓App文件</p>
                 </dd>
-            </dl>
+            </dl>-->
             <dl class="row">
                 <dt class="tit">
-                    <label for="app_version">安卓App下载地址</label>
+                    <label for="app_path">安卓App下载地址</label>
                 </dt>
                 <dd class="opt">
-                    <input name="" value="{$config.download_link}" style="width: 50%;" type="text" disabled/>
-                    <p class="notic">上传完App文件后获得</p>
+                    <textarea id="app_path" name="app_path" style="width: 50%; height: 100%; line-height: 200%;">{$config.app_path}</textarea>
+                    <p class="notic">请填写安卓App下载地址</p>
                 </dd>
             </dl>
             <dl class="row">

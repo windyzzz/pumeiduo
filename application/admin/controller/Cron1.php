@@ -11,6 +11,8 @@
 
 namespace app\admin\controller;
 
+use app\common\logic\SmsLogic;
+use app\common\model\SpecialSmsLog;
 use think\Controller;
 use think\Db;
 
@@ -18,131 +20,138 @@ use think\Db;
 class Cron1 extends Controller
 {
 
-    function edit_goods(){
+    function edit_goods()
+    {
         $z_goods = M('z_goods')->where('status=0')->select();
-        foreach($z_goods as $k=>$v){
+        foreach ($z_goods as $k => $v) {
             Db::startTrans();
             $data = array(
-                'stax_price'=>$v['stax_price'],
-                'ctax_price'=>$v['ctax_price']
+                'stax_price' => $v['stax_price'],
+                'ctax_price' => $v['ctax_price']
             );
 
-            $agoods = M('goods')->where(array('goods_sn'=>$v['order_sn']))->find();
-            if($agoods && bccomp($agoods['stax_price'],$v['stax_price'],2)==0 && bccomp($agoods['ctax_price'],$v['ctax_price'],2)==0){
+            $agoods = M('goods')->where(array('goods_sn' => $v['order_sn']))->find();
+            if ($agoods && bccomp($agoods['stax_price'], $v['stax_price'], 2) == 0 && bccomp($agoods['ctax_price'], $v['ctax_price'], 2) == 0) {
                 $bgoods = true;
-            }else{
-                $bgoods = M('goods')->where(array('goods_sn'=>$v['order_sn']))->data($data)->save();
+            } else {
+                $bgoods = M('goods')->where(array('goods_sn' => $v['order_sn']))->data($data)->save();
             }
-            $bz_goods = M('z_goods')->where(array('id'=>$v['id'],'status'=>0))->data(array('status'=>1))->save();
-            if($bgoods && $bz_goods){
+            $bz_goods = M('z_goods')->where(array('id' => $v['id'], 'status' => 0))->data(array('status' => 1))->save();
+            if ($bgoods && $bz_goods) {
                 Db::commit();
-            }else{
+            } else {
 
                 Db::rollback();
             }
         }
     }
 
-    function edit_goods1(){
+    function edit_goods1()
+    {
         $z_goods = M('z_goods')->where('status=0')->select();
-        foreach($z_goods as $k=>$v){
+        foreach ($z_goods as $k => $v) {
             Db::startTrans();
             $data = array(
-                'stax_price'=>$v['stax_price'],
-                'ctax_price'=>$v['ctax_price']
+                'stax_price' => $v['stax_price'],
+                'ctax_price' => $v['ctax_price']
             );
 
-            $agoods = M('goods')->where(array('goods_sn'=>'0'.$v['order_sn']))->find();
-            if($agoods && bccomp($agoods['stax_price'],$v['stax_price'],2)==0 && bccomp($agoods['ctax_price'],$v['ctax_price'],2)==0){
+            $agoods = M('goods')->where(array('goods_sn' => '0' . $v['order_sn']))->find();
+            if ($agoods && bccomp($agoods['stax_price'], $v['stax_price'], 2) == 0 && bccomp($agoods['ctax_price'], $v['ctax_price'], 2) == 0) {
                 $bgoods = true;
-            }else{
-                $bgoods = M('goods')->where(array('goods_sn'=>'0'.$v['order_sn']))->data($data)->save();
+            } else {
+                $bgoods = M('goods')->where(array('goods_sn' => '0' . $v['order_sn']))->data($data)->save();
             }
-            $bz_goods = M('z_goods')->where(array('id'=>$v['id'],'status'=>0))->data(array('status'=>1))->save();
-            if($bgoods && $bz_goods){
+            $bz_goods = M('z_goods')->where(array('id' => $v['id'], 'status' => 0))->data(array('status' => 1))->save();
+            if ($bgoods && $bz_goods) {
                 Db::commit();
-            }else{
+            } else {
 
                 Db::rollback();
             }
         }
     }
 
-    function edit_goods2(){
+    function edit_goods2()
+    {
         $z_goods = M('z_goods')->where('status=0')->select();
-        foreach($z_goods as $k=>$v){
+        foreach ($z_goods as $k => $v) {
             Db::startTrans();
             $data = array(
-                'stax_price'=>$v['stax_price'],
-                'ctax_price'=>$v['ctax_price']
+                'stax_price' => $v['stax_price'],
+                'ctax_price' => $v['ctax_price']
             );
 
-            $agoods = M('goods')->where(array('goods_sn'=>'00'.$v['order_sn']))->find();
-            if($agoods && bccomp($agoods['stax_price'],$v['stax_price'],2)==0 && bccomp($agoods['ctax_price'],$v['ctax_price'],2)==0){
+            $agoods = M('goods')->where(array('goods_sn' => '00' . $v['order_sn']))->find();
+            if ($agoods && bccomp($agoods['stax_price'], $v['stax_price'], 2) == 0 && bccomp($agoods['ctax_price'], $v['ctax_price'], 2) == 0) {
                 $bgoods = true;
-            }else{
-                $bgoods = M('goods')->where(array('goods_sn'=>'00'.$v['order_sn']))->data($data)->save();
+            } else {
+                $bgoods = M('goods')->where(array('goods_sn' => '00' . $v['order_sn']))->data($data)->save();
             }
-            $bz_goods = M('z_goods')->where(array('id'=>$v['id'],'status'=>0))->data(array('status'=>1))->save();
-            if($bgoods && $bz_goods){
+            $bz_goods = M('z_goods')->where(array('id' => $v['id'], 'status' => 0))->data(array('status' => 1))->save();
+            if ($bgoods && $bz_goods) {
                 Db::commit();
-            }else{
-
-                Db::rollback();
-            }
-        }
-    }
-    function edit_goods3(){
-        $z_goods = M('z_goods')->where('status=0')->select();
-        foreach($z_goods as $k=>$v){
-            Db::startTrans();
-            $data = array(
-                'stax_price'=>$v['stax_price'],
-                'ctax_price'=>$v['ctax_price']
-            );
-
-            $agoods = M('goods')->where(array('goods_sn'=>'000'.$v['order_sn']))->find();
-            if($agoods && bccomp($agoods['stax_price'],$v['stax_price'],2)==0 && bccomp($agoods['ctax_price'],$v['ctax_price'],2)==0){
-                $bgoods = true;
-            }else{
-                $bgoods = M('goods')->where(array('goods_sn'=>'000'.$v['order_sn']))->data($data)->save();
-            }
-
-            $bz_goods = M('z_goods')->where(array('id'=>$v['id'],'status'=>0))->data(array('status'=>1))->save();
-            if($bgoods && $bz_goods){
-                Db::commit();
-            }else{
+            } else {
 
                 Db::rollback();
             }
         }
     }
 
-    function edit_goods5(){
+    function edit_goods3()
+    {
         $z_goods = M('z_goods')->where('status=0')->select();
-        foreach($z_goods as $k=>$v){
+        foreach ($z_goods as $k => $v) {
             Db::startTrans();
             $data = array(
-                'stax_price'=>$v['stax_price'],
-                'ctax_price'=>$v['ctax_price']
+                'stax_price' => $v['stax_price'],
+                'ctax_price' => $v['ctax_price']
             );
 
-            $agoods = M('goods')->where(array('goods_sn'=>'00000'.$v['order_sn']))->find();
-            if($agoods && bccomp($agoods['stax_price'],$v['stax_price'],2)==0 && bccomp($agoods['ctax_price'],$v['ctax_price'],2)==0){
+            $agoods = M('goods')->where(array('goods_sn' => '000' . $v['order_sn']))->find();
+            if ($agoods && bccomp($agoods['stax_price'], $v['stax_price'], 2) == 0 && bccomp($agoods['ctax_price'], $v['ctax_price'], 2) == 0) {
                 $bgoods = true;
-            }else{
-                $bgoods = M('goods')->where(array('goods_sn'=>'00000'.$v['order_sn']))->data($data)->save();
+            } else {
+                $bgoods = M('goods')->where(array('goods_sn' => '000' . $v['order_sn']))->data($data)->save();
             }
 
-            $bz_goods = M('z_goods')->where(array('id'=>$v['id'],'status'=>0))->data(array('status'=>1))->save();
-            if($bgoods && $bz_goods){
+            $bz_goods = M('z_goods')->where(array('id' => $v['id'], 'status' => 0))->data(array('status' => 1))->save();
+            if ($bgoods && $bz_goods) {
                 Db::commit();
-            }else{
+            } else {
 
                 Db::rollback();
             }
         }
     }
+
+    function edit_goods5()
+    {
+        $z_goods = M('z_goods')->where('status=0')->select();
+        foreach ($z_goods as $k => $v) {
+            Db::startTrans();
+            $data = array(
+                'stax_price' => $v['stax_price'],
+                'ctax_price' => $v['ctax_price']
+            );
+
+            $agoods = M('goods')->where(array('goods_sn' => '00000' . $v['order_sn']))->find();
+            if ($agoods && bccomp($agoods['stax_price'], $v['stax_price'], 2) == 0 && bccomp($agoods['ctax_price'], $v['ctax_price'], 2) == 0) {
+                $bgoods = true;
+            } else {
+                $bgoods = M('goods')->where(array('goods_sn' => '00000' . $v['order_sn']))->data($data)->save();
+            }
+
+            $bz_goods = M('z_goods')->where(array('id' => $v['id'], 'status' => 0))->data(array('status' => 1))->save();
+            if ($bgoods && $bz_goods) {
+                Db::commit();
+            } else {
+
+                Db::rollback();
+            }
+        }
+    }
+
     /**
      * 导入会员.
      */
@@ -191,8 +200,8 @@ class Cron1 extends Controller
             if ($v['id_card'] && check_id_card($v['id_card'])) {
                 $id_card = $v['id_card'];
 
-                $birth = 15 == strlen($id_card) ? ('19'.substr($id_card, 6, 6)) : substr($id_card, 6, 8);
-                $birthday = substr($birth, 0, 4).'-'.substr($birth, 4, 2).'-'.substr($birth, 6, 2);
+                $birth = 15 == strlen($id_card) ? ('19' . substr($id_card, 6, 6)) : substr($id_card, 6, 8);
+                $birthday = substr($birth, 0, 4) . '-' . substr($birth, 4, 2) . '-' . substr($birth, 6, 2);
                 $sex = substr($id_card, (15 == strlen($id_card) ? -1 : -2), 1) % 2 ? 1 : 0; //1为男 2为女
 
                 $v['sex'] = $sex;
@@ -210,7 +219,7 @@ class Cron1 extends Controller
                 'sex' => $v['sex'],
                 'id_cart' => $v['id_card'],
                 'birthday' => $v['birthday'],
-                'reg_time' => strtotime($v['reg_date'].' '.$v['reg_time']),
+                'reg_time' => strtotime($v['reg_date'] . ' ' . $v['reg_time']),
                 'referee_user_name' => $v['referee_user_name'],
                 'distribut_level' => 2,
             ];
@@ -291,5 +300,63 @@ class Cron1 extends Controller
                 M('users')->where(['user_id' => $v['user_id']])->data(['second_leader' => $second_leader, 'third_leader' => $third_leader])->save();
             }
         }
+    }
+
+
+    public function test_update_tb()
+    {
+        $orderActionLog = M('order_action')->where(['log_time' => ['gt', '1583452536']])->field('order_id, log_time')->select();
+        foreach ($orderActionLog as $action) {
+            M('tb')->add([
+                'type' => 6,
+                'from_id' => $action['order_id'],
+                'system' => 3,
+                'status' => 0,
+                'add_time' => $action['log_time'],
+                'from_system' => 2,
+                'tb_sn' => get_rand_str(8, 0, 2)
+            ]);
+        }
+    }
+
+    public function test_log_send_sms()
+    {
+        $where = [
+            'mobile' => ['neq', ''],
+            'distribut_level' => ['>=', 3],
+            'is_zhixiao' => 1,
+            'is_lock' => 0,
+            'is_cancel' => 0
+        ];
+        $userData = M('users')->where($where)->field('user_id, password, mobile, user_name')->select();
+        $logData = [];
+        foreach ($userData as $k => $data) {
+            if ($data['password'] == systemEncrypt(substr($data['mobile'], -4, 4))) {
+                $logData[] = [
+                    'mobile' => $data['mobile'],
+                    'param' => serialize([
+                        'user_id' => $data['user_id'],
+                        'user_name' => $data['user_name']
+                    ])
+                ];
+            }
+        }
+        $specialSmsLog = new SpecialSmsLog();
+        $res = $specialSmsLog->saveAll($logData);
+        var_dump($res != false ? 'ok' : 'bad');
+    }
+
+    public function test_send_sms()
+    {
+        $smsLog = M('special_sms_log')->where(['is_send' => 0])->limit(0, 10)->select();
+        $smsLogic = new SmsLogic();
+        $logIds = [];
+        foreach ($smsLog as $sms) {
+//            $res = $smsLogic->sendSms(9, $sms['mobile'], unserialize($sms['param']));
+//            if ($res['status'] == 1) {
+//                $logIds[] = $sms['id'];
+//            }
+        }
+        M('special_sms_log')->where(['id' => ['in', $logIds]])->update(['is_send' => 1]);
     }
 }

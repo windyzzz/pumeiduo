@@ -827,11 +827,13 @@ function tpCache($config_key, $data = [])
         foreach ($data as $k => $v) {
             $newArr = ['name' => $k, 'value' => trim($v), 'inc_type' => $param[0]];
             if (!isset($temp[$k])) {
-                M('config')->add($newArr); //新key数据插入数据库
+                //新key数据插入数据库
+                M('config')->add($newArr);
             } else {
                 if ($v != $temp[$k]) {
+                    //缓存key存在且值有变更新此项
                     M('config')->where('name', $k)->save($newArr);
-                } //缓存key存在且值有变更新此项
+                }
             }
         }
         //更新后的数据库记录
@@ -962,8 +964,8 @@ function accountLog($user_id, $user_money = 0.00, $pay_points = 0.00, $desc = ''
     if ($update) {
         M('account_log')->add($account_log);
 //        if ($isOneself) {
-            $user = Db::name('users')->where('user_id', $user_id)->find();
-            TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
+        $user = Db::name('users')->where('user_id', $user_id)->find();
+        TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
 //        }
         return true;
     }

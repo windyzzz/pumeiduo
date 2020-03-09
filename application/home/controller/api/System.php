@@ -41,7 +41,7 @@ class System
      */
     public function downLink()
     {
-        $androidUrl = SITE_URL . tpCache('android.app_path');
+        $androidUrl = tpCache('android.app_path');
         $iosUrl = tpCache('ios.app_path');
         $return = [
             'android_url' => $androidUrl,
@@ -93,9 +93,7 @@ class System
                     $result['state'] = tpCache('ios.is_update') ? (int)tpCache('ios.is_update') : 0;    // 是否需要更新
                 }
                 $result['is_force'] = tpCache('android.is_force') ? (int)tpCache('android.is_force') : 0;  // 是否强制更新
-                Url::root('/');
-                $baseUrl = url('/', '', '', true);
-                $result['app_url'] = $baseUrl . tpCache('android.app_path');
+                $result['app_url'] = tpCache('android.app_path');
                 break;
             default:
                 return json(['status' => 0, 'msg' => '请求类型错误']);

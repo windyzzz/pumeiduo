@@ -28,12 +28,16 @@ class MobileApp extends Base
         $inc_type = 'ios';
         if (IS_POST) {
             $param = I('post.');
-//            tpCache($inc_type, ['is_audit' => $param['is_audit']]);
-            tpCache($inc_type, ['app_version' => $param['app_version']]);
-            tpCache($inc_type, ['app_log' => $param['app_log']]);
-            tpCache($inc_type, ['app_path' => $param['app_path']]);
-            tpCache($inc_type, ['is_update' => $param['is_update']]);
-            tpCache($inc_type, ['is_force' => $param['is_force']]);
+            $data = [
+//                ['is_audit' => $param['is_audit'],
+                'app_version' => $param['app_version'],
+                'app_log' => $param['app_log'],
+                'app_path' => $param['app_path'],
+                'is_update' => $param['is_update'],
+                'is_force' => $param['is_force']
+            ];
+            tpCache($inc_type, $data);
+            return $this->success('操作成功', url('MobileApp/ios_audit'));
         }
         $this->assign('inc_type', $inc_type);
         $this->assign('config', tpCache($inc_type)); //当前配置项
@@ -46,36 +50,41 @@ class MobileApp extends Base
     public function handle()
     {
         $param = I('post.');
-        $inc_type = $param['inc_type'];
+        $inc_type = 'android';
 
-        $file = request()->file('app_path');
-        if ($file) {
-            $result = $this->validate(
-                ['android_app' => $file],
-                ['android_app' => 'fileSize:40000000|fileExt:apk'],
-                ['android_app.fileSize' => '上传文件过大', 'android_app.fileExt' => '文件格式不正确']
-            );
-            if (true !== $result) {
-                return $this->error('上传文件出错：' . $result, url('MobileApp/android_audit'));
-            }
-            $savePath = UPLOAD_PATH . 'appfile/';
-            $saveName = 'android_' . $param['app_version'] . '_' . date('Ymd_His') . '.' . pathinfo($file->getInfo('name'), PATHINFO_EXTENSION);
-            $info = $file->move($savePath, $saveName);
-            if (!$info) {
-                return $this->error('文件保存出错', url('MobileApp/android_audit'));
-            }
-            $return_url = $savePath . $info->getSaveName();
-            tpCache($inc_type, ['app_path' => $return_url]);
-        }
+//        $file = request()->file('app_path');
+//        if ($file) {
+//            $result = $this->validate(
+//                ['android_app' => $file],
+//                ['android_app' => 'fileSize:40000000000000|fileExt:apk'],
+//                ['android_app.fileSize' => '上传文件过大', 'android_app.fileExt' => '文件格式不正确']
+//            );
+//            if (true !== $result) {
+//                return $this->error('上传文件出错：' . $result, url('MobileApp/android_audit'));
+//            }
+//            $savePath = UPLOAD_PATH . 'appfile/';
+//            $saveName = 'android_' . $param['app_version'] . '_' . date('Ymd_His') . '.' . pathinfo($file->getInfo('name'), PATHINFO_EXTENSION);
+//            $info = $file->move($savePath, $saveName);
+//            if (!$info) {
+//                return $this->error('文件保存出错', url('MobileApp/android_audit'));
+//            }
+//            $return_url = $savePath . $info->getSaveName();
+//            tpCache($inc_type, ['app_path' => $return_url]);
+//        }
 
-        tpCache($inc_type, ['app_version' => $param['app_version']]);
-        tpCache($inc_type, ['app_log' => $param['app_log']]);
-        tpCache($inc_type, ['is_update' => $param['is_update']]);
-        tpCache($inc_type, ['is_force' => $param['is_force']]);
+        $data = [
+//                ['is_audit' => $param['is_audit'],
+            'app_version' => $param['app_version'],
+            'app_log' => $param['app_log'],
+            'app_path' => $param['app_path'],
+            'is_update' => $param['is_update'],
+            'is_force' => $param['is_force']
+        ];
+        tpCache($inc_type, $data);
 
-        if (!$file) {
-            return $this->success('保存成功，但是没有文件上传', url('MobileApp/android_audit'));
-        }
+//        if (!$file) {
+//            return $this->success('保存成功，但是没有文件上传', url('MobileApp/android_audit'));
+//        }
 
         return $this->success('操作成功', url('MobileApp/android_audit'));
     }

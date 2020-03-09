@@ -371,14 +371,16 @@ return [
     ],
     //短信使用场景
     'SEND_SCENE' => [
-        '1' => ['用户注册', '验证码${code}，用户注册新账号, 请勿告诉他人，感谢您的支持!', 'regis_sms_enable'],
-        '2' => ['用户找回密码', '验证码${code}，用于密码找回，如非本人操作，请及时检查账户安全', 'forget_pwd_sms_enable'],
-        '3' => ['客户下单', '您有新订单，收货人：${consignee}，联系方式：${phone}，请您及时查收.', 'order_add_sms_enable'],
-        '4' => ['客户支付', '客户下的单(订单ID:${orderId})已经支付，请及时发货.', 'order_pay_sms_enable'],
-        '5' => ['商家发货', '尊敬的${userName}用户，您的订单已发货，收货人${consignee}，请您及时查收', 'order_shipping_sms_enable'],
-        '6' => ['身份验证', '尊敬的用户，您的验证码为${code}, 请勿告诉他人.', 'bind_mobile_sms_enable'],
-        '7' => ['购买虚拟商品通知', '尊敬的用户，您购买的虚拟商品${goodsName}兑换码已生成,请注意查收.', 'virtual_goods_sms_enable'],
-        '8' => ['授权登录绑定手机号', '验证码${code}，授权登录绑定手机号, 请勿告诉他人，感谢您的支持!', 'regis_sms_enable'],
+//        '1' => ['用户注册', '验证码${code}，用户注册新账号, 请勿告诉他人，感谢您的支持!', 'regis_sms_enable'],
+//        '2' => ['用户找回密码', '验证码${code}，用于密码找回，如非本人操作，请及时检查账户安全', 'forget_pwd_sms_enable'],
+//        '3' => ['客户下单', '您有新订单，收货人：${consignee}，联系方式：${phone}，请您及时查收.', 'order_add_sms_enable'],
+//        '4' => ['客户支付', '客户下的单(订单ID:${orderId})已经支付，请及时发货.', 'order_pay_sms_enable'],
+//        '5' => ['商家发货', '尊敬的${userName}用户，您的订单已发货，收货人${consignee}，请您及时查收', 'order_shipping_sms_enable'],
+//        '6' => ['身份验证', '尊敬的用户，您的验证码为${code}, 请勿告诉他人.', 'bind_mobile_sms_enable'],
+//        '7' => ['购买虚拟商品通知', '尊敬的用户，您购买的虚拟商品${goodsName}兑换码已生成,请注意查收.', 'virtual_goods_sms_enable'],
+//        '8' => ['授权登录绑定手机号', '验证码${code}，授权登录绑定手机号, 请勿告诉他人，感谢您的支持!', 'regis_sms_enable'],
+        '1' => ['通用', '您的验证码是${code}，该验证码3分钟内有效，请在页面中提交完成验证', 'regis_sms_enable'],
+        '9' => ['代理商同步账号', '您好！恭喜您加入圃美多乐活优选，您的代理商用户名${user_name}，对应乐活优选商城ID：${user_id1}；请直接输入商城ID：${user_id2} 登录，登录密码是注册代理商时的手机号码后四位，请及时登录修改您的密码。', 'regis_sms_enable']
     ],
 
     'APP_TOKEN_TIME' => 60 * 60 * 24, //App保持token时间 , 此处为1天

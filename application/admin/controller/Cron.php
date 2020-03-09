@@ -12,6 +12,7 @@
 namespace app\admin\controller;
 
 use app\common\logic\PushLogic;
+use app\common\logic\SmsLogic;
 use app\common\logic\wechat\WechatUtil;
 use think\Controller;
 use think\Db;
@@ -1230,6 +1231,7 @@ AND log_id NOT IN
         $list = M('butt')->where('status=0')->order('type asc')->limit(1000)->select();
 
         if ($list) {
+            $smsLogic = new SmsLogic();
             foreach ($list as $k => $v) {
                 Db::startTrans();
                 $buttdata = json_decode($v['data'], true);
@@ -1245,7 +1247,6 @@ AND log_id NOT IN
                         'distribut_level' => 3,
                         'is_distribut' => 1,
                     ];
-
                     if ($buttdata['referee_user_name']) {
                         $referee_users = M('users')->where(['user_name' => $buttdata['referee_user_name']])->field('user_id,first_leader,second_leader')->find();
                         if ($referee_users) {
@@ -1256,11 +1257,15 @@ AND log_id NOT IN
                             $data['invite_uid'] = $referee_users['user_id'];
                         }
                     }
-
                     $bool = M('users')->add($data);
+                    // 发送短信通知用户
+                    $param = [
+                        'user_id' => $bool,
+                        'user_name' => $buttdata['user_name']
+                    ];
+                    $smsLogic->sendSms(9, $buttdata['mobile'], $param);
                 } elseif (2 == $v['type']) {
                     $user = M('users')->where(array('user_name' => $buttdata['user_name'], 'is_lock' => 0))->field('user_id')->find();
-
                     if ($user) {
                         $bool = accountLog($user['user_id'], 0, $buttdata['xiaofei_money'], '电商转入商城', 0, 0, '', $buttdata['customs_money'], 13);
                     } else {
@@ -1268,7 +1273,6 @@ AND log_id NOT IN
                     }
                 }
                 $bbutt = M('butt')->where(['id' => $v['id'], 'status' => 0])->data(['status' => 1])->save();
-
                 if ($bool && $bbutt) {
                     Db::commit();
                 } else {
