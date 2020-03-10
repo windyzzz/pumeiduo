@@ -3152,6 +3152,7 @@ class User extends Base
             case 1:
                 // 余额
                 $return['amount'] = M('users')->where(['user_id' => $this->user_id])->value('user_money');
+                $return['will_get_amount'] = M('RebateLog')->where('user_id', $this->user_id)->where('status', 'in', [1, 2])->value('SUM(money) as money') ?? '0.00';
                 $return['log_list'] = [];
                 $result = $usersLogic->get_money_log($this->user_id)['result'];
                 foreach ($result as $res) {
@@ -3168,6 +3169,7 @@ class User extends Base
             case 2:
                 // 电子币
                 $return['amount'] = M('users')->where(['user_id' => $this->user_id])->value('user_electronic');
+                $return['will_get_amount'] = '0';
                 $return['log_list'] = [];
                 $result = $usersLogic->get_electronic_log($this->user_id)['result'];
                 foreach ($result as $res) {
@@ -3207,6 +3209,7 @@ class User extends Base
      */
     public function checkUserLevelGoods()
     {
+        return json(['status' => 1]);
         $goodsId = I('goods_id', '');
         if (!$goodsId || $goodsId === 0) {
             return json(['status' => 0, 'msg' => '请传入正确的商品ID']);

@@ -85,12 +85,9 @@ class LoginApi
                     'jpush_tags' => [$user['push_tag']]
                 ];
                 // 登录记录
-                M('user_login_log')->add([
-                    'user_id' => $user['user_id'],
-                    'login_ip' => request()->ip(),
-                    'login_time' => time(),
-                    'source' => 3
-                ]);
+                $usersLogic = new UsersLogic();
+                $usersLogic->setUserId($user['user_id']);
+                $usersLogic->userLogin(3);
             }
             return json($res);
         } catch (Exception $e) {

@@ -211,6 +211,10 @@ return [
 //				array('name' => '运营概览', 'act'=>'finance', 'op'=>'Report'),
             ['name' => '平台支出记录', 'act' => 'expense_log', 'op' => 'Report'],
         ]],
+        ['name' => '点击下载量', 'child' => [
+            ['name' => 'H5页点击统计', 'act' => 'clickList', 'op' => 'Report'],
+            ['name' => 'APP下载统计', 'act' => 'downloadList', 'op' => 'Report'],
+        ]],
         // array('name' => '账户信息','child' => array(
         // 	array('name' => '多账户流水', 'act'=>'account_list', 'op'=>'Finance'),
         // )),

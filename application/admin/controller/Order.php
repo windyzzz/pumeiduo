@@ -1551,6 +1551,7 @@ class Order extends Base
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">支付方式</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">支付状态</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">发货状态</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">订单来源</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品总数</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品编号</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品数量</td>';
@@ -1565,6 +1566,8 @@ class Order extends Base
         $parent_list = Db::name('users')->getField('user_id, first_leader', true);
         // 订单数据
         $orderList = Db::name('order')->field("*,FROM_UNIXTIME(add_time,'%Y-%m-%d %H:%i:%s') as create_time")->where($condition)->order($sort_order)->select();
+        // 订单来源
+        $orderSource = ['1' => '微信', '2' => 'PC', '3' => 'APP', '4' => '管理后台'];
         if (is_array($orderList)) {
             $region = get_region_list();
             foreach ($orderList as $k => $val) {
@@ -1593,6 +1596,7 @@ class Order extends Base
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['pay_name'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $this->pay_status[$val['pay_status']] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $this->shipping_status[$val['shipping_status']] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $orderSource[$val['source']] . '</td>';
                 // $orderGoods = D('order_goods')->where('order_id='.$val['order_id'])->select();
                 // $strGoods = '';
                 $goods_num = 0;

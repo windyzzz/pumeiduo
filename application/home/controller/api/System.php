@@ -100,4 +100,43 @@ class System
         }
         return json(['status' => 1, 'result' => $result]);
     }
+
+    /**
+     * 点击记录
+     * @return \think\response\Json
+     */
+    public function clickCount()
+    {
+        $position = I('position', 1);
+        if (request()->isPost()) {
+            M('click_log')->add([
+                'position' => $position,
+                'ip' => request()->ip(),
+                'time' => time()
+            ]);
+            return json(['status' => 1]);
+        }
+        $count = M('click_log')->where(['position' => $position])->count('id');
+        return json(['status' => 1, 'result' => ['count' => $count]]);
+    }
+
+    /**
+     * 下载记录
+     * @return \think\response\Json
+     */
+    public function downloadCount()
+    {
+        $type = I('type', '');
+        if (!$type) return json(['status' => 0, 'msg' => 'APP类型错误']);
+        if (request()->isPost()) {
+            M('download_log')->add([
+                'type' => $type,
+                'down_ip' => request()->ip(),
+                'down_time' => time()
+            ]);
+            return json(['status' => 1]);
+        }
+        $count = M('download_log')->where(['type' => $type])->count('id');
+        return json(['status' => 1, 'result' => ['count' => $count]]);
+    }
 }

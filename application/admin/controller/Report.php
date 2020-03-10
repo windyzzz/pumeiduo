@@ -53,7 +53,7 @@ class Report extends Base
         }
         $this->assign('today', $today);
         $select_year = $this->select_year;
-        $res = Db::name('order'.$select_year)
+        $res = Db::name('order' . $select_year)
             ->field(" COUNT(*) as tnum,sum(total_amount) as amount, FROM_UNIXTIME(add_time,'%Y-%m-%d') as gap ")
             ->where(" add_time >$this->begin and add_time < $this->end AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4) ")
             ->group('gap')
@@ -86,7 +86,7 @@ class Report extends Base
             $vip_order_num = 0;
             if ($result) {
                 foreach ($result as $k => $v) {
-                    if($v['re_id']==0){
+                    if ($v['re_id'] == 0) {
                         if ($v['prom_goods_price'] > 0 || $v['prom_use_integral'] > 0) {
                             if ($v['use_integral'] > 0) {
                                 $tmp_c_amout += $v['ctax_price'] * $v['goods_num'];
@@ -96,13 +96,13 @@ class Report extends Base
                         }
                     }
 
-                    if($v['zone']==3){
+                    if ($v['zone'] == 3) {
                         $vip_order_num++;
                     }
 
                 }
             }
-            $list[] = ['day' => $date, 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + 24 * 60 * 60), 'c_amount' => $tmp_c_amout,'vip_order_num'=>$vip_order_num];
+            $list[] = ['day' => $date, 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
             $day[] = $date;
         }
         rsort($list);
@@ -116,7 +116,7 @@ class Report extends Base
     public function exportIndex()
     {
         $select_year = $this->select_year;
-        $res = Db::name('order'.$select_year)
+        $res = Db::name('order' . $select_year)
             ->field(" COUNT(*) as tnum,sum(total_amount) as amount, FROM_UNIXTIME(add_time,'%Y-%m-%d') as gap ")
             ->where(" add_time >$this->begin and add_time < $this->end AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4) ")
             ->group('gap')
@@ -149,7 +149,7 @@ class Report extends Base
             $vip_order_num = 0;
             if ($result) {
                 foreach ($result as $k => $v) {
-                    if($v['re_id']==0) {
+                    if ($v['re_id'] == 0) {
                         if ($v['prom_goods_price'] > 0 || $v['prom_use_integral'] > 0) {
                             if ($v['use_integral'] > 0) {
                                 $tmp_c_amout += $v['ctax_price'] * $v['goods_num'];
@@ -159,12 +159,12 @@ class Report extends Base
                         }
 
                     }
-                    if($v['zone']==3){
+                    if ($v['zone'] == 3) {
                         $vip_order_num++;
                     }
                 }
             }
-            $list[] = ['day' => $date, 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + 24 * 60 * 60), 'c_amount' => $tmp_c_amout,'vip_order_num'=>$vip_order_num];
+            $list[] = ['day' => $date, 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
             $day[] = $date;
         }
 
@@ -180,12 +180,12 @@ class Report extends Base
         if (is_array($list)) {
             foreach ($list as $k => $val) {
                 $strTable .= '<tr>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['day'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['vip_order_num'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['order_num'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['amount'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['c_amount'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['sign'].'</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['day'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['vip_order_num'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['order_num'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['amount'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['c_amount'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['sign'] . '</td>';
                 $strTable .= '</tr>';
             }
         }
@@ -225,7 +225,7 @@ class Report extends Base
         }
         $this->assign('today', $today);
         $select_year = $this->select_year;
-        $res = Db::name('order'.$select_year)
+        $res = Db::name('order' . $select_year)
             ->field(" COUNT(*) as tnum,sum(total_amount) as amount, FROM_UNIXTIME(add_time,'%Y-%m') as gap ")
             ->where(" add_time >$this->begin and add_time < $this->end AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4) ")
             ->group('gap')
@@ -267,9 +267,9 @@ class Report extends Base
             $vip_order_num = 0;
             if ($result) {
                 foreach ($result as $k => $v) {
-                    if($v['re_id']==0) {
+                    if ($v['re_id'] == 0) {
 
-                        if ($v['prom_goods_price'] > 0 || $v['prom_use_integral'] > 0 ){
+                        if ($v['prom_goods_price'] > 0 || $v['prom_use_integral'] > 0) {
                             if ($v['use_integral'] > 0) {
                                 $tmp_c_amout += $v['ctax_price'] * $v['goods_num'];
                             } else {
@@ -279,13 +279,13 @@ class Report extends Base
 
 
                     }
-                    if($v['zone']==3){
+                    if ($v['zone'] == 3) {
                         $vip_order_num++;
                     }
                 }
             }
 
-            $list[] = ['day' => $date.'-01', 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + $day_num * 24 * 60 * 60), 'c_amount' => $tmp_c_amout,'vip_order_num'=>$vip_order_num];
+            $list[] = ['day' => $date . '-01', 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + $day_num * 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
             $day[] = $date;
 
             $i = $i + $day_num * 24 * 3600;
@@ -335,7 +335,7 @@ class Report extends Base
         }
         $this->assign('today', $today);
         $select_year = $this->select_year;
-        $res = Db::name('order'.$select_year)
+        $res = Db::name('order' . $select_year)
             ->field(" COUNT(*) as tnum,sum(total_amount) as amount, FROM_UNIXTIME(add_time,'%Y-%m') as gap ")
             ->where(" add_time >$this->begin and add_time < $this->end AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4) ")
             ->group('gap')
@@ -377,9 +377,9 @@ class Report extends Base
             if ($result) {
                 $vip_order_num = 0;
                 foreach ($result as $k => $v) {
-                    if($v['re_id']==0) {
+                    if ($v['re_id'] == 0) {
 
-                        if ($v['prom_goods_price'] > 0 || $v['prom_use_integral'] > 0 ){
+                        if ($v['prom_goods_price'] > 0 || $v['prom_use_integral'] > 0) {
                             if ($v['use_integral'] > 0) {
                                 $tmp_c_amout += $v['ctax_price'] * $v['goods_num'];
                             } else {
@@ -389,12 +389,12 @@ class Report extends Base
 
 
                     }
-                    if($v['zone']==3){
+                    if ($v['zone'] == 3) {
                         $vip_order_num++;
                     }
                 }
             }
-            $list[] = ['day' => $date, 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + $day_num * 24 * 60 * 60), 'c_amount' => $tmp_c_amout,'vip_order_num'=>$vip_order_num];
+            $list[] = ['day' => $date, 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + $day_num * 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
             $day[] = $date;
             $i = $i + $day_num * 24 * 3600;
         }
@@ -411,12 +411,12 @@ class Report extends Base
         if (is_array($list)) {
             foreach ($list as $k => $val) {
                 $strTable .= '<tr>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['day'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['vip_order_num'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['order_num'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['amount'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['c_amount'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['sign'].'</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['day'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['vip_order_num'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['order_num'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['amount'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['c_amount'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['sign'] . '</td>';
                 $strTable .= '</tr>';
             }
         }
@@ -438,7 +438,7 @@ class Report extends Base
             $day_num = date('t', strtotime("$year-$m"));
             $this->end = strtotime("{$year}-12-{$day_num} 23:59:59");
 
-        // dump(date('Y-m-d',I('start_time')));
+            // dump(date('Y-m-d',I('start_time')));
             // dump(date('Y-m-d',I('end_time')));
         } else {
             $this->begin = strtotime(date('Y-01-01', $this->begin));
@@ -461,7 +461,7 @@ class Report extends Base
         }
         $this->assign('today', $today);
         $select_year = $this->select_year;
-        $res = Db::name('order'.$select_year)
+        $res = Db::name('order' . $select_year)
             ->field(" COUNT(*) as tnum,sum(total_amount) as amount, FROM_UNIXTIME(add_time,'%Y-01-01') as gap ")
             ->where(" add_time >$this->begin and add_time < $this->end AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4) ")
             ->group('gap')
@@ -499,7 +499,7 @@ class Report extends Base
             if ($result) {
                 $vip_order_num = 0;
                 foreach ($result as $k => $v) {
-                    if($v['re_id']==0) {
+                    if ($v['re_id'] == 0) {
                         if ($v['prom_goods_price'] > 0 || $v['prom_use_integral'] > 0) {
                             if ($v['use_integral'] > 0) {
                                 $tmp_c_amout += $v['ctax_price'] * $v['goods_num'];
@@ -508,12 +508,12 @@ class Report extends Base
                             }
                         }
                     }
-                    if($v['zone']==3){
+                    if ($v['zone'] == 3) {
                         $vip_order_num++;
                     }
                 }
             }
-            $list[] = ['day' => $date.'-01-01', 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + 365 * 24 * 60 * 60), 'c_amount' => $tmp_c_amout,'vip_order_num'=>$vip_order_num];
+            $list[] = ['day' => $date . '-01-01', 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + 365 * 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
             $day[] = $date;
 
             $i = $i + 365 * 24 * 3600;
@@ -543,7 +543,7 @@ class Report extends Base
             $day_num = date('t', strtotime("$year-$m"));
             $this->end = strtotime("{$year}-12-{$day_num} 23:59:59");
 
-        // dump(date('Y-m-d',I('start_time')));
+            // dump(date('Y-m-d',I('start_time')));
             // dump(date('Y-m-d',I('end_time')));
         } else {
             $this->begin = strtotime(date('Y-01-01', $this->begin));
@@ -553,7 +553,7 @@ class Report extends Base
         }
 
         $select_year = $this->select_year;
-        $res = Db::name('order'.$select_year)
+        $res = Db::name('order' . $select_year)
             ->field(" COUNT(*) as tnum,sum(total_amount) as amount, FROM_UNIXTIME(add_time,'%Y-01-01') as gap ")
             ->where(" add_time >$this->begin and add_time < $this->end AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4) ")
             ->group('gap')
@@ -591,7 +591,7 @@ class Report extends Base
             if ($result) {
                 $vip_order_num = 0;
                 foreach ($result as $k => $v) {
-                    if($v['re_id']==0) {
+                    if ($v['re_id'] == 0) {
                         if ($v['prom_goods_price'] > 0 || $v['prom_use_integral'] > 0) {
                             if ($v['use_integral'] > 0) {
                                 $tmp_c_amout += $v['ctax_price'] * $v['goods_num'];
@@ -601,12 +601,12 @@ class Report extends Base
                         }
                     }
 
-                    if($v['zone']==3){
+                    if ($v['zone'] == 3) {
                         $vip_order_num++;
                     }
                 }
             }
-            $list[] = ['day' => $date, 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'sign' => $tmp_sign, 'end' => date('Y', $i + 365 * 24 * 60 * 60), 'c_amount' => $tmp_c_amout,'vip_order_num'=>$vip_order_num];
+            $list[] = ['day' => $date, 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'sign' => $tmp_sign, 'end' => date('Y', $i + 365 * 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
             $day[] = $date;
 
             $i = $i + 365 * 24 * 3600;
@@ -624,12 +624,12 @@ class Report extends Base
         if (is_array($list)) {
             foreach ($list as $k => $val) {
                 $strTable .= '<tr>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['day'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['vip_order_num'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['order_num'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['amount'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['c_amount'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['sign'].'</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['day'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['vip_order_num'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['order_num'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['amount'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['c_amount'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['sign'] . '</td>';
                 $strTable .= '</tr>';
             }
         }
@@ -685,12 +685,12 @@ class Report extends Base
                 foreach ($res as $k => $val) {
                     $pai = $k + 1 + ((I('p/d', 1) - 1) * $this->page_size);
                     $strTable .= '<tr>';
-                    $strTable .= '<td style="text-align:center;font-size:12px">&nbsp;'.$pai.'</td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['goods_name'].' </td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['goods_sn'].'</td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['sale_num'].'</td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['sale_amount'].'</td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">'.round($val['sale_amount'] / $val['sale_num'], 2).'</td>';
+                    $strTable .= '<td style="text-align:center;font-size:12px">&nbsp;' . $pai . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['goods_name'] . ' </td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['goods_sn'] . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['sale_num'] . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['sale_amount'] . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . round($val['sale_amount'] / $val['sale_num'], 2) . '</td>';
                     $strTable .= '</tr>';
                 }
             }
@@ -771,21 +771,21 @@ class Report extends Base
                     }
                 }
                 $strTable .= '<tr>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['user_id'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$level.'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['nickname'].' </td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['mobile'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['order_num'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['amount'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['order_amount'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['total_electronic'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['coupon_price'].'</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['user_id'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $level . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['nickname'] . ' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['mobile'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['order_num'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['amount'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['order_amount'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['total_electronic'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['coupon_price'] . '</td>';
                 $strTable .= '</tr>';
             }
             unset($list);
         }
         $strTable .= '</table>';
-        downloadExcel($strTable, 'exportUserTop'.$i);
+        downloadExcel($strTable, 'exportUserTop' . $i);
         exit();
     }
 
@@ -869,7 +869,7 @@ class Report extends Base
 
     public function saleOrder()
     {
-        $end_time =  strtotime(I('end_time'));
+        $end_time = strtotime(I('end_time'));
         $order_where = "o.add_time>$this->begin and o.add_time<$end_time AND (pay_status=1 or pay_code='cod')";  //交易成功的有效订单
         $order_count = Db::name('order')->alias('o')->where($order_where)->whereIn('order_status', '1,2,4')->count();
         $Page = new Page($order_count, 20);
@@ -973,19 +973,19 @@ class Report extends Base
             $res[$k]['inte_num'] = Db::name('order_goods')->alias('og')
                 ->join('order o', 'og.order_id=o.order_id', 'right')
                 ->join('goods g', 'og.goods_id = g.goods_id', 'left')
-                ->where($where.' and og.member_goods_price > 0')->where('use_integral', 'gt', 0)->where('og.goods_id', $v['goods_id'])->where('og.spec_key', $v['spec_key'])->where('og.goods_price', $v['goods_price'])
+                ->where($where . ' and og.member_goods_price > 0')->where('use_integral', 'gt', 0)->where('og.goods_id', $v['goods_id'])->where('og.spec_key', $v['spec_key'])->where('og.goods_price', $v['goods_price'])
                 ->group('og.goods_id,og.spec_key')
                 ->sum('og.goods_num');
             $res[$k]['cash_num'] = Db::name('order_goods')->alias('og')
                 ->join('order o', 'og.order_id=o.order_id', 'right')
                 ->join('goods g', 'og.goods_id = g.goods_id', 'left')
-                ->where($where.' and og.member_goods_price > 0')->where('use_integral', 0)->where('og.goods_id', $v['goods_id'])->where('og.spec_key', $v['spec_key'])->where('og.goods_price', $v['goods_price'])
+                ->where($where . ' and og.member_goods_price > 0')->where('use_integral', 0)->where('og.goods_id', $v['goods_id'])->where('og.spec_key', $v['spec_key'])->where('og.goods_price', $v['goods_price'])
                 ->group('og.goods_id,og.spec_key')
                 ->sum('og.goods_num');
-$res[$k]['song_num'] = Db::name('order_goods')->alias('og')
+            $res[$k]['song_num'] = Db::name('order_goods')->alias('og')
                 ->join('order o', 'og.order_id=o.order_id', 'right')
                 ->join('goods g', 'og.goods_id = g.goods_id', 'left')
-                ->where($where.' and og.member_goods_price = 0')->where('use_integral', 0)->where('og.goods_id', $v['goods_id'])->where('og.spec_key', $v['spec_key'])->where('og.goods_price', $v['goods_price'])
+                ->where($where . ' and og.member_goods_price = 0')->where('use_integral', 0)->where('og.goods_id', $v['goods_id'])->where('og.spec_key', $v['spec_key'])->where('og.goods_price', $v['goods_price'])
                 ->group('og.goods_id,og.spec_key')
                 ->sum('og.goods_num');
         }
@@ -998,7 +998,7 @@ $res[$k]['song_num'] = Db::name('order_goods')->alias('og')
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*" rowspan="2">数量</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*"  colspan="2">零售价</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*" rowspan="2">数量</td>';
-$strTable .= '<td style="text-align:center;font-size:12px;" width="*" rowspan="2">赠送</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*" rowspan="2">赠送</td>';
         $strTable .= '</tr>';
         $strTable .= '<tr>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*" >积分价含税价</td>';
@@ -1010,16 +1010,16 @@ $strTable .= '<td style="text-align:center;font-size:12px;" width="*" rowspan="2
             foreach ($res as $k => $val) {
                 $a = $val['goods_price'] - $val['use_integral'];
                 $strTable .= '<tr>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;'.$val['goods_sn'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['goods_name'].' </td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$a.'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['ctax_price'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['inte_num'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['goods_price'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['stax_price'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['cash_num'].'</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;' . $val['goods_sn'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['goods_name'] . ' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $a . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['ctax_price'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['inte_num'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['goods_price'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['stax_price'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['cash_num'] . '</td>';
 
-$strTable .= '<td style="text-align:left;font-size:12px;">'.$val['song_num'].'</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['song_num'] . '</td>';
                 $strTable .= '</tr>';
             }
         }
@@ -1062,8 +1062,8 @@ $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['song_num'].'</
             if (is_array($result)) {
                 foreach ($brr as $k => $val) {
                     $strTable .= '<tr>';
-                    $strTable .= '<td style="text-align:center;font-size:12px">&nbsp;'.$day[$k].'</td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">'.$val.' </td>';
+                    $strTable .= '<td style="text-align:center;font-size:12px">&nbsp;' . $day[$k] . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val . ' </td>';
 
                     $strTable .= '</tr>';
                 }
@@ -1094,7 +1094,7 @@ $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['song_num'].'</
         }
         $count = M('expense_log')->where($map)->count();
         $page = new Page($count);
-        $lists = M('expense_log')->where($map)->limit($page->firstRow.','.$page->listRows)->select();
+        $lists = M('expense_log')->where($map)->limit($page->firstRow . ',' . $page->listRows)->select();
         $this->assign('page', $page->show());
         $this->assign('total_count', $count);
         $this->assign('add_time_begin', $add_time_begin);
@@ -1182,7 +1182,7 @@ $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['song_num'].'</
         $order_where = [
             'o.pay_status' => 1,
             'o.shipping_status' => 1,
-            'og.is_send' => ['in', '1,2'], ];  //交易成功的有效订单
+            'og.is_send' => ['in', '1,2'],];  //交易成功的有效订单
         $order_count = Db::name('order')->alias('o')
             ->join('order_goods og', 'o.order_id = og.order_id', 'left')->join('users u', 'u.user_id = o.user_id', 'left')
             ->whereTime('o.add_time', 'between', [$begin, $end_time])->where($order_where)
@@ -1198,5 +1198,113 @@ $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['song_num'].'</
         $this->assign('page', $Page);
 
         return $this->fetch();
+    }
+
+    /**
+     * 点击记录列表
+     * @return mixed
+     */
+    public function clickList()
+    {
+        $positionIds = M('click_log')->group('position')->getField('position', true);
+        $clickList = [];
+        foreach ($positionIds as $positionId) {
+            $count = M('click_log')->where(['position' => $positionId])->count('id');
+            switch ($positionId) {
+                case 1:
+                    $position = 'H5下载头';
+                    break;
+                default:
+                    continue 2;
+            }
+            $clickList[] = [
+                'position_id' => $positionId,
+                'position' => $position,
+                'count' => $count
+            ];
+        }
+
+        $this->assign('list', $clickList);
+        return $this->fetch('click_list');
+    }
+
+    /**
+     * 点击记录详情
+     * @return mixed
+     */
+    public function clickLog()
+    {
+        $position = I('position', '');
+        $count = M('click_log')->where(['position' => $position])->count('id');
+        $page = new Page($count, 10);
+        $clickList = M('click_log')->where(['position' => $position])->order('time desc')->limit($page->firstRow, $page->listRows)->select();
+        switch ($position) {
+            case 1:
+                $position = 'H5下载头';
+                break;
+            default:
+                $position = '';
+        }
+        $this->assign('page', $page);
+        $this->assign('position', $position);
+        $this->assign('list', $clickList);
+        return $this->fetch('click_log');
+    }
+
+    /**
+     * 下载记录列表
+     * @return mixed
+     */
+    public function downloadList()
+    {
+        $typeIds = M('download_log')->group('type')->getField('type', true);
+        $downloadList = [];
+        foreach ($typeIds as $typeId) {
+            $count = M('download_log')->where(['type' => $typeId])->count('id');
+            switch ($typeId) {
+                case 1:
+                    $type = 'IOS';
+                    break;
+                case 2:
+                    $type = 'Android';
+                    break;
+                default:
+                    continue 2;
+            }
+            $downloadList[] = [
+                'type_id' => $typeId,
+                'type' => $type,
+                'count' => $count
+            ];
+        }
+
+        $this->assign('list', $downloadList);
+        return $this->fetch('download_list');
+    }
+
+    /**
+     * 下载记录详情
+     * @return mixed
+     */
+    public function downloadLog()
+    {
+        $type = I('type', '');
+        $count = M('download_log')->where(['type' => $type])->count('id');
+        $page = new Page($count, 10);
+        $downloadList = M('download_log')->where(['type' => $type])->order('down_time desc')->limit($page->firstRow, $page->listRows)->select();
+        switch ($type) {
+            case 1:
+                $type = 'IOS';
+                break;
+            case 2:
+                $type = 'Android';
+                break;
+            default:
+                $type = '';
+        }
+        $this->assign('page', $page);
+        $this->assign('type', $type);
+        $this->assign('list', $downloadList);
+        return $this->fetch('download_log');
     }
 }

@@ -242,6 +242,7 @@ class UsersLogic extends Model
                 if (1 == $user_info['is_lock']) {
                     return ['status' => -1, 'msg' => '账号异常已被冻结，无法登录'];
                 }
+                $userId = $exist['user_id'];
             }
         }
 
@@ -258,6 +259,8 @@ class UsersLogic extends Model
             $map['unionid'] = $data['unionid'];
             $map['nickname'] = filter($data['nickname']);
             $map['reg_time'] = time();
+            $map['reg_source'] = 1;
+            $map['login_time'] = time();
             $map['oauth'] = $data['oauth'];
             $map['head_pic'] = !empty($data['head_pic']) ? $data['head_pic'] : url('/', '', '', true) . '/public/images/default_head.png';
             $map['sex'] = null === $data['sex'] ? 0 : $data['sex'];
@@ -265,7 +268,7 @@ class UsersLogic extends Model
             $map['token'] = $userToken;
             $map['time_out'] = strtotime('+' . config('REDIS_DAY') . ' days');
             $row_id1 = Db::name('users')->add($map);    // 注册新用户
-            $data['user_id'] = $row_id1;
+            $data['user_id'] = $userId = $row_id1;
             $row_id2 = Db::name('OauthUsers')->data($data)->add();  // 记录oauth用户
             $user_info = M('users')->where('user_id', $row_id1)->find();
             session('is_new', 1);
@@ -280,12 +283,9 @@ class UsersLogic extends Model
             $this->afterLogin($user_info, 3);
             session('is_app', 1);
             (new Redis())->set('is_app_' . $userToken, 1, config('REDIS_TIME'));
-            M('user_login_log')->add([
-                'user_id' => $row_id1,
-                'login_ip' => request()->ip(),
-                'login_time' => time(),
-                'source' => 1
-            ]);
+            // 登录记录
+            $this->setUserId($userId);
+            $this->userLogin(1);
             $result = ['status' => 1, 'msg' => '登录成功'];
         }
 
@@ -410,12 +410,8 @@ class UsersLogic extends Model
             }
             $result = ['status' => 1, 'msg' => '登录成功', 'result' => $user];
             // 登录记录
-            M('user_login_log')->add([
-                'user_id' => $userId,
-                'login_ip' => request()->ip(),
-                'login_time' => time(),
-                'source' => $source
-            ]);
+            $this->setUserId($userId);
+            $this->userLogin($source);
         }
         return $result;
     }
@@ -745,14 +741,9 @@ class UsersLogic extends Model
             $user['last_login'] = $map['last_login'];
             $user['last_login_source'] = $map['last_login_source'];
         }
-
         // 登录记录
-        M('user_login_log')->add([
-            'user_id' => $user['user_id'],
-            'login_ip' => request()->ip(),
-            'login_time' => time(),
-            'source' => $source
-        ]);
+        $this->setUserId($user['user_id']);
+        $this->userLogin($source);
 
         return ['status' => 1, 'msg' => '登陆成功', 'result' => $user];
     }
@@ -929,12 +920,8 @@ class UsersLogic extends Model
             'jpush_tags' => [$user['push_tag']]
         ];
         // 登录记录
-        M('user_login_log')->add([
-            'user_id' => $user['user_id'],
-            'login_ip' => request()->ip(),
-            'login_time' => time(),
-            'source' => $source
-        ]);
+        $this->setUserId($user['user_id']);
+        $this->userLogin($source);
         return ['status' => 1, 'msg' => '注册成功', 'result' => $user];
     }
 
@@ -1063,12 +1050,8 @@ class UsersLogic extends Model
             'jpush_tags' => [$user['push_tag']]
         ];
         // 登录记录
-        M('user_login_log')->add([
-            'user_id' => $user['user_id'],
-            'login_ip' => request()->ip(),
-            'login_time' => time(),
-            'source' => 3
-        ]);
+        $this->setUserId($user['user_id']);
+        $this->userLogin(3);
         return ['status' => 1, 'msg' => '注册成功', 'result' => $user];
     }
 
@@ -2823,5 +2806,20 @@ class UsersLogic extends Model
         $info['sign_time'] = explode(',', $info['sign_time']);
 
         return ['info' => $info, 'str' => $str, 'jifen' => $jiFen, 'config' => $config, 'tab' => $tab, 'display_sign' => $display_sign, 'reward_list' => $reward_list];
+    }
+
+    /**
+     * 登录记录
+     * @param $source
+     */
+    public function userLogin($source)
+    {
+        M('user_login_log')->add([
+            'user_id' => $this->user_id,
+            'login_ip' => request()->ip(),
+            'login_time' => time(),
+            'source' => $source
+        ]);
+        M('users')->where(['user_id' => $this->user_id])->update(['last_login_source' => $source]);
     }
 }
