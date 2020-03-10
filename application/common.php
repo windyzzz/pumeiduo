@@ -618,24 +618,24 @@ function send_email($to, $subject = '', $content = '')
  */
 function checkEnableSendSms($scene)
 {
-    $scenes = C('SEND_SCENE');
-    $sceneItem = $scenes[$scene];
-    if (!$sceneItem) {
-        return ['status' => -1, 'msg' => "场景参数'scene'错误!"];
-    }
-    $key = $sceneItem[2];
-    $sceneName = $sceneItem[0];
-    $config = tpCache('sms');
-    $smsEnable = $config[$key];
-
-    if (!$smsEnable) {
-        return ['status' => -1, 'msg' => "['$sceneName']发送短信被关闭'"];
-    }
-    //判断是否添加"注册模板"
-    $size = M('sms_template')->where('send_scene', $scene)->count('tpl_id');
-    if (!$size) {
-        return ['status' => -1, 'msg' => "请先添加['$sceneName']短信模板"];
-    }
+//    $scenes = C('SEND_SCENE');
+//    $sceneItem = $scenes[$scene];
+//    if (!$sceneItem) {
+//        return ['status' => -1, 'msg' => "场景参数'scene'错误!"];
+//    }
+//    $key = $sceneItem[2];
+//    $sceneName = $sceneItem[0];
+//    $config = tpCache('sms');
+//    $smsEnable = $config[$key];
+//
+//    if (!$smsEnable) {
+//        return ['status' => -1, 'msg' => "['$sceneName']发送短信被关闭'"];
+//    }
+//    //判断是否添加"注册模板"
+//    $size = M('sms_template')->where('send_scene', $scene)->count('tpl_id');
+//    if (!$size) {
+//        return ['status' => -1, 'msg' => "请先添加['$sceneName']短信模板"];
+//    }
 
     return ['status' => 1, 'msg' => '可以发送短信'];
 }

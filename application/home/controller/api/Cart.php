@@ -939,9 +939,9 @@ class Cart extends Base
             $coupon = null;
             if ($coupon_id > 0) {
                 $couponList = new CouponList();
-                if ($coupon_id > 1000) {
-                    $coupon_id = $couponList->where(['id' => $coupon_id])->value('cid');
-                }
+//                if ($coupon_id > 1000) {
+//                    $coupon_id = $couponList->where(['id' => $coupon_id])->value('cid');
+//                }
                 $userCoupon = $couponList->where(['uid' => $this->user['user_id'], 'cid' => $coupon_id])->find();
                 if ($userCoupon) {
                     $coupon = Db::name('coupon')->where(['id' => $userCoupon['cid'], 'status' => 1])->find();

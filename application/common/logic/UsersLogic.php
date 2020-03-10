@@ -947,7 +947,7 @@ class UsersLogic extends Model
      */
     public function oauthReg($openid, $username, $password)
     {
-        $oauthUser = M('oauth_users')->where(['openid' => $openid, 'oauth' => 'weixin'])->find();
+        $oauthUser = M('oauth_users')->where(['openid' => $openid])->find();
         if (!$oauthUser) {
             return ['status' => 0, 'msg' => 'openid错误'];
         }

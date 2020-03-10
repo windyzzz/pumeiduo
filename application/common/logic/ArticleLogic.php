@@ -39,6 +39,8 @@ class ArticleLogic extends Model
             'um.user_id' => $userId,
             'um.status' => 0,
             'm.is_open' => 1,
+            'm.title' => ['neq', ''],
+            'm.publish_time' => ['BETWEEN', [strtotime("-3 month"), time()]]  // 三个月内
         ];
         $user_system_article_no_read = DB::name('user_article')
             ->alias('um')
@@ -96,7 +98,7 @@ class ArticleLogic extends Model
     }
 
     /**
-     * 获取用户的系统消息.
+     * 获取用户的活动消息.
      *
      * @return array
      */
@@ -111,7 +113,7 @@ class ArticleLogic extends Model
             'status' => ['in', [0, 1]],
             'm.is_open' => 1,
             'm.title' => ['neq', ''],
-            'm.publish_time' => ['BETWEEN', [strtotime("-3 month"), time()]]  // 三个月内
+//            'm.publish_time' => ['BETWEEN', [strtotime("-3 month"), time()]]  // 三个月内
         ];
         $count = Db::name('user_article')
             ->alias('um')

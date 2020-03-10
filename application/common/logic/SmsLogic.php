@@ -26,125 +26,124 @@ class SmsLogic
     }
 
     /**
-     * 发送短信逻辑.
-     *
-     * @param unknown $scene
+     * 发送短信
+     * @param $scene
+     * @param $sender
+     * @param $params
+     * @param string $userToken
+     * @return array
      */
-    public function sendSms($scene, $sender, $params, $unique_id = 0)
+    public function sendSms($scene, $sender, $params, $userToken = '')
     {
+        // 模板
         $smsTemp = M('sms_template')->where('send_scene', $scene)->find();
         if (!$smsTemp) {
-            $smsTemp = M('sms_template')->where('send_scene', 6)->find();
+            $smsTemp = M('sms_template')->where('send_scene', 1)->find();
+            $scene = 1;
         }
-
+        // 参数
         $code = !empty($params['code']) ? $params['code'] : false;
-        $consignee = !empty($params['consignee']) ? $params['consignee'] : false;
+        $userId = !empty($params['user_id']) ? $params['user_id'] : false;
         $user_name = !empty($params['user_name']) ? $params['user_name'] : false;
-        $mobile = !empty($params['mobile']) ? $params['mobile'] : false;
-        $order_id = $params['order_id'];
-        if (empty($unique_id)) {
-            $session_id = session_id();
-        } else {
-            $session_id = $unique_id;
-        }
-
-        $smsParams = [ // 短信模板中字段的值
+        // 模板字段
+        $smsParams = [
             1 => ['code' => $code],                                                                                                          //1. 用户注册 (验证码类型短信只能有一个变量)
-            2 => ['code' => $code],                                                                                                          //2. 用户找回密码 (验证码类型短信只能有一个变量)
-            3 => ['consignee' => $consignee, 'phone' => $mobile],                                                      //3. 客户下单
-            4 => ['orderId' => $order_id],                                                                                                //4. 客户支付
-            5 => ['userName' => $user_name, 'consignee' => $consignee],                                           //5. 商家发货
-            6 => ['code' => $code],
-            8 => ['code' => $code],
+            9 => ['user_name' => $user_name, 'user_id1' => $userId, 'user_id2' => $userId]
         ];
-
         $smsParam = $smsParams[$scene];
-
-        //提取发送短信内容
+        // 提取发送短信内容
         $scenes = C('SEND_SCENE');
         $msg = $scenes[$scene][1];
         foreach ($smsParam as $k => $v) {
-            $msg = str_replace('${'.$k.'}', $v, $msg);
+            $msg = str_replace('${' . $k . '}', $v, $msg);
         }
 
-        //发送记录存储数据库
+        // 发送记录存储数据库
+        if (empty($userToken)) {
+            $session_id = session_id();
+        } else {
+            $session_id = $userToken;
+        }
         $log_id = M('sms_log')->insertGetId(['mobile' => $sender, 'code' => $code, 'add_time' => time(), 'session_id' => $session_id, 'status' => 0, 'scene' => $scene, 'msg' => $msg]);
-        if ('' != $sender && check_mobile($sender)) {//如果是正常的手机号码才发送
+        if ('' != $sender && check_mobile($sender)) {
+            // 如果是正常的手机号码才发送
             try {
-                $resp = $this->realSendSms($sender, $smsTemp['sms_sign'], $smsParam, $smsTemp['sms_tpl_code']);
+                $resp = $this->sendSmsByFeige($sender, $smsTemp['sms_sign'], $smsParam, $smsTemp['sms_tpl_code']);
             } catch (\Exception $e) {
                 $resp = ['status' => -1, 'msg' => $e->getMessage()];
             }
             if (1 == $resp['status']) {
-                M('sms_log')->where(['id' => $log_id])->save(['status' => 1]); //修改发送状态为成功
+                M('sms_log')->where(['id' => $log_id])->save(['status' => 1]); // 修改发送状态为成功
             } else {
-                M('sms_log')->where(['id' => $log_id])->update(['error_msg' => $resp['msg']]); //发送失败, 将发送失败信息保存数据库
+                M('sms_log')->where(['id' => $log_id])->update(['error_msg' => $resp['msg']]); // 发送失败, 将发送失败信息保存数据库
             }
-
             return $resp;
         }
-
-        return $result = ['status' => -1, 'msg' => '接收手机号不正确['.$sender.']'];
+        return $result = ['status' => -1, 'msg' => '接收手机号不正确[' . $sender . ']'];
     }
 
-    private function realSendSms($mobile, $smsSign, $smsParam, $templateCode)
+    /**
+     * 发送短信（飞鸽）
+     * @param $mobile
+     * @param $smsSign
+     * @param $smsParam
+     * @param $templateCode
+     * @return array
+     */
+    private function sendSmsByFeige($mobile, $smsSign, $smsParam, $templateCode)
     {
-        $Content = implode('||',$smsParam);
+        $Content = implode('||', $smsParam);
         $data = array(
-            'Account'=>'pumeiduo',
-            'Pwd'=>'284a62d65f82a5c20901fae7c',
-            'Content'=>$Content,
-            'Mobile'=>$mobile,
-            'TemplateId'=>70634,
-            'SignId'=>126125
+            'Account' => 'pumeiduo',
+            'Pwd' => '284a62d65f82a5c20901fae7c',
+            'Content' => $Content,
+            'Mobile' => $mobile,
+            'TemplateId' => $templateCode,
+            'SignId' => $smsSign
         );
 
-        $url="http://api.feige.ee/SmsService/Template";
+        $url = "http://api.feige.ee/SmsService/Template";
 
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_URL, $url);
         curl_setopt($curl, CURLOPT_USERAGENT, $_SERVER['HTTP_USER_AGENT']); //在HTTP请求中包含一个"User-Agent: "头的字符串。
         curl_setopt($curl, CURLOPT_HEADER, 0); //启用时会将头文件的信息作为数据流输出。
         curl_setopt($curl, CURLOPT_POST, true); //发送一个常规的Post请求
-        curl_setopt($curl,  CURLOPT_POSTFIELDS, $data);//Post提交的数据包
+        curl_setopt($curl, CURLOPT_POSTFIELDS, $data);//Post提交的数据包
         curl_setopt($curl, CURLOPT_FOLLOWLOCATION, 1); //启用时会将服务器服务器返回的"Location: "放在header中递归的返回给服务器，使用CURLOPT_MAXREDIRS可以限定递归返回的数量。
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true); //文件流形式
         curl_setopt($curl, CURLOPT_TIMEOUT, 20); //设置cURL允许执行的最长秒数。
         $content = curl_exec($curl);
         curl_close($curl);
         unset($curl);
-        $content = json_decode($content,true);
-        if($content['Code']===0){ //成功
-            return array('status'=>1,'msg'=>$content['Message']);
-        }else{
-            return array('status'=>0,'msg'=>$content['Message']);
+        $content = json_decode($content, true);
+        if ($content['Code'] === 0) {
+            // 成功
+            return array('status' => 1, 'msg' => $content['Message']);
+        } else {
+            return array('status' => 0, 'msg' => $content['Message']);
         }
 
-/*
-
-
-        $type = (int) $this->config['sms_platform'] ?: 0;
-
-        switch ($type) {
-            case 0:
-                $result = $this->sendSmsByAlidayu($mobile, $smsSign, $smsParam, $templateCode);
-                break;
-            case 1:
-                $result = $this->sendSmsByAliyun($mobile, $smsSign, $smsParam, $templateCode);
-                break;
-            case 2:
-                //重新组装发送内容, 将变量内容组装成:  13800138006##张三格式
-                foreach ($smsParam as $k => $v) {
-                    $contents[] = $v;
-                }
-                $content = implode($contents, '##');
-                $result = $this->sendSmsByCloudsp($mobile, $smsSign, $content, $templateCode);
-                break;
-            default:
-                $result = ['status' => -1, 'msg' => '不支持的短信平台'];
-        }
-
-        return $result;*/
+//        $type = (int)$this->config['sms_platform'] ?: 0;
+//        switch ($type) {
+//            case 0:
+//                $result = $this->sendSmsByAlidayu($mobile, $smsSign, $smsParam, $templateCode);
+//                break;
+//            case 1:
+//                $result = $this->sendSmsByAliyun($mobile, $smsSign, $smsParam, $templateCode);
+//                break;
+//            case 2:
+//                //重新组装发送内容, 将变量内容组装成:  13800138006##张三格式
+//                foreach ($smsParam as $k => $v) {
+//                    $contents[] = $v;
+//                }
+//                $content = implode($contents, '##');
+//                $result = $this->sendSmsByCloudsp($mobile, $smsSign, $content, $templateCode);
+//                break;
+//            default:
+//                $result = ['status' => -1, 'msg' => '不支持的短信平台'];
+//        }
+//        return $result;
     }
 
     /**
@@ -200,7 +199,7 @@ class SmsLogic
             return ['status' => 1, 'msg' => $resp->sub_msg];
         }
 
-        return ['status' => -1, 'msg' => $resp->msg.' ,sub_msg :'.$resp->sub_msg.' subcode:'.$resp->sub_code];
+        return ['status' => -1, 'msg' => $resp->msg . ' ,sub_msg :' . $resp->sub_msg . ' subcode:' . $resp->sub_code];
     }
 
     /**
@@ -219,7 +218,7 @@ class SmsLogic
             'sign' => $smsSign,
             'templateId' => $templateCode,
             'mobile' => $mobile,
-            'content' => $smsParam, ];
+            'content' => $smsParam,];
 
         $resp = httpRequest($url, 'post', $post_data);
         $resp = json_decode($resp);
@@ -228,10 +227,10 @@ class SmsLogic
         }
 
         if ('9006' == $resp->code) {
-            return ['status' => -1, 'msg' => '请在后台配置短信或按照文档接入短信'.$resp->code];
+            return ['status' => -1, 'msg' => '请在后台配置短信或按照文档接入短信' . $resp->code];
         }
 
-        return ['status' => -1, 'msg' => '发生失败:'.$resp->msg.' , 错误代码:'.$resp->code];
+        return ['status' => -1, 'msg' => '发生失败:' . $resp->msg . ' , 错误代码:' . $resp->code];
     }
 
     /**
@@ -284,6 +283,6 @@ class SmsLogic
             return ['status' => 1, 'msg' => $resp->Code];
         }
 
-        return ['status' => -1, 'msg' => $resp->Message.'. Code: '.$resp->Code];
+        return ['status' => -1, 'msg' => $resp->Message . '. Code: ' . $resp->Code];
     }
 }

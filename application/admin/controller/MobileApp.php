@@ -28,15 +28,8 @@ class MobileApp extends Base
         $inc_type = 'ios';
         if (IS_POST) {
             $param = I('post.');
-            $data = [
-//                ['is_audit' => $param['is_audit'],
-                'app_version' => $param['app_version'],
-                'app_log' => $param['app_log'],
-                'app_path' => $param['app_path'],
-                'is_update' => $param['is_update'],
-                'is_force' => $param['is_force']
-            ];
-            tpCache($inc_type, $data);
+            unset($param['inc_type']);
+            tpCache($inc_type, $param);
             return $this->success('操作成功', url('MobileApp/ios_audit'));
         }
         $this->assign('inc_type', $inc_type);
@@ -72,15 +65,8 @@ class MobileApp extends Base
 //            tpCache($inc_type, ['app_path' => $return_url]);
 //        }
 
-        $data = [
-//                ['is_audit' => $param['is_audit'],
-            'app_version' => $param['app_version'],
-            'app_log' => $param['app_log'],
-            'app_path' => $param['app_path'],
-            'is_update' => $param['is_update'],
-            'is_force' => $param['is_force']
-        ];
-        tpCache($inc_type, $data);
+        unset($param['inc_type']);
+        tpCache($inc_type, $param);
 
 //        if (!$file) {
 //            return $this->success('保存成功，但是没有文件上传', url('MobileApp/android_audit'));

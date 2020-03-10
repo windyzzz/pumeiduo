@@ -38,6 +38,8 @@ class MessageLogic extends Model
         $user_system_message_no_read_where = [
             'um.user_id' => $userId,
             'um.status' => 0,
+            'm.title' => ['neq', ''],
+            'm.send_time' => ['BETWEEN', [strtotime("-3 month"), time()]]  // 三个月内
         ];
         $user_system_message_no_read = DB::name('user_message')
             ->alias('um')
@@ -119,7 +121,7 @@ class MessageLogic extends Model
             } else {
                 $num = 10;
                 $field = 'um.rec_id,um.user_id,um.category,um.message_id,um.status,m.send_time,m.type,m.title,m.message';
-                $where['m.send_time'] = ['BETWEEN', [strtotime("-3 month"), time()]];  // 三个月内
+//                $where['m.send_time'] = ['BETWEEN', [strtotime("-3 month"), time()]];  // 三个月内
             }
             $count = Db::name('user_message')
                 ->alias('um')
@@ -132,8 +134,8 @@ class MessageLogic extends Model
                 ->alias('um')
                 ->field($field)
                 ->join('__MESSAGE__ m', 'um.message_id = m.message_id', 'LEFT')
-//                ->where($user_system_message_no_read_where)
-//                ->where($where)
+                ->where($user_system_message_no_read_where)
+                ->where($where)
                 ->limit($Page->firstRow . ',' . $Page->listRows)
                 ->order('send_time desc')
                 ->select();

@@ -352,10 +352,10 @@ class Cron1 extends Controller
         $smsLogic = new SmsLogic();
         $logIds = [];
         foreach ($smsLog as $sms) {
-//            $res = $smsLogic->sendSms(9, $sms['mobile'], unserialize($sms['param']));
-//            if ($res['status'] == 1) {
-//                $logIds[] = $sms['id'];
-//            }
+            $res = $smsLogic->sendSms(9, $sms['mobile'], unserialize($sms['param']));
+            if ($res['status'] == 1) {
+                $logIds[] = $sms['id'];
+            }
         }
         M('special_sms_log')->where(['id' => ['in', $logIds]])->update(['is_send' => 1]);
     }

@@ -499,9 +499,9 @@ class Cart
             $coupon = null;
             if ($coupon_id) {
                 $couponList = new CouponList();
-                if ($coupon_id > 1000) {
-                    $coupon_id = $couponList->where(['id' => $coupon_id])->value('cid');
-                }
+//                if ($coupon_id > 1000) {
+//                    $coupon_id = $couponList->where(['id' => $coupon_id])->value('cid');
+//                }
                 $userCoupon = $couponList->where(['uid' => $this->user['user_id'], 'id' => $coupon_id])->find();
                 if ($userCoupon) {
                     $coupon = Db::name('coupon')->where(['id' => $userCoupon['cid'], 'status' => 1])->find();

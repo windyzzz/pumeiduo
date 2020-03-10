@@ -927,9 +927,9 @@ class Pay
     {
         if ($coupon_id > 0) {
             $couponList = new CouponList();
-            if ($coupon_id > 1000) {
-                $coupon_id = M('coupon_list')->where(['id' => $coupon_id])->value('cid');
-            }
+//            if ($coupon_id > 1000) {
+//                $coupon_id = M('coupon_list')->where(['id' => $coupon_id])->value('cid');
+//            }
             $where = array(
                 'uid' => $this->user['user_id'],
                 'cid' => $coupon_id,
@@ -986,9 +986,9 @@ class Pay
             $coupon_id_arr = explode(',', $coupon_id_str);
             $coupon_ids_arr = array();
             foreach ($coupon_id_arr as $kfdd => $coupon_id) {
-                if ($coupon_id > 1000) {
-                    $coupon_id = M('coupon_list')->where(['id' => $coupon_id])->value('cid');
-                }
+//                if ($coupon_id > 1000) {
+//                    $coupon_id = M('coupon_list')->where(['id' => $coupon_id])->value('cid');
+//                }
                 $where = array(
                     'uid' => $this->user['user_id'],
                     'cid' => $coupon_id,
@@ -1066,7 +1066,7 @@ class Pay
 
         $ln = bcsub($this->goodsPrice, $this->orderPromAmount, 2);
 
-        if ($ln < $freight_free || 0 == $freight_free) {
+        if ($ln < $freight_free) {
             $this->shippingPrice = $GoodsLogic->getFreight($this->payList, $district_id);
             $this->orderAmount = bcadd($this->orderAmount, $this->shippingPrice, 2);
             $this->totalAmount = bcadd($this->totalAmount, $this->shippingPrice, 2);
