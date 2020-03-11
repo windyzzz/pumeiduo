@@ -61,10 +61,9 @@ class Report extends Base
         foreach ($res as $val) {
             $arr[$val['gap']] = $val['tnum'];
             $brr[$val['gap']] = $val['amount'];
-            $tnum += $val['tnum'];
-            $tamount += $val['amount'];
+//            $tnum += $val['tnum'];
+//            $tamount += $val['amount'];
         }
-
         for ($i = $this->begin; $i <= $this->end; $i = $i + 24 * 3600) {
             $tmp_num = empty($arr[date('Y-m-d', $i)]) ? 0 : $arr[date('Y-m-d', $i)];
             $tmp_amount = empty($brr[date('Y-m-d', $i)]) ? 0 : $brr[date('Y-m-d', $i)];
@@ -77,7 +76,7 @@ class Report extends Base
             //销售不含税价
             $tmp_c_amout = 0;
             $result = Db::name('order')
-                ->field('oi.order_id,og.rec_id,og.use_integral,og.member_goods_price as prom_goods_price,og.use_integral as prom_use_integral,og.goods_num,g.goods_id,g.goods_name,g.ctax_price,g.stax_price,og.re_id,g.zone')
+                ->field('oi.order_id, og.rec_id, og.use_integral, og.member_goods_price as prom_goods_price, og.use_integral as prom_use_integral, og.goods_num, g.goods_id, g.goods_name, g.ctax_price, g.stax_price, og.re_id, g.zone')
                 ->alias('oi')
                 ->join('order_goods og', 'og.order_id = oi.order_id', 'left')
                 ->join('goods g', 'og.goods_id = g.goods_id', 'left')
@@ -89,17 +88,15 @@ class Report extends Base
                     if ($v['re_id'] == 0) {
                         if ($v['prom_goods_price'] > 0 || $v['prom_use_integral'] > 0) {
                             if ($v['use_integral'] > 0) {
-                                $tmp_c_amout += $v['ctax_price'] * $v['goods_num'];
+                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul($v['ctax_price'], $v['goods_num'], 2), 2);
                             } else {
-                                $tmp_c_amout += $v['stax_price'] * $v['goods_num'];
+                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul($v['stax_price'], $v['goods_num'], 2), 2);
                             }
                         }
                     }
-
                     if ($v['zone'] == 3) {
                         $vip_order_num++;
                     }
-
                 }
             }
             $list[] = ['day' => $date, 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
@@ -152,9 +149,9 @@ class Report extends Base
                     if ($v['re_id'] == 0) {
                         if ($v['prom_goods_price'] > 0 || $v['prom_use_integral'] > 0) {
                             if ($v['use_integral'] > 0) {
-                                $tmp_c_amout += $v['ctax_price'] * $v['goods_num'];
+                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul($v['ctax_price'], $v['goods_num'], 2), 2);
                             } else {
-                                $tmp_c_amout += $v['stax_price'] * $v['goods_num'];
+                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul($v['stax_price'], $v['goods_num'], 2), 2);
                             }
                         }
 
@@ -238,8 +235,8 @@ class Report extends Base
         foreach ($res as $val) {
             $arr[$val['gap']] = $val['tnum'];
             $brr[$val['gap']] = $val['amount'];
-            $tnum += $val['tnum'];
-            $tamount += $val['amount'];
+//            $tnum += $val['tnum'];
+//            $tamount += $val['amount'];
         }
 
         for ($i = $this->begin; $i <= $this->end;) {
@@ -268,26 +265,21 @@ class Report extends Base
             if ($result) {
                 foreach ($result as $k => $v) {
                     if ($v['re_id'] == 0) {
-
                         if ($v['prom_goods_price'] > 0 || $v['prom_use_integral'] > 0) {
                             if ($v['use_integral'] > 0) {
-                                $tmp_c_amout += $v['ctax_price'] * $v['goods_num'];
+                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul($v['ctax_price'], $v['goods_num'], 2), 2);
                             } else {
-                                $tmp_c_amout += $v['stax_price'] * $v['goods_num'];
+                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul($v['stax_price'], $v['goods_num'], 2), 2);
                             }
                         }
-
-
                     }
                     if ($v['zone'] == 3) {
                         $vip_order_num++;
                     }
                 }
             }
-
             $list[] = ['day' => $date . '-01', 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + $day_num * 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
             $day[] = $date;
-
             $i = $i + $day_num * 24 * 3600;
         }
 
@@ -348,8 +340,8 @@ class Report extends Base
         foreach ($res as $val) {
             $arr[$val['gap']] = $val['tnum'];
             $brr[$val['gap']] = $val['amount'];
-            $tnum += $val['tnum'];
-            $tamount += $val['amount'];
+//            $tnum += $val['tnum'];
+//            $tamount += $val['amount'];
         }
 
         for ($i = $this->begin; $i <= $this->end;) {
@@ -378,16 +370,13 @@ class Report extends Base
                 $vip_order_num = 0;
                 foreach ($result as $k => $v) {
                     if ($v['re_id'] == 0) {
-
                         if ($v['prom_goods_price'] > 0 || $v['prom_use_integral'] > 0) {
                             if ($v['use_integral'] > 0) {
-                                $tmp_c_amout += $v['ctax_price'] * $v['goods_num'];
+                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul($v['ctax_price'], $v['goods_num'], 2), 2);
                             } else {
-                                $tmp_c_amout += $v['stax_price'] * $v['goods_num'];
+                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul($v['stax_price'], $v['goods_num'], 2), 2);
                             }
                         }
-
-
                     }
                     if ($v['zone'] == 3) {
                         $vip_order_num++;
@@ -474,8 +463,8 @@ class Report extends Base
         foreach ($res as $val) {
             $arr[$val['gap']] = $val['tnum'];
             $brr[$val['gap']] = $val['amount'];
-            $tnum += $val['tnum'];
-            $tamount += $val['amount'];
+//            $tnum += $val['tnum'];
+//            $tamount += $val['amount'];
         }
 
         for ($i = $this->begin; $i <= $this->end;) {
@@ -502,9 +491,9 @@ class Report extends Base
                     if ($v['re_id'] == 0) {
                         if ($v['prom_goods_price'] > 0 || $v['prom_use_integral'] > 0) {
                             if ($v['use_integral'] > 0) {
-                                $tmp_c_amout += $v['ctax_price'] * $v['goods_num'];
+                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul($v['ctax_price'], $v['goods_num'], 2), 2);
                             } else {
-                                $tmp_c_amout += $v['stax_price'] * $v['goods_num'];
+                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul($v['stax_price'], $v['goods_num'], 2), 2);
                             }
                         }
                     }
@@ -566,8 +555,8 @@ class Report extends Base
         foreach ($res as $val) {
             $arr[$val['gap']] = $val['tnum'];
             $brr[$val['gap']] = $val['amount'];
-            $tnum += $val['tnum'];
-            $tamount += $val['amount'];
+//            $tnum += $val['tnum'];
+//            $tamount += $val['amount'];
         }
 
         for ($i = $this->begin; $i <= $this->end;) {
@@ -594,13 +583,12 @@ class Report extends Base
                     if ($v['re_id'] == 0) {
                         if ($v['prom_goods_price'] > 0 || $v['prom_use_integral'] > 0) {
                             if ($v['use_integral'] > 0) {
-                                $tmp_c_amout += $v['ctax_price'] * $v['goods_num'];
+                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul($v['ctax_price'], $v['goods_num'], 2), 2);
                             } else {
-                                $tmp_c_amout += $v['stax_price'] * $v['goods_num'];
+                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul($v['stax_price'], $v['goods_num'], 2), 2);
                             }
                         }
                     }
-
                     if ($v['zone'] == 3) {
                         $vip_order_num++;
                     }

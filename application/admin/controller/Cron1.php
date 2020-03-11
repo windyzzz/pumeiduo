@@ -303,7 +303,7 @@ class Cron1 extends Controller
     }
 
 
-    public function test_update_tb()
+    public function update_tb()
     {
         $orderActionLog = M('order_action')->where(['log_time' => ['gt', '1583452536']])->field('order_id, log_time')->select();
         foreach ($orderActionLog as $action) {
@@ -319,7 +319,7 @@ class Cron1 extends Controller
         }
     }
 
-    public function test_log_send_sms()
+    public function log_send_sms()
     {
         $where = [
             'mobile' => ['neq', ''],
@@ -346,7 +346,7 @@ class Cron1 extends Controller
         var_dump($res != false ? 'ok' : 'bad');
     }
 
-    public function test_send_sms()
+    public function send_sms()
     {
         $smsLog = M('special_sms_log')->where(['is_send' => 0])->limit(0, 10)->select();
         $smsLogic = new SmsLogic();
@@ -358,5 +358,54 @@ class Cron1 extends Controller
             }
         }
         M('special_sms_log')->where(['id' => ['in', $logIds]])->update(['is_send' => 1]);
+    }
+
+    public function update_user_data()
+    {
+        $userId1 = '28321';
+        $userId2 = '28358';
+        // 合并余额、电子币
+        $userInfo1 = M('users')->where(['user_id' => $userId1])->field('user_money, user_electronic')->find();
+        accountLog($userId2, $userInfo1['user_money'], 0, '会员28321数据合并', 0, 0, 0, 0, 12);
+        accountLog($userId2, 0, 0, '会员28321数据合并', 0, 0, 0, $userInfo1['user_electronic'], 13);
+        // 合并下级用户
+        M('users')->where(['first_leader' => $userId1])->update(['first_leader' => $userId2]);
+        M('users')->where(['second_leader' => $userId1])->update(['second_leader' => $userId2]);
+        M('users')->where(['third_leader' => $userId1])->update(['third_leader' => $userId2]);
+    }
+
+    public function calc_report()
+    {
+        $orderData = M('order')
+            ->where('add_time', 'gt', '1583683200')
+            ->where('add_time', 'lt', '1583769600')
+            ->where([
+                'pay_status' => 1,
+                'order_status' => ['in', [1, 2, 4]]
+            ])->field('order_id, total_amount')->select();
+        $total_amount = '0.00';
+        $c_amount = '0.00';
+        foreach ($orderData as $order) {
+            $total_amount = bcadd($total_amount, $order['total_amount'], 2);
+            $orderGoods = M('order_goods og')->join('goods g', 'g.goods_id = og.goods_id')
+                ->where([
+                    'og.order_id' => $order['order_id'],
+                    'og.rec_id' => ['neq', 0]
+                ])
+                ->field('og.member_goods_price, og.use_integral, og.goods_num, g.ctax_price, g.stax_price')
+                ->select();
+            foreach ($orderGoods as $goods) {
+                if ($goods['member_goods_price'] > 0 || $goods['use_integral'] > 0) {
+                    if ($goods['use_integral'] > 0) {
+                        $c_amount = bcadd($c_amount, bcmul($goods['ctax_price'], $goods['goods_num'], 2), 2);
+                    } else {
+                        $c_amount = bcadd($c_amount, bcmul($goods['stax_price'], $goods['goods_num'], 2), 2);
+                    }
+                }
+            }
+        }
+        var_dump($total_amount);
+        var_dump($c_amount);
+        exit();
     }
 }
