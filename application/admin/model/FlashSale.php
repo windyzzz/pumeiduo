@@ -31,7 +31,12 @@ class FlashSale extends Model
         return $this->hasOne('goods', 'prom_id', 'id');
     }
 
-    //状态描述
+    /**
+     * 状态描述
+     * @param $value
+     * @param $data
+     * @return string
+     */
     public function getStatusDescAttr($value, $data)
     {
         if (1 == $data['is_end']) {
@@ -47,5 +52,17 @@ class FlashSale extends Model
         }
 
         return '已过期';
+    }
+
+    /**
+     * 来源描述
+     * @param $value
+     * @param $data
+     * @return string
+     */
+    public function getSourceDescAttr($value, $data)
+    {
+        $source = ['1' => 'H5(PC)', '2' => 'PC', '3' => 'APP'];
+        return $source[$data['source']];
     }
 }

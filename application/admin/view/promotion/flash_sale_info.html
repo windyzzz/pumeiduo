@@ -23,6 +23,18 @@
         <div class="ncap-form-default">
             <dl class="row">
                 <dt class="tit">
+                    <label><em>*</em>展示地方</label>
+                </dt>
+                <dd class="opt">
+                    <select name="source">
+                        <option value="1" <if condition="$info[source] eq 1">selected</if>>H5</option>
+                        <option value="3" <if condition="$info[source] eq 3">selected</if>>APP</option>
+                    </select>
+                    <p class="notic">请选择展示地方</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
                     <label><em>*</em>抢购标题</label>
                 </dt>
                 <dd class="opt">

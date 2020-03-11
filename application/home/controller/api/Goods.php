@@ -1068,6 +1068,11 @@ class Goods extends Base
             'fs.end_time' => ['>=', time()],
             'fs.is_end' => 0
         ];
+        if ($this->isApp) {
+            $where['fs.source'] = 3;
+        } else {
+            $where['fs.source'] = ['neq', 3];
+        }
         // 秒杀商品ID
         $filter_goods_id = Db::name('flash_sale fs')->join('goods g', 'g.goods_id = fs.goods_id')
             ->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
