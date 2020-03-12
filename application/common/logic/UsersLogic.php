@@ -2814,11 +2814,17 @@ class UsersLogic extends Model
      */
     public function userLogin($source)
     {
+        if ($source == 3) {
+            // 查看是否是第一次使用APP登陆
+            $isAppFirst = M('user_login_log')->where(['user_id' => $this->user_id, 'source' => 3])->value('id') ? 0 : 1;
+        }
         M('user_login_log')->add([
             'user_id' => $this->user_id,
             'login_ip' => request()->ip(),
             'login_time' => time(),
-            'source' => $source
+            'login_date' => date('Y-m-d', time()),
+            'source' => $source,
+            'is_app_first' => $isAppFirst ?? 0
         ]);
         M('users')->where(['user_id' => $this->user_id])->update(['last_login_source' => $source]);
     }

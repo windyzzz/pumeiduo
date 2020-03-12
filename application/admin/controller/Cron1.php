@@ -408,4 +408,11 @@ class Cron1 extends Controller
         var_dump($c_amount);
         exit();
     }
+
+    public function update_user_login()
+    {
+        $userLoginIds = M('user_login_log')->where(['source' => 3])->group('user_id')->getField('id', true);
+        M('user_login_log')->where(['id' => ['in', $userLoginIds]])->update(['is_app_first' => 1]);
+        var_dump('ok');
+    }
 }

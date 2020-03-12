@@ -319,6 +319,10 @@ class User extends Base
         }*/
 
         $userList = $model->where($condition)->order($sort_order)->limit($Page->firstRow . ',' . $Page->listRows)->select();
+        foreach ($userList as $key => $user) {
+            $appFirstLogin = M('user_login_log')->where(['user_id' => $user['user_id'], 'is_app_first' => 1])->value('login_time');
+            $userList[$key]['first_login'] = $appFirstLogin ?? $user['reg_time'];
+        }
 
         $user_id_arr = get_arr_column($userList, 'user_id');
         if (!empty($user_id_arr)) {
@@ -721,6 +725,7 @@ class User extends Base
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">电子币</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">注册时间</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">注册来源</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">首次登陆时间</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">最后登陆时间</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">最后登陆来源</td>';
         $strTable .= '</tr>';
@@ -731,6 +736,8 @@ class User extends Base
         $level_list = M('distribut_level')->getField('level_id, level_name');
         // 来源
         $source = ['1' => '微信', '2' => 'PC', '3' => 'APP'];
+        // 用户第一次APP登陆
+        $firstAppLogin = M('user_login_log')->where(['is_app_first' => 1])->group('user_id')->getField('user_id, login_time', true);
         // 用户数据
         $count = M('users')->count();
         $p = ceil($count / 5000);
@@ -755,6 +762,8 @@ class User extends Base
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['user_electronic'] . ' </td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . date('Y-m-d H:i', $val['reg_time']) . '</td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $source[$val['reg_source']] . ' </td>';
+                    $firstLogin = isset($firstAppLogin[$val['user_id']]) ? $firstAppLogin[$val['user_id']] : $val['reg_time'];
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . date('Y-m-d H:i', $firstLogin) . '</td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . date('Y-m-d H:i', $val['last_login']) . '</td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $source[$val['last_login_source']] . ' </td>';
                     $strTable .= '</tr>';
@@ -1541,5 +1550,48 @@ class User extends Base
         $this->assign('user_id', $userId);
         $this->assign('login_log', $loginLog);
         return $this->fetch('login_log');
+    }
+
+    /**
+     * APP首次登陆统计
+     * @return mixed
+     */
+    public function appLoginStatistics()
+    {
+        $count = M('user_login_log')->group('login_date')->count();
+        $page = new Page($count, 10);
+        $loginDate = M('user_login_log')->order('login_date desc')->group('login_date')->limit($page->firstRow . ',' . $page->listRows)->getField('login_date', true);
+        $logList = [];
+        foreach ($loginDate as $date) {
+            $logList[] = [
+                'date' => $date,
+                'count' => M('user_login_log')->where(['login_date' => $date, 'is_app_first' => 1])->group('user_id')->count('id')
+            ];
+        }
+
+        $this->assign('page', $page);
+        $this->assign('list', $logList);
+        return $this->fetch('app_login_statistics');
+    }
+
+    /**
+     * APP首次登陆详情
+     * @return mixed
+     */
+    public function appLoginLog()
+    {
+        $date = I('date');
+        $where = [
+            'login_date' => $date,
+            'is_app_first' => 1
+        ];
+        $count = M('user_login_log')->where($where)->count();
+        $page = new Page($count, 10);
+        $loginList = M('user_login_log')->where($where)->order('login_time desc')->limit($page->firstRow . ',' . $page->listRows)->select();
+
+        $this->assign('date', $date);
+        $this->assign('page', $page);
+        $this->assign('list', $loginList);
+        return $this->fetch('app_login_log');
     }
 }

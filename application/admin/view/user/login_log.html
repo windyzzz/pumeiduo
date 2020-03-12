@@ -33,6 +33,9 @@
 						<th align="left" abbr="ac_id" axis="col4" class="">
 							<div style="text-align: center; width: 100px;" class="">登录来源</div>
 						</th>
+						<th align="left" abbr="ac_id" axis="col4" class="">
+							<div style="text-align: center; width: 100px;" class="">第一次APP登陆</div>
+						</th>
 						<th style="width:100%" axis="col7">
 							<div></div>
 						</th>
@@ -61,6 +64,13 @@
 							</td>
 							<td align="left" class="">
 								<div style="text-align: center; width: 100px;">{$vo.source_desc}</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 100px;">
+									<if condition="$vo.is_app_first == 1">
+										是
+									</if>
+								</div>
 							</td>
 							<td align="" class="" style="width: 100%;">
 								<div>&nbsp;</div>

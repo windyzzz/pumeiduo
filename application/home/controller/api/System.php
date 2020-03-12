@@ -58,46 +58,31 @@ class System
     {
         $type = I('type', '');
         $version = I('version', '');
+        if (!in_array($type, ['ios', 'android'])) {
+            return json(['status' => 0, 'msg' => '类型错误']);
+        }
         if (empty($version)) {
             return json(['status' => 0, 'msg' => '请传入版本号']);
         }
+        // 传入版本
         $version = explode('.', $version);
         $appVersion = '';
         foreach ($version as $item) {
             $appVersion .= $item * 10;
         }
-        switch ($type) {
-            case 'ios':
-                $version = explode('.', tpCache('ios.app_version'));
-                $iosVersion = '';
-                foreach ($version as $item) {
-                    $iosVersion .= $item * 10;
-                }
-                if ($appVersion == $iosVersion) {
-                    $result['state'] = 0;   // 无需更新
-                } else {
-                    $result['state'] = tpCache('ios.is_update') ? (int)tpCache('ios.is_update') : 0;    // 是否需要更新
-                }
-                $result['is_force'] = tpCache('ios.is_force') ? (int)tpCache('ios.is_force') : 0;  // 是否强制更新
-                $result['app_url'] = tpCache('ios.app_path');
-                break;
-            case 'android':
-                $version = explode('.', tpCache('ios.app_version'));
-                $androidVersion = '';
-                foreach ($version as $item) {
-                    $androidVersion .= $item * 10;
-                }
-                if ($appVersion == $androidVersion) {
-                    $result['state'] = 0;   // 无需更新
-                } else {
-                    $result['state'] = tpCache('ios.is_update') ? (int)tpCache('ios.is_update') : 0;    // 是否需要更新
-                }
-                $result['is_force'] = tpCache('android.is_force') ? (int)tpCache('android.is_force') : 0;  // 是否强制更新
-                $result['app_url'] = tpCache('android.app_path');
-                break;
-            default:
-                return json(['status' => 0, 'msg' => '请求类型错误']);
+        // 当前版本
+        $version = explode('.', tpCache($type . '.app_version'));
+        $nowVersion = '';
+        foreach ($version as $item) {
+            $nowVersion .= $item * 10;
         }
+        if ($appVersion == $nowVersion) {
+            $result['state'] = 0;   // 无需更新
+        } else {
+            $result['state'] = tpCache($type . '.is_update') ? (int)tpCache($type . '.is_update') : 0;    // 是否需要更新
+        }
+        $result['is_force'] = tpCache($type . '.is_force') ? (int)tpCache($type . '.is_force') : 0;  // 是否强制更新
+        $result['app_url'] = tpCache($type . '.app_path');
         return json(['status' => 1, 'result' => $result]);
     }
 

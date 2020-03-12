@@ -32,8 +32,11 @@ class CreateUserLoginLog extends Migrator
             ->addColumn('user_id', 'integer', ['comment' => '用户ID'])
             ->addColumn('login_ip', 'string', ['limit' => 30, 'comment' => '登录ip'])
             ->addColumn('login_time', 'integer', ['comment' => '登录时间'])
+            ->addColumn('login_date', 'string', ['limit' => 20, 'comment' => '登录日期'])
             ->addColumn('source', 'integer', ['limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
                 'comment' => '登录来源：1微信 2PC 3APP'])
+            ->addColumn('tinyint', 'integer', ['limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
+                'comment' => '首次APP登陆，0不是 1是'])
             ->create();
     }
 }
