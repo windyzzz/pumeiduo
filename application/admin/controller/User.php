@@ -321,7 +321,7 @@ class User extends Base
         $userList = $model->where($condition)->order($sort_order)->limit($Page->firstRow . ',' . $Page->listRows)->select();
         foreach ($userList as $key => $user) {
             $appFirstLogin = M('user_login_log')->where(['user_id' => $user['user_id'], 'is_app_first' => 1])->value('login_time');
-            $userList[$key]['first_login'] = $appFirstLogin ?? $user['reg_time'];
+            $userList[$key]['first_login'] = $appFirstLogin ?? '';
         }
 
         $user_id_arr = get_arr_column($userList, 'user_id');
@@ -444,6 +444,8 @@ class User extends Base
                 $user_data['type'] = 2;
                 $user_data['bind_time'] = time();
                 $user_data['time_out'] = strtotime('+' . config('REDIS_DAY') . ' days');
+                $user_data['invite_uid'] = $c['invite_uid'];
+                $user_data['invite_time'] = $c['invite_time'];
                 M('Users')->where('user_id', $uid)->update($user_data);
                 // 授权登录
 //                M('OauthUsers')->where('user_id', $merge_uid)->delete();

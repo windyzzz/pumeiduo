@@ -29,8 +29,9 @@ class Finance extends Base
         $end = date('Y-m', strtotime('+1 days'));
         $this->assign('start_time', $begin);
         $this->assign('end_time', $end);
+
         $this->begin = strtotime($begin);
-        $this->end = strtotime($end.'+1 month');
+        $this->end = strtotime($end . '+1 month');
 
         return $this->fetch();
     }
@@ -56,10 +57,10 @@ class Finance extends Base
             // $condition['created_at'] = array('between',"$begin,$end");
         }
 
-        ('' !== I('status')) && $where = "$where and status = ".I('status');
-        ('' !== I('level')) && $where = "$where and level = ".I('level');
+        ('' !== I('status')) && $where = "$where and status = " . I('status');
+        ('' !== I('level')) && $where = "$where and level = " . I('level');
 
-        $cat_id = I('cat_id');
+//        $cat_id = I('cat_id');
 
         $type = I('type');
         if ($type) {
@@ -77,19 +78,27 @@ class Finance extends Base
         if ($user_id) {
             $where = "$where and (user_id = '$user_id')";
         }
-        /**  搜索条件下 分页赋值
-        foreach($condition as $key=>$val) {
-            $Page->parameter[$key]   =   urlencode($val);
-        }
-         */
-        // dump($where);
-        // exit;
+//        // 搜索条件下 分页赋值
+//        foreach ($condition as $key => $val) {
+//            $Page->parameter[$key] = urlencode($val);
+//        }
         $count = M('CommissionLog')->where($where)->count();
         $Page = new AjaxPage($count, 20);
 
         $show = $Page->show();
 
-        $list = M('CommissionLog')->where($where)->limit($Page->firstRow.','.$Page->listRows)->order('id desc')->select();
+        $list = M('CommissionLog')->where($where)->limit($Page->firstRow . ',' . $Page->listRows)->order('id desc')->select();
+        foreach ($list as $k => $v) {
+            // VIP套组分享奖励金额
+            $vipProfit = M('account_log')->where([
+                'user_money' => ['>', 0],
+                'change_time' => ['BETWEEN', [$v['create_time'], strtotime(date('Y-m-d 23:59:59', $v['create_time']))]],
+                'type' => 14
+            ])->sum('user_money');
+            $list[$k]['total_amount'] = bcadd($list[$k]['total_amount'], $vipProfit, 2);
+            $list[$k]['real_amount'] = bcadd($list[$k]['real_amount'], $vipProfit, 2);
+            $list[$k]['sale_free'] = bcadd($list[$k]['sale_free'], $vipProfit, 2);
+        }
 
         $this->assign('list', $list);
         $this->assign('page', $show); // 赋值分页输出
@@ -110,10 +119,10 @@ class Finance extends Base
             // $condition['created_at'] = array('between',"$begin,$end");
         }
 
-        ('' !== I('status')) && $where = "$where and status = ".I('status');
-        ('' !== I('level')) && $where = "$where and level = ".I('level');
+        ('' !== I('status')) && $where = "$where and status = " . I('status');
+        ('' !== I('level')) && $where = "$where and level = " . I('level');
 
-        $cat_id = I('cat_id');
+//        $cat_id = I('cat_id');
 
         $type = I('type');
         if ($type) {
@@ -160,13 +169,13 @@ class Finance extends Base
                     $finished_at = $val['finished_at'];
                 }
                 $strTable .= '<tr>';
-                $strTable .= '<td style="text-align:center;font-size:12px">'.exchangeDate($val['create_time']).'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['total_amount'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['real_amount'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.commission_type($val['status']).'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['order_num'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['sale_free'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['shop_free'].'</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px">' . exchangeDate($val['create_time']) . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['total_amount'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['real_amount'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . commission_type($val['status']) . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['order_num'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['sale_free'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['shop_free'] . '</td>';
                 $strTable .= '</tr>';
             }
         }
@@ -243,7 +252,7 @@ class Finance extends Base
             ->alias('a')
             ->join('__USERS__ u', 'a.user_id = u.user_id', 'left')
             ->where($map)->order('log_id desc')
-            ->limit($Page->firstRow.','.$Page->listRows)
+            ->limit($Page->firstRow . ',' . $Page->listRows)
             ->having($having)
             ->select();
 
@@ -272,14 +281,14 @@ class Finance extends Base
                     $finished_at = date('Y-m-d H:i:s', $val['change_time']);
 
                     $strTable .= '<tr>';
-                    $strTable .= '<td style="text-align:center;font-size:12px">&nbsp;'.$val['user_id'].'</td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['user_name'].' </td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['desc'].'</td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['user_money'].'</td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['pay_points'].'</td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['user_electronic'].'</td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">&nbsp;'.$val['order_sn'].'</td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">'.$finished_at.'</td>';
+                    $strTable .= '<td style="text-align:center;font-size:12px">&nbsp;' . $val['user_id'] . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['user_name'] . ' </td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['desc'] . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['user_money'] . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['pay_points'] . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['user_electronic'] . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">&nbsp;' . $val['order_sn'] . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $finished_at . '</td>';
                     $strTable .= '</tr>';
                 }
             }
