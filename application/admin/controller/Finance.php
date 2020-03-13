@@ -66,6 +66,7 @@ class Finance extends Base
         if ($type) {
             $where = "$where and type = '$type'";
         } else {
+            $type = 'd';
             $where = "$where and type = 'd'";
         }
 
@@ -89,12 +90,27 @@ class Finance extends Base
 
         $list = M('CommissionLog')->where($where)->limit($Page->firstRow . ',' . $Page->listRows)->order('id desc')->select();
         foreach ($list as $k => $v) {
+            switch ($type) {
+                case 'd':
+                    $startDate = $v['create_time'];
+                    $endDate = strtotime(date('Y-m-d 23:59:59', $v['create_time']));
+                    break;
+                case 'm':
+                    $endDate = $v['create_time'];
+                    $startDate = strtotime(date('Y-m-t 23:59:59', strtotime(date('Y-m-01 H:i:s', $endDate) . ' -1 month')));
+                    break;
+                case 'y':
+                    $endDate = $v['create_time'];
+                    $startDate = strtotime(date('Y-12-31 23:59:59', strtotime(date('Y-m-d H:i:s', $endDate) . ' -1 year')));
+                    break;
+            }
             // VIP套组分享奖励金额
             $vipProfit = M('account_log')->where([
                 'user_money' => ['>', 0],
-                'change_time' => ['BETWEEN', [$v['create_time'], strtotime(date('Y-m-d 23:59:59', $v['create_time']))]],
+                'change_time' => ['BETWEEN', [$startDate, $endDate]],
                 'type' => 14
             ])->sum('user_money');
+
             $list[$k]['total_amount'] = bcadd($list[$k]['total_amount'], $vipProfit, 2);
             $list[$k]['real_amount'] = bcadd($list[$k]['real_amount'], $vipProfit, 2);
             $list[$k]['sale_free'] = bcadd($list[$k]['sale_free'], $vipProfit, 2);

@@ -100,9 +100,9 @@ class Order extends Model
         $province = Region2::where(['id' => $data['province']])->value('name');
         $city = Region2::where(['id' => $data['city']])->value('name');
         $district = Region2::where(['id' => $data['district']])->value('name');
-        $adderss = $province.'，'.$city.'，'.$district.'，'.$data['address'];
+        $address = $province . '，' . $city . '，' . $district . '，' . $data['address'];
 
-        return $adderss;
+        return $address;
     }
 
     public function teamFound()
@@ -169,7 +169,7 @@ class Order extends Model
         } elseif (3 == $os || 5 == $os) {
             $btn['remove'] = '移除';
         }
-        if (5 != $os && $ps==0) {
+        if (5 != $os && $ps == 0) {
             $btn['invalid'] = '无效';
         }
 
@@ -303,7 +303,7 @@ class Order extends Model
         $address = '';
         if ($regions) {
             foreach ($regions as $regionKey => $regionVal) {
-                $address = $regionVal['name'].$address;
+                $address = $regionVal['name'] . $address;
             }
         }
 

@@ -71,13 +71,36 @@ class CheckAuth
                         }
                     }
                 }
-
                 exit(json_encode(['status' => -1, 'msg' => '你还没有登录呢', 'result' => $return]));
             }
             // 公众号用户
             $oauth_users = Db::name('oauth_users')->where(['user_id' => $session_user['user_id']])->find();
             empty($oauth_users) && $oauth_users = [];
             // 合并信息
+            if ($invite > 0) {
+                $userInvite = M('users')->where(['user_id' => $session_user['user_id']])->field('first_leader, invite_uid')->find();
+                if ($userInvite['first_leader'] == 0 && $userInvite['invite_uid'] == 0) {
+                    // 用户还未设置邀请人
+                    $first_leader = Db::name('users')->where("user_id = {$invite}")->find();
+                    $map['first_leader'] = $first_leader['user_id'];
+                    $map['second_leader'] = $first_leader['first_leader']; // 第一级推荐人
+                    $map['third_leader'] = $first_leader['second_leader']; // 第二级推荐人
+
+                    // 他上线分销的下线人数要加1
+                    Db::name('users')->where(['user_id' => $map['first_leader']])->setInc('underling_number');
+                    Db::name('users')->where(['user_id' => $map['second_leader']])->setInc('underling_number');
+                    Db::name('users')->where(['user_id' => $map['third_leader']])->setInc('underling_number');
+
+                    // 邀请送积分
+                    $invite_integral = tpCache('basic.invite_integral');
+                    accountLog($invite, 0, $invite_integral, '邀请用户奖励积分', 0, 0, '', 0, 7, false);
+
+                    $map['invite_uid'] = $invite;
+                    $map['invite_time'] = time();
+                    M('users')->where(['user_id' => $session_user['user_id']])->update($map);
+                    $session_user = M('users')->where(['user_id' => $session_user['user_id']])->find();
+                }
+            }
             $user = array_merge($session_user, $oauth_users);
             session('user', $user);
             $this->redis->set('user_' . $session_user['token'], $user, config('REDIS_TIME'));
@@ -113,11 +136,8 @@ class CheckAuth
                         exit(json_encode(['status' => -1, 'msg' => '你还没有登录呢', 'result' => $wxuser]));
                     }
                     $wxuser = $wxuser['result'];
-
                     $logic = new UsersLogic();
-
                     $data = $logic->thirdLogin($wxuser, 1);
-
                     if (1 == $data['status']) {
                         $logic->afterLogin($data['result'], 1);
 

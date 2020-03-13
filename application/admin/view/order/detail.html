@@ -180,6 +180,9 @@
                             <dt>用户留言：</dt>
                             <dd>{$order.user_note|default=''}</dd>
                         </dl>
+                        <dl>
+                            <a class="ncap-btn-big ncap-btn-green" href="{:U('Order/editAddress', array('order_id' => $order.order_id))}">修改地址</a>
+                        </dl>
                     </div>
                     <div class="goods-info">
                         <h4>商品信息</h4>

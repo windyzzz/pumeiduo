@@ -71,7 +71,6 @@ class DistributLogic
                 $data = array_merge($rebate_info, $data);
                 M('rebate_log')->add($data);
             }
-
         } else {
 
             // $user_distributs = M('users')

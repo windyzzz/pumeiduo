@@ -29,7 +29,7 @@ class UpdateFlashSale extends Migrator
     public function change()
     {
         $this->table('flash_sale')
-            ->addColumn('source', 'integer', ['default' => 1, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'comment' => '来源：1H5 2PC 3APP'])
+            ->addColumn('source', 'string', ['limit' => 10, 'default' => '1', 'comment' => '展示地方：1H5 2PC 3APP'])
             ->update();
     }
 }

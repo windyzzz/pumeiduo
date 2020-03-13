@@ -202,7 +202,7 @@ return [
     ]],
 
     'statistics' => ['name' => '统计', 'child' => [
-        ['name' => '销售金额结算', 'child' => [
+        ['name' => '销售结算', 'child' => [
             ['name' => '系统日度计算', 'act' => 'index', 'op' => 'Report'],
             ['name' => '系统月度计算', 'act' => 'indexMonth', 'op' => 'Report'],
             ['name' => '系统年度计算', 'act' => 'indexYear', 'op' => 'Report'],

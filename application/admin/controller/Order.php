@@ -1944,4 +1944,34 @@ class Order extends Base
             $this->ajaxReturn(['status' => -1, 'msg' => '删除失败', 'url' => '']);
         }
     }
+
+
+    public function editAddress()
+    {
+        $orderId = I('order_id');
+        if (request()->isPost()) {
+
+        }
+        // 订单地址
+        $orderAddress = M('order o')
+            ->join('region2 r1', 'r1.id = o.province')
+            ->join('region2 r2', 'r2.id = o.city')
+            ->join('region2 r3', 'r3.id = o.district')
+            ->where(['order_id' => $orderId])
+            ->field('o.order_id, o.province, o.city, o.district, r1.name province_name, r2.name city_name, r3.name district_name, 
+            o.address, o.zipcode, o.mobile, o.consignee')
+            ->find();
+        // 省数据
+        $province = M('region2')->where(['level' => 0])->select();
+        // 市数据
+        $city = M('region2')->where(['parent_id' => $orderAddress['province']])->select();
+        // 区数据
+        $district = M('region2')->where(['parent_id' => $orderAddress['city']])->select();
+
+        $this->assign('order', $orderAddress);
+        $this->assign('province', $province);
+        $this->assign('city', $city);
+        $this->assign('district', $district);
+        return $this->fetch('edit_address');
+    }
 }

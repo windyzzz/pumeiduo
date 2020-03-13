@@ -71,7 +71,7 @@ class Index
         $where = [
             'fl.start_time' => ['elt', $now],
             'fl.end_time' => ['egt', $now],
-            'fl.source' => ['neq', 3],
+            'fl.source' => ['LIKE', '%' . 1 . '%'],
             'g.is_on_sale' => 1,
         ];
         $FlashSale = new FlashSale();

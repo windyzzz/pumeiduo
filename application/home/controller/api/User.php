@@ -1335,6 +1335,8 @@ class User extends Base
                 $invite_integral = tpCache('basic.invite_integral');
                 accountLog($will_invite_uid, 0, $invite_integral, '邀请用户奖励积分', 0, 0, '', 0, 7, false);
 
+                $data['invite_time'] = time();
+
                 M('Users')->where('user_id', $this->user_id)->save($data);
 
                 // 邀请任务
@@ -1928,6 +1930,8 @@ class User extends Base
         $user_data['type'] = 2;
         $user_data['bind_time'] = time();
         $user_data['time_out'] = strtotime('+' . config('REDIS_DAY') . ' days');
+        $user_data['invite_uid'] = $current_user['invite_uid'];
+        $user_data['invite_time'] = $current_user['invite_time'];
         M('Users')->where('user_id', $bind_user['user_id'])->update($user_data);
         // 授权登录
         M('OauthUsers')->where('user_id', $bind_user['user_id'])->delete();
@@ -1940,7 +1944,7 @@ class User extends Base
         $payPoints = M('AccountLog')
             ->where('user_id', $current_user['user_id'])
             ->where('pay_points', 'gt', 0)
-            ->where('type', 'neq', 6)   // 不要注册积分
+            ->where('type', 'neq', 6)// 不要注册积分
             ->sum('pay_points');
         if ($payPoints > 0) {
             accountLog($bind_user['user_id'], 0, $payPoints, '账号合并积分', 0, 0, '', 0, 11, false);
@@ -1964,18 +1968,21 @@ class User extends Base
         // 订单
         M('Order')->where('user_id', $current_user['user_id'])->update(array('user_id' => $bind_user['user_id']));
         M('OrderAction')->where('action_user', $current_user['user_id'])->update(array('action_user' => $bind_user['user_id']));
+        // 快递
+        M('DeliveryDoc')->where('user_id', $current_user['user_id'])->update(array('user_id' => $bind_user['user_id']));
+        // 退换货
+        M('ReturnGoods')->where('user_id', $current_user['user_id'])->update(array('user_id' => $bind_user['user_id']));
+        // 提成记录
+        M('RebateLog')->where('user_id', $current_user['user_id'])->update(array('user_id' => $bind_user['user_id']));
+        M('RebateLog')->where('buy_user_id', $current_user['user_id'])->update(array('buy_user_id' => $bind_user['user_id']));
 
         // 迁移数据
         // M('AccountLog')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
         // M('Cart')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
         // M('UserAddress')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
-        // M('DeliveryDoc')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
         // M('GoodsCollect')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
         // M('GoodsVisit')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
-        // M('RebateLog')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
-        // M('RebateLog')->where('buy_user_id',$this->user_id)->update(array('buy_user_id'=>$bind_user['user_id']));
         // M('Recharge')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
-        // M('ReturnGoods')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
         // M('UserSign')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
         // M('UserStore')->where('user_id',$this->user_id)->update(array('user_id'=>$bind_user['user_id']));
         // M('couponList')->where('uid',$this->user_id)->update(array('uid'=>$bind_user['user_id']));

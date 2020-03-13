@@ -1066,12 +1066,12 @@ class Goods extends Base
         $where = [
             'fs.start_time' => ['<=', time()],
             'fs.end_time' => ['>=', time()],
-            'fs.is_end' => 0
+//            'fs.is_end' => 0
         ];
         if ($this->isApp) {
-            $where['fs.source'] = 3;
+            $where['fs.source'] = ['LIKE', '%' . 3 . '%'];
         } else {
-            $where['fs.source'] = ['neq', 3];
+            $where['fs.source'] = ['LIKE', '%' . 1 . '%'];
         }
         // 秒杀商品ID
         $filter_goods_id = Db::name('flash_sale fs')->join('goods g', 'g.goods_id = fs.goods_id')

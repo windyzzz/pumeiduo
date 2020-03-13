@@ -63,6 +63,11 @@ class FlashSale extends Model
     public function getSourceDescAttr($value, $data)
     {
         $source = ['1' => 'H5(PC)', '2' => 'PC', '3' => 'APP'];
-        return $source[$data['source']];
+        $promSource = explode(',', $data['source']);
+        $return = '';
+        foreach ($promSource as $v) {
+            $return .= $source[$v] . '，';
+        }
+        return rtrim($return, '，');
     }
 }

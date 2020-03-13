@@ -13,6 +13,7 @@ namespace app\admin\controller;
 
 use app\admin\logic\GoodsLogic;
 use app\admin\model\Goods;
+use app\common\model\Popup as PopupModel;
 use think\Db;
 use think\Page;
 
@@ -58,7 +59,7 @@ class Ad extends Base
 
     public function adList()
     {
-        delFile(RUNTIME_PATH.'html'); // 先清除缓存, 否则不好预览
+        delFile(RUNTIME_PATH . 'html'); // 先清除缓存, 否则不好预览
 
         $Ad = M('ad');
         $pid = I('pid', 0);
@@ -68,11 +69,11 @@ class Ad extends Base
         }
         $keywords = I('keywords/s', false, 'trim');
         if ($keywords) {
-            $where['ad_name'] = ['like', '%'.$keywords.'%'];
+            $where['ad_name'] = ['like', '%' . $keywords . '%'];
         }
         $count = $Ad->where($where)->count(); // 查询满足要求的总记录数
         $Page = $pager = new Page($count, 10); // 实例化分页类 传入总记录数和每页显示的记录数
-        $res = $Ad->where($where)->order('pid desc')->limit($Page->firstRow.','.$Page->listRows)->select();
+        $res = $Ad->where($where)->order('pid desc')->limit($Page->firstRow . ',' . $Page->listRows)->select();
         $list = [];
         if ($res) {
             $media = ['图片', '文字', 'flash'];
@@ -90,7 +91,7 @@ class Ad extends Base
         $this->assign('pager', $pager);
 
         //判断API模块存在
-        if (is_dir(APP_PATH.'/api')) {
+        if (is_dir(APP_PATH . '/api')) {
             $this->assign('is_exists_api', 1);
         }
 
@@ -115,7 +116,7 @@ class Ad extends Base
     {
         $count = Db::name('ad_position')->count(); // 查询满足要求的总记录数
         $Page = $pager = new Page($count, 10); // 实例化分页类 传入总记录数和每页显示的记录数
-        $list = Db::name('ad_position')->order('position_id DESC')->limit($Page->firstRow.','.$Page->listRows)->select();
+        $list = Db::name('ad_position')->order('position_id DESC')->limit($Page->firstRow . ',' . $Page->listRows)->select();
         $show = $Page->show();
         $this->assign('list', $list);
         $this->assign('page', $show);
@@ -134,7 +135,7 @@ class Ad extends Base
         if (3 == $media_type) {//商品
             $data['ad_link'] = $data['goods_id'];
         } elseif (4 == $media_type) {//分类
-            $data['ad_link'] = $data['cat_id1'].'_'.$data['cat_id2'].'_'.$data['cat_id3'];
+            $data['ad_link'] = $data['cat_id1'] . '_' . $data['cat_id2'] . '_' . $data['cat_id3'];
         }
 
         if ('add' == $data['act']) {
@@ -154,7 +155,7 @@ class Ad extends Base
         }
         $referurl = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : U('Admin/Ad/adList');
         // 不管是添加还是修改广告 都清除一下缓存
-        delFile(RUNTIME_PATH.'html'); // 先清除缓存, 否则不好预览
+        delFile(RUNTIME_PATH . 'html'); // 先清除缓存, 否则不好预览
         \think\Cache::clear();
         if ($r) {
             $redirect_url = session('ad_request_url');
@@ -234,7 +235,7 @@ class Ad extends Base
         }
         if ($keywords) {
             $this->assign('keywords', $keywords);
-            $where['goods_name|keywords'] = ['like', '%'.$keywords.'%'];
+            $where['goods_name|keywords'] = ['like', '%' . $keywords . '%'];
         }
         if ($intro) {
             $where[I('intro')] = 1;
@@ -242,7 +243,7 @@ class Ad extends Base
         $Goods = new Goods();
         $count = $Goods->where($where)->count();
         $Page = new Page($count, 10);
-        $goodsList = $Goods->where($where)->order('goods_id DESC')->limit($Page->firstRow.','.$Page->listRows)->select();
+        $goodsList = $Goods->where($where)->order('goods_id DESC')->limit($Page->firstRow . ',' . $Page->listRows)->select();
         $show = $Page->show(); //分页显示输出
         $this->assign('page', $show); //赋值分页输出
         $this->assign('goodsList', $goodsList);
@@ -280,7 +281,30 @@ class Ad extends Base
         $request_url = urldecode($request_url);
         $request_url = U($request_url, ['edit_ad' => 1, 'img_url' => $img_url, 'pid' => $pid]);
 
-        echo "<script>location.href='".$request_url."';</script>";
+        echo "<script>location.href='" . $request_url . "';</script>";
         exit;
+    }
+
+    /**
+     * 活动弹窗列表
+     * @return mixed
+     */
+    public function popupList()
+    {
+        $where = [];
+        $selectPopupType = I('popup_type', 0);
+        if ($selectPopupType) {
+            $where['type'] = $selectPopupType;
+        }
+        $popup = new PopupModel();
+        $count = $popup->count('id');
+        $page = new Page($count, 10);
+        $popupList = $popup->where($where)->order('sort desc, end_time asc')->limit($page->firstRow . ',' . $page->listRows)->select();
+
+        $this->assign('page', $page);
+        $this->assign('select_popup_type', $selectPopupType);
+        $this->assign('popup_type', $popup->getType());
+        $this->assign('list', $popupList);
+        return $this->fetch('popup_list');
     }
 }

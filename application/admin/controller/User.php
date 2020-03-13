@@ -485,6 +485,13 @@ class User extends Base
                 // 订单
                 M('Order')->where('user_id', $merge_uid)->update(array('user_id' => $uid));
                 M('OrderAction')->where('action_user', $merge_uid)->update(array('action_user' => $uid));
+                // 快递
+                M('DeliveryDoc')->where('user_id', $merge_uid)->update(array('user_id' => $uid));
+                // 退换货
+                M('ReturnGoods')->where('user_id', $merge_uid)->update(array('user_id' => $uid));
+                // 提成记录
+                M('RebateLog')->where('user_id', $merge_uid)->update(array('user_id' => $uid));
+                M('RebateLog')->where('buy_user_id', $merge_uid)->update(array('buy_user_id' => $uid));
                 // 冻结报单系统用户
                 M('users')->where(['user_id' => $merge_uid])->save(['is_lock' => 1]);
                 // 绑定记录
@@ -728,7 +735,7 @@ class User extends Base
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">注册时间</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">注册来源</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">首次登陆时间</td>';
-        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">最后登陆时间</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">最后登陆APP时间</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">最后登陆来源</td>';
         $strTable .= '</tr>';
 

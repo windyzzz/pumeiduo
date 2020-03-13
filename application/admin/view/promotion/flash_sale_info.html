@@ -26,10 +26,8 @@
                     <label><em>*</em>展示地方</label>
                 </dt>
                 <dd class="opt">
-                    <select name="source">
-                        <option value="1" <if condition="$info[source] eq 1">selected</if>>H5</option>
-                        <option value="3" <if condition="$info[source] eq 3">selected</if>>APP</option>
-                    </select>
+                    <input name="source[]" type="checkbox" value="1" <if condition="isset($info[source]) && in_array(1, $info[source])">checked</if>><label>H5</label>
+                    <input name="source[]" type="checkbox" value="3" <if condition="isset($info[source]) && in_array(3, $info[source])">checked</if>><label>APP</label>
                     <p class="notic">请选择展示地方</p>
                 </dd>
             </dl>

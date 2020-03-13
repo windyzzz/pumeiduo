@@ -785,6 +785,10 @@ class Promotion extends Base
     {
         if (IS_POST) {
             $data = I('post.');
+            if (empty($data['source'])) {
+                $this->ajaxReturn(['status' => 0, 'msg' => '请选择展示地方']);
+            }
+            $data['source'] = implode(',', $data['source']);
             $data['can_integral'] = isset($data['can_integral']) ? 1 : 0;
             $data['start_time'] = strtotime($data['start_time']);
             $data['end_time'] = strtotime($data['end_time']);
@@ -852,6 +856,7 @@ class Promotion extends Base
             $info = $FlashSale->with('specGoodsPrice,goods')->find($id);
             $info['start_time'] = date('Y-m-d H:i', $info['start_time']);
             $info['end_time'] = date('Y-m-d H:i', $info['end_time']);
+            $info['source'] = explode(',', $info['source']);
         }
         $this->assign('info', $info);
         $this->assign('min_date', date('Y-m-d'));

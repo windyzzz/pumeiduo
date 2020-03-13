@@ -1,0 +1,93 @@
+<include file="public/layout"/>
+<style>
+    .ncap-form-default input {
+        text-align: center;
+    }
+</style>
+<body style="background-color: #FFF; overflow: auto;">
+<div id="toolTipLayer"
+     style="position: absolute; z-index: 9999; display: none; visibility: visible; left: 95px; top: 573px;"></div>
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title"><a class="back" href="javascript:history.back();" title="返回列表"><i
+                class="fa fa-arrow-circle-o-left"></i></a>
+            <div class="subject">
+                <h3>订单地址</h3>
+                <h5>修改订单地址</h5>
+            </div>
+        </div>
+    </div>
+    <form class="form-horizontal" id="handleposition" method="post">
+        <input type="hidden" name="id" value="{$order.order_id}"/>
+        <div class="ncap-form-default">
+            <dl class="row">
+                <dt class="tit">
+                    <label>收货人</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="consignee" value="{$order.consignee}" class="input-txt">
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>联系方式</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="mobile" value="{$order.mobile}" class="input-txt">
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>地址-省</label>
+                </dt>
+                <dd class="opt">
+                    <select name="province" onchange="get_city(this)" class="valid">
+                        <volist name="province" id="v">
+                            <option value="{$v.id}" <if condition="$v.id == $order.province">selected</if>>{$v.name}</option>
+                        </volist>
+                    </select>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>地址-市</label>
+                </dt>
+                <dd class="opt">
+                    <select name="city" id="city" onchange="get_area(this)" class="valid">
+                        <volist name="city" id="v">
+                            <option value="{$v.id}" <if condition="$v.id == $order.city">selected</if>>{$v.name}</option>
+                        </volist>
+                    </select>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>地址-区</label>
+                </dt>
+                <dd class="opt">
+                    <select name="district" id="district" onchange="" class="valid">
+                        <volist name="district" id="v">
+                            <option value="{$v.id}" <if condition="$v.id == $order.district">selected</if>>{$v.name}</option>
+                        </volist>
+                    </select>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>收货地址</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="address" value="{$order.address}" class="input-txt">
+                </dd>
+            </dl>
+            <div class="bot"><a onclick="editAddress();" class="ncap-btn-big ncap-btn-green">确认修改</a></div>
+        </div>
+    </form>
+</div>
+<script type="text/javascript">
+
+</script>
+</body>
+</html>

@@ -83,6 +83,9 @@ class System
         }
         $result['is_force'] = tpCache($type . '.is_force') ? (int)tpCache($type . '.is_force') : 0;  // 是否强制更新
         $result['app_url'] = tpCache($type . '.app_path');
+        if ($type == 'ios') {
+            $result['target_version'] = tpCache($type . '.app_version');
+        }
         return json(['status' => 1, 'result' => $result]);
     }
 
