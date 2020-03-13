@@ -999,7 +999,7 @@ class UsersLogic extends Model
                     }
                     $current_user = M('Users')->where(['user_id' => $oauthUser['user_id']])->find();
                     if (2 == $current_user['type']) {
-                        return json(['status' => 0, 'msg' => '老用户无法继续绑定', 'result' => null]);
+                        return json(['status' => 0, 'msg' => '老用户无法继续绑定']);
                     }
                     if ($current_user['bind_uid'] > 0) {
                         return json(['status' => 0, 'msg' => '不能再绑定其他旧账号了']);
@@ -1010,7 +1010,7 @@ class UsersLogic extends Model
                     }
                     $bind_user = M('Users')->where(['user_id' => $userId])->find();
                     if ($bind_user['bind_uid'] > 0) {
-                        return json(['status' => -1, 'msg' => '该旧账号已经绑定！']);
+                        return json(['status' => -1, 'msg' => '手机账号已经绑定！']);
                     }
                     $this->setUserId($current_user['user_id']);
                     if ($this->_hasRelationship($bind_user['user_id'])) {
