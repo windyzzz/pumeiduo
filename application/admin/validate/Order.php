@@ -17,7 +17,24 @@ class Order extends Validate
 {
     // 验证规则
     protected $rule = [
-        ['consignee', 'require', '收货人称必须填写'],
-        ['address', 'require', '地址必须填写'],
+        ['consignee', 'require'],
+        ['mobile', 'require'],
+        ['address', 'require'],
+        ['province', 'number|gt:0'],
+        ['city', 'number|gt:0'],
+        ['district', 'number|gt:0'],
+    ];
+
+    // 错误信息
+    protected $message = [
+        'consignee.require' => '收货人称必须填写',
+        'mobile.require' => '联系方式必须填写',
+        'address.require' => '地址必须填写',
+        'province.number' => '必须选择省',
+        'province.gt' => '必须选择省',
+        'city.number' => '必须选择市',
+        'city.gt' => '必须选择市',
+        'district.number' => '必须选择区',
+        'district.gt' => '必须选择区',
     ];
 }

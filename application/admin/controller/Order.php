@@ -1945,12 +1945,41 @@ class Order extends Base
         }
     }
 
-
+    /**
+     * 修改订单地址
+     * @return mixed
+     */
     public function editAddress()
     {
         $orderId = I('order_id');
+        $order = M('order')->where(['order_id' => $orderId])->field('order_status, shipping_status')->find();
         if (request()->isPost()) {
-
+            $data = I('post.');
+            // 数据验证
+            $validate = \think\Loader::validate('Order');
+            if (!$validate->batch()->check($data)) {
+                $error = $validate->getError();
+                $error_msg = array_values($error);
+                $return_arr = [
+                    'status' => -1,
+                    'msg' => $error_msg[0],
+                    'data' => $error,
+                ];
+                $this->ajaxReturn($return_arr);
+            }
+            if (!in_array($order['order_status'], [0, 1])) {
+                $this->ajaxReturn(['status' => -1, 'msg' => '订单已确认不能修改地址']);
+            }
+            if ($order['shipping_status'] != 0) {
+                $this->ajaxReturn(['status' => -1, 'msg' => '订单已发货不能修改地址']);
+            }
+            // 更新数据
+            M('order')->where(['order_id' => $orderId])->update($data);
+            // 订单操作记录
+            $orderLogic = new OrderLogic();
+            $convert_action = C('CONVERT_ACTION')['edit_address'];
+            $orderLogic->orderActionLog($orderId, $convert_action, I('note'));
+            $this->ajaxReturn(['status' => 1, 'msg' => '修改完成']);
         }
         // 订单地址
         $orderAddress = M('order o')

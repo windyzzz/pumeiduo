@@ -181,7 +181,9 @@
                             <dd>{$order.user_note|default=''}</dd>
                         </dl>
                         <dl>
-                            <a class="ncap-btn-big ncap-btn-green" href="{:U('Order/editAddress', array('order_id' => $order.order_id))}">修改地址</a>
+                            <if condition="in_array($order.order_status, [0, 1]) && $order.shipping_status == 0">
+                                <a class="ncap-btn-big ncap-btn-green" href="{:U('Order/editAddress', array('order_id' => $order.order_id))}">修改地址</a>
+                            </if>
                         </dl>
                     </div>
                     <div class="goods-info">

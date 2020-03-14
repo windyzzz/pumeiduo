@@ -19,15 +19,15 @@
             </div>
         </div>
     </div>
-    <form class="form-horizontal" id="handleposition" method="post">
-        <input type="hidden" name="id" value="{$order.order_id}"/>
+    <form class="form-horizontal" id="form" method="post">
+        <input type="hidden" name="order_id" value="{$order.order_id}"/>
         <div class="ncap-form-default">
             <dl class="row">
                 <dt class="tit">
                     <label>收货人</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" name="consignee" value="{$order.consignee}" class="input-txt">
+                    <input type="text" name="consignee" value="{$order.consignee}" class="input-txt" onkeyup="this.value=this.value.replace(/\s+/g,'')">
                 </dd>
             </dl>
             <dl class="row">
@@ -35,7 +35,7 @@
                     <label>联系方式</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" name="mobile" value="{$order.mobile}" class="input-txt">
+                    <input type="text" name="mobile" value="{$order.mobile}" class="input-txt" oninput ="value=value.replace(/[^\d]/g,'')">
                 </dd>
             </dl>
             <dl class="row">
@@ -45,7 +45,7 @@
                 <dd class="opt">
                     <select name="province" onchange="get_city(this)" class="valid">
                         <volist name="province" id="v">
-                            <option value="{$v.id}" <if condition="$v.id == $order.province">selected</if>>{$v.name}</option>
+                            <option value="{$v.id}"<if condition="$v.id == $order.province">selected</if>>{$v.name}</option>
                         </volist>
                     </select>
                 </dd>
@@ -57,7 +57,7 @@
                 <dd class="opt">
                     <select name="city" id="city" onchange="get_area(this)" class="valid">
                         <volist name="city" id="v">
-                            <option value="{$v.id}" <if condition="$v.id == $order.city">selected</if>>{$v.name}</option>
+                            <option value="{$v.id}"<if condition="$v.id == $order.city">selected</if>>{$v.name}</option>
                         </volist>
                     </select>
                 </dd>
@@ -69,7 +69,7 @@
                 <dd class="opt">
                     <select name="district" id="district" onchange="" class="valid">
                         <volist name="district" id="v">
-                            <option value="{$v.id}" <if condition="$v.id == $order.district">selected</if>>{$v.name}</option>
+                            <option value="{$v.id}"<if condition="$v.id == $order.district">selected</if>>{$v.name}</option>
                         </volist>
                     </select>
                 </dd>
@@ -79,7 +79,7 @@
                     <label>收货地址</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" name="address" value="{$order.address}" class="input-txt">
+                    <input type="text" name="address" value="{$order.address}" class="input-txt" onkeyup="this.value=this.value.replace(/\s+/g,'')">
                 </dd>
             </dl>
             <div class="bot"><a onclick="editAddress();" class="ncap-btn-big ncap-btn-green">确认修改</a></div>
@@ -87,7 +87,36 @@
     </form>
 </div>
 <script type="text/javascript">
-
+    function editAddress() {
+        layer.confirm('确认修改？', {btn: ['确定', '取消']}, function () {
+            // 确定
+            $.ajax({
+                type: "POST",
+                url: "{:U('Admin/Order/editAddress')}",
+                data: $('#form').serialize(),
+                async: false,
+                dataType: "json",
+                error: function () {
+                    layer.alert("服务器繁忙, 请联系管理员!");
+                },
+                success: function (data) {
+                    if (data.status == 1) {
+                        layer.msg(data.msg, {
+                            icon: 1,
+                            time: 1000
+                        }, function () {
+                            location.href = "{:U('Admin/Order/detail', array('order_id' => $order['order_id']))}";
+                        });
+                    } else {
+                        layer.msg(data.msg, {icon: 2, time: 3000});
+                    }
+                }
+            });
+        }, function (index) {
+            // 取消
+            layer.close(index);
+        });
+    }
 </script>
 </body>
 </html>

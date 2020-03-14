@@ -421,6 +421,7 @@ return [
         'remove' => '删除订单',
         'delivery' => '确认发货',
         'delivery_confirm' => '确认收货',
+        'edit_address' => '修改订单地址'
     ],
     'WITHDRAW_STATUS' => [
         '-2' => '删除作废',
