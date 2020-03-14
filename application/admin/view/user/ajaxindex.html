@@ -7,7 +7,7 @@
                     <div style="text-align: center; width: 180px; max-width:250px;">
                         <a class="btn blue" href="{:U('Admin/user/detail',array('id'=>$list['user_id']))}"><i class="fa fa-pencil-square-o"></i>详情</a>
                         <a class="btn blue" href="{:U('Admin/user/account_log',array('id'=>$list['user_id']))}"><i class="fa fa-search"></i>资金</a>
-                        <a class="btn blue" onclick="delfun(this)" data-url="{:U('Admin/user/delete',array('id'=>$list['user_id']))}"><i class="fa fa-steam"></i>删除</a>
+                        <a class="btn blue" onclick="delfun(this)" data-url="{:U('Admin/user/cancel',array('id'=>$list['user_id']))}"><i class="fa fa-steam"></i>删除</a>
                     </div>
                 </td>
                 <td class="sign">
@@ -111,7 +111,7 @@
     });
     function delfun(obj) {
         // 删除按钮
-        layer.confirm('确认删除？', {
+        layer.confirm('确认注销用户？', {
             btn: ['确定', '取消'] //按钮
         }, function () {
             $.ajax({
@@ -122,7 +122,7 @@
                 success: function (data) {
                     layer.closeAll();
                     if (data.status == 1) {
-                        $(obj).parent().parent().parent().remove();
+                        // $(obj).parent().parent().parent().remove();
                         layer.alert(data.msg, {icon: 1});
                     } else {
                         layer.alert(data.msg, {icon: 2});

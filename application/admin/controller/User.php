@@ -816,6 +816,31 @@ class User extends Base
     }
 
     /**
+     * 注销会员
+     * @return \think\response\Json
+     */
+    public function cancel()
+    {
+        $uid = I('get.id');
+        $oldData = M('users')->where('user_id', $uid)->find();
+        // 注销会员
+        M('users')->where(['user_id' => $uid])->update(['is_cancel' => 1]);
+        M('oauth_users')->where(['user_id' => $uid])->delete();
+        // 更新缓存
+        $newData = M('users')->where('user_id', $uid)->find();
+        TokenLogic::updateValue('user', $newData['token'], $newData, $newData['time_out']);
+        // 记录日志
+        M('users_edit_log')->add([
+            'admin_id' => session('admin_id'),
+            'user_id' => $uid,
+            'old_data' => json_encode($oldData),
+            'new_data' => json_encode($newData),
+            'create_time' => time()
+        ]);
+        return json(['status' => 1, 'msg' => '成功注销用户']);
+    }
+
+    /**
      * 删除会员.
      */
     public function ajax_delete()
@@ -1520,7 +1545,7 @@ class User extends Base
 
         $this->assign('page', $page);
         $this->assign('edit_log', $editLog);
-        return $this->fetch('edit_log');
+        return $this->fetch('users_edit_log');
     }
 
     /**
@@ -1577,7 +1602,6 @@ class User extends Base
                 'count' => M('user_login_log')->where(['login_date' => $date, 'is_app_first' => 1])->group('user_id')->count('id')
             ];
         }
-
         $this->assign('page', $page);
         $this->assign('list', $logList);
         return $this->fetch('app_login_statistics');
@@ -1596,7 +1620,10 @@ class User extends Base
         ];
         $count = M('user_login_log')->where($where)->count();
         $page = new Page($count, 10);
-        $loginList = M('user_login_log')->where($where)->order('login_time desc')->limit($page->firstRow . ',' . $page->listRows)->select();
+        $loginList = M('user_login_log ull')
+            ->join('users u', 'u.user_id = ull.user_id')
+            ->where($where)->field('ull.*, u.user_name, u.nickname')
+            ->order('login_time desc')->limit($page->firstRow . ',' . $page->listRows)->select();
 
         $this->assign('date', $date);
         $this->assign('page', $page);
