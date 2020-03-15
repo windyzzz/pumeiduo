@@ -1206,11 +1206,9 @@ class Order extends Base
                 $payment_obj = new \weixinApp();
                 $result = $payment_obj->refund($order, $order['order_amount']);
                 if ($result['return_code'] == 'FAIL') {
-                    $msg = $result['return_msg'];
-                    $this->ajaxReturn(['status' => 0, 'msg' => $msg, 'url' => '']);
+                    $this->ajaxReturn(['status' => 0, 'msg' => $result['return_msg'], 'url' => '']);
                 } elseif ($result['result_code'] == 'FAIL') {
-                    $msg = $result['err_code_des'];
-                    $this->ajaxReturn(['status' => 0, 'msg' => $msg, 'url' => '']);
+                    $this->ajaxReturn(['status' => 0, 'msg' => $result['err_code_des'], 'url' => '']);
                 } else {
                     $refundLogic = new RefundLogic();
                     $refundLogic->updateRefundGoods($return_goods['rec_id']); //订单商品售后退款

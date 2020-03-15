@@ -3342,8 +3342,8 @@ class User extends Base
         }
         // 用户银行卡信息
         $userBankInfo = M('users')->where(['user_id' => $this->user_id])->field('id_cart id_card, real_name, bank_name, bank_code, bank_region, bank_branch, bank_card account')->find();
-        $userBankInfo['hide_account'] = strlen($userBankInfo['account']) > 4 ? hideStr($userBankInfo['account'], 0, 4, 4) : $userBankInfo['account'];
-        $userBankInfo['hide_id_card'] = strlen($userBankInfo['id_card']) > 4 ? hideStr($userBankInfo['id_card'], 0, 4, 4) : $userBankInfo['id_card'];
+        $userBankInfo['hide_account'] = strlen($userBankInfo['account']) > 4 ? hideStr($userBankInfo['account'], 0, 4, 4, '*') : $userBankInfo['account'];
+        $userBankInfo['hide_id_card'] = strlen($userBankInfo['id_card']) > 4 ? hideStr($userBankInfo['id_card'], 0, 4, 4, '*') : $userBankInfo['id_card'];
         if ($userBankInfo['bank_code'] == 'Alipay') {
             // 支付宝
             $bankInfo = M('bank')->where(['name_en' => $userBankInfo['bank_code']])->field('id, name_cn, name_en')->find();

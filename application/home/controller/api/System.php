@@ -70,8 +70,10 @@ class System
         foreach ($version as $item) {
             $appVersion .= $item * 10;
         }
-        // 当前版本
-        $version = explode('.', tpCache($type . '.app_version'));
+        // 当前配置
+        $config = M('config')->where(['inc_type' => $type])->group('name')->order('id desc')->getField('name, value', true);
+
+        $version = explode('.', $config['app_version']);
         $nowVersion = '';
         foreach ($version as $item) {
             $nowVersion .= $item * 10;
@@ -79,12 +81,12 @@ class System
         if ($appVersion == $nowVersion) {
             $result['state'] = 0;   // 无需更新
         } else {
-            $result['state'] = tpCache($type . '.is_update') ? (int)tpCache($type . '.is_update') : 0;    // 是否需要更新
+            $result['state'] = $config['is_update'] ? (int)$config['is_update'] : 0;    // 是否需要更新
         }
-        $result['is_force'] = tpCache($type . '.is_force') ? (int)tpCache($type . '.is_force') : 0;  // 是否强制更新
-        $result['app_url'] = tpCache($type . '.app_path');
+        $result['is_force'] = $config['is_force'] ? (int)$config['is_force'] : 0;  // 是否强制更新
+        $result['app_url'] = $config['app_path'];
         if ($type == 'ios') {
-            $result['target_version'] = tpCache($type . '.app_version');
+            $result['target_version'] = $config['app_version'];
         }
         return json(['status' => 1, 'result' => $result]);
     }

@@ -1570,7 +1570,7 @@ function differTimeStr($time1, $time2, $seconds = false)
  * @return string 处理后的字符串
  * +----------------------------------------------------------
  */
-function hideStr($string, $bengin = 0, $len = 4, $type = 0, $glue = "@")
+function hideStr($string, $bengin = 0, $len = 4, $type = 0, $glue = '')
 {
     if (empty($string))
         return false;
@@ -1610,7 +1610,7 @@ function hideStr($string, $bengin = 0, $len = 4, $type = 0, $glue = "@")
         $tem = array();
         for ($i = 0; $i < ($length - $right); $i++) {
             if (isset($array[$i]))
-                $tem[] = $i >= $left ? "*" : $array[$i];
+                $tem[] = $i >= $left ? $glue : $array[$i];
         }
         $array = array_chunk(array_reverse($array), $right);
         $array = array_reverse($array[0]);
