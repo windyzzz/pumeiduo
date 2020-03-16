@@ -1,0 +1,11 @@
+{
+    "applinks": {
+        "apps":[],
+        "details":[
+            {
+                "appID":"GRD6AL3KTX.com.pmd.mall",
+                "paths":["*"]
+            }
+        ]
+    }
+}
