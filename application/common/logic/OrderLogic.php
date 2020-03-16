@@ -11,8 +11,8 @@
 
 namespace app\common\logic;
 
+use app\common\logic\Token as TokenLogic;
 use app\common\logic\wechat\WechatUtil;
-use app\common\model\Order;
 use app\common\model\SpecGoodsPrice;
 use think\Db;
 
@@ -72,9 +72,9 @@ class OrderLogic
 
         //检查是否未支付的订单
         if (($order['pay_status'] > 0 || $order['order_status'] > 0) && $order['order_amount'] > 0) {
-            if ($_SERVER['SERVER_ADDR'] != '61.238.101.138') {
+//            if ($_SERVER['SERVER_ADDR'] != '61.238.101.138') {
 //                return array('status' => 0, 'msg' => '支付状态或订单状态不允许', 'result' => '');
-            }
+//            }
             //获取记录表信息
             //$log = M('account_log')->where(array('order_id'=>$order_id))->find();
             $res = false;
@@ -179,9 +179,6 @@ class OrderLogic
                 $firstLeaderAccount = M('account_log')->where([
                     'order_id' => $order_id,
                     'type' => 14
-                ])->whereOr([
-                    'user_money' => ['>', 0],
-                    'pay_points' => ['>', 0]
                 ])->select();
                 if (!empty($firstLeaderAccount)) {
                     foreach ($firstLeaderAccount as $account) {
@@ -281,6 +278,9 @@ class OrderLogic
             Db::rollback();
             return ['status' => 0, 'msg' => '操作失败', 'result' => ''];
         }
+        // 更新缓存
+        $user = Db::name('users')->where('user_id', $user_id)->find();
+        TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
 
         Db::commit();
         return ['status' => 1, 'msg' => '操作成功', 'result' => ''];

@@ -142,7 +142,7 @@ class Order extends Model
                 $btn['pay'] = '付款';
             } elseif (1 == $ps && 1 == $ss && 1 == $os) {
                 if (6 != $pt) {
-                    $btn['pay_cancel'] = '设为未付款';
+                    $btn['pay_cancel'] = '取消订单';
                 }
             }
         } else {
@@ -150,7 +150,7 @@ class Order extends Model
                 $btn['pay'] = '付款';
             } elseif (0 == $os && 1 == $ps) {
                 if (6 != $pt) {
-                    $btn['pay_cancel'] = '设为未付款';
+                    $btn['pay_cancel'] = '取消订单';
                     $btn['confirm'] = '确认';
                 }
             } elseif (1 == $os && 1 == $ps && (0 == $ss || 2 == $ss)) {

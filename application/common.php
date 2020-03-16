@@ -1021,9 +1021,8 @@ function logDistribut($order_sn, $user_id, $new_level, $old_level, $type = 1)
  */
 function logOrder($order_id, $action_note, $status_desc, $user_id = 0)
 {
-    $status_desc_arr = ['提交订单', '付款成功', '取消', '等待收货', '完成', '退货'];
-    // if(!in_array($status_desc, $status_desc_arr))
-    // return false;
+//    $status_desc_arr = ['提交订单', '付款成功', '取消', '等待收货', '完成', '退货'];
+//    if (!in_array($status_desc, $status_desc_arr)) return false;
 
     $order = M('order')->master()->where('order_id', $order_id)->find();
     $action_info = [
@@ -1033,7 +1032,7 @@ function logOrder($order_id, $action_note, $status_desc, $user_id = 0)
         'shipping_status' => $order['shipping_status'],
         'pay_status' => $order['pay_status'],
         'action_note' => $action_note,
-        'status_desc' => $status_desc, //''
+        'status_desc' => $status_desc,
         'log_time' => time(),
     ];
 

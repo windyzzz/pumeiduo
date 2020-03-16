@@ -179,8 +179,10 @@ class OrderLogic
                 return true;
             case 'pay_cancel': //取消付款
                 $updata['pay_status'] = 0;
-                $this->order_pay_cancel($order_id);
-
+//                $this->order_pay_cancel($order_id);
+                $orderLogic = new \app\common\logic\OrderLogic();
+                $userId = M('order')->where(['order_id' => $order_id])->value('user_id');
+                $orderLogic->cancel_order($userId, $order_id, '后台取消订单', true);
                 return true;
             case 'confirm': //确认订单
                 $updata['order_status'] = 1;

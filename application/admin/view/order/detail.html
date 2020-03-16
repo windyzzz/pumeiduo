@@ -402,30 +402,36 @@
 
     before_request = 1; // 标识上一次ajax 请求有没回来, 没有回来不再进行下一次
     function verifyForm(form_id, submit_url) {
-        if (before_request == 0)
-            return false;
-        $("[id^='err_']").hide();  // 隐藏提示
-        $.ajax({
-            type: "POST",
-            url: submit_url,
-            data: $('#' + form_id).serialize(),// 你的formid
-            dataType: 'json',
-            error: function (request) {
-                layer.msg("服务器繁忙, 请联系管理员!", {icon: 1, time: 2000});
-            },
-            success: function (data) {
-                before_request = 1; // 标识ajax 请求已经返回
-                // 验证成功提交表单
-                if (data.status == 1) {
-                    layer.msg(data.msg, {icon: 1, time: 2000}, function () {
-                        window.location.href = data.url;
-                    });
-                } else {
-                    layer.msg(data.msg, {icon: 2, time: 2000});
+        layer.confirm('确认取消订单？', {
+            btn: ['确定'] //按钮
+        }, function () {
+            if (before_request == 0)
+                return false;
+            $("[id^='err_']").hide();  // 隐藏提示
+            $.ajax({
+                type: "POST",
+                url: submit_url,
+                data: $('#' + form_id).serialize(),// 你的formid
+                dataType: 'json',
+                error: function (request) {
+                    layer.msg("服务器繁忙, 请联系管理员!", {icon: 1, time: 2000});
+                },
+                success: function (data) {
+                    before_request = 1; // 标识ajax 请求已经返回
+                    // 验证成功提交表单
+                    if (data.status == 1) {
+                        layer.msg(data.msg, {icon: 1, time: 2000}, function () {
+                            window.location.href = data.url;
+                        });
+                    } else {
+                        layer.msg(data.msg, {icon: 2, time: 2000});
+                    }
                 }
-            }
+            });
+            before_request = 0; // 标识ajax 请求已经发出
+        }, function () {
+            console.log("取消");
         });
-        before_request = 0; // 标识ajax 请求已经发出
     }
 
     function getOrderAction() {
