@@ -48,7 +48,8 @@ class SmsLogic
         // 模板字段
         $smsParams = [
             1 => ['code' => $code],                                                                                                          //1. 用户注册 (验证码类型短信只能有一个变量)
-            9 => ['user_name' => $user_name, 'user_id1' => $userId, 'user_id2' => $userId]
+            9 => ['user_name' => $user_name, 'user_id1' => $userId, 'user_id2' => $userId],
+            10 => []
         ];
         $smsParam = $smsParams[$scene];
         // 提取发送短信内容

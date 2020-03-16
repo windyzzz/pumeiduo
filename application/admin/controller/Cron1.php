@@ -8533,4 +8533,41 @@ class Cron1 extends Controller
         M('users')->where(['user_id' => ['in', $userIds]])->delete();
         var_dump('ok');
     }
+
+    public function log_send_sms2()
+    {
+        $filterUserIds = M('user_login_log')->where(['is_app_first' => 1])->getField('user_id', true);
+        $where = [
+            'user_id' => ['not in', $filterUserIds],
+            'mobile' => ['neq', ''],
+            'is_lock' => 0,
+        ];
+        $userData = M('users')->where($where)->group('mobile')->field('mobile')->select();
+        $logData = [];
+        foreach ($userData as $k => $data) {
+            if (check_mobile($data['mobile'])) {
+                $logData[] = [
+                    'mobile' => $data['mobile'],
+                    'param' => ''
+                ];
+            }
+        }
+        $specialSmsLog = new SpecialSmsLog();
+        $res = $specialSmsLog->saveAll($logData);
+        var_dump($res != false ? 'ok' : 'bad');
+    }
+
+    public function send_sms2()
+    {
+        $smsLog = M('special_sms_log')->where(['is_send' => 0])->limit(0, 20)->select();
+        $smsLogic = new SmsLogic();
+        $logIds = [];
+        foreach ($smsLog as $sms) {
+            $res = $smsLogic->sendSms(10, $sms['mobile'], []);
+            if ($res['status'] == 1) {
+                $logIds[] = $sms['id'];
+            }
+        }
+        M('special_sms_log')->where(['id' => ['in', $logIds]])->update(['is_send' => 1]);
+    }
 }

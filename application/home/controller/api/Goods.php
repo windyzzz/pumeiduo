@@ -482,7 +482,7 @@ class Goods extends Base
                         break;
                     default:
                         unset($goods['coupon'][$k]);
-                        continue;
+                        continue 2;
                 }
                 $goods['coupon'][$k]['title'] = $title;
                 $goods['coupon'][$k]['desc'] = $desc;
