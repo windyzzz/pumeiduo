@@ -348,10 +348,10 @@
                                         <!--<a class="ncap-btn-big ncap-btn-green" href="javascript:void(0)" data-url="{:U('Order/pay_cancel',array('order_id'=>$order['order_id']))}" onclick="pay_cancel(this)">{$vo}</a>-->
                                         <a class="ncap-btn-big ncap-btn-green"
                                            onclick="verifyForm('order-action','{:U('Admin/order/order_action',array('order_id'=>$order['order_id'],'type'=>$k))}');">{$vo}</a>
-                                        <elseif condition="$k eq 'delivery'"/>
+                                    <elseif condition="$k eq 'delivery'"/>
                                         <a class="ncap-btn-big ncap-btn-green"
                                            href="{:U('Order/delivery_info',array('order_id'=>$order['order_id']))}">{$vo}</a>
-                                        <elseif condition="$k eq 'refund'"/>
+                                    <elseif condition="$k eq 'refund'"/>
                                         <else/>
                                         <a class="ncap-btn-big ncap-btn-green"
                                            onclick="verifyForm('order-action','{:U('Admin/order/order_action',array('order_id'=>$order['order_id'],'type'=>$k))}');">
@@ -402,7 +402,7 @@
 
     before_request = 1; // 标识上一次ajax 请求有没回来, 没有回来不再进行下一次
     function verifyForm(form_id, submit_url) {
-        layer.confirm('确认取消订单？', {
+        layer.confirm('操作确认？', {
             btn: ['确定'] //按钮
         }, function () {
             if (before_request == 0)

@@ -513,7 +513,7 @@ class Goods extends Base
             }
             // 分享二维码
             $filename = 'public/images/qrcode/goods/goods_' . $this->user_id . '_' . $goods_id . '.png';
-            if (!file_exists($filename)) {
+            if (!file_exists($baseUrl . $filename)) {
                 $this->scerweima($this->user_id, $goods['goods_id']);
             }
             $result['goods']['qr_code'] = $baseUrl . $filename;

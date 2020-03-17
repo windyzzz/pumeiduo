@@ -111,7 +111,7 @@ class LoginApi
 
         $userLogic = new UsersLogic();
         // 验证验证码
-        if ($code != '1238') {
+//        if ($code != '1238') {
             $sessionId = S('mobile_token_' . $username);
             if (!$sessionId) {
                 return json(['status' => 0, 'msg' => '验证码已过期']);
@@ -124,7 +124,7 @@ class LoginApi
             } else {
                 return json(['status' => 0, 'msg' => '手机号码不合格式']);
             }
-        }
+//        }
         // 授权用户注册
         $res = $userLogic->oauthReg($openid, $username, $password);
         return json($res);

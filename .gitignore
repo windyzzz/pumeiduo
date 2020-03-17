@@ -2,3 +2,4 @@
 runtime
 thinkphp
 .env
+public

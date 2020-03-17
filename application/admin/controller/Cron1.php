@@ -8570,4 +8570,40 @@ class Cron1 extends Controller
         }
         M('special_sms_log')->where(['id' => ['in', $logIds]])->update(['is_send' => 1]);
     }
+
+    public function getRebate()
+    {
+        $userIds = M('order')->where(['consignee' => '胡家升'])->group('user_id')->getField('user_id', true);
+        // 一级上级
+        $firstLeader = M('users')->where(['user_id' => ['in', $userIds]])->group('first_leader')->field('first_leader')->select();
+        $firstLeaderRebate = [];
+        foreach ($firstLeader as $first) {
+            $money = M('rebate_log')->where(['user_id' => $first['first_leader'], 'buy_user_id' => ['in', $userIds]])->sum('money');
+            $firstLeaderRebate[] = [
+                'first_leader' => $first['first_leader'],
+                'money' => $money
+            ];
+        }
+        // 二级上级
+        $secondLeader = M('users')->where(['user_id' => ['in', $userIds]])->group('second_leader')->field('second_leader')->select();
+        $secondLeaderRebate = [];
+        foreach ($secondLeader as $second) {
+            $money = M('rebate_log')->where(['user_id' => $second['second_leader'], 'buy_user_id' => ['in', $userIds]])->sum('money');
+            $secondLeaderRebate[] = [
+                'second_leader' => $second['second_leader'],
+                'money' => $money
+            ];
+        }
+        // 三级上级
+        $thirdLeader = M('users')->where(['user_id' => ['in', $userIds]])->group('third_leader')->field('third_leader')->select();
+        $thirdLeaderRebate = [];
+        foreach ($thirdLeader as $third) {
+            $money = M('rebate_log')->where(['user_id' => $third['third_leader'], 'buy_user_id' => ['in', $userIds]])->sum('money');
+            $thirdLeaderRebate[] = [
+                'third_leader' => $third['third_leader'],
+                'money' => $money
+            ];
+        }
+        print_r($firstLeaderRebate);
+    }
 }

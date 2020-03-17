@@ -1141,7 +1141,6 @@ class Order extends Base
                 include_once PLUGIN_PATH . 'payment/weixinJsApi/weixinJsApi.class.php';
                 $payment_obj = new \weixinJsApi();
                 $result = $payment_obj->refund1($order, $data['refund_money']);
-
                 if ('SUCCESS' == $result['return_code'] && 'SUCCESS' == $result['result_code']) {
                     $refundLogic = new RefundLogic();
                     $refundLogic->updateRefundGoods($return_goods['rec_id']); //订单商品售后退款

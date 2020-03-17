@@ -2423,12 +2423,6 @@ class UsersLogic extends Model
         $timeOut = time();
         $inValid = true;  //验证码失效
 
-        // // 测试代码
-        // if($code == '1234')
-        // {
-        //     return array('status'=>1,'msg'=>'验证成功');
-        // }
-
         //短信发送否开启
         //-1:用户没有发送短信
         //空:发送验证码关闭
