@@ -734,8 +734,8 @@ class User extends Base
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">电子币</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">注册时间</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">注册来源</td>';
-        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">首次登陆时间</td>';
-        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">最后登陆APP时间</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">首次登陆APP时间</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">最后登陆时间</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">最后登陆来源</td>';
         $strTable .= '</tr>';
 
@@ -771,8 +771,8 @@ class User extends Base
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['user_electronic'] . ' </td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . date('Y-m-d H:i', $val['reg_time']) . '</td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $source[$val['reg_source']] . ' </td>';
-                    $firstLogin = isset($firstAppLogin[$val['user_id']]) ? $firstAppLogin[$val['user_id']] : $val['reg_time'];
-                    $strTable .= '<td style="text-align:left;font-size:12px;">' . date('Y-m-d H:i', $firstLogin) . '</td>';
+                    $firstLogin = isset($firstAppLogin[$val['user_id']]) ? date('Y-m-d H:i', $firstAppLogin[$val['user_id']]) : '';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $firstLogin . '</td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . date('Y-m-d H:i', $val['last_login']) . '</td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $source[$val['last_login_source']] . ' </td>';
                     $strTable .= '</tr>';
