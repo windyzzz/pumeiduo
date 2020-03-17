@@ -1615,17 +1615,24 @@ class Order extends Base
             }
             $result = $cartLogic->AsyncUpdateCarts($cartIds);
             if (1 != $result['status']) {
-                return json(['status' => 0, 'msg' => $result['msg'], 'result' => null]);
+                return json(['status' => 0, 'msg' => $result['msg']]);
             }
             if (0 == $cartLogic->getUserCartOrderCount()) {
-                return json(['status' => 0, 'msg' => '你的购物车没有选中商品', 'result' => null]);
+                return json(['status' => 0, 'msg' => '你的购物车没有选中商品']);
             }
             $cartList['cartList'] = $cartLogic->getCartList(1); // 获取用户选中的购物车商品
+            $vipGoods = [];
             foreach ($cartList['cartList'] as $key => $cart) {
+                if ($cart['goods']['zone'] == 3 && $cart['goods']['distribut_id'] != 0) {
+                    $vipGoods[] = $cart['goods']['goods_id'];
+                }
                 if ($cart['prom_type'] == 3) {
                     // 商品促销优惠
                     $cartList['cartList'][$key]['member_goods_price'] = bcsub($cart['goods_price'], $cart['use_integral'], 2);
                 }
+            }
+            if (count($vipGoods) > 1) {
+                return json(['status' => 0, 'msg' => '不能一次购买两种或以上VIP升级商品']);
             }
         } else {
             /*
@@ -2011,11 +2018,18 @@ class Order extends Base
                 return json(['status' => 0, 'msg' => '你的购物车没有选中商品', 'result' => null]);
             }
             $cartList['cartList'] = $cartLogic->getCartList(1); // 获取用户选中的购物车商品
+            $vipGoods = [];
             foreach ($cartList['cartList'] as $key => $cart) {
+                if ($cart['goods']['zone'] == 3 && $cart['goods']['distribut_id'] != 0) {
+                    $vipGoods[] = $cart['goods']['goods_id'];
+                }
                 if ($cart['prom_type'] == 3) {
                     // 商品促销优惠
                     $cartList['cartList'][$key]['member_goods_price'] = bcsub($cart['goods_price'], $cart['use_integral'], 2);
                 }
+            }
+            if (count($vipGoods) > 1) {
+                return json(['status' => 0, 'msg' => '不能一次购买两种或以上VIP升级商品']);
             }
         } else {
             /*

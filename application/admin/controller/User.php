@@ -579,6 +579,9 @@ class User extends Base
                 $_POST['password'] = systemEncrypt($_POST['password']);
             }
             $id = $_POST['invite_uid'];
+            if ($user['invite_uid'] != $_POST['invite_uid']) {
+                $_POST['invite_time'] = time();
+            }
             $_POST['is_distribut'] = 0;
             if ($_POST['distribut_level'] > 1) {
                 $_POST['is_distribut'] = 1;
