@@ -34,6 +34,7 @@ return [
     'log_write' => [],
     // 应用结束
     'app_end' => [],
+    // 新增订单行为
     'user_add_order' => [
         'app\\common\\behavior\\Order',
     ],

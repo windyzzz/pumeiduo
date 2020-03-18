@@ -52,18 +52,19 @@ class SearchWordLogic extends Model
      * 前台搜索关键词
      * 返回查询数组.
      *
-     * @param $q|关键词
+     * @param $q |关键词
+     * @param $type |匹配类型：1关键字前后 2关键字前面 3关键字后面
      *
      * @return array
      */
-    public function getSearchWordWhere($q)
+    public function getSearchWordWhere($q, $type = 1)
     {
         //引入
         $where = [];
-        if (file_exists(PLUGIN_PATH.'coreseek/sphinxapi.php')) {
-            require_once PLUGIN_PATH.'coreseek/sphinxapi.php';
+        if (file_exists(PLUGIN_PATH . 'coreseek/sphinxapi.php')) {
+            require_once PLUGIN_PATH . 'coreseek/sphinxapi.php';
             $cl = new \SphinxClient();
-            $cl->SetServer(C('SPHINX_HOST').'', intval(C('SPHINX_PORT')));
+            $cl->SetServer(C('SPHINX_HOST') . '', intval(C('SPHINX_PORT')));
             $cl->SetConnectTimeout(10);
             $cl->SetArrayResult(true);
             $cl->SetMatchMode(SPH_MATCH_ANY);
@@ -83,16 +84,37 @@ class SearchWordLogic extends Model
             } else {
                 $q_arr = explode(' ', $q);
                 foreach ($q_arr as $key => $value) {
-                    $q_arr[$key] = '%'.$value.'%';
+                    switch ($type) {
+                        case 1:
+                            $q_arr[$key] = '%' . $value . '%';
+                            break;
+                        case 2:
+                            $q_arr[$key] = '%' . $value;
+                            break;
+                        case 3:
+                            $q_arr[$key] = $value . '%';
+                            break;
+                    }
                 }
                 $where['goods_name'] = ['like', $q_arr];
             }
         } else {
-            $q_arr = explode(' ', $q);
-            foreach ($q_arr as $key => $value) {
-                $q_arr[$key] = '%'.$value.'%';
+//            $q_arr = explode(' ', $q);
+//            foreach ($q_arr as $key => $value) {
+//                $q_arr[$key] = '%' . $value . '%';
+//            }
+            switch ($type) {
+                case 1:
+                    $keyword = ['like', '%' . $q . '%'];
+                    break;
+                case 2:
+                    $keyword = ['like', '%' . $q];
+                    break;
+                case 3:
+                    $keyword = ['like', $q . '%'];
+                    break;
             }
-            $where['goods_name|keywords'] = ['like', '%'.$q.'%'];
+            $where['goods_name|keywords'] = $keyword;
         }
 
         return $where;

@@ -1930,8 +1930,8 @@ class User extends Base
         $user_data['type'] = 2;
         $user_data['bind_time'] = time();
         $user_data['time_out'] = strtotime('+' . config('REDIS_DAY') . ' days');
-        $user_data['invite_uid'] = $current_user['invite_uid'];
-        $user_data['invite_time'] = $current_user['invite_time'];
+        $user_data['invite_uid'] = $current_user['will_invite_uid'] != 0 ? $current_user['will_invite_uid'] : $current_user['invite_uid'];
+        $user_data['invite_time'] = $current_user['will_invite_uid'] != 0 ? time() : $current_user['invite_time'];
         M('Users')->where('user_id', $bind_user['user_id'])->update($user_data);
         // 授权登录
         M('OauthUsers')->where('user_id', $bind_user['user_id'])->delete();

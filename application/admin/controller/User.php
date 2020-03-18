@@ -444,8 +444,8 @@ class User extends Base
                 $user_data['type'] = 2;
                 $user_data['bind_time'] = time();
                 $user_data['time_out'] = strtotime('+' . config('REDIS_DAY') . ' days');
-                $user_data['invite_uid'] = $c['invite_uid'];
-                $user_data['invite_time'] = $c['invite_time'];
+                $user_data['invite_uid'] = $c['will_invite_uid'] != 0 ? $c['will_invite_uid'] : $c['invite_uid'];
+                $user_data['invite_time'] = $c['will_invite_uid'] != 0 ? time() : $c['invite_time'];
                 M('Users')->where('user_id', $uid)->update($user_data);
                 // 授权登录
 //                M('OauthUsers')->where('user_id', $merge_uid)->delete();

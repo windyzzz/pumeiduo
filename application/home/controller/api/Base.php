@@ -79,7 +79,7 @@ class Base extends Controller
             'c=api.Index&a=indexNew',   // 主页
             'c=api.Goods&a=all_category',   // 商品分类
             'c=api.Goods&a=goodsListNew',   // 商品列表
-            'c=api.Goods&a=search',   // 商品搜索列表
+            'c=api.Goods&a=searchList',   // 商品搜索列表
             'c=api.Goods&a=getSeriesGoodsList',   // 超值套装列表
             'c=api.Goods&a=getGroupBuyGoodsListNew',   // 团购商品列表
             'c=api.Goods&a=getNewGoodsList',   // 新品列表

@@ -1846,6 +1846,38 @@ class Goods extends Base
     }
 
     /**
+     * 模糊搜索列表
+     * @return \think\response\Json
+     */
+    public function searchList()
+    {
+        $keyword = I('search', '');
+        $keyword = trim($keyword);
+        if (!$keyword) {
+            return json(['status' => 1, 'result' => ['search_list' => []]]);
+        }
+        $keyword = explode(' ', $keyword);
+        $searchList = [];
+        $searchWordLogic = new SearchWordLogic();
+        foreach ($keyword as $key) {
+            $where = $searchWordLogic->getSearchWordWhere($key, 3);
+            $where['is_on_sale'] = 1;
+            $searchGoods = M('goods')->where($where)->getField('goods_id, goods_name', true);
+            foreach ($searchGoods as $goodsId => $goodsName) {
+                $searchList[] = [
+                    'goods_id' => $goodsId,
+                    'goods_name' => $goodsName,
+                    'mark_field' => $key
+                ];
+            }
+        }
+        $return = [
+            'search_list' => $searchList
+        ];
+        return json(['status' => 1, 'result' => $return]);
+    }
+
+    /**
      * 商品咨询ajax分页.
      */
     public function ajax_consult()

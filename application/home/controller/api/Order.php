@@ -1632,7 +1632,7 @@ class Order extends Base
                 }
             }
             if (count($vipGoods) > 1) {
-                return json(['status' => 0, 'msg' => '不能一次购买两种或以上VIP升级商品']);
+                return json(['status' => 0, 'msg' => '不能一次购买两种或以上VIP升级套餐']);
             }
         } else {
             /*
@@ -2029,7 +2029,7 @@ class Order extends Base
                 }
             }
             if (count($vipGoods) > 1) {
-                return json(['status' => 0, 'msg' => '不能一次购买两种或以上VIP升级商品']);
+                return json(['status' => 0, 'msg' => '不能一次购买两种或以上VIP升级套餐']);
             }
         } else {
             /*

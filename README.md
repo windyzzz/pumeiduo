@@ -3,33 +3,65 @@
 
 ## 目录结构
 
-初始的目录结构如下：
+目录结构如下：
 
 ~~~
 www  WEB部署目录（或者子目录）
 ├─application           应用目录
 |  ├─admin              管理后台目录
-|     ├─
+|  |  ├─conf
+|  |  ├─controller      管理后台控制器目录
+|  |  ├─logic           管理后台逻辑目录
+|  |  ├─model           管理后台模型目录
+|  |  ├─validate        管理后台校验目录
+|  |  ├─view            管理后台视图目录
+|  |  ├─common.php      
+|  |  ├─config.php
+|  |  ├─index.html
+│  |
 │  ├─common             公共模块目录
-│  ├─home               控制器目录
-│  │  ├─config.php      模块配置文件
+|  |  ├─behavior        API监听行为目录
+|  |  ├─logic           API逻辑目录
+|  |  ├─model           API模型目录
+|  |  ├─util            API扩展目录
+|  |  ├─validate        API校验目录
+│  |
+│  ├─home               API目录
+|  |  ├─behavior        API校验目录
+|  |  ├─controller      API控制器目录
+|  |  ├─logic
+|  |  ├─model
+|  |  ├─validate        API校验目录
+|  |  ├─view
+|  |  ├─bank.php
 │  │  ├─common.php      模块函数文件
-│  │  ├─controller      控制器目录
-│  │  ├─model           模型目录
-│  │  ├─view            视图目录
-│  │  └─ ...            更多类库目录
+│  │  ├─config.php      模块配置文件
+│  │  ├─html.php
+│  │  ├─index.html
+│  │  ├─nacigate.php
+│  │  └─nginx.conf
 │  │
 │  ├─command.php        
 │  ├─common.php         公共函数文件
 │  ├─config.php         公共配置文件
+│  ├─database.php       数据库配置文件
+│  ├─function.php       公共函数文件
 │  ├─route.php          
-│  ├─tags.php           应用行为扩展定义文件
-│  └─database.php       数据库配置文件
+│  └─tags.php           应用行为扩展定义文件
 │
-├─public                WEB目录（对外访问目录）
-│  ├─index.php          入口文件
-│  ├─router.php         快速测试文件
-│  └─.htaccess          用于apache的重写
+├─code_png
+|
+├─database              数据迁移记录
+│  ├─migrations         数据表记录
+│  ├─seeds              数据记录
+|
+├─extend
+|
+├─plugins               第三方插件
+|
+├─public                WEB目录
+|
+├─response
 │
 ├─thinkphp              框架系统目录
 │  ├─lang               语言文件目录

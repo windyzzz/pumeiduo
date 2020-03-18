@@ -13,7 +13,6 @@ namespace app\home\controller\api;
 
 use app\common\logic\CartLogic;
 use app\common\logic\OrderLogic;
-use app\common\logic\TaskLogic;
 use app\common\logic\Token as TokenLogic;
 use app\common\logic\UsersLogic;
 use app\common\logic\wechat\WechatUtil;
@@ -234,9 +233,9 @@ class Login extends Base
         // }
 
         $invite = I('invite');
-        if (!empty($invite)) {
-            $invite = get_user_info($invite); //根据user_id查找邀请人
-        }
+//        if (!empty($invite)) {
+//            $invite = get_user_info($invite); //根据user_id查找邀请人
+//        }
         $source = $this->isApp == 1 ? 3 : 1;    // 1微信 3APP
         $data = $logic->reg($username, $password, $password2, 0, $invite, '', '', $this->userToken, $source);
         if (1 != $data['status']) {
