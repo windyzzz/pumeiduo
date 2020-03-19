@@ -22,15 +22,15 @@ return [
     // 数据库类型
     'type' => 'mysql',
     // 服务器地址
-    'hostname' => 'localhost',
+    'hostname' => \think\Env::get('DB.HOST'),
     // 数据库名
-    'database' => 'pumeiduo',
+    'database' => \think\Env::get('DB.NAME'),
     // 用户名
-    'username' => 'root',
+    'username' => \think\Env::get('DB.USERNAME'),
     // 密码
-    'password' => 'root',
+    'password' => \think\Env::get('DB.PASSWORD'),
     // 端口
-    'hostport' => '3306',
+    'hostport' => \think\Env::get('DB.PORT'),
     // 连接dsn
     'dsn' => '',
     // 数据库连接参数
@@ -57,5 +57,6 @@ return [
     'auto_timestamp' => false,
     // 是否需要进行SQL性能分析
     'sql_explain' => false,
-    'other_db' => 'mysql://root:root@127.0.0.1:3306/pmdzd#utf8',
+    // 代理商系统数据库
+    'other_db' => \think\Env::get('OTHER.DB'),
 ];

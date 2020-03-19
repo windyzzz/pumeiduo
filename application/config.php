@@ -251,11 +251,11 @@ return [
     ],
 
     // URL
-    'SERVER_URL' => 'http://pmdzdm.qpgame666.com',
+    'SERVER_URL' => \think\Env::get('SERVER.URL'),
 
     // 密码加密串
-    'AUTH_CODE' => 'I%H!GA(f^4yx53eSSY*V^2Yk!#5Tfdnlnl&093403Q#)j', //安装完毕之后不要改变，否则所有密码都会出错
-    'AUTH_CODE_SHOP' => "0IHP!!*@hh2vCeRVI57YTLB!#$6EWFy#",
+    'AUTH_CODE' => \think\Env::get('AUTH.CODE'), //安装完毕之后不要改变，否则所有密码都会出错
+    'AUTH_CODE_SHOP' => \think\Env::get('AUTH.CODE.SHOP'),
 
     //redis储存数据的时间
     'REDIS_TIME' => 86400,
