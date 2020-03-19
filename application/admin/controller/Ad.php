@@ -48,11 +48,28 @@ class Ad extends Base
                 $ad_info['cat_id3'] = $cat_ids[2];
             }
         }
+        // APP跳转类型
+        switch ($ad_info['target_type']) {
+            case 1:
+                $ad_info['goods'] = M('goods')->where(['goods_id' => $ad_info['target_type_id']])->field('goods_id, goods_name, original_img')->find();
+                break;
+            case 2:
+                $ad_info['prom'] = M('prom_goods')->where(['id' => $ad_info['target_type_id']])->field('id, title')->find();
+                break;
+        }
+        // 优惠促销方案
+        $promList = M('prom_goods')->where([
+            'start_time' => ['<', time()],
+            'end_time' => ['>', time()],
+            'is_end' => 0,
+            'is_open' => 1
+        ])->field('id, title')->select();
 
         $position = D('ad_position')->select();
         $this->assign('info', $ad_info);
         $this->assign('act', $act);
         $this->assign('position', $position);
+        $this->assign('prom_list', $promList);
 
         return $this->fetch();
     }
@@ -130,7 +147,10 @@ class Ad extends Base
         $data = I('post.');
         $data['start_time'] = strtotime($data['begin']);
         $data['end_time'] = strtotime($data['end']);
-
+        echo '<pre>';
+        print_r($data);
+        echo '</pre>';
+        exit();
         $media_type = $data['media_type'];
         if (3 == $media_type) {//商品
             $data['ad_link'] = $data['goods_id'];
