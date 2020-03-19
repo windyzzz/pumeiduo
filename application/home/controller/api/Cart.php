@@ -247,6 +247,7 @@ class Cart extends Base
                         'exchange_price' => bcsub($v['goods_price'], $v['use_integral'], 2),
                         'goods_num' => $v['goods_num'],
                         'buy_limit' => $buyLimit,
+                        'buy_least' => 0,
                         'store_count' => $storeCount,
                         'gift_goods' => $giftGoods
                     ];
@@ -287,6 +288,7 @@ class Cart extends Base
                         'exchange_price' => $v['member_goods_price'],
                         'goods_num' => $v['goods_num'],
                         'buy_limit' => $buyLimit,
+                        'buy_least' => 0,
                         'store_count' => $storeCount,
                         'gift_goods' => $giftGoods
                     ];
@@ -314,6 +316,7 @@ class Cart extends Base
                         'exchange_price' => $v['member_goods_price'],
                         'goods_num' => $v['goods_num'],
                         'buy_limit' => $groupBuyGoods[$key]['buy_limit'],
+                        'buy_least' => 0,
                         'store_count' => $storeCount,
                         'gift_goods' => $giftGoods
                     ];
@@ -332,6 +335,7 @@ class Cart extends Base
                         'exchange_price' => bcsub($v['goods_price'], $v['use_integral'], 2),
                         'goods_num' => $v['goods_num'],
                         'buy_limit' => $v['goods']['limit_buy_num'],
+                        'buy_least' => $v['goods']['least_buy_num'],
                         'store_count' => $storeCount,
                         'gift_goods' => $giftGoods
                     ];
