@@ -16,7 +16,6 @@ use app\common\model\UserAddress;
 use app\home\controller\api\User;
 use think\cache\driver\Redis;
 use think\Db;
-use think\Log;
 use think\Model;
 use think\Page;
 use think\Url;
@@ -287,7 +286,6 @@ class UsersLogic extends Model
             $row_id2 = Db::name('OauthUsers')->data($data)->add();  // 记录oauth用户
             $user_info = M('users')->where('user_id', $row_id1)->find();
             session('is_new', 1);
-            (new Redis())->set('is_new_' . $userToken, 1, config('REDIS_TIME'));
         }
 
         if (!$row_id0 || !$row_id1 || !$row_id2) {
@@ -297,7 +295,7 @@ class UsersLogic extends Model
             Db::commit();
             $this->afterLogin($user_info, 3);
             session('is_app', 1);
-            (new Redis())->set('is_app_' . $userToken, 1, config('REDIS_TIME'));
+            session('is_app', 1);
             // 登录记录
             $this->setUserId($userId);
             $this->userLogin(1);
@@ -740,7 +738,6 @@ class UsersLogic extends Model
             // }
             $user = Db::name('users')->where(['user_id' => $row_id])->find();
             session('is_new', 1);
-            (new Redis())->set('is_new_' . $data['token'], 1, 86400);
             if (!isset($data['oauth_child'])) {
                 $data['oauth_child'] = '';
             }
@@ -923,7 +920,7 @@ class UsersLogic extends Model
         if (false === $user_id) {
             return ['status' => -1, 'msg' => '注册失败'];
         }
-        (new Redis())->set('is_new_' . $userToken, 1, 180);
+        session('is_new', 1);
 //        $pay_points = tpCache('basic.reg_integral'); // 会员注册赠送积分
 //        if ($pay_points > 0) {
 //            accountLog($user_id, 0, $pay_points, '会员注册赠送积分'); // 记录日志流水
@@ -952,7 +949,7 @@ class UsersLogic extends Model
             'level_name' => M('DistributLevel')->where('level_id', $user['distribut_level'])->getField('level_name') ?? '普通会员',
             'is_not_show_jk' => $user['is_not_show_jk'],  // 是否提示加入金卡弹窗
             'has_pay_pwd' => $user['paypwd'] ? 1 : 0,
-            'is_app' => TokenLogic::getValue('is_app', $user['token']) ? 1 : 0,
+            'is_app' => session('is_app'),
             'token' => $user['token'],
             'jpush_tags' => [$user['push_tag']]
         ];
@@ -1186,7 +1183,7 @@ class UsersLogic extends Model
             'level_name' => M('DistributLevel')->where('level_id', $user['distribut_level'])->getField('level_name') ?? '普通会员',
             'is_not_show_jk' => $user['is_not_show_jk'],  // 是否提示加入金卡弹窗
             'has_pay_pwd' => $user['paypwd'] ? 1 : 0,
-            'is_app' => TokenLogic::getValue('is_app', $user['token']) ? 1 : 0,
+            'is_app' => session('is_app'),
             'token' => $user['token'],
             'jpush_tags' => [$user['push_tag']]
         ];
@@ -1908,8 +1905,8 @@ class UsersLogic extends Model
             return false;
         }
 
-        $current_user = M('users')->find($user_id);
-        if ($current_user['mobile'] == $email_mobile) {
+        $currentUser = M('users')->find($user_id);
+        if ($currentUser['mobile'] == $email_mobile) {
             return false;
         }
 
@@ -1968,7 +1965,7 @@ class UsersLogic extends Model
         //         $user_data['bind_time'] = time();
         //         $user_data['mobile'] = $email_mobile;
         //         $user_data['mobile_validated'] = 1;
-        //         M('Users')->where('user_id',$current_user['user_id'])->update($user_data);
+        //         M('Users')->where('user_id',$currentUser['user_id'])->update($user_data);
 
         //         //冻结新账户
         //         M('Users')->where('user_id'$user['user_id'])->update(array('is_lock'=>1));
@@ -2329,10 +2326,8 @@ class UsersLogic extends Model
         if (!$row) {
             return ['status' => -1, 'msg' => '支付密码重复', 'result' => ''];
         }
-        $url = TokenLogic::getValue('payPriorUrl', $userToken);
-        $url = $url ?? U('User/userinfo');
+        $url = session('payPriorUrl') ? session('payPriorUrl') : U('User/userinfo');
         session('payPriorUrl', null);
-        (new Redis)->rm('payPriorUrl_' . $userToken);
         // 更新缓存
         $user = M('users')->where('user_id', $user_id)->find();
         TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
