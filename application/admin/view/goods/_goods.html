@@ -409,6 +409,15 @@
                     <span class="err" id="err_limit_buy_num" style="color:#F00; display:none;"></span>
                 </dd>
             </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label for="record_no">最小购买数量</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" value="{$goodsInfo.least_buy_num}" name="least_buy_num" class="t_mane" onKeyUp="this.value=this.value.replace(/[^\d.]/g,'')" onpaste="this.value=this.value.replace(/[^\d.]/g,'')" />    件（0为不限制）
+                    <span class="err" id="err_least_buy_num" style="color:#F00; display:none;"></span>
+                </dd>
+            </dl>
             <!--<dl class="row">
                 <dt class="tit">
                     <label for="record_no">佣金</label>

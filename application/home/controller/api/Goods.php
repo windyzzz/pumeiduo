@@ -215,12 +215,13 @@ class Goods extends Base
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
         $goods = Db::name('goods')->where('goods_id', $goods_id)->field('goods_id, cat_id, extend_cat_id, goods_sn, goods_name, goods_type, goods_remark, goods_content, 
-            brand_id, store_count, comment_count, market_price, shop_price, cost_price, give_integral, exchange_integral, original_img, limit_buy_num,
+            brand_id, store_count, comment_count, market_price, shop_price, cost_price, give_integral, exchange_integral, original_img, limit_buy_num, least_buy_num,
             is_on_sale, is_free_shipping, is_recommend, is_new, is_hot, is_virtual, virtual_indate, click_count, zone')->find();
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
         $goods['buy_limit'] = $goods['limit_buy_num'];
+        $goods['buy_least'] = $goods['least_buy_num'];
         $zone = $goods['zone'];
         $goodsLogic = new GoodsLogic();
         // 判断商品性质
@@ -957,7 +958,7 @@ class Goods extends Base
 //        $filter_attr = $goodsLogic->get_filter_attr($filter_goods_id, $filter_param, 'goodsList', 1); // 获取指定分类下的筛选属性
 
         $count = count($filter_goods_id);
-        $page = new Page($count, 20);
+        $page = new Page($count, 10);
         if ($count > 0) {
             // 获取商品数据
             $goodsLogic = new GoodsLogic();
@@ -1044,7 +1045,7 @@ class Goods extends Base
         }
         // 数据
         $count = count($filter_goods_id);
-        $page = new Page($count, 20);
+        $page = new Page($count, 10);
         if ($count > 0) {
             // 获取商品数据
             $goodsLogic = new GoodsLogic();
@@ -1059,7 +1060,7 @@ class Goods extends Base
      * @param integer $num 获取数量
      * @param string $output 输出格式，默认是json
      */
-    public function getSeriesGoodsList($num = 20, $output = 'json')
+    public function getSeriesGoodsList($num = 10, $output = 'json')
     {
         $key = md5($_SERVER['REQUEST_URI'] . I('start_price') . '_' . I('end_price'));
         $html = S($key);
@@ -1155,7 +1156,7 @@ class Goods extends Base
             ->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
             ->where($where)->where(['g.is_on_sale' => 1])->getField('fs.goods_id', true);
         $count = count($filter_goods_id);
-        $page = new Page($count, 20);
+        $page = new Page($count, 10);
         // 秒杀商品
         $flashSaleGoods = Db::name('flash_sale fs')->join('goods g', 'g.goods_id = fs.goods_id')
             ->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
@@ -1227,7 +1228,7 @@ class Goods extends Base
      * @param string $output 输出格式，默认是json
      * @return array|false|\PDOStatement|string|\think\Collection|\think\response\Json
      */
-    public function getGroupBuyGoodsList($num = 20, $output = 'json')
+    public function getGroupBuyGoodsList($num = 10, $output = 'json')
     {
         $key = md5($_SERVER['REQUEST_URI'] . I('start_price') . '_' . I('end_price'));
         $html = S($key);
@@ -1358,7 +1359,7 @@ class Goods extends Base
      * @param string $output
      * @return array|\think\response\Json
      */
-    public function getGroupBuyGoodsListNew($num = 20, $output = 'json')
+    public function getGroupBuyGoodsListNew($num = 10, $output = 'json')
     {
         // 筛选 品牌 规格 属性 价格
         $GroupBuy = new GroupBuy();
@@ -1410,7 +1411,7 @@ class Goods extends Base
      * @param int $taskId
      * @return array|\think\response\Json
      */
-    public function getRecommendGoodsList($num = '20', $output = 'json', $taskId = 0)
+    public function getRecommendGoodsList($num = 20, $output = 'json', $taskId = 0)
     {
         $key = md5($_SERVER['REQUEST_URI'] . I('start_price') . '_' . I('end_price'));
         $html = S($key);
@@ -1682,7 +1683,7 @@ class Goods extends Base
         } else {
             $flashSaleWhere['source'] = ['LIKE', '%' . 1 . '%'];
         }
-        $flashSale = Db::name('flash_sale')->where(['goods_id' => ['in', $filter_goods_id]])->where($flashSale)
+        $flashSale = Db::name('flash_sale')->where(['goods_id' => ['in', $filter_goods_id]])->where($flashSaleWhere)
             ->where(['start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->limit($page->firstRow . ',' . $page->listRows)->field('goods_id')->select();
         // 团购商品
         $groupBuy = Db::name('group_buy')->where(['goods_id' => ['in', $filter_goods_id]])
@@ -1910,7 +1911,7 @@ class Goods extends Base
 //        $filter_brand = $goodsLogic->get_filter_brand($filter_goods_id, $filter_param, 'search'); // 获取指定分类下的筛选品牌
 
         $count = count($filter_goods_id);
-        $page = new Page($count, 20);
+        $page = new Page($count, 10);
         if ($count > 0) {
             // 获取商品数据
             $goodsLogic = new GoodsLogic();

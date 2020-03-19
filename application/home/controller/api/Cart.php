@@ -127,7 +127,7 @@ class Cart extends Base
         $cartLogic = new CartLogic();
         $cartLogic->setUserId($this->user_id);
         $cartData = $cartLogic->getCartList(0, true, true); // 用户购物车
-        $cartNum = $cartData['cart_num'];   // 获取用户购物车商品总数
+        $cartNum = $cartData['cart_num'];   // 获取用户购物车总数
         $cartData = $cartData['cart_list'];
         $cartList = [
             'prom_title' => '',
@@ -194,7 +194,6 @@ class Cart extends Base
 //                    }
 //                }
                 if (empty($v['goods']) || 1 != $v['goods']['is_on_sale']) {
-                    $cartNum -= $v['goods_num'];
                     // 已失效商品
                     $invalidList[] = [
                         'cart_id' => $v['id'],
@@ -292,7 +291,7 @@ class Cart extends Base
                         'gift_goods' => $giftGoods
                     ];
                 } elseif (isset($groupBuyGoods[$key])) {
-                    $cartNum -= $v['goods_num'];
+                    $cartNum -= 1;
                     continue;
                     // 团购活动
                     $id = 'group_' . $groupBuyGoods[$key]['id'];
@@ -362,7 +361,7 @@ class Cart extends Base
         foreach ($orderProm as $prom) {
             $promTitleData[] = $prom['title'];
         }
-        $cartList['prom_title'] = $promTitleData[0];
+        $cartList['prom_title'] = $promTitleData ? $promTitleData[0] : '';
         $cartList['prom_title_data'] = $promTitleData;
         $return = [
             'cart_list' => $cartList,

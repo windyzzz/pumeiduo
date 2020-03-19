@@ -98,12 +98,12 @@ class CheckAuth
                     $map['invite_uid'] = $invite;
                     $map['invite_time'] = time();
                     M('users')->where(['user_id' => $session_user['user_id']])->update($map);
-                    $session_user = M('users')->where(['user_id' => $session_user['user_id']])->find();
+                    $select_user = M('users')->where(['user_id' => $session_user['user_id']])->find();
                 }
             }
-            $user = array_merge($session_user, $oauth_users);
+            $user = array_merge($select_user, $oauth_users);
             session('user', $user);
-            $this->redis->set('user_' . $session_user['token'], $user, config('REDIS_TIME'));
+            $this->redis->set('user_' . $select_user['token'], $user, config('REDIS_TIME'));
         } else {
             // $nologin = array(
             //         'login','pop_login','do_login','logout','verify','set_pwd','finished',

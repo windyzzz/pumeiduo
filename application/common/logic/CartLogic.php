@@ -153,6 +153,9 @@ class CartLogic extends Model
         if (empty($this->goodsBuyNum)) {
             throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '购买商品数量不能为0', 'result' => '']);
         }
+        if ($this->goods['least_buy_num'] != 0 && $this->goods['least_buy_num'] > $this->goodsBuyNum) {
+            throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '至少购买' . $this->goods['least_buy_num'] . '件', 'result' => '']);
+        }
 
         $buyGoods = [
             'user_id' => $this->user_id,
@@ -298,6 +301,9 @@ class CartLogic extends Model
         // if($this->goods['exchange_integral'] > 0){
         //     return ['status'=>0,'msg'=>'积分商品跳转','result'=>['url'=>U('Goods/goodsInfo',['id'=>$this->goods['goods_id'],'item_id'=>$this->specGoodsPrice['item_id']],'',true)]];
         // }
+        if ($this->goods['least_buy_num'] != 0 && $this->goods['least_buy_num'] > $this->goodsBuyNum) {
+            return ['status' => 0, 'msg' => '至少购买' . $this->goods['least_buy_num'] . '件', 'result' => ''];
+        }
         $userCartCount = Db::name('cart')->where(['user_id' => $this->user_id, 'session_id' => $this->session_id ? $this->session_id : $this->user_token])->count(); //获取用户购物车的商品有多少种
         if ($userCartCount >= 50) {
             return ['status' => -9, 'msg' => '购物车最多只能放50种商品', 'result' => ''];
@@ -754,9 +760,9 @@ class CartLogic extends Model
     public function getUserCartGoodsNum()
     {
         if ($this->user_id) {
-            $goods_num = Db::name('cart')->where(['user_id' => $this->user_id])->sum('goods_num');
+            $goods_num = Db::name('cart')->where(['user_id' => $this->user_id])->count('id');
         } else {
-            $goods_num = Db::name('cart')->where(['session_id' => $this->session_id])->sum('goods_num');
+            $goods_num = Db::name('cart')->where(['session_id' => $this->session_id])->count('id');
         }
 
         return empty($goods_num) ? 0 : $goods_num;
@@ -818,9 +824,10 @@ class CartLogic extends Model
 
         $cartCheckAfterList = $this->checkCartList($cartList, $noSale);
 //        $cartCheckAfterList = $cartList;
-        $cartGoodsTotalNum = array_sum(array_map(function ($val) {
-            return $val['goods_num'];
-        }, $cartCheckAfterList)); //购物车购买的商品总数
+//        $cartGoodsTotalNum = array_sum(array_map(function ($val) {
+//            return $val['goods_num'];
+//        }, $cartCheckAfterList)); //购物车购买的商品总数
+        $cartGoodsTotalNum = count($cartCheckAfterList);
         setcookie('cn', $cartGoodsTotalNum, null, '/');
 
         if ($returnNum) {

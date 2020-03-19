@@ -61,7 +61,7 @@ class Token
     }
 
     /**
-     * 更新session缓存与redis缓存
+     * 更新redis缓存
      * @param $name
      * @param $token
      * @param $value
@@ -70,8 +70,6 @@ class Token
      */
     public static function updateValue($name, $token, $value, $time)
     {
-        // 更新session
-        session($name, $value);
         // 更新redis
         $redis = new Redis();
         $redis->set($name . '_' . $token, $value, $time - time());
