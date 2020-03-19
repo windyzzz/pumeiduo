@@ -147,31 +147,40 @@ class Ad extends Base
         $data = I('post.');
         $data['start_time'] = strtotime($data['begin']);
         $data['end_time'] = strtotime($data['end']);
-        echo '<pre>';
-        print_r($data);
-        echo '</pre>';
-        exit();
         $media_type = $data['media_type'];
         if (3 == $media_type) {//商品
             $data['ad_link'] = $data['goods_id'];
         } elseif (4 == $media_type) {//分类
             $data['ad_link'] = $data['cat_id1'] . '_' . $data['cat_id2'] . '_' . $data['cat_id3'];
         }
-
-        if ('add' == $data['act']) {
-            $r = D('ad')->add($data);
+        switch ($data['target_type']) {
+            case 1:
+                $data['target_type_id'] = $data['goods_id'];
+                break;
+            case 2:
+                $data['target_type_id'] = $data['prom_id'];
+                break;
+            default:
+                $data['target_type_id'] = 0;
         }
-        if ('edit' == $data['act']) {
-            $r = D('ad')->where('ad_id', $data['ad_id'])->save($data);
-        }
-
-        if ('del' == $data['act']) {
-            $r = D('ad')->where('ad_id', $data['del_id'])->delete();
-            if ($r) {
-                $this->ajaxReturn(['status' => 1, 'msg' => '操作成功', 'url' => U('Admin/Ad/adList')]);
-            } else {
-                $this->ajaxReturn(['status' => -1, 'msg' => '操作失败']);
-            }
+        unset($data['goods_id']);
+        unset($data['goods_name']);
+        unset($data['prom_id']);
+        switch ($data['act']) {
+            case 'add':
+                $r = D('ad')->add($data);
+                break;
+            case 'edit':
+                $r = D('ad')->where('ad_id', $data['ad_id'])->save($data);
+                break;
+            case 'del':
+                $r = D('ad')->where('ad_id', $data['del_id'])->delete();
+                if ($r) {
+                    $this->ajaxReturn(['status' => 1, 'msg' => '操作成功', 'url' => U('Admin/Ad/adList')]);
+                } else {
+                    $this->ajaxReturn(['status' => -1, 'msg' => '操作失败']);
+                }
+                break;
         }
         $referurl = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : U('Admin/Ad/adList');
         // 不管是添加还是修改广告 都清除一下缓存

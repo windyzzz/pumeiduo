@@ -198,7 +198,7 @@
                 </dt>
                 <dd class="opt">
                     <input type="text" readonly name="goods_name" value="{$info.goods.goods_name}" class="input-txt">
-                    <input type="hidden" name="goods_id" value="{$info.goods.goods_id}" class="input-txt">
+                    <input type="hidden" id="goods_id" name="goods_id" value="{$info.goods.goods_id}" class="input-txt">
                     <div style="overflow: hidden" id="selected_group_goods">
                         <if condition="$info['goods']['goods_id'] gt 0">
                             <div style="float: left;margin-right: 10px" class="selected-group-goods">
@@ -224,7 +224,7 @@
                         <select name="prom_id" class="input-sm" class="form-control">
                             <option value="0">请选择</option>
                             <volist name="prom_list" id="item">
-                                <option value="$info.prom.id" <if condition="$info[prom][id] eq $item[id]">selected</if>>{$item.title}</option>
+                                <option value="{$item.id}" <if condition="$info[prom][id] eq $item[id]">selected</if>>{$item.title}</option>
                             </volist>
                         </select>
                     </div>
@@ -305,12 +305,12 @@
             get_category('{$info[cat_id2]}', 'cat_id3', '{$info[cat_id3]}');
         </if>
 
-        var target_type = {$info['target_type']};
+        var target_type = $("select[name='target_type']").find("option:selected").val();
         switch (target_type) {
-            case 1:
+            case '1':
                 $('.goods').show();
                 break;
-            case 2:
+            case '2':
                 $('.prom').show();
                 break;
         }
