@@ -229,12 +229,13 @@ class GroupBuyLogic extends Prom
      * 团购商品立即购买.
      *
      * @param $buyGoods
+     * @param $buyType |购买方式
      *
      * @return mixed
      *
      * @throws TpshopException
      */
-    public function buyNow($buyGoods)
+    public function buyNow($buyGoods, $buyType)
     {
         //活动是否已经结束
         if (1 == $this->GroupBuy['is_end'] || empty($this->GroupBuy)) {
@@ -247,7 +248,7 @@ class GroupBuyLogic extends Prom
             }
             $member_goods_price = $this->GroupBuy['price'];
             $use_integral = 0;
-            if (1 == $this->GroupBuy['can_integral']) {
+            if (1 == $this->GroupBuy['can_integral'] && $buyType == 1) {
                 $member_goods_price = $this->GroupBuy['price'] - $buyGoods['goods']['exchange_integral'];
                 $use_integral = $buyGoods['goods']['exchange_integral'];
             }

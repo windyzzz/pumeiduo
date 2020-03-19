@@ -145,7 +145,7 @@ class CartLogic extends Model
      *
      * @throws TpshopException
      */
-    public function buyNow()
+    public function buyNow($isApp = false)
     {
         if (empty($this->goods)) {
             throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '购买商品不存在', 'result' => '']);
@@ -222,13 +222,34 @@ class CartLogic extends Model
             $goodsPromLogic = $goodsPromFactory->makeModule($this->goods, $this->specGoodsPrice);
             if (!empty($goodsPromLogic)) {
                 if ($goodsPromLogic->checkActivityIsAble()) {
-                    $buyGoods = $goodsPromLogic->buyNow($buyGoods);
-                    if ($prom_type == 3 && 1 == $this->type) {
-                        // 商品促销优惠
-                        $member_goods_price = $buyGoods['member_goods_price'] - $this->goods['exchange_integral'];
-                        $use_integral = $this->goods['exchange_integral'];
-                        $buyGoods['member_goods_price'] = $member_goods_price;
-                        $buyGoods['use_integral'] = $use_integral;
+                    if ($prom_type == 1) {
+                        // 秒杀商品
+                        $flashSale = M('flash_sale')->where([
+                            'id' => $this->specGoodsPrice['prom_id'],
+                            'source' => ['LIKE', $isApp ? '%' . 3 . '%' : '%' . 1 . '%']
+                        ])->value('id');
+                        if ($flashSale) {
+                            $buyGoods = $goodsPromLogic->buyNow($buyGoods, $this->type);
+                        } else {
+                            // 普通价格
+                            $member_goods_price = $buyGoods['member_goods_price'];
+                            $use_integral = 0;
+                            if (1 == $this->type) {
+                                $member_goods_price = bcsub($member_goods_price, $this->goods['exchange_integral'], 2);
+                                $use_integral = $this->goods['exchange_integral'];
+                            }
+                            $buyGoods['member_goods_price'] = $member_goods_price;
+                            $buyGoods['use_integral'] = $use_integral;
+                        }
+                    } else {
+                        $buyGoods = $goodsPromLogic->buyNow($buyGoods, $this->type);
+                        if ($prom_type == 3 && 1 == $this->type) {
+                            // 商品促销优惠
+                            $member_goods_price = bcsub($buyGoods['member_goods_price'], $this->goods['exchange_integral'], 2);
+                            $use_integral = $this->goods['exchange_integral'];
+                            $buyGoods['member_goods_price'] = $member_goods_price;
+                            $buyGoods['use_integral'] = $use_integral;
+                        }
                     }
                 } else {
                     throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '活动已经结束，无法购买', 'result' => '']);
@@ -269,7 +290,7 @@ class CartLogic extends Model
      *
      * @return array
      */
-    public function addGoodsToCart()
+    public function addGoodsToCart($isApp = false)
     {
         if (empty($this->goods)) {
             return ['status' => -3, 'msg' => '购买商品不存在', 'result' => ''];
@@ -290,7 +311,15 @@ class CartLogic extends Model
         //有商品规格，和没有商品规格
         if ($this->specGoodsPrice) {
             if (1 == $this->specGoodsPrice['prom_type']) {
-                $result = $this->addFlashSaleCart();
+                $flashSale = M('flash_sale')->where([
+                    'id' => $this->specGoodsPrice['prom_id'],
+                    'source' => ['LIKE', $isApp ? '%' . 3 . '%' : '%' . 1 . '%']
+                ])->value('id');
+                if ($flashSale) {
+                    $result = $this->addFlashSaleCart();
+                } else {
+                    $result = $this->addNormalCart();
+                }
             } elseif (2 == $this->specGoodsPrice['prom_type']) {
                 $result = $this->addGroupBuyCart();
             } elseif (3 == $this->specGoodsPrice['prom_type']) {

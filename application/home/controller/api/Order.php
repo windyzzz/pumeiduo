@@ -1596,7 +1596,7 @@ class Order extends Base
             $cartLogic->setType($payType);
             $cartLogic->setCartType(0);
             try {
-                $buyGoods = $cartLogic->buyNow();
+                $buyGoods = $cartLogic->buyNow($this->isApp);
             } catch (TpshopException $tpE) {
                 $error = $tpE->getErrorArr();
                 return json(['status' => 0, 'msg' => $error['msg']]);
@@ -1993,7 +1993,7 @@ class Order extends Base
             $cartLogic->setType($payType);
             $cartLogic->setCartType(0);
             try {
-                $buyGoods = $cartLogic->buyNow();
+                $buyGoods = $cartLogic->buyNow($this->isApp);
             } catch (TpshopException $tpE) {
                 $error = $tpE->getErrorArr();
                 return json(['status' => 0, 'msg' => $error['msg']]);
@@ -2235,7 +2235,7 @@ class Order extends Base
             $cartLogic->setType($payType);
             $cartLogic->setCartType(0);
             try {
-                $buyGoods = $cartLogic->buyNow();
+                $buyGoods = $cartLogic->buyNow($this->isApp);
             } catch (TpshopException $tpE) {
                 $error = $tpE->getErrorArr();
                 return json(['status' => 0, 'msg' => $error['msg']]);

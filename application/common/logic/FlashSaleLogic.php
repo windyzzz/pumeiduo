@@ -225,12 +225,13 @@ class FlashSaleLogic extends Prom
      * 抢购商品立即购买.
      *
      * @param $buyGoods
+     * @param $buyType |购买方式
      *
      * @return mixed
      *
      * @throws TpshopException
      */
-    public function buyNow($buyGoods)
+    public function buyNow($buyGoods, $buyType)
     {
         if ($this->checkActivityIsAble()) {
             if ($this->flashSale['buy_limit'] != 0 && $buyGoods['goods_num'] > $this->flashSale['buy_limit']) {
@@ -248,7 +249,7 @@ class FlashSaleLogic extends Prom
         }
         $member_goods_price = $this->flashSale['price'];
         $use_integral = 0;
-        if (1 == $this->flashSale['can_integral']) {
+        if (1 == $this->flashSale['can_integral'] && $buyType == 1) {
             $member_goods_price = $this->flashSale['price'] - $buyGoods['goods']['exchange_integral'];
             $use_integral = $buyGoods['goods']['exchange_integral'];
         }

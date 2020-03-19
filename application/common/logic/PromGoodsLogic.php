@@ -221,12 +221,13 @@ class PromGoodsLogic extends Prom
      * 促销商品立即购买.
      *
      * @param $buyGoods
+     * @param $buyType |购买方式
      *
      * @return mixed
      *
      * @throws TpshopException
      */
-    public function buyNow($buyGoods)
+    public function buyNow($buyGoods, $buyType)
     {
         if (!$this->checkActivityIsEnd() && $this->checkActivityIsAble()) {
             if ($this->promGoods['buy_limit'] != 0 && $buyGoods['goods_num'] > $this->promGoods['buy_limit']) {

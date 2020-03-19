@@ -78,6 +78,7 @@ class Base extends Controller
             'c=api.Login&a=do_login', // 用户登录,
             'c=api.Index&a=indexNew',   // 主页
             'c=api.Goods&a=all_category',   // 商品分类
+            'c=api.Goods&a=calcSpecPrice',   // 获取规格组合价格
             'c=api.Goods&a=goodsListNew',   // 商品列表
             'c=api.Goods&a=searchList',   // 商品搜索列表
             'c=api.Goods&a=getSeriesGoodsList',   // 超值套装列表

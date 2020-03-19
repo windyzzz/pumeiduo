@@ -224,10 +224,16 @@ class Goods extends Base
         $zone = $goods['zone'];
         $goodsLogic = new GoodsLogic();
         // 判断商品性质
+        if ($this->isApp) {
+            $flashSaleWhere['fs.source'] = ['LIKE', '%' . 3 . '%'];
+        } else {
+            $flashSaleWhere['fs.source'] = ['LIKE', '%' . 1 . '%'];
+        }
         $flashSale = Db::name('flash_sale fs')
             ->join('goods g', 'g.goods_id = fs.goods_id')
             ->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
-            ->where(['fs.goods_id' => $goods_id, 'fs.start_time' => ['<=', time()], 'fs.end_time' => ['>=', time()], 'fs.is_end' => 0])
+            ->where(['fs.goods_id' => $goods_id, 'fs.start_time' => ['<=', time()], 'fs.end_time' => ['>=', time()]])
+            ->where($flashSaleWhere)
             ->field('fs.goods_id, sgp.key spec_key, fs.price, fs.goods_num, fs.buy_limit, fs.start_time, fs.end_time, fs.can_integral, g.exchange_integral')->select();
         if (!empty($flashSale)) {
             // 秒杀商品
@@ -246,7 +252,7 @@ class Goods extends Base
             $groupBuy = Db::name('group_buy gb')
                 ->join('goods g', 'g.goods_id = gb.goods_id')
                 ->join('spec_goods_price sgp', 'sgp.item_id = gb.item_id', 'LEFT')
-                ->where(['gb.goods_id' => $goods_id, 'gb.is_end' => 0, 'gb.start_time' => ['<=', time()], 'gb.end_time' => ['>=', time()]])
+                ->where(['gb.goods_id' => $goods_id, 'gb.start_time' => ['<=', time()], 'gb.end_time' => ['>=', time()]])
                 ->field('gb.goods_id, gb.price, sgp.key spec_key, gb.price, gb.group_goods_num, gb.goods_num, gb.buy_limit, gb.start_time, gb.end_time, gb.can_integral, g.exchange_integral')->select();
             if (!empty($groupBuy)) {
                 // 团购商品
@@ -520,6 +526,77 @@ class Goods extends Base
         }
 
         return json(['status' => 1, 'msg' => 'success', 'result' => $result]);
+    }
+
+    /**
+     * 获取规格组合价格
+     * @return \think\response\Json
+     */
+    public function calcSpecPrice()
+    {
+        $itemId = I('item_id', 0);
+        $goodsPrice = M('spec_goods_price sgp')->join('goods g', 'g.goods_id = sgp.goods_id')
+            ->field('sgp.goods_id, sgp.item_id, sgp.price shop_price, sgp.store_count, g.exchange_integral, sgp.prom_type, sgp.prom_id')
+            ->where(['sgp.item_id' => $itemId])
+            ->find();
+        if (empty($goodsPrice)) return json(['status' => 0, 'msg' => '请传入正确的规格组合ID']);
+        $isNormal = false;
+        switch ($goodsPrice['prom_type']) {
+            case 1:
+                if ($this->isApp) {
+                    $where['source'] = ['LIKE', '%' . 3 . '%'];
+                } else {
+                    $where['source'] = ['LIKE', '%' . 1 . '%'];
+                }
+                // 秒杀商品
+                $flashSale = M('flash_sale')->where([
+                    'goods_id' => $goodsPrice['goods_id'],
+                    'item_id' => $goodsPrice['item_id'],
+                    'start_time' => ['<', time()],
+                    'end_time' => ['>', time()]
+                ])->where($where)->field('price, buy_limit, can_integral')->find();
+                if (empty($flashSale)) {
+                    $isNormal = true;
+                } else {
+                    $goodsPrice['activity_type'] = 'flash_sale';
+                    $goodsPrice['shop_price'] = $flashSale['price'];
+                    $goodsPrice['buy_limit'] = $flashSale['buy_limit'];
+                    if ($flashSale['can_integral'] == 0) {
+                        $goodsPrice['exchange_integral'] = '0';
+                    }
+                }
+                break;
+            case 2:
+                // 团购商品
+                $groupBuy = M('group_buy')->where([
+                    'goods_id' => $goodsPrice['goods_id'],
+                    'item_id' => $goodsPrice['item_id'],
+                    'start_time' => ['<', time()],
+                    'end_time' => ['>', time()]
+                ])->field('price, buy_limit, can_integral')->find();
+                if (empty($groupBuy)) {
+                    $isNormal = true;
+                } else {
+                    $goodsPrice['activity_type'] = 'group_buy';
+                    $goodsPrice['shop_price'] = $groupBuy['price'];
+                    $goodsPrice['buy_limit'] = $groupBuy['buy_limit'];
+                    if ($groupBuy['can_integral'] == 0) {
+                        $goodsPrice['exchange_integral'] = '0';
+                    }
+                }
+                break;
+            default:
+                // 普通商品
+                $isNormal = true;
+        }
+        if ($isNormal) {
+            $goodsPrice['activity_type'] = 'normal';
+            $goodsPrice['buy_limit'] = '0';
+        }
+        $goodsPrice['exchange_price'] = bcsub($goodsPrice['shop_price'], $goodsPrice['exchange_integral'], 2);
+        unset($goodsPrice['prom_type']);
+        unset($goodsPrice['prom_id']);
+        return json(['status' => 1, 'result' => $goodsPrice]);
     }
 
     public function getNewGoods()
@@ -1174,7 +1251,7 @@ class Goods extends Base
         $where = [
             'gb.start_time' => ['elt', time()],
             'gb.end_time' => ['egt', time()],
-            'gb.is_end' => 0,
+//            'gb.is_end' => 0,
             'g.is_on_sale' => 1,
         ];
         // 查询满足要求的总记录数
@@ -1288,7 +1365,7 @@ class Goods extends Base
         $where = [
             'gb.start_time' => ['elt', time()],
             'gb.end_time' => ['egt', time()],
-            'gb.is_end' => 0,
+//            'gb.is_end' => 0,
             'g.is_on_sale' => 1,
         ];
         // 查询满足要求的总记录数
@@ -1363,7 +1440,7 @@ class Goods extends Base
             $where = [
                 'pg.id' => $promId,
                 'pg.is_open' => 1,
-                'pg.is_end' => 0,
+//                'pg.is_end' => 0,
                 'pg.end_time' => ['>=', time()],
                 'g.is_on_sale' => 1,
                 'g.cat_id' => ['in', $cat_id_arr]
@@ -1457,14 +1534,19 @@ class Goods extends Base
         // 商品标签
         $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->limit($page->firstRow . ',' . $page->listRows)->select();
         // 秒杀商品
-        $flashSale = Db::name('flash_sale')->where(['goods_id' => ['in', $filter_goods_id]])
-            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->limit($page->firstRow . ',' . $page->listRows)->field('goods_id')->select();
+        if ($this->isApp) {
+            $flashSaleWhere['source'] = ['LIKE', '%' . 3 . '%'];
+        } else {
+            $flashSaleWhere['source'] = ['LIKE', '%' . 1 . '%'];
+        }
+        $flashSale = Db::name('flash_sale')->where(['goods_id' => ['in', $filter_goods_id]])->where($flashSaleWhere)
+            ->where(['start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->limit($page->firstRow . ',' . $page->listRows)->field('goods_id')->select();
         // 团购商品
         $groupBuy = Db::name('group_buy')->where(['goods_id' => ['in', $filter_goods_id]])
-            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->limit($page->firstRow . ',' . $page->listRows)->field('goods_id')->select();
+            ->where(['start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->limit($page->firstRow . ',' . $page->listRows)->field('goods_id')->select();
         // 促销商品
         $promGoods = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
-            ->where(['gtg.goods_id' => ['in', $filter_goods_id], 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
+            ->where(['gtg.goods_id' => ['in', $filter_goods_id], 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
             ->field('pg.title, gtg.goods_id')->limit($page->firstRow . ',' . $page->listRows)->select();    // 促销活动
         $couponLogic = new CouponLogic();
         $couponCurrency = $couponLogic->getCoupon(0);    // 通用优惠券
@@ -1595,14 +1677,19 @@ class Goods extends Base
         // 商品标签
         $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->limit($page->firstRow . ',' . $page->listRows)->select();
         // 秒杀商品
-        $flashSale = Db::name('flash_sale')->where(['goods_id' => ['in', $filter_goods_id]])
-            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->limit($page->firstRow . ',' . $page->listRows)->field('goods_id')->select();
+        if ($this->isApp) {
+            $flashSaleWhere['source'] = ['LIKE', '%' . 3 . '%'];
+        } else {
+            $flashSaleWhere['source'] = ['LIKE', '%' . 1 . '%'];
+        }
+        $flashSale = Db::name('flash_sale')->where(['goods_id' => ['in', $filter_goods_id]])->where($flashSale)
+            ->where(['start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->limit($page->firstRow . ',' . $page->listRows)->field('goods_id')->select();
         // 团购商品
         $groupBuy = Db::name('group_buy')->where(['goods_id' => ['in', $filter_goods_id]])
-            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->limit($page->firstRow . ',' . $page->listRows)->field('goods_id')->select();
+            ->where(['start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->limit($page->firstRow . ',' . $page->listRows)->field('goods_id')->select();
         // 促销商品
         $promGoods = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
-            ->where(['gtg.goods_id' => ['in', $filter_goods_id], 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
+            ->where(['gtg.goods_id' => ['in', $filter_goods_id], 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
             ->field('pg.title, gtg.goods_id')->limit($page->firstRow . ',' . $page->listRows)->select();    // 促销活动
         $couponLogic = new CouponLogic();
         $couponCurrency = $couponLogic->getCoupon(0);    // 通用优惠券
@@ -2083,14 +2170,19 @@ class Goods extends Base
         // 商品标签
         $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filterGoodsIds], 'status' => 1])->select();
         // 秒杀商品
-        $flashSale = Db::name('flash_sale')->where(['goods_id' => ['in', $filterGoodsIds]])
-            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->field('goods_id')->select();
+        if ($this->isApp) {
+            $flashSaleWhere['source'] = ['LIKE', '%' . 3 . '%'];
+        } else {
+            $flashSaleWhere['source'] = ['LIKE', '%' . 1 . '%'];
+        }
+        $flashSale = Db::name('flash_sale')->where(['goods_id' => ['in', $filterGoodsIds]])->where($flashSaleWhere)
+            ->where(['start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->field('goods_id')->select();
         // 团购商品
         $groupBuy = Db::name('group_buy')->where(['goods_id' => ['in', $filterGoodsIds]])
-            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->field('goods_id')->select();
+            ->where(['start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->field('goods_id')->select();
         // 促销商品
         $promGoods = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
-            ->where(['gtg.goods_id' => ['in', $filterGoodsIds], 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
+            ->where(['gtg.goods_id' => ['in', $filterGoodsIds], 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
             ->field('pg.title, gtg.goods_id')->select();    // 促销活动
         $couponLogic = new CouponLogic();
         $couponCurrency = $couponLogic->getCoupon(0);    // 通用优惠券

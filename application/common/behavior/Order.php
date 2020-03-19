@@ -43,12 +43,12 @@ class Order
             $wechat->sendMsg($user['openid'], 'text', $wx_content);
         }
 
-        //用户下单, 发送短信给商家
-        $res = checkEnableSendSms('3');
-        if ($res && 1 == $res['status']) {
-            $sender = tpCache('shop_info.mobile');
-            $params = ['consignee' => $order['consignee'], 'mobile' => $order['mobile']];
-            sendSms('3', $sender, $params);
-        }
+//        //用户下单, 发送短信给商家
+//        $res = checkEnableSendSms('3');
+//        if ($res && 1 == $res['status']) {
+//            $sender = tpCache('shop_info.mobile');
+//            $params = ['consignee' => $order['consignee'], 'mobile' => $order['mobile']];
+//            sendSms('3', $sender, $params);
+//        }
     }
 }

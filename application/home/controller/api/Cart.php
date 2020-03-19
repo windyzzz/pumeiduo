@@ -655,7 +655,7 @@ class Cart extends Base
             $cartLogic->setSpecGoodsPriceModel($item_id);
         }
         $cartLogic->setGoodsBuyNum($goods_num);
-        $result = $cartLogic->addGoodsToCart();
+        $result = $cartLogic->addGoodsToCart($this->isApp);
         return json($result);
     }
 
