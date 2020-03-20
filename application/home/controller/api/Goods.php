@@ -216,7 +216,7 @@ class Goods extends Base
         }
         $goods = Db::name('goods')->where('goods_id', $goods_id)->field('goods_id, cat_id, extend_cat_id, goods_sn, goods_name, goods_type, goods_remark, goods_content, 
             brand_id, store_count, comment_count, market_price, shop_price, cost_price, give_integral, exchange_integral, original_img, limit_buy_num, least_buy_num,
-            is_on_sale, is_free_shipping, is_recommend, is_new, is_hot, is_virtual, virtual_indate, click_count, zone')->find();
+            is_on_sale, is_free_shipping, is_recommend, is_new, is_hot, is_virtual, virtual_indate, click_count, zone, commission, retail_pv, integral_pv')->find();
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
@@ -273,6 +273,16 @@ class Goods extends Base
                 $goods['nature'] = [];
             }
         }
+        // 处理显示金额
+        if ($goods['exchange_integral'] != 0) {
+            $goods['exchange_price'] = bcdiv(bcsub(bcmul($goods['shop_price'], 100), bcmul($goods['exchange_integral'], 100)), 100, 2);
+        } else {
+            $goods['exchange_price'] = $goods['shop_price'];
+        }
+        // 商品佣金
+        $goods['retail_commission'] = bcdiv(bcmul($goods['shop_price'], $goods['commission'], 2), 100, 2);
+        $goods['integral_commission'] = bcdiv(bcmul($goods['exchange_price'], $goods['commission'], 2), 100, 2);
+        unset($goods['commission']);
         // 处理商品详情（抽取图片）
         $contentArr = explode('public', $goods['goods_content']);
         $contentImgArr = [];
@@ -311,12 +321,6 @@ class Goods extends Base
         if ($goods['brand_id']) {
             // 品牌名称
             $goods['brand_name'] = M('brand')->where('id', $goods['brand_id'])->getField('name');
-        }
-        // 处理显示金额
-        if ($goods['exchange_integral'] != 0) {
-            $goods['exchange_price'] = bcdiv(bcsub(bcmul($goods['shop_price'], 100), bcmul($goods['exchange_integral'], 100)), 100, 2);
-        } else {
-            $goods['exchange_price'] = $goods['shop_price'];
         }
         // 商品标签
         $goods['tabs'] = [];

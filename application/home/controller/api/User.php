@@ -1826,14 +1826,85 @@ class User extends Base
      */
     public function bindOldUser()
     {
-        $username = I('post.username', '');
-        $password = I('post.password', '');
-        $mobile = I('post.mobile', '');
-        $code = I('post.code', '');
-        $scene = I('post.scene', 6);
         $type = I('post.type', 1);
+        $data = [
+            'username' => I('post.username', ''),
+            'password' => I('post.password', ''),
+            'mobile' => I('post.mobile', ''),
+            'code' => I('post.code', ''),
+            'scene' => I('post.scene', 6),
+        ];
 
-        $current_user = M('Users')->where(['user_id' => $this->user_id])->find();
+        $usersLogic = new UsersLogic();
+        $res = $usersLogic->bindUser($this->user_id, $type, $data);
+        if ($res['status'] !== 1) {
+            return json($res);
+        }
+        $bindUserId = $res['result']['bind_user_id'];
+
+        setcookie('uname', '', time() - 3600, '/');
+        setcookie('cn', '', time() - 3600, '/');
+        setcookie('user_id', '', time() - 3600, '/');
+        setcookie('user', '', time() - 3600, '/');
+        setcookie('PHPSESSID', '', time() - 3600, '/');
+        session_unset();
+        session_destroy();
+        $this->redis->rm('user_' . $this->userToken);
+
+        $user = M('Users')->where('user_id', $bindUserId)->find();
+        // 更新用户推送tags
+        $res = (new PushLogic())->bindPushTag($user);
+        if ($res['status'] == 2) {
+            $user = Db::name('users')->where('user_id', $user['user_id'])->find();
+        }
+        if (empty($user['token'])) {
+            $userToken = TokenLogic::setToken();
+            $updateData = [
+                'last_login' => time(),
+                'token' => $userToken,
+                'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
+            ];
+            M('Users')->where('user_id', $bindUserId)->update($updateData);
+            $user['token'] = $userToken;
+        }
+        session('user', $user);
+        $this->redis->set('user_' . $user['token'], $user, config('REDIS_TIME'));
+        setcookie('user_id', $user['user_id'], null, '/');
+        setcookie('is_distribut', $user['is_distribut'], null, '/');
+        $nickname = empty($user['nickname']) ? '第三方用户' : $user['nickname'];
+        setcookie('uname', urlencode($nickname), null, '/');
+        setcookie('cn', 0, time() - 3600, '/');
+        $cartLogic = new CartLogic();
+        $cartLogic->setUserId($user['user_id']);
+        $cartLogic->setUserToken($user['token']);
+        $cartLogic->doUserLoginHandle();  //用户登录后 需要对购物车 一些操作
+
+        $returnUser = [
+            'user_id' => $user['user_id'],
+            'sex' => $user['sex'],
+            'nickname' => $user['nickname'] ?? $user['user_name'],
+            'user_name' => $user['user_name'],
+            'real_name' => $user['real_name'],
+            'id_cart' => $user['id_cart'],
+            'birthday' => $user['birthday'],
+            'mobile' => $user['mobile'],
+            'head_pic' => $user['head_pic'],
+            'type' => $user['distribut_level'] >= 3 ? 2 : $user['type'],
+            'invite_uid' => $user['invite_uid'],
+            'is_distribut' => $user['is_distribut'],
+            'is_lock' => $user['is_lock'],
+            'level' => $user['distribut_level'],
+            'level_name' => M('DistributLevel')->where('level_id', $user['distribut_level'])->getField('level_name') ?? '普通会员',
+            'is_not_show_jk' => $user['is_not_show_jk'],  // 是否提示加入金卡弹窗
+            'is_not_show_invite' => $user['distribut_level'] >= 3 ? 1 : 0,  // 是否隐藏推荐人绑定
+            'has_pay_pwd' => $user['paypwd'] ? 1 : 0,
+            'is_app' => TokenLogic::getValue('is_app', $user['token']) ? 1 : 0,
+            'token' => $user['token'],
+            'jpush_tags' => [$user['push_tag']]
+        ];
+        return json(['status' => 1, 'msg' => '绑定成功', 'result' => ['user' => $returnUser]]);
+
+        /*$current_user = M('Users')->where(['user_id' => $this->user_id])->find();
         if (2 == $current_user['type']) {
             return json(['status' => -1, 'msg' => '老用户无法继续绑定', 'result' => null]);
         }
@@ -1996,73 +2067,7 @@ class User extends Base
             'add_time' => time(),
             'type' => 1,
             'way' => 1
-        ]);
-
-        DB::commit();
-
-        setcookie('uname', '', time() - 3600, '/');
-        setcookie('cn', '', time() - 3600, '/');
-        setcookie('user_id', '', time() - 3600, '/');
-        setcookie('user', '', time() - 3600, '/');
-        setcookie('PHPSESSID', '', time() - 3600, '/');
-        session_unset();
-        session_destroy();
-        $this->redis->rm('user_' . $this->userToken);
-
-        $user = M('Users')->where('user_id', $bind_user['user_id'])->find();
-        // 更新用户推送tags
-        $res = (new PushLogic())->bindPushTag($user);
-        if ($res['status'] == 2) {
-            $user = Db::name('users')->where('user_id', $user['user_id'])->find();
-        }
-        if (empty($user['token'])) {
-            $userToken = TokenLogic::setToken();
-            $updateData = [
-                'last_login' => time(),
-                'token' => $userToken,
-                'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
-            ];
-            M('Users')->where('user_id', $bind_user['user_id'])->update($updateData);
-            $user['token'] = $userToken;
-        }
-        session('user', $user);
-        $this->redis->set('user_' . $user['token'], $user, config('REDIS_TIME'));
-        setcookie('user_id', $user['user_id'], null, '/');
-        setcookie('is_distribut', $user['is_distribut'], null, '/');
-        $nickname = empty($user['nickname']) ? '第三方用户' : $user['nickname'];
-        setcookie('uname', urlencode($nickname), null, '/');
-        setcookie('cn', 0, time() - 3600, '/');
-        // 登录后将购物车的商品的 user_id 改为当前登录的id
-        M('cart')->where('session_id', $session_id)->save(['user_id' => $user['user_id']]);
-        $cartLogic = new CartLogic();
-        $cartLogic->setUserId($user['user_id']);
-        $cartLogic->setUserToken($user['token']);
-        $cartLogic->doUserLoginHandle();  //用户登录后 需要对购物车 一些操作
-
-        $returnUser = [
-            'user_id' => $user['user_id'],
-            'sex' => $user['sex'],
-            'nickname' => $user['nickname'] ?? $user['user_name'],
-            'user_name' => $user['user_name'],
-            'real_name' => $user['real_name'],
-            'id_cart' => $user['id_cart'],
-            'birthday' => $user['birthday'],
-            'mobile' => $user['mobile'],
-            'head_pic' => $user['head_pic'],
-            'type' => $user['distribut_level'] >= 3 ? 2 : $user['type'],
-            'invite_uid' => $user['invite_uid'],
-            'is_distribut' => $user['is_distribut'],
-            'is_lock' => $user['is_lock'],
-            'level' => $user['distribut_level'],
-            'level_name' => M('DistributLevel')->where('level_id', $user['distribut_level'])->getField('level_name') ?? '普通会员',
-            'is_not_show_jk' => $user['is_not_show_jk'],  // 是否提示加入金卡弹窗
-            'is_not_show_invite' => $user['distribut_level'] >= 3 ? 1 : 0,  // 是否隐藏推荐人绑定
-            'has_pay_pwd' => $user['paypwd'] ? 1 : 0,
-            'is_app' => TokenLogic::getValue('is_app', $user['token']) ? 1 : 0,
-            'token' => $user['token'],
-            'jpush_tags' => [$user['push_tag']]
-        ];
-        return json(['status' => 1, 'msg' => '绑定成功', 'result' => ['user' => $returnUser]]);
+        ]);*/
     }
 
     function bindOldUserInfo()

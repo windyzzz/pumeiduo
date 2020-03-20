@@ -1,29 +1,41 @@
-<include file="public/layout" />
+<include file="public/layout"/>
 <style>
-    td{height:40px;line-height:40px; padding-left:20px;}
-    .span_1{
-        float:left;
-        margin-left:0px;
-        height:130px;
-        line-height:130px;
+    td {
+        height: 40px;
+        line-height: 40px;
+        padding-left: 20px;
     }
-    .span_1 ul{list-style:none;padding:0px;}
-    .span_1 ul li{
-        border:1px solid #CCC;
-        height:40px;
-        padding:0px 10px;
-        margin-left:-1px;
-        margin-top:-1px;
-        line-height:40px;
+
+    .span_1 {
+        float: left;
+        margin-left: 0px;
+        height: 130px;
+        line-height: 130px;
+    }
+
+    .span_1 ul {
+        list-style: none;
+        padding: 0px;
+    }
+
+    .span_1 ul li {
+        border: 1px solid #CCC;
+        height: 40px;
+        padding: 0px 10px;
+        margin-left: -1px;
+        margin-top: -1px;
+        line-height: 40px;
     }
 </style>
 <body style="background-color: #FFF; overflow: auto;">
-<div id="toolTipLayer" style="position: absolute; z-index: 9999; display: none; visibility: visible; left: 95px; top: 573px;"></div>
+<div id="toolTipLayer"
+     style="position: absolute; z-index: 9999; display: none; visibility: visible; left: 95px; top: 573px;"></div>
 <div id="append_parent"></div>
 <div id="ajaxwaitid"></div>
 <div class="page">
     <div class="fixed-bar">
-        <div class="item-title"><a class="back" href="javascript:history.back();" title="返回列表"><i class="fa fa-arrow-circle-o-left"></i></a>
+        <div class="item-title"><a class="back" href="javascript:history.back();" title="返回列表"><i
+                class="fa fa-arrow-circle-o-left"></i></a>
             <div class="subject">
                 <h3>会员管理 - 合并会员信息</h3>
                 <h5>网站系统会员合并会员信息</h5>
@@ -31,75 +43,75 @@
         </div>
     </div>
     <!-- 操作说明 -->
-    <div id="explanation" class="explanation" style="color: rgb(44, 188, 163); background-color: rgb(237, 251, 248); width: 99%; height: 100%;">
+    <div id="explanation" class="explanation"
+         style="color: rgb(44, 188, 163); background-color: rgb(237, 251, 248); width: 99%; height: 100%;">
         <div id="checkZoom" class="title"><i class="fa fa-lightbulb-o"></i>
             <h4 title="提示相关设置操作时应注意的要点">操作提示</h4>
             <span title="收起提示" id="explanationZoom" style="display: block;"></span>
         </div>
         <ul>
-            <li>会员合并。会将报单系统用户数据合并到输入的用户ID中去，报单系统用户账号将会被冻结.</li>
-            <li>合并数据包括：粉丝数据，积分 ， 余额 ， 电子币 ， 等级 ， 用户流水记录 ， 订单数据（不包含售后数据）.</li>
+            <li>会员合并。会将输入的用户ID的用户数据合并到报单系统用户数据，输入的用户ID账号将会被冻结.</li>
+            <li>合并数据包括：下级数据，积分，余额，电子币，等级，用户流水记录，订单数据（不包含售后数据）</li>
         </ul>
     </div>
     <form class="form-horizontal" id="user_form" method="post">
         <div class="ncap-form-default">
-
             <dl class="row">
                 <dt class="tit">
                     <label><em>*</em>用户ID</label>
                 </dt>
                 <dd class="opt">
-                    <input id="id" name="id"  class="input-txt" type="text">
+                    <input id="id" name="id" class="input-txt" type="text">
+                    <p class="notic">合并完毕账号将会被冻结</p>
                 </dd>
+            </dl>
+            <dl class="row">
                 <dt class="tit">
                     <label><em>*</em>报单系统用户商城ID</label>
                 </dt>
                 <dd class="opt">
-                    <input id="merge_uid" name="merge_uid"  class="input-txt" type="text">
+                    <input id="merge_uid" name="merge_uid" class="input-txt" type="text">
+                    <p class="notic">数据将会更新</p>
                 </dd>
+            </dl>
+            <dl class="row">
                 <dt class="tit">
                     <label>报单系统用户名</label>
                 </dt>
                 <dd class="opt">
-                    <input id="user_name" name="user_name"  class="input-txt" type="text">
+                    <input id="user_name" name="user_name" class="input-txt" type="text">
                 </dd>
-
             </dl>
-
-            <div class="bot"><a href="JavaScript:void(0);" onclick="checkUserUpdate();" class="ncap-btn-big ncap-btn-green">确认提交</a></div>
+            <div class="bot"><a href="JavaScript:void(0);" onclick="checkUserUpdate();"
+                                class="ncap-btn-big ncap-btn-green">确认提交</a></div>
         </div>
     </form>
 </div>
 
 <script type="text/javascript">
-    function checkUserUpdate(){
+    function checkUserUpdate() {
         var id = $('#id').val();
         var merge_uid = $('#merge_uid').val();
         var user_name = $('#user_name').val();
-        var error ='';
-        if(id == '')
-        {
+        var error = '';
+        if (id == '') {
             error += "用户ID不能为空<br>";
         }
-        if(merge_uid == '')
-        {
+        if (merge_uid == '') {
             error += "报单系统用户ID不能为空<br>";
         }
-
-        if(error){
+        if (error) {
             layer.alert(error, {icon: 2});  //alert(error);
             return false;
         }
-        layer.confirm('你真的要将id为 '+merge_uid+' 的报单系统用户的所有数据合并到id为 '+id+' 的用户中去吗？<br><span style="color:red">一旦合并成功，数据将不可逆，请谨慎选择！</span>',function(){
+        layer.confirm('你真的要将id为 ' + merge_uid + ' 的报单系统用户的所有数据合并到id为 ' + id + ' 的用户中去吗？<br><span style="color:red">一旦合并成功，数据将不可逆，请谨慎选择！</span>', function () {
             $('#user_form').submit();
             layer.closeAll();
-        },function(){
+        }, function () {
             layer.closeAll();
         })
         // $('#user_form').submit();
     }
-
-
 </script>
 </body>
 </html>

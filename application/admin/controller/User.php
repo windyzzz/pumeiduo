@@ -13,6 +13,7 @@ namespace app\admin\controller;
 
 use app\admin\logic\UsersLogic;
 use app\common\logic\Token as TokenLogic;
+use app\common\logic\UsersLogic as CommonUsersLogic;
 use app\common\model\UserLoginLog as UserLoginLogModel;
 use app\common\model\Users as UsersModel;
 use think\AjaxPage;
@@ -369,24 +370,31 @@ class User extends Base
     {
         if (IS_POST) {
             $uid = I('post.id');
+            $data = [
+                'bindUserId' => I('post.merge_uid'),
+                'username' => I('post.merge_uid'),
+            ];
+            $usersLogic = new CommonUsersLogic();
+            $res = $usersLogic->bindUser($uid, 4, $data);
+            if ($res['status'] !== 1) {
+                exit($this->error($res['msg']));
+            }
+            exit($this->success('合并成功'));
+
             $user = D('users')->where(['user_id' => $uid])->find();
             if (!$user) {
                 exit($this->error('会员不存在'));
             }
-
             if ($user['distribut_level'] >= 3) {
                 exit($this->error('直销商账号不能合并其他账号'));
             }
-
             if ($user['bind_uid'] > 0) {
                 exit($this->error('要合并的用户ID此前已经合并过报单系统用户，不能多次合并'));
             }
-
             $apply_customs = M('apply_customs')->where(['user_id' => $uid, 'status' => 0])->find();
             if ($apply_customs) {
                 exit($this->error('该会员在申请金卡，不能进行合并操作'));
             }
-
             $merge_uid = I('post.merge_uid');
             $user_name = I('post.user_name');
             // 合并报单系统用户
@@ -396,7 +404,6 @@ class User extends Base
                 if ($uid == $merge_uid) {
                     exit($this->error('合并报单系统用户ID不能与当前用户ID一致'));
                 }
-
                 if ($user_name) {
                     $c = M('users')->where("user_id = $merge_uid and user_name = '$user_name' and is_lock = 0")->count();
                     !$c && exit($this->error('合并报单系统用户不存在,或者被冻结，不能合并！'));
@@ -410,27 +417,22 @@ class User extends Base
                 }
 
                 // 开始合并用户信息
-
                 // 1.粉丝数据
                 if ($this->_hasRelationship($c['first_leader'], $uid)) {
                     $this->error('合并的报单系统用户和要合并的用户id存在普通会员关系，不能合并！');
                 }
-
                 if ($c['distribut_level'] < 3) {
                     $this->error('合并的报单系统用户低于店长级别，不能合并！');
                 }
-
                 if ($c['distribut_level'] > 2 && $c['bind_uid'] > 0) {
                     $this->error('合并的报单系统用户已经新用户被绑定过老用户，不能合并！');
                 }
-
                 if ($c['user_name']) {
                     $cusers = M('users')->where(array("user_name" => $c['user_name']))->count();
                     if ($cusers >= 2) {
                         $this->error($c['user_name'] . '已合并多次，禁止多次合并');
                     }
                 }
-
                 // 更新用户信息
                 $user_data = [];
                 $user_data['distribut_level'] = $c['distribut_level'] > $user['distribut_level'] ? $c['distribut_level'] : $user['distribut_level'];
@@ -498,50 +500,6 @@ class User extends Base
                 M('bind_log')->add([
                     'user_id' => $merge_uid,
                     'bind_user_id' => $uid,
-                    'add_time' => time(),
-                    'type' => 1,
-                    'way' => 2
-                ]);
-                exit($this->success('合并成功'));
-
-                $update = [];
-                $update['invite_uid'] = $update['first_leader'] = $c['first_leader'];
-                $update['second_leader'] = $c['second_leader'];
-                $update['third_leader'] = $c['third_leader'];
-                $update['user_name'] = $c['user_name'];
-
-                if ($c['invite_uid'] != $user['invite_uid']) {
-                    M('users')->where('first_leader', $uid)->update(['second_leader' => $update['first_leader'], 'third_leader' => $update['second_leader']]);
-                    M('users')->where('second_leader', $uid)->update(['third_leader' => $update['first_leader']]);
-                }
-
-                // 2.积分 && 余额 && 电子币 && 等级
-                $update['pay_points'] = ['exp', "pay_points+{$c['pay_points']}"];
-                $update['user_money'] = ['exp', "user_money+{$c['user_money']}"];
-                $update['user_electronic'] = ['exp', "user_electronic+{$c['user_electronic']}"];
-                $update['distribut_level'] = $c['distribut_level'];
-                if ($update['distribut_level'] > 1) {
-                    $update['is_distribut'] = 1;
-                }
-                $update['merge_uid'] = $c['user_id'];
-                M('users')->where(['user_id' => $uid])->save($update);
-
-                M('account_log')->where('user_id', $c['user_id'])->update(['user_id' => $uid]);
-
-                // 3.订单
-                M('order')->where('user_id', $c['user_id'])->update(['user_id' => $uid]);
-
-                M('users')->where('first_leader', $c['user_id'])->update(['first_leader' => $uid, 'invite_uid' => $uid]);
-                M('users')->where('second_leader', $c['user_id'])->update(['second_leader' => $uid]);
-                M('users')->where('third_leader', $c['user_id'])->update(['third_leader' => $uid]);
-
-                // 4.冻结报单系统用户
-                M('users')->where(['user_id' => $c['user_id']])->save(['is_lock' => 1]);
-
-                // 绑定记录
-                M('bind_log')->add([
-                    'user_id' => $c['user_id'],
-                    'bind_user_id' => $user['user_id'],
                     'add_time' => time(),
                     'type' => 1,
                     'way' => 2
