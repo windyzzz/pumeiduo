@@ -1,0 +1,123 @@
+<include file="public/layout"/>
+<script src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
+<body style="background-color: #FFF; overflow: auto;">
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title"><a class="back" href="javascript:history.back();" title="返回列表"><i
+                class="fa fa-arrow-circle-o-left"></i></a>
+            <div class="subject">
+                <h3>活动弹窗详情</h3>
+                <h5>活动弹窗详情添加与管理</h5>
+            </div>
+        </div>
+    </div>
+    <!--表单数据-->
+    <form method="post" id="handleposition" action="{:U('Admin/Ad/popupInfo')}">
+        <input type="hidden" name="id" value="{$popup_info.id}">
+        <div class="ncap-form-default">
+            <dl class="row">
+                <dt class="tit" colspan="2">
+                    <label>弹窗类型：</label>
+                </dt>
+                <dd class="opt">
+                    <select name="type" class="input-sm" class="form-control">
+                        <option value="1"<if condition="$popup_info.type eq 1 ">selected</if>>无跳转</option>
+                        <option value="2"<if condition="$popup_info.type eq 2 ">selected</if>>VIP申请</option>
+                        <option value="3"<if condition="$popup_info.type eq 3 ">selected</if>>促销商品</option>
+                        <option value="4"<if condition="$popup_info.type eq 4 ">selected</if>>优惠团购</option>
+                        <option value="5"<if condition="$popup_info.type eq 5 ">selected</if>>超值套装</option>
+                        <option value="6"<if condition="$popup_info.type eq 6 ">selected</if>>领券中心</option>
+                        <option value="7"<if condition="$popup_info.type eq 7 ">selected</if>>我的礼券</option>
+                        <option value="8"<if condition="$popup_info.type eq 8 ">selected</if>>任务中心</option>
+                    </select>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit" colspan="2">
+                    <label>弹出限制：</label>
+                </dt>
+                <dd class="opt">
+                    <select name="show_limit" class="input-sm" class="form-control">
+                        <option value="1"<if condition="$popup_info.show_limit eq 1 ">selected</if>>每天一次</option>
+                        <option value="2"<if condition="$popup_info.show_limit eq 2 ">selected</if>>活动期间一次</option>
+                    </select>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>弹窗图片</label>
+                </dt>
+                <dd class="opt">
+                    <div class="input-file-show">
+                        <span class="show">
+                            <a id="img_a" target="_blank" class="nyroModal" rel="gal" href="{$popup_info.show_path}">
+                              <i id="img_i" class="fa fa-picture-o"
+                                 onmouseover="layer.tips('<img src={$popup_info.show_path}>',this,{tips: [1, '#fff']});"
+                                 onmouseout="layer.closeAll();"></i>
+                            </a>
+                        </span>
+                        <span class="type-file-box">
+                            <input type="text" id="show_path" name="show_path" value="{$popup_info.show_path}" class="type-file-text">
+                            <input type="button" name="button" id="button1" value="选择上传..." class="type-file-button">
+                            <input class="type-file-file" onClick="GetUploadify(1,'','ad','img_call_back')" size="30"
+                                   hidefocus="true" nc_type="change_site_logo" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">
+                        </span>
+                    </div>
+                    <span class="err"></span>
+                    <p class="notic">请上传图片格式文件</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>开始时间：</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" class="input-txt" id="start_time" name="start_time" value="{$popup_info.start_time|default=$start_time}"/>
+                    <span class="err"></span>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>结束时间：</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" class="input-txt" id="end_time" name="end_time" value="{$popup_info.end_time|default=$end_time}"/>
+                    <span class="err"></span>
+                </dd>
+            </dl>
+            <if condition='$Request.param.is_app_ad eq 0'>
+                <dl class="row">
+                    <dt class="tit">
+                        <label>弹窗排序：</label>
+                    </dt>
+                    <dd class="opt">
+                        <input type="text" placeholder="0" name="sort" value="{$popup_info.sort}" class="input-txt" oninput="value=value.replace(/[^\d]/g,'')">
+                        <span class="err"></span>
+                        <p class="notic"></p>
+                    </dd>
+                </dl>
+            </if>
+            <div class="bot"><a href="JavaScript:void(0);" onclick="adsubmit()" class="ncap-btn-big ncap-btn-green" id="submitBtn">确认提交</a></div>
+        </div>
+        <input type="hidden" name="act" value="{$act}">
+        <input type="hidden" name="ad_id" value="{$popup_info.ad_id}">
+    </form>
+</div>
+<script>
+    function adsubmit() {
+        $('#handleposition').submit();
+    }
+
+    $(document).ready(function () {
+        $('#start_time').layDate();
+        $('#end_time').layDate();
+    });
+
+    function img_call_back(fileurl_tmp) {
+        $("#show_path").val(fileurl_tmp);
+        $("#img_a").attr('href', fileurl_tmp);
+        $("#img_i").attr('onmouseover', "layer.tips('<img src=" + fileurl_tmp + ">',this,{tips: [1, '#fff']});");
+    }
+</script>
+</body>
+</html>

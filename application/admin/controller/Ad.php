@@ -15,6 +15,7 @@ use app\admin\logic\GoodsLogic;
 use app\admin\model\Goods;
 use app\common\model\Popup as PopupModel;
 use think\Db;
+use think\Loader;
 use think\Page;
 
 class Ad extends Base
@@ -341,5 +342,43 @@ class Ad extends Base
         $this->assign('popup_type', $popup->getType());
         $this->assign('list', $popupList);
         return $this->fetch('popup_list');
+    }
+
+    /**
+     * 活动弹窗信息
+     * @return mixed
+     */
+    public function popupInfo()
+    {
+        $id = I('id', '');
+        if (request()->isPost()) {
+            $data = I('post.');
+            $data['start_time'] = strtotime($data['start_time']);
+            $data['end_time'] = strtotime($data['end_time']);
+            $couponValidate = Loader::validate('Ad');
+            if (!$couponValidate->scene('popup')->batch()->check($data)) {
+                $msg = '';
+                foreach ($couponValidate->getError() as $value) {
+                    $msg .= $value . ',';
+                }
+                $this->error('操作失败，' . rtrim($msg, ','));
+            }
+            unset($data['id']);
+            if ($id) {
+                M('popup')->where(['id' => $id])->update($data);
+            } else {
+                M('popup')->add($data);
+            }
+            $this->success('操作成功', U('Admin/Ad/popupList'));
+        }
+        $popup = M('popup')->where(['id' => $id])->find();
+        if ($popup) {
+            $popup['start_time'] = date('Y-m-d H:i:s', $popup['start_time']);
+            $popup['end_time'] = date('Y-m-d H:i:s', $popup['end_time']);
+        }
+        $this->assign('popup_info', $popup);
+        $this->assign('start_time', date('Y-m-d H:i:s', time()));
+        $this->assign('end_time', date('Y-m-d H:i:s', strtotime('+1 week')));
+        return $this->fetch('popup_info');
     }
 }

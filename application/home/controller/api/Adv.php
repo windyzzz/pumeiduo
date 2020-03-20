@@ -1,23 +1,9 @@
 <?php
 
-/*
- * This file is part of the J project.
- *
- * (c) J <775893055@qq.com>
- *
- * This source file is subject to the MIT license that is bundled
- * with this source code in the file LICENSE.
- */
-
 namespace app\home\controller\api;
 
-class Adv
+class Adv extends Base
 {
-    public function __construct()
-    {
-        // header('Access-Control-Allow-Origin:*');
-        // header('Access-Control-Allow-Method:POST,GET');
-    }
 
     public function index()
     {
@@ -46,6 +32,59 @@ class Adv
             return json(['status' => 1, 'msg' => 'success', 'result' => $adList]);
         } else {
             return json(['status' => 1, 'msg' => 'success', 'result' => $arr]);
+        }
+    }
+
+
+    public function popup()
+    {
+        $where = [
+            'is_open' => 1,
+            'start_time' => ['<', time()],
+            'end_time' => ['>', time()]
+        ];
+        // 活动弹窗列表
+        $popupList = M('popup')->where($where)->field('id, type, show_limit, show_path')->order('sort desc')->select();
+        if (!$this->passAuth && $this->user_id) {
+            // 用户弹窗记录
+            $userPopupLog = M('user_popup_log')->where(['user_id' => $this->user_id])->getField('popup_id, log_time', true);
+        }
+        foreach ($popupList as $key => $popup) {
+            switch ($popup['show_limit']) {
+                case 1:
+                    // 每天一次
+                    if (!isset($userPopupLog[$popup['id']]) && $this->user_id) {
+                        // 增加用户记录
+                        M('user_popup_log')->add([
+                            'user_id' => $this->user_id,
+                            'popup_id' => $popup['id'],
+                            'log_time' => time()
+                        ]);
+                    } elseif (isset($userPopupLog[$popup['id']])) {
+                        if ($userPopupLog[$popup['id']]['log_time'] < strtotime(date('Y-m-d 00:00:00', time()))) {
+                            // 当天用户未弹出，更新用户记录
+                            M('user_popup_log')->where(['user_id' => $this->user_id, 'popup_id' => $popup['id']])->update(['log_time' => time()]);
+                        } else {
+                            // 当天用户已弹出
+                            unset($popupList[$key]);
+                        }
+                    }
+                    break;
+                case 2:
+                    // 活动期间一次
+                    if (!isset($userPopupLog[$popup['id']]) && $this->user_id) {
+                        // 增加用户记录
+                        M('user_popup_log')->add([
+                            'user_id' => $this->user_id,
+                            'popup_id' => $popup['id'],
+                            'log_time' => time()
+                        ]);
+                    } elseif (isset($userPopupLog[$popup['id']])) {
+                        // 用户已弹出
+                        unset($popupList[$key]);
+                    }
+                    break;
+            }
         }
     }
 }

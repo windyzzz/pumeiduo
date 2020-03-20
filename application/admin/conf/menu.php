@@ -46,7 +46,7 @@ return [
         ['name' => '广告', 'child' => [
             ['name' => '广告列表', 'act' => 'adList', 'op' => 'Ad'],
             ['name' => '广告位置', 'act' => 'positionList', 'op' => 'Ad'],
-            ['name' => '活动弹窗', 'act' => 'popupList', 'op' => 'Ad'],
+            ['name' => 'APP活动弹窗', 'act' => 'popupList', 'op' => 'Ad'],
         ]],
         ['name' => '文章', 'child' => [
             ['name' => '文章列表', 'act' => 'articleList', 'op' => 'Article'],

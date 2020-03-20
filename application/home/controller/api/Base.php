@@ -51,6 +51,9 @@ class Base extends Controller
             $this->user = $res['user'];
             $this->user_id = $res['user']['user_id'];
             $this->userToken = $token;
+//            if (!in_array($this->user_id, [36430, 36294, 36167, 36383, 39670, 36518, 1, 24749, 36472, 39730, 36527, 107, 36175])) {
+//                die(json_encode(['status' => $this->user_id, 'msg' => '抱歉，这只是测试服务器，正式服务器已2020-3-9中午12点正式发布，请及时下载最新版APP']));
+//            }
         }
     }
 
@@ -75,6 +78,7 @@ class Base extends Controller
         return [
             'c=api.Login&a=checkLogin', // 检查登录（旧版）
             'c=api.Login&a=reg', // 用户注册
+            'c=api.Login&a=reg', // 用户注册
             'c=api.Login&a=do_login', // 用户登录,
             'c=api.Index&a=indexNew',   // 主页
             'c=api.Goods&a=all_category',   // 商品分类
@@ -89,6 +93,7 @@ class Base extends Controller
             'c=api.Goods&a=getFlashSalesGoodsList',   // 秒杀商品
             'c=api.Goods&a=look_see',   // 猜你喜欢
             'c=api.User&a=findPassword',   // 找回密码（登录前忘记密码）
+            'c=api.Adv&a=index',   // 广告
         ];
     }
 
@@ -102,6 +107,7 @@ class Base extends Controller
         return [
             'c=api.Message&a=announce',   // 公告列表
             'c=api.Goods&a=goodsInfoNew',   // 商品详情
+            'c=api.Adv&a=popup',   // 活动弹窗
         ];
     }
 }
