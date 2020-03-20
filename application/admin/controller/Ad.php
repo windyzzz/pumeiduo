@@ -155,9 +155,15 @@ class Ad extends Base
         }
         switch ($data['target_type']) {
             case 1:
+                if (!$data['goods_id'] || $data['goods_id'] == 0) {
+                    $this->error('请选择商品');
+                }
                 $data['target_type_id'] = $data['goods_id'];
                 break;
             case 2:
+                if (!$data['prom_id'] || $data['prom_id'] == 0) {
+                    $this->error('请选择促销优惠');
+                }
                 $data['target_type_id'] = $data['prom_id'];
                 break;
             default:

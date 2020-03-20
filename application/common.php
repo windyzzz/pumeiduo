@@ -973,10 +973,10 @@ function accountLog($user_id, $user_money = 0.00, $pay_points = 0.00, $desc = ''
     $update = Db::name('users')->where('user_id', $user_id)->update($update_data);
     if ($update) {
         M('account_log')->add($account_log);
-//        if ($isOneself) {
-        $user = Db::name('users')->where('user_id', $user_id)->find();
-        TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
-//        }
+        if ($isOneself) {
+            $user = Db::name('users')->where('user_id', $user_id)->find();
+            TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
+        }
         return true;
     }
     return false;

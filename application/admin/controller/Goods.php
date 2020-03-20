@@ -13,6 +13,7 @@ namespace app\admin\controller;
 
 use app\admin\logic\GoodsLogic;
 use app\admin\logic\SearchWordLogic;
+use app\admin\model\Goods as GoodsModel;
 use think\AjaxPage;
 use think\Db;
 use think\Loader;
@@ -42,16 +43,16 @@ class Goods extends Base
      * 添加修改商品分类
      * 手动拷贝分类正则 ([\u4e00-\u9fa5/\w]+)  ('393','$1'),
      * select * from tp_goods_category where id = 393
-        select * from tp_goods_category where parent_id = 393.
-        update tp_goods_category  set parent_id_path = concat_ws('_','0_76_393',id),`level` = 3 where parent_id = 393
-        insert into `tp_goods_category` (`parent_id`,`name`) values
-        ('393','时尚饰品'),
+     * select * from tp_goods_category where parent_id = 393.
+     * update tp_goods_category  set parent_id_path = concat_ws('_','0_76_393',id),`level` = 3 where parent_id = 393
+     * insert into `tp_goods_category` (`parent_id`,`name`) values
+     * ('393','时尚饰品'),
      */
     public function addEditCategory()
     {
         $GoodsLogic = new GoodsLogic();
         if (IS_GET) {
-            $goods_category_info = D('GoodsCategory')->where('id='.I('GET.id', 0))->find();
+            $goods_category_info = D('GoodsCategory')->where('id=' . I('GET.id', 0))->find();
             $this->assign('goods_category_info', $goods_category_info);
 
             $all_type = M('goods_category')->where('level<3')->getField('id,name,parent_id'); //上级分类数据集，限制3级分类，那么只拿前两级作为上级选择
@@ -79,10 +80,10 @@ class Goods extends Base
                 $error = $validate->getError();
                 $error_msg = array_values($error);
                 $return_arr = [
-                        'status' => -1,
-                        'msg' => $error_msg[0],
-                        'data' => $error,
-                    ];
+                    'status' => -1,
+                    'msg' => $error_msg[0],
+                    'data' => $error,
+                ];
                 $this->ajaxReturn($return_arr);
             } else {
                 $GoodsCategory->data(input('post.'), true); // 收集数据
@@ -119,10 +120,10 @@ class Goods extends Base
                     $GoodsLogic->refresh_cat($insert_id);
                 }
                 $return_arr = [
-                        'status' => 1,
-                        'msg' => '操作成功',
-                        'data' => ['url' => U('Admin/Goods/categoryList')],
-                    ];
+                    'status' => 1,
+                    'msg' => '操作成功',
+                    'data' => ['url' => U('Admin/Goods/categoryList')],
+                ];
                 $this->ajaxReturn($return_arr);
             }
         }
@@ -135,7 +136,7 @@ class Goods extends Base
     {
         $GoodsLogic = new GoodsLogic();
         $_REQUEST['category_id'] = $_REQUEST['category_id'] ? $_REQUEST['category_id'] : 0;
-        $filter_spec = M('GoodsCategory')->where('id = '.$_REQUEST['category_id'])->getField('filter_spec');
+        $filter_spec = M('GoodsCategory')->where('id = ' . $_REQUEST['category_id'])->getField('filter_spec');
         $filter_spec_arr = explode(',', $filter_spec);
         $str = $GoodsLogic->GetSpecCheckboxList($_REQUEST['type_id'], $filter_spec_arr);
         $str = $str ? $str : '没有可帅选的商品规格';
@@ -149,7 +150,7 @@ class Goods extends Base
     {
         $GoodsLogic = new GoodsLogic();
         $_REQUEST['category_id'] = $_REQUEST['category_id'] ? $_REQUEST['category_id'] : 0;
-        $filter_attr = M('GoodsCategory')->where('id = '.$_REQUEST['category_id'])->getField('filter_attr');
+        $filter_attr = M('GoodsCategory')->where('id = ' . $_REQUEST['category_id'])->getField('filter_attr');
         $filter_attr_arr = explode(',', $filter_attr);
         $str = $GoodsLogic->GetAttrCheckboxList($_REQUEST['type_id'], $filter_attr_arr);
         $str = $str ? $str : '没有可帅选的商品属性';
@@ -176,13 +177,13 @@ class Goods extends Base
 
     public function getGoodsInfo()
     {
-        $goods_id = I('goods_id',0);
+        $goods_id = I('goods_id', 0);
 
-        $result = M('goods')->field('goods_id,goods_name,shop_price,exchange_integral,store_count')->where('goods_id',$goods_id)->find();
-        if($result){
-            return json(['msg'=>'ok','status'=>1,'result'=>$result]);
+        $result = M('goods')->field('goods_id,goods_name,shop_price,exchange_integral,store_count')->where('goods_id', $goods_id)->find();
+        if ($result) {
+            return json(['msg' => 'ok', 'status' => 1, 'result' => $result]);
         }
-        return json(['msg'=>'err','status'=>0,'result'=>null]);
+        return json(['msg' => 'err', 'status' => 0, 'result' => null]);
     }
 
     /**
@@ -202,9 +203,9 @@ class Goods extends Base
     public function export_goods()
     {
         $where = ' 1 = 1 '; // 搜索条件
-        I('intro') && $where = "$where and ".I('intro').' = 1';
-        I('brand_id') && $where = "$where and brand_id = ".I('brand_id');
-        ('' !== I('is_on_sale')) && $where = "$where and is_on_sale = ".I('is_on_sale');
+        I('intro') && $where = "$where and " . I('intro') . ' = 1';
+        I('brand_id') && $where = "$where and brand_id = " . I('brand_id');
+        ('' !== I('is_on_sale')) && $where = "$where and is_on_sale = " . I('is_on_sale');
 
         $cat_id = I('cat_id');
         // 关键词搜索
@@ -214,17 +215,17 @@ class Goods extends Base
         }
         $sale_type = I('sale_type');
         if ($sale_type) {
-            $where = "$where and  sale_type = ".I('sale_type');
+            $where = "$where and  sale_type = " . I('sale_type');
         }
 
         $is_area_show = I('is_area_show');
-        if($is_area_show==1){
+        if ($is_area_show == 1) {
             $where .= ' and is_area_show = 1';
         }
 
         if ($cat_id > 0) {
             $grandson_ids = getCatGrandson($cat_id);
-            $where .= ' and cat_id in('.implode(',', $grandson_ids).') '; // 初始化搜索条件
+            $where .= ' and cat_id in(' . implode(',', $grandson_ids) . ') '; // 初始化搜索条件
         }
         $ids = I('ids');
         $map = [];
@@ -258,18 +259,18 @@ class Goods extends Base
                 $suppliers = M('Suppliers')->where('suppliers_id', $val['suppliers_id'])->getField('suppliers_name');
                 $price = $val['shop_price'] - $val['exchange_integral'];
                 $strTable .= '<tr>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$val['goods_sn'].'</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">'.$first_cat.'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$secend_cat.' </td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$third_cat.'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['goods_name'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['shop_price'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['stax_price'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$price.'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['ctax_price'].' </td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['exchange_integral'].' </td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.trade_type($val['trade_type']).' </td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$suppliers.' </td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['goods_sn'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $first_cat . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $secend_cat . ' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $third_cat . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['goods_name'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['shop_price'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['stax_price'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $price . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['ctax_price'] . ' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['exchange_integral'] . ' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . trade_type($val['trade_type']) . ' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $suppliers . ' </td>';
                 $strTable .= '</tr>';
             }
             unset($goodsList);
@@ -286,9 +287,9 @@ class Goods extends Base
     public function ajaxGoodsList()
     {
         $where = ' 1 = 1 '; // 搜索条件
-        I('intro') && $where = "$where and ".I('intro').' = 1';
-        I('brand_id') && $where = "$where and brand_id = ".I('brand_id');
-        ('' !== I('is_on_sale')) && $where = "$where and is_on_sale = ".I('is_on_sale');
+        I('intro') && $where = "$where and " . I('intro') . ' = 1';
+        I('brand_id') && $where = "$where and brand_id = " . I('brand_id');
+        ('' !== I('is_on_sale')) && $where = "$where and is_on_sale = " . I('is_on_sale');
 
         $cat_id = I('cat_id');
         // 关键词搜索
@@ -298,31 +299,31 @@ class Goods extends Base
         }
         $sale_type = I('sale_type');
         if ($sale_type) {
-            $where = "$where and  sale_type = ".I('sale_type');
+            $where = "$where and  sale_type = " . I('sale_type');
         }
 
         if ($cat_id > 0) {
             $grandson_ids = getCatGrandson($cat_id);
-            $where .= ' and cat_id in('.implode(',', $grandson_ids).') '; // 初始化搜索条件
+            $where .= ' and cat_id in(' . implode(',', $grandson_ids) . ') '; // 初始化搜索条件
         }
 
         $is_area_show = I('is_area_show');
-        if($is_area_show==1){
+        if ($is_area_show == 1) {
             $where .= ' and is_area_show = 1';
         }
 
         $count = M('Goods')->where($where)->count();
         $Page = new AjaxPage($count, 20);
         /**  搜索条件下 分页赋值
-        foreach($condition as $key=>$val) {
-            $Page->parameter[$key]   =   urlencode($val);
-        }
+         * foreach($condition as $key=>$val) {
+         * $Page->parameter[$key]   =   urlencode($val);
+         * }
          */
         $show = $Page->show();
         $order_str = "`{$_POST['orderby1']}` {$_POST['orderby2']}";
         // dump( M('Goods')->where($where)->order($order_str)->limit($Page->firstRow.','.$Page->listRows)->fetchSql(1)->select());
         // exit;
-        $goodsList = M('Goods')->where($where)->order($order_str)->limit($Page->firstRow.','.$Page->listRows)->select();
+        $goodsList = M('Goods')->where($where)->order($order_str)->limit($Page->firstRow . ',' . $Page->listRows)->select();
 
         $catList = D('goods_category')->select();
         $catList = convert_arr_key($catList, 'id');
@@ -352,7 +353,7 @@ class Goods extends Base
             $gap = explode(' - ', $ctime);
             $this->assign('start_time', $gap[0]);
             $this->assign('end_time', $gap[1]);
-            $this->assign('ctime', $gap[0].' - '.$gap[1]);
+            $this->assign('ctime', $gap[0] . ' - ' . $gap[1]);
             $map['ctime'] = [['gt', strtotime($gap[0])], ['lt', strtotime($gap[1])]];
         }
         $count = $model->where($map)->count();
@@ -360,7 +361,7 @@ class Goods extends Base
         $show = $Page->show();
         $this->assign('pager', $Page);
         $this->assign('page', $show); // 赋值分页输出
-        $stock_list = $model->where($map)->order('id desc')->limit($Page->firstRow.','.$Page->listRows)->select();
+        $stock_list = $model->where($map)->order('id desc')->limit($Page->firstRow . ',' . $Page->listRows)->select();
         $this->assign('stock_list', $stock_list);
 
         return $this->fetch();
@@ -412,16 +413,16 @@ class Goods extends Base
 
 
             $goods_item = I('item/a');
-            $specStock = Db::name('spec_goods_price')->where('goods_id = '.$goods_id)->getField('key,store_count,item_id,store_count,item_sn');
+            $specStock = Db::name('spec_goods_price')->where('goods_id = ' . $goods_id)->getField('key,store_count,item_id,store_count,item_sn');
             if ($goods_item) {
                 $store_count_item = 0;
                 $is_can = true;
                 foreach ($goods_item as $k => $v) {
                     // 批量添加数据
                     $v['store_count'] = trim($v['store_count']); // 记录商品总库存
-                    $store_count_item = $store_count_item+$v['store_count'];
-                    if($data['trade_type']==1){//非一键待发  不可以改库存
-                        if($v['store_count']!=$v['store_count']){
+                    $store_count_item = $store_count_item + $v['store_count'];
+                    if ($data['trade_type'] == 1) {//非一键待发  不可以改库存
+                        if ($v['store_count'] != $v['store_count']) {
                             $return_arr = [
                                 'msg' => '仓库自发,不可以修改规格库存',
                                 'status' => 0
@@ -437,7 +438,7 @@ class Goods extends Base
                             $is_can = false;
                             break;
                         }
-                        if(count($goods_item)!=count($specStock)) {
+                        if (count($goods_item) != count($specStock)) {
                             $return_arr = [
                                 'msg' => '仓库自发,不可以删除规格',
                                 'status' => 0
@@ -448,10 +449,10 @@ class Goods extends Base
                     }
 
                 }
-                if(!$is_can){
+                if (!$is_can) {
                     $this->ajaxReturn($return_arr);
                 }
-                if($store_count_item!=$data['store_count']){
+                if ($store_count_item != $data['store_count']) {
                     $return_arr = [
                         'msg' => '子规格库存要等于主库存数',
                         'status' => 0
@@ -534,7 +535,7 @@ class Goods extends Base
             $this->ajaxReturn($return_arr);
         }
 
-        $goodsInfo = Db::name('Goods')->where('goods_id='.I('GET.id', 0))->find();
+        $goodsInfo = Db::name('Goods')->where('goods_id=' . I('GET.id', 0))->find();
         $goodsInfoData = [];
         if ($goodsInfo['price_ladder']) {
             $goodsInfoData['price_ladder'] = unserialize($goodsInfo['price_ladder']);
@@ -591,15 +592,15 @@ class Goods extends Base
         $this->assign('brandList', $brandList);
         $this->assign('goodsType', $goodsType);
         $this->assign('goodsInfo', $goodsInfo);  // 商品详情
-        $goodsImages = M('GoodsImages')->where('goods_id ='.I('GET.id', 0))->select();
+        $goodsImages = M('GoodsImages')->where('goods_id =' . I('GET.id', 0))->select();
         $this->assign('goodsImages', $goodsImages);  // 商品相册
         $goodsSeries = M('GoodsSeries')
-        ->alias('gs')
-        ->field('gs.*,g.store_count,g.goods_name,g.original_img as goods_images,g.shop_price as goods_price,sg.spec_img,CONCAT_WS(",",goods_name,sg.key_name) as spec_name,sg.price as spec_goods_price,sg.key')
-        ->join('__GOODS__ g', 'g.goods_id = gs.g_id')
-        ->join('__SPEC_GOODS_PRICE__ sg', 'sg.item_id = gs.item_id', 'left')
-        ->where('gs.goods_id ='.I('GET.id', 0))
-        ->select();
+            ->alias('gs')
+            ->field('gs.*,g.store_count,g.goods_name,g.original_img as goods_images,g.shop_price as goods_price,sg.spec_img,CONCAT_WS(",",goods_name,sg.key_name) as spec_name,sg.price as spec_goods_price,sg.key')
+            ->join('__GOODS__ g', 'g.goods_id = gs.g_id')
+            ->join('__SPEC_GOODS_PRICE__ sg', 'sg.item_id = gs.item_id', 'left')
+            ->where('gs.goods_id =' . I('GET.id', 0))
+            ->select();
         foreach ($goodsSeries as $k => $v) {
             $goodsSeries[$k]['spec_image'] = '';
             if ($v['item_id'] > 0) {
@@ -629,7 +630,7 @@ class Goods extends Base
         $count = $model->count();
         $Page = $pager = new Page($count, 14);
         $show = $Page->show();
-        $goodsTypeList = $model->order('id desc')->limit($Page->firstRow.','.$Page->listRows)->select();
+        $goodsTypeList = $model->order('id desc')->limit($Page->firstRow . ',' . $Page->listRows)->select();
         $this->assign('pager', $pager);
         $this->assign('show', $show);
         $this->assign('goodsTypeList', $goodsTypeList);
@@ -679,13 +680,13 @@ class Goods extends Base
     {
         //ob_start('ob_gzhandler'); // 页面压缩输出
         $where = ' 1 = 1 '; // 搜索条件
-        I('type_id') && $where = "$where and type_id = ".I('type_id');
+        I('type_id') && $where = "$where and type_id = " . I('type_id');
         // 关键词搜索
         $model = M('GoodsAttribute');
         $count = $model->where($where)->count();
         $Page = new AjaxPage($count, 13);
         $show = $Page->show();
-        $goodsAttributeList = $model->where($where)->order('`order` desc,attr_id DESC')->limit($Page->firstRow.','.$Page->listRows)->select();
+        $goodsAttributeList = $model->where($where)->order('`order` desc,attr_id DESC')->limit($Page->firstRow . ',' . $Page->listRows)->select();
         $goodsTypeList = M('GoodsType')->getField('id,name');
         $attr_input_type = [0 => '手工录入', 1 => ' 从列表中选择', 2 => ' 多行文本框'];
         $this->assign('attr_input_type', $attr_input_type);
@@ -702,9 +703,9 @@ class Goods extends Base
     {
         $model = D('GoodsAttribute');
         $type = I('attr_id') > 0 ? 2 : 1; // 标识自动验证时的 场景 1 表示插入 2 表示更新
-            $attr_values = str_replace('_', '', I('attr_values')); // 替换特殊字符
-            $attr_values = str_replace('@', '', $attr_values); // 替换特殊字符
-            $attr_values = trim($attr_values);
+        $attr_values = str_replace('_', '', I('attr_values')); // 替换特殊字符
+        $attr_values = str_replace('@', '', $attr_values); // 替换特殊字符
+        $attr_values = trim($attr_values);
 
         $post_data = input('post.');
         $post_data['attr_values'] = $attr_values;
@@ -716,10 +717,10 @@ class Goods extends Base
                 $error = $validate->getError();
                 $error_msg = array_values($error);
                 $return_arr = [
-                            'status' => -1,
-                            'msg' => $error_msg[0],
-                            'data' => $error,
-                        ];
+                    'status' => -1,
+                    'msg' => $error_msg[0],
+                    'data' => $error,
+                ];
                 $this->ajaxReturn($return_arr);
             } else {
                 $model->data($post_data, true); // 收集数据
@@ -731,10 +732,10 @@ class Goods extends Base
                     $insert_id = $model->getLastInsID();
                 }
                 $return_arr = [
-                                 'status' => 1,
-                                 'msg' => '操作成功',
-                                 'data' => ['url' => U('Admin/Goods/goodsAttributeList')],
-                             ];
+                    'status' => 1,
+                    'msg' => '操作成功',
+                    'data' => ['url' => U('Admin/Goods/goodsAttributeList')],
+                ];
                 $this->ajaxReturn($return_arr);
             }
         }
@@ -754,11 +755,11 @@ class Goods extends Base
     public function updateField()
     {
         $primary = [
-                'goods' => 'goods_id',
-                'goods_category' => 'id',
-                'brand' => 'id',
-                'goods_attribute' => 'attr_id',
-                'ad' => 'ad_id',
+            'goods' => 'goods_id',
+            'goods_category' => 'id',
+            'brand' => 'id',
+            'goods_attribute' => 'attr_id',
+            'ad' => 'ad_id',
         ];
         $model = D($_POST['table']);
         $model->$primary[$_POST['table']] = $_POST['id'];
@@ -886,7 +887,7 @@ class Goods extends Base
         $where = $keyword ? " name like '%$keyword%' " : '';
         $count = Db::name('Brand')->where($where)->count();
         $Page = $pager = new Page($count, 10);
-        $brandList = Db::name('Brand')->where($where)->order('sort desc')->limit($Page->firstRow.','.$Page->listRows)->select();
+        $brandList = Db::name('Brand')->where($where)->order('sort desc')->limit($Page->firstRow . ',' . $Page->listRows)->select();
         $show = $Page->show();
         $cat_list = M('goods_category')->where('parent_id = 0')->getField('id,name'); // 已经改成联动菜单
         $this->assign('cat_list', $cat_list);
@@ -937,7 +938,7 @@ class Goods extends Base
         $goods_count = Db::name('Goods')->whereIn('brand_id', $brind_ids)->group('brand_id')->getField('brand_id', true);
         $use_brind_ids = implode(',', $goods_count);
         if ($goods_count) {
-            $this->ajaxReturn(['status' => -1, 'msg' => 'ID为【'.$use_brind_ids.'】的品牌有商品在用不得删除!', 'data' => '']);
+            $this->ajaxReturn(['status' => -1, 'msg' => 'ID为【' . $use_brind_ids . '】的品牌有商品在用不得删除!', 'data' => '']);
         }
         $res = Db::name('Brand')->whereIn('id', $brind_ids)->delete();
         if ($res) {
@@ -964,13 +965,13 @@ class Goods extends Base
     {
         //ob_start('ob_gzhandler'); // 页面压缩输出
         $where = ' 1 = 1 '; // 搜索条件
-        I('type_id') && $where = "$where and type_id = ".I('type_id');
+        I('type_id') && $where = "$where and type_id = " . I('type_id');
         // 关键词搜索
         $model = D('spec');
         $count = $model->where($where)->count();
         $Page = new AjaxPage($count, 13);
         $show = $Page->show();
-        $specList = $model->where($where)->order('`type_id` desc')->limit($Page->firstRow.','.$Page->listRows)->select();
+        $specList = $model->where($where)->order('`type_id` desc')->limit($Page->firstRow . ',' . $Page->listRows)->select();
         $GoodsLogic = new GoodsLogic();
         foreach ($specList as $k => $v) {       // 获取规格项
             $arr = $GoodsLogic->getSpecItem($v['id']);
@@ -1035,12 +1036,12 @@ class Goods extends Base
         $goods_id = I('get.goods_id/d') ? I('get.goods_id/d') : 0;
         $GoodsLogic = new GoodsLogic();
         //$_GET['spec_type'] =  13;
-        $specList = M('Spec')->where('type_id = '.I('get.spec_type/d'))->order('`order` desc')->select();
+        $specList = M('Spec')->where('type_id = ' . I('get.spec_type/d'))->order('`order` desc')->select();
         foreach ($specList as $k => $v) {
-            $specList[$k]['spec_item'] = M('SpecItem')->where('spec_id = '.$v['id'])->order('id')->getField('id,item');
+            $specList[$k]['spec_item'] = M('SpecItem')->where('spec_id = ' . $v['id'])->order('id')->getField('id,item');
         } // 获取规格项
 
-        $items_id = M('SpecGoodsPrice')->where('goods_id = '.$goods_id)->getField("GROUP_CONCAT(`key` SEPARATOR '_') AS items_id");
+        $items_id = M('SpecGoodsPrice')->where('goods_id = ' . $goods_id)->getField("GROUP_CONCAT(`key` SEPARATOR '_') AS items_id");
         $items_ids = explode('_', $items_id);
 
         // 获取商品规格图片
@@ -1082,7 +1083,7 @@ class Goods extends Base
     {
         $searchWordLogic = new SearchWordLogic();
         $successNum = $searchWordLogic->initGoodsSearchWord();
-        $this->success('成功初始化'.$successNum.'个搜索关键词');
+        $this->success('成功初始化' . $successNum . '个搜索关键词');
     }
 
     /**
@@ -1092,7 +1093,55 @@ class Goods extends Base
     {
         $goodsLogic = new GoodsLogic();
         $region_list = $goodsLogic->getRegionList(); //获取配送地址列表
-        file_put_contents(ROOT_PATH.'public/js/locationJson.js', 'var locationJsonInfoDyr = '.json_encode($region_list, JSON_UNESCAPED_UNICODE).';');
-        $this->success('初始化地区json.js成功。文件位置为'.ROOT_PATH.'public/js/locationJson.js');
+        file_put_contents(ROOT_PATH . 'public/js/locationJson.js', 'var locationJsonInfoDyr = ' . json_encode($region_list, JSON_UNESCAPED_UNICODE) . ';');
+        $this->success('初始化地区json.js成功。文件位置为' . ROOT_PATH . 'public/js/locationJson.js');
+    }
+
+    /**
+     * 商品搜索
+     * @return mixed
+     */
+    public function search_goods()
+    {
+        $goods_id = input('goods_id');
+        $intro = input('intro');
+        $cat_id = input('cat_id');
+        $brand_id = input('brand_id');
+        $keywords = input('keywords');
+        $tpl = input('tpl', 'search_goods');
+        $where = ['store_count' => ['gt', 0], 'is_virtual' => 0, 'is_area_show' => 1];
+        if ($goods_id) {
+            $where['goods_id'] = ['notin', trim($goods_id, ',')];
+        }
+        if ($intro) {
+            $where[$intro] = 1;
+        }
+        if ($cat_id) {
+            $grandson_ids = getCatGrandson($cat_id);
+            $where['cat_id'] = ['in', implode(',', $grandson_ids)];
+        }
+        if ($brand_id) {
+            $where['brand_id'] = $brand_id;
+        }
+        if ($keywords) {
+            $where['goods_name|keywords'] = ['like', '%' . $keywords . '%'];
+        }
+        $Goods = new GoodsModel();
+        $count = $Goods->where($where)->count();
+        $Page = new Page($count, 10);
+        $goodsList = $Goods->where($where)->with('specGoodsPrice')->order('goods_id DESC')->limit($Page->firstRow . ',' . $Page->listRows)->select();
+
+        $types = I('types', 1);
+        $this->assign('types', $types);
+
+        $GoodsLogic = new GoodsLogic();
+        $brandList = $GoodsLogic->getSortBrands();
+        $categoryList = $GoodsLogic->getSortCategory();
+        $this->assign('brandList', $brandList);
+        $this->assign('categoryList', $categoryList);
+        $this->assign('page', $Page);
+        $this->assign('goodsList', $goodsList);
+
+        return $this->fetch($tpl);
     }
 }

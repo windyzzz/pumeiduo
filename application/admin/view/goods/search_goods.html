@@ -13,7 +13,7 @@
                 <h5>(共{$page->totalRows}条记录)</h5>
             </div>
             <div title="刷新数据" class="pReload"><i class="fa fa-refresh"></i></div>
-            <form class="navbar-form form-inline" id="search-form2" action="{:U('Promotion/search_goods',['tpl'=>'search_goods'])}" method="get">
+            <form class="navbar-form form-inline" id="search-form2" action="{:U('Goods/search_goods',['tpl'=>'search_goods'])}" method="get">
                 <input name="prom_id" type="hidden" value="{$Request.param.prom_id}">
                 <input name="prom_type" type="hidden" value="{$Request.param.prom_type}">
                 <input name="nospec" type="hidden" value="{$Request.param.nospec}">

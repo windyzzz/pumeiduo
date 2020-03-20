@@ -35,7 +35,15 @@ class Adv
                 ->select();
         }
         if (count($arr) == 1) {
-            return json(['status' => 1, 'msg' => 'success', 'result' => $arr[$position_id]]);
+            $adList = $arr[$position_id];
+            foreach ($adList as $k => $item) {
+                if (in_array($item['target_type'], [3, 4])) {
+                    $adList[$k]['need_login'] = 1;
+                } else {
+                    $adList[$k]['need_login'] = 0;
+                }
+            }
+            return json(['status' => 1, 'msg' => 'success', 'result' => $adList]);
         } else {
             return json(['status' => 1, 'msg' => 'success', 'result' => $arr]);
         }
