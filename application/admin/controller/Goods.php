@@ -278,6 +278,7 @@ class Goods extends Base
 
         $strTable .= '</table>';
         downloadExcel($strTable, 'goods_list');
+        $this->ajaxReturn(['status' => 1]);
         exit();
     }
 
@@ -321,8 +322,6 @@ class Goods extends Base
          */
         $show = $Page->show();
         $order_str = "`{$_POST['orderby1']}` {$_POST['orderby2']}";
-        // dump( M('Goods')->where($where)->order($order_str)->limit($Page->firstRow.','.$Page->listRows)->fetchSql(1)->select());
-        // exit;
         $goodsList = M('Goods')->where($where)->order($order_str)->limit($Page->firstRow . ',' . $Page->listRows)->select();
 
         $catList = D('goods_category')->select();

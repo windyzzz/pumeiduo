@@ -87,7 +87,10 @@ class Cart extends Base
 
             foreach ($cartList as $k => $v) {
                 if ($v['prom_type'] == 2) {
+                    // 不显示团购
                     continue;
+                } elseif ($v['prom_type'] == 1) {
+                    $cartList[$k]['goods']['least_buy_num'] = '0';
                 }
                 if ($goods_tao_grade[$v['goods_id']]) {
                     $prom_list[$goods_tao_grade[$v['goods_id']]['id']]['list'][$k] = $v;
@@ -247,7 +250,7 @@ class Cart extends Base
                         'exchange_price' => bcsub($v['goods_price'], $v['use_integral'], 2),
                         'goods_num' => $v['goods_num'],
                         'buy_limit' => $buyLimit,
-                        'buy_least' => 0,
+                        'buy_least' => '0',
                         'store_count' => $storeCount,
                         'gift_goods' => $giftGoods
                     ];
@@ -288,7 +291,7 @@ class Cart extends Base
                         'exchange_price' => $v['member_goods_price'],
                         'goods_num' => $v['goods_num'],
                         'buy_limit' => $buyLimit,
-                        'buy_least' => 0,
+                        'buy_least' => '0',
                         'store_count' => $storeCount,
                         'gift_goods' => $giftGoods
                     ];
