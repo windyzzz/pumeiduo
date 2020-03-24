@@ -59,7 +59,7 @@ class Adv extends Base
         foreach ($popupList as $key => $popup) {
             switch ($popup['show_limit']) {
                 case 1:
-                    // 每天一次
+                    //--- 每天一次
                     if (!isset($userPopupLog[$popup['id']]) && $this->user_id) {
                         // 增加用户记录
                         M('user_popup_log')->add([
@@ -78,7 +78,7 @@ class Adv extends Base
                     }
                     break;
                 case 2:
-                    // 活动期间一次
+                    //--- 活动期间一次
                     if (!isset($userPopupLog[$popup['id']]) && $this->user_id) {
                         // 增加用户记录
                         M('user_popup_log')->add([

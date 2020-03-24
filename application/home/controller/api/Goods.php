@@ -278,6 +278,9 @@ class Goods extends Base
                 $goods['nature'] = [];
             }
         }
+        if (!empty($goods['nature']) && in_array($goods['nature']['type'], ['group_buy', 'flash_sale'])) {
+            $goods['buy_least'] = '0';
+        }
         // 处理显示金额
         if ($goods['exchange_integral'] != 0) {
             $goods['exchange_price'] = bcdiv(bcsub(bcmul($goods['shop_price'], 100), bcmul($goods['exchange_integral'], 100)), 100, 2);

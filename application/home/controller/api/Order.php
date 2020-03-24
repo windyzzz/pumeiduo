@@ -1659,6 +1659,11 @@ class Order extends Base
             $cartList['cartList'] = $cartLogic->getCartList(1); // 获取用户选中的购物车商品
             $vipGoods = [];
             foreach ($cartList['cartList'] as $key => $cart) {
+                if ($cart['prom_type'] == 0) {
+                    if ($cart['goods']['least_buy_num'] != 0 && $cart['goods']['least_buy_num'] > $cart['goods_num']) {
+                        return json(['status' => 0, 'msg' => $cart['goods']['goods_name'] . '至少购买' . $cart['goods']['least_buy_num'] . '件']);
+                    }
+                }
                 if ($cart['goods']['zone'] == 3 && $cart['goods']['distribut_id'] != 0) {
                     $vipGoods[] = $cart['goods']['goods_id'];
                 }

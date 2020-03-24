@@ -154,9 +154,6 @@ class CartLogic extends Model
         if (empty($this->goodsBuyNum)) {
             throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '购买商品数量不能为0', 'result' => '']);
         }
-        if ($this->goods['least_buy_num'] != 0 && $this->goods['least_buy_num'] > $this->goodsBuyNum) {
-            throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '至少购买' . $this->goods['least_buy_num'] . '件', 'result' => '']);
-        }
 
         $buyGoods = [
             'user_id' => $this->user_id,
@@ -261,6 +258,9 @@ class CartLogic extends Model
             }
         } else {
             if (0 == $this->goods['prom_type']) {
+                if ($this->goods['least_buy_num'] != 0 && $this->goods['least_buy_num'] > $this->goodsBuyNum) {
+                    throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '至少购买' . $this->goods['least_buy_num'] . '件', 'result' => '']);
+                }
                 if (!empty($this->goods['price_ladder'])) {
                     //如果有阶梯价格,就是用阶梯价格
                     $goodsLogic = new GoodsLogic();
@@ -302,9 +302,6 @@ class CartLogic extends Model
         // if($this->goods['exchange_integral'] > 0){
         //     return ['status'=>0,'msg'=>'积分商品跳转','result'=>['url'=>U('Goods/goodsInfo',['id'=>$this->goods['goods_id'],'item_id'=>$this->specGoodsPrice['item_id']],'',true)]];
         // }
-        if ($this->goods['least_buy_num'] != 0 && $this->goods['least_buy_num'] > $this->goodsBuyNum) {
-            return ['status' => 0, 'msg' => '至少购买' . $this->goods['least_buy_num'] . '件', 'result' => ''];
-        }
         $userCartCount = Db::name('cart')->where(['user_id' => $this->user_id, 'session_id' => $this->session_id ? $this->session_id : $this->user_token])->count(); //获取用户购物车的商品有多少种
         if ($userCartCount >= 50) {
             return ['status' => -9, 'msg' => '购物车最多只能放50种商品', 'result' => ''];
@@ -325,6 +322,9 @@ class CartLogic extends Model
                 if ($flashSale) {
                     $result = $this->addFlashSaleCart();
                 } else {
+                    if ($this->goods['least_buy_num'] != 0 && $this->goods['least_buy_num'] > $this->goodsBuyNum) {
+                        return ['status' => 0, 'msg' => '至少购买' . $this->goods['least_buy_num'] . '件', 'result' => ''];
+                    }
                     $result = $this->addNormalCart();
                 }
             } elseif (2 == $this->specGoodsPrice['prom_type']) {
@@ -332,6 +332,9 @@ class CartLogic extends Model
             } elseif (3 == $this->specGoodsPrice['prom_type']) {
                 $result = $this->addPromGoodsCart();
             } else {
+                if ($this->goods['least_buy_num'] != 0 && $this->goods['least_buy_num'] > $this->goodsBuyNum) {
+                    return ['status' => 0, 'msg' => '至少购买' . $this->goods['least_buy_num'] . '件', 'result' => ''];
+                }
                 $result = $this->addNormalCart();
             }
         } else {
@@ -342,6 +345,9 @@ class CartLogic extends Model
             } elseif (3 == $this->goods['prom_type']) {
                 $result = $this->addPromGoodsCart();
             } else {
+                if ($this->goods['least_buy_num'] != 0 && $this->goods['least_buy_num'] > $this->goodsBuyNum) {
+                    return ['status' => 0, 'msg' => '至少购买' . $this->goods['least_buy_num'] . '件', 'result' => ''];
+                }
                 $result = $this->addNormalCart();
             }
         }
