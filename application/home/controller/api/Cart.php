@@ -911,16 +911,22 @@ class Cart extends Base
                 $cartLogic->setType($type);
                 $cartLogic->setCartType($cart_type);
                 $buyGoods = $cartLogic->buyNow();
+                // 计算商品pv
+                $cartLogic->calcGoodsPv([$buyGoods]);
                 $cartList[0] = $buyGoods;
                 $pay->payGoodsList($cartList);
             } else {
                 $userCartList = $cartLogic->getCartList(1);
+                // 计算商品pv
+                $cartLogic->calcGoodsPv($userCartList);
                 $cartLogic->checkStockCartList($userCartList);
                 $pay->payCart($userCartList);
             }
 
             list($prom_type, $prom_id) = $pay->getPromInfo();
 
+            // 商品pv
+            $pay->setGoodsPv($cartLogic->getGoodsPv());
             $pay->check(); // 加价购活动
             $pay->activityPayBefore(); // 参与活动促销 加价购活动
 
@@ -935,9 +941,11 @@ class Cart extends Base
             $pay->usePayPoints($pay_points);
             $pay->useUserElectronic($user_electronic); // 电子币
 
-            $pay->activity2();   // 指定商品赠品 / 订单优惠赠品
             $pay->activity3();         // 订单优惠促销
             $pay->activity();    // 参与活动奖励 例如:赠品活动
+            $pay->activity2();   // 指定商品赠品 / 订单优惠赠品
+            // 订单pv
+            $pay->setOrderPv();
 
             $coupon = null;
             if ($coupon_id > 0) {

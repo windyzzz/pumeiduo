@@ -36,6 +36,7 @@ class CartLogic extends Model
     protected $userGoodsTypeCount = 0; //用户购物车的全部商品种类
     protected $userCouponNumArr; //用户符合购物车店铺可用优惠券数量
     protected $cart_id; // 购物车记录id
+    protected $goodsPv = '0.00';
 
     public function __construct()
     {
@@ -1203,7 +1204,7 @@ class CartLogic extends Model
             }
         }
         if ($cartList) {
-            $cartList = collection($cartList)->append(['cut_fee', 'total_fee', 'goods_fee'])->toArray();
+            $cartList = collection($cartList)->append(['cut_fee', 'total_fee', 'goods_fee', 'goods'])->toArray();
             $cartPriceInfo = $this->getCartPriceInfo($cartList);
             $cartPriceInfo['cartList'] = $cartList;
             return ['status' => 1, 'msg' => '计算成功', 'result' => $cartPriceInfo];
@@ -1262,7 +1263,7 @@ class CartLogic extends Model
      */
     public function getCartPriceInfo($cartList = null)
     {
-        $total_fee = $goods_fee = $cut_fee = $goods_num = $use_integral = '0'; // 初始化数据
+        $total_fee = $goods_fee = $cut_fee = $goods_num = $use_integral = $goods_pv = '0'; // 初始化数据
         if ($cartList) {
             foreach ($cartList as $cartKey => $cartItem) {
                 if (in_array($cartItem['prom_type'], [1, 2])) {
@@ -1282,6 +1283,27 @@ class CartLogic extends Model
             }
         }
         return compact('total_fee', 'goods_fee', 'cut_fee', 'goods_num', 'use_integral');
+    }
+
+    /**
+     * 计算商品pv
+     * @param $cartList
+     * @param $goodsPv
+     */
+    public function calcGoodsPv($cartList)
+    {
+        foreach ($cartList as $cartItem) {
+            switch ($cartItem['type']) {
+                case 1:
+                    // 现金+积分
+                    $this->goodsPv = bcadd($this->goodsPv, bcmul($cartItem['goods']['integral_pv'], $cartItem['goods_num']), 2);
+                    break;
+                case 2:
+                    // 现金
+                    $this->goodsPv = bcadd($this->goodsPv, bcmul($cartItem['goods']['retail_pv'], $cartItem['goods_num']), 2);
+                    break;
+            }
+        }
     }
 
     /**
@@ -1422,6 +1444,12 @@ class CartLogic extends Model
     public function getUserCouponNumArr()
     {
         return $this->userCouponNumArr;
+    }
+
+
+    public function getGoodsPv()
+    {
+        return $this->goodsPv;
     }
 
     /**

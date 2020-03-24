@@ -109,45 +109,52 @@ class Goods extends Base
         $goodsLogic = new GoodsLogic();
         $goods_id = I('goods_id/d');
 
+//        $Goods = new \app\common\model\Goods();
         $goods = Db::name('goods')->where('goods_id', $goods_id)->field('goods_id, cat_id, extend_cat_id, goods_sn, goods_name, goods_type, goods_remark, goods_content, 
-            brand_id, store_count, comment_count, market_price, shop_price, cost_price, give_integral, exchange_integral, original_img, limit_buy_num,
-            is_on_sale, is_free_shipping, is_recommend, is_new, is_hot, is_virtual, virtual_indate, click_count, zone')->find();
+            brand_id, store_count, comment_count, market_price, shop_price, cost_price, give_integral, exchange_integral, original_img, limit_buy_num, least_buy_num,
+            is_on_sale, is_free_shipping, is_recommend, is_new, is_hot, is_virtual, virtual_indate, click_count, zone, commission, integral_pv')->find();
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
-        if ($this->user) {
-            $goodsLogic->add_visit_log($this->user_id, $goods);
+        if (cookie('user_id')) {
+            $goodsLogic->add_visit_log(cookie('user_id'), $goods);
         }
         if ($goods['brand_id']) {
             $goods['brand_name'] = M('brand')->where('id', $goods['brand_id'])->getField('name');
         }
-        // 处理显示金额
-        if ($goods['exchange_integral'] != 0) {
-            $goods['exchange_price'] = bcdiv(bcsub(bcmul($goods['shop_price'], 100), bcmul($goods['exchange_integral'], 100)), 100, 2);
-        } else {
-            $goods['exchange_price'] = $goods['shop_price'];
-        }
+        $goods_images_list = M('GoodsImages')->where('goods_id', $goods_id)->select(); // 商品 图册
+
+        $goods_attribute = M('GoodsAttribute')->getField('attr_id,attr_name'); // 查询属性
+        $goods_attr_list = M('GoodsAttr')->where('goods_id', $goods_id)->select(); // 查询商品属性表
+        $filter_spec = $goodsLogic->get_spec($goods_id);
+        $freight_free = tpCache('shopping.freight_free'); // 全场满多少免运费
+        $spec_goods_price = M('spec_goods_price')->where('goods_id', $goods_id)->getField('key,item_id,price,store_count'); // 规格 对应 价格 库存表
         M('Goods')->where('goods_id', $goods_id)->save(['click_count' => $goods['click_count'] + 1]); //统计点击数
+        $commentStatistics = $goodsLogic->commentStatistics($goods_id); // 获取某个商品的评论统计
+        $point_rate = tpCache('shopping.point_rate');
+
+        $look_see = $goodsLogic->get_look_see($goods);
+        // 商品佣金
+        $goods['commission'] = bcdiv(bcmul($goods['shop_price'], $goods['commission'], 2), 100, 2);
 
         $data = [];
-        $data['goods'] = $goods;
-        $data['point_rate'] = tpCache('shopping.point_rate');
-        $data['freight_free'] = tpCache('shopping.freight_free'); // 全场满多少免运费
-        $data['filter_spec'] = $goodsLogic->get_spec($goods_id); //规格参数
-        $data['spec_goods_price'] = $goodsLogic->get_spec_price($goods_id); //规格参数价格
-//        $data['navigate_goods'] = navigate_goods($goods_id, 1); // 面包屑导航
-//        $data['commentStatistics'] = $goodsLogic->commentStatistics($goods_id); // 获取某个商品的评论统计
-//        $data['goods_attribute'] = M('GoodsAttribute')->getField('attr_id,attr_name'); // 查询属性
-//        $data['goods_attr_list'] = M('GoodsAttr')->where('goods_id', $goods_id)->select(); // 查询商品属性表
-        $data['goods_images_list'] = M('GoodsImages')->where('goods_id', $goods_id)->select(); //商品缩略图
+        $data['freight_free'] = $freight_free; // 全场满多少免运费
+        $data['spec_goods_price'] = $spec_goods_price; // 规格 对应 价格 库存表
+        $data['navigate_goods'] = navigate_goods($goods_id, 1); // 面包屑导航
+        $data['commentStatistics'] = $commentStatistics; //评论概览
+        $data['goods_attribute'] = $goods_attribute; //属性值
+        $data['goods_attr_list'] = $goods_attr_list; //属性列表
+        $data['filter_spec'] = $filter_spec; //规格参数
+        $data['goods_images_list'] = $goods_images_list; //商品缩略图
         $data['siblings_cate'] = $goodsLogic->get_siblings_cate($goods['cat_id']); //相关分类
-        $data['look_see'] = $goodsLogic->get_look_see($goods); //看了又看
-
+        $data['look_see'] = $look_see; //看了又看
+        $data['goods'] = $goods;
         // 添加 is_enshrine  是否收藏字段 && 添加 tabs  商品标签字段 BY J
+
         $data['is_enshrine'] = 0;
         $data['tabs'] = M('GoodsTab')->where('goods_id', $goods_id)->select();
-        if ($this->user) {
-            if (1 == $goodsLogic->isCollectGoods($this->user_id, $goods_id)) {
+        if (session('?user')) {
+            if (1 == $goodsLogic->isCollectGoods(session('user')['user_id'], $goods_id)) {
                 $data['is_enshrine'] = 1;
             }
         }
@@ -156,9 +163,9 @@ class Goods extends Base
 //        createSharePng($gData,'code_png/php_code.png','share.png');
 
         //构建手机端URL
-        // $ShareLink = urlencode("http://{$_SERVER['HTTP_HOST']}/index.php?m=Mobile&c=Goods&a=goodsInfo&id={$goods['goods_id']}");
-        // $data['ShareLink'] = $ShareLink;
-
+//         $ShareLink = urlencode("http://{$_SERVER['HTTP_HOST']}/index.php?m=Mobile&c=Goods&a=goodsInfo&id={$goods['goods_id']}");
+//         $data['ShareLink'] = $ShareLink;
+        $data['point_rate'] = $point_rate;
 
         //是否弹窗
         //弹窗内容
@@ -168,22 +175,23 @@ class Goods extends Base
         $data['is_alert_content'] = '';
         $data['is_alert_referee'] = '';
 
-//        if ($data['goods']['zone'] == 3) {
-//            $data['is_alert'] = 1;
-//            $article = M('article')->where(array('article_id' => 104))->field('title,content')->find();
-//            $data['is_alert_title'] = $article['title'];
-//            $data['is_alert_content'] = $article['content'];
-//            $invite_uid = M('users')->where(array('user_id' => $this->user_id))->getField('invite_uid');
-//            if ($invite_uid) {
-//                $data['is_alert_referee'] = '推荐人会员号：' . $invite_uid;
-//            }
-//        }
+        if ($data['goods']['zone'] == 3) {
+            $data['is_alert'] = 1;
+            $article = M('article')->where(array('article_id' => 104))->field('title,content')->find();
+            $data['is_alert_title'] = $article['title'];
+            $data['is_alert_content'] = $article['content'];
+            $user = session('user');
+            $invite_uid = M('users')->where(array('user_id' => $user['user_id']))->getField('invite_uid');
+            if ($invite_uid) {
+                $data['is_alert_referee'] = '推荐人会员号：' . $invite_uid;
+            }
+        }
 
         $goods_tao_grade = M('goods_tao_grade')
             ->alias('g')
             ->field('pg.type,pg.title,pg.id')
             ->where(array('g.goods_id' => $goods_id))
-            ->join('prom_goods pg', 'g.promo_id = pg.id and pg.start_time <= ' . NOW_TIME . ' and pg.end_time >= ' . NOW_TIME . ' and pg.is_end = 0 and  pg.is_open = 1')
+            ->join('prom_goods pg', 'g.promo_id = pg.id and pg.start_time <= ' . NOW_TIME . ' and pg.end_time >= ' . NOW_TIME . ' and pg.is_end = 0 and  pg.is_open =1 ')
             ->select();
         if ($goods_tao_grade) {
             $type_arr = array(
@@ -194,12 +202,9 @@ class Goods extends Base
                 $goods_tao_grade[$k]['type_name'] = $type_arr[$v['type']];
             }
         }
-        // 活动商品
         $data['prom_goods'] = $goods_tao_grade;
-        // 赠品
         $Pay = new \app\common\logic\Pay();
         $data['gift_goods'] = $Pay->gift2_goods($goods_id);
-
         return json(['status' => 1, 'msg' => 'success', 'result' => $data]);
     }
 
@@ -216,7 +221,7 @@ class Goods extends Base
         }
         $goods = Db::name('goods')->where('goods_id', $goods_id)->field('goods_id, cat_id, extend_cat_id, goods_sn, goods_name, goods_type, goods_remark, goods_content, 
             brand_id, store_count, comment_count, market_price, shop_price, cost_price, give_integral, exchange_integral, original_img, limit_buy_num, least_buy_num,
-            is_on_sale, is_free_shipping, is_recommend, is_new, is_hot, is_virtual, virtual_indate, click_count, zone, commission, retail_pv, integral_pv')->find();
+            is_on_sale, is_free_shipping, is_recommend, is_new, is_hot, is_virtual, virtual_indate, click_count, zone, commission, integral_pv')->find();
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
@@ -280,9 +285,7 @@ class Goods extends Base
             $goods['exchange_price'] = $goods['shop_price'];
         }
         // 商品佣金
-        $goods['retail_commission'] = bcdiv(bcmul($goods['shop_price'], $goods['commission'], 2), 100, 2);
-        $goods['integral_commission'] = bcdiv(bcmul($goods['exchange_price'], $goods['commission'], 2), 100, 2);
-        unset($goods['commission']);
+        $goods['commission'] = bcdiv(bcmul($goods['shop_price'], $goods['commission'], 2), 100, 2);
         // 处理商品详情（抽取图片）
         $contentArr = explode('public', $goods['goods_content']);
         $contentImgArr = [];

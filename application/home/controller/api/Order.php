@@ -401,6 +401,7 @@ class Order extends Base
             'confirm_time' => $orderInfo['confirm_time'],
             'cancel_time' => $orderInfo['cancel_time'],
             'delivery_type' => $orderInfo['delivery_type'],   // 1统一发货 2分开发货
+            'order_pv' => $orderInfo['order_pv'],
             'delivery' => [
                 'consignee' => $orderInfo['consignee'],
                 'mobile' => $orderInfo['mobile'],
@@ -1574,8 +1575,25 @@ class Order extends Base
         if (!empty($userAddress)) {
             unset($userAddress[0]['zipcode']);
             unset($userAddress[0]['is_pickup']);
-            unset($userAddress[0]['tabs']);
+            // 地址标签
+            $addressTab = (new UsersLogic())->getAddressTab($this->user_id);
+            foreach ($userAddress as $k1 => $value) {
+                $tabs = explode(',', $value['tabs']);
+                unset($userAddress[$k1]['tabs']);
+                foreach ($addressTab as $k2 => $item) {
+                    $userAddress[$k1]['tabs'][$k2] = [
+                        'tab_id' => $item['tab_id'],
+                        'name' => $item['name'],
+                        'is_selected' => 0
+                    ];
+                    if (in_array($item['tab_id'], $tabs)) {
+                        $userAddress[$k1]['tabs'][$k2]['is_selected'] = 1;
+                    }
+                }
+            }
         }
+        print_r($userAddress);
+        exit();
 
         $goodsId = I('goods_id', '');           // 商品ID
         $itemId = I('item_id', '');             // 商品规格ID
@@ -1663,7 +1681,10 @@ class Order extends Base
 //            }
 //            $cartList['cartList'] = $buyGoods;
         }
-        $cartPriceInfo = $cartLogic->getCartPriceInfo($cartList['cartList']);  //初始化数据 商品总额/节约金额/商品总共数量/商品使用积分
+        // 计算商品pv
+        $cartLogic->calcGoodsPv($cartList['cartList']);
+        //初始化数据 商品总额/节约金额/商品总共数量/商品使用积分
+        $cartPriceInfo = $cartLogic->getCartPriceInfo($cartList['cartList']);
         $cartList = array_merge($cartList, $cartPriceInfo);
 
         $cartGoodsList = get_arr_column($cartList['cartList'], 'goods');
@@ -1718,13 +1739,16 @@ class Order extends Base
         }
         try {
             $payLogic = new Pay();
-            $payLogic->setUserId($this->user_id);   // 设置支付用户ID
+            // 设置支付用户ID
+            $payLogic->setUserId($this->user_id);
             // 计算购物车价格
             $payLogic->payCart($cartList['cartList']);
             // 检测支付商品购买限制
             $payLogic->check();
             // 参与活动促销
             $payLogic->goodsPromotion();
+            // 商品pv
+            $payLogic->setGoodsPv($cartLogic->getGoodsPv());
 
             // 配送物流
             if (empty($userAddress)) {
@@ -1827,6 +1851,8 @@ class Order extends Base
             $payLogic->activity2New();      // 指定商品赠品 / 订单优惠赠品
 
             // 支付数据
+            // 订单pv
+            $payLogic->setOrderPv();
             $payReturn = $payLogic->toArray();
             // 商品列表 赠品列表 加价购列表
             $payList = collection($payLogic->getPayList())->toArray();
@@ -1947,7 +1973,8 @@ class Order extends Base
             'electronic_limit' => $payReturn['order_amount'],
             'spare_pay_points' => bcsub($this->user['pay_points'], $payReturn['pay_points'], 2),
             'give_integral' => $give_integral,
-            'free_shipping_price' => tpCache('shopping.freight_free') <= $payReturn['order_amount'] ? '0' : bcsub(tpCache('shopping.freight_free'), $payReturn['order_amount'], 2)
+            'free_shipping_price' => tpCache('shopping.freight_free') <= $payReturn['order_amount'] ? '0' : bcsub(tpCache('shopping.freight_free'), $payReturn['order_amount'], 2),
+            'order_pv' => $payReturn['order_pv']
         ];
         return json(['status' => 1, 'result' => $return]);
     }
@@ -2037,12 +2064,16 @@ class Order extends Base
              */
             return json(['status' => 0, 'msg' => '暂不支持此下单方式']);
         }
-        $cartPriceInfo = $cartLogic->getCartPriceInfo($cartList['cartList']);  //初始化数据 商品总额/节约金额/商品总共数量/商品使用积分
+        // 计算商品pv
+        $cartLogic->calcGoodsPv($cartList['cartList']);
+        //初始化数据 商品总额/节约金额/商品总共数量/商品使用积分
+        $cartPriceInfo = $cartLogic->getCartPriceInfo($cartList['cartList']);
         $cartList = array_merge($cartList, $cartPriceInfo);
 
         try {
             $payLogic = new Pay();
-            $payLogic->setUserId($this->user_id);   // 设置支付用户ID
+            // 设置支付用户ID
+            $payLogic->setUserId($this->user_id);
             // 计算购物车价格
             $payLogic->payCart($cartList['cartList']);
             // 检测支付商品购买限制
@@ -2050,7 +2081,9 @@ class Order extends Base
             // 参与活动促销
             $payLogic->goodsPromotion();
             // 加价购活动
-            $payLogic->activityPayBeforeNew($extraGoods);
+            $payLogic->activityPayBeforeNew($extraGoods, $cartLogic);
+            // 商品pv
+            $payLogic->setGoodsPv($cartLogic->getGoodsPv());
 
             // 配送物流
             if (empty($userAddress)) {
@@ -2098,6 +2131,8 @@ class Order extends Base
             $payLogic->useUserElectronic($userElectronic);
 
             // 支付数据
+            // 订单pv
+            $payLogic->setOrderPv();
             $payReturn = $payLogic->toArray();
             // 商品列表 赠品列表 加价购列表
             $payList = collection($payLogic->getPayList())->toArray();
@@ -2183,7 +2218,8 @@ class Order extends Base
             'electronic_limit' => bcadd($payReturn['order_amount'], $payReturn['user_electronic'], 2),
             'spare_pay_points' => bcsub($this->user['pay_points'], $payReturn['pay_points'], 2),
             'give_integral' => $give_integral,
-            'free_shipping_price' => tpCache('shopping.freight_free') <= $payReturn['order_amount'] ? '0' : bcsub(tpCache('shopping.freight_free'), $payReturn['order_amount'], 2)
+            'free_shipping_price' => tpCache('shopping.freight_free') <= $payReturn['order_amount'] ? '0' : bcsub(tpCache('shopping.freight_free'), $payReturn['order_amount'], 2),
+            'order_pv' => $payReturn['order_pv']
         ];
         return json(['status' => 1, 'result' => $return]);
     }
@@ -2273,6 +2309,9 @@ class Order extends Base
             return json(['status' => 0, 'msg' => '暂不支持此下单方式']);
         }
         try {
+            // 计算商品pv
+            $cartLogic->calcGoodsPv($cartList['cartList']);
+
             $payLogic = new Pay();
             $payLogic->setUserId($this->user_id);   // 设置支付用户ID
             // 计算购物车价格
@@ -2282,7 +2321,9 @@ class Order extends Base
             // 参与活动促销
             $payLogic->goodsPromotion();
             // 加价购活动
-            $payLogic->activityPayBeforeNew($extraGoods);
+            $payLogic->activityPayBeforeNew($extraGoods, $cartLogic);
+            // 商品pv
+            $payLogic->setGoodsPv($cartLogic->getGoodsPv());
 
             // 配送物流
             if (empty($userAddress)) {
@@ -2298,8 +2339,6 @@ class Order extends Base
             $payLogic->usePayPoints($pay_points);
 
             $payLogic->activity3();         // 订单优惠促销
-            $payLogic->activity(true);      // 满单赠品
-            $payLogic->activity2New();      // 指定商品赠品 / 订单优惠赠品
 
             // 使用优惠券
             if (isset($couponId) && $couponId > 0) {
@@ -2309,8 +2348,14 @@ class Order extends Base
             if (isset($exchangeId) && $exchangeId > 0) {
                 $payLogic->useCouponByIdRe($exchangeId);
             }
+
+            $payLogic->activity(true);      // 满单赠品
+            $payLogic->activity2New();      // 指定商品赠品 / 订单优惠赠品
+
             // 使用电子币
             $payLogic->useUserElectronic($userElectronic);
+            // 订单pv
+            $payLogic->setOrderPv();
         } catch (TpshopException $tpE) {
             return json($tpE->getErrorArr());
         }

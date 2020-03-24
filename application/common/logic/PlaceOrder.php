@@ -230,7 +230,8 @@ class PlaceOrder
             'order_amount' => $this->pay->getOrderAmount(), //'应付款金额',
             'add_time' => time(), // 下单时间
             'coupon_id' => $this->pay->getCouponId(),
-            'source' => $source
+            'source' => $source,
+            'order_pv' => $this->pay->getOrderPv(),
         ];
         if (!empty($this->userAddress)) {
             $orderData['consignee'] = $this->userAddress['consignee']; // 收货人
@@ -325,7 +326,8 @@ class PlaceOrder
                 'commission' => $goodsArr[$payItem['goods_id']]['commission'],
                 'trade_type' => $goodsArr[$payItem['goods_id']]['trade_type'],
                 'sale_type' => $goodsArr[$payItem['goods_id']]['sale_type'],
-                're_id' => isset($payItem['re_id']) ? intval($payItem['re_id']) : 0
+                're_id' => isset($payItem['re_id']) ? intval($payItem['re_id']) : 0,
+                'pay_type' => $payItem['type']      // 购买方式：1现金+积分 2现金
             ];
             if (!empty($payItem['spec_key'])) {
                 $orderGoodsData['spec_key'] = $payItem['spec_key'];
@@ -364,7 +366,8 @@ class PlaceOrder
                         'commission' => 0,
                         'trade_type' => $v['trade_type'],
                         'sale_type' => 1,
-                        're_id' => 0
+                        're_id' => 0,
+                        'pay_type' => $payItem['type']      // 购买方式：1现金+积分 2现金
                     ];
                     if (!empty($v['spec_key'])) {
                         $orderGoodsData['spec_key'] = $v['spec_key'];           // 商品规格

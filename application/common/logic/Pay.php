@@ -59,6 +59,9 @@ class Pay
     private $extra_reward;                  // 加价购商品记录列表
     private $extra_price = '0';             // 加价购商品价格
 
+    private $goodsPv;                       // 商品pv
+    private $orderPv;                       // 订单总pv
+
     public function __construct()
     {
         $this->giftLogic = new GiftLogic();
@@ -208,6 +211,23 @@ class Pay
     public function setPayList($goodsList)
     {
         $this->payList = $goodsList;
+    }
+
+    /**
+     * 设置商品pv
+     * @param $goodsPv
+     */
+    public function setGoodsPv($goodsPv)
+    {
+        $this->goodsPv = $goodsPv;
+    }
+
+    /**
+     * 设置订单pv
+     */
+    public function setOrderPv()
+    {
+        $this->orderPv = bcmul(bcdiv(bcadd($this->orderAmount, $this->userElectronic, 2), $this->totalAmount, 2), $this->goodsPv, 2);;
     }
 
     /**
@@ -816,11 +836,10 @@ class Pay
     }
 
     // 加价购活动（新）
-    public function activityPayBeforeNew($buyExtraGoods = [])
+    public function activityPayBeforeNew($buyExtraGoods = [], $cartLogic)
     {
         $extra_goods_list = convert_arr_key($this->extra_goods_list, 'goods_id');
         $extraGoodsList = [];
-        $cartLogic = new CartLogic();
         foreach ($buyExtraGoods as $key => $extra) {
             if (!isset($extra_goods_list[$extra['goods_id']])) {
                 throw new TpshopException('计算订单价格', 0, ['status' => 0, 'msg' => '请求参数非法']);
@@ -856,6 +875,8 @@ class Pay
             $cartLogic->setCartType(0);
             try {
                 $buyGoods = $cartLogic->buyNow();
+                // 计算商品pv
+                $cartLogic->calcGoodsPv([$buyGoods]);
             } catch (TpshopException $tpE) {
                 $error = $tpE->getErrorArr();
                 throw new TpshopException('计算订单价格', 0, ['status' => 0, 'msg' => $error['msg']]);
@@ -1402,9 +1423,14 @@ class Pay
         return $this->orderPromIds;
     }
 
+    public function getOrderPv()
+    {
+        return $this->orderPv;
+    }
+
     public function toArray()
     {
-        return [
+        $returnData = [
             'shipping_price' => $this->shippingPrice,
             'coupon_price' => $this->couponPrice,
             'user_electronic' => bcadd($this->userElectronic, 0, 2),
@@ -1419,6 +1445,8 @@ class Pay
             'extra_goods_list' => $this->extra_goods_list,
             'gift_record_list' => $this->giftLogic->getRewardInfo(),
             'prom_title_data' => array_values($this->promTitleData),
+            'order_pv' => $this->orderPv
         ];
+        return $returnData;
     }
 }
