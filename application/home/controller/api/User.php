@@ -522,6 +522,13 @@ class User extends Base
                     $addressList[$k1]['tabs'][$k2]['is_selected'] = 1;
                 }
             }
+            if ($value['is_default'] == 1) {
+                $addressList[$k1]['tabs'][] = [
+                    'tab_id' => 0,
+                    'name' => '默认',
+                    'is_selected' => 1
+                ];
+            }
         }
         return json(['status' => 1, 'msg' => 'success', 'result' => ['list' => $addressList]]);
     }

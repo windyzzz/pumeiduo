@@ -619,7 +619,7 @@ class Article extends Base
                     break;
             }
             if (!empty($data['push_id'])) {
-                // 清除用户消息表
+                $data['status'] = 0;
                 M('push')->where(['id' => $data['push_id']])->update($data);
             } else {
                 unset($data['push_id']);

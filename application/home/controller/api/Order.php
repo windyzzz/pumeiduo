@@ -1577,23 +1577,41 @@ class Order extends Base
             unset($userAddress[0]['is_pickup']);
             // 地址标签
             $addressTab = (new UsersLogic())->getAddressTab($this->user_id);
-            foreach ($userAddress as $k1 => $value) {
-                $tabs = explode(',', $value['tabs']);
-                unset($userAddress[$k1]['tabs']);
-                foreach ($addressTab as $k2 => $item) {
-                    $userAddress[$k1]['tabs'][$k2] = [
-                        'tab_id' => $item['tab_id'],
-                        'name' => $item['name'],
-                        'is_selected' => 0
+            if (!empty($addressTab)) {
+                if (empty($userAddress[0]['tabs'])) {
+                    unset($userAddress[0]['tabs']);
+                    $userAddress[0]['tabs'][] = [
+                        'tab_id' => 0,
+                        'name' => '默认',
+                        'is_selected' => 1
                     ];
-                    if (in_array($item['tab_id'], $tabs)) {
-                        $userAddress[$k1]['tabs'][$k2]['is_selected'] = 1;
+                } else {
+                    $tabs = explode(',', $userAddress[0]['tabs']);
+                    unset($userAddress[0]['tabs']);
+                    foreach ($addressTab as $item) {
+                        if (in_array($item['tab_id'], $tabs)) {
+                            $userAddress[0]['tabs'][] = [
+                                'tab_id' => $item['tab_id'],
+                                'name' => $item['name'],
+                                'is_selected' => 1
+                            ];
+                        }
                     }
+                    $userAddress[0]['tabs'][] = [
+                        'tab_id' => 0,
+                        'name' => '默认',
+                        'is_selected' => 1
+                    ];
                 }
+            } else {
+                unset($userAddress[0]['tabs']);
+                $userAddress[0]['tabs'][] = [
+                    'tab_id' => 0,
+                    'name' => '默认',
+                    'is_selected' => 1
+                ];
             }
         }
-        print_r($userAddress);
-        exit();
 
         $goodsId = I('goods_id', '');           // 商品ID
         $itemId = I('item_id', '');             // 商品规格ID
