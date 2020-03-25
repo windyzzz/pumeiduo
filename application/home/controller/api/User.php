@@ -3480,4 +3480,39 @@ class User extends Base
         $res = $taskLogic->loginProfit();
         return json($res);
     }
+
+    /**
+     * 查看用户通知
+     * @return \think\response\Json
+     */
+    public function checkNote()
+    {
+        $returnData = [];
+        /*
+         * 用户是否有完成未领取的任务奖励
+         */
+        $userTaskLog = M('task_log tl')->join('task t', 't.id = tl.task_id')
+            ->where(['user_id' => $this->user_id, 'type' => 1, 'status' => 0])->order('created_at desc')
+            ->field('t.id, t.title')->find();
+        if (!empty($userTaskLog)) {
+            $returnData[] = [
+                'type' => 1,
+                'is_note' => 1,
+                'note_data' => [
+                    'id' => $userTaskLog['id'],
+                    'title' => $userTaskLog['title']
+                ]
+            ];
+        } else {
+            $returnData[] = [
+                'type' => 1,
+                'is_note' => 0,
+                'note_data' => [
+                    'id' => '0',
+                    'title' => ''
+                ]
+            ];
+        }
+        return json(['status' => 1, 'result' => $returnData]);
+    }
 }

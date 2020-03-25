@@ -1080,7 +1080,8 @@ class Pay
         $checkGoodsShipping = $GoodsLogic->checkGoodsListShipping($this->payList, $district_id);
         foreach ($checkGoodsShipping as $shippingKey => $shippingVal) {
             if (true != $shippingVal['shipping_able']) {
-                // throw new TpshopException("计算订单价格",0,['status'=>-1,'msg'=>'订单中部分商品不支持对当前地址的配送请返回购物车修改','result'=>['goods_shipping'=>$checkGoodsShipping]]);
+//                throw new TpshopException("计算订单价格", 0, ['status' => -1, 'msg' => '订单中部分商品不支持对当前地址的配送请返回购物车修改', 'result' => ['goods_shipping' => $checkGoodsShipping]]);
+                throw new TpshopException("计算订单价格", 0, ['status' => -1, 'msg' => '订单中部分商品不支持对当前地址的配送']);
             }
         }
         $freight_free = tpCache('shopping.freight_free'); // 全场满多少免运费
