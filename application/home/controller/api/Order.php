@@ -1573,6 +1573,7 @@ class Order extends Base
         // 用户默认地址
         $userAddress = get_user_address_list_new($this->user_id, true);
         if (!empty($userAddress)) {
+            $userAddress[0]['out_range'] = 0;
             unset($userAddress[0]['zipcode']);
             unset($userAddress[0]['is_pickup']);
             // 地址标签
@@ -1777,7 +1778,10 @@ class Order extends Base
             if (empty($userAddress)) {
                 $payLogic->delivery('0');
             } else {
-                $payLogic->delivery($userAddress[0]['district']);
+                $res = $payLogic->delivery($userAddress[0]['district']);
+                if (isset($res['status']) && $res['status'] == -1) {
+                    $userAddress[0]['out_range'] = 1;
+                }
             }
             // 使用积分
             $pay_points = $payLogic->getUsePoint();

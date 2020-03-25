@@ -505,10 +505,21 @@ class User extends Base
      */
     public function address_list_new()
     {
+        $goodsId = I('goods_id', '');           // 商品ID
+        $cartIds = I('cart_ids', '');           // 购物车ID组合
+        if (!empty($goodsId) && empty(trim($cartIds))) {
+            $goodsIds = [['goods_id' => $goodsId]];
+            $GoodsLogic = new GoodsLogic();
+        } elseif (empty($goodsId) && !empty(trim($cartIds))) {
+            $goodsIds = (new CartLogic())->getCartGoods($cartIds, 'c.goods_id');
+            $GoodsLogic = new GoodsLogic();
+        }
         // 用户地址
         $addressList = get_user_address_list_new($this->user_id);
         // 地址标签
         $addressTab = (new UsersLogic())->getAddressTab($this->user_id);
+        // 超出范围的地址
+        $outRange = [];
         foreach ($addressList as $k1 => $value) {
             $tabs = explode(',', $value['tabs']);
             unset($addressList[$k1]['tabs']);
@@ -529,8 +540,28 @@ class User extends Base
                     'is_selected' => 1
                 ];
             }
+            // 判断传入商品是否能在该地区配送
+            if (!empty($goodsIds)) {
+                $checkGoodsShipping = $GoodsLogic->checkGoodsListShipping($goodsIds, $value['district']);
+                foreach ($checkGoodsShipping as $shippingKey => $shippingVal) {
+                    if (true != $shippingVal['shipping_able']) {
+                        // 订单中部分商品不支持对当前地址的配送
+                        $addressList[$k1]['out_range'] = 1;
+                        $outRange[] = $addressList[$k1];
+                        unset($addressList[$k1]);
+                    } else {
+                        $addressList[$k1]['out_range'] = 0;
+                    }
+                }
+            } else {
+                $addressList[$k1]['out_range'] = 0;
+            }
         }
-        return json(['status' => 1, 'msg' => 'success', 'result' => ['list' => $addressList]]);
+        $returnData = [
+            'list' => array_values($addressList),
+            'out_range' => $outRange
+        ];
+        return json(['status' => 1, 'msg' => 'success', 'result' => $returnData]);
     }
 
     /**
@@ -3487,7 +3518,7 @@ class User extends Base
      */
     public function checkNote()
     {
-        $returnData = [];
+        $returnData = ['list' => []];
         /*
          * 用户是否有完成未领取的任务奖励
          */
@@ -3495,7 +3526,7 @@ class User extends Base
             ->where(['user_id' => $this->user_id, 'type' => 1, 'status' => 0])->order('created_at desc')
             ->field('t.id, t.title')->find();
         if (!empty($userTaskLog)) {
-            $returnData[] = [
+            $returnData['list'][] = [
                 'type' => 1,
                 'is_note' => 1,
                 'note_data' => [
@@ -3504,7 +3535,7 @@ class User extends Base
                 ]
             ];
         } else {
-            $returnData[] = [
+            $returnData['list'][] = [
                 'type' => 1,
                 'is_note' => 0,
                 'note_data' => [

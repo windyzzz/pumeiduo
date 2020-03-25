@@ -108,7 +108,10 @@ class Adv extends Base
             }
             $popupList[$key]['type_ids'] = [];
         }
-        return json(['status' => 1, 'result' => $popupList]);
+        $returnData = [
+            'popup_list' => $popupList
+        ];
+        return json(['status' => 1, 'result' => $returnData]);
     }
 
     /**
