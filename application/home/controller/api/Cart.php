@@ -60,6 +60,9 @@ class Cart extends Base
                 }
             }
         }
+        if ($this->user_id == 0) {
+            die(json_encode(['status' => -999, 'msg' => '请先登录']));
+        }
     }
 
     public function index()
@@ -93,6 +96,7 @@ class Cart extends Base
                     $cartList[$k]['goods']['least_buy_num'] = '0';
                 }
                 if ($goods_tao_grade[$v['goods_id']]) {
+                    $v['member_goods_price'] = bcsub($v['goods_price'], $v['use_integral'], 2);
                     $prom_list[$goods_tao_grade[$v['goods_id']]['id']]['list'][$k] = $v;
                     $prom_list[$goods_tao_grade[$v['goods_id']]['id']]['prom']['is_prom_goods_type'] = $goods_tao_grade[$v['goods_id']]['type'];
                     $prom_list[$goods_tao_grade[$v['goods_id']]['id']]['prom']['is_prom_goods_expression'] = $goods_tao_grade[$v['goods_id']]['expression'];
@@ -105,8 +109,6 @@ class Cart extends Base
                     unset($cartList[$k]);
                 }
             }
-
-
             //$cartList = array_merge($prom_list,$cartList);
         }
 
@@ -722,6 +724,24 @@ class Cart extends Base
                 return json(['status' => 0, 'msg' => '你的购物车没有选中商品', 'result' => null]);
             }
             $cartList['cartList'] = $cartLogic->getCartList(1); // 获取用户选中的购物车商品
+            $vipGoods = [];
+            foreach ($cartList['cartList'] as $key => $cart) {
+                if ($cart['prom_type'] == 0) {
+                    if ($cart['goods']['least_buy_num'] != 0 && $cart['goods']['least_buy_num'] > $cart['goods_num']) {
+                        return json(['status' => 0, 'msg' => $cart['goods']['goods_name'] . '至少购买' . $cart['goods']['least_buy_num'] . '件']);
+                    }
+                }
+                if ($cart['goods']['zone'] == 3 && $cart['goods']['distribut_id'] != 0) {
+                    $vipGoods[] = $cart['goods']['goods_id'];
+                }
+                if ($cart['prom_type'] == 3) {
+                    // 商品促销优惠
+                    $cartList['cartList'][$key]['member_goods_price'] = bcsub($cart['goods_price'], $cart['use_integral'], 2);
+                }
+            }
+            if (count($vipGoods) > 1) {
+                return json(['status' => 0, 'msg' => '不能一次购买两种或以上VIP升级套餐']);
+            }
             $cartGoodsTotalNum = count($cartList['cartList']);
         }
         $point = 0;
@@ -920,6 +940,24 @@ class Cart extends Base
                 $pay->payGoodsList($cartList);
             } else {
                 $userCartList = $cartLogic->getCartList(1);
+                $vipGoods = [];
+                foreach ($userCartList as $key => $cart) {
+                    if ($cart['prom_type'] == 0) {
+                        if ($cart['goods']['least_buy_num'] != 0 && $cart['goods']['least_buy_num'] > $cart['goods_num']) {
+                            return json(['status' => 0, 'msg' => $cart['goods']['goods_name'] . '至少购买' . $cart['goods']['least_buy_num'] . '件']);
+                        }
+                    }
+                    if ($cart['goods']['zone'] == 3 && $cart['goods']['distribut_id'] != 0) {
+                        $vipGoods[] = $cart['goods']['goods_id'];
+                    }
+                    if ($cart['prom_type'] == 3) {
+                        // 商品促销优惠
+                        $userCartList[$key]['member_goods_price'] = bcsub($cart['goods_price'], $cart['use_integral'], 2);
+                    }
+                }
+                if (count($vipGoods) > 1) {
+                    return json(['status' => 0, 'msg' => '不能一次购买两种或以上VIP升级套餐']);
+                }
                 // 计算商品pv
                 $cartLogic->calcGoodsPv($userCartList);
                 $cartLogic->checkStockCartList($userCartList);

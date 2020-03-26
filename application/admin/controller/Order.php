@@ -136,7 +136,9 @@ class Order extends Base
             }
         }
 
-        $field = 'sum(order_amount) as order_amount,sum(goods_price) as goods_price,sum(coupon_price) as coupon_price,sum(integral_money) as integral_money,sum(user_electronic) as user_electronic, sum(order_prom_amount) as order_prom_amount, sum(shipping_price) as shipping_price';
+        $field = 'sum(order_amount) as order_amount,sum(goods_price) as goods_price,sum(coupon_price) as coupon_price,
+        sum(integral_money) as integral_money,sum(user_electronic) as user_electronic, sum(order_prom_amount) as order_prom_amount, 
+        sum(shipping_price) as shipping_price, sum(order_pv) as order_pv';
         $all = M('order')->where($condition)->field($field)->find();
         $this->assign('all', $all);
         $this->assign('orderList', $orderList);
@@ -1544,6 +1546,7 @@ class Order extends Base
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">积分折扣</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">现金折扣</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">运费</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">总pv值</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">订单状态</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">支付方式</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">支付状态</td>';
@@ -1589,6 +1592,7 @@ class Order extends Base
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['integral_money'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['user_electronic'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['shipping_price'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['order_pv'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . C('ORDER_STATUS')[$val['order_status']] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['pay_name'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $this->pay_status[$val['pay_status']] . '</td>';

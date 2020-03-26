@@ -225,8 +225,10 @@ class Goods extends Base
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
-        $goods['buy_limit'] = $goods['limit_buy_num'];
-        $goods['buy_least'] = $goods['least_buy_num'];
+//        $goods['goods_content'] = htmlspecialchars_decode($goods['goods_content']); // 商品内容
+//        $goods['goods_content'] = str_replace('/public', SITE_URL . '/public', $goods['goods_content']);
+        $goods['buy_limit'] = $goods['limit_buy_num'];  // 商品最大购买数量
+        $goods['buy_least'] = $goods['least_buy_num'];  // 商品最低购买数量
         $zone = $goods['zone'];
         $goodsLogic = new GoodsLogic();
         // 判断商品性质
@@ -842,7 +844,8 @@ class Goods extends Base
                 $goods['start_time'] = date('m-d H:i:s', $goods['start_time']);
                 $goods['activity_is_on'] = 1;
                 $goods['use_integral'] = 0;
-                if (1 == $goods['can_integral']) {
+
+                if (isset($goods['can_integral']) && 1 == $goods['can_integral']) {
                     $goods['use_integral'] = $goods['exchange_integral'];
                     $goods['shop_price'] = $goods['shop_price'] - $goods['exchange_integral'];
                 }

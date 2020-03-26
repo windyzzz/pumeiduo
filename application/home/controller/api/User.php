@@ -549,6 +549,7 @@ class User extends Base
                         $addressList[$k1]['out_range'] = 1;
                         $outRange[] = $addressList[$k1];
                         unset($addressList[$k1]);
+                        break;
                     } else {
                         $addressList[$k1]['out_range'] = 0;
                     }

@@ -1,17 +1,9 @@
 <?php
 
-
 namespace app\home\controller\api;
-
-use think\Url;
 
 class System
 {
-    public function __construct()
-    {
-        // header('Access-Control-Allow-Origin:*');
-        // header('Access-Control-Allow-Method:POST,GET');
-    }
 
     function happy_day()
     {
@@ -44,8 +36,8 @@ class System
         $androidUrl = tpCache('android.app_path');
         $iosUrl = tpCache('ios.app_path');
         $return = [
-            'android_url' => $androidUrl,
-            'ios_url' => $iosUrl,
+            'android_url' => htmlspecialchars_decode($androidUrl),
+            'ios_url' => htmlspecialchars_decode($iosUrl),
         ];
         return json(['status' => 1, 'result' => $return]);
     }
@@ -84,7 +76,7 @@ class System
             $result['state'] = $config['is_update'] ? (int)$config['is_update'] : 0;    // 是否需要更新
         }
         $result['is_force'] = $config['is_force'] ? (int)$config['is_force'] : 0;  // 是否强制更新
-        $result['app_url'] = $config['app_path'];
+        $result['app_url'] = htmlspecialchars_decode($config['app_path']);
         if ($type == 'ios') {
             $result['target_version'] = $config['app_version'];
         }

@@ -1322,8 +1322,8 @@ AND log_id NOT IN
             foreach ($pushList as $push) {
                 // 标题内容数据
                 $contentData = [
-                    'title' => $push['title'],
-                    'desc' => $push['desc']
+                    'title' => htmlspecialchars_decode($push['title']),
+                    'desc' => htmlspecialchars_decode($push['desc'])
                 ];
                 // 点击处理数据
                 switch ($push['type']) {
