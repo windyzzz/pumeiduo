@@ -229,7 +229,7 @@ class CartLogic extends Model
                             'id' => $this->specGoodsPrice['prom_id'],
                             'source' => ['LIKE', $isApp ? '%' . 3 . '%' : '%' . 1 . '%']
                         ])->value('id');
-                        if ($flashSale) {
+                        if (empty($flashSale)) {
                             $buyGoods = $goodsPromLogic->buyNow($buyGoods, $this->type);
                         } else {
                             // 普通价格
@@ -319,7 +319,7 @@ class CartLogic extends Model
                     'id' => $this->specGoodsPrice['prom_id'],
                     'source' => ['LIKE', $isApp ? '%' . 3 . '%' : '%' . 1 . '%']
                 ])->value('id');
-                if ($flashSale) {
+                if (empty($flashSale)) {
                     $result = $this->addFlashSaleCart();
                 } else {
                     if ($this->goods['least_buy_num'] != 0 && $this->goods['least_buy_num'] > $this->goodsBuyNum) {

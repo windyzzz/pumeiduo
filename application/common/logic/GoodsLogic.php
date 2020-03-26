@@ -1025,7 +1025,7 @@ class GoodsLogic extends Model
             // 第一类，活动类（优先级：“秒杀” > “团购” > “套组” > “自营”）
 //            $goodsList[$k]['tags'][0] = ['type' => 'activity', 'title' => '自营'];
             if ($v['sale_type'] == 2) {
-                $goodsList[$k]['tags'][0]['title'] = '套组';
+                $goodsList[$k]['tags'][0] = ['type' => 'activity', 'title' => '套组'];
             }
             if (!empty($groupBuy)) {
                 foreach ($groupBuy as $value) {

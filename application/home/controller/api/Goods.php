@@ -112,7 +112,7 @@ class Goods extends Base
 //        $Goods = new \app\common\model\Goods();
         $goods = Db::name('goods')->where('goods_id', $goods_id)->field('goods_id, cat_id, extend_cat_id, goods_sn, goods_name, goods_type, goods_remark, goods_content, 
             brand_id, store_count, comment_count, market_price, shop_price, cost_price, give_integral, exchange_integral, original_img, limit_buy_num, least_buy_num,
-            is_on_sale, is_free_shipping, is_recommend, is_new, is_hot, is_virtual, virtual_indate, click_count, zone, commission, integral_pv')->find();
+            is_on_sale, is_free_shipping, is_recommend, is_new, is_hot, is_virtual, virtual_indate, click_count, zone, prom_type, prom_id, commission, integral_pv')->find();
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
@@ -1603,7 +1603,7 @@ class Goods extends Base
             // 第一类，活动类（优先级：秒杀” > ”团购“ > ”套组“ > “自营”）
 //            $goodsList[$k]['tags'][0] = ['type' => 'activity', 'title' => '自营'];
             if ($v['sale_type'] == 2) {
-                $goodsList[$k]['tags'][0]['title'] = '套组';
+                $goodsList[$k]['tags'][0] = ['type' => 'activity', 'title' => '套组'];
             }
             if (!empty($groupBuy)) {
                 foreach ($groupBuy as $value) {
@@ -1746,7 +1746,7 @@ class Goods extends Base
             // 第一类，活动类（优先级：秒杀” > ”团购“ > ”套组“ > “自营”）
 //            $goodsList[$k]['tags'][0] = ['type' => 'activity', 'title' => '自营'];
             if ($v['sale_type'] == 2) {
-                $goodsList[$k]['tags'][0]['title'] = '套组';
+                $goodsList[$k]['tags'][0] = ['type' => 'activity', 'title' => '套组'];
             }
             if (!empty($groupBuy)) {
                 foreach ($groupBuy as $value) {
@@ -2228,7 +2228,7 @@ class Goods extends Base
             // 第一类，活动类（优先级：秒杀” > ”团购“ > ”套组“ > “自营”）
 //            $lookSee[$k]['tags'][0] = ['type' => 'activity', 'title' => '自营'];
             if ($v['sale_type'] == 2) {
-                $lookSee[$k]['tags'][0]['title'] = '套组';
+                $lookSee[$k]['tags'][0] = ['type' => 'activity', 'title' => '套组'];
             }
             if (!empty($groupBuy)) {
                 foreach ($groupBuy as $value) {
