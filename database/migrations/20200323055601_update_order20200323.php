@@ -30,6 +30,7 @@ class UpdateOrder20200323 extends Migrator
     {
         $this->table('order')
             ->addColumn('order_pv', 'decimal', ['default' => '0', 'comment' => '订单pv', 'precision' => 10, 'scale' => 2, 'after' => 'total_amount'])
+            ->addColumn('pv_send', 'integer', ['default' => 0, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'comment' => '是否已将pv数值发送到代理商系统', 'after' => 'order_pv'])
             ->update();
     }
 }

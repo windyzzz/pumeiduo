@@ -1386,4 +1386,25 @@ AND log_id NOT IN
             M('push')->where(['id' => ['in', $pushIds]])->update(['status' => 1]);
         }
     }
+
+    /**
+     * 自动发送订单pv到代理商系统
+     */
+    public function autoSendOrderPv()
+    {
+        $where = [
+            'order_pv' => ['>', 0],
+            'pv_send' => 1,
+            'add_time' => ['<=', time() - (3600 * 24 * 7)]  // 计算pv7天后
+        ];
+        $orderData = M('order')->where($where)->field('order_id, order_pv')->select();
+        // 订单商品
+        foreach ($orderData as $key => $order) {
+            $orderData[$key]['goods'] = M('order_goods')->where(['order_id' => $order['order_id']])->field('rec_id, goods_id, goods_pv')->select();
+        }
+        // 发送到代理商系统
+
+        // 发送成功更新订单
+
+    }
 }

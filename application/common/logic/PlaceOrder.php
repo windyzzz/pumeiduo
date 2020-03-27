@@ -296,11 +296,11 @@ class PlaceOrder
         $goodsArr = Db::name('goods')->where('goods_id', 'IN', $goods_ids)->getField('goods_id,cost_price,give_integral,commission,exchange_integral,trade_type,sale_type');
         $orderGoodsAllData = [];
 
+        $orderAmountRate = bcdiv(bcadd($this->pay->getOrderAmount(), $this->pay->getUserElectronic(), 2), $this->pay->getTotalAmount(), 2); // 订单实际支付金额比率
         $orderPromId = [];  // 订单优惠促销ID
         $orderDiscount = 0.00;  // 订单优惠金额
 
         foreach ($payList as $payKey => $payItem) {
-            unset($payItem['goods']);
             $totalPriceToRatio = bcdiv($payItem['member_goods_price'], $this->pay->getGoodsPrice(), 2);  //商品价格占总价的比例
             $finalPrice = bcsub($payItem['member_goods_price'], bcmul($totalPriceToRatio, $orderDiscounts, 2), 2);
             $orderGoodsData = [
@@ -329,6 +329,14 @@ class PlaceOrder
                 're_id' => isset($payItem['re_id']) ? intval($payItem['re_id']) : 0,
                 'pay_type' => $payItem['type']      // 购买方式：1现金+积分 2现金
             ];
+            switch ($payItem['type']) {
+                case 1:
+                    $orderGoodsData['goods_pv'] = bcmul(bcmul($payItem['goods']['integral_pv'], $payItem['goods_num'], 2), $orderAmountRate, 2);
+                    break;
+                case 2:
+                    $orderGoodsData['goods_pv'] = bcmul(bcmul($payItem['goods']['retail_pv'], $payItem['goods_num'], 2), $orderAmountRate, 2);
+                    break;
+            }
             if (!empty($payItem['spec_key'])) {
                 $orderGoodsData['spec_key'] = $payItem['spec_key'];
                 $orderGoodsData['spec_key_name'] = $payItem['spec_key_name'];

@@ -227,7 +227,7 @@ class Pay
      */
     public function setOrderPv()
     {
-        $this->orderPv = bcmul(bcdiv(bcadd($this->orderAmount, $this->userElectronic, 2), $this->totalAmount, 2), $this->goodsPv, 2);;
+        $this->orderPv = bcmul(bcdiv(bcadd($this->orderAmount, $this->userElectronic, 2), $this->totalAmount, 2), $this->goodsPv, 2);
     }
 
     /**
