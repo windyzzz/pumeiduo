@@ -278,7 +278,6 @@ class Goods extends Base
 
         $strTable .= '</table>';
         downloadExcel($strTable, 'goods_list');
-        $this->ajaxReturn(['status' => 1]);
         exit();
     }
 
