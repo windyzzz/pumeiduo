@@ -60,7 +60,7 @@ class Cart extends Base
                 }
             }
         }
-        if ($this->user_id == 0) {
+        if (!$this->isApp && $this->user_id == 0) {
             die(json_encode(['status' => -999, 'msg' => '请先登录']));
         }
     }

@@ -504,6 +504,8 @@ class User extends Base
                     'type' => 1,
                     'way' => 2
                 ]);
+                $user = Db::name('users')->where('user_id', $uid)->find();
+                TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
                 exit($this->success('合并成功'));
             }
         }
