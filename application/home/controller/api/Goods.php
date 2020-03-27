@@ -487,7 +487,7 @@ class Goods extends Base
                     case 2:
                         // 指定分类可用
                         $title = '￥' . $coupon['money'];
-                        $desc = $coupon['cate_name'] . '满' . $coupon['condition'] . '可用';
+                        $desc = $coupon['cat_name'] . '满' . $coupon['condition'] . '可用';
                         break;
                     case 4:
                         // 指定商品折扣券
