@@ -313,7 +313,8 @@ class GoodsLogic extends Model
                 'item_id' => $value['id'],
                 'item' => $value['item'],
                 'src' => $specImage[$value['id']] ?? '',
-                'is_default' => $isDefault
+                'is_default' => $isDefault,
+                'can_select' => 1   // 能否被选
             ];
         }
         // 给定默认选中规格
