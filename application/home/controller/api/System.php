@@ -70,7 +70,7 @@ class System
         foreach ($version as $item) {
             $nowVersion .= $item * 10;
         }
-        if ($appVersion == $nowVersion) {
+        if ($appVersion == $nowVersion || $appVersion > $nowVersion) {
             $result['state'] = 0;   // 无需更新
         } else {
             $result['state'] = $config['is_update'] ? (int)$config['is_update'] : 0;    // 是否需要更新

@@ -55,14 +55,10 @@ class Order
                 unset($orderGoods[$key]['extend_cat_id']);
             }
             if ($isSelfSales) {
-                // 发送订单pv到代理商系统
-                $orderData = [
-                    'order_id' => $order['order_id'],
-                    'order_pv' => $order['order_pv'],
-                    'goods' => $orderGoods
-                ];
-
-                // 发送成功更新订单
+                // 通知代理商系统记录
+                include_once "plugins/Tb.php";
+                $TbLogic = new \Tb();
+                $TbLogic->add_tb(1, 11, $order['order_id'], 0);
             }
         }
     }

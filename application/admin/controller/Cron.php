@@ -1397,14 +1397,12 @@ AND log_id NOT IN
             'pv_send' => 0,
             'add_time' => ['<=', time() - (3600 * 24 * 7)]  // 计算pv7天后
         ];
-        $orderData = M('order')->where($where)->field('order_id, order_pv')->select();
-        // 订单商品
+        $orderData = M('order')->where($where)->field('order_id')->select();
+        // 通知代理商系统记录
+        include_once "plugins/Tb.php";
+        $TbLogic = new \Tb();
         foreach ($orderData as $key => $order) {
-            $orderData[$key]['goods'] = M('order_goods')->where(['order_id' => $order['order_id']])->field('rec_id, goods_id, goods_pv')->select();
+            $TbLogic->add_tb(1, 11, $order['order_id'], 0);
         }
-        // 发送到代理商系统
-
-        // 发送成功更新订单
-
     }
 }

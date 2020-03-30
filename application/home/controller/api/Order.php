@@ -401,7 +401,7 @@ class Order extends Base
             'confirm_time' => $orderInfo['confirm_time'],
             'cancel_time' => $orderInfo['cancel_time'],
             'delivery_type' => $orderInfo['delivery_type'],   // 1统一发货 2分开发货
-            'order_pv' => $orderInfo['order_pv'],
+            'order_pv' => $this->user['distribut_level'] >= 3 ? $orderInfo['order_pv'] : '',
             'delivery' => [
                 'consignee' => $orderInfo['consignee'],
                 'mobile' => $orderInfo['mobile'],
@@ -1705,8 +1705,10 @@ class Order extends Base
 //            }
 //            $cartList['cartList'] = $buyGoods;
         }
-        // 计算商品pv
-        $cartLogic->calcGoodsPv($cartList['cartList']);
+        if ($this->user['distribut_level'] >= 3) {
+            // 计算商品pv
+            $cartLogic->calcGoodsPv($cartList['cartList']);
+        }
         //初始化数据 商品总额/节约金额/商品总共数量/商品使用积分
         $cartPriceInfo = $cartLogic->getCartPriceInfo($cartList['cartList']);
         $cartList = array_merge($cartList, $cartPriceInfo);
@@ -2001,7 +2003,7 @@ class Order extends Base
             'spare_pay_points' => bcsub($this->user['pay_points'], $payReturn['pay_points'], 2),
             'give_integral' => $give_integral,
             'free_shipping_price' => tpCache('shopping.freight_free') <= $payReturn['order_amount'] ? '0' : bcsub(tpCache('shopping.freight_free'), $payReturn['order_amount'], 2),
-            'order_pv' => $payReturn['order_pv']
+            'order_pv' => $this->user['distribut_level'] >= 3 ? $payReturn['order_pv'] == '0.00' ? '' : $payReturn['order_pv'] : ''
         ];
         return json(['status' => 1, 'result' => $return]);
     }
@@ -2091,8 +2093,10 @@ class Order extends Base
              */
             return json(['status' => 0, 'msg' => '暂不支持此下单方式']);
         }
-        // 计算商品pv
-        $cartLogic->calcGoodsPv($cartList['cartList']);
+        if ($this->user['distribut_level'] >= 3) {
+            // 计算商品pv
+            $cartLogic->calcGoodsPv($cartList['cartList']);
+        }
         //初始化数据 商品总额/节约金额/商品总共数量/商品使用积分
         $cartPriceInfo = $cartLogic->getCartPriceInfo($cartList['cartList']);
         $cartList = array_merge($cartList, $cartPriceInfo);
@@ -2246,7 +2250,7 @@ class Order extends Base
             'spare_pay_points' => bcsub($this->user['pay_points'], $payReturn['pay_points'], 2),
             'give_integral' => $give_integral,
             'free_shipping_price' => tpCache('shopping.freight_free') <= $payReturn['order_amount'] ? '0' : bcsub(tpCache('shopping.freight_free'), $payReturn['order_amount'], 2),
-            'order_pv' => $payReturn['order_pv']
+            'order_pv' => $this->user['distribut_level'] >= 3 ? $payReturn['order_pv'] == '0.00' ? '' : $payReturn['order_pv'] : ''
         ];
         return json(['status' => 1, 'result' => $return]);
     }
@@ -2336,8 +2340,10 @@ class Order extends Base
             return json(['status' => 0, 'msg' => '暂不支持此下单方式']);
         }
         try {
-            // 计算商品pv
-            $cartLogic->calcGoodsPv($cartList['cartList']);
+            if ($this->user['distribut_level'] >= 3) {
+                // 计算商品pv
+                $cartLogic->calcGoodsPv($cartList['cartList']);
+            }
 
             $payLogic = new Pay();
             $payLogic->setUserId($this->user_id);   // 设置支付用户ID

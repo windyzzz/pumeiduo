@@ -134,8 +134,25 @@ class Goods extends Base
         $point_rate = tpCache('shopping.point_rate');
 
         $look_see = $goodsLogic->get_look_see($goods);
-        // 商品佣金
-        $goods['commission'] = bcdiv(bcmul($goods['shop_price'], $goods['commission'], 2), 100, 2);
+        if ($this->user) {
+            // 商品pv
+            if ($this->user['distribut_level'] < 3) {
+                $goods['integral_pv'] = '';
+            } elseif ($goods['integral_pv'] == 0) {
+                $goods['integral_pv'] = '';
+            }
+            // 商品佣金
+            if ($this->user['distribut_level'] < 2) {
+                $goods['commission'] = '';
+            } elseif ($goods['commission'] == 0) {
+                $goods['commission'] = '';
+            } else {
+                $goods['commission'] = bcdiv(bcmul($goods['shop_price'], $goods['commission'], 2), 100, 2);
+            }
+        } else {
+            $goods['integral_pv'] = '';
+            $goods['commission'] = '';
+        }
 
         $data = [];
         $data['freight_free'] = $freight_free; // 全场满多少免运费
@@ -225,8 +242,6 @@ class Goods extends Base
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
-//        $goods['goods_content'] = htmlspecialchars_decode($goods['goods_content']); // 商品内容
-//        $goods['goods_content'] = str_replace('/public', SITE_URL . '/public', $goods['goods_content']);
         $goods['buy_limit'] = $goods['limit_buy_num'];  // 商品最大购买数量
         $goods['buy_least'] = $goods['least_buy_num'];  // 商品最低购买数量
         $zone = $goods['zone'];
@@ -289,8 +304,25 @@ class Goods extends Base
         } else {
             $goods['exchange_price'] = $goods['shop_price'];
         }
-        // 商品佣金
-        $goods['commission'] = bcdiv(bcmul($goods['shop_price'], $goods['commission'], 2), 100, 2);
+        if ($this->user) {
+            // 商品pv
+            if ($this->user['distribut_level'] < 3) {
+                $goods['integral_pv'] = '';
+            } elseif ($goods['integral_pv'] == 0) {
+                $goods['integral_pv'] = '';
+            }
+            // 商品佣金
+            if ($this->user['distribut_level'] < 2) {
+                $goods['commission'] = '';
+            } elseif ($goods['commission'] == 0) {
+                $goods['commission'] = '';
+            } else {
+                $goods['commission'] = bcdiv(bcmul($goods['shop_price'], $goods['commission'], 2), 100, 2);
+            }
+        } else {
+            $goods['integral_pv'] = '';
+            $goods['commission'] = '';
+        }
         // 处理商品详情（抽取图片）
         $contentArr = explode('public', $goods['goods_content']);
         $contentImgArr = [];
