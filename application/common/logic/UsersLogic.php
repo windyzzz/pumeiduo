@@ -766,6 +766,10 @@ class UsersLogic extends Model
                     accountLog($invite, 0, $invite_integral, '邀请用户奖励积分', 0, 0, '', 0, 7, false);
                     $map['invite_uid'] = $invite;
                     $map['invite_time'] = time();
+
+                    // 邀请人记录
+                    $file = 'invite.txt';
+                    file_put_contents($file, '[' . date('Y-m-d H:i:s', $map['invite_time']) . ']  用户' . $user['user_id'] . '设置邀请人：' . $invite . "\n", FILE_APPEND | LOCK_EX);
                 }
             }
             Db::name('users')->where('user_id', $user['user_id'])->save($map);

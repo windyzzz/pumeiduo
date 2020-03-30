@@ -99,6 +99,10 @@ class CheckAuth
                     $map['invite_time'] = time();
                     M('users')->where(['user_id' => $session_user['user_id']])->update($map);
                     $select_user = M('users')->where(['user_id' => $session_user['user_id']])->find();
+
+                    // 邀请人记录
+                    $file = 'invite.txt';
+                    file_put_contents($file, '[' . date('Y-m-d H:i:s', $map['invite_time']) . ']  用户' . $session_user['user_id'] . '设置邀请人：' . $invite . "\n", FILE_APPEND | LOCK_EX);
                 }
             }
             $user = array_merge($select_user, $oauth_users);
