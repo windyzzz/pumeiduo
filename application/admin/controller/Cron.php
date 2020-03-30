@@ -1394,7 +1394,7 @@ AND log_id NOT IN
     {
         $where = [
             'order_pv' => ['>', 0],
-            'pv_send' => 1,
+            'pv_send' => 0,
             'add_time' => ['<=', time() - (3600 * 24 * 7)]  // 计算pv7天后
         ];
         $orderData = M('order')->where($where)->field('order_id, order_pv')->select();
