@@ -77,9 +77,7 @@ class System
         }
         $result['is_force'] = $config['is_force'] ? (int)$config['is_force'] : 0;  // 是否强制更新
         $result['app_url'] = htmlspecialchars_decode($config['app_path']);
-        if ($type == 'ios') {
-            $result['target_version'] = $config['app_version'];
-        }
+        $result['target_version'] = $config['app_version'];
         return json(['status' => 1, 'result' => $result]);
     }
 

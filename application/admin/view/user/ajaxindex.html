@@ -7,7 +7,11 @@
                     <div style="text-align: center; width: 180px; max-width:250px;">
                         <a class="btn blue" href="{:U('Admin/user/detail',array('id'=>$list['user_id']))}"><i class="fa fa-pencil-square-o"></i>详情</a>
                         <a class="btn blue" href="{:U('Admin/user/account_log',array('id'=>$list['user_id']))}"><i class="fa fa-search"></i>资金</a>
-                        <a class="btn blue" onclick="delfun(this)" data-url="{:U('Admin/user/delete',array('id'=>$list['user_id']))}"><i class="fa fa-steam"></i>删除</a>
+                        <if condition="$admin_act == 'all' ||(isset($admin_role) && in_array('User@delete', $admin_role))">
+                            <a class="btn blue" onclick="delfun(this, '删除')" data-url="{:U('Admin/user/delete',array('id'=>$list['user_id']))}"><i class="fa fa-steam"></i>删除</a>
+                        <else/>
+                            <a class="btn blue" onclick="delfun(this, '注销')" data-url="{:U('Admin/user/cancel',array('id'=>$list['user_id']))}"><i class="fa fa-steam"></i>注销</a>
+                        </if>
                     </div>
                 </td>
                 <td class="sign">
@@ -108,9 +112,9 @@
         });
         $('#user_count').empty().html("{$pager->totalRows}");
     });
-    function delfun(obj) {
+    function delfun(obj, action) {
         // 删除按钮
-        layer.confirm('确认删除用户？', {
+        layer.confirm('确认' + action + '用户？', {
             btn: ['确定', '取消'] //按钮
         }, function () {
             $.ajax({
@@ -121,7 +125,7 @@
                 success: function (data) {
                     layer.closeAll();
                     if (data.status == 1) {
-                        // $(obj).parent().parent().parent().remove();
+                        if (action == '删除') $(obj).parent().parent().parent().remove();
                         layer.alert(data.msg, {icon: 1});
                     } else {
                         layer.alert(data.msg, {icon: 2});
