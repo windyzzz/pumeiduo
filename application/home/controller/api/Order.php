@@ -2003,7 +2003,7 @@ class Order extends Base
             'spare_pay_points' => bcsub($this->user['pay_points'], $payReturn['pay_points'], 2),
             'give_integral' => $give_integral,
             'free_shipping_price' => tpCache('shopping.freight_free') <= $payReturn['order_amount'] ? '0' : bcsub(tpCache('shopping.freight_free'), $payReturn['order_amount'], 2),
-            'order_pv' => $this->user['distribut_level'] >= 3 ? $payReturn['order_pv'] == '0.00' ? '' : $payReturn['order_pv'] : ''
+            'order_pv' => $this->user['distribut_level'] >= 3 ? $payReturn['order_pv'] : ''
         ];
         return json(['status' => 1, 'result' => $return]);
     }
@@ -2250,7 +2250,7 @@ class Order extends Base
             'spare_pay_points' => bcsub($this->user['pay_points'], $payReturn['pay_points'], 2),
             'give_integral' => $give_integral,
             'free_shipping_price' => tpCache('shopping.freight_free') <= $payReturn['order_amount'] ? '0' : bcsub(tpCache('shopping.freight_free'), $payReturn['order_amount'], 2),
-            'order_pv' => $this->user['distribut_level'] >= 3 ? $payReturn['order_pv'] == '0.00' ? '' : $payReturn['order_pv'] : ''
+            'order_pv' => $this->user['distribut_level'] >= 3 ? $payReturn['order_pv'] : ''
         ];
         return json(['status' => 1, 'result' => $return]);
     }
