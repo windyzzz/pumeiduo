@@ -199,6 +199,7 @@ class CartLogic extends Model
             if ($specGoodsPriceCount > 0) {
                 throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '必须传递商品规格', 'result' => '']);
             }
+            $prom_id = $this->goods['prom_id'];
             $prom_type = $this->goods['prom_type'];
             $store_count = $this->goods['store_count'];
         } else {
@@ -209,6 +210,7 @@ class CartLogic extends Model
             $buyGoods['spec_key'] = $this->specGoodsPrice['key'];
             $buyGoods['spec_key_name'] = $this->specGoodsPrice['key_name']; // 规格 key_name
             $buyGoods['sku'] = $this->specGoodsPrice['sku']; //商品条形码
+            $prom_id = $this->specGoodsPrice['prom_id'];
             $prom_type = $this->specGoodsPrice['prom_type'];
             $this->goods['prom_type'] = $this->specGoodsPrice['prom_type'];
             $store_count = $this->specGoodsPrice['store_count'];
@@ -226,10 +228,12 @@ class CartLogic extends Model
                     if ($prom_type == 1) {
                         // 秒杀商品
                         $flashSale = M('flash_sale')->where([
-                            'id' => $this->specGoodsPrice['prom_id'],
+                            'id' => $prom_id,
+                            'start_time' => ['<', time()],
+                            'end_time' => ['>', time()],
                             'source' => ['LIKE', $isApp ? '%' . 3 . '%' : '%' . 1 . '%']
                         ])->value('id');
-                        if (empty($flashSale)) {
+                        if (!empty($flashSale)) {
                             $buyGoods = $goodsPromLogic->buyNow($buyGoods, $this->type);
                         } else {
                             // 普通价格
@@ -253,7 +257,19 @@ class CartLogic extends Model
                         }
                     }
                 } else {
-                    throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '活动已经结束，无法购买', 'result' => '']);
+//                    throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '活动已经结束，无法购买', 'result' => '']);
+                    // 按普通商品计算
+                    if ($this->goods['least_buy_num'] != 0 && $this->goods['least_buy_num'] > $this->goodsBuyNum) {
+                        throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '至少购买' . $this->goods['least_buy_num'] . '件', 'result' => '']);
+                    }
+                    $member_goods_price = $buyGoods['member_goods_price'];
+                    $use_integral = 0;
+                    if (1 == $this->type) {
+                        $member_goods_price = bcsub($member_goods_price, $this->goods['exchange_integral'], 2);
+                        $use_integral = $this->goods['exchange_integral'];
+                    }
+                    $buyGoods['member_goods_price'] = $member_goods_price;
+                    $buyGoods['use_integral'] = $use_integral;
                 }
             }
         } else {
@@ -317,9 +333,11 @@ class CartLogic extends Model
             if (1 == $this->specGoodsPrice['prom_type']) {
                 $flashSale = M('flash_sale')->where([
                     'id' => $this->specGoodsPrice['prom_id'],
+                    'start_time' => ['<', time()],
+                    'end_time' => ['>', time()],
                     'source' => ['LIKE', $isApp ? '%' . 3 . '%' : '%' . 1 . '%']
                 ])->value('id');
-                if (empty($flashSale)) {
+                if (!empty($flashSale)) {
                     $result = $this->addFlashSaleCart();
                 } else {
                     if ($this->goods['least_buy_num'] != 0 && $this->goods['least_buy_num'] > $this->goodsBuyNum) {
@@ -339,7 +357,20 @@ class CartLogic extends Model
             }
         } else {
             if (1 == $this->goods['prom_type']) {
-                $result = $this->addFlashSaleCart();
+                $flashSale = M('flash_sale')->where([
+                    'id' => $this->goods['prom_id'],
+                    'start_time' => ['<', time()],
+                    'end_time' => ['>', time()],
+                    'source' => ['LIKE', $isApp ? '%' . 3 . '%' : '%' . 1 . '%']
+                ])->value('id');
+                if (!empty($flashSale)) {
+                    $result = $this->addFlashSaleCart();
+                } else {
+                    if ($this->goods['least_buy_num'] != 0 && $this->goods['least_buy_num'] > $this->goodsBuyNum) {
+                        return ['status' => 0, 'msg' => '至少购买' . $this->goods['least_buy_num'] . '件', 'result' => ''];
+                    }
+                    $result = $this->addNormalCart();
+                }
             } elseif (2 == $this->goods['prom_type']) {
                 $result = $this->addGroupBuyCart();
             } elseif (3 == $this->goods['prom_type']) {
