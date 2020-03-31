@@ -205,13 +205,20 @@ class CouponLogic extends Model
      * @param array $goods_cat_id
      * @return array
      */
-    public function getUserAbleCouponList($user_id, $goods_ids = [], $goods_cat_id = [])
+    public function getUserAbleCouponList($user_id, $goods_ids = [], $goods_cat_id = [], $isApp = false)
     {
-        $goods_list = M('goods')->where('goods_id', 'in', $goods_ids)->select();
+        $goods_list = M('goods')->where('goods_id', 'in', $goods_ids)->field('zone, distribut_id, prom_type')->select();
         foreach ($goods_list as $key => $value) {
             if ($value['prom_type'] == 1) {
-                // 秒杀商品不能使用优惠券
-                return [];
+                if (M('flash_sale')->where([
+                    'goods_id' => $value['goods_id'],
+                    'start_time' => ['<=', time()],
+                    'end_time' => ['>=', time()],
+                    'source' => ['LIKE', $isApp ? '%' . 3 . '%' : '%' . 1 . '%']
+                ])->value('id')) {
+                    // 秒杀商品不能使用优惠券
+                    return [];
+                }
             }
             if (3 == $value['zone'] && $value['distribut_id'] != 0) {
                 // VIP升级套餐
@@ -302,13 +309,20 @@ class CouponLogic extends Model
      * @param array $goods_cat_id
      * @return array
      */
-    public function getUserAbleCouponListRe($user_id, $goods_ids = [], $goods_cat_id = [])
+    public function getUserAbleCouponListRe($user_id, $goods_ids = [], $goods_cat_id = [], $isApp = false)
     {
-        $goods_list = M('goods')->where('goods_id', 'in', $goods_ids)->select();
+        $goods_list = M('goods')->where('goods_id', 'in', $goods_ids)->field('zone, distribut_id, prom_type')->select();
         foreach ($goods_list as $key => $value) {
             if ($value['prom_type'] == 1) {
-                // 秒杀商品不能使用优惠券
-                return [];
+                if (M('flash_sale')->where([
+                    'goods_id' => $value['goods_id'],
+                    'start_time' => ['<=', time()],
+                    'end_time' => ['>=', time()],
+                    'source' => ['LIKE', $isApp ? '%' . 3 . '%' : '%' . 1 . '%']
+                ])->value('id')) {
+                    // 秒杀商品不能使用优惠券
+                    return [];
+                }
             }
             if (3 == $value['zone'] && $value['distribut_id'] != 0) {
                 // VIP升级套餐

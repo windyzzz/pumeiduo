@@ -247,16 +247,11 @@ class Goods extends Base
         $zone = $goods['zone'];
         $goodsLogic = new GoodsLogic();
         // 判断商品性质
-        if ($this->isApp) {
-            $flashSaleWhere['fs.source'] = ['LIKE', '%' . 3 . '%'];
-        } else {
-            $flashSaleWhere['fs.source'] = ['LIKE', '%' . 1 . '%'];
-        }
         $flashSale = Db::name('flash_sale fs')
             ->join('goods g', 'g.goods_id = fs.goods_id')
             ->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
             ->where(['fs.goods_id' => $goods_id, 'fs.start_time' => ['<=', time()], 'fs.end_time' => ['>=', time()]])
-            ->where($flashSaleWhere)
+            ->where(['fs.source' => ['LIKE', $this->isApp ? '%' . 3 . '%' : '%' . 1 . '%']])
             ->field('fs.goods_id, sgp.key spec_key, fs.price, fs.goods_num, fs.buy_limit, fs.start_time, fs.end_time, fs.can_integral, g.exchange_integral')->select();
         if (!empty($flashSale)) {
             // 秒杀商品
@@ -588,18 +583,14 @@ class Goods extends Base
         $isNormal = false;
         switch ($goodsPrice['prom_type']) {
             case 1:
-                if ($this->isApp) {
-                    $where['source'] = ['LIKE', '%' . 3 . '%'];
-                } else {
-                    $where['source'] = ['LIKE', '%' . 1 . '%'];
-                }
                 // 秒杀商品
                 $flashSale = M('flash_sale')->where([
                     'goods_id' => $goodsPrice['goods_id'],
                     'item_id' => $goodsPrice['item_id'],
                     'start_time' => ['<', time()],
-                    'end_time' => ['>', time()]
-                ])->where($where)->field('price, buy_limit, can_integral')->find();
+                    'end_time' => ['>', time()],
+                    'source' => ['LIKE', $this->isApp ? '%' . 3 . '%' : '%' . 1 . '%']
+                ])->field('price, buy_limit, can_integral')->find();
                 if (empty($flashSale)) {
                     $isNormal = true;
                 } else {
@@ -1189,13 +1180,9 @@ class Goods extends Base
         $where = [
             'fs.start_time' => ['<=', time()],
             'fs.end_time' => ['>=', time()],
-//            'fs.is_end' => 0
+//            'fs.is_end' => 0,
+            'source' => ['LIKE', $this->isApp ? '%' . 3 . '%' : '%' . 1 . '%']
         ];
-        if ($this->isApp) {
-            $where['fs.source'] = ['LIKE', '%' . 3 . '%'];
-        } else {
-            $where['fs.source'] = ['LIKE', '%' . 1 . '%'];
-        }
         // 秒杀商品ID
         $filter_goods_id = Db::name('flash_sale fs')->join('goods g', 'g.goods_id = fs.goods_id')
             ->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
@@ -1580,13 +1567,10 @@ class Goods extends Base
         // 商品标签
         $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->limit($page->firstRow . ',' . $page->listRows)->select();
         // 秒杀商品
-        if ($this->isApp) {
-            $flashSaleWhere['source'] = ['LIKE', '%' . 3 . '%'];
-        } else {
-            $flashSaleWhere['source'] = ['LIKE', '%' . 1 . '%'];
-        }
-        $flashSale = Db::name('flash_sale')->where(['goods_id' => ['in', $filter_goods_id]])->where($flashSaleWhere)
-            ->where(['start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->limit($page->firstRow . ',' . $page->listRows)->field('goods_id')->select();
+        $flashSale = Db::name('flash_sale')->where([
+            'goods_id' => ['in', $filter_goods_id],
+            'source' => ['LIKE', $this->isApp ? '%' . 3 . '%' : '%' . 1 . '%']
+        ])->where(['start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->limit($page->firstRow . ',' . $page->listRows)->field('goods_id')->select();
         // 团购商品
         $groupBuy = Db::name('group_buy')->where(['goods_id' => ['in', $filter_goods_id]])
             ->where(['start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->limit($page->firstRow . ',' . $page->listRows)->field('goods_id')->select();
@@ -1723,13 +1707,10 @@ class Goods extends Base
         // 商品标签
         $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->limit($page->firstRow . ',' . $page->listRows)->select();
         // 秒杀商品
-        if ($this->isApp) {
-            $flashSaleWhere['source'] = ['LIKE', '%' . 3 . '%'];
-        } else {
-            $flashSaleWhere['source'] = ['LIKE', '%' . 1 . '%'];
-        }
-        $flashSale = Db::name('flash_sale')->where(['goods_id' => ['in', $filter_goods_id]])->where($flashSaleWhere)
-            ->where(['start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->limit($page->firstRow . ',' . $page->listRows)->field('goods_id')->select();
+        $flashSale = Db::name('flash_sale')->where([
+            'goods_id' => ['in', $filter_goods_id],
+            'source' => ['LIKE', $this->isApp ? '%' . 3 . '%' : '%' . 1 . '%']
+        ])->where(['start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->limit($page->firstRow . ',' . $page->listRows)->field('goods_id')->select();
         // 团购商品
         $groupBuy = Db::name('group_buy')->where(['goods_id' => ['in', $filter_goods_id]])
             ->where(['start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->limit($page->firstRow . ',' . $page->listRows)->field('goods_id')->select();
@@ -2216,13 +2197,10 @@ class Goods extends Base
         // 商品标签
         $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filterGoodsIds], 'status' => 1])->select();
         // 秒杀商品
-        if ($this->isApp) {
-            $flashSaleWhere['source'] = ['LIKE', '%' . 3 . '%'];
-        } else {
-            $flashSaleWhere['source'] = ['LIKE', '%' . 1 . '%'];
-        }
-        $flashSale = Db::name('flash_sale')->where(['goods_id' => ['in', $filterGoodsIds]])->where($flashSaleWhere)
-            ->where(['start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->field('goods_id')->select();
+        $flashSale = Db::name('flash_sale')->where([
+            'goods_id' => ['in', $filterGoodsIds],
+            'source' => ['LIKE',$this->isApp ? '%' . 3 . '%' : '%' . 1 . '%']
+        ])->where(['start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->field('goods_id')->select();
         // 团购商品
         $groupBuy = Db::name('group_buy')->where(['goods_id' => ['in', $filterGoodsIds]])
             ->where(['start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->field('goods_id')->select();

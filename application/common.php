@@ -1815,3 +1815,20 @@ function getPayBody($order_id)
 
     return $payBody;
 }
+
+/**
+ * 邀请人记录
+ * @param $invite
+ * @param $userId
+ * @param $status 0设置失败 1设置成功 -1设置不成功（用户已设置了推荐人）
+ * @param $time
+ */
+function inviteLog($invite, $userId, $status, $time = null)
+{
+    M('invite_log')->add([
+        'invite_uid' => $invite,
+        'user_id' => $userId,
+        'status' => $status,
+        'create_time' => $time ?? time()
+    ]);
+}

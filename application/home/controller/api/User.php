@@ -1379,8 +1379,7 @@ class User extends Base
                 M('Users')->where('user_id', $this->user_id)->save($data);
 
                 // 邀请人记录
-                $file = 'invite.txt';
-                file_put_contents($file, '[' . date('Y-m-d H:i:s', $data['invite_time']) . ']  用户' . $this->user_id . '设置邀请人：' . $will_invite_uid . "\n", FILE_APPEND | LOCK_EX);
+                inviteLog($will_invite_uid, $this->user_id, 1, $data['invite_time']);
 
                 // 邀请任务
 //                $user = M('users')->find($this->user_id);

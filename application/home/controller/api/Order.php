@@ -1718,7 +1718,7 @@ class Order extends Base
         $cartGoodsCatId = get_arr_column($cartGoodsList, 'cat_id');
         $couponLogic = new CouponLogic();
         // 用户可用的优惠券列表
-        $userCouponList = $couponLogic->getUserAbleCouponList($this->user_id, $cartGoodsId, $cartGoodsCatId);
+        $userCouponList = $couponLogic->getUserAbleCouponList($this->user_id, $cartGoodsId, $cartGoodsCatId, $this->isApp);
 //        $userCouponList = $cartLogic->getCouponCartList($cartList, $userCouponList);
         $couponList = [];
         foreach ($userCouponList as $k => $coupon) {
@@ -1735,7 +1735,7 @@ class Order extends Base
             ];
         }
         // 用户可用的兑换券列表
-        $userExchangeList = $couponLogic->getUserAbleCouponListRe($this->user_id, $cartGoodsId, $cartGoodsCatId);
+        $userExchangeList = $couponLogic->getUserAbleCouponListRe($this->user_id, $cartGoodsId, $cartGoodsCatId, $this->isApp);
 //        $userExchangeList = $cartLogic->getCouponCartList($cartList, $userExchangeList);
         $exchangeList = [];
         $exchangeId = 0;

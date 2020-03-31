@@ -768,8 +768,10 @@ class UsersLogic extends Model
                     $map['invite_time'] = time();
 
                     // 邀请人记录
-                    $file = 'invite.txt';
-                    file_put_contents($file, '[' . date('Y-m-d H:i:s', $map['invite_time']) . ']  用户' . $user['user_id'] . '设置邀请人：' . $invite . "\n", FILE_APPEND | LOCK_EX);
+                    inviteLog($invite, $user['user_id'], 1, $map['invite_time']);
+                } else {
+                    // 用户已设置邀请人
+                    inviteLog($invite, $user['user_id'], -1);
                 }
             }
             Db::name('users')->where('user_id', $user['user_id'])->save($map);

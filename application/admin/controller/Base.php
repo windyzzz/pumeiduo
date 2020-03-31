@@ -57,16 +57,16 @@ class Base extends Controller
                 $this->assign('admin_act', $act_list);
                 if ('all' == $act_list) {
                     // 后台首页控制器无需验证,超级管理员无需验证
-                    return true;
+                } else {
+                    $act_list = session('act_list');
+                    $right = M('system_menu')->where('id', 'in', $act_list)->cache(true)->getField('right', true);
+                    $role_right = '';
+                    foreach ($right as $val) {
+                        $role_right .= $val . ',';
+                    }
+                    $role_right = explode(',', $role_right);
+                    $this->assign('admin_role', $role_right);
                 }
-                $act_list = session('act_list');
-                $right = M('system_menu')->where('id', 'in', $act_list)->cache(true)->getField('right', true);
-                $role_right = '';
-                foreach ($right as $val) {
-                    $role_right .= $val . ',';
-                }
-                $role_right = explode(',', $role_right);
-                $this->assign('admin_role', $role_right);
             } else {
                 (ACTION_NAME == 'index') && $this->redirect(U('Admin/Admin/login'));
                 $this->error('请先登录', U('Admin/Admin/login'), null, 1);
