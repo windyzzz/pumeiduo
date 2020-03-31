@@ -766,6 +766,12 @@ class UsersLogic extends Model
                     accountLog($invite, 0, $invite_integral, '邀请用户奖励积分', 0, 0, '', 0, 7, false);
                     $map['invite_uid'] = $invite;
                     $map['invite_time'] = time();
+
+                    // 邀请人记录
+                    inviteLog($invite, $user['user_id'], 1, $map['invite_time']);
+                } else {
+                    // 用户已设置邀请人
+                    inviteLog($invite, $user['user_id'], -1);
                 }
             }
             Db::name('users')->where('user_id', $user['user_id'])->save($map);
@@ -966,7 +972,7 @@ class UsersLogic extends Model
      */
     public function oauthReg($openid, $username, $password)
     {
-        $oauthUser = M('oauth_users')->where(['openid' => $openid])->find();
+        $oauthUser = M('oauth_users')->where(['openid' => $openid])->order('tu_id desc')->find();
         if (!$oauthUser) {
             return ['status' => 0, 'msg' => 'openid错误'];
         }
@@ -992,7 +998,10 @@ class UsersLogic extends Model
                             return ['status' => 0, 'msg' => '手机绑定的账号与微信绑定的账号都已有推荐人，请联系后台管理员进行账号合并'];
                         }
                     }
-                    $this->bindUser($oauthUser['user_id'], 3, ['user_id' => $userId]);
+                    $res = $this->bindUser($oauthUser['user_id'], 3, ['user_id' => $userId]);
+                    if ($res['status'] !== 1) {
+                        return $res;
+                    }
                 }
             } else {
                 //--- 手机没有账号
@@ -2994,6 +3003,9 @@ class UsersLogic extends Model
         $user_data['time_out'] = strtotime('+' . config('REDIS_DAY') . ' days');
         $user_data['invite_uid'] = $currentUser['will_invite_uid'] != 0 ? $currentUser['will_invite_uid'] : $currentUser['invite_uid'];
         $user_data['invite_time'] = $currentUser['will_invite_uid'] != 0 ? time() : $currentUser['invite_time'];
+        $user_data['first_leader'] = $currentUser['first_leader'];
+        $user_data['second_leader'] = $currentUser['second_leader'];
+        $user_data['third_leader'] = $currentUser['third_leader'];
         M('Users')->where('user_id', $bindUser['user_id'])->update($user_data);
         // 授权登录
         M('OauthUsers')->where('user_id', $bindUser['user_id'])->delete();
@@ -3061,5 +3073,6 @@ class UsersLogic extends Model
             'way' => $type
         ]);
         Db::commit();
+        return ['status' => 1, 'msg' => '合并成功'];
     }
 }

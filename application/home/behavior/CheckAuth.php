@@ -99,6 +99,12 @@ class CheckAuth
                     $map['invite_time'] = time();
                     M('users')->where(['user_id' => $session_user['user_id']])->update($map);
                     $select_user = M('users')->where(['user_id' => $session_user['user_id']])->find();
+
+                    // 邀请人记录
+                    inviteLog($invite, $session_user['user_id'], 1, $map['invite_time']);
+                } else {
+                    // 用户已设置邀请人
+                    inviteLog($invite, $session_user['user_id'], -1);
                 }
             }
             $user = array_merge($select_user, $oauth_users);

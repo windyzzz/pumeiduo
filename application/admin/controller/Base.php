@@ -50,7 +50,23 @@ class Base extends Controller
         //过滤不需要登陆的行为
         if (!in_array(ACTION_NAME, ['login', 'vertify'])) {
             if (session('admin_id') > 0) {
-                $this->check_priv(); //检查管理员菜单操作权限
+                // 检查管理员菜单操作权限
+                $this->check_priv();
+                // 获取管理员权限
+                $act_list = session('act_list');
+                $this->assign('admin_act', $act_list);
+                if ('all' == $act_list) {
+                    // 后台首页控制器无需验证,超级管理员无需验证
+                } else {
+                    $act_list = session('act_list');
+                    $right = M('system_menu')->where('id', 'in', $act_list)->cache(true)->getField('right', true);
+                    $role_right = '';
+                    foreach ($right as $val) {
+                        $role_right .= $val . ',';
+                    }
+                    $role_right = explode(',', $role_right);
+                    $this->assign('admin_role', $role_right);
+                }
             } else {
                 (ACTION_NAME == 'index') && $this->redirect(U('Admin/Admin/login'));
                 $this->error('请先登录', U('Admin/Admin/login'), null, 1);
@@ -67,7 +83,7 @@ class Base extends Controller
         $tpshop_config = [];
         $tp_config = M('config')->cache(true)->select();
         foreach ($tp_config as $k => $v) {
-            $tpshop_config[$v['inc_type'].'_'.$v['name']] = $v['value'];
+            $tpshop_config[$v['inc_type'] . '_' . $v['name']] = $v['value'];
         }
         if (I('start_time')) {
             $begin = $begin = I('start_time');
@@ -101,12 +117,12 @@ class Base extends Controller
         $right = M('system_menu')->where('id', 'in', $act_list)->cache(true)->getField('right', true);
         $role_right = '';
         foreach ($right as $val) {
-            $role_right .= $val.',';
+            $role_right .= $val . ',';
         }
         $role_right = explode(',', $role_right);
         //检查是否拥有此操作权限
-        if (!in_array($ctl.'@'.$act, $role_right)) {
-            $this->error('您没有操作权限['.($ctl.'@'.$act).'],请联系超级管理员分配权限', U('Admin/Index/welcome'));
+        if (!in_array($ctl . '@' . $act, $role_right)) {
+            $this->error('您没有操作权限[' . ($ctl . '@' . $act) . '],请联系超级管理员分配权限', U('Admin/Index/welcome'));
         }
     }
 

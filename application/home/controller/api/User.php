@@ -1378,6 +1378,9 @@ class User extends Base
 
                 M('Users')->where('user_id', $this->user_id)->save($data);
 
+                // 邀请人记录
+                inviteLog($will_invite_uid, $this->user_id, 1, $data['invite_time']);
+
                 // 邀请任务
 //                $user = M('users')->find($this->user_id);
 //                $TaskLogic = new \app\common\logic\TaskLogic(2);

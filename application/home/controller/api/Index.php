@@ -50,7 +50,7 @@ class Index
         }
 
         //购物车数量
-        $getCartNum = M('Cart')->where('user_id', $this->user_id)->sum('goods_num');
+        $getCartNum = M('Cart')->where('user_id', $this->user_id)->count('id');
 
         //新品
         $getNewGoods = M('goods')->field('goods_name,goods_id,shop_price,exchange_integral,shop_price - exchange_integral as member_price,original_img')
