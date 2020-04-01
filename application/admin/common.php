@@ -52,20 +52,20 @@ function tpversion()
     }
     $_SESSION['isset_push'] = 1;
     error_reporting(0); //关闭所有错误报告
-    $app_path = dirname($_SERVER['SCRIPT_FILENAME']).'/';
-    $version_txt_path = $app_path.'/application/admin/conf/version.php';
+    $app_path = dirname($_SERVER['SCRIPT_FILENAME']) . '/';
+    $version_txt_path = $app_path . '/application/admin/conf/version.php';
     $curent_version = file_get_contents($version_txt_path);
 
     $vaules = [
-            'domain' => $_SERVER['HTTP_HOST'],
-            'last_domain' => $_SERVER['HTTP_HOST'],
-            'key_num' => $curent_version,
-            'install_time' => INSTALL_DATE,
-            'cpu' => '0001',
-            'mac' => '0002',
-            'serial_number' => SERIALNUMBER,
-            ];
-    $url = 'http://service.tp-shop.cn/index.php?m=Home&c=Index&a=user_push&'.http_build_query($vaules);
+        'domain' => $_SERVER['HTTP_HOST'],
+        'last_domain' => $_SERVER['HTTP_HOST'],
+        'key_num' => $curent_version,
+        'install_time' => INSTALL_DATE,
+        'cpu' => '0001',
+        'mac' => '0002',
+        'serial_number' => SERIALNUMBER,
+    ];
+    $url = 'http://service.tp-shop.cn/index.php?m=Home&c=Index&a=user_push&' . http_build_query($vaules);
     stream_context_set_default(['http' => ['timeout' => 3]]);
     file_get_contents($url);
 }
@@ -76,8 +76,8 @@ function tpversion()
  */
 function navigate_admin()
 {
-    $navigate = include APP_PATH.'admin/conf/navigate.php';
-    $location = strtolower('Admin/'.CONTROLLER_NAME);
+    $navigate = include APP_PATH . 'admin/conf/navigate.php';
+    $location = strtolower('Admin/' . CONTROLLER_NAME);
     $arr = [
         '后台首页' => 'javascript:void();',
         $navigate[$location]['name'] => 'javascript:void();',
@@ -90,23 +90,85 @@ function navigate_admin()
 /**
  * 导出excel.
  *
- * @param $strTable	表格内容
+ * @param $strTable    表格内容
  * @param $filename 文件名
  */
 function downloadExcel($strTable, $filename)
 {
+    set_time_limit(0);    // 防止超时
+    ini_set("memory_limit", "128M");  // 防止内存溢出
     header('Content-type: application/vnd.ms-excel');
     header('Content-Type: application/force-download');
-    header('Content-Disposition: attachment; filename='.$filename.'_'.date('Y-m-d').'.xls');
+    header('Content-Disposition: attachment; filename=' . $filename . '_' . date('Y-m-d') . '.xls');
     header('Expires:0');
     header('Pragma:public');
-    echo '<html><meta http-equiv="Content-Type" content="text/html; charset=utf-8" />'.$strTable.'</html>';
+    echo '<html><meta http-equiv="Content-Type" content="text/html; charset=utf-8" />' . $strTable . '</html>';
+}
+
+/**
+ * 导出Excel数据表格
+ * @param  array $dataList 要导出的数组格式的数据
+ * @param  array $headList 导出的Excel数据第一列表头
+ * @param  string $fileName 输出Excel表格文件名
+ * @param  string $exportUrl 直接输出到浏览器（php://output）or输出到指定路径文件下（服务器目录地址/文件名.csv）
+ * @return bool|false|string
+ */
+function toCsvExcel($dataList, $headList, $fileName, $exportUrl = 'php://output')
+{
+    set_time_limit(0);    // 防止超时
+    ini_set("memory_limit", "128M");  // 防止内存溢出
+    header('Content-Type: application/vnd.ms-excel');
+    header('Content-Disposition: attachment;filename="' . $fileName . '_' . date('Y-m-d') . '.csv"');
+    header('Cache-Control: max-age=0');
+    //打开PHP文件句柄,php://output 表示直接输出到浏览器,$exportUrl表示输出到指定路径文件下
+    $fp = fopen($exportUrl, 'a');
+
+    //输出Excel列名信息
+    foreach ($headList as $key => $value) {
+        //CSV的Excel支持GBK编码，一定要转换，否则乱码
+        $headList[$key] = iconv('utf-8', 'gbk', $value);
+    }
+
+    //将数据通过fputcsv写到文件句柄
+    fputcsv($fp, $headList);
+
+    //计数器
+    $num = 0;
+
+    //每隔$limit行，刷新一下输出buffer，不要太大，也不要太小
+    $limit = 100000;
+
+    //逐行取出数据，不浪费内存
+    $count = count($dataList);
+    for ($i = 0; $i < $count; $i++) {
+        $num++;
+        //刷新一下输出buffer，防止由于数据过多造成问题
+        if ($limit == $num) {
+            ob_flush();
+            flush();
+            $num = 0;
+        }
+        $row = $dataList[$i];
+        foreach ($row as $key => $value) {
+            if (is_array($value)) {
+                $rowValue = '';
+                foreach ($value as $v) {
+                    $rowValue .= iconv('utf-8', 'gbk', $v). "\n";
+                }
+                $row[$key] = trim($rowValue, "\n");
+            } else {
+                $row[$key] = iconv('utf-8', 'gbk', $value);
+            }
+        }
+        fputcsv($fp, $row);
+    }
+    return $fileName;
 }
 
 /**
  * 格式化字节大小.
  *
- * @param number $size      字节数
+ * @param number $size 字节数
  * @param string $delimiter 数字和单位分隔符
  *
  * @return string 格式化后的带单位的大小
@@ -118,7 +180,7 @@ function format_bytes($size, $delimiter = '')
         $size /= 1024;
     }
 
-    return round($size, 2).$delimiter.$units[$i];
+    return round($size, 2) . $delimiter . $units[$i];
 }
 
 /**
@@ -141,12 +203,12 @@ function getMenuList($act_list)
         $right = M('system_menu')->where('id', 'in', $act_list)->cache(true)->getField('right', true);
         $role_right = '';
         foreach ($right as $val) {
-            $role_right .= $val.',';
+            $role_right .= $val . ',';
         }
         $role_right = explode(',', $role_right);
         foreach ($menu_list as $k => $mrr) {
             foreach ($mrr['sub_menu'] as $j => $v) {
-                if (!in_array($v['control'].'@'.$v['act'], $role_right)) {
+                if (!in_array($v['control'] . '@' . $v['act'], $role_right)) {
                     unset($menu_list[$k]['sub_menu'][$j]); //过滤菜单
                 }
             }
@@ -158,121 +220,121 @@ function getMenuList($act_list)
 
 function getAllMenu()
 {
-    return	[
-            'system' => ['name' => '系统设置', 'icon' => 'fa-cog', 'sub_menu' => [
-                    ['name' => '网站设置', 'act' => 'index', 'control' => 'System'],
-                    ['name' => '友情链接', 'act' => 'linkList', 'control' => 'Article'],
-                    ['name' => '自定义导航', 'act' => 'navigationList', 'control' => 'System'],
-                    ['name' => '区域管理', 'act' => 'region', 'control' => 'Tools'],
-                    ['name' => '短信模板', 'act' => 'index', 'control' => 'SmsTemplate'],
-            ]],
-            'access' => ['name' => '权限管理', 'icon' => 'fa-gears', 'sub_menu' => [
-                    ['name' => '权限资源列表', 'act' => 'right_list', 'control' => 'System'],
-                    ['name' => '管理员列表', 'act' => 'index', 'control' => 'Admin'],
-                    ['name' => '角色管理', 'act' => 'role', 'control' => 'Admin'],
-                    ['name' => '供应商管理', 'act' => 'supplier', 'control' => 'Admin'],
-                    ['name' => '管理员日志', 'act' => 'log', 'control' => 'Admin'],
-            ]],
-            'member' => ['name' => '会员管理', 'icon' => 'fa-user', 'sub_menu' => [
-                    ['name' => '会员列表', 'act' => 'index', 'control' => 'User'],
-                    ['name' => '会员等级', 'act' => 'levelList', 'control' => 'User'],
-                    ['name' => '充值记录', 'act' => 'recharge', 'control' => 'User'],
-                    ['name' => '提现申请', 'act' => 'withdrawals', 'control' => 'User'],
-                    ['name' => '汇款记录', 'act' => 'remittance', 'control' => 'User'],
-                    //array('name'=>'会员整合','act'=>'integrate','control'=>'User'),
-            ]],
-            'goods' => ['name' => '商品管理', 'icon' => 'fa-book', 'sub_menu' => [
-                    ['name' => '商品分类', 'act' => 'categoryList', 'control' => 'Goods'],
-                    ['name' => '商品列表', 'act' => 'goodsList', 'control' => 'Goods'],
-                    ['name' => '商品模型', 'act' => 'goodsTypeList', 'control' => 'Goods'],
-                    ['name' => '商品规格', 'act' => 'specList', 'control' => 'Goods'],
-                    ['name' => '商品属性', 'act' => 'goodsAttributeList', 'control' => 'Goods'],
-                    ['name' => '品牌列表', 'act' => 'brandList', 'control' => 'Goods'],
-                    ['name' => '商品评论', 'act' => 'index', 'control' => 'Comment'],
-                    ['name' => '商品咨询', 'act' => 'ask_list', 'control' => 'Comment'],
-            ]],
-            'order' => ['name' => '订单管理', 'icon' => 'fa-money', 'sub_menu' => [
-                    ['name' => '订单列表', 'act' => 'index', 'control' => 'Order'],
-                    ['name' => '发货单', 'act' => 'delivery_list', 'control' => 'Order'],
-                    //array('name' => '快递单', 'act'=>'express_list', 'control'=>'Order'),
-                    ['name' => '退货单', 'act' => 'return_list', 'control' => 'Order'],
-                    ['name' => '添加订单', 'act' => 'add_order', 'control' => 'Order'],
-                    ['name' => '订单日志', 'act' => 'order_log', 'control' => 'Order'],
-            ]],
-            'promotion' => ['name' => '促销管理', 'icon' => 'fa-bell', 'sub_menu' => [
-                    ['name' => '抢购管理', 'act' => 'flash_sale', 'control' => 'Promotion'],
-                    ['name' => '团购管理', 'act' => 'group_buy_list', 'control' => 'Promotion'],
-                    ['name' => '商品促销', 'act' => 'prom_goods_list', 'control' => 'Promotion'],
-                    ['name' => '订单促销', 'act' => 'prom_order_list', 'control' => 'Promotion'],
-                    ['name' => '代金券管理', 'act' => 'index', 'control' => 'Coupon'],
-                    ['name' => '预售管理', 'act' => 'pre_sell_list', 'control' => 'Promotion'],
-            ]],
-            'Ad' => ['name' => '广告管理', 'icon' => 'fa-flag', 'sub_menu' => [
-                    ['name' => '广告列表', 'act' => 'adList', 'control' => 'Ad'],
-                    ['name' => '广告位置', 'act' => 'positionList', 'control' => 'Ad'],
-            ]],
-            'content' => ['name' => '内容管理', 'icon' => 'fa-comments', 'sub_menu' => [
-                    ['name' => '文章列表', 'act' => 'articleList', 'control' => 'Article'],
-                    ['name' => '文章分类', 'act' => 'categoryList', 'control' => 'Article'],
-                    //array('name' => '帮助管理', 'act'=>'help_list', 'control'=>'Article'),
-                    //array('name' => '公告管理', 'act'=>'notice_list', 'control'=>'Article'),
-                    ['name' => '专题列表', 'act' => 'topicList', 'control' => 'Topic'],
-            ]],
-            'weixin' => ['name' => '微信管理', 'icon' => 'fa-weixin', 'sub_menu' => [
-                    ['name' => '公众号管理', 'act' => 'index', 'control' => 'Wechat'],
-                    ['name' => '微信菜单管理', 'act' => 'menu', 'control' => 'Wechat'],
-                    ['name' => '文本回复', 'act' => 'text', 'control' => 'Wechat'],
-                    ['name' => '图文回复', 'act' => 'img', 'control' => 'Wechat'],
-                    //array('name' => '组合回复', 'act'=>'nes', 'control'=>'Wechat'),
-                    //array('name' => '消息推送', 'act'=>'news', 'control'=>'Wechat'),
-            ]],
-            'theme' => ['name' => '模板管理', 'icon' => 'fa-adjust', 'sub_menu' => [
-                    ['name' => 'PC端模板', 'act' => 'templateList?t=pc', 'control' => 'Template'],
-                    ['name' => '手机端模板', 'act' => 'templateList?t=mobile', 'control' => 'Template'],
-            ]],
+    return [
+        'system' => ['name' => '系统设置', 'icon' => 'fa-cog', 'sub_menu' => [
+            ['name' => '网站设置', 'act' => 'index', 'control' => 'System'],
+            ['name' => '友情链接', 'act' => 'linkList', 'control' => 'Article'],
+            ['name' => '自定义导航', 'act' => 'navigationList', 'control' => 'System'],
+            ['name' => '区域管理', 'act' => 'region', 'control' => 'Tools'],
+            ['name' => '短信模板', 'act' => 'index', 'control' => 'SmsTemplate'],
+        ]],
+        'access' => ['name' => '权限管理', 'icon' => 'fa-gears', 'sub_menu' => [
+            ['name' => '权限资源列表', 'act' => 'right_list', 'control' => 'System'],
+            ['name' => '管理员列表', 'act' => 'index', 'control' => 'Admin'],
+            ['name' => '角色管理', 'act' => 'role', 'control' => 'Admin'],
+            ['name' => '供应商管理', 'act' => 'supplier', 'control' => 'Admin'],
+            ['name' => '管理员日志', 'act' => 'log', 'control' => 'Admin'],
+        ]],
+        'member' => ['name' => '会员管理', 'icon' => 'fa-user', 'sub_menu' => [
+            ['name' => '会员列表', 'act' => 'index', 'control' => 'User'],
+            ['name' => '会员等级', 'act' => 'levelList', 'control' => 'User'],
+            ['name' => '充值记录', 'act' => 'recharge', 'control' => 'User'],
+            ['name' => '提现申请', 'act' => 'withdrawals', 'control' => 'User'],
+            ['name' => '汇款记录', 'act' => 'remittance', 'control' => 'User'],
+            //array('name'=>'会员整合','act'=>'integrate','control'=>'User'),
+        ]],
+        'goods' => ['name' => '商品管理', 'icon' => 'fa-book', 'sub_menu' => [
+            ['name' => '商品分类', 'act' => 'categoryList', 'control' => 'Goods'],
+            ['name' => '商品列表', 'act' => 'goodsList', 'control' => 'Goods'],
+            ['name' => '商品模型', 'act' => 'goodsTypeList', 'control' => 'Goods'],
+            ['name' => '商品规格', 'act' => 'specList', 'control' => 'Goods'],
+            ['name' => '商品属性', 'act' => 'goodsAttributeList', 'control' => 'Goods'],
+            ['name' => '品牌列表', 'act' => 'brandList', 'control' => 'Goods'],
+            ['name' => '商品评论', 'act' => 'index', 'control' => 'Comment'],
+            ['name' => '商品咨询', 'act' => 'ask_list', 'control' => 'Comment'],
+        ]],
+        'order' => ['name' => '订单管理', 'icon' => 'fa-money', 'sub_menu' => [
+            ['name' => '订单列表', 'act' => 'index', 'control' => 'Order'],
+            ['name' => '发货单', 'act' => 'delivery_list', 'control' => 'Order'],
+            //array('name' => '快递单', 'act'=>'express_list', 'control'=>'Order'),
+            ['name' => '退货单', 'act' => 'return_list', 'control' => 'Order'],
+            ['name' => '添加订单', 'act' => 'add_order', 'control' => 'Order'],
+            ['name' => '订单日志', 'act' => 'order_log', 'control' => 'Order'],
+        ]],
+        'promotion' => ['name' => '促销管理', 'icon' => 'fa-bell', 'sub_menu' => [
+            ['name' => '抢购管理', 'act' => 'flash_sale', 'control' => 'Promotion'],
+            ['name' => '团购管理', 'act' => 'group_buy_list', 'control' => 'Promotion'],
+            ['name' => '商品促销', 'act' => 'prom_goods_list', 'control' => 'Promotion'],
+            ['name' => '订单促销', 'act' => 'prom_order_list', 'control' => 'Promotion'],
+            ['name' => '代金券管理', 'act' => 'index', 'control' => 'Coupon'],
+            ['name' => '预售管理', 'act' => 'pre_sell_list', 'control' => 'Promotion'],
+        ]],
+        'Ad' => ['name' => '广告管理', 'icon' => 'fa-flag', 'sub_menu' => [
+            ['name' => '广告列表', 'act' => 'adList', 'control' => 'Ad'],
+            ['name' => '广告位置', 'act' => 'positionList', 'control' => 'Ad'],
+        ]],
+        'content' => ['name' => '内容管理', 'icon' => 'fa-comments', 'sub_menu' => [
+            ['name' => '文章列表', 'act' => 'articleList', 'control' => 'Article'],
+            ['name' => '文章分类', 'act' => 'categoryList', 'control' => 'Article'],
+            //array('name' => '帮助管理', 'act'=>'help_list', 'control'=>'Article'),
+            //array('name' => '公告管理', 'act'=>'notice_list', 'control'=>'Article'),
+            ['name' => '专题列表', 'act' => 'topicList', 'control' => 'Topic'],
+        ]],
+        'weixin' => ['name' => '微信管理', 'icon' => 'fa-weixin', 'sub_menu' => [
+            ['name' => '公众号管理', 'act' => 'index', 'control' => 'Wechat'],
+            ['name' => '微信菜单管理', 'act' => 'menu', 'control' => 'Wechat'],
+            ['name' => '文本回复', 'act' => 'text', 'control' => 'Wechat'],
+            ['name' => '图文回复', 'act' => 'img', 'control' => 'Wechat'],
+            //array('name' => '组合回复', 'act'=>'nes', 'control'=>'Wechat'),
+            //array('name' => '消息推送', 'act'=>'news', 'control'=>'Wechat'),
+        ]],
+        'theme' => ['name' => '模板管理', 'icon' => 'fa-adjust', 'sub_menu' => [
+            ['name' => 'PC端模板', 'act' => 'templateList?t=pc', 'control' => 'Template'],
+            ['name' => '手机端模板', 'act' => 'templateList?t=mobile', 'control' => 'Template'],
+        ]],
 
-            'distribut' => ['name' => '分销管理', 'icon' => 'fa-cubes', 'sub_menu' => [
-                    ['name' => '分销商品列表', 'act' => 'goods_list', 'control' => 'Distribut'],
-                    ['name' => '分销商列表', 'act' => 'distributor_list', 'control' => 'Distribut'],
-                    ['name' => '分销关系', 'act' => 'tree', 'control' => 'Distribut'],
-                    ['name' => '分销设置', 'act' => 'set', 'control' => 'Distribut'],
-                    ['name' => '分成日志', 'act' => 'rebate_log', 'control' => 'Distribut'],
-            ]],
+        'distribut' => ['name' => '分销管理', 'icon' => 'fa-cubes', 'sub_menu' => [
+            ['name' => '分销商品列表', 'act' => 'goods_list', 'control' => 'Distribut'],
+            ['name' => '分销商列表', 'act' => 'distributor_list', 'control' => 'Distribut'],
+            ['name' => '分销关系', 'act' => 'tree', 'control' => 'Distribut'],
+            ['name' => '分销设置', 'act' => 'set', 'control' => 'Distribut'],
+            ['name' => '分成日志', 'act' => 'rebate_log', 'control' => 'Distribut'],
+        ]],
 
-            'tools' => ['name' => '插件工具', 'icon' => 'fa-plug', 'sub_menu' => [
-                    ['name' => '插件列表', 'act' => 'index', 'control' => 'Plugin'],
-                    ['name' => '数据备份', 'act' => 'index', 'control' => 'Tools'],
-                    ['name' => '数据还原', 'act' => 'restore', 'control' => 'Tools'],
-            ]],
-            'count' => ['name' => '统计报表', 'icon' => 'fa-signal', 'sub_menu' => [
-                    ['name' => '销售概况', 'act' => 'index', 'control' => 'Report'],
-                    ['name' => '销售排行', 'act' => 'saleTop', 'control' => 'Report'],
-                    ['name' => '会员排行', 'act' => 'userTop', 'control' => 'Report'],
-                    ['name' => '销售明细', 'act' => 'saleList', 'control' => 'Report'],
-                    ['name' => '会员统计', 'act' => 'user', 'control' => 'Report'],
-                    ['name' => '财务统计', 'act' => 'finance', 'control' => 'Report'],
-            ]],
-            'pickup' => ['name' => '自提点管理', 'icon' => 'fa-anchor', 'sub_menu' => [
-                    ['name' => '自提点列表', 'act' => 'index', 'control' => 'Pickup'],
-                    ['name' => '添加自提点', 'act' => 'add', 'control' => 'Pickup'],
-            ]],
+        'tools' => ['name' => '插件工具', 'icon' => 'fa-plug', 'sub_menu' => [
+            ['name' => '插件列表', 'act' => 'index', 'control' => 'Plugin'],
+            ['name' => '数据备份', 'act' => 'index', 'control' => 'Tools'],
+            ['name' => '数据还原', 'act' => 'restore', 'control' => 'Tools'],
+        ]],
+        'count' => ['name' => '统计报表', 'icon' => 'fa-signal', 'sub_menu' => [
+            ['name' => '销售概况', 'act' => 'index', 'control' => 'Report'],
+            ['name' => '销售排行', 'act' => 'saleTop', 'control' => 'Report'],
+            ['name' => '会员排行', 'act' => 'userTop', 'control' => 'Report'],
+            ['name' => '销售明细', 'act' => 'saleList', 'control' => 'Report'],
+            ['name' => '会员统计', 'act' => 'user', 'control' => 'Report'],
+            ['name' => '财务统计', 'act' => 'finance', 'control' => 'Report'],
+        ]],
+        'pickup' => ['name' => '自提点管理', 'icon' => 'fa-anchor', 'sub_menu' => [
+            ['name' => '自提点列表', 'act' => 'index', 'control' => 'Pickup'],
+            ['name' => '添加自提点', 'act' => 'add', 'control' => 'Pickup'],
+        ]],
     ];
 }
 
 function getMenuArr()
 {
-    $menuArr = include APP_PATH.'admin/conf/menu.php';
+    $menuArr = include APP_PATH . 'admin/conf/menu.php';
     $act_list = session('act_list');
     if ('all' != $act_list && !empty($act_list)) {
         $right = M('system_menu')->where("id in ($act_list)")->cache(true)->getField('right', true);
         $role_right = '';
         foreach ($right as $val) {
-            $role_right .= $val.',';
+            $role_right .= $val . ',';
         }
         foreach ($menuArr as $k => $val) {
             foreach ($val['child'] as $j => $v) {
                 foreach ($v['child'] as $s => $son) {
-                    if (false === strpos($role_right, $son['op'].'@'.$son['act'])) {
+                    if (false === strpos($role_right, $son['op'] . '@' . $son['act'])) {
                         unset($menuArr[$k]['child'][$j]['child'][$s]); //过滤菜单
                     }
                 }
@@ -386,7 +448,7 @@ function getDistributOption($distribut_list)
 {
     $html = '';
     foreach ($distribut_list as $key => $value) {
-        $html .= "<option value='{$value['level_id']}'>".$value['level_name'].'</option>';
+        $html .= "<option value='{$value['level_id']}'>" . $value['level_name'] . '</option>';
     }
 
     return $html;
@@ -395,7 +457,7 @@ function getDistributOption($distribut_list)
 function subtext($text, $length)
 {
     if (mb_strlen($text, 'utf8') > $length) {
-        return mb_substr($text, 0, $length, 'utf8').'...';
+        return mb_substr($text, 0, $length, 'utf8') . '...';
     }
 
     return $text;
