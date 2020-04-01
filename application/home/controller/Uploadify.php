@@ -579,7 +579,7 @@ class Uploadify extends Base
                 }
                 $return_url = UPLOAD_PATH . $savePath . $info->getSaveName();
             }
-            if (Request::instance()->header('is-app', null)) {
+            if ($this->isApp) {
                 Url::root('/');
                 $baseUrl = url('/', '', '', true);
                 $return_data['url'] = $baseUrl . $return_url;
