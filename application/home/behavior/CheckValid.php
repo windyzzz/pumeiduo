@@ -19,7 +19,7 @@ class CheckValid
     {
         $user = TokenLogic::getValue('user', $params['user_token']);
         if (!$user) exit(json_encode(['status' => -1, 'msg' => '请先登录', 'result' => null]));
-        if (0 == $user['type']) {
+        if (0 == $user['type'] && $user['distribut_level'] < 3) {
             exit(json_encode(['status' => -1, 'msg' => '你还没选择你的用户类型呢，不能进行该操作', 'result' => null]));
         }
     }

@@ -1246,6 +1246,7 @@ AND log_id NOT IN
                         'is_zhixiao' => 1,
                         'distribut_level' => 3,
                         'is_distribut' => 1,
+                        'type' => 2
                     ];
                     if ($buttdata['referee_user_name']) {
                         $referee_users = M('users')->where(['user_name' => $buttdata['referee_user_name']])->field('user_id,first_leader,second_leader')->find();
@@ -1253,7 +1254,6 @@ AND log_id NOT IN
                             $data['first_leader'] = $referee_users['user_id'];
                             $data['second_leader'] = $referee_users['first_leader'];
                             $data['third_leader'] = $referee_users['second_leader'];
-
                             $data['invite_uid'] = $referee_users['user_id'];
                         }
                     }
