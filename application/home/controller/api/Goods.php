@@ -1449,6 +1449,7 @@ class Goods extends Base
                 ->where($where)->getField('gtg.goods_id', true);
             $filter_goods_id = array_unique($filter_goods_id);
         } else {
+            $return['prom_title'] = '';
             if ($taskId > 0) {
                 $taskLogic = new TaskLogic($taskId);
                 $task_info = $taskLogic->getTaskInfo();

@@ -14,6 +14,7 @@ namespace app\admin\controller;
 use app\admin\logic\GoodsLogic;
 use app\admin\model\Goods;
 use app\common\model\Popup as PopupModel;
+use app\common\model\Ad as AdModel;
 use think\Db;
 use think\Loader;
 use think\Page;
@@ -79,7 +80,7 @@ class Ad extends Base
     {
         delFile(RUNTIME_PATH . 'html'); // 先清除缓存, 否则不好预览
 
-        $Ad = M('ad');
+        $Ad = new AdModel();
         $pid = I('pid', 0);
         if ($pid) {
             $where['pid'] = $pid;
