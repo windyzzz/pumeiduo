@@ -401,7 +401,7 @@ class Order extends Base
             'confirm_time' => $orderInfo['confirm_time'],
             'cancel_time' => $orderInfo['cancel_time'],
             'delivery_type' => $orderInfo['delivery_type'],   // 1统一发货 2分开发货
-            'order_pv' => $this->user['distribut_level'] >= 3 ? $orderInfo['order_pv'] : '',
+            'order_pv' => $this->user['distribut_level'] >= 3 ? $orderInfo['order_pv'] != 0 ? $orderInfo['order_pv'] : '' : '',
             'delivery' => [
                 'consignee' => $orderInfo['consignee'],
                 'mobile' => $orderInfo['mobile'],
@@ -2003,7 +2003,7 @@ class Order extends Base
             'spare_pay_points' => bcsub($this->user['pay_points'], $payReturn['pay_points'], 2),
             'give_integral' => $give_integral,
             'free_shipping_price' => tpCache('shopping.freight_free') <= $payReturn['order_amount'] ? '0' : bcsub(tpCache('shopping.freight_free'), $payReturn['order_amount'], 2),
-            'order_pv' => $this->user['distribut_level'] >= 3 ? $payReturn['order_pv'] : ''
+            'order_pv' => $payReturn['order_pv'] != '0.00' ? $payReturn['order_pv'] : ''
         ];
         return json(['status' => 1, 'result' => $return]);
     }
@@ -2250,7 +2250,7 @@ class Order extends Base
             'spare_pay_points' => bcsub($this->user['pay_points'], $payReturn['pay_points'], 2),
             'give_integral' => $give_integral,
             'free_shipping_price' => tpCache('shopping.freight_free') <= $payReturn['order_amount'] ? '0' : bcsub(tpCache('shopping.freight_free'), $payReturn['order_amount'], 2),
-            'order_pv' => $this->user['distribut_level'] >= 3 ? $payReturn['order_pv'] : ''
+            'order_pv' => $payReturn['order_pv'] != '0.00' ? $payReturn['order_pv'] : ''
         ];
         return json(['status' => 1, 'result' => $return]);
     }
