@@ -560,7 +560,7 @@ class User extends Base
         }
         $returnData = [
             'list' => array_values($addressList),
-            'out_range' => $outRange
+            'out_range_list' => $outRange
         ];
         return json(['status' => 1, 'msg' => 'success', 'result' => $returnData]);
     }
