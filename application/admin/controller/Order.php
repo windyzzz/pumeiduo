@@ -2004,4 +2004,34 @@ class Order extends Base
         $this->assign('district', $district);
         return $this->fetch('edit_address');
     }
+
+    /**
+     * 批量确认订单
+     */
+    public function batchConfirm()
+    {
+        $orderIds = trim(I('order_ids'), ',');
+        $orderData = M('order')->where(['order_id' => ['IN', $orderIds]])->field('order_id, order_sn, order_status, pay_status')->select();
+        foreach ($orderData as $order) {
+            if ($order['pay_status'] != 1) {
+                $this->ajaxReturn(['status' => 0, 'msg' => '订单：' . $order['order_sn'] . ' 未支付']);
+            }
+            if ($order['order_status'] != 0) {
+                $this->ajaxReturn(['status' => 0, 'msg' => '订单：' . $order['order_sn'] . ' 已被确认']);
+            }
+        }
+        $orderLogic = new OrderLogic();
+        Db::startTrans();
+        foreach ($orderData as $order) {
+            $convert_action = C('CONVERT_ACTION')['confirm'];
+            $res1 = $orderLogic->orderActionLog($order['order_id'], $convert_action, I('note'));
+            $res2 = $orderLogic->orderProcessHandle($order['order_id'], 'confirm', ['note' => '批量确认订单', 'admin_id' => 0]);
+            if (!$res1 || !$res2) {
+                Db::rollback();
+                $this->ajaxReturn(['status' => 0, 'msg' => '订单：' . $order['order_sn'] . ' 确认失败']);
+            }
+        }
+        Db::commit();
+        $this->ajaxReturn(['status' => 1, 'msg' => '批量确认订单成功']);
+    }
 }
