@@ -65,8 +65,7 @@ class System
         }
         // 当前配置
         $config = M('config')->where(['inc_type' => $type])->group('name')->order('id desc')->getField('name, value', true);
-
-        $version = explode('.', $config['app_version']);
+        $version = explode('.', $config['app_version']);    // 当前版本
         $nowVersion = '';
         foreach ($version as $item) {
             $nowVersion .= $item * 10;
