@@ -242,6 +242,7 @@ class Goods extends Base
         $strTable .= '<td style="text-align:center;font-size:12px;" width="100">商品分类2</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品分类3</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品名称</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">成本价</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">本店售价</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品不含税价</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">现金金额</td>';
@@ -264,6 +265,7 @@ class Goods extends Base
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $secend_cat . ' </td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $third_cat . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['goods_name'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['cost_price'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['shop_price'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['stax_price'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $price . '</td>';
