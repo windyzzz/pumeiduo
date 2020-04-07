@@ -675,7 +675,7 @@ class Order extends Base
         }
         $orderModel = new \app\common\model\Order();
         $orderObj = $orderModel::get(['order_id' => $order_id]);
-        $order = $orderObj->append(['full_address', 'orderGoods'])->toArray();
+        $order = $orderObj->append(['full_address', 'orderGoods', 'orderUser'])->toArray();
         $order['province'] = getRegionName($order['province']);
         $order['city'] = getRegionName($order['city']);
         $order['district'] = getRegionName($order['district']);

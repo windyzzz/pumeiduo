@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html dir="ltr" lang="cn">
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8"/>
     <title>配货单打印</title>
-    <link href="__PUBLIC__/bootstrap/css/bootstrap.css" rel="stylesheet" media="all" />
+    <link href="__PUBLIC__/bootstrap/css/bootstrap.css" rel="stylesheet" media="all"/>
     <script type="text/javascript" src="__PUBLIC__/plugins/jQuery/jQuery-2.1.4.min.js"></script>
     <script type="text/javascript" src="__PUBLIC__/bootstrap/css/bootstrap.min.css"></script>
-    <link href="__PUBLIC__/bootstrap/css/font-awesome.min.css" type="text/css" rel="stylesheet" />
-    <style media="print" type="text/css">.noprint{display:none}</style>
+    <link href="__PUBLIC__/bootstrap/css/font-awesome.min.css" type="text/css" rel="stylesheet"/>
+    <style media="print" type="text/css">.noprint {
+        display: none
+    }</style>
 </head>
 <body>
 <div class="container">
@@ -22,18 +24,31 @@
             </thead>
             <tbody>
             <tr>
-                <td><address><strong>{$shop.store_name}</strong><br/>{$shop.address}</address>
+                <td>
+                    <address><strong>{$shop.store_name}</strong><br/>{$shop.address}</address>
                     <b>电话：</b> {$shop.phone}<br/>
                     <b>E-Mail：</b> {$shop.smtp_user}<br/>
                     <b>网址：</b> <a href="{$shop.tpshop_http}">{$shop.tpshop_http}</a>
                 </td>
                 <td style="width: 50%;">
-                	<b>下单日期：</b> {$order.add_time|date='Y-m-d',###}<br />
-                    <b>订单号：</b> {$order.order_sn}<br />                    
-					<b>支付方式：</b> {$order.pay_name|default="其他"}<br/>                    
+                    <b>下单日期：</b> {$order.add_time|date='Y-m-d',###}<br/>
+                    <b>订单号：</b> {$order.order_sn}<br/>
+                    <b>支付方式：</b> {$order.pay_name|default="其他"}<br/>
                     <b>配送方式：</b> {$order.shipping_name}<br/>
                     <b>用户备注：</b> {$order.user_note}<br/>
                     <b>订单来源：</b> {$order.source_desc}<br/>
+                    <b>下单人：</b> {$order.user_id}<br/>
+                    <b>下单人姓名：</b> <if condition="$order['orderUser']['user_name']">{$order.orderUser.user_name}<else/>{$order.orderUser.nickname}</if> <br/>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <table class="table table-bordered">
+            <tbody>
+            <tr>
+                <td>
+                    备注：一件代发产品是由厂家直接发货，请注意手机短息告知的快递单号及快递公司，以便于您查询包裹，及签收。
+                    如有疑问可联系圃美多乐活（中国）总部客服 咨询电话：400-023-2626，客服微信：13308361237
                 </td>
             </tr>
             </tbody>
@@ -43,13 +58,20 @@
             <tr>
                 <td colspan="4"><b>收货信息</b></td>
             </tr>
-            <tr><td>收件人</td><td>联系电话</td><td>收货地址</td><td>邮编</td></tr>
+            <tr>
+                <td>收件人</td>
+                <td>联系电话</td>
+                <td>收货地址</td>
+                <td>邮编</td>
+            </tr>
             </thead>
             <tbody>
             <tr>
-            	<td>{$order.consignee}</td>
-            	<td>{$order.mobile}</td>
-                <td>{$order.province}&nbsp;&nbsp;{$order.city}&nbsp;&nbsp;{$order.district}&nbsp;&nbsp;{$order.address}</td>
+                <td>{$order.consignee}</td>
+                <td>{$order.mobile}</td>
+                <td>
+                    {$order.province}&nbsp;&nbsp;{$order.city}&nbsp;&nbsp;{$order.district}&nbsp;&nbsp;{$order.address}
+                </td>
                 <td>{$order.zipcode}</td>
             </tr>
             </tbody>
@@ -83,7 +105,9 @@
             </volist>
             </tbody>
             <tfoot>
-            <tr><td colspan="6" class="text-center"><input class="btn btn-default noprint" type="submit" onclick="window.print();" value="打印"></td></tr>
+            <tr>
+                <td colspan="6" class="text-center"><input class="btn btn-default noprint" type="submit" onclick="window.print();" value="打印"></td>
+            </tr>
             </tfoot>
         </table>
     </div>
