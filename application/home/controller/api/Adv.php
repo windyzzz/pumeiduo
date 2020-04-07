@@ -25,8 +25,8 @@ class Adv extends Base
             foreach ($adList as $k => $item) {
                 // APP跳转页面接口参数
                 $adList[$k]['target_type_ids'] = [
-                    'goods_id' => $item['target_type'] == 1 ? $item['target_type_id'] : 0,
-                    'prom_id' => $item['target_type'] == 2 ? $item['target_type_id'] : 0
+                    'goods_id' => $item['target_type'] == 1 ? $item['target_type_id'] : "0",
+                    'prom_id' => $item['target_type'] == 2 ? $item['target_type_id'] : "0"
                 ];
                 unset($adList[$k]['target_type_id']);
                 // 是否需要登录

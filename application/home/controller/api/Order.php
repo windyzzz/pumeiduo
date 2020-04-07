@@ -2572,6 +2572,7 @@ class Order extends Base
                         case 3:
                             return json(['status' => 1, 'result' => [
                                 'delivery_status' => -1,    // 未发货
+                                'delivery_status_desc' => C('DELIVERY_STATUS')[-1],
                                 'order_id' => $order['order_id'],
                                 'order_sn' => $order['order_sn'],
                                 'shipping_name' => '',
@@ -2602,12 +2603,13 @@ class Order extends Base
                     }
                     $return = [
                         'delivery_status' => $express['result']['deliverystatus'],
+                        'delivery_status_desc' => C('DELIVERY_STATUS')[$express['result']['deliverystatus']],
                         'order_id' => $order['order_id'],
                         'order_sn' => $order['order_sn'],
                         'shipping_name' => $delivery['shipping_name'],
                         'invoice_no' => $delivery['invoice_no'],
                         'goods_id' => $orderGoods['goods_id'],
-                        'original_img' => $orderGoods['original_img'],
+                        'original_img' => SITE_URL . $orderGoods['original_img'],
                         'service_phone' => $express['result']['expPhone'],
                         'province' => Db::name('region2')->where(['id' => $delivery['province']])->value('name'),
                         'city' => Db::name('region2')->where(['id' => $delivery['city']])->value('name'),
@@ -2631,11 +2633,12 @@ class Order extends Base
                             $return['delivery'][] = [
                                 'rec_id' => '',
                                 'status' => -1, // 未发货
+                                'status_desc' => C('DELIVERY_STATUS')[-1],
                                 'shipping_name' => '',
                                 'invoice_no' => '',
                                 'express' => [],
                                 'goods_id' => $orderGoods['goods_id'],
-                                'original_img' => $orderGoods['original_img'],
+                                'original_img' => SITE_URL . $orderGoods['original_img'],
                             ];
                             return json(['status' => 1, 'result' => $return]);
                     }
@@ -2656,11 +2659,12 @@ class Order extends Base
                         $return['delivery'][] = [
                             'rec_id' => $item['rec_id'],
                             'status' => $express['result']['deliverystatus'],
+                            'status_desc' => C('DELIVERY_STATUS')[$express['result']['deliverystatus']],
                             'shipping_name' => $item['shipping_name'],
                             'invoice_no' => $item['invoice_no'],
                             'express' => $express['result']['list'][0],
                             'goods_id' => $item['goods_id'],
-                            'original_img' => $item['original_img'],
+                            'original_img' => SITE_URL . $item['original_img'],
                         ];
                     }
                     break;
@@ -2676,6 +2680,7 @@ class Order extends Base
                 case 3:
                     return json(['status' => 1, 'result' => [
                         'delivery_status' => -1,    // 未发货
+                        'delivery_status_desc' => C('DELIVERY_STATUS')[-1],
                         'order_id' => $order['order_id'],
                         'order_sn' => $order['order_sn'],
                         'shipping_name' => '',
@@ -2706,6 +2711,7 @@ class Order extends Base
             }
             $return = [
                 'delivery_status' => $express['result']['deliverystatus'],
+                'delivery_status_desc' => C('DELIVERY_STATUS')[$express['result']['deliverystatus']],
                 'order_id' => $order['order_id'],
                 'order_sn' => $order['order_sn'],
                 'shipping_name' => $delivery['shipping_name'],
