@@ -2850,6 +2850,8 @@ class User extends Base
      */
     public function userTask()
     {
+        if ($this->passAuth) die(json_encode(['status' => -999, 'msg' => '请先登录']));
+
         $userDistributeLevel = M('users')->where(['user_id' => $this->user_id])->value('distribut_level');
         $taskLogic = new TaskLogic(0);
         // 任务列表
@@ -2889,19 +2891,32 @@ class User extends Base
                     'task_reward_type' => $reward['reward_type'],
                     'reward_desc' => $reward['description'],
                     'reward_cycle' => $reward['cycle'],
-                    'reward_set' => $reward['invite_num'] != 0 ? $reward['invite_num'] : ($reward['order_num'] != 0 ? $reward['order_num'] : 0),
-                    'user_reward_set' => 0,
-                    'reward_times' => 0,
-                    'user_reward_times' => 0
+                    'reward_set' => $reward['invite_num'] != 0 ? $reward['invite_num'] : ($reward['order_num'] != 0 ? $reward['order_num'] : 0), // 任务规定需要完成的次数（才能获得奖励）
+                    'user_reward_set' => 0,         // 用户完成任务次数
+                    'reward_times' => 0,            // 任务可领取奖励次数
+                    'user_reward_times' => 0        // 用户可领取奖励次数（机会）
                 ];
-                // 查看用户完成任务次数
-                $userTaskCount = M('task_log')
-                    ->where(['user_id' => $this->user_id, 'task_id' => $task['id'], 'task_reward_id' => $reward['reward_id'], 'finished_at' => 0])
-                    ->count('id');
-                $times = $userTaskCount >= $taskRewardData[$k]['reward_set'] ? bcdiv($userTaskCount, $taskRewardData[$k]['reward_set']) : 0;
-                $taskRewardData[$k]['user_reward_set'] = $userTaskCount;
-                $taskRewardData[$k]['reward_times'] = $times;
-                $taskRewardData[$k]['user_reward_times'] = $times;
+                // 查看用户任务记录
+                $userTask = M('user_task')
+                    ->where(['user_id' => $this->user_id, 'task_id' => $task['id'], 'task_reward_id' => $reward['reward_id']])
+                    ->field('id, target_num, finish_num')->order('created_at desc')->find();
+                if (!empty($userTask)) {
+                    // 查看用户任务记录领取情况
+                    $userTaskLog = M('task_log')->where(['user_task_id' => $userTask['id'], 'type' => 1])->find();
+                    if (!empty($userTaskLog) && $userTaskLog['status'] == 1) {
+                        // 已领取
+                        $taskRewardData[$k]['user_reward_set'] = 0;
+                        $taskRewardData[$k]['reward_times'] = $userTask['target_num'];
+                    } else {
+                        // 未完成 || 未领取
+                        $taskRewardData[$k]['user_reward_set'] = $userTask['finish_num'];
+                        $taskRewardData[$k]['reward_times'] = bcdiv($userTask['target_num'], $userTask['finish_num']);
+                    }
+                }
+                // 用户可领取奖励次数（机会）
+                $userTaskLog = M('task_log')->where(['user_id' => $this->user_id, 'task_id' => $task['id'], 'task_reward_id' => $reward['reward_id'],
+                    'type' => 1, 'status' => 0])->count('id');
+                $taskRewardData[$k]['user_reward_times'] = $userTaskLog == 0 ? $userTaskLog : bcdiv($userTaskLog, $taskRewardData[$k]['reward_set']);
             }
             if (empty($taskData)) {
                 $taskData = $taskRewardData;
@@ -2941,11 +2956,11 @@ class User extends Base
                         break;
                     case 1:
                         // 每次（循环）
-                        $logCount = M('task_log')->where(['task_id' => $data['task_id'], 'task_reward_id' => $data['reward_id'], 'user_id' => $this->user_id, 'finished_at' => 0])->count('id');
-                        $times = $logCount >= $data['reward_set'] ? bcdiv($logCount, $data['reward_set']) : 0;
-                        $taskData[$k2]['user_reward_set'] = $times;
-                        $taskData[$k2]['reward_times'] = $times;
-                        $taskData[$k2]['user_reward_times'] = $times;
+//                        $logCount = M('task_log')->where(['task_id' => $data['task_id'], 'task_reward_id' => $data['reward_id'], 'user_id' => $this->user_id, 'finished_at' => 0])->count('id');
+//                        $times = $logCount >= $data['reward_set'] ? bcdiv($logCount, $data['reward_set']) : 0;
+//                        $taskData[$k2]['user_reward_set'] = $times;
+//                        $taskData[$k2]['reward_times'] = $times;
+//                        $taskData[$k2]['user_reward_times'] = $times;
                         $logStatus = M('task_log')->where(['task_id' => $data['task_id'], 'task_reward_id' => $data['reward_id'], 'user_id' => $this->user_id])->order('id DESC')->value('status');
                         if (is_null($logStatus)) {
                             // 未完成任务
@@ -3253,7 +3268,11 @@ class User extends Base
         if (!$inviteUid || $inviteUid == 0) {
             return json(['status' => -11, 'msg' => '暂无推荐人']);
         }
-        $inviteUser = M('users')->where(['user_id' => $inviteUid])->field('user_id, nickname')->find();
+        $inviteUser = M('users')->where(['user_id' => $inviteUid])->field('user_id, nickname, user_name')->find();
+        if (!empty($inviteUser['user_name'])) {
+            $inviteUser['nickname'] = $inviteUser['user_name'];
+        }
+        unset($inviteUser['user_name']);
         return json(['status' => 1, 'result' => $inviteUser]);
     }
 
@@ -3527,7 +3546,9 @@ class User extends Base
          * 用户是否有完成未领取的任务奖励
          */
         $userTaskLog = M('task_log tl')->join('task t', 't.id = tl.task_id')
-            ->where(['user_id' => $this->user_id, 'type' => 1, 'status' => 0])->order('created_at desc')
+            ->where(['t.is_open' => 1, 't.start_time' => ['<=', time()], 't.end_time' => ['>=', time()]])
+            ->where(['tl.user_id' => $this->user_id, 'tl.type' => 1, 'tl.status' => 0])
+            ->order('created_at desc')
             ->field('t.id, t.title')->find();
         if (!empty($userTaskLog)) {
             $returnData['list'][] = [

@@ -1165,6 +1165,11 @@ class Goods extends Base
         $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->select();
         $endTime = 0;
         foreach ($flashSaleGoods as $k => $v) {
+            // 商品参加活动数限制
+            if ($v['goods_num'] <= $v['buy_num'] || $v['goods_num'] <= $v['order_num']) {
+                unset($flashSaleGoods[$k]);
+                continue;
+            }
             $flashSaleGoods[$k]['key_name'] = $v['key_name'] ?? '';
             // 最近的结束时间
             if ($k == 0) {
