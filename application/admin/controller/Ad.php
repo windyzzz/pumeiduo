@@ -12,9 +12,9 @@
 namespace app\admin\controller;
 
 use app\admin\logic\GoodsLogic;
+use app\admin\model\Ad as AdModel;
 use app\admin\model\Goods;
-use app\common\model\Popup as PopupModel;
-use app\common\model\Ad as AdModel;
+use app\admin\model\Popup as PopupModel;
 use think\Db;
 use think\Loader;
 use think\Page;
