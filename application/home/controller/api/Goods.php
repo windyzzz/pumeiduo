@@ -134,8 +134,25 @@ class Goods extends Base
         $point_rate = tpCache('shopping.point_rate');
 
         $look_see = $goodsLogic->get_look_see($goods);
-        // 商品佣金
-        $goods['commission'] = bcdiv(bcmul($goods['shop_price'], $goods['commission'], 2), 100, 2);
+        if ($this->user) {
+            // 商品pv
+            if ($this->user['distribut_level'] < 3) {
+                $goods['integral_pv'] = '';
+            } elseif ($goods['integral_pv'] == 0) {
+                $goods['integral_pv'] = '';
+            }
+            // 商品佣金
+            if ($this->user['distribut_level'] < 2) {
+                $goods['commission'] = '';
+            } elseif ($goods['commission'] == 0) {
+                $goods['commission'] = '';
+            } else {
+                $goods['commission'] = bcdiv(bcmul($goods['shop_price'], $goods['commission'], 2), 100, 2);
+            }
+        } else {
+            $goods['integral_pv'] = '';
+            $goods['commission'] = '';
+        }
 
         $data = [];
         $data['freight_free'] = $freight_free; // 全场满多少免运费
@@ -282,8 +299,25 @@ class Goods extends Base
         } else {
             $goods['exchange_price'] = $goods['shop_price'];
         }
-        // 商品佣金
-        $goods['commission'] = bcdiv(bcmul($goods['shop_price'], $goods['commission'], 2), 100, 2);
+        if ($this->user) {
+            // 商品pv
+            if ($this->user['distribut_level'] < 3) {
+                $goods['integral_pv'] = '';
+            } elseif ($goods['integral_pv'] == 0) {
+                $goods['integral_pv'] = '';
+            }
+            // 商品佣金
+            if ($this->user['distribut_level'] < 2) {
+                $goods['commission'] = '';
+            } elseif ($goods['commission'] == 0) {
+                $goods['commission'] = '';
+            } else {
+                $goods['commission'] = bcdiv(bcmul($goods['shop_price'], $goods['commission'], 2), 100, 2);
+            }
+        } else {
+            $goods['integral_pv'] = '';
+            $goods['commission'] = '';
+        }
         // 处理商品详情（抽取图片）
         $contentArr = explode('public', $goods['goods_content']);
         $contentImgArr = [];

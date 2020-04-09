@@ -1386,4 +1386,23 @@ AND log_id NOT IN
             M('push')->where(['id' => ['in', $pushIds]])->update(['status' => 1]);
         }
     }
+
+    /**
+     * 自动发送订单pv到代理商系统
+     */
+    public function autoSendOrderPv()
+    {
+        $where = [
+            'order_pv' => ['>', 0],
+            'pv_send' => 0,
+            'add_time' => ['<=', time() - (3600 * 24 * 7)]  // 计算pv7天后
+        ];
+        $orderData = M('order')->where($where)->field('order_id')->select();
+        // 通知代理商系统记录
+        include_once "plugins/Tb.php";
+        $TbLogic = new \Tb();
+        foreach ($orderData as $key => $order) {
+            $TbLogic->add_tb(1, 11, $order['order_id'], 0);
+        }
+    }
 }

@@ -25,7 +25,6 @@ Class Tb
         return M('tb')->data($data)->add();
     }
 
-
     /**
      * 到达的链接
      * @param $to_system
@@ -97,4 +96,3 @@ Class Tb
         return $jsonarr;
     }
 }
-

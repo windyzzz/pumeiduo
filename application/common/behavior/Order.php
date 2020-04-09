@@ -1,14 +1,5 @@
 <?php
 
-/*
- * This file is part of the J project.
- *
- * (c) J <775893055@qq.com>
- *
- * This source file is subject to the MIT license that is bundled
- * with this source code in the file LICENSE.
- */
-
 namespace app\common\behavior;
 
 use app\common\logic\wechat\WechatUtil;
@@ -28,7 +19,7 @@ class Order
         ];
         Db::name('order_action')->add($action_info);
 
-        //分销开关全局
+        // 分销开关全局
         $distribut_switch = tpCache('distribut.switch');
         if (1 == $distribut_switch && file_exists(APP_PATH.'common/logic/DistributLogic.php')) {
             $distributLogic = new \app\common\logic\DistributLogic();
@@ -50,5 +41,25 @@ class Order
 //            $params = ['consignee' => $order['consignee'], 'mobile' => $order['mobile']];
 //            sendSms('3', $sender, $params);
 //        }
+
+        if ($order['order_pv'] > 0) {
+            // 查看订单商品是否有非自营产品
+            $isSelfSales = true;
+            $orderGoods = M('order_goods og')->join('goods g', 'g.goods_id = og.goods_id')
+                ->where(['og.order_id' => $order['order_id']])->field('g.cat_id, g.extend_cat_id, og.rec_id, og.goods_id, og.goods_pv')->select();
+            foreach ($orderGoods as $key => $goods) {
+                if (!in_array($goods['cat_id'], [903, 888]) && !in_array($goods['extend_cat_id'], [903, 888])) {
+                    $isSelfSales = false;
+                }
+                unset($orderGoods[$key]['cat_id']);
+                unset($orderGoods[$key]['extend_cat_id']);
+            }
+            if ($isSelfSales) {
+                // 通知代理商系统记录
+                include_once "plugins/Tb.php";
+                $TbLogic = new \Tb();
+                $TbLogic->add_tb(1, 11, $order['order_id'], 0);
+            }
+        }
     }
 }

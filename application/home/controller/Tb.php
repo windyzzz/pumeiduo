@@ -50,10 +50,8 @@ class Tb extends Controller
                         $tb_data['data'] = $this->send_order_refund($v['from_id']);
                         break;
                     case 11:
-                        // 退换库存
-//                        $v['type'] = 9;
-//                        $tb_data['type'] = 9;
-//                        $tb_data['data'] = $this->send_order_refund1($v['from_id']);
+                        // 订单pv
+                        $tb_data['data'] = $this->send_order_pv($v['from_id']);
                         break;
                 }
                 $request_send = $Tb->tb_now($v['system'], $tb_data);
@@ -213,6 +211,19 @@ class Tb extends Controller
         }
 
         return $data;
+    }
+
+    /**
+     * 订单pv信息
+     * @param $orderId
+     * @return mixed
+     */
+    function send_order_pv($orderId)
+    {
+        $orderData = M('order o')->join('users u', 'u.user_id = o.user_id')
+            ->where(['o.order_id' => $orderId])
+            ->field('u.user_name, o.order_sn, o.order_pv')->find();
+        return $orderData;
     }
 
     /**
