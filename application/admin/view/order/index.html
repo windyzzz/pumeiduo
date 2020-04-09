@@ -118,6 +118,9 @@
                     <div class="sDiv2">
                         <input type="button" onclick="ajax_get_table('search-form2',1)" class="btn" value="搜索">
                     </div>
+                    <div class="sDiv2">
+                        <input type="button" onclick="batch_confirm()" class="btn" value="批量确认订单">
+                    </div>
                 </div>
             </form>
         </div>
@@ -204,8 +207,15 @@
             <div class="tDiv2">
                 <div class="fbutton">
                     <a href="javascript:exportReport()">
-                        <div class="add" title="选定行数据导出excel文件,如果不选中行，将导出列表所有数据">
-                            <span><i class="fa fa-plus"></i>导出数据</span>
+                        <div class="add" title="选定行数据导出excel文件，如果不选中行，将导出列表所有数据">
+                            <span><i class="fa fa-plus"></i>导出数据（xls）</span>
+                        </div>
+                    </a>
+                </div>
+                <div class="fbutton">
+                    <a href="javascript:exportReport2()">
+                        <div class="add" title="选定行数据导出csv文件，可以导出大量数据，但显示样式不能控制">
+                            <span><i class="fa fa-plus"></i>导出数据（csv）</span>
                         </div>
                     </a>
                 </div>
@@ -229,8 +239,6 @@
     </div>
 </div>
 <script type="text/javascript">
-
-
     $(document).ready(function () {
 
         $('#add_time_begin').layDate();
@@ -259,7 +267,6 @@
         });
 
     });
-
 
     //ajax 抓取页面
     function ajax_get_table(tab, page) {
@@ -294,9 +301,22 @@
         $('.trSelected', '#flexigrid').each(function (i) {
             selected_ids += $(this).data('order-id') + ',';
         });
+        if (selected_ids != '' && selected_ids != ',') {
+            $('input[name="order_ids"]').val(selected_ids.substring(0, selected_ids.length - 1));
+        }
+        $('#search-form2').attr('action', "{:U('Admin/order/export_order')}");
+        $('#search-form2').submit();
+    }
+
+    function exportReport2() {
+        var selected_ids = '';
+        $('.trSelected', '#flexigrid').each(function (i) {
+            selected_ids += $(this).data('order-id') + ',';
+        });
         if (selected_ids != '') {
             $('input[name="order_ids"]').val(selected_ids.substring(0, selected_ids.length - 1));
         }
+        $('#search-form2').attr('action', "{:U('Admin/order/export_order_v2')}");
         $('#search-form2').submit();
     }
 
@@ -306,6 +326,35 @@
         }
     });
 
+    function batch_confirm() {
+        layer.confirm('确认批量确认订单？', {
+            btn: ['确定', '取消'] //按钮
+        }, function () {
+            var order_ids = '';
+            $('.trSelected', '#flexigrid').each(function (i) {
+                order_ids += $(this).data('order-id') + ',';
+            });
+            if (order_ids == '' || order_ids == ',') {
+                layer.msg('请选择订单', {icon: 2, time: 2000});
+            } else {
+                $.ajax({
+                    url: "{:U('Order/batchConfirm')}",
+                    data: {order_ids: order_ids},
+                    dataType: 'json',
+                    success: function (data) {
+                        layer.closeAll();
+                        if (data.status == 1) {
+                            layer.alert(data.msg, {icon: 1, time: 2000});
+                            ajax_get_table('search-form2', 1)
+                        } else {
+                            layer.alert(data.msg, {icon: 2, time: 3000});
+                        }
+                    }
+                })
+            }
+        }, function () {
+        });
+    }
 </script>
 </body>
 </html>

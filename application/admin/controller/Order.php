@@ -61,7 +61,6 @@ class Order extends Base
         $orderLogic = new OrderLogic();
         $begin = $this->begin;
         $end = $this->end;
-
         if (I('pay_start_time')) {
             $pay_begin = I('pay_start_time');
             $pay_end = I('pay_end_time');
@@ -675,7 +674,7 @@ class Order extends Base
         }
         $orderModel = new \app\common\model\Order();
         $orderObj = $orderModel::get(['order_id' => $order_id]);
-        $order = $orderObj->append(['full_address', 'orderGoods'])->toArray();
+        $order = $orderObj->append(['full_address', 'orderGoods', 'orderUser'])->toArray();
         $order['province'] = getRegionName($order['province']);
         $order['city'] = getRegionName($order['city']);
         $order['district'] = getRegionName($order['district']);
@@ -1482,53 +1481,65 @@ class Order extends Base
         exit();
     }
 
+    /**
+     * 订单数据导出xls
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     */
     public function export_order()
     {
+        $condition = [];
+        // 下单时间
         $begin = $this->begin;
         $end = $this->end;
-
+        if ($begin && $end) {
+            $condition['o.add_time'] = ['between', "$begin,$end"];
+        }
+        // 支付时间
         if (I('pay_start_time')) {
             $pay_begin = I('pay_start_time');
             $pay_end = I('pay_end_time');
         }
-
         $pay_begin = strtotime($pay_begin);
         $pay_end = strtotime($pay_end) + 86399;
-
-        // 搜索条件
-        $condition = [];
+        if ($pay_begin && $pay_end) {
+            $condition['o.pay_time'] = ['between', "$pay_begin,$pay_end"];
+        }
+        // 关键字
         $keyType = I('keytype');
         $keywords = I('keywords', '', 'trim');
         $user_id = I('user_id', '', 'trim');
-
         $consignee = ($keyType && 'consignee' == $keyType) ? $keywords : I('consignee', '', 'trim');
-        $consignee ? $condition['consignee'] = trim($consignee) : false;
-
-
-        if ($begin && $end) {
-            $condition['add_time'] = ['between', "$begin,$end"];
-        }
-
-        if ($pay_begin && $pay_end) {
-            $condition['pay_time'] = ['between', "$pay_begin,$pay_end"];
-        }
-
+        $consignee ? $condition['o.consignee'] = trim($consignee) : false;
         // $condition['prom_type'] = array('lt',5);
         if ('' != $user_id) {
-            $condition['user_id'] = ['eq', $user_id];
+            $condition['o.user_id'] = ['eq', $user_id];
         }
-
         $order_sn = ($keyType && 'order_sn' == $keyType) ? $keywords : I('order_sn');
-        $order_sn ? $condition['order_sn'] = trim($order_sn) : false;
+        $order_sn ? $condition['o.order_sn'] = trim($order_sn) : false;
 
-        '' != I('order_status') ? $condition['order_status'] = I('order_status') : false;
-        '' != I('pay_status') ? $condition['pay_status'] = I('pay_status') : false;
-        '' != I('pay_code') ? $condition['pay_code'] = I('pay_code') : false;
-        '' != I('shipping_status') ? $condition['shipping_status'] = I('shipping_status') : false;
-        '' != I('prom_type') ? $condition['prom_type'] = I('prom_type') : false;
-        I('user_id') ? $condition['user_id'] = trim(I('user_id')) : false;
+        '' != I('order_status') ? $condition['o.order_status'] = I('order_status') : false;
+        '' != I('pay_status') ? $condition['o.pay_status'] = I('pay_status') : false;
+        '' != I('pay_code') ? $condition['o.pay_code'] = I('pay_code') : false;
+        '' != I('shipping_status') ? $condition['o.shipping_status'] = I('shipping_status') : false;
+        '' != I('prom_type') ? $condition['o.prom_type'] = I('prom_type') : false;
+
+        // 排序
         $sort_order = I('order_by', 'DESC') . ' ' . I('sort');
 
+        // 订单数据
+        $orderList = Db::name('order o')->join('users u', 'u.user_id = o.user_id', 'LEFT')
+            ->field("o.*, FROM_UNIXTIME(o.add_time,'%Y-%m-%d %H:%i:%s') as add_time, u.distribut_level")
+            ->where($condition)->order($sort_order)->select();
+        // 等级列表
+        $level_list = M('distribut_level')->getField('level_id, level_name');
+        // 用户父级ID
+        $parent_list = Db::name('users')->getField('user_id, first_leader', true);
+        // 订单来源
+        $orderSource = ['1' => '微信', '2' => 'PC', '3' => 'APP', '4' => '管理后台'];
+
+        // 表头
         $strTable = '<table width="500" border="1">';
         $strTable .= '<tr>';
         $strTable .= '<td style="text-align:center;font-size:12px;width:120px;">订单编号</td>';
@@ -1559,19 +1570,10 @@ class Order extends Base
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品规格</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">交易条件</td>';
         $strTable .= '</tr>';
-
-        // 等级列表
-        $level_list = M('distribut_level')->getField('level_id,level_name');
-        // 用户父级ID
-        $parent_list = Db::name('users')->getField('user_id, first_leader', true);
-        // 订单数据
-        $orderList = Db::name('order')->field("*,FROM_UNIXTIME(add_time,'%Y-%m-%d %H:%i:%s') as create_time")->where($condition)->order($sort_order)->select();
-        // 订单来源
-        $orderSource = ['1' => '微信', '2' => 'PC', '3' => 'APP', '4' => '管理后台'];
+        // 表体数据
         if (is_array($orderList)) {
             $region = get_region_list();
             foreach ($orderList as $k => $val) {
-                $user_info = M('users')->where('user_id', $val['user_id'])->find();
                 $orderGoods = D('order_goods')->where('order_id=' . $val['order_id'])->select();
                 $orderGoodsNum = count($orderGoods);
                 $val['pay_time_show'] = $val['pay_time'] ? date('Y-m-d H:i:s', $val['pay_time']) : '';
@@ -1582,7 +1584,8 @@ class Order extends Base
                 $parentId = $parent_list[$val['user_id']];
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $parentId . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['user_id'] . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $level_list[$user_info['distribut_level']] . '</td>';
+                $level = $val['distribut_level'] ? $level_list[$val['distribut_level']] : '普通会员';
+                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $level . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['consignee'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . "{$region[$val['province']]},{$region[$val['city']]},{$region[$val['district']]},{$region[$val['twon']]}{$val['address']}" . ' </td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['mobile'] . '</td>';
@@ -1598,7 +1601,6 @@ class Order extends Base
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $this->pay_status[$val['pay_status']] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $this->shipping_status[$val['shipping_status']] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $orderSource[$val['source']] . '</td>';
-                // $orderGoods = D('order_goods')->where('order_id='.$val['order_id'])->select();
                 // $strGoods = '';
                 $goods_num = 0;
                 foreach ($orderGoods as $goods) {
@@ -1609,17 +1611,16 @@ class Order extends Base
                     // $strTradeType = $goods['trade_type'] == 1 ? '仓库自发'  : '一件代发';
                 }
                 $strTable .= '<td style="text-align:left;font-size:12px;"    rowspan="' . $orderGoodsNum . '">' . $goods_num . ' </td>';
-                foreach ($orderGoods as $goods) {
-                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['goods_sn'] . ' </td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['goods_num'] . ' </td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['goods_name'] . ' </td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['spec_key_name'] . ' </td>';
-                    $strTradeType = 1 == $goods['trade_type'] ? '仓库自发' : '一件代发';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $strTradeType . ' </td>';
-                    $strTable .= '</tr>';
-                    break;
-                }
+
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['goods_sn'] . ' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['goods_num'] . ' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['goods_name'] . ' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['spec_key_name'] . ' </td>';
+                $strTradeType = 1 == $orderGoods[0]['trade_type'] ? '仓库自发' : '一件代发';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $strTradeType . ' </td>';
+                $strTable .= '</tr>';
                 unset($orderGoods[0]);
+
                 if ($orderGoods) {
                     foreach ($orderGoods as $goods) {
                         $strTable .= '<tr>';
@@ -1647,6 +1648,127 @@ class Order extends Base
         unset($orderList);
         downloadExcel($strTable, 'order');
         exit();
+    }
+
+    /**
+     * 订单数据导出csv
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     */
+    public function export_order_v2()
+    {
+        $condition = [];
+        // 下单时间
+        $begin = $this->begin;
+        $end = $this->end;
+        if ($begin && $end) {
+            $condition['o.add_time'] = ['between', "$begin,$end"];
+        }
+        // 支付时间
+        if (I('pay_start_time')) {
+            $pay_begin = I('pay_start_time');
+            $pay_end = I('pay_end_time');
+        }
+        $pay_begin = strtotime($pay_begin);
+        $pay_end = strtotime($pay_end) + 86399;
+        if ($pay_begin && $pay_end) {
+            $condition['o.pay_time'] = ['between', "$pay_begin,$pay_end"];
+        }
+        // 关键字
+        $keyType = I('keytype');
+        $keywords = I('keywords', '', 'trim');
+        $user_id = I('user_id', '', 'trim');
+        $consignee = ($keyType && 'consignee' == $keyType) ? $keywords : I('consignee', '', 'trim');
+        $consignee ? $condition['o.consignee'] = trim($consignee) : false;
+        // $condition['prom_type'] = array('lt',5);
+        if ('' != $user_id) {
+            $condition['o.user_id'] = ['eq', $user_id];
+        }
+        $order_sn = ($keyType && 'order_sn' == $keyType) ? $keywords : I('order_sn');
+        $order_sn ? $condition['o.order_sn'] = trim($order_sn) : false;
+
+        '' != I('order_status') ? $condition['o.order_status'] = I('order_status') : false;
+        '' != I('pay_status') ? $condition['o.pay_status'] = I('pay_status') : false;
+        '' != I('pay_code') ? $condition['o.pay_code'] = I('pay_code') : false;
+        '' != I('shipping_status') ? $condition['o.shipping_status'] = I('shipping_status') : false;
+        '' != I('prom_type') ? $condition['o.prom_type'] = I('prom_type') : false;
+
+        // 排序
+        $sort_order = I('order_by', 'DESC') . ' ' . I('sort');
+
+        // 订单数据
+        $orderList = Db::name('order o')->join('users u', 'u.user_id = o.user_id', 'LEFT')
+            ->field("o.*, FROM_UNIXTIME(o.add_time,'%Y-%m-%d %H:%i:%s') as add_time, u.distribut_level")
+            ->where($condition)->order($sort_order)->select();
+        // 等级列表
+        $level_list = M('distribut_level')->getField('level_id, level_name');
+        // 用户父级ID
+        $parent_list = Db::name('users')->getField('user_id, first_leader', true);
+        // 订单来源
+        $orderSource = ['1' => '微信', '2' => 'PC', '3' => 'APP', '4' => '管理后台'];
+        // 地区数据
+        $region = get_region_list();
+
+        // 表头
+        $headList = [
+            '订单编号', '下单日期', '支付日期', '父级ID', '会员ID', '会员等级', '收货人', '收货地址', '电话',
+            '应付金额', '商品金额', '优惠券折扣', '积分折扣', '现金折扣', '运费', '总pv值',
+            '订单状态', '支付状态', '发货状态', '订单来源', '支付方式',
+            '商品总数', '商品编号', '商品数量', '商品名称', '商品规格', '交易条件'
+        ];
+        // 表数据
+        $dataList = [];
+        foreach ($orderList as $key => $order) {
+            $payTime = $order['pay_time'] ? date('Y-m-d H:i:s', $order['pay_time']) : '';
+            $parentId = $parent_list[$order['user_id']];
+            $dataList[$key] = [
+                "\t" . $order['order_sn'],
+                $order['add_time'],
+                $payTime,
+                $parentId,
+                $order['user_id'],
+                $order['distribut_level'] ? $level_list[$order['distribut_level']] : '普通会员',
+                $order['consignee'],
+                "{$region[$order['province']]},{$region[$order['city']]},{$region[$order['district']]},{$region[$order['twon']]}{$order['address']}",
+                "\t" . $order['mobile'],
+                $order['order_amount'],
+                $order['goods_price'],
+                $order['coupon_price'],
+                $order['integral_money'],
+                $order['user_electronic'],
+                $order['shipping_price'],
+                $order['order_pv'],
+                C('ORDER_STATUS')[$order['order_status']],
+                $this->pay_status[$order['pay_status']],
+                $this->shipping_status[$order['shipping_status']],
+                $orderSource[$order['source']],
+                $order['pay_name'],
+            ];
+            // 订单商品
+            $orderGoods = D('order_goods')->where('order_id=' . $order['order_id'])->select();
+            $goods_amount = 0;
+            $goods_sn = [];
+            $goods_num = [];
+            $goods_name = [];
+            $goods_attr = [];
+            $goods_trade = [];
+            foreach ($orderGoods as $goods) {
+                $goods_amount += $goods['goods_num'];
+                $goods_sn[] = $goods['goods_sn'];
+                $goods_num[] = $goods['goods_num'];
+                $goods_name[] = $goods['goods_name'];
+                $goods_attr[] = $goods['spec_key_name'];
+                $goods_trade[] = $goods['trade_type'] == 1 ? '仓库自发' : '一件代发';
+            }
+            $dataList[$key][] = $goods_amount;
+            $dataList[$key][] = $goods_sn;
+            $dataList[$key][] = $goods_num;
+            $dataList[$key][] = $goods_name;
+            $dataList[$key][] = $goods_attr;
+            $dataList[$key][] = $goods_trade;
+        }
+        toCsvExcel($dataList, $headList, 'order');
     }
 
     /**
@@ -2003,5 +2125,35 @@ class Order extends Base
         $this->assign('city', $city);
         $this->assign('district', $district);
         return $this->fetch('edit_address');
+    }
+
+    /**
+     * 批量确认订单
+     */
+    public function batchConfirm()
+    {
+        $orderIds = trim(I('order_ids'), ',');
+        $orderData = M('order')->where(['order_id' => ['IN', $orderIds]])->field('order_id, order_sn, order_status, pay_status')->select();
+        foreach ($orderData as $order) {
+            if ($order['pay_status'] != 1) {
+                $this->ajaxReturn(['status' => 0, 'msg' => '订单：' . $order['order_sn'] . ' 未支付']);
+            }
+            if ($order['order_status'] != 0) {
+                $this->ajaxReturn(['status' => 0, 'msg' => '订单：' . $order['order_sn'] . ' 已被确认']);
+            }
+        }
+        $orderLogic = new OrderLogic();
+        Db::startTrans();
+        foreach ($orderData as $order) {
+            $convert_action = C('CONVERT_ACTION')['confirm'];
+            $res1 = $orderLogic->orderActionLog($order['order_id'], $convert_action, I('note'));
+            $res2 = $orderLogic->orderProcessHandle($order['order_id'], 'confirm', ['note' => '批量确认订单', 'admin_id' => 0]);
+            if (!$res1 || !$res2) {
+                Db::rollback();
+                $this->ajaxReturn(['status' => 0, 'msg' => '订单：' . $order['order_sn'] . ' 确认失败']);
+            }
+        }
+        Db::commit();
+        $this->ajaxReturn(['status' => 1, 'msg' => '批量确认订单成功']);
     }
 }
