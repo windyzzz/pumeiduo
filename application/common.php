@@ -150,17 +150,19 @@ function update_user_distribut($user_id, $order_id)
         //2.3推荐人奖励
         $firstLeaderLevel = M('users')->where(['user_id' => $user_info['first_leader']])->value('distribut_level');
         $updateRebate = false;
-        if (tpCache('distribut.referee_vip_money') != 0 && in_array($firstLeaderLevel, [2, 3])) {
+        if (tpCache('distribut.referee_vip_money') > 0 && in_array($firstLeaderLevel, [2, 3])) {
             // 奖励金额
             accountLog($user_info['first_leader'], tpCache('distribut.referee_vip_money'), 0, '推荐人VIP套组奖励金额', 0, $order_id, '', 0, 14, false);
             $updateRebate = true;
         }
-        if (tpCache('distribut.referee_vip_point') != 0 && in_array($firstLeaderLevel, [2, 3])) {
+        if (tpCache('distribut.referee_vip_point') > 0 && in_array($firstLeaderLevel, [2, 3])) {
             // 奖励积分
             accountLog($user_info['first_leader'], 0, tpCache('distribut.referee_vip_point'), '推荐人VIP套组奖励积分', 0, $order_id, '', 0, 14, false);
             $updateRebate = true;
         }
         if ($updateRebate) {
+            // 更新订单已分成
+            M('order')->where(['order_id' => $order_id])->update(['is_distribut' => 1]);
             // 更新分成记录
             M('rebate_log')->where(['buy_user_id' => $order['user_id'], 'order_id' => $order['order_id']])->update([
                 'status' => 3,
@@ -1513,7 +1515,7 @@ function confirm_order($id, $user_id = 0)
 
     order_give($order); // 调用送礼物方法, 给下单这个人赠送相应的礼物
     //分销设置
-    M('rebate_log')->where('order_id', $id)->save(['status' => 2, 'confirm' => time()]);
+    M('rebate_log')->where(['order_id' => $id, 'status' => ['NOT IN', ['3', '4', '5']]])->save(['status' => 2, 'confirm' => time()]);
 
     // 邀请任务 (开始)
 //    $orderGoodsArr = M('OrderGoods')->where(['order_id' => $id])->select();

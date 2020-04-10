@@ -3545,7 +3545,9 @@ class User extends Base
         /*
          * 用户是否有完成未领取的任务奖励
          */
-        $userTaskLog = M('task_log tl')->join('task t', 't.id = tl.task_id')
+        $userTaskLog = M('task_log tl')
+            ->join('task t', 't.id = tl.task_id')
+            ->join('task_reward tr', 'tr.reward_id = tl.task_reward_id')
             ->where(['t.is_open' => 1, 't.start_time' => ['<=', time()], 't.end_time' => ['>=', time()]])
             ->where(['tl.user_id' => $this->user_id, 'tl.type' => 1, 'tl.status' => 0])
             ->order('created_at desc')
