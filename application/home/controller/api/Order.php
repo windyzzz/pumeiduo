@@ -180,6 +180,11 @@ class Order extends Base
         // 组合数据
         $orderData = [];
         foreach ($orderList as $k => $list) {
+            $payEndTime = bcadd($list['add_time'], 3600);   // 支付到期时间
+            $payDeadTime = bcsub($payEndTime, time());      // 支付结束时间
+            if ($payDeadTime < 0) {
+                $payDeadTime = "0";
+            }
             $orderList[$k] = set_btn_order_status($list);  // 添加属性  包括按钮显示属性 和 订单状态显示属性
             $orderData[$k] = [
                 'type' => 1,
@@ -195,7 +200,9 @@ class Order extends Base
                     'order_amount' => $list['order_amount'],
                     'shipping_price' => $list['shipping_price'],
                     'add_time' => $list['add_time'],
-                    'pay_end_time' => $list['add_time'] + 3600, // 支付到期时间
+                    'pay_end_time' => $payEndTime,
+                    'pay_dead_time' => $payDeadTime,
+                    'now_time' => time() . '',
                     'delivery_type' => $list['delivery_type'],
                 ],
                 'order_goods' => []     // 订单商品
@@ -357,7 +364,7 @@ class Order extends Base
     {
         $orderId = I('order_id', '');
         $map['order_id'] = $orderId;
-//        $map['user_id'] = $this->user_id;
+        $map['user_id'] = $this->user_id;
         $orderInfo = M('order')->where($map)->find();
         if (!$orderInfo) {
             return json(['status' => 0, 'msg' => '没有获取到订单信息', 'result' => null]);
@@ -371,6 +378,11 @@ class Order extends Base
             $autoConfirmTime = $orderInfo['shipping_time'] + tpCache('shopping.auto_confirm_date') * 24 * 60 * 60;
         } else {
             $autoConfirmTime = '0';
+        }
+        $payEndTime = bcadd($orderInfo['add_time'], 3600);   // 支付到期时间
+        $payDeadTime = bcsub($payEndTime, time());           // 支付结束时间
+        if ($payDeadTime < 0) {
+            $payDeadTime = "0";
         }
         // 组合数据
         $orderData = [
@@ -395,7 +407,9 @@ class Order extends Base
             'order_amount' => $orderInfo['order_amount'],
             'give_integral' => 0,
             'add_time' => $orderInfo['add_time'],
-            'pay_end_time' => $orderInfo['add_time'] + 3600,    // 支付到期时间
+            'pay_end_time' => $payEndTime,
+            'pay_dead_time' => $payDeadTime,
+            'now_time' => time() . '',
             'pay_time' => $orderInfo['pay_time'],
             'shipping_time' => $orderInfo['shipping_time'],
             'confirm_time' => $orderInfo['confirm_time'],
@@ -729,7 +743,7 @@ class Order extends Base
             'content' => $content,
             'user_name' => $this->user['nickname'],
             'to_name' => $to_name,
-            'reply_time' => time(),
+            'reply_time' => time() . '',
         ];
         $where = ['o.user_id' => $this->user_id, 'og.goods_id' => $goods_id, 'o.pay_status' => 1];
         $user_goods_count = Db::name('order')
@@ -1553,7 +1567,7 @@ class Order extends Base
         $add['is_show'] = 1; //默认显示
         $add['content'] = I('content');
         $add['img'] = $comment_img;
-        $add['add_time'] = time();
+        $add['add_time'] = time() . '';
         $add['ip_address'] = $_SERVER['REMOTE_ADDR'];
         $add['user_id'] = $this->user_id;
         $logic = new UsersLogic();

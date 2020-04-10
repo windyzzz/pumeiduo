@@ -252,42 +252,55 @@ class Goods extends Base
             ->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
             ->where(['fs.goods_id' => $goods_id, 'fs.start_time' => ['<=', time()], 'fs.end_time' => ['>=', time()]])
             ->where(['fs.source' => ['LIKE', $this->isApp ? '%' . 3 . '%' : '%' . 1 . '%']])
-            ->field('fs.goods_id, sgp.key spec_key, fs.price, fs.goods_num, fs.buy_limit, fs.start_time, fs.end_time, fs.can_integral, g.exchange_integral')->select();
+            ->field('fs.goods_id, sgp.key spec_key, fs.price, fs.goods_num, fs.buy_num, fs.order_num, fs.buy_limit, fs.start_time, fs.end_time, fs.can_integral, g.exchange_integral')->select();
         if (!empty($flashSale)) {
             // 秒杀商品
-            $goods['nature'] = [
-                'type' => 'flash_sale',
-                'price' => $flashSale[0]['price'],
-                'limit_num' => $flashSale[0]['goods_num'],
-                'buy_limit' => $flashSale[0]['buy_limit'],
-                'start_time' => $flashSale[0]['start_time'],
-                'end_time' => $flashSale[0]['end_time'],
-                'now_time' => time(),
-                'exchange_integral' => $flashSale[0]['can_integral'] == 0 ? '0' : $flashSale[0]['exchange_integral']
-            ];
-            $extendGoodsSpec = ['type' => 'flash_sale', 'data' => $flashSale];
+            // 商品参加活动数限制
+            if ($flashSale[0]['goods_num'] <= $flashSale[0]['buy_num'] || $flashSale[0]['goods_num'] <= $flashSale[0]['order_num']) {
+                $goods['nature'] = [];
+                $extendGoodsSpec = [];
+            } else {
+                $goods['nature'] = [
+                    'type' => 'flash_sale',
+                    'price' => $flashSale[0]['price'],
+                    'limit_num' => $flashSale[0]['goods_num'],
+                    'buy_limit' => $flashSale[0]['buy_limit'],
+                    'start_time' => $flashSale[0]['start_time'],
+                    'end_time' => $flashSale[0]['end_time'],
+                    'now_time' => time() . '',
+                    'exchange_integral' => $flashSale[0]['can_integral'] == 0 ? '0' : $flashSale[0]['exchange_integral']
+                ];
+                $extendGoodsSpec = ['type' => 'flash_sale', 'data' => $flashSale];
+            }
         } else {
+            $goods['nature'] = [];
+        }
+        if (empty($goods['nature'])) {
             $groupBuy = Db::name('group_buy gb')
                 ->join('goods g', 'g.goods_id = gb.goods_id')
                 ->join('spec_goods_price sgp', 'sgp.item_id = gb.item_id', 'LEFT')
                 ->where(['gb.goods_id' => $goods_id, 'gb.start_time' => ['<=', time()], 'gb.end_time' => ['>=', time()]])
-                ->field('gb.goods_id, gb.price, sgp.key spec_key, gb.price, gb.group_goods_num, gb.goods_num, gb.buy_limit, gb.start_time, gb.end_time, gb.can_integral, g.exchange_integral')->select();
+                ->field('gb.goods_id, gb.price, sgp.key spec_key, gb.price, gb.group_goods_num, gb.goods_num, gb.buy_num, gb.order_num, gb.buy_limit, gb.start_time, gb.end_time, gb.can_integral, g.exchange_integral')->select();
             if (!empty($groupBuy)) {
                 // 团购商品
-                $goods['nature'] = [
-                    'type' => 'group_buy',
-                    'price' => $groupBuy[0]['price'],
-                    'group_goods_num' => $groupBuy[0]['group_goods_num'],
-                    'limit_num' => bcdiv($groupBuy[0]['goods_num'], $groupBuy[0]['group_goods_num']),
-                    'buy_limit' => $groupBuy[0]['buy_limit'],
-                    'start_time' => $groupBuy[0]['start_time'],
-                    'end_time' => $groupBuy[0]['end_time'],
-                    'now_time' => time() . '',
-                    'exchange_integral' => $groupBuy[0]['can_integral'] == 0 ? '0' : $groupBuy[0]['exchange_integral']
-                ];
-                $extendGoodsSpec = ['type' => 'group_buy', 'data' => $groupBuy];
-            } else {
-                $goods['nature'] = [];
+                // 商品参加活动数限制
+                if ($groupBuy[0]['goods_num'] <= $groupBuy[0]['buy_num'] || $groupBuy[0]['goods_num'] <= $groupBuy[0]['order_num']) {
+                    $goods['nature'] = [];
+                    $extendGoodsSpec = [];
+                } else {
+                    $goods['nature'] = [
+                        'type' => 'group_buy',
+                        'price' => $groupBuy[0]['price'],
+                        'group_goods_num' => $groupBuy[0]['group_goods_num'],
+                        'limit_num' => bcdiv($groupBuy[0]['goods_num'], $groupBuy[0]['group_goods_num']),
+                        'buy_limit' => $groupBuy[0]['buy_limit'],
+                        'start_time' => $groupBuy[0]['start_time'],
+                        'end_time' => $groupBuy[0]['end_time'],
+                        'now_time' => time() . '',
+                        'exchange_integral' => $groupBuy[0]['can_integral'] == 0 ? '0' : $groupBuy[0]['exchange_integral']
+                    ];
+                    $extendGoodsSpec = ['type' => 'group_buy', 'data' => $groupBuy];
+                }
             }
         }
         if (!empty($goods['nature']) && in_array($goods['nature']['type'], ['group_buy', 'flash_sale'])) {
@@ -1420,6 +1433,7 @@ class Goods extends Base
             ->select();
         $groupBuyData = collection($groupBuyData)->toArray();
         foreach ($groupBuyData as $k => $groupBuy) {
+            $groupBuyData[$k]['now_time'] = time() . '';
             // 价格判断
             if ($groupBuy['can_integral'] == 0) {
                 $groupBuyData[$k]['exchange_integral'] = '0';
@@ -2205,7 +2219,7 @@ class Goods extends Base
         // 秒杀商品
         $flashSale = Db::name('flash_sale')->where([
             'goods_id' => ['in', $filterGoodsIds],
-            'source' => ['LIKE',$this->isApp ? '%' . 3 . '%' : '%' . 1 . '%']
+            'source' => ['LIKE', $this->isApp ? '%' . 3 . '%' : '%' . 1 . '%']
         ])->where(['start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->field('goods_id')->select();
         // 团购商品
         $groupBuy = Db::name('group_buy')->where(['goods_id' => ['in', $filterGoodsIds]])
