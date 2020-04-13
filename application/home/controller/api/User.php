@@ -1613,17 +1613,25 @@ class User extends Base
         if ($electronic < 1) {
             return json(['status' => 0, 'msg' => '传成电子币的数额不能小于1', 'result' => null]);
         }
-        $userMoneyLog = [];
-        $electronicLog = [];
-
+        $withdrawal = M('withdrawals')->where('user_id', $this->user_id)->where('status', 0)->value('money');
+        $user_money = M('Users')->where('user_id', $this->user_id)->getField('user_money');
+        if ($withdrawal && $user_money - $withdrawal < $electronic) {
+            return json(['status' => 0, 'msg' => '你有一笔余额正在申请提现，因此你的余额不够' . $electronic]);
+        } elseif ($user_money < $electronic) {
+            return json(['status' => 0, 'msg' => '你的余额不够' . $electronic]);
+        }
         $user_money = M('Users')->where('user_id', $user['user_id'])->getField('user_money');
-
         if ($user_money < $electronic) {
             return json(['status' => 0, 'msg' => '你的余额不够' . $electronic, 'result' => null]);
         }
+        Db::startTrans();
         accountLog($user['user_id'], 0, 0, '用户余额转电子币', 0, 0, '', $electronic, 13);
-        accountLog($user['user_id'], -$electronic, 0, '电子币充值（余额转）', 0, 0, '', 0, 13);
-
+        $res = accountLog($user['user_id'], -$electronic, 0, '电子币充值（余额转）', 0, 0, '', 0, 13);
+        if (!$res) {
+            Db::rollback();
+            return json(['status' => 0, 'msg' => '电子币充值（余额转）失败']);
+        }
+        Db::commit();
         return json(['status' => 1, 'msg' => '电子币充值成功', 'result' => null]);
     }
 
@@ -1648,10 +1656,14 @@ class User extends Base
         if ($user_electronic < $electronic) {
             return json(['status' => 0, 'msg' => '你的电子币不够' . $electronic, 'result' => null]);
         }
-        accountLog($user['user_id'], 0, 0, "转出电子币给用户$to_user_id", 0, 0, '', -$electronic, 13);
-
+        Db::startTrans();
+        $res = accountLog($user['user_id'], 0, 0, "转出电子币给用户$to_user_id", 0, 0, '', -$electronic, 13);
+        if (!$res) {
+            Db::rollback();
+            return json(['status' => 0, 'msg' => "转出电子币给用户$to_user_id" . '失败', 'result' => null]);
+        }
         accountLog($to_user_id, 0, 0, "来自用户{$user['user_id']}的赠送", 0, 0, '', $electronic, 13, false);
-
+        Db::commit();
         return json(['status' => 1, 'msg' => '电子币转帐成功', 'result' => null]);
     }
 
@@ -1692,8 +1704,14 @@ class User extends Base
             if ($userElectronic < $electronic) {
                 return json(['status' => 0, 'msg' => '你的电子币不够' . $electronic]);
             }
-            accountLog($this->user_id, 0, 0, '转出电子币给用户' . $toUser['user_id'], 0, 0, '', -$electronic, 12);
+            Db::startTrans();
+            $res = accountLog($this->user_id, 0, 0, '转出电子币给用户' . $toUser['user_id'], 0, 0, '', -$electronic, 12);
+            if (!$res) {
+                Db::rollback();
+                return json(['status' => 0, 'msg' => '转出电子币给用户' . $toUser['user_id'] . '失败']);
+            }
             accountLog($toUser['user_id'], 0, 0, '转入电子币From用户' . $this->user_id, 0, 0, '', $electronic, 12, false);
+            Db::commit();
             $userElectronic = M('Users')->where('user_id', $this->user_id)->getField('user_electronic');
             return json(['status' => 1, 'msg' => '电子币转增成功', 'result' => ['user_electronic' => $userElectronic]]);
         } else {
@@ -1718,15 +1736,17 @@ class User extends Base
             return json(['status' => 0, 'msg' => '转账用户不存在，请重新确认', 'result' => null]);
         }
         $user_pay_points = M('Users')->where('user_id', $user['user_id'])->getField('pay_points');
-
         if ($user_pay_points < $pay_points) {
             return json(['status' => 0, 'msg' => '你的积分不够' . $pay_points, 'result' => null]);
         }
-
-        accountLog($user['user_id'], 0, -$pay_points, "转出积分给用户$to_user_id", 0, 0, '', 0, 12);
-
+        Db::startTrans();
+        $res = accountLog($user['user_id'], 0, -$pay_points, "转出积分给用户$to_user_id", 0, 0, '', 0, 12);
+        if (!$res) {
+            Db::rollback();
+            return json(['status' => 0, 'msg' => "转出积分给用户$to_user_id" . '失败', 'result' => null]);
+        }
         accountLog($to_user_id, 0, $pay_points, "转入积分From用户{$user['user_id']}", 0, 0, '', 0, 12, false);
-
+        Db::commit();
         return json(['status' => 1, 'msg' => '积分转帐成功', 'result' => null]);
     }
 
@@ -1767,8 +1787,14 @@ class User extends Base
             if ($userPayPoints < $payPoints) {
                 return json(['status' => 0, 'msg' => '你的积分不够' . $payPoints]);
             }
-            accountLog($this->user_id, 0, -$payPoints, '转赠用户' . $toUser['user_id'], 0, 0, '', 0, 12);
+            Db::startTrans();
+            $res = accountLog($this->user_id, 0, -$payPoints, '积分转赠用户' . $toUser['user_id'], 0, 0, '', 0, 12);
+            if (!$res) {
+                Db::rollback();
+                return json(['status' => 0, 'msg' => '积分转赠用户' . $toUser['user_id'] . '失败']);
+            }
             accountLog($toUser['user_id'], 0, $payPoints, '从用户' . $this->user_id . '获赠', 0, 0, '', 0, 12, false);
+            Db::commit();
             $userPayPoints = M('Users')->where('user_id', $this->user_id)->getField('pay_points');
             return json(['status' => 1, 'msg' => '积分转增成功', 'result' => ['user_pay_points' => $userPayPoints]]);
         }
@@ -1843,12 +1869,21 @@ class User extends Base
             if ($amount < 1) {
                 return json(['status' => 0, 'msg' => '数额不能小于1']);
             }
+            $withdrawal = M('withdrawals')->where('user_id', $this->user_id)->where('status', 0)->value('money');
             $user_money = M('Users')->where('user_id', $this->user_id)->getField('user_money');
-            if ($user_money < $amount) {
+            if ($withdrawal && $user_money - $withdrawal < $amount) {
+                return json(['status' => 0, 'msg' => '你有一笔余额正在申请提现，因此你的余额不够' . $amount]);
+            } elseif ($user_money < $amount) {
                 return json(['status' => 0, 'msg' => '你的余额不够' . $amount]);
             }
+            Db::startTrans();
             accountLog($this->user_id, 0, 0, '用户余额转电子币', 0, 0, '', $amount, 13);
-            accountLog($this->user_id, -$amount, 0, '电子币充值（余额转）', 0, 0, '', 0, 13);
+            $res = accountLog($this->user_id, -$amount, 0, '电子币充值（余额转）', 0, 0, '', 0, 13);
+            if (!$res) {
+                Db::rollback();
+                return json(['status' => 0, 'msg' => '电子币充值（余额转）失败']);
+            }
+            Db::commit();
             $user = M('users')->where(['user_id' => $this->user_id])->field('user_electronic, user_money')->find();
             return json(['status' => 1, 'msg' => '电子币充值成功', 'result' => [
                 'user_electronic' => $user['user_electronic'],

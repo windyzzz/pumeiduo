@@ -972,7 +972,24 @@ function accountLog($user_id, $user_money = 0.00, $pay_points = 0.00, $desc = ''
     if (0 == ($user_money + $pay_points + $distribut_money + $user_electronic)) {
         return false;
     }
-    $update = Db::name('users')->where('user_id', $user_id)->update($update_data);
+    $where = ['user_id' => $user_id];
+    if (bccomp(0, $user_money, 2) == 1) {
+        // 扣减余额
+        $where['user_money'] = ['egt', abs($user_money)];
+    }
+    if (bccomp(0, $pay_points, 2) == 1) {
+        // 扣减积分
+        $where['pay_points'] = ['egt', abs($pay_points)];
+    }
+    if (bccomp(0, $distribut_money, 2) == 1) {
+        // 扣减累积佣金
+        $where['distribut_money'] = ['egt', abs($distribut_money)];
+    }
+    if (bccomp(0, $user_electronic, 2) == 1) {
+        // 扣减电子币
+        $where['user_electronic'] = ['egt', abs($user_electronic)];
+    }
+    $update = Db::name('users')->where($where)->update($update_data);
     if ($update) {
         M('account_log')->add($account_log);
         if ($isOneself) {
