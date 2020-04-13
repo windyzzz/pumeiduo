@@ -82,7 +82,7 @@ class Distribute extends Base
 
         $where = [
             'rl.user_id' => $this->user_id,
-            'rl.create_time' => ['BETWEEN', [$startAt, $endAt]]
+            'rl.create_time' => ['BETWEEN', [strtotime(date('Y-m-d 00:00:00', $startAt)), strtotime(date('Y-m-d 23:59:59', $endAt))]]
         ];
         if ($status != '') {
             $where['rl.status'] = $status;
@@ -183,7 +183,7 @@ class Distribute extends Base
         $where = [
             'rl.user_id' => $this->user_id,
             'rl.buy_user_id' => $buyUserId,
-            'rl.create_time' => ['BETWEEN', [$startAt, $endAt]],
+            'rl.create_time' => ['BETWEEN', [strtotime(date('Y-m-d 00:00:00', $startAt)), strtotime(date('Y-m-d 23:59:59', $endAt))]]
         ];
         if ($status != '') {
             $where['rl.status'] = $status;
