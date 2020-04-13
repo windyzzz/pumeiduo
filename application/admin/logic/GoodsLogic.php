@@ -33,7 +33,7 @@ class GoodsLogic extends Model
     public function goods_cat_list($cat_id = 0, $selected = 0, $re_type = true, $level = 0)
     {
         global $goods_category, $goods_category2;
-        $sql = 'SELECT * FROM  __PREFIX__goods_category ORDER BY parent_id , sort_order ASC';
+        $sql = 'SELECT * FROM  __PREFIX__goods_category ORDER BY parent_id ASC, sort_order DESC';
         $goods_category = DB::query($sql);
         $goods_category = convert_arr_key($goods_category, 'id');
 

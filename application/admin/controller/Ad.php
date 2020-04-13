@@ -91,9 +91,11 @@ class Ad extends Base
 
         $Ad = new AdModel();
         $pid = I('pid', 0);
+        $order = '';
         if ($pid) {
             $where['pid'] = $pid;
             $this->assign('pid', I('pid'));
+            $order = 'orderby DESC';
         }
         $keywords = I('keywords/s', false, 'trim');
         if ($keywords) {
@@ -101,7 +103,7 @@ class Ad extends Base
         }
         $count = $Ad->where($where)->count(); // 查询满足要求的总记录数
         $Page = $pager = new Page($count, 10); // 实例化分页类 传入总记录数和每页显示的记录数
-        $res = $Ad->where($where)->order('pid desc')->limit($Page->firstRow . ',' . $Page->listRows)->select();
+        $res = $Ad->where($where)->order('pid desc')->limit($Page->firstRow . ',' . $Page->listRows)->order($order)->select();
         $list = [];
         if ($res) {
             $media = ['图片', '文字', 'flash'];
