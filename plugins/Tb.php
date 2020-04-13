@@ -36,7 +36,7 @@ Class Tb
         $test_ip = '61.238.101.139';
         $test_url_arr = array(
             1 => 'http://bestputest.lohas211.com/index.php/Tb/get_system',
-            2 => 'http://test.pumeiduo.com',
+            2 => '',
             3 => 'http://pmderp.qpgame666.com/index.php/Tb/get_system'
         );
         // 正式链接

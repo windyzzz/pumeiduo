@@ -24,7 +24,8 @@ class Distribut extends Base
         $this->service = new \app\admin\logic\DistributLogic();
     }
 
-    function exportRebateList(){
+    function exportRebateList()
+    {
 
         $begin = I('start_time');
         $end = I('end_time');
@@ -34,16 +35,17 @@ class Distribut extends Base
 
         $where = ' 1 = 1 '; // 搜索条件
 
-        ('' !== I('type')) && $where = "$where and type = ".I('type');
-        ('' !== I('status')) && $where = "$where and status = ".I('status');
-        ('' !== I('level')) && $where = "$where and level = ".I('level');
+        ('' !== I('type')) && $where = "$where and type = " . I('type');
+        ('' !== I('status')) && $where = "$where and status = " . I('status');
+        ('' !== I('level')) && $where = "$where and level = " . I('level');
 
-        $cat_id = I('cat_id');
+//        $cat_id = I('cat_id');
 
         $order_sn = I('order_sn') ? trim(I('order_sn')) : '';
         if ($order_sn) {
             $where = "$where and (order_sn = '$order_sn')";
         }
+        $condition = [];
         if ($begin && $end) {
             $condition['confirm'] = ['between', "$begin,$end"];
         }
@@ -54,50 +56,48 @@ class Distribut extends Base
         }
 
         $list = M('rebate_log')->where($where)->where($condition)->order('id desc')->select();
-        foreach($list as $k=>$v){
-            $list[$k]['create_time'] = date('Y-m-d H:i:s',$v['create_time']);
-            $list[$k]['confirm'] = $v['confirm']?date('Y-m-d H:i:s',$v['confirm']):'';
+        foreach ($list as $k => $v) {
+            $list[$k]['create_time'] = date('Y-m-d H:i:s', $v['create_time']);
+            $list[$k]['confirm'] = $v['confirm'] ? date('Y-m-d H:i:s', $v['confirm']) : '';
             $list[$k]['status'] = rebate_status($v['status']);
             $list[$k]['type'] = rebate_type($v['type']);
         }
 
-
         $strTable = '<table width="500" border="1">';
         $strTable .= '<tr>';
-        $strTable .= '<td style="text-align:left;font-size:12px;width:120px;">购买人昵称</td>';
-        $strTable .= '<td style="text-align:left;font-size:12px;" width="100">订单id</td>';
-        $strTable .= '<td style="text-align:left;font-size:12px;" width="100">订单编号</td>';
-        $strTable .= '<td style="text-align:left;font-size:12px;" width="*">商品总价</td>';
-        $strTable .= '<td style="text-align:left;font-size:12px;" width="*">获佣用户</td>';
-        $strTable .= '<td style="text-align:left;font-size:12px;" width="*">获佣金额</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;width:120px;">购买人昵称</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;width:100px;">订单id</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;width:120px;">订单编号</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品总价</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">获佣用户</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">获佣金额</td>';
 
-        $strTable .= '<td style="text-align:left;font-size:12px;" width="*">获佣积分</td>';
-        $strTable .= '<td style="text-align:left;font-size:12px;" width="*">获佣代数</td>';
-        $strTable .= '<td style="text-align:left;font-size:12px;" width="*">生成时间</td>';
-        $strTable .= '<td style="text-align:left;font-size:12px;" width="*">确定收货时间</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">获佣积分</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">获佣代数</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">生成时间</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">确定收货时间</td>';
 
-        $strTable .= '<td style="text-align:left;font-size:12px;" width="*">状态</td>';
-        $strTable .= '<td style="text-align:left;font-size:12px;" width="*">类型</td>';
-        $strTable .= '<td style="text-align:left;font-size:12px;" width="*">备注</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">状态</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">类型</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">备注</td>';
 
         $strTable .= '</tr>';
         if (is_array($list)) {
             foreach ($list as $k => $val) {
                 $strTable .= '<tr>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['nickname'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['order_id'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['order_sn'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['goods_price'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['user_id'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['money'].'</td>';
-
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['point'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['level'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['create_time'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['confirm'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['status'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['type'].'</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">'.$val['remark'].'</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['nickname'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['order_id'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;' . $val['order_sn'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['goods_price'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['user_id'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['money'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['point'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['level'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['create_time'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['confirm'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['status'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['type'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['remark'] . '</td>';
 
                 $strTable .= '</tr>';
             }
@@ -131,9 +131,9 @@ class Distribut extends Base
 
         $where = ' 1 = 1 '; // 搜索条件
 
-        ('' !== I('type')) && $where = "$where and type = ".I('type');
-        ('' !== I('status')) && $where = "$where and status = ".I('status');
-        ('' !== I('level')) && $where = "$where and level = ".I('level');
+        ('' !== I('type')) && $where = "$where and type = " . I('type');
+        ('' !== I('status')) && $where = "$where and status = " . I('status');
+        ('' !== I('level')) && $where = "$where and level = " . I('level');
 
 //        $cat_id = I('cat_id');
 
@@ -150,9 +150,9 @@ class Distribut extends Base
             $where = "$where and (user_id = '$user_id')";
         }
         /**  搜索条件下 分页赋值
-        foreach($condition as $key=>$val) {
-            $Page->parameter[$key]   =   urlencode($val);
-        }
+         * foreach($condition as $key=>$val) {
+         * $Page->parameter[$key]   =   urlencode($val);
+         * }
          */
         $count = M('rebate_log')->where($where)->where($condition)->count();
         $Page = new AjaxPage($count, 20);
@@ -160,7 +160,7 @@ class Distribut extends Base
 
         $show = $Page->show();
 
-        $list = M('rebate_log')->where($where)->where($condition)->limit($Page->firstRow.','.$Page->listRows)->order('id desc')->select();
+        $list = M('rebate_log')->where($where)->where($condition)->limit($Page->firstRow . ',' . $Page->listRows)->order('id desc')->select();
 
         // dump(M('rebate_log')->where($where)->where($condition)->limit($Page->firstRow.','.$Page->listRows)->order('id desc')->fetchSql(1)->select());
 

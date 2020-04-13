@@ -58,6 +58,10 @@ class Tb extends Controller
                 if ($request_send['status'] == 1) {
                     // 同步成功  改变状态
                     M('tb')->where(array('id' => $v['id']))->data(array('tb_time' => NOW_TIME, 'status' => 1, 'msg' => ''))->save();
+                    if ($v['type'] == 11) {
+                        // 订单pv
+                        M('order')->where(['order_id' => $v['from_id']])->update(['pv_send' => 1]);
+                    }
                 } else {
                     M('tb')->where(array('id' => $v['id']))->data(array('tb_time' => NOW_TIME, 'status' => 0, 'msg' => $request_send['msg']))->save();
                 }
