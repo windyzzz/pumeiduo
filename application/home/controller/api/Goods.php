@@ -78,7 +78,6 @@ class Goods extends Base
         //直接输出
         createSharePng($gData, $filename);
         exit;
-
     }
 
     private function scerweima($user_id, $goods_id)
@@ -147,7 +146,7 @@ class Goods extends Base
             } elseif ($goods['commission'] == 0) {
                 $goods['commission'] = '';
             } else {
-                $goods['commission'] = bcdiv(bcmul($goods['shop_price'], $goods['commission'], 2), 100, 2);
+                $goods['commission'] = bcdiv(bcmul(bcsub($goods['shop_price'], $goods['exchange_integral'], 2), $goods['commission'], 2), 100, 2);
             }
         } else {
             $goods['integral_pv'] = '';
@@ -308,7 +307,7 @@ class Goods extends Base
         }
         // 处理显示金额
         if ($goods['exchange_integral'] != 0) {
-            $goods['exchange_price'] = bcdiv(bcsub(bcmul($goods['shop_price'], 100), bcmul($goods['exchange_integral'], 100)), 100, 2);
+            $goods['exchange_price'] = bcsub($goods['shop_price'], $goods['exchange_integral'], 2);
         } else {
             $goods['exchange_price'] = $goods['shop_price'];
         }
@@ -325,7 +324,7 @@ class Goods extends Base
             } elseif ($goods['commission'] == 0) {
                 $goods['commission'] = '';
             } else {
-                $goods['commission'] = bcdiv(bcmul($goods['shop_price'], $goods['commission'], 2), 100, 2);
+                $goods['commission'] = bcdiv(bcmul(bcsub($goods['shop_price'], $goods['exchange_integral'], 2), $goods['commission'], 2), 100, 2);
             }
         } else {
             $goods['integral_pv'] = '';
@@ -1349,7 +1348,7 @@ class Goods extends Base
                 }
                 // 处理显示金额
                 if ($v['exchange_integral'] != 0) {
-                    $goods_list[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);
+                    $goods_list[$k]['exchange_price'] = bcsub($v['shop_price'], $v['exchange_integral'], 2);
                 } else {
                     $goods_list[$k]['exchange_price'] = $v['shop_price'];
                 }
@@ -1689,7 +1688,7 @@ class Goods extends Base
 
             // 处理显示金额
             if ($v['exchange_integral'] != 0) {
-                $goodsList[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);
+                $goodsList[$k]['exchange_price'] = bcsub($v['shop_price'], $v['exchange_integral'], 2);
             } else {
                 $goodsList[$k]['exchange_price'] = $v['shop_price'];
             }
@@ -1829,7 +1828,7 @@ class Goods extends Base
 
             // 处理显示金额
             if ($v['exchange_integral'] != 0) {
-                $goodsList[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);
+                $goodsList[$k]['exchange_price'] = bcsub($v['shop_price'], $v['exchange_integral'], 2);
             } else {
                 $goodsList[$k]['exchange_price'] = $v['shop_price'];
             }
@@ -2327,7 +2326,7 @@ class Goods extends Base
         foreach ($list as $k => $v) {
             // 处理显示金额
             if ($v['exchange_integral'] != 0) {
-                $list[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);
+                $list[$k]['exchange_price'] = bcsub($v['shop_price'], $v['exchange_integral'], 2);
             } else {
                 $list[$k]['exchange_price'] = $v['shop_price'];
             }
