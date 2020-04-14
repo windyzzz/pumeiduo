@@ -2131,11 +2131,8 @@ class Order extends Base
             $payLogic->setGoodsPv($cartLogic->getGoodsPv());
 
             // 配送物流
-            if (empty($userAddress)) {
-                $payLogic->delivery('0');
-            } else {
-                $payLogic->delivery($userAddress['district']);
-            }
+            $payLogic->delivery($userAddress['district']);
+
             // 使用积分
             $pay_points = $payLogic->getUsePoint();
             if ($this->user['pay_points'] < $pay_points) {
@@ -2373,11 +2370,11 @@ class Order extends Base
             $payLogic->setGoodsPv($cartLogic->getGoodsPv());
 
             // 配送物流
-            if (empty($userAddress)) {
-                $payLogic->delivery('0');
-            } else {
-                $payLogic->delivery($userAddress['district']);
+            $res = $payLogic->delivery($userAddress['district']);
+            if (isset($res['status']) && $res['status'] == -1) {
+                return json(['status' => 0, 'msg' => '订单中部分商品不支持对当前地址的配送']);
             }
+
             // 使用积分
             $pay_points = $payLogic->getUsePoint();
             if ($this->user['pay_points'] < $pay_points) {

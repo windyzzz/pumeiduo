@@ -374,8 +374,7 @@ class PlaceOrder
                         'commission' => 0,
                         'trade_type' => $v['trade_type'],
                         'sale_type' => 1,
-                        're_id' => 0,
-                        'pay_type' => $payItem['type']      // 购买方式：1现金+积分 2现金
+                        're_id' => 0
                     ];
                     if (!empty($v['spec_key'])) {
                         $orderGoodsData['spec_key'] = $v['spec_key'];           // 商品规格

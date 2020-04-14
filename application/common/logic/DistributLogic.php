@@ -35,22 +35,45 @@ class DistributLogic
 
         // 计算用于分成的总金额
         $order_goods = M('OrderGoods')
-            ->field('goods_id,goods_num,final_price')
+            ->field('goods_id, goods_num, final_price, pay_type')
             ->where('order_id', $order['order_id'])
             ->select();
+
+        // 查看用户等级
+        $userLevel = M('users')->where(['user_id' => $order['user_id']])->value('distribut_level');
 
         $distribut_total_money = 0;
         $is_vip = false;
         foreach ($order_goods as $ov) {
-            $goods_info = M('goods')->field('zone,distribut_id,commission')->where(['goods_id' => $ov['goods_id']])->find();
+            $goods_info = M('goods')->field('zone, distribut_id, commission, integral_pv, retail_pv')->where(['goods_id' => $ov['goods_id']])->find();
             if (3 == $goods_info['zone'] && $goods_info['distribut_id'] > 0) {
                 $is_vip = true;
-            } else {
+                continue;
+            }
+            $hasGoodsPv = false;
+            if ($userLevel >= 3) {
+                switch ($ov['pay_type']) {
+                    case 1:
+                        // 现金+积分
+                        if ($goods_info['integral_pv'] > 0) {
+                            $hasGoodsPv = true;
+                        }
+                        break;
+                    case 2:
+                        // 现金
+                        if ($goods_info['retail_pv'] > 0) {
+                            $hasGoodsPv = true;
+                        }
+                        break;
+                }
+            }
+            if (!$hasGoodsPv) {
                 $distribut_total_money = bcadd($distribut_total_money, bcdiv(bcmul(bcmul($ov['final_price'], $ov['goods_num'], 2), $goods_info['commission'], 2), 100, 2), 2);
             }
         }
 
         $invite_uid = M('Users')->where('user_id', $order['user_id'])->getField('invite_uid');
+        if ($invite_uid == 0) $invite_uid = M('Users')->where('user_id', $order['user_id'])->getField('first_leader');
         $OrderCommonLogic = new \app\common\logic\OrderLogic();
         if ($is_vip) {
             //vip商品

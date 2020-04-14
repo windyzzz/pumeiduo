@@ -1,96 +1,97 @@
 <table>
-       <tbody>
-            <volist name="list" id="list">
-              <tr data-id="{$list[goods_id]}">
-                <td class="sign" axis="col6">
-                  <div style="width: 24px;"><i class="ico-check"></i></div>
-                </td>
+    <tbody>
+    <volist name="list" id="list">
+        <tr data-id="{$list[goods_id]}">
+            <td class="sign" axis="col6">
+                <div style="width: 24px;"><i class="ico-check"></i></div>
+            </td>
+            <td align="center" axis="col0">
+                <div style="width: 50px;">{$list.id}</div>
+            </td>
+            <td align="center" axis="col0">
+                <div style="text-align: left; width: 100px;">{$list.nickname}</div>
+            </td>
+            <td align="center" axis="col0">
+                <div style="text-align: center; width: 100px;">{$list.order_id}</div>
+            </td>
+            <td align="center" axis="col0">
+                <div style="text-align: center; width: 200px;">{$list.order_sn}</div>
+            </td>
+            <td align="center" axis="col0">
+                <div style="text-align: center; width: 50px;">{$list.goods_price}</div>
+            </td>
+            <td align="center" axis="col0">
+                <div style="text-align: center; width: 100px;">{$list.user_id}</div>
+            </td>
+            <td align="center" axis="col0">
+                <div style="text-align: center; width: 100px;">{$list.money}</div>
+            </td>
+            <td align="center" axis="col0">
+                <div style="text-align: center; width: 100px;">{$list.point}</div>
+            </td>
+            <td align="center" axis="col0">
+                <div style="text-align: center; width: 100px;">{$list.level}</div>
+            </td>
+            <td align="center" axis="col0">
+                <div style="text-align: center; width: 150px;">{$list.create_time|exchangeTime}</div>
+            </td>
+            <td align="center" axis="col0">
+                <div style="text-align: center; width: 150px;">{$list['confirm']>0 ? exchangeTime($list['confirm']) :
+                    ''}
+                </div>
+            </td>
+            <td align="center" axis="col0">
+                <div style="text-align: center; width: 50px;">{:rebate_status($list.status)}</div>
+            </td>
+            <td align="center" axis="col0">
+                <div style="text-align: center; width: 150px;">{:rebate_type($list['type'])}</div>
+            </td>
+            <td align="center" axis="col0">
+                <div style="text-align: center; width: 100px;">{$list.remark}</div>
+            </td>
+            <td align="" class="" style="width: 100%;">
+                <div>&nbsp;</div>
+            </td>
+        </tr>
+    </volist>
+    </tbody>
+</table>
+<!--分页位置--> {$page}
+<script>
+    // 点击分页触发的事件
+    $(".pagination  a").click(function () {
+        cur_page = $(this).data('p');
+        ajax_get_table('search-form2', cur_page);
+    });
 
-                <td align="center" axis="col0">
-                  <div style="width: 50px;">{$list.id}</div>
-                </td>
-                <td align="center" axis="col0">
-                  <div style="text-align: left; width: 100px;">{$list.nickname}</div>
-                </td>
-                <td align="center" axis="col0">
-                  <div style="text-align: center; width: 100px;">{$list.order_id}</div>
-                </td>
-                <td align="center" axis="col0">
-                  <div style="text-align: center; width: 200px;">{$list.order_sn}</div>
-                </td>
-                <td align="center" axis="col0">
-                  <div style="text-align: center; width: 50px;">{$list.goods_price}</div>
-                </td>
-                <td align="center" axis="col0">
-                  <div style="text-align: center; width: 100px;">{$list.user_id}</div>
-                </td>
-                <td align="center" axis="col0">
-                  <div style="text-align: center; width: 100px;">{$list.money}</div>
-                </td>
-                <td align="center" axis="col0">
-                  <div style="text-align: center; width: 100px;">{$list.point}</div>
-                </td>
-                <td align="center" axis="col0">
-                  <div style="text-align: center; width: 100px;">{$list.level}</div>
-                </td>
-                <td align="center" axis="col0">
-                  <div style="text-align: center; width: 150px;">{$list.create_time|exchangeTime}</div>
-                </td>
-                <td align="center" axis="col0">
-                  <div style="text-align: center; width: 150px;">{$list['confirm']>0 ? exchangeTime($list['confirm']) : ''}</div>
-                </td>
-                <td align="center" axis="col0">
-                  <div style="text-align: center; width: 50px;">{:rebate_status($list.status)}</div>
-                </td>
-                <td align="center" axis="col0">
-                  <div style="text-align: center; width: 150px;">{:rebate_type($list['type'])}</div>
-                </td>
-                <td align="center" axis="col0">
-                  <div style="text-align: center; width: 100px;">{$list.remark}</div>
-                </td>
+    /*
+     * 清除静态页面缓存
+     */
+    function ClearGoodsHtml(goods_id) {
+        $.ajax({
+            type: 'GET',
+            url: "{:U('Admin/System/ClearGoodsHtml')}",
+            data: {goods_id: goods_id},
+            dataType: 'json',
+            success: function (data) {
+                layer.alert(data.msg, {icon: 2});
+            }
+        });
+    }
 
+    /*
+     * 清除商品缩列图缓存
+     */
+    function ClearGoodsThumb(goods_id) {
+        $.ajax({
+            type: 'GET',
+            url: "{:U('Admin/System/ClearGoodsThumb')}",
+            data: {goods_id: goods_id},
+            dataType: 'json',
+            success: function (data) {
+                layer.alert(data.msg, {icon: 2});
+            }
+        });
+    }
 
-              </tr>
-            </volist>
-          </tbody>
-        </table>
-        <!--分页位置--> {$page}
-		<script>
-            // 点击分页触发的事件
-            $(".pagination  a").click(function(){
-                cur_page = $(this).data('p');
-                ajax_get_table('search-form2',cur_page);
-            });
-
-			/*
-			 * 清除静态页面缓存
-			 */
-			function ClearGoodsHtml(goods_id)
-			{
-				$.ajax({
-						type:'GET',
-						url:"{:U('Admin/System/ClearGoodsHtml')}",
-						data:{goods_id:goods_id},
-						dataType:'json',
-						success:function(data){
-							layer.alert(data.msg, {icon: 2});
-						}
-				});
-			}
-			/*
-			 * 清除商品缩列图缓存
-			 */
-			function ClearGoodsThumb(goods_id)
-			{
-				$.ajax({
-						type:'GET',
-						url:"{:U('Admin/System/ClearGoodsThumb')}",
-						data:{goods_id:goods_id},
-						dataType:'json',
-						success:function(data){
-							layer.alert(data.msg, {icon: 2});
-						}
-				});
-			}
-
-        </script>
+</script>
