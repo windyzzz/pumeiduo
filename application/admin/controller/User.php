@@ -1308,7 +1308,11 @@ class User extends Base
                     Db::rollback();
                     $this->ajaxReturn(['status' => 0, 'msg' => '用户ID：' . $val['user_id'] . ' 现在余额不足，请联系客户'], 'JSON');
                 }
-                accountLog($val['user_id'], ($val['money'] * -1), 0, '提现已完成', 0, 0, '', 0, 20); //手动转账，默认视为已通过线下转方式处理了该笔提现申请
+                $res = accountLog($val['user_id'], ($val['money'] * -1), 0, '提现已完成', 0, 0, '', 0, 20); //手动转账，默认视为已通过线下转方式处理了该笔提现申请
+                if (!$res) {
+                    Db::rollback();
+                    $this->ajaxReturn(['status' => 0, 'msg' => '用户ID：' . $val['user_id'] . ' 现在余额不足，请联系客户'], 'JSON');
+                }
             }
         }
 
