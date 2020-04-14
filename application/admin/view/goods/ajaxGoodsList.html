@@ -68,7 +68,15 @@
                     </if>
                 </div>
             </td>
-
+            <td align="center" axis="col0">
+                <div style="text-align: center; width: 30px;">
+                    <if condition='$list[abroad_recommend] eq 1'>
+                        <span class="yes" onClick="changeTableVal('goods','goods_id','{$list.goods_id}','abroad_recommend',this)"><i class="fa fa-check-circle"></i>是</span>
+                        <else/>
+                        <span class="no" onClick="changeTableVal('goods','goods_id','{$list.goods_id}','abroad_recommend',this)"><i class="fa fa-ban"></i>否</span>
+                    </if>
+                </div>
+            </td>
             <td align="center" axis="col0">
                 <div style="text-align: center; width: 300px;">
                     本区是否显示：

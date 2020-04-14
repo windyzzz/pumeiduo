@@ -411,7 +411,6 @@ class Goods extends Base
                 $data['commission'] = 0;
             }
 
-
             $goods_item = I('item/a');
             $specStock = Db::name('spec_goods_price')->where('goods_id = ' . $goods_id)->getField('key,store_count,item_id,store_count,item_sn');
             if ($goods_item) {
@@ -460,8 +459,17 @@ class Goods extends Base
                     $this->ajaxReturn($return_arr);
                 }
             }
-            $Goods->data($data, true); // 收集数据
-            $Goods->on_time = time(); // 上架时间
+            // 查看是否选择了海外购分类
+            $catId = I('cat_id');
+            if (M('goods_category')->where(['id' => $catId, 'name' => ['LIKE', '%海外购%']])->value('id')) {
+                // 查看商品是否是海外购商品
+                if (!M('goods')->where(['goods_id' => $goods_id, 'is_abroad' => 1])->value('goods_id')) {
+                    $this->ajaxReturn(['status' => 0, 'msg' => '请选择海外购商品']);
+                }
+            }
+
+            $Goods->data($data, true);  // 收集数据
+            $Goods->on_time = time();   // 上架时间
             I('cat_id_2') && ($Goods->cat_id = I('cat_id_2'));
             I('cat_id_3') && ($Goods->cat_id = I('cat_id_3'));
 

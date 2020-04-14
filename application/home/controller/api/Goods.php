@@ -2334,4 +2334,39 @@ class Goods extends Base
         }
         return json(['status' => 1, 'result' => $list]);
     }
+
+    /**
+     * 海外购商品分类
+     * @return \think\response\Json
+     */
+    public function abroadCate()
+    {
+        $cateId = I('cate_id', 0);
+        $cateList = M('goods_category gc1')
+            ->join('goods_category gc2', 'gc1.id = gc2.parent_id')
+            ->join('goods_category gc3', 'gc2.id = gc3.parent_id')
+            ->where([
+                'gc1.name' => ['LIKE', '%海外购%'],
+                'gc1.parent_id' => 0,
+                'gc1.is_show' => 1,
+                'gc2.is_show' => 1,
+                'gc3.is_show' => 1,
+            ])
+            ->order('gc3.sort_order DESC')->field('gc3.id cate_id, gc3.name')->select();
+        $cateItem = [
+            'cate_id' => '-1',
+            'name' => '精选'
+        ];
+        array_unshift($cateList, $cateItem);
+        foreach ($cateList as $k => $v) {
+            if ($cateId == 0 && $k == 0) {
+                $cateList[$k]['is_selected'] = 1;
+            } elseif ($cateId == $v['cate_id']) {
+                $cateList[$k]['is_selected'] = 1;
+            } else {
+                $cateList[$k]['is_selected'] = 0;
+            }
+        }
+        return json(['status' => 1 , 'result' => ['cate_list' => $cateList]]);
+    }
 }
