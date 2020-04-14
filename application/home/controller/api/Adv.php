@@ -24,7 +24,7 @@ class Adv extends Base
             $adList = $arr[$position_id];
             foreach ($adList as $k => $item) {
                 // 十六进制颜色转RGB
-                $adList[$k]['bgcolor'] = HexToRGB($item['bgcolor']);
+//                $adList[$k]['bgcolor'] = HexToRGBA($item['bgcolor'], 1);
                 // APP跳转页面接口参数
                 $adList[$k]['target_type_ids'] = [
                     'goods_id' => $item['target_type'] == 1 ? $item['target_type_id'] : "0",

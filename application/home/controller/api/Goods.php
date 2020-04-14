@@ -2366,6 +2366,38 @@ class Goods extends Base
                 $cateList[$k]['is_selected'] = 0;
             }
         }
-        return json(['status' => 1 , 'result' => ['cate_list' => $cateList]]);
+        return json(['status' => 1, 'result' => ['cate_list' => $cateList]]);
+    }
+
+    /**
+     * 海外购商品列表
+     * @return \think\response\Json
+     */
+    public function abroadGoodsList()
+    {
+        $cateId = I('cate_id', 0);
+        $sort = I('sort', 'goods_id');
+        $sortAsc = I('sort_asc', 'desc');
+        $where = [
+            'is_on_sale' => 1,
+            'is_abroad' => 1
+        ];
+        if ($cateId != 0) {
+            switch ($cateId) {
+                case -1:
+                    $where['abroad_recommend'] = 1;
+                    break;
+                default:
+                    $where['cat_id'] = $cateId;
+            }
+        }
+        $goodsIds = M('goods')->where($where)->getField('goods_id', true);
+        $count = count($goodsIds);
+        $page = new Page($count, 10);
+        // 获取商品数据
+        $goodsLogic = new GoodsLogic();
+        $goodsList = $goodsLogic->getGoodsList($goodsIds, $sort, $sortAsc, $page, null, ['is_abroad' => 1])['goods_list'];
+
+        return json(['status' => 1, 'result' => ['goods_list' => $goodsList]]);
     }
 }

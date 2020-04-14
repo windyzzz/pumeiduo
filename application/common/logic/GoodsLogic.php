@@ -946,12 +946,19 @@ class GoodsLogic extends Model
      * @param $sort_asc
      * @param $page
      * @param null $userId
+     * @param array $whereExt
      * @return array
      */
-    public function getGoodsList($filter_goods_id, $sort, $sort_asc, $page, $userId = null)
+    public function getGoodsList($filter_goods_id, $sort, $sort_asc, $page, $userId = null, $whereExt = [])
     {
+        $where = [
+            'is_abroad' => 0
+        ];
+        if (isset($whereExt['is_abroad'])) {
+            $where['is_abroad'] = $whereExt['is_abroad'];
+        }
         // 商品列表
-        $goodsList = Db::name('goods')->where('goods_id', 'in', $filter_goods_id)->where('is_abroad', 0)
+        $goodsList = Db::name('goods')->where('goods_id', 'in', $filter_goods_id)->where($where)
             ->field('goods_id, cat_id, extend_cat_id, goods_sn, goods_name, goods_type, brand_id, store_count, comment_count, goods_remark,
                 market_price, shop_price, cost_price, give_integral, exchange_integral, original_img, limit_buy_num, trade_type,
                 is_on_sale, is_free_shipping, is_recommend, is_new, is_hot, sale_type')

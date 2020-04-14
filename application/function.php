@@ -1679,3 +1679,57 @@ function HexToRGB($hexColor)
     }
     return $rgb;
 }
+
+/**
+ * 十六精致转RGBA
+ * @param $color
+ * @param integer $opacity 透明度
+ * @return array
+ */
+function HexToRGBA($color, $opacity = 0)
+{
+    $default = [
+        'r' => 0,
+        'g' => 0,
+        'b' => 0,
+    ];
+    // Return default if no color provided
+    if (empty($color))
+        return $default;
+
+    // Sanitize $color if "#" is provided
+    if ($color[0] == '#') {
+        $color = substr($color, 1);
+    }
+
+    // Check if color has 6 or 3 characters and get values
+    if (strlen($color) == 6) {
+        $hex = array($color[0] . $color[1], $color[2] . $color[3], $color[4] . $color[5]);
+    } elseif (strlen($color) == 3) {
+        $hex = array($color[0] . $color[0], $color[1] . $color[1], $color[2] . $color[2]);
+    } else {
+        return $default;
+    }
+
+    // Convert hexadec to rgb
+    $rgb = array_map('hexdec', $hex);
+
+    if ($opacity) {
+        if (abs($opacity) > 1) $opacity = 1.0;
+        array_push($rgb, $opacity);
+        $output = [
+            'r' => $rgb[0],
+            'g' => $rgb[1],
+            'b' => $rgb[2],
+            'a' => $rgb[3]
+        ];
+    } else {
+        $output = [
+            'r' => $rgb[0],
+            'g' => $rgb[1],
+            'b' => $rgb[2],
+        ];
+    }
+
+    return $output;
+}
