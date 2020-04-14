@@ -1398,6 +1398,7 @@ AND log_id NOT IN
             'shipping_status' => 1,             // 已发货
             'order_pv' => ['>', 0],
             'pv_tb' => 0,
+            'pv_send' => 0,
             'end_sale_time' => ['<=', time()]  // 售后期结束
         ];
         $orderIds = M('order')->where($where)->getField('order_id', true);

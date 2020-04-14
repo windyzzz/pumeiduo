@@ -51,6 +51,7 @@ class DistributLogic
         }
 
         $invite_uid = M('Users')->where('user_id', $order['user_id'])->getField('invite_uid');
+        if ($invite_uid == 0) $invite_uid = M('Users')->where('user_id', $order['user_id'])->getField('first_leader');
         $OrderCommonLogic = new \app\common\logic\OrderLogic();
         if ($is_vip) {
             //vip商品

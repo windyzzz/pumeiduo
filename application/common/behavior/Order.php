@@ -19,11 +19,14 @@ class Order
         ];
         Db::name('order_action')->add($action_info);
 
-        // 分销开关全局
-        $distribut_switch = tpCache('distribut.switch');
-        if (1 == $distribut_switch && file_exists(APP_PATH.'common/logic/DistributLogic.php')) {
-            $distributLogic = new \app\common\logic\DistributLogic();
-            $distributLogic->rebateLog($order); // 生成分成记录
+        if ($order['order_pv'] == 0) {
+            // pv与提成二选一计算
+            // 分销开关全局
+            $distribut_switch = tpCache('distribut.switch');
+            if (1 == $distribut_switch && file_exists(APP_PATH.'common/logic/DistributLogic.php')) {
+                $distributLogic = new \app\common\logic\DistributLogic();
+                $distributLogic->rebateLog($order); // 生成分成记录
+            }
         }
 
         // 如果有微信公众号 则推送一条消息到微信
