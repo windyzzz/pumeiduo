@@ -15,7 +15,10 @@ class Distribute extends Base
     public function member()
     {
         $level = I('level', 1);
-        $where = [];
+        $where = [
+            'is_lock' => 0,
+            'is_cancel' => 0
+        ];
         switch ($level) {
             case 1:
                 $where['first_leader'] = $this->user_id;
@@ -43,7 +46,10 @@ class Distribute extends Base
     public function memberList()
     {
         $level = I('level', 1);
-        $where = [];
+        $where = [
+            'is_lock' => 0,
+            'is_cancel' => 0
+        ];
         switch ($level) {
             case 1:
                 $where['first_leader'] = $this->user_id;
