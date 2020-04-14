@@ -466,7 +466,8 @@ class Tb extends Controller
             'weight' => $goods['weight'],//重量 - 克
             'on_time' => $goods['on_time'],//上架时间戳
             'out_time' => $goods['out_time'],//下架时间戳
-            'trade_type' => $goods['is_one_send'] == 1 ? 2 : 1
+            'trade_type' => $goods['is_one_send'] == 1 ? 2 : 1,
+            'is_abroad' => $goods['is_abroad']
         );
 
         if ($goods['is_one_send'] == 0) {
