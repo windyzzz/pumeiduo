@@ -1666,7 +1666,7 @@ function get_goods_category_tree()
         ->join('__AD_POSITION__ p', 'c.id = p.category_id', 'LEFT')
         // ->cache(true)
         ->where(['is_show' => 1])
-        ->order('sort_order desc')
+        ->order('sort_order desc, id asc')
         ->select(); //所有分类
     if ($cat_list) {
         $abroadCateId = 0;  // 海外购分类

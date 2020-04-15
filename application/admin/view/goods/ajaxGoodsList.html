@@ -22,7 +22,7 @@
                 <div style="width: 50px;">{$list.goods_id}</div>
             </td>
             <td align="center" axis="col0">
-                <div style="text-align: left; width: 300px;">
+                <div style="text-align: center; width: 300px;">
                     <if condition="$list[is_virtual] eq 1">
                         <span class="type-virtual" title="虚拟兑换商品">虚拟</span>
                     </if>
@@ -69,7 +69,7 @@
                 </div>
             </td>
             <td align="center" axis="col0">
-                <div style="text-align: center; width: 30px;">
+                <div style="text-align: center; width: 80px;">
                     <if condition='$list[abroad_recommend] eq 1'>
                         <span class="yes" onClick="changeTableVal('goods','goods_id','{$list.goods_id}','abroad_recommend',this)"><i class="fa fa-check-circle"></i>是</span>
                         <else/>

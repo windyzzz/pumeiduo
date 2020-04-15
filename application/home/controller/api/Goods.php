@@ -237,7 +237,7 @@ class Goods extends Base
         }
         $goods = Db::name('goods')->where('goods_id', $goods_id)->field('goods_id, cat_id, extend_cat_id, goods_sn, goods_name, goods_type, goods_remark, goods_content, 
             brand_id, store_count, comment_count, market_price, shop_price, cost_price, give_integral, exchange_integral, original_img, limit_buy_num, least_buy_num,
-            is_on_sale, is_free_shipping, is_recommend, is_new, is_hot, is_virtual, virtual_indate, click_count, zone, commission, integral_pv')->find();
+            is_on_sale, is_free_shipping, is_recommend, is_new, is_hot, is_virtual, virtual_indate, click_count, zone, commission, integral_pv, is_abroad')->find();
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
@@ -551,6 +551,13 @@ class Goods extends Base
 
         $goods['freight_free'] = tpCache('shopping.freight_free'); // 全场满多少免运费
         $goods['qr_code'] = ''; // 分享二维码
+
+        if ($goods['is_abroad'] == 1) {
+            $config = tpCache('abroad');
+            $goods['abroad_freight_process'] = isset($config['freight_process']) ? SITE_URL . $config['freight_process'] : '';
+        } else {
+            $goods['abroad_freight_process'] = '';
+        }
 
         // 组装数据
         $result['goods'] = $goods;
@@ -2373,7 +2380,7 @@ class Goods extends Base
      * 海外购商品列表
      * @return \think\response\Json
      */
-    public function abroadGoodsList()
+    public function abroadGoods()
     {
         $cateId = I('cate_id', 0);
         $sort = I('sort', 'goods_id');
