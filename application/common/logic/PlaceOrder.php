@@ -32,6 +32,7 @@ class PlaceOrder
     private $taxpayer;
     private $pay;
     private $order;
+    private $user;
     private $userAddress;
     private $payPsw;
     private $promType;
@@ -46,6 +47,11 @@ class PlaceOrder
     {
         $this->pay = $pay;
         $this->order = new Order();
+    }
+
+    public function setUser($user)
+    {
+        $this->user = $user;
     }
 
     /**
@@ -327,15 +333,18 @@ class PlaceOrder
                 'trade_type' => $goodsArr[$payItem['goods_id']]['trade_type'],
                 'sale_type' => $goodsArr[$payItem['goods_id']]['sale_type'],
                 're_id' => isset($payItem['re_id']) ? intval($payItem['re_id']) : 0,
+                'goods_pv' => 0,
                 'pay_type' => $payItem['type']      // 购买方式：1现金+积分 2现金
             ];
-            switch ($payItem['type']) {
-                case 1:
-                    $orderGoodsData['goods_pv'] = bcmul(bcmul($payItem['goods']['integral_pv'], $payItem['goods_num'], 2), $orderAmountRate, 2);
-                    break;
-                case 2:
-                    $orderGoodsData['goods_pv'] = bcmul(bcmul($payItem['goods']['retail_pv'], $payItem['goods_num'], 2), $orderAmountRate, 2);
-                    break;
+            if ($this->user['distribut_level'] >= 3) {
+                switch ($payItem['type']) {
+                    case 1:
+                        $orderGoodsData['goods_pv'] = bcmul(bcmul($payItem['goods']['integral_pv'], $payItem['goods_num'], 2), $orderAmountRate, 2);
+                        break;
+                    case 2:
+                        $orderGoodsData['goods_pv'] = bcmul(bcmul($payItem['goods']['retail_pv'], $payItem['goods_num'], 2), $orderAmountRate, 2);
+                        break;
+                }
             }
             if (!empty($payItem['spec_key'])) {
                 $orderGoodsData['spec_key'] = $payItem['spec_key'];

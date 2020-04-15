@@ -2408,6 +2408,7 @@ class Order extends Base
         try {
             Db::startTrans();
             $placeOrder = new PlaceOrder($payLogic);
+            $placeOrder->setUser($this->user);
             $placeOrder->setUserAddress($userAddress);
             $placeOrder->setUserNote($userNote);
             $placeOrder->setPayPsw($payPwd);
