@@ -511,6 +511,7 @@ class Cart
             // 提交订单
             if ('submit_order' == $act) {
                 $placeOrder = new PlaceOrder($pay);
+                $placeOrder->setUser($this->user);
                 $placeOrder->setUserAddress($address);
                 $placeOrder->setInvoiceTitle($invoice_title);
                 $placeOrder->setUserNote($user_note);
@@ -790,6 +791,7 @@ class Cart
             // 提交订单
             if ('submit_order' == $_REQUEST['act']) {
                 $placeOrder = new PlaceOrder($pay);
+                $placeOrder->setUser($this->user);
                 $placeOrder->setUserAddress($integral->getUserAddress());
                 $placeOrder->setInvoiceTitle($invoice_title);
                 $placeOrder->setUserNote($user_note);
