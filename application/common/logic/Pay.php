@@ -59,8 +59,8 @@ class Pay
     private $extra_reward;                  // 加价购商品记录列表
     private $extra_price = '0';             // 加价购商品价格
 
-    private $goodsPv;                       // 商品pv
-    private $orderPv;                       // 订单总pv
+    private $goodsPv = '0';                       // 商品pv
+    private $orderPv = '0';                       // 订单总pv
 
     public function __construct()
     {
