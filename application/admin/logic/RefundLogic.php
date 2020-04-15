@@ -107,7 +107,7 @@ class RefundLogic extends Model
             M('coupon_list')->where(['id' => $coupon_list['id'], 'status' => 1])->save($update_coupon_data);
         }
         M('order')->where(['order_id' => $order['order_id']])->save(['pay_status' => 3]); //更改订单状态
-        $orderLogic = new app\common\logic\OrderLogic();
+        $orderLogic = new \app\common\logic\OrderLogic();
         $orderLogic->alterReturnGoodsInventory($order); //取消订单后改变库存
         $expense_data = [
             'money' => $order['user_money'],
