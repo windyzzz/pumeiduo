@@ -349,8 +349,8 @@ class Cart extends Base
         }
         // 处理秒杀商品归纳
         $flashSaleList = [
-            'prom_id' => 0,
-            'type' => 6,
+            'prom_id' => '0',
+            'type' => '6',
             'type_value' => '秒杀专区',
             'goods' => []
         ];
@@ -379,6 +379,375 @@ class Cart extends Base
             'cart_num' => $cartNum
         ];
 
+        return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
+    }
+
+    /**
+     * 购物车列表（新）_version2
+     * @return \think\response\Json
+     * @throws TpshopException
+     */
+    public function indexNew_v2()
+    {
+        $params['user_token'] = $this->userToken;
+        Hook::exec('app\\home\\behavior\\CheckAuth', 'run', $params);
+
+        $cartLogic = new CartLogic();
+        $cartLogic->setUserId($this->user_id);
+        $cartData = $cartLogic->getCartList(0, true, true); // 用户购物车
+        $cartNum = $cartData['cart_num'];   // 获取用户购物车总数
+        $cartData = $cartData['cart_list'];
+        // 圃美多商品
+        $pmdList = [
+            'prom_title' => '',
+            'prom_title_data' => [],
+            'cart_title' => '乐活优选',
+            'goods_list' => [
+                [
+                    'prom_id' => '',
+                    'type' => '',
+                    'type_value' => '',
+                    'goods' => []
+                ]
+            ]
+        ];
+        // 海外购商品
+        $abroadList = [
+            'prom_title' => '',
+            'prom_title_data' => [],
+            'cart_title' => '海外购',
+            'goods_list' => [
+                [
+                    'prom_id' => '',
+                    'type' => '',
+                    'type_value' => '',
+                    'goods' => []
+                ]
+            ]
+        ];
+        // 失效商品
+        $invalidList = [];
+        if (!empty($cartData)) {
+            // 计算购物车金额
+            $Pay = new \app\common\logic\Pay();
+            $cartData = collection($cartData)->toArray();
+            $cartData = $Pay->activity2_goods($cartData);
+            // 促销活动商品
+            $goods_tao_grade = M('goods_tao_grade')
+                ->alias('g')
+                ->join('prom_goods pg', "g.promo_id = pg.id and pg.group like '%" . $this->user['distribut_level'] . "%' and pg.start_time <= " . NOW_TIME . " and pg.end_time >= " . NOW_TIME . " and pg.is_end = 0 and is_open = 1")
+                ->join('spec_goods_price sgp', 'sgp.item_id = g.item_id', 'LEFT')
+                ->field('pg.id, pg.type, pg.title, pg.buy_limit, g.goods_id, sgp.key spec_key')->select();
+            $promGoods = [];
+            foreach ($goods_tao_grade as $item) {
+                $promGoods[$item['goods_id'] . '_' . $item['spec_key']] = $item;
+            }
+            // 秒杀活动商品
+            $flashSale = Db::name('flash_sale fs')->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
+                ->where(['fs.start_time' => ['<=', time()], 'fs.end_time' => ['>=', time()], 'fs.is_end' => 0])
+                ->field('fs.id, fs.title, fs.goods_id, fs.price, fs.buy_limit, sgp.key spec_key')->select();
+            $flashSaleGoods = [];
+            foreach ($flashSale as $item) {
+                $flashSaleGoods[$item['goods_id'] . '_' . $item['spec_key']] = $item;
+            }
+            // 团购活动商品
+            $groupBuy = Db::name('group_buy gb')->join('spec_goods_price sgp', 'sgp.item_id = gb.item_id', 'LEFT')
+                ->where(['gb.is_end' => 0, 'gb.start_time' => ['<=', time()], 'gb.end_time' => ['>=', time()]])
+                ->field('gb.id, gb.title, gb.goods_id, gb.price, gb.buy_limit, sgp.key spec_key')->select();
+            $groupBuyGoods = [];
+            foreach ($groupBuy as $item) {
+                $groupBuyGoods[$item['goods_id'] . '_' . $item['spec_key']] = $item;
+            }
+            // 组装数据
+            foreach ($cartData as $k => $v) {
+                if (isset($v['item_id'])) {
+                    $storeCount = M('spec_goods_price')->where(['item_id' => $v['item_id']])->value('store_count');
+                } else {
+                    $storeCount = $v['goods']['store_count'];
+                }
+                $key = $v['goods_id'] . '_' . $v['spec_key'];
+                if (empty($v['goods']) || 1 != $v['goods']['is_on_sale']) {
+                    // 已失效商品
+                    $invalidList[] = [
+                        'cart_id' => $v['id'],
+                        'goods_id' => $v['goods_id'],
+                        'goods_sn' => $v['goods_sn'],
+                        'goods_name' => $v['goods_name'],
+                        'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                        'spec_key' => $v['spec_key'],
+                        'spec_key_name' => $v['spec_key_name']
+                    ];
+                } elseif ($v['goods']['is_abroad'] == 0) {
+                    // 圃美多商品
+                    if (isset($promGoods[$key])) {
+                        // 促销活动
+                        $id = 'prom_' . $promGoods[$key]['id'];
+                        if (!isset($pmdList['goods_list'][$id])) {
+                            $pmdList['goods_list'][$id]['prom_id'] = $promGoods[$key]['id'];
+                            $pmdList['goods_list'][$id]['type'] = $promGoods[$key]['type'];
+                            $pmdList['goods_list'][$id]['type_value'] = $promGoods[$key]['title'];
+                            $pmdList['goods_list'][$id]['goods'] = [];
+                        }
+                        $buyLimit = $promGoods[$key]['buy_limit'];
+                        if ($buyLimit != 0) {
+                            // 订单中已购买过的数量
+                            $orderGoodsNum = M('order_goods og')->join('order o', 'o.order_id = og.order_id')
+                                ->where([
+                                    'o.order_status' => ['not in', [3, 5]],
+                                    'o.user_id' => $this->user_id,
+                                    'og.goods_id' => $v['goods_id'],
+                                    'og.spec_key' => $v['spec_key'],
+                                    'og.prom_type' => 3,
+                                    'og.prom_id' => $promGoods[$key]['id']
+                                ])->sum('goods_num');
+                            $buyLimit = $buyLimit - $orderGoodsNum;
+                            if ($buyLimit <= 0) continue;
+                        }
+                        $pmdList['goods_list'][$id]['goods'][] = [
+                            'cart_id' => $v['id'],
+                            'goods_id' => $v['goods_id'],
+                            'goods_sn' => $v['goods_sn'],
+                            'goods_name' => $v['goods_name'],
+                            'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                            'spec_key' => $v['spec_key'],
+                            'spec_key_name' => $v['spec_key_name'],
+                            'shop_price' => $v['goods_price'],
+                            'exchange_integral' => $v['use_integral'],
+                            'exchange_price' => bcsub($v['goods_price'], $v['use_integral'], 2),
+                            'goods_num' => $v['goods_num'],
+                            'buy_limit' => $buyLimit,
+                            'buy_least' => '0',
+                            'store_count' => $storeCount,
+                        ];
+                    } elseif (isset($flashSaleGoods[$key])) {
+                        // 秒杀活动
+                        $id = 'flash_' . $flashSaleGoods[$key]['id'];
+                        if (!isset($pmdList['goods_list'][$id])) {
+                            $pmdList['goods_list'][$id]['prom_id'] = $flashSaleGoods[$key]['id'];
+                            $pmdList['goods_list'][$id]['type'] = 6;
+                            $pmdList['goods_list'][$id]['type_value'] = $flashSaleGoods[$key]['title'];
+                            $pmdList['goods_list'][$id]['goods'] = [];
+                        }
+                        $buyLimit = $flashSaleGoods[$key]['buy_limit'];
+                        if ($buyLimit != 0) {
+                            // 订单中已购买过的数量
+                            $orderGoodsNum = M('order_goods og')->join('order o', 'o.order_id = og.order_id')
+                                ->where([
+                                    'o.order_status' => ['not in', [3, 5]],
+                                    'o.user_id' => $this->user_id,
+                                    'og.goods_id' => $v['goods_id'],
+                                    'og.spec_key' => $v['spec_key'],
+                                    'og.prom_type' => 1,
+                                    'og.prom_id' => $flashSaleGoods[$key]['id']
+                                ])->sum('goods_num');
+                            $buyLimit = $buyLimit - $orderGoodsNum;
+                            if ($buyLimit <= 0) continue;
+                        }
+                        $pmdList['goods_list'][$id]['goods'][] = [
+                            'cart_id' => $v['id'],
+                            'goods_id' => $v['goods_id'],
+                            'goods_sn' => $v['goods_sn'],
+                            'goods_name' => $v['goods_name'],
+                            'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                            'spec_key' => $v['spec_key'],
+                            'spec_key_name' => $v['spec_key_name'],
+                            'shop_price' => $v['goods_price'],
+                            'exchange_integral' => $v['use_integral'],
+                            'exchange_price' => $v['member_goods_price'],
+                            'goods_num' => $v['goods_num'],
+                            'buy_limit' => $buyLimit,
+                            'buy_least' => '0',
+                            'store_count' => $storeCount,
+                        ];
+                    } elseif (isset($groupBuyGoods[$key])) {
+                        $cartNum -= 1;
+                        continue;
+                        // 团购活动
+                    } else {
+                        // 正常普通商品
+                        $pmdList['goods_list'][0]['goods'][] = [
+                            'cart_id' => $v['id'],
+                            'goods_id' => $v['goods_id'],
+                            'goods_sn' => $v['goods_sn'],
+                            'goods_name' => $v['goods_name'],
+                            'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                            'spec_key' => $v['spec_key'],
+                            'spec_key_name' => $v['spec_key_name'],
+                            'shop_price' => $v['goods_price'],
+                            'exchange_integral' => $v['use_integral'],
+                            'exchange_price' => bcsub($v['goods_price'], $v['use_integral'], 2),
+                            'goods_num' => $v['goods_num'],
+                            'buy_limit' => $v['goods']['limit_buy_num'],
+                            'buy_least' => $v['goods']['least_buy_num'],
+                            'store_count' => $storeCount,
+                        ];
+                    }
+                } else {
+                    // 海外购商品
+                    if (isset($promGoods[$key])) {
+                        // 促销活动
+                        $id = 'prom_' . $promGoods[$key]['id'];
+                        if (!isset($abroadList['goods_list'][$id])) {
+                            $abroadList['goods_list'][$id]['prom_id'] = $promGoods[$key]['id'];
+                            $abroadList['goods_list'][$id]['type'] = $promGoods[$key]['type'];
+                            $abroadList['goods_list'][$id]['type_value'] = $promGoods[$key]['title'];
+                            $abroadList['goods_list'][$id]['goods'] = [];
+                        }
+                        $buyLimit = $promGoods[$key]['buy_limit'];
+                        if ($buyLimit != 0) {
+                            // 订单中已购买过的数量
+                            $orderGoodsNum = M('order_goods og')->join('order o', 'o.order_id = og.order_id')
+                                ->where([
+                                    'o.order_status' => ['not in', [3, 5]],
+                                    'o.user_id' => $this->user_id,
+                                    'og.goods_id' => $v['goods_id'],
+                                    'og.spec_key' => $v['spec_key'],
+                                    'og.prom_type' => 3,
+                                    'og.prom_id' => $promGoods[$key]['id']
+                                ])->sum('goods_num');
+                            $buyLimit = $buyLimit - $orderGoodsNum;
+                            if ($buyLimit <= 0) continue;
+                        }
+                        $abroadList['goods_list'][$id]['goods'][] = [
+                            'cart_id' => $v['id'],
+                            'goods_id' => $v['goods_id'],
+                            'goods_sn' => $v['goods_sn'],
+                            'goods_name' => $v['goods_name'],
+                            'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                            'spec_key' => $v['spec_key'],
+                            'spec_key_name' => $v['spec_key_name'],
+                            'shop_price' => $v['goods_price'],
+                            'exchange_integral' => $v['use_integral'],
+                            'exchange_price' => bcsub($v['goods_price'], $v['use_integral'], 2),
+                            'goods_num' => $v['goods_num'],
+                            'buy_limit' => $buyLimit,
+                            'buy_least' => '0',
+                            'store_count' => $storeCount,
+                        ];
+                    } elseif (isset($flashSaleGoods[$key])) {
+                        // 秒杀活动
+                        $id = 'flash_' . $flashSaleGoods[$key]['id'];
+                        if (!isset($abroadList['goods_list'][$id])) {
+                            $abroadList['goods_list'][$id]['prom_id'] = $flashSaleGoods[$key]['id'];
+                            $abroadList['goods_list'][$id]['type'] = 6;
+                            $abroadList['goods_list'][$id]['type_value'] = $flashSaleGoods[$key]['title'];
+                            $abroadList['goods_list'][$id]['goods'] = [];
+                        }
+                        $buyLimit = $flashSaleGoods[$key]['buy_limit'];
+                        if ($buyLimit != 0) {
+                            // 订单中已购买过的数量
+                            $orderGoodsNum = M('order_goods og')->join('order o', 'o.order_id = og.order_id')
+                                ->where([
+                                    'o.order_status' => ['not in', [3, 5]],
+                                    'o.user_id' => $this->user_id,
+                                    'og.goods_id' => $v['goods_id'],
+                                    'og.spec_key' => $v['spec_key'],
+                                    'og.prom_type' => 1,
+                                    'og.prom_id' => $flashSaleGoods[$key]['id']
+                                ])->sum('goods_num');
+                            $buyLimit = $buyLimit - $orderGoodsNum;
+                            if ($buyLimit <= 0) continue;
+                        }
+                        $abroadList['goods_list'][$id]['goods'][] = [
+                            'cart_id' => $v['id'],
+                            'goods_id' => $v['goods_id'],
+                            'goods_sn' => $v['goods_sn'],
+                            'goods_name' => $v['goods_name'],
+                            'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                            'spec_key' => $v['spec_key'],
+                            'spec_key_name' => $v['spec_key_name'],
+                            'shop_price' => $v['goods_price'],
+                            'exchange_integral' => $v['use_integral'],
+                            'exchange_price' => $v['member_goods_price'],
+                            'goods_num' => $v['goods_num'],
+                            'buy_limit' => $buyLimit,
+                            'buy_least' => '0',
+                            'store_count' => $storeCount,
+                        ];
+                    } elseif (isset($groupBuyGoods[$key])) {
+                        $cartNum -= 1;
+                        continue;
+                        // 团购活动
+                    } else {
+                        // 正常普通商品
+                        $abroadList['goods_list'][0]['goods'][] = [
+                            'cart_id' => $v['id'],
+                            'goods_id' => $v['goods_id'],
+                            'goods_sn' => $v['goods_sn'],
+                            'goods_name' => $v['goods_name'],
+                            'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                            'spec_key' => $v['spec_key'],
+                            'spec_key_name' => $v['spec_key_name'],
+                            'shop_price' => $v['goods_price'],
+                            'exchange_integral' => $v['use_integral'],
+                            'exchange_price' => bcsub($v['goods_price'], $v['use_integral'], 2),
+                            'goods_num' => $v['goods_num'],
+                            'buy_limit' => $v['goods']['limit_buy_num'],
+                            'buy_least' => $v['goods']['least_buy_num'],
+                            'store_count' => $storeCount,
+                        ];
+                    }
+                }
+            }
+        }
+        // 处理秒杀商品归纳 - 圃美多商品
+        $pmdNormalGoods = $pmdList['goods_list'][0];
+        unset( $pmdList['goods_list'][0]);
+        $flashSaleList = [
+            'prom_id' => '0',
+            'type' => '6',
+            'type_value' => '秒杀专区',
+            'goods' => []
+        ];
+        foreach ($pmdList['goods_list'] as $k => $v) {
+            if ($v['type'] == 6) {
+                $flashSaleList['goods'] = array_merge($flashSaleList['goods'], $v['goods']);
+                unset($pmdList['goods_list'][$k]);
+            }
+        }
+        if (!empty($flashSaleList['goods'])) {
+            array_unshift($pmdList['goods_list'], $flashSaleList);
+        }
+        array_unshift($pmdList['goods_list'], $pmdNormalGoods);
+        $pmdList['goods_list'] = array_values($pmdList['goods_list']);
+
+        // 处理秒杀商品归纳 - 圃美多商品
+        $abroadNormalGoods = $abroadList['goods_list'][0];
+        unset( $abroadList['goods_list'][0]);
+        $flashSaleList = [
+            'prom_id' => '0',
+            'type' => '6',
+            'type_value' => '秒杀专区',
+            'goods' => []
+        ];
+        foreach ($abroadList['goods_list'] as $k => $v) {
+            if ($v['type'] == 6) {
+                $flashSaleList['goods'] = array_merge($flashSaleList['goods'], $v['goods']);
+                unset($abroadList['goods_list'][$k]);
+            }
+        }
+        if (!empty($flashSaleList['goods'])) {
+            array_unshift($abroadList['goods_list'], $flashSaleList);
+        }
+        array_unshift($abroadList['goods_list'], $abroadNormalGoods);
+        $abroadList['goods_list'] = array_values($abroadList['goods_list']);
+
+        // 订单优惠促销（查看是否有优惠价格）
+        $promTitleData = [];
+        $orderProm = M('order_prom')
+            ->where(['type' => ['in', '0, 1'], 'is_open' => 1, 'is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])
+            ->field('id, title')->order('discount_price asc')->select();
+        foreach ($orderProm as $prom) {
+            $promTitleData[] = $prom['title'];
+        }
+        $pmdList['prom_title'] = $promTitleData ? $promTitleData[0] : '';
+        $pmdList['prom_title_data'] = $promTitleData;
+        $return = [
+            'pmd_list' => $pmdList,
+            'abroad_list' => $abroadList,
+            'invalid_list' => $invalidList,
+            'cart_num' => $cartNum
+        ];
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
     }
 

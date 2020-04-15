@@ -551,12 +551,22 @@ class Goods extends Base
 
         $goods['freight_free'] = tpCache('shopping.freight_free'); // 全场满多少免运费
         $goods['qr_code'] = ''; // 分享二维码
-
+        // 海外购物流流程图
+        $goods['abroad_freight_process'] = [
+            'url' => '',
+            'width' => '',
+            'height' => ''
+        ];
         if ($goods['is_abroad'] == 1) {
             $config = tpCache('abroad');
-            $goods['abroad_freight_process'] = isset($config['freight_process']) ? SITE_URL . $config['freight_process'] : '';
-        } else {
-            $goods['abroad_freight_process'] = '';
+            if (isset($config['freight_process'])) {
+                $imageSize = getimagesize(SITE_URL . $config['freight_process']);
+                $goods['abroad_freight_process'] = [
+                    'url' => SITE_URL . $config['freight_process'],
+                    'width' => $imageSize[0] . '',
+                    'height' => $imageSize[1] . ''
+                ];
+            }
         }
 
         // 组装数据
