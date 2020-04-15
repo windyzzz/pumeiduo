@@ -511,9 +511,9 @@ class Cart extends Base
                             'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
                             'spec_key' => $v['spec_key'],
                             'spec_key_name' => $v['spec_key_name'],
-                            'shop_price' => $v['goods_price'],
+                            'shop_price' => '￥' . $v['goods_price'],
                             'exchange_integral' => $v['use_integral'],
-                            'exchange_price' => bcsub($v['goods_price'], $v['use_integral'], 2),
+                            'exchange_price' => '￥' . bcsub($v['goods_price'], $v['use_integral'], 2),
                             'goods_num' => $v['goods_num'],
                             'buy_limit' => $buyLimit,
                             'buy_least' => '0',
@@ -551,9 +551,9 @@ class Cart extends Base
                             'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
                             'spec_key' => $v['spec_key'],
                             'spec_key_name' => $v['spec_key_name'],
-                            'shop_price' => $v['goods_price'],
+                            'shop_price' => '￥' . $v['goods_price'],
                             'exchange_integral' => $v['use_integral'],
-                            'exchange_price' => $v['member_goods_price'],
+                            'exchange_price' => '￥' . $v['member_goods_price'],
                             'goods_num' => $v['goods_num'],
                             'buy_limit' => $buyLimit,
                             'buy_least' => '0',
@@ -573,9 +573,9 @@ class Cart extends Base
                             'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
                             'spec_key' => $v['spec_key'],
                             'spec_key_name' => $v['spec_key_name'],
-                            'shop_price' => $v['goods_price'],
+                            'shop_price' => '￥' . $v['goods_price'],
                             'exchange_integral' => $v['use_integral'],
-                            'exchange_price' => bcsub($v['goods_price'], $v['use_integral'], 2),
+                            'exchange_price' => '￥' . bcsub($v['goods_price'], $v['use_integral'], 2),
                             'goods_num' => $v['goods_num'],
                             'buy_limit' => $v['goods']['limit_buy_num'],
                             'buy_least' => $v['goods']['least_buy_num'],
@@ -616,9 +616,9 @@ class Cart extends Base
                             'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
                             'spec_key' => $v['spec_key'],
                             'spec_key_name' => $v['spec_key_name'],
-                            'shop_price' => $v['goods_price'],
+                            'shop_price' => '￥' . $v['goods_price'],
                             'exchange_integral' => $v['use_integral'],
-                            'exchange_price' => bcsub($v['goods_price'], $v['use_integral'], 2),
+                            'exchange_price' => '￥' . bcsub($v['goods_price'], $v['use_integral'], 2),
                             'goods_num' => $v['goods_num'],
                             'buy_limit' => $buyLimit,
                             'buy_least' => '0',
@@ -656,9 +656,9 @@ class Cart extends Base
                             'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
                             'spec_key' => $v['spec_key'],
                             'spec_key_name' => $v['spec_key_name'],
-                            'shop_price' => $v['goods_price'],
+                            'shop_price' => '￥' . $v['goods_price'],
                             'exchange_integral' => $v['use_integral'],
-                            'exchange_price' => $v['member_goods_price'],
+                            'exchange_price' => '￥' . $v['member_goods_price'],
                             'goods_num' => $v['goods_num'],
                             'buy_limit' => $buyLimit,
                             'buy_least' => '0',
@@ -678,9 +678,9 @@ class Cart extends Base
                             'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
                             'spec_key' => $v['spec_key'],
                             'spec_key_name' => $v['spec_key_name'],
-                            'shop_price' => $v['goods_price'],
+                            'shop_price' => '￥' . $v['goods_price'],
                             'exchange_integral' => $v['use_integral'],
-                            'exchange_price' => bcsub($v['goods_price'], $v['use_integral'], 2),
+                            'exchange_price' => '￥' . bcsub($v['goods_price'], $v['use_integral'], 2),
                             'goods_num' => $v['goods_num'],
                             'buy_limit' => $v['goods']['limit_buy_num'],
                             'buy_least' => $v['goods']['least_buy_num'],
@@ -692,7 +692,7 @@ class Cart extends Base
         }
         // 处理秒杀商品归纳 - 圃美多商品
         $pmdNormalGoods = $pmdList['goods_list'][0];
-        unset( $pmdList['goods_list'][0]);
+        unset($pmdList['goods_list'][0]);
         $flashSaleList = [
             'prom_id' => '0',
             'type' => '6',
@@ -711,9 +711,9 @@ class Cart extends Base
         array_unshift($pmdList['goods_list'], $pmdNormalGoods);
         $pmdList['goods_list'] = array_values($pmdList['goods_list']);
 
-        // 处理秒杀商品归纳 - 圃美多商品
+        // 处理秒杀商品归纳 - 海外购商品
         $abroadNormalGoods = $abroadList['goods_list'][0];
-        unset( $abroadList['goods_list'][0]);
+        unset($abroadList['goods_list'][0]);
         $flashSaleList = [
             'prom_id' => '0',
             'type' => '6',
@@ -802,13 +802,13 @@ class Cart extends Base
      * @return \think\response\Json
      * @throws TpshopException
      */
-    public function calcCartPrice()
+    public function calcCartPrice($cartIds = '', $cartNum = '')
     {
         $params['user_token'] = $this->userToken;
         Hook::exec('app\\home\\behavior\\CheckAuth', 'run', $params);
 
-        $cartIds = I('cart_ids', '');
-        $cartNum = I('cart_num', '');
+        $cartIds = $cartIds == '' ? I('cart_ids', '') : $cartIds;
+        $cartNum = $cartNum == '' ? I('cart_num', '') : $cartNum;
         if (empty($cartIds) || empty($cartNum)) {
             return json(['status' => 1, 'msg' => '计算成功', 'result' => [
                 'total_fee' => '0.00',
@@ -862,6 +862,68 @@ class Cart extends Base
             $result['can_integral'] = 0;
         }
         return json(['status' => 1, 'msg' => '计算成功', 'result' => $result]);
+    }
+
+    /**
+     * 检查购物车商品（支付时候）
+     * @return \think\response\Json
+     */
+    public function checkCartGoods()
+    {
+        $cartIds = I('cart_ids', '');
+        if (empty(trim($cartIds))) return json(['status' => 0, 'msg' => '请选择商品']);
+        // 购物车商品
+        $cartGoods = (new CartLogic())->getCartGoods($cartIds, 'c.id cart_id, c.goods_num cart_num, g.goods_id, g.is_abroad');
+        $pmdCart = [];
+        $abroadCart = [];
+        foreach ($cartGoods as $cart) {
+            if ($cart['is_abroad'] == 0) {
+                if (empty($pmdCart['cart_ids'])) {
+                    $pmdCart = [
+                        'cart_ids' => $cart['cart_id'],
+                        'cart_num' => $cart['cart_num']
+                    ];
+                } else {
+                    $pmdCart['cart_ids'] = $pmdCart['cart_ids'] . ',' . $cart['cart_id'];
+                    $pmdCart['cart_num'] = $pmdCart['cart_num'] . ',' . $cart['cart_num'];
+                }
+            } else {
+                if (empty($abroadCart['cart_ids'])) {
+                    $abroadCart = [
+                        'cart_ids' => $cart['cart_id'],
+                        'cart_num' => $cart['cart_num']
+                    ];
+                } else {
+                    $abroadCart['cart_ids'] = $abroadCart['cart_ids'] . ',' . $cart['cart_id'];
+                    $abroadCart['cart_num'] = $abroadCart['cart_num'] . ',' . $cart['cart_num'];
+                }
+            }
+        }
+        $return = [
+            'state' => 1,   // 直接结算
+            'data' => []
+        ];
+        // 是否都选了两种商品
+        if (!empty($pmdCart) && !empty($abroadCart)) {
+            $return['state'] = 2;   // 结算提示
+            // 圃美多商品价格
+            $res = json_decode($this->calcCartPrice($pmdCart['cart_ids'], $pmdCart['cart_num'])->getContent(), true);
+            $return['data'][] = [
+                'title' => '乐活优选',
+                'goods_num' => $res['result']['goods_num'],
+                'total_fee' => $res['result']['total_fee'],
+                'use_integral' => $res['result']['use_integral']
+            ];
+            // 海外购商品价格
+            $res = json_decode($this->calcCartPrice($abroadCart['cart_ids'], $abroadCart['cart_num'])->getContent(), true);
+            $return['data'][] = [
+                'title' => '海外购',
+                'goods_num' => $res['result']['goods_num'],
+                'total_fee' => $res['result']['total_fee'],
+                'use_integral' => $res['result']['use_integral']
+            ];
+        }
+        return json(['status' => 1, 'result' => $return]);
     }
 
     /**
