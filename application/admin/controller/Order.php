@@ -1192,7 +1192,7 @@ class Order extends Base
             } elseif ('alipayApp' == $order['pay_code']) {
                 include_once PLUGIN_PATH . 'payment/alipayApp/alipayApp.class.php';
                 $payment_obj = new \alipayApp();
-                $result = $payment_obj->refund($order, $order['order_amount'], '售后订单退款');
+                $result = $payment_obj->refund($order, $data['refund_money'], '售后订单退款');
                 $msg = $result->sub_msg;
                 if ('10000' == $result->code) {
                     $refundLogic = new RefundLogic();
@@ -1204,7 +1204,7 @@ class Order extends Base
             } elseif ('weixinApp' == $order['pay_code']) {
                 include_once PLUGIN_PATH . 'payment/weixinApp/weixinApp.class.php';
                 $payment_obj = new \weixinApp();
-                $result = $payment_obj->refund($order, $order['order_amount']);
+                $result = $payment_obj->refund($order, $data['refund_money']);
                 if ($result['return_code'] == 'FAIL') {
                     $this->ajaxReturn(['status' => 0, 'msg' => $result['return_msg'], 'url' => '']);
                 } elseif ($result['result_code'] == 'FAIL') {
@@ -1213,55 +1213,6 @@ class Order extends Base
                     $refundLogic = new RefundLogic();
                     $refundLogic->updateRefundGoods($return_goods['rec_id']); //订单商品售后退款
                     $this->ajaxReturn(['status' => 1, 'msg' => '退款成功', 'url' => '']);
-                }
-            }
-            if ($order['pay_status'] > 0) {
-
-                M('order')->where(['order_id' => $order['order_id']])->save(['pay_status' => 3, 'cancel_time' => time()]); //更改订单状态
-
-                // 追回等级
-                $update_info = M('distribut_log')->where('order_sn', $order['order_sn'])->where('type', 1)->find();
-                if ($update_info) {
-                    $is_distribut = 0;
-                    $level = $update_info['old_level'];
-                    if ($level > 1) {
-                        $is_distribut = 1;
-                    }
-                    M('users')->where('user_id', $order['user_id'])->update([
-                        'distribut_level' => $level,
-                        'is_distribut' => $is_distribut,
-                    ]);
-                    // 更新缓存
-                    $user = Db::name('users')->where('user_id', $order['user_id'])->find();
-                    TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
-
-                    logDistribut($order['order_sn'], $order['user_id'], $level, $update_info['new_level'], 2);
-
-                    // 分销追回 (下级)
-                    if (1 == $level) {
-                        M('rebate_log')->where('user_id', $order['user_id'])->update(['money' => 0, 'point' => 0, 'confirm_time' => time(), 'remark' => '取消订单，追回佣金']);
-                    } elseif (2 == $level) {
-                        M('rebate_log')->where('user_id', $order['user_id'])->where('type', 1)->update(['money' => 0, 'point' => 0, 'confirm_time' => time(), 'remark' => '取消订单，追回佣金']);
-                    }
-
-                    // 推荐人奖励追回
-                    $firstLeaderAccount = M('account_log')->where([
-                        'order_id' => $order['order_id'],
-                        'type' => 14
-                    ])->whereOr([
-                        'user_money' => ['>', 0],
-                        'pay_points' => ['>', 0]
-                    ])->select();
-                    if (!empty($firstLeaderAccount)) {
-                        foreach ($firstLeaderAccount as $account) {
-                            if ($account['user_money'] > 0) {
-                                accountLog($account['user_id'], -$account['user_money'], 0, '推荐人VIP套组奖励金额追回', 0, $order['order_id'], '', 0, 14, false);
-                            }
-                            if ($account['pay_points']) {
-                                accountLog($account['user_id'], 0, -$account['pay_points'], '推荐人VIP套组奖励积分追回', 0, $order['order_id'], '', 0, 14, false);
-                            }
-                        }
-                    }
                 }
             }
         } else {
