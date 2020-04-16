@@ -307,8 +307,8 @@ class PlaceOrder
         $orderDiscount = 0.00;  // 订单优惠金额
 
         foreach ($payList as $payKey => $payItem) {
-            $totalPriceToRatio = $payItem['member_goods_price'] / $this->pay->getGoodsPrice();  //商品价格占总价的比例
-            $finalPrice = bcsub($payItem['member_goods_price'], bcmul($totalPriceToRatio, $orderDiscounts, 2), 2);
+//            $totalPriceToRatio = $payItem['member_goods_price'] / $this->pay->getGoodsPrice();  // 商品价格占总价的比例
+            $finalPrice = bcsub($payItem['member_goods_price'], bcmul($payItem['member_goods_price'] / $this->pay->getGoodsPrice(), $orderDiscounts, 2), 2);
             $orderGoodsData = [
                 'order_id' => $this->order['order_id'],         // 订单id
                 'goods_id' => $payItem['goods_id'],             // 商品id
