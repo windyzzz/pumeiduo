@@ -15,7 +15,6 @@ use app\admin\logic\OrderLogic;
 use app\admin\logic\RefundLogic;
 use app\common\logic\Pay;
 use app\common\logic\PlaceOrder;
-use app\common\logic\Token as TokenLogic;
 use app\common\model\OrderGoods;
 use app\common\util\TpshopException;
 use think\AjaxPage;
@@ -334,14 +333,13 @@ class Order extends Base
         $orderModel = new \app\common\model\Order();
         $orderObj = $orderModel::get(['order_id' => $data['order_id']]);
         $order = $orderObj->append(['full_address'])->toArray();
-        if (!order) {
+        if (!$order) {
             $this->error('订单不存在或参数错误');
         }
         if (3 == $data['pay_status']) {
             $refundLogic = new RefundLogic();
             if (1 == $data['refund_type']) {
                 //取消订单退款退余额
-
                 if ($refundLogic->updateRefundOrder($order, 1)) {
                     $this->success('成功退款到账户余额');
                 } else {
@@ -1066,14 +1064,14 @@ class Order extends Base
             }
         }
         $note = "退换货:{$type_msg[$return_goods['type']]}, 状态:{$status_msg[$post_data['status']]},处理备注：{$post_data['remark']}";
-        $result = M('return_goods')->where(['id' => $post_data['id']])->save($post_data);
-        // $result = true;
+        // 更新退换货记录
+        M('return_goods')->where(['id' => $post_data['id']])->save($post_data);
 
         if (1 == $post_data['status']) {
             //审核通过才更改订单商品状态，进行退货，退款时要改对应商品修改库存
             $order = \app\common\model\Order::get($return_goods['order_id']);
-            $commonOrderLogic = new \app\common\logic\OrderLogic();
-            //$commonOrderLogic->alterReturnGoodsInventory($order, $return_goods['rec_id']); //审核通过，恢复原来库存
+//            $commonOrderLogic = new \app\common\logic\OrderLogic();
+//            $commonOrderLogic->alterReturnGoodsInventory($order, $return_goods['rec_id']); //审核通过，恢复原来库存
             if ($return_goods['type'] < 2) {
                 $orderLogic->disposereRurnOrderCoupon($return_goods); // 是退货可能要处理优惠券
                 $order_info = $order->toArray();
@@ -1101,7 +1099,7 @@ class Order extends Base
         }
         $orderLogic->orderActionLog($return_goods['order_id'], '退换货', $note);
 
-        //仅退款-审核通过   和  退货退款确认收货
+        //仅退款-审核通过 和 退货退款确认收货
         if (($post_data['status'] == 1 && $return_goods['type'] == 0) || ($post_data['status'] == 3 && $return_goods['type'] == 1)) {
             //通知 退货补回库存
             include_once "plugins/Tb.php";
@@ -1109,6 +1107,34 @@ class Order extends Base
             $TbLogic->add_tb(3, 9, $return_goods['id'], 0);
         }
 
+        // 更新订单pv
+        if (in_array($return_goods['type'], [0, 1]) && !in_array($post_data['status'], [-2, -1, 0])) {
+            if (!isset($order)) {
+                $order = \app\common\model\Order::get($return_goods['order_id']);
+            }
+            $order_goods = M('order_goods')->where(['rec_id' => $return_goods['rec_id']])->find();
+            if ($order['order_pv'] > 0) {
+                $goods = M('goods g')->join('order_goods og', 'og.goods_id = g.goods_id')->where(['og.rec_id' => $return_goods['rec_id']])->field('integral_pv, retail_pv')->find();
+                $orderAmountRate = bcdiv(bcadd($order['order_amount'], $order['user_electronic'], 2), $order['total_amount'], 2); // 订单实际支付金额比率
+                $goods_pv = 0;
+                switch ($order_goods['pay_type']) {
+                    case 1:
+                        $goods_pv = bcmul(bcmul($goods['integral_pv'], $order_goods['goods_num'], 2), $orderAmountRate, 2);
+                        break;
+                    case 2:
+                        $goods_pv = bcmul(bcmul($goods['retail_pv'], $order_goods['goods_num'], 2), $orderAmountRate, 2);
+                        break;
+                }
+                if ($goods_pv > 0) {
+                    $order_pv = bcsub($order['order_pv'], $goods_pv, 2);
+                    M('order')->where(['order_id' => $order['order_id']])->update([
+                        'order_pv' => $order_pv,
+                        'pv_tb' => 0,
+                        'pv_send' => 0
+                    ]);
+                }
+            }
+        }
 
         $this->ajaxReturn(['status' => 1, 'msg' => '修改成功', 'url' => '']);
     }
