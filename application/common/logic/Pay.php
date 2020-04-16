@@ -315,6 +315,7 @@ class Pay
         //5.加价购
         $district_level = [];
         foreach ($pay_list as $k => $v) {
+            $pay_list[$k]['item_id'] = M('spec_goods_price')->where(['goods_id' => $v['goods_id'], 'key' => $v['spec_key']])->value('item_id') ?? 0;
             $goods_info = M('goods')
                 ->field('goods_id,goods_name,distribut_id,zone,limit_buy_num,sale_type,prom_type')
                 ->where(['goods_id' => $v['goods_id']])
@@ -470,7 +471,7 @@ class Pay
                     ->join('spec_goods_price sg', "sg.item_id = gg.buy_item_id and sg.key = '" . $v['spec_key'] . "'")
                     ->where(array('gg.buy_goods_id' => $v['goods_id'], 'gg.buy_stock' => array('elt', $v['goods_num']), 'gt.start_time' => array('elt', NOW_TIME), 'gt.end_time' => array('egt', NOW_TIME)))
                     ->select();
-                $v['item_id'] = M('spec_goods_price')->where(['goods_id' => $v['goods_id'], 'key' => $v['spec_key']])->value('item_id');
+//                $v['item_id'] = M('spec_goods_price')->where(['goods_id' => $v['goods_id'], 'key' => $v['spec_key']])->value('item_id');
             } else {
                 $gift2_goods = M('gift2_goods')
                     ->alias('gg')
@@ -580,7 +581,7 @@ class Pay
                     ->join('spec_goods_price sg', "sg.item_id = gg.buy_item_id and sg.key = '" . $v['spec_key'] . "'")
                     ->where(array('gg.buy_goods_id' => $v['goods_id'], 'gg.buy_stock' => array('elt', $v['goods_num']), 'gt.start_time' => array('elt', NOW_TIME), 'gt.end_time' => array('egt', NOW_TIME)))
                     ->select();
-                $v['item_id'] = M('spec_goods_price')->where(['goods_id' => $v['goods_id'], 'key' => $v['spec_key']])->value('item_id');
+//                $v['item_id'] = M('spec_goods_price')->where(['goods_id' => $v['goods_id'], 'key' => $v['spec_key']])->value('item_id');
             } else {
                 $gift2_goods = M('gift2_goods')
                     ->alias('gg')
@@ -1194,7 +1195,7 @@ class Pay
                             $member_goods_price = bcdiv(bcmul($v['member_goods_price'], $group_activity['expression'], 2), 100, 2);
                             $promAmount = bcmul(bcsub($v['member_goods_price'], $member_goods_price, 2), $v['goods_num'], 2);
 
-//                            $this->payList[$k]['member_goods_price'] = $member_goods_price;
+                            $this->payList[$k]['member_goods_price'] = $member_goods_price;
                             $this->orderPromIds['goods_prom'][] = $group_activity['id'];
                             break;
                         case 1:
@@ -1202,7 +1203,7 @@ class Pay
                             $member_goods_price = bcsub($v['member_goods_price'], $group_activity['expression'], 2);
                             $promAmount = bcmul(bcsub($v['member_goods_price'], $member_goods_price, 2), $v['goods_num'], 2);
 
-//                            $this->payList[$k]['member_goods_price'] = $member_goods_price;
+                            $this->payList[$k]['member_goods_price'] = $member_goods_price;
                             $this->orderPromIds['goods_prom'][] = $group_activity['id'];
                             break;
                         case 2:
@@ -1225,32 +1226,10 @@ class Pay
                             }
                             $pay_list[$k]['prom_type'] = 3;
                             $pay_list[$k]['prom_id'] = $group_activity['id'];
-//                            if ($v['goods_num'] >= $group_activity['goods_num']) {
-//                                $member_goods_price = bcdiv(bcmul($v['member_goods_price'], $group_activity['expression'], 2), 100, 2);
-//                                $promAmount = bcmul(bcsub($v['member_goods_price'], $member_goods_price, 2), $v['goods_num'], 2);
-//
-//                                $this->payList[$k]['member_goods_price'] = $member_goods_price;
-//                                $this->orderPromIds['goods_prom'][] = $group_activity['id'];
-//                            }
-                            break;
-//                            if ($v['member_goods_price'] >= $group_activity['goods_price']) {
-//                                $member_goods_price = bcsub($v['member_goods_price'], $group_activity['expression'], 2);
-//                                $promAmount = bcmul(bcsub($v['member_goods_price'], $member_goods_price, 2), $v['goods_num'], 2);
-//
-//                                $this->payList[$k]['member_goods_price'] = $member_goods_price;
-//                                $this->orderPromIds['goods_prom'][] = $group_activity['id'];
-//                            }
                             break;
                         default:
                             $promAmount = '0';
                     }
-//                    if (!isset($this->promTitleData[$group_activity['type'] . '_' . $group_activity['id']])) {
-//                        $this->promTitleData[$group_activity['type'] . '_' . $group_activity['id']] = [
-//                            'prom_id' => $group_activity['id'],
-//                            'type' => $group_activity['type'],
-//                            'type_value' => $group_activity['title']
-//                        ];
-//                    }
                     $goodsPromAmount = bcadd($goodsPromAmount, $promAmount, 2);
                 }
             }
@@ -1268,12 +1247,30 @@ class Pay
                         if ($prom['goods_num'] >= $promInfo['goods_num']) {
                             $promAmount = bcdiv(bcmul($prom['goods_price'], $promInfo['expression'], 2), 100, 2);
                             $promAmount = bcsub($prom['goods_price'], $promAmount, 2);
+                            // 优惠设置的商品
+                            $promGoods = M('goods_tao_grade')->where(['promo_id' => $promId])->field('goods_id, item_id')->select();
+                            foreach ($pay_list as $k => $v) {
+                                foreach ($promGoods as $goods) {
+                                    if ($v['goods_id'] == $goods['goods_id'] && $v['item_id'] == $goods['item_id']) {
+                                        $pay_list[$k]['member_goods_price'] = bcdiv(bcmul($v['member_goods_price'], $promInfo['expression'], 2), 100, 2);
+                                    }
+                                }
+                            }
                         }
                         break;
                     case 5:
                         if ($prom['goods_price'] >= $promInfo['goods_price']) {
                             $promAmount = bcsub($prom['goods_price'], $promInfo['expression'], 2);
                             $promAmount = bcsub($prom['goods_price'], $promAmount, 2);
+                            // 优惠设置的商品
+                            $promGoods = M('goods_tao_grade')->where(['promo_id' => $promId])->field('goods_id, item_id')->select();
+                            foreach ($pay_list as $k => $v) {
+                                foreach ($promGoods as $goods) {
+                                    if ($v['goods_id'] == $goods['goods_id'] && $v['item_id'] == $goods['item_id']) {
+                                        $pay_list[$k]['member_goods_price'] = bcsub($pay_list[$k]['member_goods_price'], $promInfo['expression'], 2);
+                                    }
+                                }
+                            }
                         }
                         break;
                     default:

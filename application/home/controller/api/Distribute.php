@@ -100,7 +100,7 @@ class Distribute extends Base
             ->join('order o', 'o.order_id = og.order_id')
             ->join('goods g', 'g.goods_id = og.goods_id')
             ->where(['og.order_id' => ['in', array_unique($orderIds)]])
-            ->field('og.order_id, og.goods_id, og.goods_name, og.spec_key_name, g.original_img, og.goods_num, og.final_price, og.member_goods_price, og.use_integral, og.commission, og.goods_pv, o.add_time')->select();
+            ->field('og.rec_id, og.order_id, og.goods_id, og.goods_name, og.spec_key_name, g.original_img, og.goods_num, og.final_price, og.member_goods_price, og.use_integral, og.commission, og.goods_pv, o.add_time')->select();
         // 提成记录
         $page = new Page(count($orderIds), 10);
         $rebateLog = M('rebate_log rl')
@@ -123,6 +123,13 @@ class Distribute extends Base
             ];
             foreach ($orderGoods as $goods) {
                 if ($log['order_id'] == $goods['order_id']) {
+                    $hasCommission = true;
+                    if ($log['status'] == 6) {
+                        // 提成记录状态为 已售后
+                        if (M('return_goods')->where(['rec_id' => $goods['rec_id'], 'status' => ['NOT IN', [-2, -1, 6]]])->value('id')) {
+                            $hasCommission = false;
+                        }
+                    }
                     $list[$k]['goods_list'][] = [
                         'goods_id' => $goods['goods_id'],
                         'goods_name' => $goods['goods_name'],
@@ -131,8 +138,8 @@ class Distribute extends Base
                         'goods_num' => $goods['goods_num'],
                         'exchange_price' => $goods['member_goods_price'],
                         'exchange_integral' => $goods['use_integral'],
-                        'commission' => $goods['goods_pv'] == 0 ? bcadd($OrderLogic->getRongMoney(bcdiv(bcmul(bcmul($goods['final_price'], $goods['goods_num'], 2), $goods['commission'], 2), 100, 2), $log['level'], $goods['add_time'], $goods['goods_id']), 0, 2) : '0.00',
-                        'goods_pv' => $goods['goods_pv'] > 0 ? $goods['goods_pv'] : '0.00'
+                        'commission' => $hasCommission ? $goods['goods_pv'] == 0 ? bcadd($OrderLogic->getRongMoney(bcdiv(bcmul(bcmul($goods['final_price'], $goods['goods_num'], 2), $goods['commission'], 2), 100, 2), $log['level'], $goods['add_time'], $goods['goods_id']), 0, 2) : '0.00' : '0.00',
+                        'goods_pv' => $hasCommission ? $goods['goods_pv'] > 0 ? $goods['goods_pv'] : '0.00' : '0.00'
                     ];
                 }
             }
@@ -222,6 +229,13 @@ class Distribute extends Base
             ];
             foreach ($orderGoods as $goods) {
                 if ($log['order_id'] == $goods['order_id']) {
+                    $hasCommission = true;
+                    if ($log['status'] == 6) {
+                        // 提成记录状态为 已售后
+                        if (M('return_goods')->where(['rec_id' => $goods['rec_id'], 'status' => ['NOT IN', [-2, -1, 6]]])->value('id')) {
+                            $hasCommission = false;
+                        }
+                    }
                     $list[$k]['goods_list'][] = [
                         'goods_id' => $goods['goods_id'],
                         'goods_name' => $goods['goods_name'],
@@ -230,8 +244,8 @@ class Distribute extends Base
                         'goods_num' => $goods['goods_num'],
                         'exchange_price' => $goods['member_goods_price'],
                         'exchange_integral' => $goods['use_integral'],
-                        'commission' => $goods['goods_pv'] ? bcadd($OrderLogic->getRongMoney(bcdiv(bcmul(bcmul($goods['final_price'], $goods['goods_num'], 2), $goods['commission'], 2), 100, 2), $log['level'], $goods['add_time'], $goods['goods_id']), 0, 2) : '0.00',
-                        'goods_pv' => $goods['goods_pv'] > 0 ? $goods['goods_pv'] : '0.00'
+                        'commission' => $hasCommission ? $goods['goods_pv'] ? bcadd($OrderLogic->getRongMoney(bcdiv(bcmul(bcmul($goods['final_price'], $goods['goods_num'], 2), $goods['commission'], 2), 100, 2), $log['level'], $goods['add_time'], $goods['goods_id']), 0, 2) : '0.00' : '0.00',
+                        'goods_pv' => $hasCommission ? $goods['goods_pv'] > 0 ? $goods['goods_pv'] : '0.00' : '0.00'
                     ];
                 }
             }

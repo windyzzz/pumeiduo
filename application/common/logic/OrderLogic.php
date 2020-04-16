@@ -560,7 +560,7 @@ class OrderLogic
         }
 
         // 更新分成记录状态
-        M('rebate_log')->where('order_sn', $data['order_sn'])->update(['status' => 6]);
+        M('rebate_log')->where('order_sn', $order['order_sn'])->update(['status' => 6]);
         if ($orderGoods['goods_pv'] == 0) {
             // 冻结分成
             $rebate_list = M('rebate_log')->where('order_sn', $order['order_sn'])->select();

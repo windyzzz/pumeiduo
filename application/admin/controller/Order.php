@@ -1116,7 +1116,7 @@ class Order extends Base
         }
 
         // 更新订单pv
-        if (in_array($return_goods['type'], [0, 1]) && !in_array($post_data['status'], [-2, -1, 0])) {
+        if (in_array($return_goods['type'], [0, 1]) && !in_array($post_data['status'], [-2, -1, 0, 6])) {
             if (!isset($order)) {
                 $order = \app\common\model\Order::get($return_goods['order_id']);
             }
