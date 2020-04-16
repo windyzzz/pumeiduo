@@ -848,7 +848,7 @@ class CartLogic extends Model
                 *,CASE type WHEN 1 THEN goods_price - member_goods_price ELSE '0' END AS use_point,
                 CASE use_integral > 0 WHEN 1 THEN 1 ELSE 0 END AS can_integral
                 ")
-            ->with('promGoods,goods')
+            ->with('promGoods,goods,specGoods')
             ->where($cartWhere)
             ->order('id desc')
             ->select();  // 获取购物车商品

@@ -399,31 +399,19 @@ class Cart extends Base
         $cartData = $cartData['cart_list'];
         // 圃美多商品
         $pmdList = [
+            'has_data' => 0,
             'prom_title' => '',
             'prom_title_data' => [],
             'cart_title' => '乐活优选',
-            'goods_list' => [
-                [
-                    'prom_id' => '',
-                    'type' => '',
-                    'type_value' => '',
-                    'goods' => []
-                ]
-            ]
+            'goods_list' => []
         ];
         // 海外购商品
         $abroadList = [
+            'has_data' => 0,
             'prom_title' => '',
             'prom_title_data' => [],
             'cart_title' => '海外购',
-            'goods_list' => [
-                [
-                    'prom_id' => '',
-                    'type' => '',
-                    'type_value' => '',
-                    'goods' => []
-                ]
-            ]
+            'goods_list' => []
         ];
         // 失效商品
         $invalidList = [];
@@ -460,6 +448,14 @@ class Cart extends Base
             }
             // 组装数据
             foreach ($cartData as $k => $v) {
+                $itemId = '0';
+                if (!empty($v['spec_goods'])) {
+                    foreach ($v['spec_goods'] as $spec) {
+                        if ($v['goods_id'] == $spec['goods_id'] && $v['spec_key'] == $spec['key']) {
+                            $itemId = $spec['item_id'];
+                        }
+                    }
+                }
                 if (isset($v['item_id'])) {
                     $storeCount = M('spec_goods_price')->where(['item_id' => $v['item_id']])->value('store_count');
                 } else {
@@ -471,6 +467,7 @@ class Cart extends Base
                     $invalidList[] = [
                         'cart_id' => $v['id'],
                         'goods_id' => $v['goods_id'],
+                        'item_id' => $itemId,
                         'goods_sn' => $v['goods_sn'],
                         'goods_name' => $v['goods_name'],
                         'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
@@ -506,6 +503,7 @@ class Cart extends Base
                         $pmdList['goods_list'][$id]['goods'][] = [
                             'cart_id' => $v['id'],
                             'goods_id' => $v['goods_id'],
+                            'item_id' => $itemId,
                             'goods_sn' => $v['goods_sn'],
                             'goods_name' => $v['goods_name'],
                             'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
@@ -546,6 +544,7 @@ class Cart extends Base
                         $pmdList['goods_list'][$id]['goods'][] = [
                             'cart_id' => $v['id'],
                             'goods_id' => $v['goods_id'],
+                            'item_id' => $itemId,
                             'goods_sn' => $v['goods_sn'],
                             'goods_name' => $v['goods_name'],
                             'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
@@ -568,6 +567,7 @@ class Cart extends Base
                         $pmdList['goods_list'][0]['goods'][] = [
                             'cart_id' => $v['id'],
                             'goods_id' => $v['goods_id'],
+                            'item_id' => $itemId,
                             'goods_sn' => $v['goods_sn'],
                             'goods_name' => $v['goods_name'],
                             'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
@@ -611,6 +611,7 @@ class Cart extends Base
                         $abroadList['goods_list'][$id]['goods'][] = [
                             'cart_id' => $v['id'],
                             'goods_id' => $v['goods_id'],
+                            'item_id' => $itemId,
                             'goods_sn' => $v['goods_sn'],
                             'goods_name' => $v['goods_name'],
                             'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
@@ -651,6 +652,7 @@ class Cart extends Base
                         $abroadList['goods_list'][$id]['goods'][] = [
                             'cart_id' => $v['id'],
                             'goods_id' => $v['goods_id'],
+                            'item_id' => $itemId,
                             'goods_sn' => $v['goods_sn'],
                             'goods_name' => $v['goods_name'],
                             'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
@@ -673,6 +675,7 @@ class Cart extends Base
                         $abroadList['goods_list'][0]['goods'][] = [
                             'cart_id' => $v['id'],
                             'goods_id' => $v['goods_id'],
+                            'item_id' => $itemId,
                             'goods_sn' => $v['goods_sn'],
                             'goods_name' => $v['goods_name'],
                             'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
@@ -691,7 +694,8 @@ class Cart extends Base
             }
         }
         // 处理秒杀商品归纳 - 圃美多商品
-        $pmdNormalGoods = $pmdList['goods_list'][0];
+        $pmdList['goods_list'] = array_values($pmdList['goods_list']);
+        $pmdNormalGoods = isset($pmdList['goods_list'][0]) ? $pmdList['goods_list'][0] : [];
         unset($pmdList['goods_list'][0]);
         $flashSaleList = [
             'prom_id' => '0',
@@ -708,11 +712,11 @@ class Cart extends Base
         if (!empty($flashSaleList['goods'])) {
             array_unshift($pmdList['goods_list'], $flashSaleList);
         }
-        array_unshift($pmdList['goods_list'], $pmdNormalGoods);
-        $pmdList['goods_list'] = array_values($pmdList['goods_list']);
+        if (!empty($pmdNormalGoods)) array_unshift($pmdList['goods_list'], $pmdNormalGoods);
 
         // 处理秒杀商品归纳 - 海外购商品
-        $abroadNormalGoods = $abroadList['goods_list'][0];
+        $abroadList['goods_list'] = array_values($abroadList['goods_list']);
+        $abroadNormalGoods = isset($abroadList['goods_list'][0]) ? $abroadList['goods_list'][0] : [];
         unset($abroadList['goods_list'][0]);
         $flashSaleList = [
             'prom_id' => '0',
@@ -729,8 +733,7 @@ class Cart extends Base
         if (!empty($flashSaleList['goods'])) {
             array_unshift($abroadList['goods_list'], $flashSaleList);
         }
-        array_unshift($abroadList['goods_list'], $abroadNormalGoods);
-        $abroadList['goods_list'] = array_values($abroadList['goods_list']);
+        if (!empty($abroadNormalGoods)) array_unshift($abroadList['goods_list'], $abroadNormalGoods);
 
         // 订单优惠促销（查看是否有优惠价格）
         $promTitleData = [];
@@ -742,6 +745,8 @@ class Cart extends Base
         }
         $pmdList['prom_title'] = $promTitleData ? $promTitleData[0] : '';
         $pmdList['prom_title_data'] = $promTitleData;
+        if (!empty($pmdList['goods_list'])) $pmdList['has_data'] = 1;
+        if (!empty($abroadList['goods_list'])) $abroadList['has_data'] = 1;
         $return = [
             'pmd_list' => $pmdList,
             'abroad_list' => $abroadList,
