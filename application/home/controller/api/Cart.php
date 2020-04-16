@@ -911,7 +911,7 @@ class Cart extends Base
             $return['data'][] = [
                 'title' => '乐活优选',
                 'goods_num' => $res['result']['goods_num'],
-                'total_fee' => $res['result']['total_fee'],
+                'total_fee' => '￥' . $res['result']['total_fee'],
                 'use_integral' => $res['result']['use_integral']
             ];
             // 海外购商品价格
@@ -919,7 +919,7 @@ class Cart extends Base
             $return['data'][] = [
                 'title' => '海外购',
                 'goods_num' => $res['result']['goods_num'],
-                'total_fee' => $res['result']['total_fee'],
+                'total_fee' => '￥' . $res['result']['total_fee'],
                 'use_integral' => $res['result']['use_integral']
             ];
         }
