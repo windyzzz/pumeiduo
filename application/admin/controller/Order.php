@@ -1022,6 +1022,7 @@ class Order extends Base
         }
         $return_goods = Db::name('return_goods')->where(['id' => $post_data['id']])->find();
         !$return_goods && $this->ajaxReturn(['status' => -1, 'msg' => '非法操作!']);
+        $order_goods = M('order_goods')->where(['rec_id' => $return_goods['rec_id']])->find();
         $type_msg = C('RETURN_TYPE');
         $status_msg = C('REFUND_STATUS');
         switch ($post_data['status']) {
@@ -1035,22 +1036,26 @@ class Order extends Base
         }
 
         if ($return_goods['type'] > 0 && 4 == $post_data['status']) {
-            // 换货成功直接解冻分成
-            $rebate_list = M('rebate_log')->where('order_sn', $return_goods['order_sn'])->select();
-
-            if ($rebate_list) {
-                $OrderLogic = new \app\common\logic\OrderLogic();
-                foreach ($rebate_list as $rk => $rv) {
-                    $money = $OrderLogic->getDecMoney($rv['order_id'], $rv['level']);
-
-                    $dec_money = $money[$return_goods['rec_id']]['money'];
-                    $dec_point = $money[$return_goods['rec_id']]['point'];
-
-                    M('rebate_log')->where('id', $rv['id'])->update([
-                        'money' => ['exp', "money + {$dec_money}"],
-                        'point' => ['exp', "point + {$dec_point}"],
-                        'freeze_money' => ['exp', "freeze_money - {$dec_money}"],
-                    ]);
+            // 更新分成记录状态
+            $other_return = M('return_goods')->where(['order_id' => $return_goods['order_id'], 'rec_id' => ['neq', $return_goods['rec_id']], 'status' => 0])->find();
+            if (!$other_return) {
+                M('rebate_log')->where('order_sn', $return_goods['order_sn'])->update(['status' => 2]);
+            }
+            if ($order_goods['goods_pv'] == 0) {
+                // 换货成功直接解冻分成
+                $rebate_list = M('rebate_log')->where('order_sn', $return_goods['order_sn'])->select();
+                if ($rebate_list) {
+                    $OrderLogic = new \app\common\logic\OrderLogic();
+                    foreach ($rebate_list as $rk => $rv) {
+                        $money = $OrderLogic->getDecMoney($rv['order_id'], $rv['level']);
+                        $dec_money = $money[$return_goods['rec_id']]['money'];
+                        $dec_point = $money[$return_goods['rec_id']]['point'];
+                        M('rebate_log')->where('id', $rv['id'])->update([
+                            'money' => ['exp', "money + {$dec_money}"],
+                            'point' => ['exp', "point + {$dec_point}"],
+                            'freeze_money' => ['exp', "freeze_money - {$dec_money}"],
+                        ]);
+                    }
                 }
             }
             $post_data['seller_delivery']['express_time'] = date('Y-m-d H:i:s');
@@ -1074,26 +1079,29 @@ class Order extends Base
 //            $commonOrderLogic->alterReturnGoodsInventory($order, $return_goods['rec_id']); //审核通过，恢复原来库存
             if ($return_goods['type'] < 2) {
                 $orderLogic->disposereRurnOrderCoupon($return_goods); // 是退货可能要处理优惠券
-                $order_info = $order->toArray();
+//                $order_info = $order->toArray();
             }
         } elseif (-1 == $post_data['status']) {
-            // 解冻分成
-            $rebate_list = M('rebate_log')->where('order_sn', $return_goods['order_sn'])->select();
-
-            if ($rebate_list) {
-                $OrderLogic = new \app\common\logic\OrderLogic();
-                foreach ($rebate_list as $rk => $rv) {
-                    $money = $OrderLogic->getDecMoney($rv['order_id'], $rv['level']);
-
-
-                    $dec_money = $money[$return_goods['rec_id']]['money'];
-                    $dec_point = $money[$return_goods['rec_id']]['point'];
-
-                    M('rebate_log')->where('id', $rv['id'])->update([
-                        'money' => ['exp', "money + {$dec_money}"],
-                        'point' => ['exp', "point + {$dec_point}"],
-                        'freeze_money' => ['exp', "freeze_money - {$dec_money}"],
-                    ]);
+            // 更新分成记录状态
+            $other_return = M('return_goods')->where(['order_id' => $return_goods['order_id'], 'rec_id' => ['neq', $return_goods['rec_id']], 'status' => 0])->find();
+            if (!$other_return) {
+                M('rebate_log')->where('order_sn', $return_goods['order_sn'])->update(['status' => 2]);
+            }
+            if ($order_goods['goods_pv'] == 0) {
+                // 解冻分成
+                $rebate_list = M('rebate_log')->where('order_sn', $return_goods['order_sn'])->select();
+                if ($rebate_list) {
+                    $OrderLogic = new \app\common\logic\OrderLogic();
+                    foreach ($rebate_list as $rk => $rv) {
+                        $money = $OrderLogic->getDecMoney($rv['order_id'], $rv['level']);
+                        $dec_money = $money[$return_goods['rec_id']]['money'];
+                        $dec_point = $money[$return_goods['rec_id']]['point'];
+                        M('rebate_log')->where('id', $rv['id'])->update([
+                            'money' => ['exp', "money + {$dec_money}"],
+                            'point' => ['exp', "point + {$dec_point}"],
+                            'freeze_money' => ['exp', "freeze_money - {$dec_money}"],
+                        ]);
+                    }
                 }
             }
         }
@@ -1112,7 +1120,6 @@ class Order extends Base
             if (!isset($order)) {
                 $order = \app\common\model\Order::get($return_goods['order_id']);
             }
-            $order_goods = M('order_goods')->where(['rec_id' => $return_goods['rec_id']])->find();
             if ($order['order_pv'] > 0) {
                 $goods = M('goods g')->join('order_goods og', 'og.goods_id = g.goods_id')->where(['og.rec_id' => $return_goods['rec_id']])->field('integral_pv, retail_pv')->find();
                 $orderAmountRate = bcdiv(bcadd($order['order_amount'], $order['user_electronic'], 2), $order['total_amount'], 2); // 订单实际支付金额比率

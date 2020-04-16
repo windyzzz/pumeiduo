@@ -826,7 +826,7 @@ class Order extends Base
         $region_id[] = tpCache('shop_info.district');
         $region_id[] = '0';
         $return_address = M('region2')->where('id in (' . implode(',', $region_id) . ')')->getField('id,name');
-        $order_info = array_merge($order, $order_goods);  //合并数组
+//        $order_info = array_merge($order, $order_goods);  //合并数组
         $return['return_address'] = $return_address;
         $return['return_type'] = C('RETURN_TYPE');
         $return['goods'] = $order_goods;
@@ -873,21 +873,20 @@ class Order extends Base
                 'item_id' => $orderGoods['item_id'] ?? '',
                 'original_img' => $orderGoods['original_img']
             ];
+
             if ($type != -1) {
-                $useApplyReturnMoney = bcmul($orderGoods['final_price'], $orderGoods['goods_num'], 2);    // 要退的总价 商品购买单价*申请数量
-                $userExpenditureMoney = bcsub(bcsub($order['goods_price'], $order['order_prom_amount'], 2), $order['coupon_price'], 2);    // 用户实际使用金额
-                $rate = bcdiv($useApplyReturnMoney, $userExpenditureMoney, 2);
-                $shippingRate = bcdiv($order['shipping_price'], $order['total_amount'], 2);
-                $userElectronic = bcsub($order['user_electronic'], bcmul($order['user_electronic'], $shippingRate, 2), 2);
+                $useApplyReturnMoney = $orderGoods['final_price'] * $orderGoods['goods_num'];    // 要退的总价 商品购买单价*申请数量
+                $userExpenditureMoney = $order['goods_price'] - $order['order_prom_amount'] - $order['coupon_price'];    // 用户实际使用金额
+                $user_electronic = round($order['user_electronic'] - $order['user_electronic'] * $order['shipping_price'] / $order['total_amount'], 2);
                 // 该退积分支付
-                $refundIntegral = bcmul($orderGoods['use_integral'], $orderGoods['goods_num'], 2);
+                $refundIntegral = round($orderGoods['use_integral'] * $orderGoods['goods_num'], 2);
                 // 该退电子币
-                $refundElectronic = bcmul($rate, $userElectronic, 2);
+                $refundElectronic = round($useApplyReturnMoney / $userExpenditureMoney * $user_electronic, 2);
                 if ($order['order_amount'] > 0) {
-                    $orderAmount = bcadd($order['order_amount'], $order['paid_money'], 2);   // 三方支付总额，预售要退定金
-                    if ($orderAmount > $order['shipping_price']) {
+                    $order_amount = $order['order_amount'] + $order['paid_money'];   // 三方支付总额，预售要退定金
+                    if ($order_amount > $order['shipping_price']) {
                         // 退款金额
-                        $refundMoney = bcmul($rate, bcsub($orderAmount, $order['shipping_price'], 2), 2);
+                        $refundMoney = round($useApplyReturnMoney / $userExpenditureMoney * ($order_amount - $order['shipping_price']), 2);
                     }
                 }
 
@@ -908,9 +907,9 @@ class Order extends Base
                     $return['return_contact'] = tpCache('shop_info.contact');
                     $return['return_mobile'] = tpCache('shop_info.mobile');
                     $return['return_address'] = isset($address) ? $address : '';
-                    $return['return_price'] = isset($refundMoney) ? $refundMoney : isset($refundElectronic) ? $refundElectronic : 0;
-                    $return['return_electronic'] = isset($refundElectronic) ? $refundElectronic : 0;
-                    $return['return_integral'] = isset($refundIntegral) ? $refundIntegral : 0;
+                    $return['return_price'] = isset($refundMoney) ? $refundMoney . '' : isset($refundElectronic) ? $refundElectronic . '' : 0;
+                    $return['return_electronic'] = isset($refundElectronic) ? $refundElectronic . '' : 0;
+                    $return['return_integral'] = isset($refundIntegral) ? $refundIntegral . '' : 0;
                     break;
                 default:
                     return json(['status' => 0, 'msg' => '参数错误']);
@@ -1265,9 +1264,9 @@ class Order extends Base
         if (!M('return_goods')->where('order_id', $order_id)->where('status', 'neq', -2)->find()) {
             M('order')->where('order_id', $order_id)->update(['order_status' => 2]);
         }
-
         $return_info = M('return_goods')->where(['id' => $id, 'user_id' => $this->user_id])->find();
-        // 解冻分成
+        $order_goods = M('order_goods')->where(['rec_id' => $return_info['rec_id']])->find();
+
         if (5 != $return_info['status']) {
             // $goods_commission = M('Goods')->where('goods_id', $return_info['goods_id'])->getField('commission');
             // $dec_money = $return_info['refund_money'] * $goods_commission / 100;
@@ -1275,22 +1274,26 @@ class Order extends Base
             //     'money' => ['exp',"money + {$dec_money}"],
             //     'freeze_money' => ['exp',"freeze_money - {$dec_money}"]
             // ]);
-
-            $rebate_list = M('rebate_log')->where('order_sn', $return_info['order_sn'])->select();
-
-            if ($rebate_list) {
-                $OrderLogic = new OrderLogic();
-                foreach ($rebate_list as $rk => $rv) {
-                    $money = $OrderLogic->getDecMoney($rv['order_id'], $rv['level']);
-
-                    $dec_money = $money[$return_info['rec_id']]['money'];
-                    $dec_point = $money[$return_info['rec_id']]['point'];
-
-                    M('rebate_log')->where('id', $rv['id'])->update([
-                        'money' => ['exp', "money + {$dec_money}"],
-                        'point' => ['exp', "point + {$dec_point}"],
-                        'freeze_money' => ['exp', "freeze_money - {$dec_money}"],
-                    ]);
+            // 更新分成记录状态
+            $other_return = M('return_goods')->where(['order_id' => $return_info['order_id'], 'rec_id' => ['neq', $return_info['rec_id']], 'status' => 0])->find();
+            if (!$other_return) {
+                M('rebate_log')->where('order_sn', $return_info['order_sn'])->update(['status' => 2]);
+            }
+            if ($order_goods['goods_pv'] == 0) {
+                // 解冻分成
+                $rebate_list = M('rebate_log')->where('order_sn', $return_info['order_sn'])->select();
+                if ($rebate_list) {
+                    $OrderLogic = new OrderLogic();
+                    foreach ($rebate_list as $rk => $rv) {
+                        $money = $OrderLogic->getDecMoney($rv['order_id'], $rv['level']);
+                        $dec_money = $money[$return_info['rec_id']]['money'];
+                        $dec_point = $money[$return_info['rec_id']]['point'];
+                        M('rebate_log')->where('id', $rv['id'])->update([
+                            'money' => ['exp', "money + {$dec_money}"],
+                            'point' => ['exp', "point + {$dec_point}"],
+                            'freeze_money' => ['exp', "freeze_money - {$dec_money}"],
+                        ]);
+                    }
                 }
             }
         }
@@ -2406,7 +2409,6 @@ class Order extends Base
         // 创建订单
         list($prom_type, $prom_id) = $payLogic->getPromInfo();
         try {
-            Db::startTrans();
             $placeOrder = new PlaceOrder($payLogic);
             $placeOrder->setUser($this->user);
             $placeOrder->setUserAddress($userAddress);
@@ -2423,7 +2425,6 @@ class Order extends Base
             }
             $order = $placeOrder->getOrder();
             $payLogic->activityRecord($order);  // 记录
-            Db::commit();
             $return = [
                 'order_id' => $order['order_id'],
                 'order_sn' => $order['order_sn'],
@@ -2451,7 +2452,6 @@ class Order extends Base
             $return['payment_list'] = $paymentList;
             return json(['status' => 1, 'msg' => '创建订单成功', 'result' => $return]);
         } catch (TpshopException $tpE) {
-            Db::rollback();
             return json(['status' => $tpE->getErrorArr()['status'], 'msg' => $tpE->getErrorArr()['msg'] ?? '创建订单失败']);
         }
     }
