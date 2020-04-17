@@ -199,7 +199,6 @@ class DistributLogic
             'order_status' => ['IN', [2, 6]],   // 已收货 售后
             'pay_status' => 1, //已支付
             'end_sale_time' => ['ELT', $confirm_time],
-//            'add_time' => ['GT', '1587052800']    // 测试服
         ];
 
         // 分成订单列表
@@ -215,33 +214,30 @@ class DistributLogic
         }
     }
 
-    //订单收货确认后自动分成
-    public function auto_confirm_ceshi()
+    // 订单收货确认后自动分成_测试
+    public function auto_confirm_test()
     {
         //确认分成时间
-        $confirm_time = time() + 10 * 86400;
-
-        $where0 = [
+//        $confirm_time = time() + 10 * 86400;
+        // 确认分成时间
+        $confirm_time = time();
+        $where = [
             'is_distribut' => 0, // 未分成
             'shipping_status' => 1,  //已发货
-            'order_status' => 2,  //已收货
+            'order_status' => ['IN', [2, 6]],   // 已收货 售后
             'pay_status' => 1, //已支付
-            // 'rg.type' => ['in',[0,1]], // 0仅退款 1退货退款
             'end_sale_time' => ['ELT', $confirm_time],
+            'add_time' => ['GT', '1587052800']    // 测试服
         ];
 
         // 分成订单列表
-        $orderList = M('Order')
-            ->field('o.order_sn, IFNULL(rg.id,0) as is_has_return, rg.type, o.order_id')
-            // ->fetchSql(1)
-            ->alias('o')
-            ->join('__RETURN_GOODS__ rg', 'o.order_sn = rg.order_sn', 'LEFT')
-            ->where($where0)
-            ->having('is_has_return = 0')
-            ->select();
-
+        $orderList = M('Order')->field('order_id, order_sn')->where($where)->select();
         if ($orderList) {
             foreach ($orderList as $v) {
+                // 查看订单商品是否正在申请售后（未处理完成）
+                if (M('return_goods')->where(['order_id' => $v['order_id'], 'status' => ['IN', [0, 1]]])->value('id')) {
+                    continue;
+                }
                 $this->confirmOrder($v['order_sn'], $v['order_id']);
             }
         }

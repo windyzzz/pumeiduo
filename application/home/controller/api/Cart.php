@@ -935,7 +935,10 @@ class Cart extends Base
                 $cartLogic->setCartType($cart_type);
                 $buyGoods = $cartLogic->buyNow();
                 // 计算商品pv
-                $cartLogic->calcGoodsPv([$buyGoods]);
+                if ($this->user['distribut_level'] >= 3) {
+                    // 计算商品pv
+                    $cartLogic->calcGoodsPv([$buyGoods]);
+                }
                 $cartList[0] = $buyGoods;
                 $pay->payGoodsList($cartList);
             } else {
@@ -958,8 +961,10 @@ class Cart extends Base
                 if (count($vipGoods) > 1) {
                     return json(['status' => 0, 'msg' => '不能一次购买两种或以上VIP升级套餐']);
                 }
-                // 计算商品pv
-                $cartLogic->calcGoodsPv($userCartList);
+                if ($this->user['distribut_level'] >= 3) {
+                    // 计算商品pv
+                    $cartLogic->calcGoodsPv($userCartList);
+                }
                 $cartLogic->checkStockCartList($userCartList);
                 $pay->payCart($userCartList);
             }
