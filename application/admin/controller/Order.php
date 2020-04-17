@@ -437,7 +437,7 @@ class Order extends Base
                         $orderGoods[$key]['prom_value'] = '订单优惠促销';
                         break;
                     default:
-                        $orderGoods[$key]['final_goods_price'] = $val['member_goods_price'];
+                        $orderGoods[$key]['final_goods_price'] = $val['final_price'];
                         $orderGoods[$key]['prom_value'] = '无';
                 }
             }

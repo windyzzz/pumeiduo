@@ -1729,7 +1729,7 @@ class Order extends Base
 
         if ($this->user['distribut_level'] >= 3) {
             // 计算商品pv
-            $cartLogic->calcGoodsPv($cartList['cartList']);
+            $cartList['cartList'] = $cartLogic->calcGoodsPv($cartList['cartList']);
         }
 
         $cartGoodsList = get_arr_column($cartList['cartList'], 'goods');
@@ -1792,8 +1792,6 @@ class Order extends Base
             $payLogic->check();
             // 参与活动促销
             $payLogic->goodsPromotion();
-            // 商品pv
-            $payLogic->setGoodsPv($cartLogic->getGoodsPv());
 
             // 配送物流
             if (empty($userAddress)) {
@@ -2118,7 +2116,7 @@ class Order extends Base
 
         if ($this->user['distribut_level'] >= 3) {
             // 计算商品pv
-            $cartLogic->calcGoodsPv($cartList['cartList']);
+            $cartList['cartList'] = $cartLogic->calcGoodsPv($cartList['cartList']);
         }
 
         try {
@@ -2133,8 +2131,6 @@ class Order extends Base
             $payLogic->goodsPromotion();
             // 加价购活动
             $payLogic->activityPayBeforeNew($extraGoods, $cartLogic);
-            // 商品pv
-            $payLogic->setGoodsPv($cartLogic->getGoodsPv());
 
             // 配送物流
             $payLogic->delivery($userAddress['district']);
@@ -2363,7 +2359,7 @@ class Order extends Base
 
             if ($this->user['distribut_level'] >= 3) {
                 // 计算商品pv
-                $cartLogic->calcGoodsPv($cartList['cartList']);
+                $cartList['cartList'] = $cartLogic->calcGoodsPv($cartList['cartList']);
             }
 
             $payLogic = new Pay();
@@ -2376,13 +2372,11 @@ class Order extends Base
             $payLogic->goodsPromotion();
             // 加价购活动
             $payLogic->activityPayBeforeNew($extraGoods, $cartLogic);
-            // 商品pv
-            $payLogic->setGoodsPv($cartLogic->getGoodsPv());
 
             // 配送物流
             $res = $payLogic->delivery($userAddress['district']);
             if (isset($res['status']) && $res['status'] == -1) {
-                return json(['status' => 0, 'msg' => '订单中部分商品不支持对当前地址的配送']);
+//                return json(['status' => 0, 'msg' => '订单中部分商品不支持对当前地址的配送']);
             }
 
             // 使用积分
