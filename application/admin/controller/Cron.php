@@ -1404,7 +1404,7 @@ AND log_id NOT IN
         $orderIds = M('order')->where($where)->getField('order_id', true);
         // 查看订单商品是否正在申请售后（未处理完成）
         foreach ($orderIds as $k => $orderId) {
-            if (M('return_goods')->where(['order_id' => $orderId, 'status' => 0])->value('id')) {
+            if (M('return_goods')->where(['order_id' => $orderId, 'status' => ['IN', [0, 1]]])->value('id')) {
                 unset($orderIds[$k]);
             }
         }

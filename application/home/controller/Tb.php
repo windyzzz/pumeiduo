@@ -257,7 +257,7 @@ class Tb extends Controller
                 $back = $this->save_type($data);
             } else if ($type == 5) {//更新库存
                 $back = $this->save_stock($data);
-            } else if ($type == 6) {//更新库存
+            } else if ($type == 6) {//更新订单
                 $back = $this->save_order($data);
             } else if ($type == 7) {//更新快递
                 $back = $this->save_logistics($data);
