@@ -564,6 +564,14 @@ class Cart extends Base
                         // 团购活动
                     } else {
                         // 正常普通商品
+                        if (!isset($pmdList['goods_list'][0])) {
+                            array_unshift($pmdList['goods_list'], [
+                                'prom_id' => '',
+                                'type' => '',
+                                'type_value' => '',
+                                'goods' => []
+                            ]);
+                        }
                         $pmdList['goods_list'][0]['goods'][] = [
                             'cart_id' => $v['id'],
                             'goods_id' => $v['goods_id'],
@@ -672,6 +680,14 @@ class Cart extends Base
                         // 团购活动
                     } else {
                         // 正常普通商品
+                        if (!isset($abroadList['goods_list'][0])) {
+                            array_unshift($abroadList['goods_list'], [
+                                'prom_id' => '',
+                                'type' => '',
+                                'type_value' => '',
+                                'goods' => []
+                            ]);
+                        }
                         $abroadList['goods_list'][0]['goods'][] = [
                             'cart_id' => $v['id'],
                             'goods_id' => $v['goods_id'],
