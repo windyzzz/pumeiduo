@@ -1182,8 +1182,12 @@ AND log_id NOT IN
 
     function auto_confirm_ceshi()
     {
-        $distributLogic = new \app\common\logic\DistributLogic();
-        $distributLogic->auto_confirm_ceshi(); // 自动确认分成
+        // 多少天后自动分销记录自动分成
+        $switch = tpCache('distribut.switch');
+        if (1 == $switch && file_exists(APP_PATH . 'common/logic/DistributLogic.php')) {
+            $distributLogic = new \app\common\logic\DistributLogic();
+            $distributLogic->auto_confirm_test(); // 自动确认分成
+        }
     }
 
     // 自动收货
