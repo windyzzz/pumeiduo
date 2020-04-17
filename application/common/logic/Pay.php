@@ -215,20 +215,21 @@ class Pay
     }
 
     /**
-     * 设置商品pv
-     * @param $goodsPv
-     */
-    public function setGoodsPv($goodsPv)
-    {
-        $this->goodsPv = $goodsPv;
-    }
-
-    /**
      * 设置订单pv
+     * @param $payList
      */
     public function setOrderPv()
     {
-        $this->orderPv = bcmul(bcdiv(bcadd($this->orderAmount, $this->userElectronic, 2), $this->totalAmount, 2), $this->goodsPv, 2);
+        foreach ($this->payList as $item) {
+            if (isset($item['goods_pv'])) {
+                $this->goodsPv = bcadd($this->goodsPv, bcmul($item['goods_pv'], $item['goods_num'], 2), 2);
+            }
+        }
+        // 订单优惠的价格
+        $promAmount = bcsub(bcadd($this->orderPromAmount, $this->couponPrice, 2), $this->goodsPromAmount, 2);
+        // 优惠比例
+        $promRate = bcsub(1, bcdiv($promAmount, $this->totalAmount, 2), 2);
+        $this->orderPv = $promRate < 1 ? bcmul($promRate, $this->goodsPv) : $this->goodsPv;
     }
 
     /**
@@ -877,8 +878,6 @@ class Pay
             $cartLogic->setCartType(0);
             try {
                 $buyGoods = $cartLogic->buyNow();
-                // 计算商品pv
-                $cartLogic->calcGoodsPv([$buyGoods]);
             } catch (TpshopException $tpE) {
                 $error = $tpE->getErrorArr();
                 throw new TpshopException('计算订单价格', 0, ['status' => 0, 'msg' => $error['msg']]);
@@ -1198,6 +1197,9 @@ class Pay
 
                             $this->payList[$k]['member_goods_price'] = $member_goods_price;
                             $this->orderPromIds['goods_prom'][] = $group_activity['id'];
+                            if (isset($v['goods_pv'])) {
+                                $this->payList[$k]['goods_pv'] = bcdiv(bcmul($v['goods_pv'], $group_activity['expression'], 2), 100, 2);
+                            }
                             break;
                         case 1:
                             // 减价优惠
@@ -1206,11 +1208,17 @@ class Pay
 
                             $this->payList[$k]['member_goods_price'] = $member_goods_price;
                             $this->orderPromIds['goods_prom'][] = $group_activity['id'];
+                            if (isset($v['goods_pv'])) {
+                                $this->payList[$k]['goods_pv'] = bcmul($v['goods_pv'], bcdiv($member_goods_price, $v['member_goods_price'], 2), 2);
+                            }
                             break;
                         case 2:
                             // 固定金额
                             $this->payList[$k]['member_goods_price'] = $group_activity['expression'];
                             $this->orderPromIds['goods_prom'][] = $group_activity['id'];
+                            if (isset($v['goods_pv'])) {
+                                $this->payList[$k]['goods_pv'] = bcmul($v['goods_pv'], bcdiv($group_activity['expression'], $v['member_goods_price'], 2), 2);
+                            }
                             break;
                         case 4:
                             // 满打折
@@ -1256,6 +1264,9 @@ class Pay
                                 foreach ($promGoods as $goods) {
                                     if ($v['goods_id'] == $goods['goods_id'] && $v['item_id'] == $goods['item_id']) {
                                         $pay_list[$k]['member_goods_price'] = bcdiv(bcmul($v['member_goods_price'], $promInfo['expression'], 2), 100, 2);
+                                        if (isset($v['goods_pv'])) {
+                                            $this->payList[$k]['goods_pv'] = bcdiv(bcmul($v['goods_pv'], $promInfo['expression'], 2), 100, 2);
+                                        }
                                     }
                                 }
                             }
@@ -1271,7 +1282,10 @@ class Pay
                             foreach ($pay_list as $k => $v) {
                                 foreach ($promGoods as $goods) {
                                     if ($v['goods_id'] == $goods['goods_id'] && $v['item_id'] == $goods['item_id']) {
-                                        $pay_list[$k]['member_goods_price'] = bcsub($pay_list[$k]['member_goods_price'], $eachPromAmount, 2);
+                                        $pay_list[$k]['member_goods_price'] = bcsub($v['member_goods_price'], $eachPromAmount, 2);
+                                        if (isset($v['goods_pv'])) {
+                                            $this->payList[$k]['goods_pv'] = bcmul($v['goods_pv'], bcdiv($pay_list[$k]['member_goods_price'], $v['member_goods_price'], 2), 2);
+                                        }
                                     }
                                 }
                             }

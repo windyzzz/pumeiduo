@@ -220,7 +220,6 @@ class PlaceOrder
     {
         $OrderLogic = new OrderLogic();
         $user = $this->pay->getUser();
-
         $orderData = [
             'order_sn' => $OrderLogic->get_order_sn(), // 订单编号
             'user_id' => $user['user_id'], // 用户id
@@ -302,10 +301,9 @@ class PlaceOrder
         $goodsArr = Db::name('goods')->where('goods_id', 'IN', $goods_ids)->getField('goods_id,cost_price,give_integral,commission,exchange_integral,trade_type,sale_type');
         $orderGoodsAllData = [];
 
-        $orderAmountRate = bcdiv(bcadd($this->pay->getOrderAmount(), $this->pay->getUserElectronic(), 2), $this->pay->getTotalAmount(), 2); // 订单实际支付金额比率
+        $promRate = bcsub(1, bcdiv($orderDiscounts, $this->pay->getTotalAmount(), 2), 2);
         $orderPromId = [];  // 订单优惠促销ID
         $orderDiscount = 0.00;  // 订单优惠金额
-
         foreach ($payList as $payKey => $payItem) {
             $finalPrice = bcsub($payItem['member_goods_price'], bcmul($payItem['member_goods_price'] / $this->pay->getGoodsPrice(), $orderDiscounts, 2), 2);
             $orderGoodsData = [
@@ -332,19 +330,9 @@ class PlaceOrder
                 'trade_type' => $goodsArr[$payItem['goods_id']]['trade_type'],
                 'sale_type' => $goodsArr[$payItem['goods_id']]['sale_type'],
                 're_id' => isset($payItem['re_id']) ? intval($payItem['re_id']) : 0,
-                'goods_pv' => 0,
+                'goods_pv' => isset($payItem['goods_pv']) ? bcmul(bcmul($payItem['goods_pv'], $payItem['goods_num'], 2), $promRate, 2) : 0,
                 'pay_type' => $payItem['type']      // 购买方式：1现金+积分 2现金
             ];
-            if ($this->user['distribut_level'] >= 3) {
-                switch ($payItem['type']) {
-                    case 1:
-                        $orderGoodsData['goods_pv'] = bcmul(bcmul($payItem['goods']['integral_pv'], $payItem['goods_num'], 2), $orderAmountRate, 2);
-                        break;
-                    case 2:
-                        $orderGoodsData['goods_pv'] = bcmul(bcmul($payItem['goods']['retail_pv'], $payItem['goods_num'], 2), $orderAmountRate, 2);
-                        break;
-                }
-            }
             if (!empty($payItem['spec_key'])) {
                 $orderGoodsData['spec_key'] = $payItem['spec_key'];
                 $orderGoodsData['spec_key_name'] = $payItem['spec_key_name'];

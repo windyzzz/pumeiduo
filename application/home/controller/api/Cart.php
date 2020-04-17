@@ -1389,7 +1389,7 @@ class Cart extends Base
                 // 计算商品pv
                 if ($this->user['distribut_level'] >= 3) {
                     // 计算商品pv
-                    $cartLogic->calcGoodsPv([$buyGoods]);
+                    $buyGoods = $cartLogic->calcGoodsPv([$buyGoods])[0];
                 }
                 $cartList[0] = $buyGoods;
                 $pay->payGoodsList($cartList);
@@ -1415,7 +1415,7 @@ class Cart extends Base
                 }
                 if ($this->user['distribut_level'] >= 3) {
                     // 计算商品pv
-                    $cartLogic->calcGoodsPv($userCartList);
+                    $userCartList = $cartLogic->calcGoodsPv($userCartList);
                 }
                 $cartLogic->checkStockCartList($userCartList);
                 $pay->payCart($userCartList);
@@ -1423,8 +1423,6 @@ class Cart extends Base
 
             list($prom_type, $prom_id) = $pay->getPromInfo();
 
-            // 商品pv
-            $pay->setGoodsPv($cartLogic->getGoodsPv());
             $pay->check(); // 加价购活动
             $pay->activityPayBefore(); // 参与活动促销 加价购活动
 
