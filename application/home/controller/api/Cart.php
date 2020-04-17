@@ -1026,6 +1026,7 @@ class Cart extends Base
                 return json(['status' => 1, 'msg' => '提交订单成功', 'result' => $order['order_sn'], 'order_id' => $order['order_id']]);
             }
             $return = $pay->toArray();
+            $return['order_pv'] = $return['order_pv'] != '0.00' ? $return['order_pv'] : '';
             $return['coupon_info'] = $coupon;
 
             return json(['status' => 1, 'msg' => '计算成功', 'result' => $return]);
