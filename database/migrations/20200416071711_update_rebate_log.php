@@ -29,8 +29,8 @@ class UpdateRebateLog extends Migrator
     public function change()
     {
         $this->table('rebate_log')
-            ->changeColumn('status', 'integer', ['default' => 0, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
-                'comment' => '0未付款 1已付款 2等待分成(已收货) 3已分成 4已取消 5已统计 6售后'])
+            ->addColumn('sale_service', 'integer', ['default' => 0, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
+                'comment' => '是否已售后 1是 0否'])
             ->update();
     }
 }

@@ -291,7 +291,7 @@ class PlaceOrder
     private function addOrderGoods()
     {
         if ($this->pay->getOrderPromAmount() > 0) {
-            $orderDiscounts = bcadd($this->pay->getOrderPromAmount(), $this->pay->getCouponPrice(), 2);  //整个订单优惠价钱
+            $orderDiscounts = bcsub(bcadd($this->pay->getOrderPromAmount(), $this->pay->getCouponPrice(), 2), $this->pay->getGoodsPromAmount(), 2);  //整个订单优惠价钱
         } else {
             $orderDiscounts = $this->pay->getCouponPrice();  //整个订单优惠价钱
         }
@@ -307,7 +307,6 @@ class PlaceOrder
         $orderDiscount = 0.00;  // 订单优惠金额
 
         foreach ($payList as $payKey => $payItem) {
-//            $totalPriceToRatio = $payItem['member_goods_price'] / $this->pay->getGoodsPrice();  // 商品价格占总价的比例
             $finalPrice = bcsub($payItem['member_goods_price'], bcmul($payItem['member_goods_price'] / $this->pay->getGoodsPrice(), $orderDiscounts, 2), 2);
             $orderGoodsData = [
                 'order_id' => $this->order['order_id'],         // 订单id

@@ -1036,12 +1036,7 @@ class Order extends Base
         }
 
         if ($return_goods['type'] > 0 && 4 == $post_data['status']) {
-            // 更新分成记录状态
-            $other_return = M('return_goods')->where(['order_id' => $return_goods['order_id'], 'rec_id' => ['neq', $return_goods['rec_id']], 'status' => 0])->find();
-            if (!$other_return) {
-                M('rebate_log')->where('order_sn', $return_goods['order_sn'])->update(['status' => 2]);
-            }
-            if ($order_goods['goods_pv'] == 0) {
+            if ($return_goods['type'] < 2 && $order_goods['goods_pv'] == 0) {
                 // 换货成功直接解冻分成
                 $rebate_list = M('rebate_log')->where('order_sn', $return_goods['order_sn'])->select();
                 if ($rebate_list) {
@@ -1082,12 +1077,7 @@ class Order extends Base
 //                $order_info = $order->toArray();
             }
         } elseif (-1 == $post_data['status']) {
-            // 更新分成记录状态
-            $other_return = M('return_goods')->where(['order_id' => $return_goods['order_id'], 'rec_id' => ['neq', $return_goods['rec_id']], 'status' => 0])->find();
-            if (!$other_return) {
-                M('rebate_log')->where('order_sn', $return_goods['order_sn'])->update(['status' => 2]);
-            }
-            if ($order_goods['goods_pv'] == 0) {
+            if ($return_goods['type'] < 2 && $order_goods['goods_pv'] == 0) {
                 // 解冻分成
                 $rebate_list = M('rebate_log')->where('order_sn', $return_goods['order_sn'])->select();
                 if ($rebate_list) {
@@ -1116,7 +1106,7 @@ class Order extends Base
         }
 
         // 更新订单pv
-        if (in_array($return_goods['type'], [0, 1]) && !in_array($post_data['status'], [-2, -1, 0, 6])) {
+        if (in_array($return_goods['type'], [0, 1]) && !in_array($post_data['status'], [-2, -1, 0, 1, 6])) {
             if (!isset($order)) {
                 $order = \app\common\model\Order::get($return_goods['order_id']);
             }
