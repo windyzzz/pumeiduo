@@ -250,6 +250,8 @@ class Order extends Base
         if (5 == $order_info['prom_type']) {   //虚拟订单
             $this->redirect(U('virtual/virtual_order', ['order_id' => $id]));
         }
+        $order_info['order_pv'] = $this->user['distribut_level'] >= 3 ? $order_info['order_pv'] != 0 ? $order_info['order_pv'] : '' : '';
+        
         //获取订单商品
         $model = new UsersLogic();
         $data = $model->get_order_goods($order_info['order_id']);
@@ -2358,7 +2360,7 @@ class Order extends Base
             //初始化数据 商品总额/节约金额/商品总共数量/商品使用积分
             $cartPriceInfo = $cartLogic->getCartPriceInfo($cartList['cartList']);
             $cartList = array_merge($cartList, $cartPriceInfo);
-            
+
             if ($this->user['distribut_level'] >= 3) {
                 // 计算商品pv
                 $cartLogic->calcGoodsPv($cartList['cartList']);
