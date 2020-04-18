@@ -298,7 +298,7 @@ class OrderLogic
             ->select();
 
         foreach ($order_goods as $ok => $ov) {
-            $money[$ov['rec_id']]['money'] = $this->getRongMoney(($ov['final_price'] * $ov['goods_num']) * $ov['commission'] / 100, $level, $ov['add_time'], $ov['goods_id']);
+            $money[$ov['rec_id']]['money'] = $this->getRongMoney(bcdiv(bcmul(bcmul($ov['final_price'], $ov['goods_num'], 2), $ov['commission'], 2), 100, 2), $level, $ov['add_time'], $ov['goods_id']);
             $money[$ov['rec_id']]['point'] = $this->getRongPoint($ov['goods_id'], $level);
         }
 
@@ -331,8 +331,6 @@ class OrderLogic
             }
             return round($money * $distribut_rate, 2);
         }
-
-
     }
 
     function getRongPoint($goods_id, $level)
