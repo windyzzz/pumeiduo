@@ -1110,26 +1110,13 @@ class Order extends Base
             if (!isset($order)) {
                 $order = \app\common\model\Order::get($return_goods['order_id']);
             }
-            if ($order['order_pv'] > 0) {
-                $goods = M('goods g')->join('order_goods og', 'og.goods_id = g.goods_id')->where(['og.rec_id' => $return_goods['rec_id']])->field('integral_pv, retail_pv')->find();
-                $orderAmountRate = bcdiv(bcadd($order['order_amount'], $order['user_electronic'], 2), $order['total_amount'], 2); // 订单实际支付金额比率
-                $goods_pv = 0;
-                switch ($order_goods['pay_type']) {
-                    case 1:
-                        $goods_pv = bcmul(bcmul($goods['integral_pv'], $order_goods['goods_num'], 2), $orderAmountRate, 2);
-                        break;
-                    case 2:
-                        $goods_pv = bcmul(bcmul($goods['retail_pv'], $order_goods['goods_num'], 2), $orderAmountRate, 2);
-                        break;
-                }
-                if ($goods_pv > 0) {
-                    $order_pv = bcsub($order['order_pv'], $goods_pv, 2);
-                    M('order')->where(['order_id' => $order['order_id']])->update([
-                        'order_pv' => $order_pv,
-                        'pv_tb' => 0,
-                        'pv_send' => 0
-                    ]);
-                }
+            if ($order_goods['goods_pv'] > 0) {
+                $order_pv = bcsub($order['order_pv'], $order_goods['goods_pv'], 2);
+                M('order')->where(['order_id' => $order['order_id']])->update([
+                    'order_pv' => $order_pv,
+                    'pv_tb' => 0,
+                    'pv_send' => 0
+                ]);
             }
         }
 
