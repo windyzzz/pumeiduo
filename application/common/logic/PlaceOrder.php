@@ -301,7 +301,7 @@ class PlaceOrder
         $goodsArr = Db::name('goods')->where('goods_id', 'IN', $goods_ids)->getField('goods_id,cost_price,give_integral,commission,exchange_integral,trade_type,sale_type');
         $orderGoodsAllData = [];
 
-        $promRate = bcsub(1, bcdiv($orderDiscounts, $this->pay->getTotalAmount(), 2), 2);
+        $promRate = bcsub(1, ($orderDiscounts / $this->pay->getTotalAmount()), 2);
         $orderPromId = [];  // 订单优惠促销ID
         $orderDiscount = 0.00;  // 订单优惠金额
         foreach ($payList as $payKey => $payItem) {

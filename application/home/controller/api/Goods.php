@@ -1597,16 +1597,6 @@ class Goods extends Base
         $promGoods = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
             ->where(['gtg.goods_id' => ['in', $filter_goods_id], 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
             ->field('pg.title, gtg.goods_id')->limit($page->firstRow . ',' . $page->listRows)->select();    // 促销活动
-        $couponLogic = new CouponLogic();
-        $couponCurrency = $couponLogic->getCoupon(0);    // 通用优惠券
-        $couponGoods = [];
-        $couponCate = [];
-        if (empty($coupon)) {
-            $couponGoods = $couponLogic->getCoupon(null, $filter_goods_id, null, ['limit' => ['offset' => $page->firstRow, 'length' => $page->listRows]]);    // 指定商品优惠券
-            $filter_cat_id = Db::name('goods')->where(['goods_id' => ['in', $filter_goods_id]])->limit($page->firstRow . ',' . $page->listRows)->getField('cat_id', true);
-            $couponCate = $couponLogic->getCoupon(null, null, $filter_cat_id, ['limit' => ['offset' => $page->firstRow, 'length' => $page->listRows]]);    // 指定分类优惠券
-        }
-        $promGoods = array_merge_recursive($promGoods, $couponCurrency, $couponGoods, $couponCate);
         // 循环处理数据
         foreach ($goodsList as $k => $v) {
             // 商品规格属性
@@ -1737,16 +1727,6 @@ class Goods extends Base
         $promGoods = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
             ->where(['gtg.goods_id' => ['in', $filter_goods_id], 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
             ->field('pg.title, gtg.goods_id')->limit($page->firstRow . ',' . $page->listRows)->select();    // 促销活动
-        $couponLogic = new CouponLogic();
-        $couponCurrency = $couponLogic->getCoupon(0);    // 通用优惠券
-        $couponGoods = [];
-        $couponCate = [];
-        if (empty($coupon)) {
-            $couponGoods = $couponLogic->getCoupon(null, $filter_goods_id, null, ['limit' => ['offset' => $page->firstRow, 'length' => $page->listRows]]);    // 指定商品优惠券
-            $filter_cat_id = Db::name('goods')->where(['goods_id' => ['in', $filter_goods_id]])->limit($page->firstRow . ',' . $page->listRows)->getField('cat_id', true);
-            $couponCate = $couponLogic->getCoupon(null, null, $filter_cat_id, ['limit' => ['offset' => $page->firstRow, 'length' => $page->listRows]]);    // 指定分类优惠券
-        }
-        $promGoods = array_merge_recursive($promGoods, $couponCurrency, $couponGoods, $couponCate);
         // 循环处理数据
         foreach ($goodsList as $k => $v) {
             // 商品规格属性

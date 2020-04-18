@@ -1332,11 +1332,11 @@ class CartLogic extends Model
             switch ($cartItem['type']) {
                 case 1:
                     // 现金+积分
-                    $cartList[$k]['goods_pv'] = bcmul($cartItem['goods']['integral_pv'], $cartItem['goods_num']);
+                    $cartList[$k]['goods_pv'] = $cartItem['goods']['integral_pv'];
                     break;
                 case 2:
                     // 现金
-                    $cartList[$k]['goods_pv'] = bcmul($cartItem['goods']['retail_pv'], $cartItem['goods_num']);
+                    $cartList[$k]['goods_pv'] = $cartItem['goods']['retail_pv'];
                     break;
             }
         }
