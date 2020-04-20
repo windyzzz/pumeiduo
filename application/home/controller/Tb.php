@@ -226,7 +226,16 @@ class Tb extends Controller
     {
         $orderData = M('order o')->join('users u', 'u.user_id = o.user_id')
             ->where(['o.order_id' => $orderId])
-            ->field('u.user_name, o.order_sn, o.order_pv')->find();
+            ->field('u.user_name, o.order_sn, o.order_pv, o.order_amount, o.user_electronic')->find();
+        // 查看是否有处理完的售后
+        $returnGoods = M('return_goods')->where(['order_id' => $orderId, 'status' => ['NOT IN', [-2, -1, 0]]])->field('refund_money, refund_electronic')->select();
+        $goodsPrice = bcadd($orderData['order_amount'], $orderData['user_electronic'], 2);
+        if (!empty($returnGoods)) {
+            $goodsPrice = bcsub($goodsPrice, bcadd($returnGoods['refund_money'], $returnGoods['refund_electronic'], 2), 2);
+        }
+        $orderData['goods_price'] = $goodsPrice;
+        unset($orderData['order_amount']);
+        unset($orderData['user_electronic']);
         return $orderData;
     }
 
