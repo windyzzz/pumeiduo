@@ -399,7 +399,7 @@ class Cart extends Base
         $cartData = $cartData['cart_list'];
         // 圃美多商品
         $pmdList = [
-            'has_data' => 0,
+            'cart_num' => 0,
             'prom_title' => '',
             'prom_title_data' => [],
             'cart_title' => '乐活优选',
@@ -407,14 +407,18 @@ class Cart extends Base
         ];
         // 海外购商品
         $abroadList = [
-            'has_data' => 0,
+            'cart_num' => 0,
             'prom_title' => '',
             'prom_title_data' => [],
             'cart_title' => '海外购',
             'goods_list' => []
         ];
         // 失效商品
-        $invalidList = [];
+        $invalidList = [
+            'cart_num' => 0,
+            'cart_title' => '失效宝贝',
+            'goods' => []
+        ];
         if (!empty($cartData)) {
             // 计算购物车金额
             $Pay = new \app\common\logic\Pay();
@@ -464,7 +468,9 @@ class Cart extends Base
                 $key = $v['goods_id'] . '_' . $v['spec_key'];
                 if (empty($v['goods']) || 1 != $v['goods']['is_on_sale']) {
                     // 已失效商品
-                    $invalidList[] = [
+                    $cartNum -= 1;
+                    $invalidList['cart_num'] += 1;
+                    $invalidList['goods'][] = [
                         'cart_id' => $v['id'],
                         'goods_id' => $v['goods_id'],
                         'item_id' => $itemId,
@@ -476,6 +482,7 @@ class Cart extends Base
                     ];
                 } elseif ($v['goods']['is_abroad'] == 0) {
                     // 圃美多商品
+                    $pmdList['cart_num'] += 1;
                     if (isset($promGoods[$key])) {
                         // 促销活动
                         $id = 'prom_' . $promGoods[$key]['id'];
@@ -592,6 +599,7 @@ class Cart extends Base
                     }
                 } else {
                     // 海外购商品
+                    $abroadList['cart_num'] += 1;
                     if (isset($promGoods[$key])) {
                         // 促销活动
                         $id = 'prom_' . $promGoods[$key]['id'];
@@ -761,8 +769,10 @@ class Cart extends Base
         }
         $pmdList['prom_title'] = $promTitleData ? $promTitleData[0] : '';
         $pmdList['prom_title_data'] = $promTitleData;
-        if (!empty($pmdList['goods_list'])) $pmdList['has_data'] = 1;
-        if (!empty($abroadList['goods_list'])) $abroadList['has_data'] = 1;
+
+        // 失效商品数量
+        $invalidList['cart_title'] = $invalidList['cart_title'] . $invalidList['cart_num'] . '件';
+
         $return = [
             'pmd_list' => $pmdList,
             'abroad_list' => $abroadList,

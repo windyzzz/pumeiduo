@@ -156,7 +156,7 @@ return [
         ]],
 
         ['name' => '海外购', 'child' => [
-            ['name' => '物流设置', 'act' => 'freight', 'op' => 'Abroad'],
+            ['name' => '设置', 'act' => 'config', 'op' => 'Abroad'],
         ]],
 
         // array('name' => '统计','child' => array(
