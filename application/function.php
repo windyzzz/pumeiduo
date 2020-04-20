@@ -1249,7 +1249,7 @@ function rebate_status($status)
     $rebate_status = [
         '未付款',
         '已付款',
-        '等待分成(已收货)',
+        '等待分成',
         '已分成',
         '已取消',
         '已统计'
