@@ -374,18 +374,26 @@ class Order extends Base
         $order = $orderObj->append(['full_address', 'orderGoods', 'adminOrderButton'])->toArray();
 
         $orderGoods = $order['orderGoods'];
+//        $orderGoodsNum = M('order_goods')->where(['order_id' => $order_id])->sum('goods_num');
         $express = Db::name('delivery_doc')->where('order_id', $order_id)->select();  //发货信息（可能多个）
         $user = Db::name('users')->where(['user_id' => $order['user_id']])->find();
         $this->assign('order', $order);
         $this->assign('user', $user);
         $split = count($orderGoods) > 1 ? 1 : 0;
         $buyGoodsNum = 1;   // 要支付购买的商品种类数
-        foreach ($orderGoods as $val) {
+
+        // 满单优惠
+//        $orderPromRate = 1;
+//        if (strstr($order['order_prom_id'], 'order_prom')) {
+//            $orderProm = explode('order_prom: ', $order['order_prom_id']);
+//            $orderPromId = (substr($orderProm[1], 0, strrpos($orderProm[1], ";")));
+//            $discountPrice = M('order_prom')->where(['id' => $orderPromId])->value('discount_price');
+//            $orderPromRate = $discountPrice / $orderGoodsNum;
+//        }
+        foreach ($orderGoods as $key => $val) {
             if ($val['is_gift'] == 0 && !in_array($val['prom_type'], [8, 9])) {
                 $buyGoodsNum += 1;
             }
-        }
-        foreach ($orderGoods as $key => $val) {
             if ($val['goods_num'] > 1) {
                 $split = 1;
             }
@@ -393,16 +401,15 @@ class Order extends Base
                 $orderGoods[$key]['final_goods_price'] = 0.00;
                 $orderGoods[$key]['prom_value'] = '无';
             } else {
+                $orderGoods[$key]['final_goods_price'] = $val['final_price'];
                 // 优惠促销
                 switch ($val['prom_type']) {
                     case 1:
                         // 秒杀
-                        $orderGoods[$key]['final_goods_price'] = $val['member_goods_price'];
                         $orderGoods[$key]['prom_value'] = '秒杀';
                         break;
                     case 2:
                         // 团购
-                        $orderGoods[$key]['final_goods_price'] = $val['member_goods_price'];
                         $orderGoods[$key]['prom_value'] = '秒杀';
                         break;
                     case 3:
@@ -412,32 +419,24 @@ class Order extends Base
                             case 0:
                             case 4:
                                 // 打折
-                                $orderGoods[$key]['final_goods_price'] = bcdiv(bcmul($val['member_goods_price'], $prom['expression'], 2), 100, 2);
                                 $orderGoods[$key]['prom_value'] = '折扣优惠';
                                 break;
                             case 1:
                             case 5:
-                                $expression = bcdiv($prom['expression'], $buyGoodsNum, 2);
                                 // 减价
-                                $orderGoods[$key]['final_goods_price'] = bcsub($val['member_goods_price'], bcdiv($expression, $val['goods_num'], 2), 2);
                                 $orderGoods[$key]['prom_value'] = '减价优惠';
                                 break;
                             case 2:
                                 // 固定金额
-                                $orderGoods[$key]['final_goods_price'] = $val['member_goods_price'];
                                 $orderGoods[$key]['prom_value'] = '固定金额';
                                 break;
                         }
                         break;
                     case 7:
                         // 订单优惠促销
-                        $discountPrice = M('order_prom')->where(['id' => $val['prom_id']])->value('discount_price');
-                        $expression = bcdiv($discountPrice, $buyGoodsNum, 2);
-                        $orderGoods[$key]['final_goods_price'] = bcsub($val['member_goods_price'], bcdiv($expression, $val['goods_num'], 2), 2);
                         $orderGoods[$key]['prom_value'] = '订单优惠促销';
                         break;
                     default:
-                        $orderGoods[$key]['final_goods_price'] = $val['final_price'];
                         $orderGoods[$key]['prom_value'] = '无';
                 }
             }
