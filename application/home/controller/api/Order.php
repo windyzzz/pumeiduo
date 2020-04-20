@@ -251,7 +251,7 @@ class Order extends Base
             $this->redirect(U('virtual/virtual_order', ['order_id' => $id]));
         }
         $order_info['order_pv'] = $this->user['distribut_level'] >= 3 ? $order_info['order_pv'] != 0 ? $order_info['order_pv'] : '' : '';
-        
+
         //获取订单商品
         $model = new UsersLogic();
         $data = $model->get_order_goods($order_info['order_id']);
@@ -1723,7 +1723,19 @@ class Order extends Base
              */
             return json(['status' => 0, 'msg' => '暂不支持此下单方式']);
         }
-        //初始化数据 商品总额/节约金额/商品总共数量/商品使用积分
+        // 检查下单商品
+        $res = $cartLogic->checkCartGoods($cartList['cartList']);
+        switch ($res['status']) {
+            case 0:
+                return json($res);
+            case 2:
+                // 获取身份证信息
+
+                // 获取海外购产品购买须知
+                break;
+        }
+
+        // 初始化数据 商品总额/节约金额/商品总共数量/商品使用积分
         $cartPriceInfo = $cartLogic->getCartPriceInfo($cartList['cartList']);
         $cartList = array_merge($cartList, $cartPriceInfo);
 

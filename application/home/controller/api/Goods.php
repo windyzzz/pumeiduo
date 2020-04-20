@@ -558,11 +558,11 @@ class Goods extends Base
             'height' => ''
         ];
         if ($goods['is_abroad'] == 1) {
-            $config = tpCache('abroad');
-            if (isset($config['freight_process'])) {
-                $imageSize = getimagesize(SITE_URL . $config['freight_process']);
+            $process = M('abroad_config')->where(['type' => 'freight_process'])->value('content');
+            if (!empty($process)) {
+                $imageSize = getimagesize(SITE_URL . $process);
                 $goods['abroad_freight_process'] = [
-                    'url' => SITE_URL . $config['freight_process'],
+                    'url' => SITE_URL . $process,
                     'width' => $imageSize[0] . '',
                     'height' => $imageSize[1] . ''
                 ];

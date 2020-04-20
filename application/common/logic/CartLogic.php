@@ -1573,4 +1573,29 @@ class CartLogic extends Model
                 return ['status' => 1, 'type_value' => $promInfo['title']];
         }
     }
+
+    /**
+     * 检查下单商品
+     * @param $cartList
+     * @return array
+     */
+    public function checkCartGoods($cartList)
+    {
+        $hasPmd = false;
+        $hasAbroad = false;
+        foreach ($cartList as $cart) {
+            if ($cart['goods']['is_abroad'] == 0) {
+                $hasPmd = true;
+            } else {
+                $hasAbroad = true;
+            }
+        }
+        if ($hasPmd && $hasAbroad) {
+            return ['status' => 0, 'msg' => '海外购商品请分开结算'];
+        }
+        if (!$hasPmd && $hasAbroad) {
+            return ['status' => 2];
+        }
+        return ['status' => 1];
+    }
 }
