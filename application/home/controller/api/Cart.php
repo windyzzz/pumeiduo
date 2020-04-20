@@ -933,7 +933,8 @@ class Cart extends Base
                 'title' => '乐活优选',
                 'goods_num' => $res['result']['goods_num'],
                 'total_fee' => '￥' . $res['result']['total_fee'],
-                'use_integral' => $res['result']['use_integral']
+                'use_integral' => $res['result']['use_integral'],
+                'cart_ids' => $pmdCart['cart_ids']
             ];
             // 海外购商品价格
             $res = json_decode($this->calcCartPrice($abroadCart['cart_ids'], $abroadCart['cart_num'])->getContent(), true);
@@ -941,7 +942,8 @@ class Cart extends Base
                 'title' => '海外购',
                 'goods_num' => $res['result']['goods_num'],
                 'total_fee' => '￥' . $res['result']['total_fee'],
-                'use_integral' => $res['result']['use_integral']
+                'use_integral' => $res['result']['use_integral'],
+                'cart_ids' => $abroadCart['cart_ids']
             ];
         }
         return json(['status' => 1, 'result' => $return]);
