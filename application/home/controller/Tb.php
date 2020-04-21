@@ -231,7 +231,9 @@ class Tb extends Controller
         $returnGoods = M('return_goods')->where(['order_id' => $orderId, 'status' => ['NOT IN', [-2, -1, 0]]])->field('refund_money, refund_electronic')->select();
         $goodsPrice = bcadd($orderData['order_amount'], $orderData['user_electronic'], 2);
         if (!empty($returnGoods)) {
-            $goodsPrice = bcsub($goodsPrice, bcadd($returnGoods['refund_money'], $returnGoods['refund_electronic'], 2), 2);
+            foreach ($returnGoods as $return) {
+                $goodsPrice = bcsub($goodsPrice, bcadd($return['refund_money'], $return['refund_electronic'], 2), 2);
+            }
         }
         $orderData['goods_price'] = $goodsPrice;
         unset($orderData['order_amount']);
