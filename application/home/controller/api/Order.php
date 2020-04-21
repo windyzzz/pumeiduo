@@ -1459,7 +1459,7 @@ class Order extends Base
                 $order_goods[$ok]['get_pv'] = $this->user['distribut_level'] >= 3 ? $hasCommission ? $ov['goods_pv'] > 0 ? $ov['goods_pv'] : '0.00' : '0.00' : '';
 
                 //$order_goods[$ok]['get_price'] = round(($ov['final_price'] * $ov['goods_num']) * $ov['commission'] / 100 * $distribut_rate, 2);
-                $order_goods[$ok]['is_freeze'] = M('return_goods')->where('rec_id', $ov['rec_id'])->where('status', 'gt', -1)->where(['status' => ['neq', 4]])->find() ? 1 : 0;
+                $order_goods[$ok]['is_freeze'] = M('return_goods')->where(['rec_id' => $ov['rec_id'], 'status' => ['NOT IN', [-2, -1, 4, 6]]])->find() ? 1 : 0;
             }
 
             $rebate_log[$rk]['status_desc'] = $rv['sale_service'] == 1 ? '已售后' : rebate_status($rv['status']);

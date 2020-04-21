@@ -146,7 +146,8 @@ class Distribute extends Base
                         'exchange_price' => $goods['member_goods_price'],
                         'exchange_integral' => $goods['use_integral'],
                         'commission' => $hasCommission ? $goods['goods_pv'] == 0 ? bcadd($OrderLogic->getRongMoney(bcdiv(bcmul(bcmul($goods['final_price'], $goods['goods_num'], 2), $goods['commission'], 2), 100, 2), $log['level'], $goods['add_time'], $goods['goods_id']), 0, 2) : '0.00' : '0.00',
-                        'goods_pv' => $this->user['distribut_level'] >= 3 ? $hasCommission ? $goods['goods_pv'] > 0 ? $goods['goods_pv'] : '0.00' : '0.00' : ''
+                        'goods_pv' => $this->user['distribut_level'] >= 3 ? $hasCommission ? $goods['goods_pv'] > 0 ? $goods['goods_pv'] : '0.00' : '0.00' : '',
+                        'is_freeze' => $hasCommission ? 0 : 1
                     ];
                 }
             }
@@ -259,7 +260,8 @@ class Distribute extends Base
                         'exchange_price' => $goods['member_goods_price'],
                         'exchange_integral' => $goods['use_integral'],
                         'commission' => $hasCommission ? $goods['goods_pv'] ? bcadd($OrderLogic->getRongMoney(bcdiv(bcmul(bcmul($goods['final_price'], $goods['goods_num'], 2), $goods['commission'], 2), 100, 2), $log['level'], $goods['add_time'], $goods['goods_id']), 0, 2) : '0.00' : '0.00',
-                        'goods_pv' => $this->user['distribut_level'] >= 3 ? $hasCommission ? $goods['goods_pv'] > 0 ? $goods['goods_pv'] : '0.00' : '0.00' : ''
+                        'goods_pv' => $this->user['distribut_level'] >= 3 ? $hasCommission ? $goods['goods_pv'] > 0 ? $goods['goods_pv'] : '0.00' : '0.00' : '',
+                        'is_freeze' => $hasCommission ? 0 : 1
                     ];
                 }
             }
