@@ -521,7 +521,7 @@ class Cart extends Base
                             'exchange_price' => '￥' . bcsub($v['goods_price'], $v['use_integral'], 2),
                             'goods_num' => $v['goods_num'],
                             'buy_limit' => $buyLimit,
-                            'buy_least' => '0',
+                            'buy_least' => '1',
                             'store_count' => $storeCount,
                         ];
                     } elseif (isset($flashSaleGoods[$key])) {
@@ -562,7 +562,7 @@ class Cart extends Base
                             'exchange_price' => '￥' . $v['member_goods_price'],
                             'goods_num' => $v['goods_num'],
                             'buy_limit' => $buyLimit,
-                            'buy_least' => '0',
+                            'buy_least' => '1',
                             'store_count' => $storeCount,
                         ];
                     } elseif (isset($groupBuyGoods[$key])) {
@@ -593,7 +593,7 @@ class Cart extends Base
                             'exchange_price' => '￥' . bcsub($v['goods_price'], $v['use_integral'], 2),
                             'goods_num' => $v['goods_num'],
                             'buy_limit' => $v['goods']['limit_buy_num'],
-                            'buy_least' => $v['goods']['least_buy_num'],
+                            'buy_least' => $v['goods']['least_buy_num'] == 0 ? '1' : $v['goods']['least_buy_num'],
                             'store_count' => $storeCount,
                         ];
                     }
