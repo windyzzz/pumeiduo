@@ -250,7 +250,7 @@ class Order extends Base
         if (5 == $order_info['prom_type']) {   //虚拟订单
             $this->redirect(U('virtual/virtual_order', ['order_id' => $id]));
         }
-        $order_info['order_pv'] = $this->user['distribut_level'] >= 3 ? $order_info['order_pv'] != 0 ? $order_info['order_pv'] : '' : '';
+        $order_info['order_pv'] = $this->user['distribut_level'] >= 3 ? $order_info['order_pv'] : '';
         
         //获取订单商品
         $model = new UsersLogic();
@@ -417,7 +417,7 @@ class Order extends Base
             'confirm_time' => $orderInfo['confirm_time'],
             'cancel_time' => $orderInfo['cancel_time'],
             'delivery_type' => $orderInfo['delivery_type'],   // 1统一发货 2分开发货
-            'order_pv' => $this->user['distribut_level'] >= 3 ? $orderInfo['order_pv'] != 0 ? $orderInfo['order_pv'] : '' : '',
+            'order_pv' => $this->user['distribut_level'] >= 3 ? $orderInfo['order_pv'] : '',
             'delivery' => [
                 'consignee' => $orderInfo['consignee'],
                 'mobile' => $orderInfo['mobile'],
