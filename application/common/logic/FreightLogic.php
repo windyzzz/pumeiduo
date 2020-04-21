@@ -139,6 +139,15 @@ class FreightLogic extends Model
         } else {
             $freight_price = $freight_config['first_money'];
         }
+        // 该运费模板是否有设置满优惠邮费
+        switch ($freight_config['discount_type']) {
+            case 1:
+                // 数量
+                if ($this->goodsNum >= number_format($freight_config['discount_condition'])) {
+                    $freight_price = $freight_config['discount_money'];
+                }
+                break;
+        }
 
         return $freight_price;
     }

@@ -1087,9 +1087,7 @@ class Pay
             }
         }
         $freight_free = tpCache('shopping.freight_free'); // 全场满多少免运费
-
         $ln = bcsub($this->goodsPrice, $this->orderPromAmount, 2);
-
         if ($ln < $freight_free) {
             $this->shippingPrice = $GoodsLogic->getFreight($this->payList, $district_id);
             $this->orderAmount = bcadd($this->orderAmount, $this->shippingPrice, 2);
