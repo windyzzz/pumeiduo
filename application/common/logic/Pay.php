@@ -1275,15 +1275,14 @@ class Pay
                     case 5:
                         if ($prom['goods_price'] >= $promInfo['goods_price']) {
                             $promAmount = $promInfo['expression'];
-                            $eachPromRate = $promInfo['expression'] / $promInfo['goods_price'];
                             // 优惠设置的商品
                             $promGoods = M('goods_tao_grade')->where(['promo_id' => $promId])->field('goods_id, item_id')->select();
                             foreach ($pay_list as $k => $v) {
                                 foreach ($promGoods as $goods) {
                                     if ($v['goods_id'] == $goods['goods_id'] && $v['item_id'] == $goods['item_id']) {
-                                        $pay_list[$k]['member_goods_price'] = bcmul($v['member_goods_price'], $eachPromRate, 2);
+                                        $pay_list[$k]['member_goods_price'] = bcsub($v['member_goods_price'], $promInfo['expression'], 2);
                                         if (isset($v['goods_pv'])) {
-                                            $this->payList[$k]['goods_pv'] = bcmul($v['goods_pv'], $eachPromRate, 2);
+                                            $this->payList[$k]['goods_pv'] = bcmul($v['goods_pv'], ($pay_list[$k]['member_goods_price'] / $v['member_goods_price']), 2);
                                         }
                                     }
                                 }
