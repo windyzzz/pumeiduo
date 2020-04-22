@@ -67,14 +67,26 @@
                     <label><em>*</em>是否启用默认配送配置</label>
                 </dt>
                 <dd class="opt ctype">
-                    <input name="is_enable_default" class="is_enable_default" type="radio" value="0" <if condition="$freightTemplate['is_enable_default'] heq 0">checked='checked'</if>>
+                    <input name="is_enable_default" class="is_enable_default" type="radio" value="0" <if condition="$freightTemplate['is_enable_default'] eq 0">checked='checked'</if>>
                     <label>否</label>
-                    <input name="is_enable_default" class="is_enable_default" type="radio" value="1" <if condition="$freightTemplate['is_enable_default'] heq 1">checked='checked'</if>>
+                    <input name="is_enable_default" class="is_enable_default" type="radio" value="1" <if condition="$freightTemplate['is_enable_default'] eq 1">checked='checked'</if>>
                     <label>是</label>
                 </dd>
                 <span class="err" id="err_enable_default"></span>
             </dl>
             -->
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>不启用商城免运费设置</label>
+                </dt>
+                <dd class="opt ctype">
+                    <input name="is_out_setting"  type="radio" value="0" <if condition="$freightTemplate['is_out_setting'] eq 0">checked='checked'</if>>
+                    <label>否</label>
+                    <input name="is_out_setting"  type="radio" value="1" <if condition="$freightTemplate['is_out_setting'] eq 1">checked='checked'</if>>
+                    <label>是</label>
+                </dd>
+                <span class="err" id="err_enable_default"></span>
+            </dl>
             <div class="flexigrid" id="config_table" style="display: none;">
                 <div class="hDiv">
                     <div class="hDivBox">
@@ -349,6 +361,7 @@
         var template_name = $("input[name='template_name']").val();
         var type = $("input[name='type']:checked").val();
         var is_enable_default = $("input[name='is_enable_default']:checked").val();
+        var is_out_setting = $("input[name='is_out_setting']:checked").val();
         var config_item = $("#config_list").find('tr');
         config_item.each(function (i, o) {
             var area_ids_input = $(this).find("input[name^='area_ids']");
@@ -374,7 +387,8 @@
                 template_name: template_name,
                 type: type,
                 config_list: config_list,
-                is_enable_default: is_enable_default
+                is_enable_default: is_enable_default,
+                is_out_setting: is_out_setting,
             },
             async: false,
             dataType: "json",

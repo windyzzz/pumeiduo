@@ -78,6 +78,7 @@ class Freight extends Base
         $template_name = input('template_name/s');
         $type = input('type/d');
         $is_enable_default = input('is_enable_default/d');
+        $is_out_setting = input('is_out_setting/d');
         $config_list = input('config_list/a', []);
         $data = input('post.');
         $freightTemplateValidate = Loader::validate('FreightTemplate');
@@ -95,6 +96,7 @@ class Freight extends Base
         $freightTemplate['template_name'] = $template_name;
         $freightTemplate['type'] = $type;
         $freightTemplate['is_enable_default'] = $is_enable_default ?? 0;
+        $freightTemplate['is_out_setting'] = $is_out_setting ?? 0;
         $freightTemplate->save();
         $config_list_count = count($config_list);
         $config_id_arr = Db::name('freight_config')->where(['template_id' => $template_id])->getField('config_id', true);

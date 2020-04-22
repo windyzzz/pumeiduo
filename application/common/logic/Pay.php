@@ -1086,15 +1086,9 @@ class Pay
                 return ['status' => -1];
             }
         }
-        $freight_free = tpCache('shopping.freight_free'); // 全场满多少免运费
-        $ln = bcsub($this->goodsPrice, $this->orderPromAmount, 2);
-        if ($ln < $freight_free) {
-            $this->shippingPrice = $GoodsLogic->getFreight($this->payList, $district_id);
-            $this->orderAmount = bcadd($this->orderAmount, $this->shippingPrice, 2);
-            $this->totalAmount = bcadd($this->totalAmount, $this->shippingPrice, 2);
-        } else {
-            $this->shippingPrice = '0';
-        }
+        $this->shippingPrice = $GoodsLogic->getFreight($this->payList, $district_id, bcsub($this->orderPromAmount, $this->goodsPromAmount, 2));
+        $this->orderAmount = bcadd($this->orderAmount, $this->shippingPrice, 2);
+        $this->totalAmount = bcadd($this->totalAmount, $this->shippingPrice, 2);
     }
 
     /**
