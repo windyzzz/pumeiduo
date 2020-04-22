@@ -61,6 +61,7 @@
                 </dd>
                 <span class="err" id="err_type"></span>
             </dl>
+            <!--
             <dl class="row">
                 <dt class="tit">
                     <label><em>*</em>是否启用默认配送配置</label>
@@ -73,6 +74,7 @@
                 </dd>
                 <span class="err" id="err_enable_default"></span>
             </dl>
+            -->
             <div class="flexigrid" id="config_table" style="display: none;">
                 <div class="hDiv">
                     <div class="hDivBox">
@@ -444,8 +446,8 @@
         var default_config_length = $('.default_config').length;
         var is_enable_default = $("input[name='is_enable_default']:checked").val();
         if (is_enable_default == 1 && default_config_length == 0) {
-            var html = '<tr class="default_config"> <td align="left"> <div class="w150"> ' +
-                '<input readonly name="" value="中国" type="text"> <input name="area_ids[]" class="area_ids" value="" type="hidden"> ' +
+            var html = '<tr class="default_config"> <td align="left"> <div class="w150" style="width:800px !important;"> ' +
+                '<input class="select_area" style="width:583px !important;" readonly name="" readonly value="中国" type="text"> <input name="area_ids[]" class="area_ids" value="" type="hidden"> ' +
                 '<input name="config_id[]" value="" type="hidden"> </div> </td> <td align="left"> <div class="w150"> ' +
                 '<input name="first_unit[]" value="" onpaste="this.value=this.value.replace(/[^\\d.]/g,\'\')" onkeyup="this.value=this.value.replace(/[^\\d.]/g,\'\')" type="text"> ' +
                 '<span class="first_unit_span">' + unit + '</span> </div> </td> <td align="left"> <div class="w150"> ' +
@@ -453,11 +455,12 @@
                 '<input name="continue_unit[]" value="" onpaste="this.value=this.value.replace(/[^\\d.]/g,\'\')" onkeyup="this.value=this.value.replace(/[^\\d.]/g,\'\')" type="text"> ' +
                 '<span class="continue_unit_span">' + unit + '</span> </div> </td> <td align="left"> <div class="w150">' +
                 '<input name="continue_money[]" value="" type="text"><span>元</span> </div> </td> ' +
-                '<td align="left" class="handle"> <div class="w150"> ' +
                 '<td align="left"> <div class="w150"><select name="discount_type[]" onchange="discountTypeChange(this)"><option value="0">不设置</option><option value="1">按件数</option></select></div></td>' +
                 '<td align="left"> <div class="w150">无设置</div></td>' +
                 '<td align="left"> <div class="w150"><input name="discount_money[]" value="0" type="text" disabled="disabled"><span>元</span></div></td>' +
-                '</div> </td> </tr>';
+                '<td align="left" class="handle"> <div class="w150"> ' +
+                '</div> </td>' +
+                '<td align="" class="" style="width: 100%;"><div></div></td> </tr>';
             $('#config_list').prepend(html);
         } else if (is_enable_default == 0) {
             $('.default_config').remove();

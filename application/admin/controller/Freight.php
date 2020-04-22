@@ -115,13 +115,9 @@ class Freight extends Base
                             Db::rollback();
                             $this->ajaxReturn(['status' => 0, 'msg' => '请设置优惠条件', 'result' => '']);
                         }
-                        if ($config_list[$i]['discount_money'] == 0) {
-                            Db::rollback();
-                            $this->ajaxReturn(['status' => 0, 'msg' => '请设置优惠运费', 'result' => '']);
-                        }
                         if ($config_list[$i]['discount_money'] > number_format($config_list[$i]['first_money'], 2)) {
                             Db::rollback();
-                            $this->ajaxReturn(['status' => 0, 'msg' => '请设置优惠运费不能大于普通运费', 'result' => '']);
+                            $this->ajaxReturn(['status' => 0, 'msg' => '设置优惠运费不能大于普通运费', 'result' => '']);
                         }
                 }
                 $freight_config_data = [
