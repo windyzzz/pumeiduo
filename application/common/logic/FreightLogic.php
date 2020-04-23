@@ -94,7 +94,7 @@ class FreightLogic extends Model
             if ($this->freightTemplate['is_out_setting'] == 0) {
                 // 启用商城免运费设置
                 $this->freight = $this->getFreightPrice($total_unit, $freightConfig);
-                $this->freightGoodsPrice = bcsub($this->goods['member_goods_price'], bcmul($this->goodsNum, $this->goods['each_order_prom_amount'], 2), 2);
+                $this->freightGoodsPrice = bcsub(bcmul($this->goods['member_goods_price'], $this->goodsNum, 2), bcmul($this->goodsNum, $this->goods['each_order_prom_amount'], 2), 2);
             } else {
                 // 不启用商城免运费设置
                 $this->outSettingFreight = $this->getFreightPrice($total_unit, $freightConfig);
