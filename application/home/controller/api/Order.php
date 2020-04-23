@@ -1896,7 +1896,6 @@ class Order extends Base
                     $userAddress[0]['out_range'] = 1;
                 }
             }
-
             // 订单pv
             $payLogic->setOrderPv();
 
@@ -2170,14 +2169,12 @@ class Order extends Base
             $payLogic->activity(true);      // 满单赠品
             $payLogic->activity2New();      // 指定商品赠品 / 订单优惠赠品
 
-            // 使用电子币
-            $payLogic->useUserElectronic($userElectronic);
-
             // 配送物流
             $payLogic->delivery($userAddress['district']);
-
             // 订单pv
             $payLogic->setOrderPv();
+            // 使用电子币
+            $payLogic->useUserElectronic($userElectronic);
 
             // 支付数据
             $payReturn = $payLogic->toArray();
@@ -2397,8 +2394,6 @@ class Order extends Base
             $payLogic->activity(true);      // 满单赠品
             $payLogic->activity2New();      // 指定商品赠品 / 订单优惠赠品
 
-            // 使用电子币
-            $payLogic->useUserElectronic($userElectronic);
             // 配送物流
             $res = $payLogic->delivery($userAddress['district']);
             if (isset($res['status']) && $res['status'] == -1) {
@@ -2406,6 +2401,8 @@ class Order extends Base
             }
             // 订单pv
             $payLogic->setOrderPv();
+            // 使用电子币
+            $payLogic->useUserElectronic($userElectronic);
         } catch (TpshopException $tpE) {
             return json($tpE->getErrorArr());
         }
