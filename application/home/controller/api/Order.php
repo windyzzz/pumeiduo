@@ -1460,7 +1460,7 @@ class Order extends Base
                 $order_goods[$ok]['get_pv'] = $this->user['distribut_level'] >= 3 ? $hasCommission ? $ov['goods_pv'] > 0 ? $ov['goods_pv'] : '0.00' : '0.00' : '';
 
                 //$order_goods[$ok]['get_price'] = round(($ov['final_price'] * $ov['goods_num']) * $ov['commission'] / 100 * $distribut_rate, 2);
-                $order_goods[$ok]['is_freeze'] = M('return_goods')->where('rec_id', $ov['rec_id'])->where('status', 'gt', -1)->where(['status' => ['neq', 4]])->find() ? 1 : 0;
+                $order_goods[$ok]['is_freeze'] = M('return_goods')->where(['rec_id' => $ov['rec_id'], 'status' => ['NOT IN', [-2, -1, 4, 6]]])->find() ? 1 : 0;
             }
 
             $rebate_log[$rk]['status_desc'] = $rv['sale_service'] == 1 ? '已售后' : rebate_status($rv['status']);
@@ -1806,15 +1806,6 @@ class Order extends Base
             // 参与活动促销
             $payLogic->goodsPromotion();
 
-            // 配送物流
-            if (empty($userAddress)) {
-                $payLogic->delivery('0');
-            } else {
-                $res = $payLogic->delivery($userAddress[0]['district']);
-                if (isset($res['status']) && $res['status'] == -1) {
-                    $userAddress[0]['out_range'] = 1;
-                }
-            }
             // 使用积分
             $pay_points = $payLogic->getUsePoint();
             if ($this->user['pay_points'] < $pay_points) {
@@ -1909,13 +1900,23 @@ class Order extends Base
             $payLogic->activity(true);      // 满单赠品
             $payLogic->activity2New();      // 指定商品赠品 / 订单优惠赠品
 
-            // 支付数据
+            // 配送物流
+            if (empty($userAddress)) {
+                $payLogic->delivery('0');
+            } else {
+                $res = $payLogic->delivery($userAddress[0]['district']);
+                if (isset($res['status']) && $res['status'] == -1) {
+                    $userAddress[0]['out_range'] = 1;
+                }
+            }
             // 订单pv
             $payLogic->setOrderPv();
+
+            // 支付数据
             $payReturn = $payLogic->toArray();
+
             // 商品列表 赠品列表 加价购列表
             $payList = collection($payLogic->getPayList())->toArray();
-
             $goodsList = [];    // 商品列表
             foreach ($payList as $k => $list) {
                 $goods = $list['goods'];
@@ -2145,9 +2146,6 @@ class Order extends Base
             // 加价购活动
             $payLogic->activityPayBeforeNew($extraGoods, $cartLogic);
 
-            // 配送物流
-            $payLogic->delivery($userAddress['district']);
-
             // 使用积分
             $pay_points = $payLogic->getUsePoint();
             if ($this->user['pay_points'] < $pay_points) {
@@ -2184,16 +2182,18 @@ class Order extends Base
             $payLogic->activity(true);      // 满单赠品
             $payLogic->activity2New();      // 指定商品赠品 / 订单优惠赠品
 
+            // 配送物流
+            $payLogic->delivery($userAddress['district']);
+            // 订单pv
+            $payLogic->setOrderPv();
             // 使用电子币
             $payLogic->useUserElectronic($userElectronic);
 
             // 支付数据
-            // 订单pv
-            $payLogic->setOrderPv();
             $payReturn = $payLogic->toArray();
+
             // 商品列表 赠品列表 加价购列表
             $payList = collection($payLogic->getPayList())->toArray();
-
             $goodsList = [];    // 商品列表
             $extraGoodsIds = $payLogic->getExtraGoodsIds();
             foreach ($payList as $k => $list) {
@@ -2386,12 +2386,6 @@ class Order extends Base
             // 加价购活动
             $payLogic->activityPayBeforeNew($extraGoods, $cartLogic);
 
-            // 配送物流
-            $res = $payLogic->delivery($userAddress['district']);
-            if (isset($res['status']) && $res['status'] == -1) {
-//                return json(['status' => 0, 'msg' => '订单中部分商品不支持对当前地址的配送']);
-            }
-
             // 使用积分
             $pay_points = $payLogic->getUsePoint();
             if ($this->user['pay_points'] < $pay_points) {
@@ -2413,10 +2407,15 @@ class Order extends Base
             $payLogic->activity(true);      // 满单赠品
             $payLogic->activity2New();      // 指定商品赠品 / 订单优惠赠品
 
-            // 使用电子币
-            $payLogic->useUserElectronic($userElectronic);
+            // 配送物流
+            $res = $payLogic->delivery($userAddress['district']);
+            if (isset($res['status']) && $res['status'] == -1) {
+                return json(['status' => 0, 'msg' => '订单中部分商品不支持对当前地址的配送']);
+            }
             // 订单pv
             $payLogic->setOrderPv();
+            // 使用电子币
+            $payLogic->useUserElectronic($userElectronic);
         } catch (TpshopException $tpE) {
             return json($tpE->getErrorArr());
         }
