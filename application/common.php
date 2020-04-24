@@ -148,17 +148,51 @@ function update_user_distribut($user_id, $order_id)
         $CouponLogic->sendNewVipUser($user_id, $order_id);
 
         //2.3推荐人奖励
-        $firstLeaderLevel = M('users')->where(['user_id' => $user_info['first_leader']])->value('distribut_level');
+        $firstLeaderInfo = M('users')->where(['user_id' => $user_info['first_leader']])->field('distribut_level, first_leader')->find();
         $updateRebate = false;
-        if (tpCache('distribut.referee_vip_money') > 0 && in_array($firstLeaderLevel, [2, 3])) {
-            // 奖励金额
-            accountLog($user_info['first_leader'], tpCache('distribut.referee_vip_money'), 0, '推荐人VIP套组奖励金额', 0, $order_id, '', 0, 14, false);
-            $updateRebate = true;
-        }
-        if (tpCache('distribut.referee_vip_point') > 0 && in_array($firstLeaderLevel, [2, 3])) {
-            // 奖励积分
-            accountLog($user_info['first_leader'], 0, tpCache('distribut.referee_vip_point'), '推荐人VIP套组奖励积分', 0, $order_id, '', 0, 14, false);
-            $updateRebate = true;
+        switch ($firstLeaderInfo['distribut_level']) {
+            case 1:
+                break;
+            case 2:
+                // VIP推荐VIP奖励
+                if (tpCache('distribut.referee_vip_money') > 0) {
+                    // 奖励金额
+                    accountLog($user_info['first_leader'], tpCache('distribut.referee_vip_money'), 0, '推荐人VIP套组奖励金额', 0, $order_id, '', 0, 14, false);
+                    $updateRebate = true;
+                }
+                if (tpCache('distribut.referee_vip_point') > 0) {
+                    // 奖励积分
+                    accountLog($user_info['first_leader'], 0, tpCache('distribut.referee_vip_point'), '推荐人VIP套组奖励积分', 0, $order_id, '', 0, 14, false);
+                    $updateRebate = true;
+                }
+                // VIP的直接上级SVIP
+                $vipSvipInfo = M('users')->where(['user_id' => $firstLeaderInfo['first_leader']])->field('distribut_level')->find();
+                if (!empty($vipSvipInfo) && $vipSvipInfo['distribut_level'] >= 3) {
+                    if (tpCache('distribut.referee_vip_svip_money') > 0) {
+                        // 奖励金额
+                        accountLog($firstLeaderInfo['first_leader'], tpCache('distribut.referee_vip_svip_money'), 0, '直属下级推荐人VIP套组奖励金额', 0, $order_id, '', 0, 14, false);
+                        $updateRebate = true;
+                    }
+                    if (tpCache('distribut.referee_vip_svip_point') > 0) {
+                        // 奖励积分
+                        accountLog($firstLeaderInfo['first_leader'], 0, tpCache('distribut.referee_vip_svip_point'), '直属下级推荐人VIP套组奖励积分', 0, $order_id, '', 0, 14, false);
+                        $updateRebate = true;
+                    }
+                }
+                break;
+            case 3:
+                // SVIP推荐VIP奖励
+                if (tpCache('distribut.referee_svip_money') > 0) {
+                    // 奖励金额
+                    accountLog($user_info['first_leader'], tpCache('distribut.referee_svip_money'), 0, '推荐人VIP套组奖励金额', 0, $order_id, '', 0, 14, false);
+                    $updateRebate = true;
+                }
+                if (tpCache('distribut.referee_svip_point') > 0) {
+                    // 奖励积分
+                    accountLog($user_info['first_leader'], 0, tpCache('distribut.referee_svip_point'), '推荐人VIP套组奖励积分', 0, $order_id, '', 0, 14, false);
+                    $updateRebate = true;
+                }
+                break;
         }
         if ($updateRebate) {
             // 更新订单已分成

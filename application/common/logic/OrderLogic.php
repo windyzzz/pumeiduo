@@ -307,7 +307,6 @@ class OrderLogic
 
     function getRongMoney($money, $level, $order_time, $goods_id = 0, $is_zone = false)
     {
-
         if ($order_time < bonus_time()) {
             $distribut_rate = 25 / 100;
             return round($money * $distribut_rate, 2);
