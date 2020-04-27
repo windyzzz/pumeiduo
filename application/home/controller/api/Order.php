@@ -2657,7 +2657,7 @@ class Order extends Base
                     //--- 分开发货
                     $return = [
                         'order_id' => $order['order_id'],
-                        'order_goods_num' => M('order_goods')->where(['order_id' => $order['order_id']])->count('rec_id'),
+                        'order_goods_num' => M('delivery_doc')->where(['order_id' => $order['order_id']])->count('rec_id'),
                         'delivery' => []
                     ];
                     switch ($order['shipping_status']) {
@@ -2667,6 +2667,7 @@ class Order extends Base
                             $orderGoods = M('order_goods og')->join('goods g', 'g.goods_id = og.goods_id')->where(['og.order_id' => $orderId])->field('g.goods_id, g.original_img')->find();
                             $return['delivery'][] = [
                                 'rec_id' => '',
+                                'doc_id' => '',
                                 'status' => -1, // 未发货
                                 'status_desc' => C('DELIVERY_STATUS')[-1],
                                 'shipping_name' => '',
@@ -2679,7 +2680,7 @@ class Order extends Base
                     }
                     $delivery = M('delivery_doc dd')->join('order_goods og', 'og.rec_id = dd.rec_id')
                         ->join('goods g', 'g.goods_id = og.goods_id')
-                        ->field('dd.rec_id, dd.shipping_code, dd.shipping_name, dd.invoice_no, g.goods_id, g.original_img')
+                        ->field('dd.id doc_id, dd.rec_id, dd.shipping_code, dd.shipping_name, dd.invoice_no, g.goods_id, g.original_img')
                         ->where($where)->select();
                     $apiController = new ApiController();
                     foreach ($delivery as $item) {
@@ -2693,6 +2694,7 @@ class Order extends Base
                         }
                         $return['delivery'][] = [
                             'rec_id' => $item['rec_id'],
+                            'doc_id' => $item['doc_id'],
                             'status' => $express['result']['deliverystatus'],
                             'status_desc' => C('DELIVERY_STATUS')[$express['result']['deliverystatus']],
                             'shipping_name' => $item['shipping_name'],
