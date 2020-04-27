@@ -170,12 +170,12 @@ function update_user_distribut($user_id, $order_id)
                 if (!empty($vipSvipInfo) && $vipSvipInfo['distribut_level'] >= 3) {
                     if (tpCache('distribut.referee_vip_svip_money') > 0) {
                         // 奖励金额
-                        accountLog($firstLeaderInfo['first_leader'], tpCache('distribut.referee_vip_svip_money'), 0, '直属下级推荐人VIP套组奖励金额', 0, $order_id, '', 0, 14, false);
+                        accountLog($firstLeaderInfo['first_leader'], tpCache('distribut.referee_vip_svip_money'), 0, '直属推广318套组奖励金额', 0, $order_id, '', 0, 14, false);
                         $updateRebate = true;
                     }
                     if (tpCache('distribut.referee_vip_svip_point') > 0) {
                         // 奖励积分
-                        accountLog($firstLeaderInfo['first_leader'], 0, tpCache('distribut.referee_vip_svip_point'), '直属下级推荐人VIP套组奖励积分', 0, $order_id, '', 0, 14, false);
+                        accountLog($firstLeaderInfo['first_leader'], 0, tpCache('distribut.referee_vip_svip_point'), '直属推广318套组奖励积分', 0, $order_id, '', 0, 14, false);
                         $updateRebate = true;
                     }
                 }
