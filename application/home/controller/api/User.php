@@ -237,7 +237,7 @@ class User extends Base
 
         $return['distribut_level'] = M('DistributLevel')->where('level_id', $user['distribut_level'])->getField('level_name');
         $return['has_pay_pwd'] = $user['paypwd'] ? 1 : 0;
-        if ($user['distribut_level'] >= 3) $return['type'] = 2; // 直销商
+        if ($user['distribut_level'] >= 3) $return['type'] = '2'; // 直销商
         $return['is_app'] = TokenLogic::getValue('is_app', $this->userToken) ? 1 : 0;
 
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
@@ -1966,7 +1966,7 @@ class User extends Base
             'birthday' => $user['birthday'],
             'mobile' => $user['mobile'],
             'head_pic' => $user['head_pic'],
-            'type' => $user['distribut_level'] >= 3 ? 2 : $user['type'],
+            'type' => $user['distribut_level'] >= 3 ? '2' : $user['type'],
             'invite_uid' => $user['invite_uid'],
             'is_distribut' => $user['is_distribut'],
             'is_lock' => $user['is_lock'],
@@ -3186,7 +3186,7 @@ class User extends Base
             'birthday' => $this->user['birthday'],
             'mobile' => $this->user['mobile'],
             'head_pic' => $this->user['head_pic'],
-            'type' => $this->user['distribut_level'] >= 3 ? 2 : $this->user['type'],
+            'type' => $this->user['distribut_level'] >= 3 ? '2' : $this->user['type'],
             'invite_uid' => $this->user['invite_uid'],
             'is_distribut' => $this->user['is_distribut'],
             'is_lock' => $this->user['is_lock'],
