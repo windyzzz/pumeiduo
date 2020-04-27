@@ -2313,4 +2313,54 @@ class Goods extends Base
         }
         return json(['status' => 1, 'result' => $list]);
     }
+
+    /**
+     * 主页展示不同类型商品
+     * @return \think\response\Json
+     */
+    public function indexGoods()
+    {
+        $type = I('type', '');
+
+        $seriesGoods = [];
+        $groupBuyGoods = [];
+        $newGoods = [];
+        $recommendGoods = [];
+        $hotGoods = [];
+        $typeArr = explode(',', $type);
+        foreach ($typeArr as $type) {
+            switch ($type) {
+                case 'series':
+                    // 超值套装列表
+                    $seriesGoods = $this->getSeriesGoodsList(10, 'array');
+                    break;
+                case 'groupBuy':
+                    // 团购商品列表
+                    $groupBuyGoods = $this->getGroupBuyGoodsListNew(10, 'array');
+                    break;
+                case 'new':
+                    // 新品列表
+                    $newGoods = $this->getNewGoodsList(10, 'array');
+                    break;
+                case 'recommend':
+                    // 促销商品
+                    $recommendGoods = $this->getRecommendGoodsList(10, 'array', 1);
+                    break;
+                case 'hot':
+                    // 热销商品
+                    $hotGoods = $this->getHotGoodsList(10, 'array');
+                    break;
+                default:
+                    return json(['status' => 0, 'msg' => 'fail']);
+            }
+        }
+        $return = [
+            'series_goods' => $seriesGoods,
+            'groupBuy_goods' => $groupBuyGoods,
+            'new_goods' => $newGoods,
+            'recommend_goods' => $recommendGoods,
+            'hot_goods' => $hotGoods
+        ];
+        return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
+    }
 }

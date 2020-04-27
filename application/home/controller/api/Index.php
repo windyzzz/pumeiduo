@@ -232,15 +232,15 @@ class Index
     {
         $goodsController = new GoodsController();
         // 超值套装列表
-        $seriesGoods = $goodsController->getSeriesGoodsList(11, 'array');
+        $seriesGoods = $goodsController->getSeriesGoodsList(10, 'array');
         // 团购商品列表
-        $groupBuyGoods = $goodsController->getGroupBuyGoodsListNew(11, 'array');
+        $groupBuyGoods = $goodsController->getGroupBuyGoodsListNew(10, 'array');
         // 新品列表
-        $newGoods = $goodsController->getNewGoodsList(20, 'array');
+        $newGoods = $goodsController->getNewGoodsList(10, 'array');
         // 促销商品
-        $recommendGoods = $goodsController->getRecommendGoodsList(20, 'array', 1);
+        $recommendGoods = $goodsController->getRecommendGoodsList(10, 'array', 1);
         // 热销商品
-        $hotGoods = $goodsController->getHotGoodsList(20, 'array');
+        $hotGoods = $goodsController->getHotGoodsList(10, 'array');
 
         $return = [
             'series_goods' => $seriesGoods,
