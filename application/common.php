@@ -157,12 +157,12 @@ function update_user_distribut($user_id, $order_id)
                 // VIP推荐VIP奖励
                 if (tpCache('distribut.referee_vip_money') > 0) {
                     // 奖励金额
-                    accountLog($user_info['first_leader'], tpCache('distribut.referee_vip_money'), 0, '推荐人VIP套组奖励金额', 0, $order_id, '', 0, 14, false);
+                    accountLog($user_info['first_leader'], tpCache('distribut.referee_vip_money'), 0, '推广318套组奖励金额', 0, $order_id, '', 0, 14, false);
                     $updateRebate = true;
                 }
                 if (tpCache('distribut.referee_vip_point') > 0) {
                     // 奖励积分
-                    accountLog($user_info['first_leader'], 0, tpCache('distribut.referee_vip_point'), '推荐人VIP套组奖励积分', 0, $order_id, '', 0, 14, false);
+                    accountLog($user_info['first_leader'], 0, tpCache('distribut.referee_vip_point'), '推广318套组奖励积分', 0, $order_id, '', 0, 14, false);
                     $updateRebate = true;
                 }
                 // VIP的直接上级SVIP
@@ -184,12 +184,12 @@ function update_user_distribut($user_id, $order_id)
                 // SVIP推荐VIP奖励
                 if (tpCache('distribut.referee_svip_money') > 0) {
                     // 奖励金额
-                    accountLog($user_info['first_leader'], tpCache('distribut.referee_svip_money'), 0, '推荐人VIP套组奖励金额', 0, $order_id, '', 0, 14, false);
+                    accountLog($user_info['first_leader'], tpCache('distribut.referee_svip_money'), 0, '推广318套组奖励金额', 0, $order_id, '', 0, 14, false);
                     $updateRebate = true;
                 }
                 if (tpCache('distribut.referee_svip_point') > 0) {
                     // 奖励积分
-                    accountLog($user_info['first_leader'], 0, tpCache('distribut.referee_svip_point'), '推荐人VIP套组奖励积分', 0, $order_id, '', 0, 14, false);
+                    accountLog($user_info['first_leader'], 0, tpCache('distribut.referee_svip_point'), '推广318套组奖励积分', 0, $order_id, '', 0, 14, false);
                     $updateRebate = true;
                 }
                 break;

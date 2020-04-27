@@ -183,10 +183,10 @@ class OrderLogic
                 if (!empty($firstLeaderAccount)) {
                     foreach ($firstLeaderAccount as $account) {
                         if ($account['user_money'] > 0) {
-                            accountLog($account['user_id'], -$account['user_money'], 0, '推荐人VIP套组奖励金额追回', 0, $order_id, '', 0, 14, false);
+                            accountLog($account['user_id'], -$account['user_money'], 0, '推广318套组奖励金额追回', 0, $order_id, '', 0, 14, false);
                         }
                         if ($account['pay_points']) {
-                            accountLog($account['user_id'], 0, -$account['pay_points'], '推荐人VIP套组奖励积分追回', 0, $order_id, '', 0, 14, false);
+                            accountLog($account['user_id'], 0, -$account['pay_points'], '推广318套组奖励积分追回', 0, $order_id, '', 0, 14, false);
                         }
                     }
                 }
