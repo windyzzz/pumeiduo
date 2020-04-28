@@ -370,7 +370,9 @@ class PlaceOrder
                         'commission' => 0,
                         'trade_type' => $v['trade_type'],
                         'sale_type' => 1,
-                        're_id' => 0
+                        're_id' => 0,
+                        'goods_pv' => 0,
+                        'pay_type' => 0
                     ];
                     if (!empty($v['spec_key'])) {
                         $orderGoodsData['spec_key'] = $v['spec_key'];           // 商品规格
@@ -404,7 +406,9 @@ class PlaceOrder
                         'commission' => 0,
                         'trade_type' => $v['trade_type'],
                         'sale_type' => 1,
-                        're_id' => 0
+                        're_id' => 0,
+                        'goods_pv' => 0,
+                        'pay_type' => 0
                     ];
                     if (!empty($v['spec_key'])) {
                         $orderGoodsData['spec_key'] = $v['spec_key']; // 商品规格
@@ -458,7 +462,9 @@ class PlaceOrder
                         'commission' => 0,
                         'trade_type' => $goodsInfo['trade_type'],
                         'sale_type' => 1,
-                        're_id' => 0
+                        're_id' => 0,
+                        'goods_pv' => 0,
+                        'pay_type' => 0
                     ];
                     array_push($orderGoodsAllData, $orderGoodsData);
                 }
@@ -491,12 +497,14 @@ class PlaceOrder
                     'commission' => 0,
                     'trade_type' => $giftGoods['goods']['trade_type'],
                     'sale_type' => 1,
-                    're_id' => 0
+                    're_id' => 0,
+                    'goods_pv' => 0,
+                    'pay_type' => 0
                 ];
                 array_push($orderGoodsAllData, $orderGoodsData);
             }
         }
-
+        
         Db::name('order_goods')->insertAll($orderGoodsAllData);
         if ($orderDiscount != 0.00) {
             // 增加优惠金额
