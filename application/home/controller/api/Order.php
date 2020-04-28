@@ -2583,13 +2583,13 @@ class Order extends Base
     public function express()
     {
         $orderId = I('order_id', '');
-        $recId = I('rec_id', '');
+        $docId = I('doc_id', '');
         if ($orderId) {
             $where = ['dd.order_id' => $orderId];
             $order = M('order')->where(['order_id' => $orderId])->find();
-        } elseif ($recId) {
-            $where = ['dd.rec_id' => $recId];
-            $order = M('order_goods og')->join('order o', 'o.order_id = og.order_id')->where(['og.rec_id' => $recId])->field('o.*')->find();
+        } elseif ($docId) {
+            $where = ['dd.id' => $docId];
+            $order = M('delivery_doc dd')->join('order o', 'o.order_id = dd.order_id')->where($where)->field('o.*')->find();
         } else {
             return json(['status' => 0, 'msg' => '订单信息不存在']);
         }
@@ -2708,10 +2708,11 @@ class Order extends Base
                 default:
                     return json(['status' => 0, 'msg' => '参数错误']);
             }
-        } elseif ($recId) {
+        } elseif ($docId) {
             //--- 订单商品单独物流信息
             // 订单商品
-            $orderGoods = M('order_goods og')->join('goods g', 'g.goods_id = og.goods_id')->where(['og.rec_id' => $recId])->field('g.goods_id, g.original_img')->find();
+            $orderGoods = M('delivery_doc dd')->join('order_goods og', 'og.rec_id = dd.rec_id')->join('goods g', 'g.goods_id = og.goods_id')
+                ->where($where)->field('g.goods_id, g.original_img')->find();
             switch ($order['shipping_status']) {
                 case 0:
                 case 3:
