@@ -40,9 +40,7 @@
                 <input type="hidden" name="order_ids" value="">
                 <!--用于查看结算统计 包含了哪些订单-->
                 <input type="hidden" value="{$_GET['order_statis_id']}" name="order_statis_id"/>
-
                 <div class="sDiv">
-
                     <div class="sDiv2">
                         <input type="text" size="30" id="add_time_begin" name="start_time" value="{$start_time}"
                                class="qsbox" placeholder="下单开始时间">
@@ -60,7 +58,13 @@
                         <input type="text" size="30" id="pay_time_end" name="pay_end_time" value="{$pay_end_time}"
                                class="qsbox" placeholder="支付结束时间">
                     </div>
-
+                    <div class="sDiv2">
+                        <select name="order_type" class="select sDiv3" style="margin-right:5px;margin-left:5px">
+                            <option value="">订单类型</option>
+                            <option value="1">圃美多</option>
+                            <option value="2">海外购</option>
+                        </select>
+                    </div>
                     <div class="sDiv2">
                         <select name="pay_status" class="select sDiv3" style="margin-right:5px;margin-left:5px">
                             <option value="">支付状态</option>
@@ -134,6 +138,9 @@
                         </th>
                         <th axis="col0">
                             <div style="text-align: center; width: 24px;"><i class="ico-check"></i></div>
+                        </th>
+                        <th align="left" abbr="user_id" axis="col3" class="">
+                            <div style="text-align: center; width: 50px;" class="">订单类型</div>
                         </th>
                         <th align="left" abbr="user_id" axis="col3" class="">
                             <div style="text-align: center; width: 50px;" class="">会员id</div>

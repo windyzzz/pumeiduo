@@ -2323,12 +2323,12 @@ class Order extends Base
 
         // 检查下单商品
         $res = $cartLogic->checkCartGoods($cartList['cartList']);
-        $isAbroad = false;
+        $orderType = 1; // 圃美多
         switch ($res['status']) {
             case 0:
                 return json($res);
             case 2:
-                $isAbroad = true;
+                $orderType = 2; // 海外购
                 break;
         }
 
@@ -2395,7 +2395,7 @@ class Order extends Base
             $placeOrder->setUserAddress($userAddress);
             $placeOrder->setUserNote($userNote);
             $placeOrder->setUserIdCard($idCard);
-            $placeOrder->setOrderAbroad($isAbroad);
+            $placeOrder->setOrderType($orderType);
             Db::startTrans();
             if (2 == $prom_type) {
                 $placeOrder->addGroupBuyOrder($prom_id, 3);    // 团购订单

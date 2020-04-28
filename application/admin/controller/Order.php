@@ -99,6 +99,8 @@ class Order extends Base
         '' != I('shipping_status') ? $condition['shipping_status'] = I('shipping_status') : false;
         '' != I('prom_type') ? $condition['prom_type'] = I('prom_type') : false;
         I('user_id') ? $condition['user_id'] = trim(I('user_id')) : false;
+        '' != I('order_type') ? $condition['order_type'] = I('order_type') : false;
+
         $sort_order = I('order_by', 'DESC') . ' ' . I('sort');
 
         $count = M('order')->where($condition)->count();
@@ -106,7 +108,6 @@ class Order extends Base
         $show = $Page->show();
         //获取订单列表
         $orderList = $orderLogic->getOrderList($condition, $sort_order, $Page->firstRow, $Page->listRows);
-
         foreach ($orderList as $k => $v) {
             if (2 == $v['prom_type']) {
                 $group_details = M('group_detail')->where('group_id', $v['prom_id'])->select();
@@ -375,7 +376,8 @@ class Order extends Base
 
         $orderGoods = $order['orderGoods'];
 //        $orderGoodsNum = M('order_goods')->where(['order_id' => $order_id])->sum('goods_num');
-        $express = Db::name('delivery_doc')->where('order_id', $order_id)->select();  //发货信息（可能多个）
+        $express = Db::name('delivery_doc dd')->join('order_goods og', 'og.rec_id = dd.rec_id', 'LEFT')
+            ->where('dd.order_id', $order_id)->field('dd.*, og.goods_name, og.spec_key_name')->select();  //发货信息（可能多个）
         $user = Db::name('users')->where(['user_id' => $order['user_id']])->find();
         $this->assign('order', $order);
         $this->assign('user', $user);
