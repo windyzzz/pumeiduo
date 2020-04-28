@@ -2292,6 +2292,7 @@ class Order extends Base
         $userElectronic = I('user_electronic', '');     // 使用电子币
         $extraGoods = isset(I('post.')['extra_goods']) ? I('post.')['extra_goods'] : [];     // 加价购商品
         $userNote = I('user_note', '');                 // 用户备注
+        $idCard = I('id_card', 0);
 
         if (!$this->user['paypwd']) {
             return json(['status' => 0, 'msg' => '请先设置支付密码']);
@@ -2306,6 +2307,9 @@ class Order extends Base
         if (strlen($userNote) > 50) {
             return json(['status' => 0, 'msg' => '备注超出限制可输入字符长度']);
         }
+        if ($idCard != 0 && !checkIdCard($idCard)) {
+            return json(['status' => 0, 'msg' => '请填写正确的身份证格式']);
+        }
 
         $cartLogic = new CartLogic();
         $cartLogic->setUserId($this->user_id);
@@ -2315,6 +2319,17 @@ class Order extends Base
             return json($res);
         } else {
             $cartList['cartList'] = $res['result'];
+        }
+
+        // 检查下单商品
+        $res = $cartLogic->checkCartGoods($cartList['cartList']);
+        $isAbroad = false;
+        switch ($res['status']) {
+            case 0:
+                return json($res);
+            case 2:
+                $isAbroad = true;
+                break;
         }
 
         // 初始化数据 商品总额/节约金额/商品总共数量/商品使用积分
@@ -2376,9 +2391,11 @@ class Order extends Base
         try {
             $placeOrder = new PlaceOrder($payLogic);
             $placeOrder->setUser($this->user);
+            $placeOrder->setPayPsw($payPwd);
             $placeOrder->setUserAddress($userAddress);
             $placeOrder->setUserNote($userNote);
-            $placeOrder->setPayPsw($payPwd);
+            $placeOrder->setUserIdCard($idCard);
+            $placeOrder->setOrderAbroad($isAbroad);
             Db::startTrans();
             if (2 == $prom_type) {
                 $placeOrder->addGroupBuyOrder($prom_id, 3);    // 团购订单

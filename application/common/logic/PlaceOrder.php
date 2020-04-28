@@ -37,6 +37,8 @@ class PlaceOrder
     private $payPsw;
     private $promType;
     private $promId;
+    private $userIdCard;
+    private $isAbroad = false;
 
     /**
      * PlaceOrder constructor.
@@ -92,6 +94,16 @@ class PlaceOrder
     private function setPromId($prom_id)
     {
         $this->promId = $prom_id;
+    }
+
+    public function setUserIdCard($idCard)
+    {
+        $this->userIdCard = $idCard;
+    }
+
+    public function setOrderAbroad($isAbroad)
+    {
+        $this->isAbroad = $isAbroad;
     }
 
     public function addNormalOrder($source = 1)
@@ -237,6 +249,8 @@ class PlaceOrder
             'coupon_id' => $this->pay->getCouponId(),
             'source' => $source,
             'order_pv' => $this->pay->getOrderPv(),
+            'id_card' => $this->userIdCard,
+            'is_abroad' => $this->isAbroad,
         ];
         if (!empty($this->userAddress)) {
             $orderData['consignee'] = $this->userAddress['consignee']; // 收货人
