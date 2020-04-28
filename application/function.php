@@ -523,6 +523,11 @@ function check_password($password, $type = 'login')
     }
 }
 
+/**
+ * 检查身份证格式
+ * @param $id
+ * @return bool
+ */
 function check_id_card($id)
 {
     $id = strtoupper($id);
@@ -531,20 +536,18 @@ function check_id_card($id)
     if (!preg_match($regx, $id)) {
         return false;
     }
-    if (15 == strlen($id)) { //检查15位
+    if (15 == strlen($id)) {
+        //检查15位
         $regx = "/^(\d{6})+(\d{2})+(\d{2})+(\d{2})+(\d{3})$/";
-
         @preg_match($regx, $id, $arr_split);
         //检查生日日期是否正确
         $dtm_birth = '19' . $arr_split[2] . '/' . $arr_split[3] . '/' . $arr_split[4];
         if (!strtotime($dtm_birth)) {
             return false;
         }
-
         return true;
     }
     //检查18位
-
     $regx = "/^(\d{6})+(\d{4})+(\d{2})+(\d{2})+(\d{3})([0-9]|X)$/";
     @preg_match($regx, $id, $arr_split);
     $dtm_birth = $arr_split[2] . '/' . $arr_split[3] . '/' . $arr_split[4];
@@ -1258,6 +1261,11 @@ function rebate_status($status)
     return $rebate_status[$status];
 }
 
+/**
+ * 检查身份证格式
+ * @param $idcard
+ * @return bool
+ */
 function checkIdCard($idcard)
 {
     $preg_card = "/^[1-9]\d{5}[1-9]\d{3}((0\d)|(1[0-2]))(([0|1|2]\d)|3[0-1])\d{3}([0-9]|X)$/i";

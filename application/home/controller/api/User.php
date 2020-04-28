@@ -987,7 +987,7 @@ class User extends Base
             I('post.bank_name') ? $post['bank_name'] = I('post.bank_name') : false;  // 收款银行 (银行名称)
             I('post.bank_card') ? $post['bank_card'] = I('post.bank_card') : false;  // 收款账户 (银行账号)
 
-            if ($post['id_cart'] && !checkIdCard($post['id_cart'])) {
+            if ($post['id_cart'] && !check_id_card($post['id_cart'])) {
                 return json(['status' => 0, 'msg' => '请填写正确的身份证格式']);
             }
 
@@ -2346,7 +2346,7 @@ class User extends Base
                 return json(['status' => 0, 'msg' => '请填写身份证']);
             }
 
-            if (!checkIdCard($data['id_cart'])) {
+            if (!check_id_card($data['id_cart'])) {
                 return json(['status' => 0, 'msg' => '请填写正确的身份证格式']);
             }
 
@@ -3607,5 +3607,21 @@ class User extends Base
             ];
         }
         return json(['status' => 1, 'result' => $returnData]);
+    }
+
+    /**
+     * 检查真实姓名与身份证是否匹配
+     * @return \think\response\Json
+     */
+    public function checkIdCard()
+    {
+        $realName = I('real_name', '');
+        $idCard = I('id_card', '');
+        if (empty($realName)) return json(['status' => 0, 'msg' => '请传入真实姓名']);
+        if (empty($idCard)) return json(['status' => 0, 'msg' => '请传入身份证号码']);
+        if (!check_id_card($idCard))  return json(['status' => 0, 'msg' => '请填写正确的身份证号码']);
+        // 第三方验证姓名与身份证
+        return json(['status' => 0, 'msg' => '请填写正确的身份信息\r\n（身份证号以及姓名）']);
+        return json(['status' => 1]);
     }
 }

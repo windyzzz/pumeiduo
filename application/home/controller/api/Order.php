@@ -2307,7 +2307,7 @@ class Order extends Base
         if (strlen($userNote) > 50) {
             return json(['status' => 0, 'msg' => '备注超出限制可输入字符长度']);
         }
-        if ($idCard != 0 && !checkIdCard($idCard)) {
+        if ($idCard != 0 && !check_id_card($idCard)) {
             return json(['status' => 0, 'msg' => '请填写正确的身份证格式']);
         }
 

@@ -649,7 +649,7 @@ class User
             I('post.bank_name') ? $post['bank_name'] = I('post.bank_name') : false;  // 收款银行 (银行名称)
             I('post.bank_card') ? $post['bank_card'] = I('post.bank_card') : false;  // 收款账户 (银行账号)
 
-            if ($post['id_cart'] && !checkIdCard($post['id_cart'])) {
+            if ($post['id_cart'] && !check_id_card($post['id_cart'])) {
                 return json(['status' => 0, 'msg' => '请填写正确的身份证格式']);
             }
 
@@ -1767,7 +1767,7 @@ class User
                 return json(['status' => 0, 'msg' => '请填写身份证']);
             }
 
-            if (!checkIdCard($data['id_cart'])) {
+            if (!check_id_card($data['id_cart'])) {
                 return json(['status' => 0, 'msg' => '请填写正确的身份证格式']);
             }
 
