@@ -1605,6 +1605,80 @@ class Order extends Base
     }
 
     /**
+     * 获取订单商品数据
+     * @param $cartLogic
+     * @param $goodsId
+     * @param $itemId
+     * @param $goodsNum
+     * @param $payType
+     * @param $cartIds
+     * @return array
+     */
+    public function getOrderGoodsData($cartLogic, $goodsId, $itemId, $goodsNum, $payType, $cartIds)
+    {
+        if (!empty($goodsId) && empty(trim($cartIds))) {
+            /*
+             * 单个商品下单
+             */
+            $cartLogic->setGoodsModel($goodsId);
+            $cartLogic->setSpecGoodsPriceModel($itemId);
+            $cartLogic->setGoodsBuyNum($goodsNum);
+            $cartLogic->setType($payType);
+            $cartLogic->setCartType(0);
+            try {
+                $buyGoods = $cartLogic->buyNow($this->isApp);
+            } catch (TpshopException $tpE) {
+                $error = $tpE->getErrorArr();
+                return ['status' => 0, 'msg' => $error['msg']];
+            }
+            return ['status' => 1, 'result' => [$buyGoods]];
+        } elseif (empty($goodsId) && !empty(trim($cartIds))) {
+            /*
+             * 购物车下单
+             */
+            $cartIds = explode(',', $cartIds);
+            foreach ($cartIds as $k => $v) {
+                $data = [];
+                $data['id'] = $v;
+                $data['selected'] = 1;
+                $cartIds[$k] = $data;
+            }
+            $result = $cartLogic->AsyncUpdateCarts($cartIds);
+            if (1 != $result['status']) {
+                return ['status' => 0, 'msg' => $result['msg']];
+            }
+            if (0 == $cartLogic->getUserCartOrderCount()) {
+                return ['status' => 0, 'msg' => '你的购物车没有选中商品'];
+            }
+            $cartList = $cartLogic->getCartList(1); // 获取用户选中的购物车商品
+            $vipGoods = [];
+            foreach ($cartList as $key => $cart) {
+                if ($cart['prom_type'] == 0) {
+                    if ($cart['goods']['least_buy_num'] != 0 && $cart['goods']['least_buy_num'] > $cart['goods_num']) {
+                        return ['status' => 0, 'msg' => $cart['goods']['goods_name'] . '至少购买' . $cart['goods']['least_buy_num'] . '件'];
+                    }
+                }
+                if ($cart['goods']['zone'] == 3 && $cart['goods']['distribut_id'] != 0) {
+                    $vipGoods[] = $cart['goods']['goods_id'];
+                }
+                if ($cart['prom_type'] == 3) {
+                    // 商品促销优惠
+                    $cartList[$key]['member_goods_price'] = bcsub($cart['goods_price'], $cart['use_integral'], 2);
+                }
+            }
+            if (count($vipGoods) > 1) {
+                return ['status' => 0, 'msg' => '不能一次购买两种或以上VIP升级套餐'];
+            }
+            return ['status' => 1, 'result' => $cartList];
+        } else {
+            /*
+             * 单个商品 + 购物车 下单
+             */
+            return ['status' => 0, 'msg' => '暂不支持此下单方式'];
+        }
+    }
+
+    /**
      * 获取提交订单前的信息
      * @return \think\response\Json
      * @throws \app\common\util\TpshopException
@@ -1664,66 +1738,15 @@ class Order extends Base
 
         $cartLogic = new CartLogic();
         $cartLogic->setUserId($this->user_id);
-        if (!empty($goodsId) && empty(trim($cartIds))) {
-            /*
-             * 单个商品下单
-             */
-            $cartLogic->setGoodsModel($goodsId);
-            $cartLogic->setSpecGoodsPriceModel($itemId);
-            $cartLogic->setGoodsBuyNum($goodsNum);
-            $cartLogic->setType($payType);
-            $cartLogic->setCartType(0);
-            try {
-                $buyGoods = $cartLogic->buyNow($this->isApp);
-            } catch (TpshopException $tpE) {
-                $error = $tpE->getErrorArr();
-                return json(['status' => 0, 'msg' => $error['msg']]);
-            }
-            $cartList['cartList'] = [$buyGoods];
-        } elseif (empty($goodsId) && !empty(trim($cartIds))) {
-            /*
-             * 购物车下单
-             */
-            $cartIds = explode(',', $cartIds);
-            foreach ($cartIds as $k => $v) {
-                $data = [];
-                $data['id'] = $v;
-                $data['selected'] = 1;
-                $cartIds[$k] = $data;
-            }
-            $result = $cartLogic->AsyncUpdateCarts($cartIds);
-            if (1 != $result['status']) {
-                return json(['status' => 0, 'msg' => $result['msg']]);
-            }
-            if (0 == $cartLogic->getUserCartOrderCount()) {
-                return json(['status' => 0, 'msg' => '你的购物车没有选中商品']);
-            }
-            $cartList['cartList'] = $cartLogic->getCartList(1); // 获取用户选中的购物车商品
-            $vipGoods = [];
-            foreach ($cartList['cartList'] as $key => $cart) {
-                if ($cart['prom_type'] == 0) {
-                    if ($cart['goods']['least_buy_num'] != 0 && $cart['goods']['least_buy_num'] > $cart['goods_num']) {
-                        return json(['status' => 0, 'msg' => $cart['goods']['goods_name'] . '至少购买' . $cart['goods']['least_buy_num'] . '件']);
-                    }
-                }
-                if ($cart['goods']['zone'] == 3 && $cart['goods']['distribut_id'] != 0) {
-                    $vipGoods[] = $cart['goods']['goods_id'];
-                }
-                if ($cart['prom_type'] == 3) {
-                    // 商品促销优惠
-                    $cartList['cartList'][$key]['member_goods_price'] = bcsub($cart['goods_price'], $cart['use_integral'], 2);
-                }
-            }
-            if (count($vipGoods) > 1) {
-                return json(['status' => 0, 'msg' => '不能一次购买两种或以上VIP升级套餐']);
-            }
+        // 获取订单商品数据
+        $res = $this->getOrderGoodsData($cartLogic, $goodsId, $itemId, $goodsNum, $payType, $cartIds);
+        if ($res['status'] != 1) {
+            return json($res);
         } else {
-            /*
-             * 单个商品 + 购物车 下单
-             */
-            return json(['status' => 0, 'msg' => '暂不支持此下单方式']);
+            $cartList['cartList'] = $res['result'];
         }
-        //初始化数据 商品总额/节约金额/商品总共数量/商品使用积分
+
+        // 初始化数据 商品总额/节约金额/商品总共数量/商品使用积分
         $cartPriceInfo = $cartLogic->getCartPriceInfo($cartList['cartList']);
         $cartList = array_merge($cartList, $cartPriceInfo);
 
@@ -1738,7 +1761,6 @@ class Order extends Base
         $couponLogic = new CouponLogic();
         // 用户可用的优惠券列表
         $userCouponList = $couponLogic->getUserAbleCouponList($this->user_id, $cartGoodsId, $cartGoodsCatId, $this->isApp);
-//        $userCouponList = $cartLogic->getCouponCartList($cartList, $userCouponList);
         $couponList = [];
         foreach ($userCouponList as $k => $coupon) {
             $couponList[$k] = [
@@ -1755,7 +1777,6 @@ class Order extends Base
         }
         // 用户可用的兑换券列表
         $userExchangeList = $couponLogic->getUserAbleCouponListRe($this->user_id, $cartGoodsId, $cartGoodsCatId, $this->isApp);
-//        $userExchangeList = $cartLogic->getCouponCartList($cartList, $userExchangeList);
         $exchangeList = [];
         $exchangeId = 0;
         foreach ($userExchangeList as $key => $coupon) {
@@ -2057,61 +2078,15 @@ class Order extends Base
         }
         $cartLogic = new CartLogic();
         $cartLogic->setUserId($this->user_id);
-        if (!empty($goodsId) && empty(trim($cartIds))) {
-            /*
-             * 单个商品下单
-             */
-            $cartLogic->setGoodsModel($goodsId);
-            $cartLogic->setSpecGoodsPriceModel($itemId);
-            $cartLogic->setGoodsBuyNum($goodsNum);
-            $cartLogic->setType($payType);
-            $cartLogic->setCartType(0);
-            try {
-                $buyGoods = $cartLogic->buyNow($this->isApp);
-            } catch (TpshopException $tpE) {
-                $error = $tpE->getErrorArr();
-                return json(['status' => 0, 'msg' => $error['msg']]);
-            }
-            $cartList['cartList'] = [$buyGoods];
-        } elseif (empty($goodsId) && !empty(trim($cartIds))) {
-            /*
-             * 购物车下单
-             */
-            $cartIds = explode(',', $cartIds);
-            foreach ($cartIds as $k => $v) {
-                $data = [];
-                $data['id'] = $v;
-                $data['selected'] = 1;
-                $cartIds[$k] = $data;
-            }
-            $result = $cartLogic->AsyncUpdateCarts($cartIds);
-            if (1 != $result['status']) {
-                return json(['status' => 0, 'msg' => $result['msg'], 'result' => null]);
-            }
-            if (0 == $cartLogic->getUserCartOrderCount()) {
-                return json(['status' => 0, 'msg' => '你的购物车没有选中商品', 'result' => null]);
-            }
-            $cartList['cartList'] = $cartLogic->getCartList(1); // 获取用户选中的购物车商品
-            $vipGoods = [];
-            foreach ($cartList['cartList'] as $key => $cart) {
-                if ($cart['goods']['zone'] == 3 && $cart['goods']['distribut_id'] != 0) {
-                    $vipGoods[] = $cart['goods']['goods_id'];
-                }
-                if ($cart['prom_type'] == 3) {
-                    // 商品促销优惠
-                    $cartList['cartList'][$key]['member_goods_price'] = bcsub($cart['goods_price'], $cart['use_integral'], 2);
-                }
-            }
-            if (count($vipGoods) > 1) {
-                return json(['status' => 0, 'msg' => '不能一次购买两种或以上VIP升级套餐']);
-            }
+        // 获取订单商品数据
+        $res = $this->getOrderGoodsData($cartLogic, $goodsId, $itemId, $goodsNum, $payType, $cartIds);
+        if ($res['status'] != 1) {
+            return json($res);
         } else {
-            /*
-             * 单个商品 + 购物车 下单
-             */
-            return json(['status' => 0, 'msg' => '暂不支持此下单方式']);
+            $cartList['cartList'] = $res['result'];
         }
-        //初始化数据 商品总额/节约金额/商品总共数量/商品使用积分
+
+        // 初始化数据 商品总额/节约金额/商品总共数量/商品使用积分
         $cartPriceInfo = $cartLogic->getCartPriceInfo($cartList['cartList']);
         $cartList = array_merge($cartList, $cartPriceInfo);
 
@@ -2171,6 +2146,9 @@ class Order extends Base
 
             // 配送物流
             $payLogic->delivery($userAddress['district']);
+            if (isset($res['status']) && $res['status'] == -1) {
+                return json(['status' => 0, 'msg' => '订单中部分商品不支持对当前地址的配送']);
+            }
             // 订单pv
             $payLogic->setOrderPv();
             // 使用电子币
@@ -2305,63 +2283,24 @@ class Order extends Base
 
         $cartLogic = new CartLogic();
         $cartLogic->setUserId($this->user_id);
-        if (!empty($goodsId) && empty($cartIds)) {
-            /*
-             * 单个商品下单
-             */
-            $cartLogic->setGoodsModel($goodsId);
-            $cartLogic->setSpecGoodsPriceModel($itemId);
-            $cartLogic->setGoodsBuyNum($goodsNum);
-            $cartLogic->setType($payType);
-            $cartLogic->setCartType(0);
-            try {
-                $buyGoods = $cartLogic->buyNow($this->isApp);
-            } catch (TpshopException $tpE) {
-                $error = $tpE->getErrorArr();
-                return json(['status' => 0, 'msg' => $error['msg']]);
-            }
-            $cartList['cartList'] = [$buyGoods];
-        } elseif (empty($goodsId) && !empty($cartIds)) {
-            /*
-             * 购物车下单
-             */
-            $cartIds = explode(',', $cartIds);
-            foreach ($cartIds as $k => $v) {
-                $data = [];
-                $data['id'] = $v;
-                $data['selected'] = 1;
-                $cartIds[$k] = $data;
-            }
-            $result = $cartLogic->AsyncUpdateCarts($cartIds);
-            if (1 != $result['status']) {
-                return json(['status' => 0, 'msg' => $result['msg']]);
-            }
-            if (0 == $cartLogic->getUserCartOrderCount()) {
-                return json(['status' => 0, 'msg' => '你的购物车没有选中商品']);
-            }
-            $cartList['cartList'] = $cartLogic->getCartList(1); // 获取用户选中的购物车商品
-            foreach ($cartList['cartList'] as $key => $cart) {
-                if ($cart['prom_type'] == 3) {
-                    // 商品促销优惠
-                    $cartList['cartList'][$key]['member_goods_price'] = bcsub($cart['goods_price'], $cart['use_integral'], 2);
-                }
-            }
+        // 获取订单商品数据
+        $res = $this->getOrderGoodsData($cartLogic, $goodsId, $itemId, $goodsNum, $payType, $cartIds);
+        if ($res['status'] != 1) {
+            return json($res);
         } else {
-            /*
-             * 单个商品 + 购物车 下单
-             */
-            return json(['status' => 0, 'msg' => '暂不支持此下单方式']);
+            $cartList['cartList'] = $res['result'];
         }
+
+        // 初始化数据 商品总额/节约金额/商品总共数量/商品使用积分
+        $cartPriceInfo = $cartLogic->getCartPriceInfo($cartList['cartList']);
+        $cartList = array_merge($cartList, $cartPriceInfo);
+
+        if ($this->user['distribut_level'] >= 3) {
+            // 计算商品pv
+            $cartList['cartList'] = $cartLogic->calcGoodsPv($cartList['cartList']);
+        }
+
         try {
-            //初始化数据 商品总额/节约金额/商品总共数量/商品使用积分
-            $cartPriceInfo = $cartLogic->getCartPriceInfo($cartList['cartList']);
-            $cartList = array_merge($cartList, $cartPriceInfo);
-
-            if ($this->user['distribut_level'] >= 3) {
-                // 计算商品pv
-                $cartList['cartList'] = $cartLogic->calcGoodsPv($cartList['cartList']);
-            }
-
             $payLogic = new Pay();
             $payLogic->setUserId($this->user_id);   // 设置支付用户ID
             // 计算购物车价格
@@ -2435,12 +2374,7 @@ class Order extends Base
                 Db::commit();
                 return json(['status' => 11, 'msg' => '创建订单成功', 'result' => $return]);
             }
-//            // 预售和抢购暂不支持货到付款
-//            $orderGoodsPromType = M('order_goods')->where(['order_id' => $order['order_id']])->getField('prom_type', true);
-//            $no_cod_order_prom_type = ['4,5']; // 预售订单，虚拟订单不支持货到付款
-//            if (in_array($order['prom_type'], $no_cod_order_prom_type) || in_array(1, $orderGoodsPromType)) {
-//                $payment_where['code'] = ['neq', 'cod'];
-//            }
+
             // 获取支付方式
             $payment_where = [
                 'type' => 'payment',
