@@ -1726,13 +1726,24 @@ class Order extends Base
         }
         // 检查下单商品
         $res = $cartLogic->checkCartGoods($cartList['cartList']);
+        $abroad = [
+            'state' => 0,
+            'id_card' => '',
+            'hide_id_card' => '',
+            'id_card_tips' => '',
+            'purchase_tips' => '',
+        ];
         switch ($res['status']) {
             case 0:
                 return json($res);
             case 2:
+                $abroad['state'] = 1;
                 // 获取身份证信息
-
+                $abroad['id_card'] = $this->user['id_cart'];
+                $abroad['hide_id_card'] = $this->user['id_cart'] ? hideStr($this->user['id_cart'], 4, 4, 4, '*') : '';
+                $abroad['id_card_tips'] = M('abroad_config')->where(['type' => 'id_card'])->value('content');
                 // 获取海外购产品购买须知
+                $abroad['purchase_tips'] = M('abroad_config')->where(['type' => 'purchase'])->value('content');
                 break;
         }
 
@@ -2034,7 +2045,9 @@ class Order extends Base
             'spare_pay_points' => bcsub($this->user['pay_points'], $payReturn['pay_points'], 2),
             'give_integral' => $give_integral,
             'free_shipping_price' => tpCache('shopping.freight_free') <= $payReturn['order_amount'] ? '0' : bcsub(tpCache('shopping.freight_free'), $payReturn['order_amount'], 2),
-            'order_pv' => $payReturn['order_pv'] != '0.00' ? $payReturn['order_pv'] : ''
+            'order_pv' => $payReturn['order_pv'] != '0.00' ? $payReturn['order_pv'] : '',
+            // 海外购信息
+            'abroad' => $abroad,
         ];
         return json(['status' => 1, 'result' => $return]);
     }
