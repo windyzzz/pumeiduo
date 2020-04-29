@@ -3619,9 +3619,9 @@ class User extends Base
         $idCard = I('id_card', '');
         if (empty($realName)) return json(['status' => 0, 'msg' => '请传入真实姓名']);
         if (empty($idCard)) return json(['status' => 0, 'msg' => '请传入身份证号码']);
-        if (!check_id_card($idCard))  return json(['status' => 0, 'msg' => '请填写正确的身份证号码']);
+        if (!check_id_card($idCard)) return json(['status' => 0, 'msg' => '请填写正确的身份证号码']);
         // 第三方验证姓名与身份证
-        return json(['status' => 0, 'msg' => '请填写正确的身份信息\r\n（身份证号以及姓名）']);
+        return json(['status' => 0, 'msg' => '请填写正确的身份信息' . '\r\n（身份证号以及姓名）']);
         return json(['status' => 1]);
     }
 }

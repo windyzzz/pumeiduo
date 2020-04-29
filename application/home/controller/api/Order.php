@@ -1762,7 +1762,7 @@ class Order extends Base
             case 2:
                 $abroad['state'] = 1;
                 // 获取身份证信息
-                $abroad['id_card'] = $this->user['id_cart'];
+                $abroad['id_card'] = $this->user['id_cart'] ?? '';
                 $abroad['hide_id_card'] = $this->user['id_cart'] ? hideStr($this->user['id_cart'], 4, 4, 4, '*') : '';
                 $abroad['id_card_tips'] = M('abroad_config')->where(['type' => 'id_card'])->value('content');
                 // 获取海外购产品购买须知
