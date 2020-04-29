@@ -260,7 +260,6 @@ class Tb extends Controller
 
             if ($type == 1) {//更新商品
                 $back = $this->save_goods($data);
-                return json_encode(array('status' => 0, 'msg' => $back));
             } else if ($type == 2) {//更新品牌
                 $back = $this->save_brand($data);
             } else if ($type == 3) {//更新供货商
