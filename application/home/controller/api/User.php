@@ -3511,10 +3511,10 @@ class User extends Base
     {
         if ($this->user_id == 36410) {
             // APP审核账号
-            return json(['status' => 1, 'result' => ['state' => 0]]);
+            return json(['status' => 1, 'result' => ['state' => 0, 'url' => '']]);
         }
         if ($this->passAuth) {
-            $result = ['status' => 1, 'result' => ['state' => 0]];
+            $result = ['status' => 1, 'result' => ['state' => 0, 'url' => '']];
         } else {
             // 登录奖励
             $taskLogic = new TaskLogic(4);
