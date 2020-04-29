@@ -526,9 +526,14 @@ class Tb extends Controller
 
     function save_goods($goods)
     {
-
         $area3 = $goods['area3'];
-
+        if ($goods['is_supply'] == 1) {
+            $trade_type = 3;
+        } elseif ($goods['is_one_send'] == 1) {
+            $trade_type = 2;
+        } else {
+            $trade_type = 1;
+        }
         $goods_data = array(
             'goods_sn' => $goods['goods_sn'],
             'goods_name' => $goods['goods_name'],
@@ -538,7 +543,7 @@ class Tb extends Controller
             'weight' => $goods['weight'],//重量 - 克
             'on_time' => $goods['on_time'],//上架时间戳
             'out_time' => $goods['out_time'],//下架时间戳
-            'trade_type' => $goods['is_one_send'] == 1 ? 2 : 1,
+            'trade_type' => $trade_type,
             'is_abroad' => $goods['is_abroad']
         );
 

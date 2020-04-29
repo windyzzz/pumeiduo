@@ -229,7 +229,13 @@
                                         </a>
                                     </td>
                                     <td class="w80">{$good.spec_key_name}</td>
-                                    <td class="w80">{$good['trade_type'] == 1 ? '仓库自发' : '一件代发'}</td>
+                                    <td class="w80">
+                                        <switch name="$good[trade_type]">
+                                            <case value="1">仓库自发</case>
+                                            <case value="2">一件代发</case>
+                                            <case value="3">供应链发货</case>
+                                        </switch>
+                                    </td>
                                     <td class="w60">{$good.goods_num}</td>
                                     <td class="w100">{$good.goods_price}</td>
                                     <td class="w60">{$good.member_goods_price}</td>

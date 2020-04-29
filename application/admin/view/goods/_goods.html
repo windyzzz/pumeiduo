@@ -289,12 +289,12 @@
                     <label for="record_no">交易条件选择</label>
                 </dt>
                 <dd class="opt">
-                    <if condition="1 eq $goodsInfo['trade_type'] ">
-                        仓库自发
-                    <else/>
-                        一件代发
-                    </if>
-                    <input type="hidden" name="trade_type" value="{$goodsInfo['trade_type']}"/>
+                    <switch name="$goodsInfo[trade_type]">
+                        <case value="1">仓库自发</case>
+                        <case value="2">一件代发</case>
+                        <case value="3">供应链发货</case>
+                    </switch>
+                    <input type="hidden" name="trade_type" value="{$goodsInfo['trade_type']}" />
                 </dd>
             </dl>
             <dl class="row">
