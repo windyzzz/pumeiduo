@@ -931,7 +931,7 @@ class Goods extends Base
         if ($sort == 'shop_price') {
             $sort = 'shop_price - exchange_integral';   // 现金价格
         }
-        $sort_asc = I('get.sort_asc', 'asc'); // 排序
+        $sort_asc = I('get.sort_asc', 'desc'); // 排序
         $filter_param = []; // 筛选数组
         $id = I('get.id/d', 0); // 当前分类id
         $couponId = I('get.coupon_id', 0); // 优惠券ID
