@@ -260,6 +260,7 @@ class Tb extends Controller
 
             if ($type == 1) {//更新商品
                 $back = $this->save_goods($data);
+                return json_encode(array('status' => 0, 'msg' => $back));
             } else if ($type == 2) {//更新品牌
                 $back = $this->save_brand($data);
             } else if ($type == 3) {//更新供货商
@@ -469,9 +470,14 @@ class Tb extends Controller
 
     function save_goods($goods)
     {
-
         $area3 = $goods['area3'];
-
+        if ($goods['is_supply'] == 1) {
+            $trade_type = 3;
+        } elseif ($goods['is_one_send'] == 1) {
+            $trade_type = 2;
+        } else {
+            $trade_type = 1;
+        }
         $goods_data = array(
             'goods_sn' => $goods['goods_sn'],
             'goods_name' => $goods['goods_name'],
@@ -481,7 +487,7 @@ class Tb extends Controller
             'weight' => $goods['weight'],//重量 - 克
             'on_time' => $goods['on_time'],//上架时间戳
             'out_time' => $goods['out_time'],//下架时间戳
-            'trade_type' => $goods['is_one_send'] == 1 ? 2 : 1
+            'trade_type' => $trade_type
         );
 
         if ($goods['is_one_send'] == 0) {

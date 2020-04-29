@@ -260,7 +260,7 @@ class Goods extends Base
                 $suppliers = M('Suppliers')->where('suppliers_id', $val['suppliers_id'])->getField('suppliers_name');
                 $price = $val['shop_price'] - $val['exchange_integral'];
                 $strTable .= '<tr>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['goods_sn'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px; vnd.ms-excel.numberformat:@;">' .$val['goods_sn'] . '</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">' . $first_cat . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $secend_cat . ' </td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $third_cat . '</td>';
