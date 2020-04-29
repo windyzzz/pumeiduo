@@ -60,9 +60,17 @@
                     </div>
                     <div class="sDiv2">
                         <select name="order_type" class="select sDiv3" style="margin-right:5px;margin-left:5px">
-                            <option value="">订单类型</option>
+                            <option value="">订单种类</option>
                             <option value="1">圃美多</option>
                             <option value="2">海外购</option>
+                        </select>
+                    </div>
+                    <div class="sDiv2">
+                        <select name="order_status" class="select sDiv3">
+                            <option value="">订单状态</option>
+                            <volist name="order_status" id="v" key="k">
+                                <option value="{$k-1}">{$v}</option>
+                            </volist>
                         </select>
                     </div>
                     <div class="sDiv2">
@@ -76,14 +84,6 @@
                         </select>
                     </div>
                     <div class="sDiv2">
-                        <select name="pay_code" class="select sDiv3" style="margin-right:5px;margin-left:5px">
-                            <option value="">支付方式</option>
-                            <option value="alipay">支付宝支付</option>
-                            <option value="weixin">微信支付</option>
-                            <option value="cod">货到付款</option>
-                        </select>
-                    </div>
-                    <div class="sDiv2">
                         <select name="shipping_status" class="select sDiv3">
                             <option value="">发货状态</option>
                             <option value="0">未发货</option>
@@ -92,19 +92,19 @@
                         </select>
                     </div>
                     <div class="sDiv2">
+                        <select name="pay_code" class="select sDiv3" style="margin-right:5px;margin-left:5px">
+                            <option value="">支付方式</option>
+                            <option value="alipay">支付宝支付</option>
+                            <option value="weixin">微信支付</option>
+                            <option value="cod">货到付款</option>
+                        </select>
+                    </div>
+                    <div class="sDiv2">
                         <select name="prom_type" class="select sDiv3">
                             <option value="">订单类型</option>
                             <option value="0">普通订单</option>
                             <option value="2">团购订单</option>
                             <!-- <option value="2">部分发货</option> -->
-                        </select>
-                    </div>
-                    <div class="sDiv2">
-                        <select name="order_status" class="select sDiv3">
-                            <option value="">订单状态</option>
-                            <volist name="order_status" id="v" key="k">
-                                <option value="{$k-1}">{$v}</option>
-                            </volist>
                         </select>
                     </div>
                     <div class="sDiv2">
