@@ -363,10 +363,10 @@
                                         <a class="ncap-btn-big ncap-btn-green"
                                            onclick="verifyForm('order-action','{:U('Admin/order/order_action',array('order_id'=>$order['order_id'],'type'=>$k))}');">{$vo}</a>
                                     <elseif condition="$k eq 'delivery'"/>
-                                        <a class="ncap-btn-big ncap-btn-green"
-                                           href="{:U('Order/delivery_info',array('order_id'=>$order['order_id']))}">{$vo}</a>
+                                        <!--<a class="ncap-btn-big ncap-btn-green" href="{:U('Order/delivery_info',array('order_id'=>$order['order_id']))}">{$vo}</a>-->
                                     <elseif condition="$k eq 'refund'"/>
-                                        <else/>
+
+                                    <else/>
                                         <a class="ncap-btn-big ncap-btn-green"
                                            onclick="verifyForm('order-action','{:U('Admin/order/order_action',array('order_id'=>$order['order_id'],'type'=>$k))}');">
                                             {$vo}</a>
