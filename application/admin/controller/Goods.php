@@ -248,6 +248,8 @@ class Goods extends Base
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">现金金额</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">现金不含税价</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">积分兑换</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">零售价pv</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">积分价pv</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">交易条件选择</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">供应商</td>';
         $strTable .= '</tr>';
@@ -271,6 +273,8 @@ class Goods extends Base
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $price . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['ctax_price'] . ' </td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['exchange_integral'] . ' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['retail_pv'] . ' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['integral_pv'] . ' </td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . trade_type($val['trade_type']) . ' </td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $suppliers . ' </td>';
                 $strTable .= '</tr>';
