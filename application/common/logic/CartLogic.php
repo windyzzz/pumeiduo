@@ -842,6 +842,7 @@ class CartLogic extends Model
             $cartWhere['selected'] = 1;
         }
         $cartWhere['goods_num'] = ['neq', 0];
+        $cartWhere['prom_type'] = ['neq', 2];   // 不显示团购商品
         $cartList = $cart
             ->field("
                 *,CASE type WHEN 1 THEN goods_price - member_goods_price ELSE '0' END AS use_point,
