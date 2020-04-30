@@ -48,8 +48,13 @@
             <div class="flexigrid">
                 <div class="mDiv">
                     <div class="ftitle">
-                        <h3>{$template.template_name}</h3>
-                        <h5>按照{$template.type_desc}设置</h5>
+                        <span style="font-size: large; margin-right: 20px;">{$template.template_name}</span>
+                        <span style="font-size: medium; margin-right: 20px;">按照{$template.type_desc}设置</span>
+                        <if condition="$template[is_out_setting] == 1">
+                            <span style="font-size: medium; margin-right: 20px;">不启用商城免运费设置</span>
+                        <else/>
+                            <span style="font-size: medium; margin-right: 20px;">启用商城免运费设置</span>
+                        </if>
                     </div>
                     <div title="删除运费模板" data-template-id="{$template.template_id}" class="pReload delete_template">
                         <i class="fa fa-trash-o"></i>
@@ -63,15 +68,15 @@
                         <table cellspacing="0" cellpadding="0">
                             <thead>
                             <tr>
-                                <th align="left" abbr="" axis="col1" class="">
+                                <th align="center" abbr="" axis="col1" class="">
                                     <div style="text-align: center; width: 800px;" class="">配送区域</div>
                                 </th>
-                                <th align="left" abbr="" axis="col2" class="">
+                                <th align="center" abbr="" axis="col2" class="">
                                     <div style="text-align: center; width: 150px;" class="">
                                         首{$template.type_desc}({$template.unit_desc})
                                     </div>
                                 </th>
-                                <th align="left" abbr="" axis="col3" class="">
+                                <th align="center" abbr="" axis="col3" class="">
                                     <div style="text-align: center; width: 150px;" class="">运费(元)</div>
                                 </th>
                                 <th align="center" abbr="" axis="col4" class="">
@@ -81,6 +86,12 @@
                                 </th>
                                 <th align="center" abbr="" axis="col5" class="">
                                     <div style="text-align: center; width: 150px;" class="">运费(元)</div>
+                                </th>
+                                <th align="center" abbr="" axis="col5" class="">
+                                    <div style="text-align: center; width: 150px;" class="">满优惠设置</div>
+                                </th>
+                                <th align="center" abbr="" axis="col5" class="">
+                                    <div style="text-align: center; width: 150px;" class="">满优惠运费</div>
                                 </th>
                                 <th style="width:100%" axis="col6">
                                     <div></div>
@@ -100,7 +111,7 @@
                                         <div style="text-align: center; width: 800px;">
                                             <if condition="$config[is_default] eq 1">
                                                 中国
-                                                <else/>
+                                            <else/>
                                                 <volist name="config[freightRegion]" id="freight_region">
                                                     {$freight_region.name},
                                                 </volist>
@@ -118,6 +129,17 @@
                                     </td>
                                     <td align="left" class="">
                                         <div style="text-align: center; width: 150px;">{$config.continue_money}</div>
+                                    </td>
+                                    <td align="left" class="">
+                                        <div style="text-align: center; width: 150px;">
+                                            <switch name="$config[discount_type]">
+                                                <case value="0">无设置</case>
+                                                <case value="1">满{$config.discount_condition|number_format=0}件</case>
+                                            </switch>
+                                        </div>
+                                    </td>
+                                    <td align="left" class="">
+                                        <div style="text-align: center; width: 150px;">{$config.discount_money}</div>
                                     </td>
                                     <td align="" class="" style="width: 100%;">
                                         <div>&nbsp;</div>
@@ -139,7 +161,6 @@
         $('#flexigrid > table>tbody >tr').click(function () {
             $(this).toggleClass('trSelected');
         });
-
     });
     //删除运费确定事件
     $(function () {

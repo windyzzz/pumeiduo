@@ -24,11 +24,13 @@ use think\Model;
  */
 class FreightLogic extends Model
 {
-    protected $goods; //商品模型
-    protected $regionId; //地址
-    protected $goodsNum; //件数
+    protected $goods;                   // 商品模型
+    protected $regionId;                // 地址
+    protected $goodsNum;                // 件数
     private $freightTemplate;
-    private $freight = 0;
+    private $freight = 0;               // 启用商城免运费设置的运费
+    private $outSettingFreight = 0;     // 不启用商城免运费设置的运费
+    private $freightGoodsPrice = 0;     // 启用商城免运费设置的商品价格
 
     /**
      * 包含一个商品模型.
@@ -69,9 +71,10 @@ class FreightLogic extends Model
      */
     public function doCalculation()
     {
-        if (1 == $this->goods['is_free_shipping']) {
-            $this->freight = 0;
-        } else {
+        $this->freight = 0;
+        $this->outSettingFreight = 0;
+        $this->freightGoodsPrice = 0;
+        if (0 == $this->goods['is_free_shipping']) {
             $freightRegion = $this->getFreightRegion();
             $freightConfig = $this->getFreightConfig($freightRegion);
             //计算价格
@@ -88,7 +91,14 @@ class FreightLogic extends Model
                     //按件数
                     $total_unit = $this->goodsNum;
             }
-            $this->freight = $this->getFreightPrice($total_unit, $freightConfig);
+            if ($this->freightTemplate['is_out_setting'] == 0) {
+                // 启用商城免运费设置
+                $this->freight = $this->getFreightPrice($total_unit, $freightConfig);
+                $this->freightGoodsPrice = bcsub(bcmul($this->goods['member_goods_price'], $this->goodsNum, 2), bcmul($this->goodsNum, $this->goods['each_order_prom_amount'], 2), 2);
+            } else {
+                // 不启用商城免运费设置
+                $this->outSettingFreight = $this->getFreightPrice($total_unit, $freightConfig);
+            }
         }
     }
 
@@ -123,6 +133,26 @@ class FreightLogic extends Model
     }
 
     /**
+     * 获取运费（不按照商城免运费设置）
+     *
+     * @return int
+     */
+    public function getOutSettingFreight()
+    {
+        return $this->outSettingFreight;
+    }
+
+    /**
+     * 获取订单商品价格
+     *
+     * @return int
+     */
+    public function getFreightGoodsPrice()
+    {
+        return $this->freightGoodsPrice;
+    }
+
+    /**
      * 根据总量和配置信息获取运费.
      *
      * @param $total_unit
@@ -138,6 +168,15 @@ class FreightLogic extends Model
             $freight_price = bcadd($freight_config['first_money'], bcmul($freight_config['continue_money'], $average, 2), 2);
         } else {
             $freight_price = $freight_config['first_money'];
+        }
+        // 该运费模板是否有设置满优惠邮费
+        switch ($freight_config['discount_type']) {
+            case 1:
+                // 数量
+                if ($this->goodsNum >= number_format($freight_config['discount_condition'])) {
+                    $freight_price = $freight_config['discount_money'];
+                }
+                break;
         }
 
         return $freight_price;
