@@ -28,7 +28,7 @@ class CreateAppLog extends Migrator
      */
     public function change()
     {
-        $this->table('app_log')
+        $this->table('app_log', ['comment' => 'APP更新记录表'])
             ->addColumn('type', 'string', ['limit' => 10, 'comment' => 'APP类型'])
             ->addColumn('app_version', 'string', ['limit' => 10, 'comment' => '版本号'])
             ->addColumn('app_log', 'text', ['comment' => '版本日志'])
