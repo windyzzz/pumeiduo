@@ -60,7 +60,7 @@ class Order
         // 搜索订单 根据商品名称 或者 订单编号
         $search_key = trim(I('search_key'));
         if ($search_key) {
-            $where .= ' and (order_sn like :search_key1 or order_id in (select order_id from `'.C('database.prefix').'order_goods` where goods_name like :search_key2) ) ';
+            $where .= ' and (order_sn like :search_key1 or order_id in (select order_id from `' . C('database.prefix') . 'order_goods` where goods_name like :search_key2) ) ';
             $bind['search_key1'] = "%$search_key%";
             $bind['search_key2'] = "%$search_key%";
         }
@@ -71,7 +71,7 @@ class Order
 
         $show = $Page->show();
         $order_str = 'order_id DESC';
-        $order_list = M('order')->order($order_str)->where($where)->bind($bind)->limit($Page->firstRow.','.$Page->listRows)->select();
+        $order_list = M('order')->order($order_str)->where($where)->bind($bind)->limit($Page->firstRow . ',' . $Page->listRows)->select();
 
         //获取订单商品
         $model = new UsersLogic();
@@ -86,7 +86,7 @@ class Order
                 $number_amount += $glv['goods_num'];
                 $total_give_integral += $glv['give_integral'];
 
-                if($glv['zone']==3){
+                if ($glv['zone'] == 3) {
                     $order_list[$k]['cancel_btn'] = 0;
                 }
             }
@@ -200,8 +200,8 @@ class Order
         $items = DB::query($sql, $bind);
         $items_count = count($items);
 
-        $ids = $order_info['province'].','.$order_info['city'].','.$order_info['district'];
-        $region_list = M('region2')->where('id in ('.$ids.')')->getField('id,name');
+        $ids = $order_info['province'] . ',' . $order_info['city'] . ',' . $order_info['district'];
+        $region_list = M('region2')->where('id in (' . $ids . ')')->getField('id,name');
         $invoice_no = M('DeliveryDoc')->where('order_id', $id)->getField('invoice_no', true);
         $order_info['invoice_no'] = implode(' , ', $invoice_no);
         $order_return_num = M('return_goods')->where(['order_id' => $id, 'user_id' => $this->user_id])->count();
@@ -232,17 +232,17 @@ class Order
 
         //获取购物券
         $coupon_info = M('coupon_list')->alias('cl')
-            ->where(array('cl.get_order_id'=>$order_info['order_id']))
-            ->join('coupon c','cl.cid = c.id')->field('c.name,c.condition,c.money,c.id')->find();
+            ->where(array('cl.get_order_id' => $order_info['order_id']))
+            ->join('coupon c', 'cl.cid = c.id')->field('c.name,c.condition,c.money,c.id')->find();
 
-        if($coupon_info){
+        if ($coupon_info) {
             $return['is_has_coupon'] = 1;
             $return['coupon_id'] = $coupon_info['id'];
             $return['coupon_name'] = $coupon_info['name'];
-            $coupon_money = bcdiv(bcmul($coupon_info['money'],10,2),$coupon_info['condition'],1);
-            $return['coupon_dis'] = str_replace('.0','',$coupon_money).'折';
+            $coupon_money = bcdiv(bcmul($coupon_info['money'], 10, 2), $coupon_info['condition'], 1);
+            $return['coupon_dis'] = str_replace('.0', '', $coupon_money) . '折';
 
-        }else{
+        } else {
             $return['coupon_id'] = 0;
             $return['is_has_coupon'] = 0;
             $return['coupon_name'] = '';
@@ -301,9 +301,9 @@ class Order
         $order_id = I('get.order_id/d');
 
         $order = M('order')
-                ->field('order_id,pay_code,pay_name,user_money,integral_money,coupon_price,order_amount,total_amount')
-                ->where(['order_id' => $order_id, 'user_id' => $this->user_id])
-                ->find();
+            ->field('order_id,pay_code,pay_name,user_money,integral_money,coupon_price,order_amount,total_amount')
+            ->where(['order_id' => $order_id, 'user_id' => $this->user_id])
+            ->find();
 
         if (!$order) {
             return json(['status' => 0, 'msg' => '订单不存在', 'result' => null]);
@@ -500,7 +500,7 @@ class Order
         $confirm_time_config = tpCache('shopping.auto_service_date'); //后台设置多少天内可申请售后
         $confirm_time = $confirm_time_config * 24 * 60 * 60;
         if ((time() - $order['confirm_time']) > $confirm_time && !empty($order['confirm_time'])) {
-            return json(['status' => 0, 'msg' => '已经超过'.$confirm_time_config.'天内退货时间', 'result' => null]);
+            return json(['status' => 0, 'msg' => '已经超过' . $confirm_time_config . '天内退货时间', 'result' => null]);
         }
         if (empty($order)) {
             return json(['status' => 0, 'msg' => '非法操作', 'result' => null]);
@@ -518,7 +518,7 @@ class Order
         $region_id[] = tpCache('shop_info.city');
         $region_id[] = tpCache('shop_info.district');
         $region_id[] = 0;
-        $return_address = M('region2')->where('id in ('.implode(',', $region_id).')')->getField('id,name');
+        $return_address = M('region2')->where('id in (' . implode(',', $region_id) . ')')->getField('id,name');
         $order_info = array_merge($order, $order_goods);  //合并数组
         $return['return_address'] = $return_address;
         $return['return_type'] = C('RETURN_TYPE');
@@ -635,7 +635,7 @@ class Order
         $list = M('return_goods')->where($where)->order('id desc')->limit($page->firstRow, $page->listRows)->select();
         $goods_id_arr = get_arr_column($list, 'goods_id');
         if (!empty($goods_id_arr)) {
-            $goodsList = M('goods')->where('goods_id in ('.implode(',', $goods_id_arr).')')->getField('goods_id,goods_name');
+            $goodsList = M('goods')->where('goods_id in (' . implode(',', $goods_id_arr) . ')')->getField('goods_id,goods_name');
         }
         $return['goodsList'] = $goodsList;
         $state = C('REFUND_STATUS');
@@ -656,7 +656,8 @@ class Order
         }
         $res = M('return_goods')->where(['id' => $id, 'user_id' => $this->user_id])->save(['status' => -2, 'canceltime' => time()]);
         $return_info = M('return_goods')->where(['id' => $id, 'user_id' => $this->user_id])->find();
-        // 解冻分成
+        $order_goods = M('order_goods')->where(['rec_id' => $return_info['rec_id']])->find();
+
         if (5 != $return_info['status']) {
             // $goods_commission = M('Goods')->where('goods_id', $return_info['goods_id'])->getField('commission');
             // $dec_money = $return_info['refund_money'] * $goods_commission / 100;
@@ -664,22 +665,26 @@ class Order
             //     'money' => ['exp',"money + {$dec_money}"],
             //     'freeze_money' => ['exp',"freeze_money - {$dec_money}"]
             // ]);
-
-            $rebate_list = M('rebate_log')->where('order_sn', $return_info['order_sn'])->select();
-
-            if ($rebate_list) {
-                $OrderLogic = new OrderLogic();
-                foreach ($rebate_list as $rk => $rv) {
-                    $money = $OrderLogic->getDecMoney($rv['order_id'], $rv['level']);
-
-                    $dec_money = $money[$return_info['rec_id']]['money'];
-                    $dec_point = $money[$return_info['rec_id']]['point'];
-
-                    M('rebate_log')->where('id', $rv['id'])->update([
-                        'money' => ['exp', "money + {$dec_money}"],
-                        'point' => ['exp', "point + {$dec_point}"],
-                        'freeze_money' => ['exp', "freeze_money - {$dec_money}"],
-                    ]);
+            // 更新分成记录状态
+            $other_return = M('return_goods')->where(['order_id' => $return_info['order_id'], 'rec_id' => ['neq', $return_info['rec_id']], 'status' => 0])->find();
+            if (!$other_return) {
+                M('rebate_log')->where('order_sn', $return_info['order_sn'])->update(['status' => 2]);
+            }
+            if ($order_goods['goods_pv'] == 0) {
+                // 解冻分成
+                $rebate_list = M('rebate_log')->where('order_sn', $return_info['order_sn'])->select();
+                if ($rebate_list) {
+                    $OrderLogic = new OrderLogic();
+                    foreach ($rebate_list as $rk => $rv) {
+                        $money = $OrderLogic->getDecMoney($rv['order_id'], $rv['level']);
+                        $dec_money = $money[$return_info['rec_id']]['money'];
+                        $dec_point = $money[$return_info['rec_id']]['point'];
+                        M('rebate_log')->where('id', $rv['id'])->update([
+                            'money' => ['exp', "money + {$dec_money}"],
+                            'point' => ['exp', "point + {$dec_point}"],
+                            'freeze_money' => ['exp', "freeze_money - {$dec_money}"],
+                        ]);
+                    }
                 }
             }
         }
@@ -705,7 +710,7 @@ class Order
             M('order_goods')->where([
                 'order_id' => $return_info['order_id'],
                 'goods_id' => $return_info['goods_id'],
-                'spec_key' => $return_info['spec_key'], ])->save(['is_send' => 2]);  //订单商品改为已换货
+                'spec_key' => $return_info['spec_key'],])->save(['is_send' => 2]);  //订单商品改为已换货
             return json(['status' => 1, 'msg' => '操作成功', 'result' => null]);
         }
 
@@ -812,11 +817,11 @@ class Order
 
         foreach ($rebate_log as $rk => $rv) {
             $order_goods = M('OrderGoods')
-            ->alias('a')
-            ->field('a.*,o.add_time')
-            ->join('__ORDER__ o', 'o.order_id = a.order_id', 'LEFT')
-            ->where('a.order_id', $rv['order_id'])
-            ->select();
+                ->alias('a')
+                ->field('a.*,o.add_time')
+                ->join('__ORDER__ o', 'o.order_id = a.order_id', 'LEFT')
+                ->where('a.order_id', $rv['order_id'])
+                ->select();
 
             foreach ($order_goods as $ok => $ov) {
                 $goodsInfo = M('Goods')->field('exchange_integral,shop_price,shop_price - exchange_integral as integral_price, original_img as imgSrc')->where('goods_id', $ov['goods_id'])->find();
@@ -831,7 +836,7 @@ class Order
                 }
                 //$order_goods[$ok]['get_price'] = round(($ov['final_price'] * $ov['goods_num']) * $ov['commission'] / 100 * $distribut_rate, 2);
                 $OrderCommonLogc = new \app\common\logic\OrderLogic();
-                $order_goods[$ok]['get_price'] = $OrderCommonLogc->getRongMoney(($ov['final_price'] * $ov['goods_num']) * $ov['commission'] / 100,$rv['level'],$ov['add_time']);
+                $order_goods[$ok]['get_price'] = $OrderCommonLogc->getRongMoney(($ov['final_price'] * $ov['goods_num']) * $ov['commission'] / 100, $rv['level'], $ov['add_time']);
                 $order_goods[$ok]['is_freeze'] = M('return_goods')->where('rec_id', $ov['rec_id'])->where('status', 'gt', -1)->where(['status' => ['neq', 4]])->find() ? 1 : 0;
             }
 
@@ -886,11 +891,11 @@ class Order
         $OrderCommonLogc = new \app\common\logic\OrderLogic();
         foreach ($rebate_log as $rk => $rv) {
             $order_goods = M('OrderGoods')
-            ->alias('a')
-            ->field('a.*,o.add_time')
-            ->join('__ORDER__ o', 'o.order_id = a.order_id', 'LEFT')
-            ->where('a.order_id', $rv['order_id'])
-            ->select();
+                ->alias('a')
+                ->field('a.*,o.add_time')
+                ->join('__ORDER__ o', 'o.order_id = a.order_id', 'LEFT')
+                ->where('a.order_id', $rv['order_id'])
+                ->select();
 
             foreach ($order_goods as $ok => $ov) {
                 $goodsInfo = M('Goods')->field('exchange_integral,shop_price,shop_price - exchange_integral as integral_price, original_img as imgSrc')->where('goods_id', $ov['goods_id'])->find();
@@ -906,7 +911,7 @@ class Order
 
                 //$order_goods[$ok]['get_price'] = round(($ov['final_price'] * $ov['goods_num']) * $ov['commission'] / 100 * $distribut_rate, 2);
 
-                $order_goods[$ok]['get_price'] = $OrderCommonLogc->getRongMoney(($ov['final_price'] * $ov['goods_num']) * $ov['commission'] / 100,$rv['level'],$ov['add_time']);
+                $order_goods[$ok]['get_price'] = $OrderCommonLogc->getRongMoney(($ov['final_price'] * $ov['goods_num']) * $ov['commission'] / 100, $rv['level'], $ov['add_time']);
                 $order_goods[$ok]['is_freeze'] = M('return_goods')->where('rec_id', $ov['rec_id'])->where('status', 'gt', -1)->where(['status' => ['neq', 4]])->find() ? 1 : 0;
             }
 
@@ -945,9 +950,9 @@ class Order
         //查找评价商品
         $order_comment_where['rec_id'] = $rec_id;
         $order_goods = M('order_goods')
-                ->field('rec_id,goods_id,is_comment,goods_name,goods_num,goods_price,spec_key_name')
-                ->where($order_comment_where)
-                ->find();
+            ->field('rec_id,goods_id,is_comment,goods_name,goods_num,goods_price,spec_key_name')
+            ->where($order_comment_where)
+            ->find();
         $order_info = array_merge($order_info, $order_goods);
         $return['order_info'] = $order_info;
 

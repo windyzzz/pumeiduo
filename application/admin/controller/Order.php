@@ -15,7 +15,6 @@ use app\admin\logic\OrderLogic;
 use app\admin\logic\RefundLogic;
 use app\common\logic\Pay;
 use app\common\logic\PlaceOrder;
-use app\common\logic\Token as TokenLogic;
 use app\common\model\OrderGoods;
 use app\common\util\TpshopException;
 use think\AjaxPage;
@@ -61,7 +60,6 @@ class Order extends Base
         $orderLogic = new OrderLogic();
         $begin = $this->begin;
         $end = $this->end;
-
         if (I('pay_start_time')) {
             $pay_begin = I('pay_start_time');
             $pay_end = I('pay_end_time');
@@ -335,14 +333,13 @@ class Order extends Base
         $orderModel = new \app\common\model\Order();
         $orderObj = $orderModel::get(['order_id' => $data['order_id']]);
         $order = $orderObj->append(['full_address'])->toArray();
-        if (!order) {
+        if (!$order) {
             $this->error('订单不存在或参数错误');
         }
         if (3 == $data['pay_status']) {
             $refundLogic = new RefundLogic();
             if (1 == $data['refund_type']) {
                 //取消订单退款退余额
-
                 if ($refundLogic->updateRefundOrder($order, 1)) {
                     $this->success('成功退款到账户余额');
                 } else {
@@ -377,18 +374,26 @@ class Order extends Base
         $order = $orderObj->append(['full_address', 'orderGoods', 'adminOrderButton'])->toArray();
 
         $orderGoods = $order['orderGoods'];
+//        $orderGoodsNum = M('order_goods')->where(['order_id' => $order_id])->sum('goods_num');
         $express = Db::name('delivery_doc')->where('order_id', $order_id)->select();  //发货信息（可能多个）
         $user = Db::name('users')->where(['user_id' => $order['user_id']])->find();
         $this->assign('order', $order);
         $this->assign('user', $user);
         $split = count($orderGoods) > 1 ? 1 : 0;
         $buyGoodsNum = 1;   // 要支付购买的商品种类数
-        foreach ($orderGoods as $val) {
+
+        // 满单优惠
+//        $orderPromRate = 1;
+//        if (strstr($order['order_prom_id'], 'order_prom')) {
+//            $orderProm = explode('order_prom: ', $order['order_prom_id']);
+//            $orderPromId = (substr($orderProm[1], 0, strrpos($orderProm[1], ";")));
+//            $discountPrice = M('order_prom')->where(['id' => $orderPromId])->value('discount_price');
+//            $orderPromRate = $discountPrice / $orderGoodsNum;
+//        }
+        foreach ($orderGoods as $key => $val) {
             if ($val['is_gift'] == 0 && !in_array($val['prom_type'], [8, 9])) {
                 $buyGoodsNum += 1;
             }
-        }
-        foreach ($orderGoods as $key => $val) {
             if ($val['goods_num'] > 1) {
                 $split = 1;
             }
@@ -396,16 +401,15 @@ class Order extends Base
                 $orderGoods[$key]['final_goods_price'] = 0.00;
                 $orderGoods[$key]['prom_value'] = '无';
             } else {
+                $orderGoods[$key]['final_goods_price'] = $val['final_price'];
                 // 优惠促销
                 switch ($val['prom_type']) {
                     case 1:
                         // 秒杀
-                        $orderGoods[$key]['final_goods_price'] = $val['member_goods_price'];
                         $orderGoods[$key]['prom_value'] = '秒杀';
                         break;
                     case 2:
                         // 团购
-                        $orderGoods[$key]['final_goods_price'] = $val['member_goods_price'];
                         $orderGoods[$key]['prom_value'] = '秒杀';
                         break;
                     case 3:
@@ -415,32 +419,24 @@ class Order extends Base
                             case 0:
                             case 4:
                                 // 打折
-                                $orderGoods[$key]['final_goods_price'] = bcdiv(bcmul($val['member_goods_price'], $prom['expression'], 2), 100, 2);
                                 $orderGoods[$key]['prom_value'] = '折扣优惠';
                                 break;
                             case 1:
                             case 5:
-                                $expression = bcdiv($prom['expression'], $buyGoodsNum, 2);
                                 // 减价
-                                $orderGoods[$key]['final_goods_price'] = bcsub($val['member_goods_price'], bcdiv($expression, $val['goods_num'], 2), 2);
                                 $orderGoods[$key]['prom_value'] = '减价优惠';
                                 break;
                             case 2:
                                 // 固定金额
-                                $orderGoods[$key]['final_goods_price'] = $val['member_goods_price'];
                                 $orderGoods[$key]['prom_value'] = '固定金额';
                                 break;
                         }
                         break;
                     case 7:
                         // 订单优惠促销
-                        $discountPrice = M('order_prom')->where(['id' => $val['prom_id']])->value('discount_price');
-                        $expression = bcdiv($discountPrice, $buyGoodsNum, 2);
-                        $orderGoods[$key]['final_goods_price'] = bcsub($val['member_goods_price'], bcdiv($expression, $val['goods_num'], 2), 2);
                         $orderGoods[$key]['prom_value'] = '订单优惠促销';
                         break;
                     default:
-                        $orderGoods[$key]['final_goods_price'] = $val['member_goods_price'];
                         $orderGoods[$key]['prom_value'] = '无';
                 }
             }
@@ -675,7 +671,7 @@ class Order extends Base
         }
         $orderModel = new \app\common\model\Order();
         $orderObj = $orderModel::get(['order_id' => $order_id]);
-        $order = $orderObj->append(['full_address', 'orderGoods'])->toArray();
+        $order = $orderObj->append(['full_address', 'orderGoods', 'orderUser'])->toArray();
         $order['province'] = getRegionName($order['province']);
         $order['city'] = getRegionName($order['city']);
         $order['district'] = getRegionName($order['district']);
@@ -1025,6 +1021,7 @@ class Order extends Base
         }
         $return_goods = Db::name('return_goods')->where(['id' => $post_data['id']])->find();
         !$return_goods && $this->ajaxReturn(['status' => -1, 'msg' => '非法操作!']);
+        $order_goods = M('order_goods')->where(['rec_id' => $return_goods['rec_id']])->find();
         $type_msg = C('RETURN_TYPE');
         $status_msg = C('REFUND_STATUS');
         switch ($post_data['status']) {
@@ -1038,22 +1035,21 @@ class Order extends Base
         }
 
         if ($return_goods['type'] > 0 && 4 == $post_data['status']) {
-            // 换货成功直接解冻分成
-            $rebate_list = M('rebate_log')->where('order_sn', $return_goods['order_sn'])->select();
-
-            if ($rebate_list) {
-                $OrderLogic = new \app\common\logic\OrderLogic();
-                foreach ($rebate_list as $rk => $rv) {
-                    $money = $OrderLogic->getDecMoney($rv['order_id'], $rv['level']);
-
-                    $dec_money = $money[$return_goods['rec_id']]['money'];
-                    $dec_point = $money[$return_goods['rec_id']]['point'];
-
-                    M('rebate_log')->where('id', $rv['id'])->update([
-                        'money' => ['exp', "money + {$dec_money}"],
-                        'point' => ['exp', "point + {$dec_point}"],
-                        'freeze_money' => ['exp', "freeze_money - {$dec_money}"],
-                    ]);
+            if ($return_goods['type'] < 2 && $order_goods['goods_pv'] == 0) {
+                // 换货成功直接解冻分成
+                $rebate_list = M('rebate_log')->where('order_sn', $return_goods['order_sn'])->select();
+                if ($rebate_list) {
+                    $OrderLogic = new \app\common\logic\OrderLogic();
+                    foreach ($rebate_list as $rk => $rv) {
+                        $money = $OrderLogic->getDecMoney($rv['order_id'], $rv['level']);
+                        $dec_money = $money[$return_goods['rec_id']]['money'];
+                        $dec_point = $money[$return_goods['rec_id']]['point'];
+                        M('rebate_log')->where('id', $rv['id'])->update([
+                            'money' => ['exp', "money + {$dec_money}"],
+                            'point' => ['exp', "point + {$dec_point}"],
+                            'freeze_money' => ['exp', "freeze_money - {$dec_money}"],
+                        ]);
+                    }
                 }
             }
             $post_data['seller_delivery']['express_time'] = date('Y-m-d H:i:s');
@@ -1067,42 +1063,40 @@ class Order extends Base
             }
         }
         $note = "退换货:{$type_msg[$return_goods['type']]}, 状态:{$status_msg[$post_data['status']]},处理备注：{$post_data['remark']}";
-        $result = M('return_goods')->where(['id' => $post_data['id']])->save($post_data);
-        // $result = true;
+        // 更新退换货记录
+        M('return_goods')->where(['id' => $post_data['id']])->save($post_data);
 
         if (1 == $post_data['status']) {
             //审核通过才更改订单商品状态，进行退货，退款时要改对应商品修改库存
             $order = \app\common\model\Order::get($return_goods['order_id']);
-            $commonOrderLogic = new \app\common\logic\OrderLogic();
-            //$commonOrderLogic->alterReturnGoodsInventory($order, $return_goods['rec_id']); //审核通过，恢复原来库存
+//            $commonOrderLogic = new \app\common\logic\OrderLogic();
+//            $commonOrderLogic->alterReturnGoodsInventory($order, $return_goods['rec_id']); //审核通过，恢复原来库存
             if ($return_goods['type'] < 2) {
                 $orderLogic->disposereRurnOrderCoupon($return_goods); // 是退货可能要处理优惠券
-                $order_info = $order->toArray();
+//                $order_info = $order->toArray();
             }
         } elseif (-1 == $post_data['status']) {
-            // 解冻分成
-            $rebate_list = M('rebate_log')->where('order_sn', $return_goods['order_sn'])->select();
-
-            if ($rebate_list) {
-                $OrderLogic = new \app\common\logic\OrderLogic();
-                foreach ($rebate_list as $rk => $rv) {
-                    $money = $OrderLogic->getDecMoney($rv['order_id'], $rv['level']);
-
-
-                    $dec_money = $money[$return_goods['rec_id']]['money'];
-                    $dec_point = $money[$return_goods['rec_id']]['point'];
-
-                    M('rebate_log')->where('id', $rv['id'])->update([
-                        'money' => ['exp', "money + {$dec_money}"],
-                        'point' => ['exp', "point + {$dec_point}"],
-                        'freeze_money' => ['exp', "freeze_money - {$dec_money}"],
-                    ]);
+            if ($return_goods['type'] < 2 && $order_goods['goods_pv'] == 0) {
+                // 解冻分成
+                $rebate_list = M('rebate_log')->where('order_sn', $return_goods['order_sn'])->select();
+                if ($rebate_list) {
+                    $OrderLogic = new \app\common\logic\OrderLogic();
+                    foreach ($rebate_list as $rk => $rv) {
+                        $money = $OrderLogic->getDecMoney($rv['order_id'], $rv['level']);
+                        $dec_money = $money[$return_goods['rec_id']]['money'];
+                        $dec_point = $money[$return_goods['rec_id']]['point'];
+                        M('rebate_log')->where('id', $rv['id'])->update([
+                            'money' => ['exp', "money + {$dec_money}"],
+                            'point' => ['exp', "point + {$dec_point}"],
+                            'freeze_money' => ['exp', "freeze_money - {$dec_money}"],
+                        ]);
+                    }
                 }
             }
         }
         $orderLogic->orderActionLog($return_goods['order_id'], '退换货', $note);
 
-        //仅退款-审核通过   和  退货退款确认收货
+        //仅退款-审核通过 和 退货退款确认收货
         if (($post_data['status'] == 1 && $return_goods['type'] == 0) || ($post_data['status'] == 3 && $return_goods['type'] == 1)) {
             //通知 退货补回库存
             include_once "plugins/Tb.php";
@@ -1110,6 +1104,20 @@ class Order extends Base
             $TbLogic->add_tb(3, 9, $return_goods['id'], 0);
         }
 
+        // 更新订单pv
+        if (in_array($return_goods['type'], [0, 1]) && !in_array($post_data['status'], [-2, -1, 0, 6])) {
+            if (!isset($order)) {
+                $order = \app\common\model\Order::get($return_goods['order_id']);
+            }
+            if ($order_goods['goods_pv'] > 0) {
+                $order_pv = bcsub($order['order_pv'], $order_goods['goods_pv'], 2);
+                M('order')->where(['order_id' => $order['order_id']])->update([
+                    'order_pv' => $order_pv,
+                    'pv_tb' => 0,
+                    'pv_send' => 0
+                ]);
+            }
+        }
 
         $this->ajaxReturn(['status' => 1, 'msg' => '修改成功', 'url' => '']);
     }
@@ -1138,7 +1146,7 @@ class Order extends Base
         $orderLogic = new OrderLogic();
         $return_goods['refund_money'] = $orderLogic->getRefundGoodsMoney($return_goods);
 
-        if ('weixinJsApi' == $order['pay_code'] || 'weixin' == $order['pay_code'] || 'alipay' == $order['pay_code'] || 'alipayMobile' == $order['pay_code']) {
+        if ('weixinJsApi' == $order['pay_code'] || 'weixin' == $order['pay_code'] || 'alipay' == $order['pay_code'] || 'alipayMobile' == $order['pay_code'] || 'alipayApp' == $order['pay_code'] || 'weixinApp' == $order['pay_code']) {
             if ('weixinJsApi' == $order['pay_code']) {
                 include_once PLUGIN_PATH . 'payment/weixinJsApi/weixinJsApi.class.php';
                 $payment_obj = new \weixinJsApi();
@@ -1193,7 +1201,7 @@ class Order extends Base
             } elseif ('alipayApp' == $order['pay_code']) {
                 include_once PLUGIN_PATH . 'payment/alipayApp/alipayApp.class.php';
                 $payment_obj = new \alipayApp();
-                $result = $payment_obj->refund($order, $order['order_amount'], '售后订单退款');
+                $result = $payment_obj->refund($order, $data['refund_money'], '售后订单退款');
                 $msg = $result->sub_msg;
                 if ('10000' == $result->code) {
                     $refundLogic = new RefundLogic();
@@ -1205,7 +1213,7 @@ class Order extends Base
             } elseif ('weixinApp' == $order['pay_code']) {
                 include_once PLUGIN_PATH . 'payment/weixinApp/weixinApp.class.php';
                 $payment_obj = new \weixinApp();
-                $result = $payment_obj->refund($order, $order['order_amount']);
+                $result = $payment_obj->refund($order, $data['refund_money']);
                 if ($result['return_code'] == 'FAIL') {
                     $this->ajaxReturn(['status' => 0, 'msg' => $result['return_msg'], 'url' => '']);
                 } elseif ($result['result_code'] == 'FAIL') {
@@ -1214,55 +1222,6 @@ class Order extends Base
                     $refundLogic = new RefundLogic();
                     $refundLogic->updateRefundGoods($return_goods['rec_id']); //订单商品售后退款
                     $this->ajaxReturn(['status' => 1, 'msg' => '退款成功', 'url' => '']);
-                }
-            }
-            if ($order['pay_status'] > 0) {
-
-                M('order')->where(['order_id' => $order['order_id']])->save(['pay_status' => 3, 'cancel_time' => time()]); //更改订单状态
-
-                // 追回等级
-                $update_info = M('distribut_log')->where('order_sn', $order['order_sn'])->where('type', 1)->find();
-                if ($update_info) {
-                    $is_distribut = 0;
-                    $level = $update_info['old_level'];
-                    if ($level > 1) {
-                        $is_distribut = 1;
-                    }
-                    M('users')->where('user_id', $order['user_id'])->update([
-                        'distribut_level' => $level,
-                        'is_distribut' => $is_distribut,
-                    ]);
-                    // 更新缓存
-                    $user = Db::name('users')->where('user_id', $order['user_id'])->find();
-                    TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
-
-                    logDistribut($order['order_sn'], $order['user_id'], $level, $update_info['new_level'], 2);
-
-                    // 分销追回 (下级)
-                    if (1 == $level) {
-                        M('rebate_log')->where('user_id', $order['user_id'])->update(['money' => 0, 'point' => 0, 'confirm_time' => time(), 'remark' => '取消订单，追回佣金']);
-                    } elseif (2 == $level) {
-                        M('rebate_log')->where('user_id', $order['user_id'])->where('type', 1)->update(['money' => 0, 'point' => 0, 'confirm_time' => time(), 'remark' => '取消订单，追回佣金']);
-                    }
-
-                    // 推荐人奖励追回
-                    $firstLeaderAccount = M('account_log')->where([
-                        'order_id' => $order['order_id'],
-                        'type' => 14
-                    ])->whereOr([
-                        'user_money' => ['>', 0],
-                        'pay_points' => ['>', 0]
-                    ])->select();
-                    if (!empty($firstLeaderAccount)) {
-                        foreach ($firstLeaderAccount as $account) {
-                            if ($account['user_money'] > 0) {
-                                accountLog($account['user_id'], -$account['user_money'], 0, '推荐人VIP套组奖励金额追回', 0, $order['order_id'], '', 0, 14, false);
-                            }
-                            if ($account['pay_points']) {
-                                accountLog($account['user_id'], 0, -$account['pay_points'], '推荐人VIP套组奖励积分追回', 0, $order['order_id'], '', 0, 14, false);
-                            }
-                        }
-                    }
                 }
             }
         } else {
@@ -1482,53 +1441,65 @@ class Order extends Base
         exit();
     }
 
+    /**
+     * 订单数据导出xls
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     */
     public function export_order()
     {
+        $condition = [];
+        // 下单时间
         $begin = $this->begin;
         $end = $this->end;
-
+        if ($begin && $end) {
+            $condition['o.add_time'] = ['between', "$begin,$end"];
+        }
+        // 支付时间
         if (I('pay_start_time')) {
             $pay_begin = I('pay_start_time');
             $pay_end = I('pay_end_time');
         }
-
         $pay_begin = strtotime($pay_begin);
         $pay_end = strtotime($pay_end) + 86399;
-
-        // 搜索条件
-        $condition = [];
+        if ($pay_begin && $pay_end) {
+            $condition['o.pay_time'] = ['between', "$pay_begin,$pay_end"];
+        }
+        // 关键字
         $keyType = I('keytype');
         $keywords = I('keywords', '', 'trim');
         $user_id = I('user_id', '', 'trim');
-
         $consignee = ($keyType && 'consignee' == $keyType) ? $keywords : I('consignee', '', 'trim');
-        $consignee ? $condition['consignee'] = trim($consignee) : false;
-
-
-        if ($begin && $end) {
-            $condition['add_time'] = ['between', "$begin,$end"];
-        }
-
-        if ($pay_begin && $pay_end) {
-            $condition['pay_time'] = ['between', "$pay_begin,$pay_end"];
-        }
-
+        $consignee ? $condition['o.consignee'] = trim($consignee) : false;
         // $condition['prom_type'] = array('lt',5);
         if ('' != $user_id) {
-            $condition['user_id'] = ['eq', $user_id];
+            $condition['o.user_id'] = ['eq', $user_id];
         }
-
         $order_sn = ($keyType && 'order_sn' == $keyType) ? $keywords : I('order_sn');
-        $order_sn ? $condition['order_sn'] = trim($order_sn) : false;
+        $order_sn ? $condition['o.order_sn'] = trim($order_sn) : false;
 
-        '' != I('order_status') ? $condition['order_status'] = I('order_status') : false;
-        '' != I('pay_status') ? $condition['pay_status'] = I('pay_status') : false;
-        '' != I('pay_code') ? $condition['pay_code'] = I('pay_code') : false;
-        '' != I('shipping_status') ? $condition['shipping_status'] = I('shipping_status') : false;
-        '' != I('prom_type') ? $condition['prom_type'] = I('prom_type') : false;
-        I('user_id') ? $condition['user_id'] = trim(I('user_id')) : false;
+        '' != I('order_status') ? $condition['o.order_status'] = I('order_status') : false;
+        '' != I('pay_status') ? $condition['o.pay_status'] = I('pay_status') : false;
+        '' != I('pay_code') ? $condition['o.pay_code'] = I('pay_code') : false;
+        '' != I('shipping_status') ? $condition['o.shipping_status'] = I('shipping_status') : false;
+        '' != I('prom_type') ? $condition['o.prom_type'] = I('prom_type') : false;
+
+        // 排序
         $sort_order = I('order_by', 'DESC') . ' ' . I('sort');
 
+        // 订单数据
+        $orderList = Db::name('order o')->join('users u', 'u.user_id = o.user_id', 'LEFT')
+            ->field("o.*, FROM_UNIXTIME(o.add_time,'%Y-%m-%d %H:%i:%s') as add_time, u.distribut_level")
+            ->where($condition)->order($sort_order)->select();
+        // 等级列表
+        $level_list = M('distribut_level')->getField('level_id, level_name');
+        // 用户父级ID
+        $parent_list = Db::name('users')->getField('user_id, first_leader', true);
+        // 订单来源
+        $orderSource = ['1' => '微信', '2' => 'PC', '3' => 'APP', '4' => '管理后台'];
+
+        // 表头
         $strTable = '<table width="500" border="1">';
         $strTable .= '<tr>';
         $strTable .= '<td style="text-align:center;font-size:12px;width:120px;">订单编号</td>';
@@ -1559,19 +1530,10 @@ class Order extends Base
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品规格</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">交易条件</td>';
         $strTable .= '</tr>';
-
-        // 等级列表
-        $level_list = M('distribut_level')->getField('level_id,level_name');
-        // 用户父级ID
-        $parent_list = Db::name('users')->getField('user_id, first_leader', true);
-        // 订单数据
-        $orderList = Db::name('order')->field("*,FROM_UNIXTIME(add_time,'%Y-%m-%d %H:%i:%s') as create_time")->where($condition)->order($sort_order)->select();
-        // 订单来源
-        $orderSource = ['1' => '微信', '2' => 'PC', '3' => 'APP', '4' => '管理后台'];
+        // 表体数据
         if (is_array($orderList)) {
             $region = get_region_list();
             foreach ($orderList as $k => $val) {
-                $user_info = M('users')->where('user_id', $val['user_id'])->find();
                 $orderGoods = D('order_goods')->where('order_id=' . $val['order_id'])->select();
                 $orderGoodsNum = count($orderGoods);
                 $val['pay_time_show'] = $val['pay_time'] ? date('Y-m-d H:i:s', $val['pay_time']) : '';
@@ -1582,7 +1544,8 @@ class Order extends Base
                 $parentId = $parent_list[$val['user_id']];
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $parentId . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['user_id'] . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $level_list[$user_info['distribut_level']] . '</td>';
+                $level = $val['distribut_level'] ? $level_list[$val['distribut_level']] : '普通会员';
+                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $level . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['consignee'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . "{$region[$val['province']]},{$region[$val['city']]},{$region[$val['district']]},{$region[$val['twon']]}{$val['address']}" . ' </td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['mobile'] . '</td>';
@@ -1598,7 +1561,6 @@ class Order extends Base
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $this->pay_status[$val['pay_status']] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $this->shipping_status[$val['shipping_status']] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $orderSource[$val['source']] . '</td>';
-                // $orderGoods = D('order_goods')->where('order_id='.$val['order_id'])->select();
                 // $strGoods = '';
                 $goods_num = 0;
                 foreach ($orderGoods as $goods) {
@@ -1609,17 +1571,15 @@ class Order extends Base
                     // $strTradeType = $goods['trade_type'] == 1 ? '仓库自发'  : '一件代发';
                 }
                 $strTable .= '<td style="text-align:left;font-size:12px;"    rowspan="' . $orderGoodsNum . '">' . $goods_num . ' </td>';
-                foreach ($orderGoods as $goods) {
-                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['goods_sn'] . ' </td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['goods_num'] . ' </td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['goods_name'] . ' </td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['spec_key_name'] . ' </td>';
-                    $strTradeType = 1 == $goods['trade_type'] ? '仓库自发' : '一件代发';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $strTradeType . ' </td>';
-                    $strTable .= '</tr>';
-                    break;
-                }
+
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['goods_sn'] . ' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['goods_num'] . ' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['goods_name'] . ' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['spec_key_name'] . ' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . trade_type($orderGoods[0]['trade_type']) . ' </td>';
+                $strTable .= '</tr>';
                 unset($orderGoods[0]);
+
                 if ($orderGoods) {
                     foreach ($orderGoods as $goods) {
                         $strTable .= '<tr>';
@@ -1627,8 +1587,7 @@ class Order extends Base
                         $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['goods_num'] . ' </td>';
                         $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['goods_name'] . ' </td>';
                         $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['spec_key_name'] . ' </td>';
-                        $strTradeType = 1 == $goods['trade_type'] ? '仓库自发' : '一件代发';
-                        $strTable .= '<td style="text-align:left;font-size:12px;">' . $strTradeType . ' </td>';
+                        $strTable .= '<td style="text-align:left;font-size:12px;">' . trade_type($goods['trade_type']) . ' </td>';
                         $strTable .= '</tr>';
                     }
                 }
@@ -1647,6 +1606,127 @@ class Order extends Base
         unset($orderList);
         downloadExcel($strTable, 'order');
         exit();
+    }
+
+    /**
+     * 订单数据导出csv
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     */
+    public function export_order_v2()
+    {
+        $condition = [];
+        // 下单时间
+        $begin = $this->begin;
+        $end = $this->end;
+        if ($begin && $end) {
+            $condition['o.add_time'] = ['between', "$begin,$end"];
+        }
+        // 支付时间
+        if (I('pay_start_time')) {
+            $pay_begin = I('pay_start_time');
+            $pay_end = I('pay_end_time');
+        }
+        $pay_begin = strtotime($pay_begin);
+        $pay_end = strtotime($pay_end) + 86399;
+        if ($pay_begin && $pay_end) {
+            $condition['o.pay_time'] = ['between', "$pay_begin,$pay_end"];
+        }
+        // 关键字
+        $keyType = I('keytype');
+        $keywords = I('keywords', '', 'trim');
+        $user_id = I('user_id', '', 'trim');
+        $consignee = ($keyType && 'consignee' == $keyType) ? $keywords : I('consignee', '', 'trim');
+        $consignee ? $condition['o.consignee'] = trim($consignee) : false;
+        // $condition['prom_type'] = array('lt',5);
+        if ('' != $user_id) {
+            $condition['o.user_id'] = ['eq', $user_id];
+        }
+        $order_sn = ($keyType && 'order_sn' == $keyType) ? $keywords : I('order_sn');
+        $order_sn ? $condition['o.order_sn'] = trim($order_sn) : false;
+
+        '' != I('order_status') ? $condition['o.order_status'] = I('order_status') : false;
+        '' != I('pay_status') ? $condition['o.pay_status'] = I('pay_status') : false;
+        '' != I('pay_code') ? $condition['o.pay_code'] = I('pay_code') : false;
+        '' != I('shipping_status') ? $condition['o.shipping_status'] = I('shipping_status') : false;
+        '' != I('prom_type') ? $condition['o.prom_type'] = I('prom_type') : false;
+
+        // 排序
+        $sort_order = I('order_by', 'DESC') . ' ' . I('sort');
+
+        // 订单数据
+        $orderList = Db::name('order o')->join('users u', 'u.user_id = o.user_id', 'LEFT')
+            ->field("o.*, FROM_UNIXTIME(o.add_time,'%Y-%m-%d %H:%i:%s') as add_time, u.distribut_level")
+            ->where($condition)->order($sort_order)->select();
+        // 等级列表
+        $level_list = M('distribut_level')->getField('level_id, level_name');
+        // 用户父级ID
+        $parent_list = Db::name('users')->getField('user_id, first_leader', true);
+        // 订单来源
+        $orderSource = ['1' => '微信', '2' => 'PC', '3' => 'APP', '4' => '管理后台'];
+        // 地区数据
+        $region = get_region_list();
+
+        // 表头
+        $headList = [
+            '订单编号', '下单日期', '支付日期', '父级ID', '会员ID', '会员等级', '收货人', '收货地址', '电话',
+            '应付金额', '商品金额', '优惠券折扣', '积分折扣', '现金折扣', '运费', '总pv值',
+            '订单状态', '支付状态', '发货状态', '订单来源', '支付方式',
+            '商品总数', '商品编号', '商品数量', '商品名称', '商品规格', '交易条件'
+        ];
+        // 表数据
+        $dataList = [];
+        foreach ($orderList as $key => $order) {
+            $payTime = $order['pay_time'] ? date('Y-m-d H:i:s', $order['pay_time']) : '';
+            $parentId = $parent_list[$order['user_id']];
+            $dataList[$key] = [
+                "\t" . $order['order_sn'],
+                $order['add_time'],
+                $payTime,
+                $parentId,
+                $order['user_id'],
+                $order['distribut_level'] ? $level_list[$order['distribut_level']] : '普通会员',
+                $order['consignee'],
+                "{$region[$order['province']]},{$region[$order['city']]},{$region[$order['district']]},{$region[$order['twon']]}{$order['address']}",
+                "\t" . $order['mobile'],
+                $order['order_amount'],
+                $order['goods_price'],
+                $order['coupon_price'],
+                $order['integral_money'],
+                $order['user_electronic'],
+                $order['shipping_price'],
+                $order['order_pv'],
+                C('ORDER_STATUS')[$order['order_status']],
+                $this->pay_status[$order['pay_status']],
+                $this->shipping_status[$order['shipping_status']],
+                $orderSource[$order['source']],
+                $order['pay_name'],
+            ];
+            // 订单商品
+            $orderGoods = D('order_goods')->where('order_id=' . $order['order_id'])->select();
+            $goods_amount = 0;
+            $goods_sn = [];
+            $goods_num = [];
+            $goods_name = [];
+            $goods_attr = [];
+            $goods_trade = [];
+            foreach ($orderGoods as $goods) {
+                $goods_amount += $goods['goods_num'];
+                $goods_sn[] = $goods['goods_sn'];
+                $goods_num[] = $goods['goods_num'];
+                $goods_name[] = $goods['goods_name'];
+                $goods_attr[] = $goods['spec_key_name'];
+                $goods_trade[] = trade_type($goods['trade_type']);
+            }
+            $dataList[$key][] = $goods_amount;
+            $dataList[$key][] = $goods_sn;
+            $dataList[$key][] = $goods_num;
+            $dataList[$key][] = $goods_name;
+            $dataList[$key][] = $goods_attr;
+            $dataList[$key][] = $goods_trade;
+        }
+        toCsvExcel($dataList, $headList, 'order');
     }
 
     /**
@@ -2003,5 +2083,35 @@ class Order extends Base
         $this->assign('city', $city);
         $this->assign('district', $district);
         return $this->fetch('edit_address');
+    }
+
+    /**
+     * 批量确认订单
+     */
+    public function batchConfirm()
+    {
+        $orderIds = trim(I('order_ids'), ',');
+        $orderData = M('order')->where(['order_id' => ['IN', $orderIds]])->field('order_id, order_sn, order_status, pay_status')->select();
+        foreach ($orderData as $order) {
+            if ($order['pay_status'] != 1) {
+                $this->ajaxReturn(['status' => 0, 'msg' => '订单：' . $order['order_sn'] . ' 未支付']);
+            }
+            if ($order['order_status'] != 0) {
+                $this->ajaxReturn(['status' => 0, 'msg' => '订单：' . $order['order_sn'] . ' 已被确认']);
+            }
+        }
+        $orderLogic = new OrderLogic();
+        Db::startTrans();
+        foreach ($orderData as $order) {
+            $convert_action = C('CONVERT_ACTION')['confirm'];
+            $res1 = $orderLogic->orderActionLog($order['order_id'], $convert_action, I('note'));
+            $res2 = $orderLogic->orderProcessHandle($order['order_id'], 'confirm', ['note' => '批量确认订单', 'admin_id' => 0]);
+            if (!$res1 || !$res2) {
+                Db::rollback();
+                $this->ajaxReturn(['status' => 0, 'msg' => '订单：' . $order['order_sn'] . ' 确认失败']);
+            }
+        }
+        Db::commit();
+        $this->ajaxReturn(['status' => 1, 'msg' => '批量确认订单成功']);
     }
 }

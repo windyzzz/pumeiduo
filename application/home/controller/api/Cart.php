@@ -278,7 +278,10 @@ class Cart extends Base
                                 'og.prom_id' => $flashSaleGoods[$key]['id']
                             ])->sum('goods_num');
                         $buyLimit = $buyLimit - $orderGoodsNum;
-                        if ($buyLimit <= 0) continue;
+                        if ($buyLimit <= 0) {
+                            $cartNum -= 1;
+                            continue;
+                        }
                     }
                     $promList[$id]['goods'][] = [
                         'cart_id' => $v['id'],
@@ -599,12 +602,48 @@ class Cart extends Base
     public function getCartNum()
     {
         if ($this->user_id) {
-            $num = M('Cart')->where('user_id', $this->user_id)->where('prom_type', 'neq', 2)->count('id');
+            $cartLogic = new CartLogic();
+            $cartLogic->setUserId($this->user_id);
+            $cartData = $cartLogic->getCartList(0, true, true); // 用户购物车
+            $cartNum = $cartData['cart_num'];   // 获取用户购物车总数
+            $cartData = $cartData['cart_list'];
+            // 秒杀活动商品
+            $flashSale = Db::name('flash_sale fs')->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
+                ->where(['fs.start_time' => ['<=', time()], 'fs.end_time' => ['>=', time()], 'fs.is_end' => 0])
+                ->field('fs.id, fs.title, fs.goods_id, fs.price, fs.buy_limit, sgp.key spec_key')->select();
+            $flashSaleGoods = [];
+            foreach ($flashSale as $item) {
+                $flashSaleGoods[$item['goods_id'] . '_' . $item['spec_key']] = $item;
+            }
+            foreach ($cartData as $k => $v) {
+                $key = $v['goods_id'] . '_' . $v['spec_key'];
+                if (isset($flashSaleGoods[$key])) {
+                    // 秒杀活动
+                    $buyLimit = $flashSaleGoods[$key]['buy_limit'];
+                    if ($buyLimit != 0) {
+                        // 订单中已购买过的数量
+                        $orderGoodsNum = M('order_goods og')->join('order o', 'o.order_id = og.order_id')
+                            ->where([
+                                'o.order_status' => ['not in', [3, 5]],
+                                'o.user_id' => $this->user_id,
+                                'og.goods_id' => $v['goods_id'],
+                                'og.spec_key' => $v['spec_key'],
+                                'og.prom_type' => 1,
+                                'og.prom_id' => $flashSaleGoods[$key]['id']
+                            ])->sum('goods_num');
+                        $buyLimit = $buyLimit - $orderGoodsNum;
+                        if ($buyLimit <= 0) {
+                            $cartNum -= 1;
+                            continue;
+                        }
+                    }
+                }
+            }
         } else {
-            $num = 0;
+            $cartNum = 0;
         }
 
-        return json(['status' => 1, 'msg' => 'ok', 'result' => $num]);
+        return json(['status' => 1, 'msg' => 'ok', 'result' => $cartNum]);
     }
 
     /**
@@ -935,7 +974,10 @@ class Cart extends Base
                 $cartLogic->setCartType($cart_type);
                 $buyGoods = $cartLogic->buyNow();
                 // 计算商品pv
-                $cartLogic->calcGoodsPv([$buyGoods]);
+                if ($this->user['distribut_level'] >= 3) {
+                    // 计算商品pv
+                    $buyGoods = $cartLogic->calcGoodsPv([$buyGoods])[0];
+                }
                 $cartList[0] = $buyGoods;
                 $pay->payGoodsList($cartList);
             } else {
@@ -958,16 +1000,16 @@ class Cart extends Base
                 if (count($vipGoods) > 1) {
                     return json(['status' => 0, 'msg' => '不能一次购买两种或以上VIP升级套餐']);
                 }
-                // 计算商品pv
-                $cartLogic->calcGoodsPv($userCartList);
+                if ($this->user['distribut_level'] >= 3) {
+                    // 计算商品pv
+                    $userCartList = $cartLogic->calcGoodsPv($userCartList);
+                }
                 $cartLogic->checkStockCartList($userCartList);
                 $pay->payCart($userCartList);
             }
 
             list($prom_type, $prom_id) = $pay->getPromInfo();
 
-            // 商品pv
-            $pay->setGoodsPv($cartLogic->getGoodsPv());
             $pay->check(); // 加价购活动
             $pay->activityPayBefore(); // 参与活动促销 加价购活动
 
@@ -1003,6 +1045,7 @@ class Cart extends Base
             // 提交订单
             if ('submit_order' == $act) {
                 $placeOrder = new PlaceOrder($pay);
+                $placeOrder->setUser($this->user);
                 $placeOrder->setUserAddress($address);
                 $placeOrder->setInvoiceTitle($invoice_title);
                 $placeOrder->setUserNote($user_note);
@@ -1020,6 +1063,7 @@ class Cart extends Base
                 return json(['status' => 1, 'msg' => '提交订单成功', 'result' => $order['order_sn'], 'order_id' => $order['order_id']]);
             }
             $return = $pay->toArray();
+            $return['order_pv'] = $return['order_pv'] != '0.00' ? $return['order_pv'] : '';
             $return['coupon_info'] = $coupon;
 
             return json(['status' => 1, 'msg' => '计算成功', 'result' => $return]);
@@ -1279,6 +1323,7 @@ class Cart extends Base
             // 提交订单
             if ('submit_order' == $_REQUEST['act']) {
                 $placeOrder = new PlaceOrder($pay);
+                $placeOrder->setUser($this->user);
                 $placeOrder->setUserAddress($integral->getUserAddress());
                 $placeOrder->setInvoiceTitle($invoice_title);
                 $placeOrder->setUserNote($user_note);

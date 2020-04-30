@@ -35,22 +35,45 @@ class DistributLogic
 
         // 计算用于分成的总金额
         $order_goods = M('OrderGoods')
-            ->field('goods_id,goods_num,final_price')
+            ->field('goods_id, goods_num, final_price, pay_type')
             ->where('order_id', $order['order_id'])
             ->select();
+
+        // 查看用户等级
+        $userLevel = M('users')->where(['user_id' => $order['user_id']])->value('distribut_level');
 
         $distribut_total_money = 0;
         $is_vip = false;
         foreach ($order_goods as $ov) {
-            $goods_info = M('goods')->field('zone,distribut_id,commission')->where(['goods_id' => $ov['goods_id']])->find();
+            $goods_info = M('goods')->field('zone, distribut_id, commission, integral_pv, retail_pv')->where(['goods_id' => $ov['goods_id']])->find();
             if (3 == $goods_info['zone'] && $goods_info['distribut_id'] > 0) {
                 $is_vip = true;
-            } else {
+                continue;
+            }
+            $hasGoodsPv = false;
+            if ($userLevel >= 3) {
+                switch ($ov['pay_type']) {
+                    case 1:
+                        // 现金+积分
+                        if ($goods_info['integral_pv'] > 0) {
+                            $hasGoodsPv = true;
+                        }
+                        break;
+                    case 2:
+                        // 现金
+                        if ($goods_info['retail_pv'] > 0) {
+                            $hasGoodsPv = true;
+                        }
+                        break;
+                }
+            }
+            if (!$hasGoodsPv) {
                 $distribut_total_money = bcadd($distribut_total_money, bcdiv(bcmul(bcmul($ov['final_price'], $ov['goods_num'], 2), $goods_info['commission'], 2), 100, 2), 2);
             }
         }
 
         $invite_uid = M('Users')->where('user_id', $order['user_id'])->getField('invite_uid');
+        if ($invite_uid == 0) $invite_uid = M('Users')->where('user_id', $order['user_id'])->getField('first_leader');
         $OrderCommonLogic = new \app\common\logic\OrderLogic();
         if ($is_vip) {
             //vip商品
@@ -165,65 +188,56 @@ class DistributLogic
         return $shop_id;
     }
 
-    //订单收货确认后自动分成
+    // 订单收货确认后自动分成
     public function auto_confirm()
     {
-        //确认分成时间
+        // 确认分成时间
         $confirm_time = time();
-
-        $where0 = [
+        $where = [
             'is_distribut' => 0, // 未分成
             'shipping_status' => 1,  //已发货
-            'order_status' => 2,  //已收货
+            'order_status' => ['IN', [2, 6]],   // 已收货 售后
             'pay_status' => 1, //已支付
-            // 'rg.type' => ['in',[0,1]], // 0仅退款 1退货退款
             'end_sale_time' => ['ELT', $confirm_time],
         ];
 
         // 分成订单列表
-        $orderList = M('Order')
-            ->field('o.order_sn, IFNULL(rg.id,0) as is_has_return, rg.type, o.order_id')
-            // ->fetchSql(1)
-            ->alias('o')
-            ->join('__RETURN_GOODS__ rg', 'o.order_sn = rg.order_sn', 'LEFT')
-            ->where($where0)
-            ->having('is_has_return = 0')
-            ->select();
-
+        $orderList = M('Order')->field('order_id, order_sn')->where($where)->select();
         if ($orderList) {
             foreach ($orderList as $v) {
+                // 查看订单商品是否正在申请售后（未处理完成）
+                if (M('return_goods')->where(['order_id' => $v['order_id'], 'status' => ['IN', [0, 1]]])->value('id')) {
+                    continue;
+                }
                 $this->confirmOrder($v['order_sn'], $v['order_id']);
             }
         }
     }
 
-    //订单收货确认后自动分成
-    public function auto_confirm_ceshi()
+    // 订单收货确认后自动分成_测试
+    public function auto_confirm_test()
     {
         //确认分成时间
-        $confirm_time = time() + 10 * 86400;
-
-        $where0 = [
+//        $confirm_time = time() + 10 * 86400;
+        // 确认分成时间
+        $confirm_time = time();
+        $where = [
             'is_distribut' => 0, // 未分成
             'shipping_status' => 1,  //已发货
-            'order_status' => 2,  //已收货
+            'order_status' => ['IN', [2, 6]],   // 已收货 售后
             'pay_status' => 1, //已支付
-            // 'rg.type' => ['in',[0,1]], // 0仅退款 1退货退款
             'end_sale_time' => ['ELT', $confirm_time],
+            'add_time' => ['GT', '1587052800']    // 测试服
         ];
 
         // 分成订单列表
-        $orderList = M('Order')
-            ->field('o.order_sn, IFNULL(rg.id,0) as is_has_return, rg.type, o.order_id')
-            // ->fetchSql(1)
-            ->alias('o')
-            ->join('__RETURN_GOODS__ rg', 'o.order_sn = rg.order_sn', 'LEFT')
-            ->where($where0)
-            ->having('is_has_return = 0')
-            ->select();
-
+        $orderList = M('Order')->field('order_id, order_sn')->where($where)->select();
         if ($orderList) {
             foreach ($orderList as $v) {
+                // 查看订单商品是否正在申请售后（未处理完成）
+                if (M('return_goods')->where(['order_id' => $v['order_id'], 'status' => ['IN', [0, 1]]])->value('id')) {
+                    continue;
+                }
                 $this->confirmOrder($v['order_sn'], $v['order_id']);
             }
         }
@@ -234,6 +248,12 @@ class DistributLogic
         $rebateList = M('RebateLog')->field('user_id,money,point')->where(array('order_sn' => $order_sn, 'status' => array('in', array(0, 1, 2))))->select();
         if ($rebateList) {
             foreach ($rebateList as $rk => $rv) {
+                if ($rv['sale_service'] == 1) {
+                    // 查看订单商品是否正在申请售后（未处理完成）
+                    if (M('return_goods')->where(['order_id' => $order_id, 'status' => ['IN', [0, 1]]])->value('id')) {
+                        continue;
+                    }
+                }
                 accountLog($rv['user_id'], $rv['money'], $rv['point'], "订单：{$order_sn} 佣金分成", $rv['money'], $order_id, $order_sn, 0, 1);
             }
             M('RebateLog')->where(array('order_sn' => $order_sn, 'status' => array('in', array(0, 1, 2))))->update(['status' => 3, 'confirm_time' => time()]);

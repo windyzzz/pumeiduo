@@ -51,6 +51,15 @@ class Ad extends Base
             }
         }
         // APP跳转类型
+        $ad_info['goods'] = [
+            'goods_id' => 0,
+            'goods_name' => 0,
+            'original_img' => 0
+        ];
+        $ad_info['prom'] = [
+            'id' => 0,
+            'title' => 0
+        ];
         switch ($ad_info['target_type']) {
             case 1:
                 $ad_info['goods'] = M('goods')->where(['goods_id' => $ad_info['target_type_id']])->field('goods_id, goods_name, original_img')->find();

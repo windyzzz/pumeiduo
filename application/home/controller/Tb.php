@@ -58,6 +58,10 @@ class Tb extends Controller
                 if ($request_send['status'] == 1) {
                     // 同步成功  改变状态
                     M('tb')->where(array('id' => $v['id']))->data(array('tb_time' => NOW_TIME, 'status' => 1, 'msg' => ''))->save();
+                    if ($v['type'] == 11) {
+                        // 订单pv
+                        M('order')->where(['order_id' => $v['from_id']])->update(['pv_send' => 1]);
+                    }
                 } else {
                     M('tb')->where(array('id' => $v['id']))->data(array('tb_time' => NOW_TIME, 'status' => 0, 'msg' => $request_send['msg']))->save();
                 }
@@ -222,7 +226,18 @@ class Tb extends Controller
     {
         $orderData = M('order o')->join('users u', 'u.user_id = o.user_id')
             ->where(['o.order_id' => $orderId])
-            ->field('u.user_name, o.order_sn, o.order_pv')->find();
+            ->field('u.user_name, o.order_sn, o.order_pv, o.order_amount, o.user_electronic')->find();
+        // 查看是否有处理完的售后
+        $returnGoods = M('return_goods')->where(['order_id' => $orderId, 'status' => ['NOT IN', [-2, -1, 0]]])->field('refund_money, refund_electronic')->select();
+        $goodsPrice = bcadd($orderData['order_amount'], $orderData['user_electronic'], 2);
+        if (!empty($returnGoods)) {
+            foreach ($returnGoods as $return) {
+                $goodsPrice = bcsub($goodsPrice, bcadd($return['refund_money'], $return['refund_electronic'], 2), 2);
+            }
+        }
+        $orderData['goods_price'] = $goodsPrice;
+        unset($orderData['order_amount']);
+        unset($orderData['user_electronic']);
         return $orderData;
     }
 
@@ -253,7 +268,7 @@ class Tb extends Controller
                 $back = $this->save_type($data);
             } else if ($type == 5) {//更新库存
                 $back = $this->save_stock($data);
-            } else if ($type == 6) {//更新库存
+            } else if ($type == 6) {//更新订单
                 $back = $this->save_order($data);
             } else if ($type == 7) {//更新快递
                 $back = $this->save_logistics($data);
@@ -454,9 +469,14 @@ class Tb extends Controller
 
     function save_goods($goods)
     {
-
         $area3 = $goods['area3'];
-
+        if ($goods['is_supply'] == 1) {
+            $trade_type = 3;
+        } elseif ($goods['is_one_send'] == 1) {
+            $trade_type = 2;
+        } else {
+            $trade_type = 1;
+        }
         $goods_data = array(
             'goods_sn' => $goods['goods_sn'],
             'goods_name' => $goods['goods_name'],
@@ -466,7 +486,7 @@ class Tb extends Controller
             'weight' => $goods['weight'],//重量 - 克
             'on_time' => $goods['on_time'],//上架时间戳
             'out_time' => $goods['out_time'],//下架时间戳
-            'trade_type' => $goods['is_one_send'] == 1 ? 2 : 1
+            'trade_type' => $trade_type
         );
 
         if ($goods['is_one_send'] == 0) {

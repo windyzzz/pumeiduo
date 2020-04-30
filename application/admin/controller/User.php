@@ -1298,18 +1298,31 @@ class User extends Base
             $this->ajaxReturn(['status' => 0, 'msg' => '操作失败,参数为空'], 'JSON');
         }
 
-        foreach ($id_arr as $k => $v) {
-            $val = Db::name('withdrawals')->find($v);
-            if (1 == $status) {
-                accountLog($val['user_id'], ($val['money'] * -1), 0, '提现已完成', 0, 0, '', 0, 20); //手动转账，默认视为已通过线下转方式处理了该笔提现申请
+        Db::startTrans();
+        if (1 == $status) {
+            foreach ($id_arr as $k => $v) {
+                $val = Db::name('withdrawals')->find($v);
+                // 查看用户现在余额
+                $userMoney = M('users')->where(['user_id' => $val['user_id']])->value('user_money');
+                if ($userMoney < $val['money']) {
+                    Db::rollback();
+                    $this->ajaxReturn(['status' => 0, 'msg' => '用户ID：' . $val['user_id'] . ' 现在余额不足，请联系客户'], 'JSON');
+                }
+                $res = accountLog($val['user_id'], ($val['money'] * -1), 0, '提现已完成', 0, 0, '', 0, 20); //手动转账，默认视为已通过线下转方式处理了该笔提现申请
+                if (!$res) {
+                    Db::rollback();
+                    $this->ajaxReturn(['status' => 0, 'msg' => '用户ID：' . $val['user_id'] . ' 现在余额不足，请联系客户'], 'JSON');
+                }
             }
         }
 
         $ids = implode(',', $id_arr);
         $r = Db::name('withdrawals')->whereIn('id', $ids)->update($data);
         if (false !== $r) {
+            Db::commit();
             $this->ajaxReturn(['status' => 1, 'msg' => '操作成功'], 'JSON');
         } else {
+            Db::rollback();
             $this->ajaxReturn(['status' => 0, 'msg' => '操作失败'], 'JSON');
         }
     }

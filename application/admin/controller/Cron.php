@@ -1182,8 +1182,12 @@ AND log_id NOT IN
 
     function auto_confirm_ceshi()
     {
-        $distributLogic = new \app\common\logic\DistributLogic();
-        $distributLogic->auto_confirm_ceshi(); // 自动确认分成
+        // 多少天后自动分销记录自动分成
+        $switch = tpCache('distribut.switch');
+        if (1 == $switch && file_exists(APP_PATH . 'common/logic/DistributLogic.php')) {
+            $distributLogic = new \app\common\logic\DistributLogic();
+            $distributLogic->auto_confirm_test(); // 自动确认分成
+        }
     }
 
     // 自动收货
@@ -1388,21 +1392,33 @@ AND log_id NOT IN
     }
 
     /**
-     * 自动发送订单pv到代理商系统
+     * 自动发送订单pv到代理商系统记录
      */
     public function autoSendOrderPv()
     {
         $where = [
+            'order_status' => ['IN', [2, 6]],   // 已收货 售后
+            'pay_status' => 1,                  // 已支付
+            'shipping_status' => 1,             // 已发货
             'order_pv' => ['>', 0],
+            'pv_tb' => 0,
             'pv_send' => 0,
-            'add_time' => ['<=', time() - (3600 * 24 * 7)]  // 计算pv7天后
+            'end_sale_time' => ['<=', time()]  // 售后期结束
         ];
-        $orderData = M('order')->where($where)->field('order_id')->select();
+        $orderIds = M('order')->where($where)->getField('order_id', true);
+        // 查看订单商品是否正在申请售后（未处理完成）
+        foreach ($orderIds as $k => $orderId) {
+            if (M('return_goods')->where(['order_id' => $orderId, 'status' => ['IN', [0, 1]]])->value('id')) {
+                unset($orderIds[$k]);
+            }
+        }
         // 通知代理商系统记录
         include_once "plugins/Tb.php";
         $TbLogic = new \Tb();
-        foreach ($orderData as $key => $order) {
-            $TbLogic->add_tb(1, 11, $order['order_id'], 0);
+        foreach ($orderIds as $orderId) {
+            $TbLogic->add_tb(1, 11, $orderId, 0);
         }
+        // 更新记录状态
+        M('order')->where(['order_id' => ['in', $orderIds]])->update(['pv_tb' => 1]);
     }
 }
