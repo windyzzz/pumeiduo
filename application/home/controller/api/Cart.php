@@ -546,7 +546,11 @@ class Cart extends Base
                                     'og.prom_id' => $flashSaleGoods[$key]['id']
                                 ])->sum('goods_num');
                             $buyLimit = $buyLimit - $orderGoodsNum;
-                            if ($buyLimit <= 0) continue;
+                            if ($buyLimit <= 0) {
+                                $pmdList['cart_num'] -= 1;
+                                $cartNum -= 1;
+                                continue;
+                            }
                         }
                         $pmdList['goods_list'][$id]['goods'][] = [
                             'cart_id' => $v['id'],
@@ -566,6 +570,7 @@ class Cart extends Base
                             'store_count' => $storeCount,
                         ];
                     } elseif (isset($groupBuyGoods[$key])) {
+                        $pmdList['cart_num'] -= 1;
                         $cartNum -= 1;
                         continue;
                         // 团购活动
