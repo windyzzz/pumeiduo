@@ -33,8 +33,9 @@ class System
      */
     public function downLink()
     {
-        $androidUrl = tpCache('android.app_path');
-        $iosUrl = tpCache('ios.app_path');
+        $downLink = M('config')->where(['inc_type' => ['IN', ['ios', 'android']], 'name' => 'app_path'])->order('id desc')->getField('inc_type, value', true);
+        $androidUrl = $downLink['android'];
+        $iosUrl = $downLink['ios'];
         $return = [
             'android_url' => htmlspecialchars_decode($androidUrl),
             'ios_url' => htmlspecialchars_decode($iosUrl),
@@ -64,13 +65,12 @@ class System
         }
         // 当前配置
         $config = M('config')->where(['inc_type' => $type])->group('name')->order('id desc')->getField('name, value', true);
-
-        $version = explode('.', $config['app_version']);
+        $version = explode('.', $config['app_version']);    // 当前版本
         $nowVersion = '';
         foreach ($version as $item) {
             $nowVersion .= $item * 10;
         }
-        if ($appVersion == $nowVersion) {
+        if ($appVersion == $nowVersion || $appVersion > $nowVersion) {
             $result['state'] = 0;   // 无需更新
         } else {
             $result['state'] = $config['is_update'] ? (int)$config['is_update'] : 0;    // 是否需要更新

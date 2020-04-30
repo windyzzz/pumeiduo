@@ -78,7 +78,6 @@ class Goods extends Base
         //直接输出
         createSharePng($gData, $filename);
         exit;
-
     }
 
     private function scerweima($user_id, $goods_id)
@@ -134,8 +133,25 @@ class Goods extends Base
         $point_rate = tpCache('shopping.point_rate');
 
         $look_see = $goodsLogic->get_look_see($goods);
-        // 商品佣金
-        $goods['commission'] = bcdiv(bcmul($goods['shop_price'], $goods['commission'], 2), 100, 2);
+        if ($this->user) {
+            // 商品pv
+            if ($this->user['distribut_level'] < 3) {
+                $goods['integral_pv'] = '';
+            } elseif ($goods['integral_pv'] == 0) {
+                $goods['integral_pv'] = '';
+            }
+            // 商品佣金
+            if ($this->user['distribut_level'] < 2) {
+                $goods['commission'] = '';
+            } elseif ($goods['commission'] == 0) {
+                $goods['commission'] = '';
+            } else {
+                $goods['commission'] = bcdiv(bcmul(bcsub($goods['shop_price'], $goods['exchange_integral'], 2), $goods['commission'], 2), 100, 2);
+            }
+        } else {
+            $goods['integral_pv'] = '';
+            $goods['commission'] = '';
+        }
 
         $data = [];
         $data['freight_free'] = $freight_free; // 全场满多少免运费
@@ -235,42 +251,55 @@ class Goods extends Base
             ->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
             ->where(['fs.goods_id' => $goods_id, 'fs.start_time' => ['<=', time()], 'fs.end_time' => ['>=', time()]])
             ->where(['fs.source' => ['LIKE', $this->isApp ? '%' . 3 . '%' : '%' . 1 . '%']])
-            ->field('fs.goods_id, sgp.key spec_key, fs.price, fs.goods_num, fs.buy_limit, fs.start_time, fs.end_time, fs.can_integral, g.exchange_integral')->select();
+            ->field('fs.goods_id, sgp.key spec_key, fs.price, fs.goods_num, fs.buy_num, fs.order_num, fs.buy_limit, fs.start_time, fs.end_time, fs.can_integral, g.exchange_integral')->select();
         if (!empty($flashSale)) {
             // 秒杀商品
-            $goods['nature'] = [
-                'type' => 'flash_sale',
-                'price' => $flashSale[0]['price'],
-                'limit_num' => $flashSale[0]['goods_num'],
-                'buy_limit' => $flashSale[0]['buy_limit'],
-                'start_time' => $flashSale[0]['start_time'],
-                'end_time' => $flashSale[0]['end_time'],
-                'now_time' => time(),
-                'exchange_integral' => $flashSale[0]['can_integral'] == 0 ? '0' : $flashSale[0]['exchange_integral']
-            ];
-            $extendGoodsSpec = ['type' => 'flash_sale', 'data' => $flashSale];
+            // 商品参加活动数限制
+            if ($flashSale[0]['goods_num'] <= $flashSale[0]['buy_num'] || $flashSale[0]['goods_num'] <= $flashSale[0]['order_num']) {
+                $goods['nature'] = [];
+                $extendGoodsSpec = [];
+            } else {
+                $goods['nature'] = [
+                    'type' => 'flash_sale',
+                    'price' => $flashSale[0]['price'],
+                    'limit_num' => $flashSale[0]['goods_num'],
+                    'buy_limit' => $flashSale[0]['buy_limit'],
+                    'start_time' => $flashSale[0]['start_time'],
+                    'end_time' => $flashSale[0]['end_time'],
+                    'now_time' => time() . '',
+                    'exchange_integral' => $flashSale[0]['can_integral'] == 0 ? '0' : $flashSale[0]['exchange_integral']
+                ];
+                $extendGoodsSpec = ['type' => 'flash_sale', 'data' => $flashSale];
+            }
         } else {
+            $goods['nature'] = [];
+        }
+        if (empty($goods['nature'])) {
             $groupBuy = Db::name('group_buy gb')
                 ->join('goods g', 'g.goods_id = gb.goods_id')
                 ->join('spec_goods_price sgp', 'sgp.item_id = gb.item_id', 'LEFT')
                 ->where(['gb.goods_id' => $goods_id, 'gb.start_time' => ['<=', time()], 'gb.end_time' => ['>=', time()]])
-                ->field('gb.goods_id, gb.price, sgp.key spec_key, gb.price, gb.group_goods_num, gb.goods_num, gb.buy_limit, gb.start_time, gb.end_time, gb.can_integral, g.exchange_integral')->select();
+                ->field('gb.goods_id, gb.price, sgp.key spec_key, gb.price, gb.group_goods_num, gb.goods_num, gb.buy_num, gb.order_num, gb.buy_limit, gb.start_time, gb.end_time, gb.can_integral, g.exchange_integral')->select();
             if (!empty($groupBuy)) {
                 // 团购商品
-                $goods['nature'] = [
-                    'type' => 'group_buy',
-                    'price' => $groupBuy[0]['price'],
-                    'group_goods_num' => $groupBuy[0]['group_goods_num'],
-                    'limit_num' => bcdiv($groupBuy[0]['goods_num'], $groupBuy[0]['group_goods_num']),
-                    'buy_limit' => $groupBuy[0]['buy_limit'],
-                    'start_time' => $groupBuy[0]['start_time'],
-                    'end_time' => $groupBuy[0]['end_time'],
-                    'now_time' => time() . '',
-                    'exchange_integral' => $groupBuy[0]['can_integral'] == 0 ? '0' : $groupBuy[0]['exchange_integral']
-                ];
-                $extendGoodsSpec = ['type' => 'group_buy', 'data' => $groupBuy];
-            } else {
-                $goods['nature'] = [];
+                // 商品参加活动数限制
+                if ($groupBuy[0]['goods_num'] <= $groupBuy[0]['buy_num'] || $groupBuy[0]['goods_num'] <= $groupBuy[0]['order_num']) {
+                    $goods['nature'] = [];
+                    $extendGoodsSpec = [];
+                } else {
+                    $goods['nature'] = [
+                        'type' => 'group_buy',
+                        'price' => $groupBuy[0]['price'],
+                        'group_goods_num' => $groupBuy[0]['group_goods_num'],
+                        'limit_num' => bcdiv($groupBuy[0]['goods_num'], $groupBuy[0]['group_goods_num']),
+                        'buy_limit' => $groupBuy[0]['buy_limit'],
+                        'start_time' => $groupBuy[0]['start_time'],
+                        'end_time' => $groupBuy[0]['end_time'],
+                        'now_time' => time() . '',
+                        'exchange_integral' => $groupBuy[0]['can_integral'] == 0 ? '0' : $groupBuy[0]['exchange_integral']
+                    ];
+                    $extendGoodsSpec = ['type' => 'group_buy', 'data' => $groupBuy];
+                }
             }
         }
         if (!empty($goods['nature']) && in_array($goods['nature']['type'], ['group_buy', 'flash_sale'])) {
@@ -282,8 +311,25 @@ class Goods extends Base
         } else {
             $goods['exchange_price'] = $goods['shop_price'];
         }
-        // 商品佣金
-        $goods['commission'] = bcdiv(bcmul($goods['shop_price'], $goods['commission'], 2), 100, 2);
+        if ($this->user) {
+            // 商品pv
+            if ($this->user['distribut_level'] < 3) {
+                $goods['integral_pv'] = '';
+            } elseif ($goods['integral_pv'] == 0) {
+                $goods['integral_pv'] = '';
+            }
+            // 商品佣金
+            if ($this->user['distribut_level'] < 2) {
+                $goods['commission'] = '';
+            } elseif ($goods['commission'] == 0) {
+                $goods['commission'] = '';
+            } else {
+                $goods['commission'] = bcdiv(bcmul(bcsub($goods['shop_price'], $goods['exchange_integral'], 2), $goods['commission'], 2), 100, 2);
+            }
+        } else {
+            $goods['integral_pv'] = '';
+            $goods['commission'] = '';
+        }
         // 处理商品详情（抽取图片）
         $contentArr = explode('public', $goods['goods_content']);
         $contentImgArr = [];
@@ -1171,7 +1217,7 @@ class Goods extends Base
         if ($sort == 'shop_price') {
             $sort = 'shop_price - exchange_integral';   // 现金价格
         }
-        $sort_asc = I('get.sort_asc', 'asc'); // 排序
+        $sort_asc = I('get.sort_asc', 'desc'); // 排序
         $filter_param = []; // 筛选数组
         $id = I('get.id/d', 0); // 当前分类id
         $couponId = I('get.coupon_id', 0); // 优惠券ID
@@ -1286,7 +1332,7 @@ class Goods extends Base
         if ($sort == 'shop_price') {
             $sort = 'shop_price - exchange_integral';   // 现金价格
         }
-        $sort_asc = I('get.sort_asc', 'asc'); // 排序
+        $sort_asc = I('get.sort_asc', 'desc'); // 排序
 
         $id = I('get.id/d', 0); // 当前分类id
         $couponId = I('get.coupon_id', 0); // 优惠券ID
@@ -1448,9 +1494,14 @@ class Goods extends Base
             ->where(['fs.goods_id' => ['in', $filter_goods_id]])->field('fs.id prom_id, g.goods_id, fs.item_id, g.goods_sn, g.goods_name, g.original_img, g.exchange_integral, fs.price flash_sale_price, fs.title, fs.goods_num, fs.buy_num, sgp.key_name, fs.end_time, fs.can_integral')
             ->limit($page->firstRow . ',' . $page->listRows)->order($order)->select();
         // 商品标签
-        $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->limit($page->firstRow . ',' . $page->listRows)->select();
+        $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->select();
         $endTime = 0;
         foreach ($flashSaleGoods as $k => $v) {
+            // 商品参加活动数限制
+            if ($v['goods_num'] <= $v['buy_num'] || $v['goods_num'] <= $v['order_num']) {
+                unset($flashSaleGoods[$k]);
+                continue;
+            }
             $flashSaleGoods[$k]['key_name'] = $v['key_name'] ?? '';
             // 最近的结束时间
             if ($k == 0) {
@@ -1560,7 +1611,7 @@ class Goods extends Base
                 ->select();
             $goods_list = collection($goods_list)->toArray();
             // 商品规格属性
-            $goodsItem = Db::name('spec_goods_price')->where(['goods_id' => ['in', $filter_goods_id]])->limit($page->firstRow . ',' . $page->listRows)->group('goods_id')->getField('goods_id, item_id', true);
+            $goodsItem = Db::name('spec_goods_price')->where(['goods_id' => ['in', $filter_goods_id]])->group('goods_id')->getField('goods_id, item_id', true);
 
             foreach ($goods_list as $k => $v) {
                 // 商品规格属性
@@ -1583,7 +1634,7 @@ class Goods extends Base
                 }
                 // 处理显示金额
                 if ($v['exchange_integral'] != 0) {
-                    $goods_list[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);
+                    $goods_list[$k]['exchange_price'] = bcsub($v['shop_price'], $v['exchange_integral'], 2);
                 } else {
                     $goods_list[$k]['exchange_price'] = $v['shop_price'];
                 }
@@ -1667,6 +1718,7 @@ class Goods extends Base
             ->select();
         $groupBuyData = collection($groupBuyData)->toArray();
         foreach ($groupBuyData as $k => $groupBuy) {
+            $groupBuyData[$k]['now_time'] = time() . '';
             // 价格判断
             if ($groupBuy['can_integral'] == 0) {
                 $groupBuyData[$k]['exchange_integral'] = '0';
@@ -1735,6 +1787,7 @@ class Goods extends Base
                 ->where($where)->getField('gtg.goods_id', true);
             $filter_goods_id = array_unique($filter_goods_id);
         } else {
+            $return['prom_title'] = '';
             if ($taskId > 0) {
                 $taskLogic = new TaskLogic($taskId);
                 $task_info = $taskLogic->getTaskInfo();
@@ -1815,9 +1868,9 @@ class Goods extends Base
             ->limit($page->firstRow . ',' . $page->listRows)
             ->select();
         // 商品规格属性
-        $goodsItem = Db::name('spec_goods_price')->where(['goods_id' => ['in', $filter_goods_id]])->limit($page->firstRow . ',' . $page->listRows)->group('goods_id')->getField('goods_id, item_id', true);
+        $goodsItem = Db::name('spec_goods_price')->where(['goods_id' => ['in', $filter_goods_id]])->group('goods_id')->getField('goods_id, item_id', true);
         // 商品标签
-        $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->limit($page->firstRow . ',' . $page->listRows)->select();
+        $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->select();
         // 秒杀商品
         $flashSale = Db::name('flash_sale')->where([
             'goods_id' => ['in', $filter_goods_id],
@@ -1830,16 +1883,6 @@ class Goods extends Base
         $promGoods = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
             ->where(['gtg.goods_id' => ['in', $filter_goods_id], 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
             ->field('pg.title, gtg.goods_id')->limit($page->firstRow . ',' . $page->listRows)->select();    // 促销活动
-        $couponLogic = new CouponLogic();
-        $couponCurrency = $couponLogic->getCoupon(0);    // 通用优惠券
-        $couponGoods = [];
-        $couponCate = [];
-        if (empty($coupon)) {
-            $couponGoods = $couponLogic->getCoupon(null, $filter_goods_id, null, ['limit' => ['offset' => $page->firstRow, 'length' => $page->listRows]]);    // 指定商品优惠券
-            $filter_cat_id = Db::name('goods')->where(['goods_id' => ['in', $filter_goods_id]])->limit($page->firstRow . ',' . $page->listRows)->getField('cat_id', true);
-            $couponCate = $couponLogic->getCoupon(null, null, $filter_cat_id, ['limit' => ['offset' => $page->firstRow, 'length' => $page->listRows]]);    // 指定分类优惠券
-        }
-        $promGoods = array_merge_recursive($promGoods, $couponCurrency, $couponGoods, $couponCate);
         // 循环处理数据
         foreach ($goodsList as $k => $v) {
             // 商品规格属性
@@ -1921,7 +1964,7 @@ class Goods extends Base
 
             // 处理显示金额
             if ($v['exchange_integral'] != 0) {
-                $goodsList[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);
+                $goodsList[$k]['exchange_price'] = bcsub($v['shop_price'], $v['exchange_integral'], 2);
             } else {
                 $goodsList[$k]['exchange_price'] = $v['shop_price'];
             }
@@ -1955,9 +1998,9 @@ class Goods extends Base
             ->limit($page->firstRow . ',' . $page->listRows)
             ->select();
         // 商品规格属性
-        $goodsItem = Db::name('spec_goods_price')->where(['goods_id' => ['in', $filter_goods_id]])->limit($page->firstRow . ',' . $page->listRows)->group('goods_id')->getField('goods_id, item_id', true);
+        $goodsItem = Db::name('spec_goods_price')->where(['goods_id' => ['in', $filter_goods_id]])->group('goods_id')->getField('goods_id, item_id', true);
         // 商品标签
-        $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->limit($page->firstRow . ',' . $page->listRows)->select();
+        $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->select();
         // 秒杀商品
         $flashSale = Db::name('flash_sale')->where([
             'goods_id' => ['in', $filter_goods_id],
@@ -1970,16 +2013,6 @@ class Goods extends Base
         $promGoods = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
             ->where(['gtg.goods_id' => ['in', $filter_goods_id], 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
             ->field('pg.title, gtg.goods_id')->limit($page->firstRow . ',' . $page->listRows)->select();    // 促销活动
-        $couponLogic = new CouponLogic();
-        $couponCurrency = $couponLogic->getCoupon(0);    // 通用优惠券
-        $couponGoods = [];
-        $couponCate = [];
-        if (empty($coupon)) {
-            $couponGoods = $couponLogic->getCoupon(null, $filter_goods_id, null, ['limit' => ['offset' => $page->firstRow, 'length' => $page->listRows]]);    // 指定商品优惠券
-            $filter_cat_id = Db::name('goods')->where(['goods_id' => ['in', $filter_goods_id]])->limit($page->firstRow . ',' . $page->listRows)->getField('cat_id', true);
-            $couponCate = $couponLogic->getCoupon(null, null, $filter_cat_id, ['limit' => ['offset' => $page->firstRow, 'length' => $page->listRows]]);    // 指定分类优惠券
-        }
-        $promGoods = array_merge_recursive($promGoods, $couponCurrency, $couponGoods, $couponCate);
         // 循环处理数据
         foreach ($goodsList as $k => $v) {
             // 商品规格属性
@@ -2061,7 +2094,7 @@ class Goods extends Base
 
             // 处理显示金额
             if ($v['exchange_integral'] != 0) {
-                $goodsList[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);
+                $goodsList[$k]['exchange_price'] = bcsub($v['shop_price'], $v['exchange_integral'], 2);
             } else {
                 $goodsList[$k]['exchange_price'] = $v['shop_price'];
             }
@@ -2451,7 +2484,7 @@ class Goods extends Base
         // 秒杀商品
         $flashSale = Db::name('flash_sale')->where([
             'goods_id' => ['in', $filterGoodsIds],
-            'source' => ['LIKE',$this->isApp ? '%' . 3 . '%' : '%' . 1 . '%']
+            'source' => ['LIKE', $this->isApp ? '%' . 3 . '%' : '%' . 1 . '%']
         ])->where(['start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->field('goods_id')->select();
         // 团购商品
         $groupBuy = Db::name('group_buy')->where(['goods_id' => ['in', $filterGoodsIds]])
@@ -2559,11 +2592,61 @@ class Goods extends Base
         foreach ($list as $k => $v) {
             // 处理显示金额
             if ($v['exchange_integral'] != 0) {
-                $list[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);
+                $list[$k]['exchange_price'] = bcsub($v['shop_price'], $v['exchange_integral'], 2);
             } else {
                 $list[$k]['exchange_price'] = $v['shop_price'];
             }
         }
         return json(['status' => 1, 'result' => $list]);
+    }
+
+    /**
+     * 主页展示不同类型商品
+     * @return \think\response\Json
+     */
+    public function indexGoods()
+    {
+        $type = I('type', '');
+
+        $seriesGoods = [];
+        $groupBuyGoods = [];
+        $newGoods = [];
+        $recommendGoods = [];
+        $hotGoods = [];
+        $typeArr = explode(',', $type);
+        foreach ($typeArr as $type) {
+            switch ($type) {
+                case 'series':
+                    // 超值套装列表
+                    $seriesGoods = $this->getSeriesGoodsList(10, 'array');
+                    break;
+                case 'groupBuy':
+                    // 团购商品列表
+                    $groupBuyGoods = $this->getGroupBuyGoodsListNew(10, 'array');
+                    break;
+                case 'new':
+                    // 新品列表
+                    $newGoods = $this->getNewGoodsList(10, 'array');
+                    break;
+                case 'recommend':
+                    // 促销商品
+                    $recommendGoods = $this->getRecommendGoodsList(10, 'array', 1);
+                    break;
+                case 'hot':
+                    // 热销商品
+                    $hotGoods = $this->getHotGoodsList(10, 'array');
+                    break;
+                default:
+                    return json(['status' => 0, 'msg' => 'fail']);
+            }
+        }
+        $return = [
+            'series_goods' => $seriesGoods,
+            'groupBuy_goods' => $groupBuyGoods,
+            'new_goods' => $newGoods,
+            'recommend_goods' => $recommendGoods,
+            'hot_goods' => $hotGoods
+        ];
+        return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
     }
 }

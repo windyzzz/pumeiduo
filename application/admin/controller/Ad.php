@@ -12,8 +12,9 @@
 namespace app\admin\controller;
 
 use app\admin\logic\GoodsLogic;
+use app\admin\model\Ad as AdModel;
 use app\admin\model\Goods;
-use app\common\model\Popup as PopupModel;
+use app\admin\model\Popup as PopupModel;
 use think\Db;
 use think\Loader;
 use think\Page;
@@ -50,6 +51,15 @@ class Ad extends Base
             }
         }
         // APP跳转类型
+        $ad_info['goods'] = [
+            'goods_id' => 0,
+            'goods_name' => 0,
+            'original_img' => 0
+        ];
+        $ad_info['prom'] = [
+            'id' => 0,
+            'title' => 0
+        ];
         switch ($ad_info['target_type']) {
             case 1:
                 $ad_info['goods'] = M('goods')->where(['goods_id' => $ad_info['target_type_id']])->field('goods_id, goods_name, original_img')->find();
@@ -79,7 +89,7 @@ class Ad extends Base
     {
         delFile(RUNTIME_PATH . 'html'); // 先清除缓存, 否则不好预览
 
-        $Ad = M('ad');
+        $Ad = new AdModel();
         $pid = I('pid', 0);
         if ($pid) {
             $where['pid'] = $pid;

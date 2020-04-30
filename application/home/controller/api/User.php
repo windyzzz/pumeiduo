@@ -237,7 +237,7 @@ class User extends Base
 
         $return['distribut_level'] = M('DistributLevel')->where('level_id', $user['distribut_level'])->getField('level_name');
         $return['has_pay_pwd'] = $user['paypwd'] ? 1 : 0;
-        if ($user['distribut_level'] >= 3) $return['type'] = 2; // 直销商
+        if ($user['distribut_level'] >= 3) $return['type'] = '2'; // 直销商
         $return['is_app'] = TokenLogic::getValue('is_app', $this->userToken) ? 1 : 0;
 
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
@@ -560,7 +560,7 @@ class User extends Base
         }
         $returnData = [
             'list' => array_values($addressList),
-            'out_range' => $outRange
+            'out_range_list' => $outRange
         ];
         return json(['status' => 1, 'msg' => 'success', 'result' => $returnData]);
     }
@@ -1613,17 +1613,25 @@ class User extends Base
         if ($electronic < 1) {
             return json(['status' => 0, 'msg' => '传成电子币的数额不能小于1', 'result' => null]);
         }
-        $userMoneyLog = [];
-        $electronicLog = [];
-
+        $withdrawal = M('withdrawals')->where('user_id', $this->user_id)->where('status', 0)->value('money');
+        $user_money = M('Users')->where('user_id', $this->user_id)->getField('user_money');
+        if ($withdrawal && $user_money - $withdrawal < $electronic) {
+            return json(['status' => 0, 'msg' => '你有一笔余额正在申请提现，因此你的余额不够' . $electronic]);
+        } elseif ($user_money < $electronic) {
+            return json(['status' => 0, 'msg' => '你的余额不够' . $electronic]);
+        }
         $user_money = M('Users')->where('user_id', $user['user_id'])->getField('user_money');
-
         if ($user_money < $electronic) {
             return json(['status' => 0, 'msg' => '你的余额不够' . $electronic, 'result' => null]);
         }
+        Db::startTrans();
         accountLog($user['user_id'], 0, 0, '用户余额转电子币', 0, 0, '', $electronic, 13);
-        accountLog($user['user_id'], -$electronic, 0, '电子币充值（余额转）', 0, 0, '', 0, 13);
-
+        $res = accountLog($user['user_id'], -$electronic, 0, '电子币充值（余额转）', 0, 0, '', 0, 13);
+        if (!$res) {
+            Db::rollback();
+            return json(['status' => 0, 'msg' => '电子币充值（余额转）失败']);
+        }
+        Db::commit();
         return json(['status' => 1, 'msg' => '电子币充值成功', 'result' => null]);
     }
 
@@ -1648,10 +1656,14 @@ class User extends Base
         if ($user_electronic < $electronic) {
             return json(['status' => 0, 'msg' => '你的电子币不够' . $electronic, 'result' => null]);
         }
-        accountLog($user['user_id'], 0, 0, "转出电子币给用户$to_user_id", 0, 0, '', -$electronic, 13);
-
+        Db::startTrans();
+        $res = accountLog($user['user_id'], 0, 0, "转出电子币给用户$to_user_id", 0, 0, '', -$electronic, 13);
+        if (!$res) {
+            Db::rollback();
+            return json(['status' => 0, 'msg' => "转出电子币给用户$to_user_id" . '失败', 'result' => null]);
+        }
         accountLog($to_user_id, 0, 0, "来自用户{$user['user_id']}的赠送", 0, 0, '', $electronic, 13, false);
-
+        Db::commit();
         return json(['status' => 1, 'msg' => '电子币转帐成功', 'result' => null]);
     }
 
@@ -1692,8 +1704,14 @@ class User extends Base
             if ($userElectronic < $electronic) {
                 return json(['status' => 0, 'msg' => '你的电子币不够' . $electronic]);
             }
-            accountLog($this->user_id, 0, 0, '转出电子币给用户' . $toUser['user_id'], 0, 0, '', -$electronic, 12);
+            Db::startTrans();
+            $res = accountLog($this->user_id, 0, 0, '转出电子币给用户' . $toUser['user_id'], 0, 0, '', -$electronic, 12);
+            if (!$res) {
+                Db::rollback();
+                return json(['status' => 0, 'msg' => '转出电子币给用户' . $toUser['user_id'] . '失败']);
+            }
             accountLog($toUser['user_id'], 0, 0, '转入电子币From用户' . $this->user_id, 0, 0, '', $electronic, 12, false);
+            Db::commit();
             $userElectronic = M('Users')->where('user_id', $this->user_id)->getField('user_electronic');
             return json(['status' => 1, 'msg' => '电子币转增成功', 'result' => ['user_electronic' => $userElectronic]]);
         } else {
@@ -1718,15 +1736,17 @@ class User extends Base
             return json(['status' => 0, 'msg' => '转账用户不存在，请重新确认', 'result' => null]);
         }
         $user_pay_points = M('Users')->where('user_id', $user['user_id'])->getField('pay_points');
-
         if ($user_pay_points < $pay_points) {
             return json(['status' => 0, 'msg' => '你的积分不够' . $pay_points, 'result' => null]);
         }
-
-        accountLog($user['user_id'], 0, -$pay_points, "转出积分给用户$to_user_id", 0, 0, '', 0, 12);
-
+        Db::startTrans();
+        $res = accountLog($user['user_id'], 0, -$pay_points, "转出积分给用户$to_user_id", 0, 0, '', 0, 12);
+        if (!$res) {
+            Db::rollback();
+            return json(['status' => 0, 'msg' => "转出积分给用户$to_user_id" . '失败', 'result' => null]);
+        }
         accountLog($to_user_id, 0, $pay_points, "转入积分From用户{$user['user_id']}", 0, 0, '', 0, 12, false);
-
+        Db::commit();
         return json(['status' => 1, 'msg' => '积分转帐成功', 'result' => null]);
     }
 
@@ -1767,8 +1787,14 @@ class User extends Base
             if ($userPayPoints < $payPoints) {
                 return json(['status' => 0, 'msg' => '你的积分不够' . $payPoints]);
             }
-            accountLog($this->user_id, 0, -$payPoints, '转赠用户' . $toUser['user_id'], 0, 0, '', 0, 12);
+            Db::startTrans();
+            $res = accountLog($this->user_id, 0, -$payPoints, '积分转赠用户' . $toUser['user_id'], 0, 0, '', 0, 12);
+            if (!$res) {
+                Db::rollback();
+                return json(['status' => 0, 'msg' => '积分转赠用户' . $toUser['user_id'] . '失败']);
+            }
             accountLog($toUser['user_id'], 0, $payPoints, '从用户' . $this->user_id . '获赠', 0, 0, '', 0, 12, false);
+            Db::commit();
             $userPayPoints = M('Users')->where('user_id', $this->user_id)->getField('pay_points');
             return json(['status' => 1, 'msg' => '积分转增成功', 'result' => ['user_pay_points' => $userPayPoints]]);
         }
@@ -1843,12 +1869,21 @@ class User extends Base
             if ($amount < 1) {
                 return json(['status' => 0, 'msg' => '数额不能小于1']);
             }
+            $withdrawal = M('withdrawals')->where('user_id', $this->user_id)->where('status', 0)->value('money');
             $user_money = M('Users')->where('user_id', $this->user_id)->getField('user_money');
-            if ($user_money < $amount) {
+            if ($withdrawal && $user_money - $withdrawal < $amount) {
+                return json(['status' => 0, 'msg' => '你有一笔余额正在申请提现，因此你的余额不够' . $amount]);
+            } elseif ($user_money < $amount) {
                 return json(['status' => 0, 'msg' => '你的余额不够' . $amount]);
             }
+            Db::startTrans();
             accountLog($this->user_id, 0, 0, '用户余额转电子币', 0, 0, '', $amount, 13);
-            accountLog($this->user_id, -$amount, 0, '电子币充值（余额转）', 0, 0, '', 0, 13);
+            $res = accountLog($this->user_id, -$amount, 0, '电子币充值（余额转）', 0, 0, '', 0, 13);
+            if (!$res) {
+                Db::rollback();
+                return json(['status' => 0, 'msg' => '电子币充值（余额转）失败']);
+            }
+            Db::commit();
             $user = M('users')->where(['user_id' => $this->user_id])->field('user_electronic, user_money')->find();
             return json(['status' => 1, 'msg' => '电子币充值成功', 'result' => [
                 'user_electronic' => $user['user_electronic'],
@@ -1931,7 +1966,7 @@ class User extends Base
             'birthday' => $user['birthday'],
             'mobile' => $user['mobile'],
             'head_pic' => $user['head_pic'],
-            'type' => $user['distribut_level'] >= 3 ? 2 : $user['type'],
+            'type' => $user['distribut_level'] >= 3 ? '2' : $user['type'],
             'invite_uid' => $user['invite_uid'],
             'is_distribut' => $user['is_distribut'],
             'is_lock' => $user['is_lock'],
@@ -2850,6 +2885,8 @@ class User extends Base
      */
     public function userTask()
     {
+        if ($this->passAuth) die(json_encode(['status' => -999, 'msg' => '请先登录']));
+
         $userDistributeLevel = M('users')->where(['user_id' => $this->user_id])->value('distribut_level');
         $taskLogic = new TaskLogic(0);
         // 任务列表
@@ -2889,19 +2926,32 @@ class User extends Base
                     'task_reward_type' => $reward['reward_type'],
                     'reward_desc' => $reward['description'],
                     'reward_cycle' => $reward['cycle'],
-                    'reward_set' => $reward['invite_num'] != 0 ? $reward['invite_num'] : ($reward['order_num'] != 0 ? $reward['order_num'] : 0),
-                    'user_reward_set' => 0,
-                    'reward_times' => 0,
-                    'user_reward_times' => 0
+                    'reward_set' => $reward['invite_num'] != 0 ? $reward['invite_num'] : ($reward['order_num'] != 0 ? $reward['order_num'] : 0), // 任务规定需要完成的次数（才能获得奖励）
+                    'user_reward_set' => 0,         // 用户完成任务次数
+                    'reward_times' => 0,            // 任务可领取奖励次数
+                    'user_reward_times' => 0        // 用户可领取奖励次数（机会）
                 ];
-                // 查看用户完成任务次数
-                $userTaskCount = M('task_log')
-                    ->where(['user_id' => $this->user_id, 'task_id' => $task['id'], 'task_reward_id' => $reward['reward_id'], 'finished_at' => 0])
-                    ->count('id');
-                $times = $userTaskCount >= $taskRewardData[$k]['reward_set'] ? bcdiv($userTaskCount, $taskRewardData[$k]['reward_set']) : 0;
-                $taskRewardData[$k]['user_reward_set'] = $userTaskCount;
-                $taskRewardData[$k]['reward_times'] = $times;
-                $taskRewardData[$k]['user_reward_times'] = $times;
+                // 查看用户任务记录
+                $userTask = M('user_task')
+                    ->where(['user_id' => $this->user_id, 'task_id' => $task['id'], 'task_reward_id' => $reward['reward_id']])
+                    ->field('id, target_num, finish_num')->order('created_at desc')->find();
+                if (!empty($userTask)) {
+                    // 查看用户任务记录领取情况
+                    $userTaskLog = M('task_log')->where(['user_task_id' => $userTask['id'], 'type' => 1])->find();
+                    if (!empty($userTaskLog) && $userTaskLog['status'] == 1) {
+                        // 已领取
+                        $taskRewardData[$k]['user_reward_set'] = 0;
+                        $taskRewardData[$k]['reward_times'] = $userTask['target_num'];
+                    } else {
+                        // 未完成 || 未领取
+                        $taskRewardData[$k]['user_reward_set'] = $userTask['finish_num'];
+                        $taskRewardData[$k]['reward_times'] = bcdiv($userTask['target_num'], $userTask['finish_num']);
+                    }
+                }
+                // 用户可领取奖励次数（机会）
+                $userTaskLog = M('task_log')->where(['user_id' => $this->user_id, 'task_id' => $task['id'], 'task_reward_id' => $reward['reward_id'],
+                    'type' => 1, 'status' => 0])->count('id');
+                $taskRewardData[$k]['user_reward_times'] = $userTaskLog == 0 ? $userTaskLog : bcdiv($userTaskLog, $taskRewardData[$k]['reward_set']);
             }
             if (empty($taskData)) {
                 $taskData = $taskRewardData;
@@ -2941,11 +2991,11 @@ class User extends Base
                         break;
                     case 1:
                         // 每次（循环）
-                        $logCount = M('task_log')->where(['task_id' => $data['task_id'], 'task_reward_id' => $data['reward_id'], 'user_id' => $this->user_id, 'finished_at' => 0])->count('id');
-                        $times = $logCount >= $data['reward_set'] ? bcdiv($logCount, $data['reward_set']) : 0;
-                        $taskData[$k2]['user_reward_set'] = $times;
-                        $taskData[$k2]['reward_times'] = $times;
-                        $taskData[$k2]['user_reward_times'] = $times;
+//                        $logCount = M('task_log')->where(['task_id' => $data['task_id'], 'task_reward_id' => $data['reward_id'], 'user_id' => $this->user_id, 'finished_at' => 0])->count('id');
+//                        $times = $logCount >= $data['reward_set'] ? bcdiv($logCount, $data['reward_set']) : 0;
+//                        $taskData[$k2]['user_reward_set'] = $times;
+//                        $taskData[$k2]['reward_times'] = $times;
+//                        $taskData[$k2]['user_reward_times'] = $times;
                         $logStatus = M('task_log')->where(['task_id' => $data['task_id'], 'task_reward_id' => $data['reward_id'], 'user_id' => $this->user_id])->order('id DESC')->value('status');
                         if (is_null($logStatus)) {
                             // 未完成任务
@@ -3136,7 +3186,7 @@ class User extends Base
             'birthday' => $this->user['birthday'],
             'mobile' => $this->user['mobile'],
             'head_pic' => $this->user['head_pic'],
-            'type' => $this->user['distribut_level'] >= 3 ? 2 : $this->user['type'],
+            'type' => $this->user['distribut_level'] >= 3 ? '2' : $this->user['type'],
             'invite_uid' => $this->user['invite_uid'],
             'is_distribut' => $this->user['is_distribut'],
             'is_lock' => $this->user['is_lock'],
@@ -3253,7 +3303,11 @@ class User extends Base
         if (!$inviteUid || $inviteUid == 0) {
             return json(['status' => -11, 'msg' => '暂无推荐人']);
         }
-        $inviteUser = M('users')->where(['user_id' => $inviteUid])->field('user_id, nickname')->find();
+        $inviteUser = M('users')->where(['user_id' => $inviteUid])->field('user_id, nickname, user_name')->find();
+        if (!empty($inviteUser['user_name'])) {
+            $inviteUser['nickname'] = $inviteUser['user_name'];
+        }
+        unset($inviteUser['user_name']);
         return json(['status' => 1, 'result' => $inviteUser]);
     }
 
@@ -3457,10 +3511,10 @@ class User extends Base
     {
         if ($this->user_id == 36410) {
             // APP审核账号
-            return json(['status' => 1, 'result' => ['state' => 0]]);
+            return json(['status' => 1, 'result' => ['state' => 0, 'url' => '']]);
         }
         if ($this->passAuth) {
-            $result = ['status' => 1, 'result' => ['state' => 0]];
+            $result = ['status' => 1, 'result' => ['state' => 0, 'url' => '']];
         } else {
             // 登录奖励
             $taskLogic = new TaskLogic(4);
@@ -3526,8 +3580,12 @@ class User extends Base
         /*
          * 用户是否有完成未领取的任务奖励
          */
-        $userTaskLog = M('task_log tl')->join('task t', 't.id = tl.task_id')
-            ->where(['user_id' => $this->user_id, 'type' => 1, 'status' => 0])->order('created_at desc')
+        $userTaskLog = M('task_log tl')
+            ->join('task t', 't.id = tl.task_id')
+            ->join('task_reward tr', 'tr.reward_id = tl.task_reward_id')
+            ->where(['t.is_open' => 1, 't.start_time' => ['<=', time()], 't.end_time' => ['>=', time()]])
+            ->where(['tl.user_id' => $this->user_id, 'tl.type' => 1, 'tl.status' => 0])
+            ->order('created_at desc')
             ->field('t.id, t.title')->find();
         if (!empty($userTaskLog)) {
             $returnData['list'][] = [

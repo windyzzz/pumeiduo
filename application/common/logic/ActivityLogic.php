@@ -544,12 +544,10 @@ class ActivityLogic extends Model
         foreach ($activityGoods as $item) {
             $filter_goods_id[] = $item['goods_id'];
         }
-        $count = count($filter_goods_id);
-        $page = new Page($count, 20);
         // 商品规格属性
-        $goodsItem = Db::name('spec_goods_price')->where(['goods_id' => ['in', $filter_goods_id]])->limit($page->firstRow . ',' . $page->listRows)->getField('item_id, key_name');
+        $goodsItem = Db::name('spec_goods_price')->where(['goods_id' => ['in', $filter_goods_id]])->getField('item_id, key_name');
         // 商品标签
-        $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->limit($page->firstRow . ',' . $page->listRows)->select();
+        $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->select();
         // 处理活动商品数据
         foreach ($activityGoods as $k => $v) {
             // 商品属性
@@ -620,12 +618,10 @@ class ActivityLogic extends Model
         foreach ($activityGoods as $item) {
             $filter_goods_id[] = $item['goods_id'];
         }
-        $count = count($filter_goods_id);
-        $page = new Page($count, 20);
         // 商品规格属性
-        $goodsItem = Db::name('spec_goods_price')->where(['goods_id' => ['in', $filter_goods_id]])->limit($page->firstRow . ',' . $page->listRows)->getField('item_id, key_name');
+        $goodsItem = Db::name('spec_goods_price')->where(['goods_id' => ['in', $filter_goods_id]])->getField('item_id, key_name');
         // 商品标签
-        $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->limit($page->firstRow . ',' . $page->listRows)->select();
+        $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->select();
         // 处理活动商品数据
         foreach ($activityGoods as $k => $v) {
             // 商品属性

@@ -51,7 +51,7 @@ class Base extends Controller
             $this->user = $res['user'];
             $this->user_id = $res['user']['user_id'];
             $this->userToken = $token;
-//            if (!in_array($this->user_id, [36430, 36294, 36167, 36383, 39670, 36518, 1, 24749, 36472, 39730, 36527, 107, 36175])) {
+//            if (!in_array($this->user_id, [1, 107, 24749, 36167, 36175, 36294, 36383, 36430, 36472, 36518, 36527, 36558, 39730])) {
 //                die(json_encode(['status' => $this->user_id, 'msg' => '抱歉，这只是测试服务器，正式服务器已2020-3-9中午12点正式发布，请及时下载最新版APP']));
 //            }
         }

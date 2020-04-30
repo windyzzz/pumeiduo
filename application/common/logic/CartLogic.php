@@ -36,7 +36,6 @@ class CartLogic extends Model
     protected $userGoodsTypeCount = 0; //用户购物车的全部商品种类
     protected $userCouponNumArr; //用户符合购物车店铺可用优惠券数量
     protected $cart_id; // 购物车记录id
-    protected $goodsPv = '0.00';
 
     public function __construct()
     {
@@ -843,6 +842,7 @@ class CartLogic extends Model
             $cartWhere['selected'] = 1;
         }
         $cartWhere['goods_num'] = ['neq', 0];
+        $cartWhere['prom_type'] = ['neq', 2];   // 不显示团购商品
         $cartList = $cart
             ->field("
                 *,CASE type WHEN 1 THEN goods_price - member_goods_price ELSE '0' END AS use_point,
@@ -1325,22 +1325,23 @@ class CartLogic extends Model
     /**
      * 计算商品pv
      * @param $cartList
-     * @param $goodsPv
+     * @return mixed
      */
     public function calcGoodsPv($cartList)
     {
-        foreach ($cartList as $cartItem) {
+        foreach ($cartList as $k => $cartItem) {
             switch ($cartItem['type']) {
                 case 1:
                     // 现金+积分
-                    $this->goodsPv = bcadd($this->goodsPv, bcmul($cartItem['goods']['integral_pv'], $cartItem['goods_num']), 2);
+                    $cartList[$k]['goods_pv'] = $cartItem['goods']['integral_pv'];
                     break;
                 case 2:
                     // 现金
-                    $this->goodsPv = bcadd($this->goodsPv, bcmul($cartItem['goods']['retail_pv'], $cartItem['goods_num']), 2);
+                    $cartList[$k]['goods_pv'] = $cartItem['goods']['retail_pv'];
                     break;
             }
         }
+        return $cartList;
     }
 
     /**
@@ -1481,12 +1482,6 @@ class CartLogic extends Model
     public function getUserCouponNumArr()
     {
         return $this->userCouponNumArr;
-    }
-
-
-    public function getGoodsPv()
-    {
-        return $this->goodsPv;
     }
 
     /**

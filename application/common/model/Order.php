@@ -16,6 +16,15 @@ use think\Model;
 
 class Order extends Model
 {
+    /**
+     * 下单人信息
+     * @return \think\model\relation\HasOne
+     */
+    public function orderUser()
+    {
+        return $this->hasOne('Users', 'user_id', 'user_id');
+    }
+
     //获取所有订单商品
     public function OrderGoods()
     {

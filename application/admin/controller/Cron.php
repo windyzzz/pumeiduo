@@ -1182,8 +1182,12 @@ AND log_id NOT IN
 
     function auto_confirm_ceshi()
     {
-        $distributLogic = new \app\common\logic\DistributLogic();
-        $distributLogic->auto_confirm_ceshi(); // 自动确认分成
+        // 多少天后自动分销记录自动分成
+        $switch = tpCache('distribut.switch');
+        if (1 == $switch && file_exists(APP_PATH . 'common/logic/DistributLogic.php')) {
+            $distributLogic = new \app\common\logic\DistributLogic();
+            $distributLogic->auto_confirm_test(); // 自动确认分成
+        }
     }
 
     // 自动收货
@@ -1246,6 +1250,7 @@ AND log_id NOT IN
                         'is_zhixiao' => 1,
                         'distribut_level' => 3,
                         'is_distribut' => 1,
+                        'type' => 2
                     ];
                     if ($buttdata['referee_user_name']) {
                         $referee_users = M('users')->where(['user_name' => $buttdata['referee_user_name']])->field('user_id,first_leader,second_leader')->find();
@@ -1253,7 +1258,6 @@ AND log_id NOT IN
                             $data['first_leader'] = $referee_users['user_id'];
                             $data['second_leader'] = $referee_users['first_leader'];
                             $data['third_leader'] = $referee_users['second_leader'];
-
                             $data['invite_uid'] = $referee_users['user_id'];
                         }
                     }
@@ -1385,5 +1389,36 @@ AND log_id NOT IN
             // 更新消息发送状态
             M('push')->where(['id' => ['in', $pushIds]])->update(['status' => 1]);
         }
+    }
+
+    /**
+     * 自动发送订单pv到代理商系统记录
+     */
+    public function autoSendOrderPv()
+    {
+        $where = [
+            'order_status' => ['IN', [2, 6]],   // 已收货 售后
+            'pay_status' => 1,                  // 已支付
+            'shipping_status' => 1,             // 已发货
+            'order_pv' => ['>', 0],
+            'pv_tb' => 0,
+            'pv_send' => 0,
+            'end_sale_time' => ['<=', time()]  // 售后期结束
+        ];
+        $orderIds = M('order')->where($where)->getField('order_id', true);
+        // 查看订单商品是否正在申请售后（未处理完成）
+        foreach ($orderIds as $k => $orderId) {
+            if (M('return_goods')->where(['order_id' => $orderId, 'status' => ['IN', [0, 1]]])->value('id')) {
+                unset($orderIds[$k]);
+            }
+        }
+        // 通知代理商系统记录
+        include_once "plugins/Tb.php";
+        $TbLogic = new \Tb();
+        foreach ($orderIds as $orderId) {
+            $TbLogic->add_tb(1, 11, $orderId, 0);
+        }
+        // 更新记录状态
+        M('order')->where(['order_id' => ['in', $orderIds]])->update(['pv_tb' => 1]);
     }
 }

@@ -15,7 +15,10 @@ class Distribute extends Base
     public function member()
     {
         $level = I('level', 1);
-        $where = [];
+        $where = [
+            'is_lock' => 0,
+            'is_cancel' => 0
+        ];
         switch ($level) {
             case 1:
                 $where['first_leader'] = $this->user_id;
@@ -43,7 +46,10 @@ class Distribute extends Base
     public function memberList()
     {
         $level = I('level', 1);
-        $where = [];
+        $where = [
+            'is_lock' => 0,
+            'is_cancel' => 0
+        ];
         switch ($level) {
             case 1:
                 $where['first_leader'] = $this->user_id;
@@ -76,16 +82,23 @@ class Distribute extends Base
      */
     public function rebateLog()
     {
-        $startAt = I('start_at', strtotime(date('Y-m-01 00:00:00', time())));
-        $endAt = I('end_at', strtotime(date('Y-m-t 23:59:59', time())));
+        $startAt = I('start_at', strtotime(date('Y-m-01 00:00:00', time())) . '');
+        $endAt = I('end_at', strtotime(date('Y-m-t 23:59:59', time())) . '');
         $status = I('status', '');
 
         $where = [
             'rl.user_id' => $this->user_id,
-            'rl.create_time' => ['BETWEEN', [$startAt, $endAt]]
+            'rl.create_time' => ['BETWEEN', [strtotime(date('Y-m-d 00:00:00', $startAt)), strtotime(date('Y-m-d 23:59:59', $endAt))]]
         ];
         if ($status != '') {
-            $where['rl.status'] = $status;
+            switch ($status) {
+                case 6:
+                    $where['rl.sale_service'] = 1;
+                    break;
+                default:
+                    $where['rl.status'] = $status;
+                    $where['rl.sale_service'] = 0;
+            }
         }
         // 订单ID
         $orderIds = M('rebate_log rl')->where($where)->getField('rl.order_id', true);
@@ -94,12 +107,13 @@ class Distribute extends Base
             ->join('order o', 'o.order_id = og.order_id')
             ->join('goods g', 'g.goods_id = og.goods_id')
             ->where(['og.order_id' => ['in', array_unique($orderIds)]])
-            ->field('og.order_id, og.goods_id, og.goods_name, og.spec_key_name, g.original_img, og.goods_num, og.final_price, og.member_goods_price, og.use_integral, og.commission, o.add_time')->select();
+            ->field('og.rec_id, og.order_id, og.goods_id, og.goods_name, og.spec_key_name, g.original_img, og.goods_num, og.final_price, og.member_goods_price, og.use_integral, og.commission, og.goods_pv, o.add_time')->select();
         // 提成记录
         $page = new Page(count($orderIds), 10);
         $rebateLog = M('rebate_log rl')
             ->join('users u', 'u.user_id = rl.buy_user_id')
-            ->where($where)->field('rl.*, u.nickname buy_user_nickname, u.user_name buy_user_username, u.head_pic buy_user_head')
+            ->join('order o', 'o.order_id = rl.order_id')
+            ->where($where)->field('rl.*, u.nickname buy_user_nickname, u.user_name buy_user_username, u.head_pic buy_user_head,o.order_status, o.end_sale_time')
             ->limit($page->firstRow . ',' . $page->listRows)->order('create_time DESC')->select();
         $list = [];
         $OrderLogic = new OrderLogic();
@@ -111,12 +125,24 @@ class Distribute extends Base
                 'order_id' => $log['order_id'],
                 'order_sn' => $log['order_sn'],
                 'commission' => $log['money'],
-                'status' => $log['status'],
+                'status' => $log['sale_service'] == 1 ? '6' : $log['status'],
+                'status_desc' => $log['sale_service'] == 1 ? '已售后' : rebate_status($log['status']),
                 'create_time' => $log['create_time'],
-                'goods_list' => []
+                'goods_list' => [],
+                'end_sale_tips' => ''
             ];
+            if (in_array($log['status'], [0, 1, 2]) && $log['order_status'] == 2 && !empty($log['end_sale_time'])) {
+                $list[$k]['end_sale_tips'] = '已确认收货，预计' . date('Y年m月d日', $log['end_sale_time']) . '到账';
+            }
             foreach ($orderGoods as $goods) {
                 if ($log['order_id'] == $goods['order_id']) {
+                    $hasCommission = true;
+                    if ($log['sale_service'] == 1) {
+                        // 提成记录状态为 已售后
+                        if (M('return_goods')->where(['rec_id' => $goods['rec_id'], 'status' => ['NOT IN', [-2, -1, 4, 6]]])->value('id')) {
+                            $hasCommission = false;
+                        }
+                    }
                     $list[$k]['goods_list'][] = [
                         'goods_id' => $goods['goods_id'],
                         'goods_name' => $goods['goods_name'],
@@ -125,7 +151,9 @@ class Distribute extends Base
                         'goods_num' => $goods['goods_num'],
                         'exchange_price' => $goods['member_goods_price'],
                         'exchange_integral' => $goods['use_integral'],
-                        'commission' => bcadd($OrderLogic->getRongMoney(bcdiv(bcmul(bcmul($goods['final_price'], $goods['goods_num'], 2), $goods['commission'], 2), 100, 2), $log['level'], $goods['add_time'], $goods['goods_id']), 0, 2)
+                        'commission' => $hasCommission ? $goods['goods_pv'] == 0 ? bcadd($OrderLogic->getRongMoney(bcdiv(bcmul(bcmul($goods['final_price'], $goods['goods_num'], 2), $goods['commission'], 2), 100, 2), $log['level'], $goods['add_time'], $goods['goods_id']), 0, 2) : '0.00' : '0.00',
+                        'goods_pv' => $this->user['distribut_level'] >= 3 ? $hasCommission ? $goods['goods_pv'] > 0 ? $goods['goods_pv'] : '0.00' : '0.00' : '',
+                        'is_freeze' => $hasCommission ? 0 : 1
                     ];
                 }
             }
@@ -183,10 +211,17 @@ class Distribute extends Base
         $where = [
             'rl.user_id' => $this->user_id,
             'rl.buy_user_id' => $buyUserId,
-            'rl.create_time' => ['BETWEEN', [$startAt, $endAt]],
+            'rl.create_time' => ['BETWEEN', [strtotime(date('Y-m-d 00:00:00', $startAt)), strtotime(date('Y-m-d 23:59:59', $endAt))]]
         ];
         if ($status != '') {
-            $where['rl.status'] = $status;
+            switch ($status) {
+                case 6:
+                    $where['rl.sale_service'] = 1;
+                    break;
+                default:
+                    $where['rl.status'] = $status;
+                    $where['rl.sale_service'] = 0;
+            }
         }
         // 订单ID
         $orderIds = M('rebate_log rl')->where($where)->getField('rl.order_id', true);
@@ -195,11 +230,11 @@ class Distribute extends Base
             ->join('order o', 'o.order_id = og.order_id')
             ->join('goods g', 'g.goods_id = og.goods_id')
             ->where(['og.order_id' => ['in', array_unique($orderIds)]])
-            ->field('og.order_id, og.goods_id, og.goods_name, og.spec_key_name, g.original_img, og.goods_num, og.final_price, og.member_goods_price, og.use_integral, og.commission, o.add_time')->select();
+            ->field('og.order_id, og.goods_id, og.goods_name, og.spec_key_name, g.original_img, og.goods_num, og.final_price, og.member_goods_price, og.use_integral, og.commission, og.goods_pv, o.add_time')->select();
         // 提成记录
         $page = new Page(count($orderIds), 10);
-        $rebateLog = M('rebate_log rl')
-            ->where($where)->field('rl.*')
+        $rebateLog = M('rebate_log rl')->join('order o', 'o.order_id = rl.order_id')
+            ->where($where)->field('rl.*, o.order_status, o.end_sale_time')
             ->limit($page->firstRow . ',' . $page->listRows)->order('create_time DESC')->select();
         $list = [];
         $OrderLogic = new OrderLogic();
@@ -209,12 +244,24 @@ class Distribute extends Base
                 'order_id' => $log['order_id'],
                 'order_sn' => $log['order_sn'],
                 'commission' => $log['money'],
-                'status' => $log['status'],
+                'status' => $log['sale_service'] == 1 ? '6' : $log['status'],
+                'status_desc' => $log['sale_service'] == 1 ? '已售后' : rebate_status($log['status']),
                 'create_time' => $log['create_time'],
-                'goods_list' => []
+                'goods_list' => [],
+                'end_sale_tips' => ''
             ];
+            if (in_array($log['status'], [0, 1, 2]) && $log['order_status'] == 2 && !empty($log['end_sale_time'])) {
+                $list[$k]['end_sale_tips'] = '已确认收货，预计' . date('Y年m月d日', $log['end_sale_time']) . '到账';
+            }
             foreach ($orderGoods as $goods) {
                 if ($log['order_id'] == $goods['order_id']) {
+                    $hasCommission = true;
+                    if ($log['sale_service'] == 1) {
+                        // 提成记录状态为 已售后
+                        if (M('return_goods')->where(['rec_id' => $goods['rec_id'], 'status' => ['NOT IN', [-2, -1, 4, 6]]])->value('id')) {
+                            $hasCommission = false;
+                        }
+                    }
                     $list[$k]['goods_list'][] = [
                         'goods_id' => $goods['goods_id'],
                         'goods_name' => $goods['goods_name'],
@@ -223,7 +270,9 @@ class Distribute extends Base
                         'goods_num' => $goods['goods_num'],
                         'exchange_price' => $goods['member_goods_price'],
                         'exchange_integral' => $goods['use_integral'],
-                        'commission' => bcadd($OrderLogic->getRongMoney(bcdiv(bcmul(bcmul($goods['final_price'], $goods['goods_num'], 2), $goods['commission'], 2), 100, 2), $log['level'], $goods['add_time'], $goods['goods_id']), 0, 2)
+                        'commission' => $hasCommission ? $goods['goods_pv'] ? bcadd($OrderLogic->getRongMoney(bcdiv(bcmul(bcmul($goods['final_price'], $goods['goods_num'], 2), $goods['commission'], 2), 100, 2), $log['level'], $goods['add_time'], $goods['goods_id']), 0, 2) : '0.00' : '0.00',
+                        'goods_pv' => $this->user['distribut_level'] >= 3 ? $hasCommission ? $goods['goods_pv'] > 0 ? $goods['goods_pv'] : '0.00' : '0.00' : '',
+                        'is_freeze' => $hasCommission ? 0 : 1
                     ];
                 }
             }

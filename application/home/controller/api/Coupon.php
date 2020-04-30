@@ -8,6 +8,14 @@ use think\Db;
 
 class Coupon extends Base
 {
+    public function __construct()
+    {
+        parent::__construct();
+        if ($this->passAuth) {
+            die(json_encode(['status' => -999, 'msg' => '请先登录']));
+        }
+    }
+
     /**
      * 领券中心列表
      * @return \think\response\Json

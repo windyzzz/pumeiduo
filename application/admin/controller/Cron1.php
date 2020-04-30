@@ -12,6 +12,7 @@
 namespace app\admin\controller;
 
 use app\common\logic\SmsLogic;
+use app\common\model\GoodspvUpdateLog;
 use app\common\model\SpecialSmsLog;
 use think\Controller;
 use think\Db;
@@ -8605,5 +8606,83 @@ class Cron1 extends Controller
             ];
         }
         print_r($firstLeaderRebate);
+    }
+
+
+    public function updateGoodsPv()
+    {
+        $file = 'public/temp_excel/goodspv_20200429.xls';
+
+        include_once "plugins/PHPExcel.php";
+        $objRead = new \PHPExcel_Reader_Excel2007();   //建立reader对象
+        if (!$objRead->canRead($file)) {
+            $objRead = new \PHPExcel_Reader_Excel5();
+            if (!$objRead->canRead($file)) {
+                die('No Excel!');
+            }
+        }
+
+        $cellName = array('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'AA', 'AB', 'AC', 'AD', 'AE', 'AF', 'AG', 'AH', 'AI', 'AJ', 'AK', 'AL', 'AM', 'AN', 'AO', 'AP', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AV', 'AW', 'AX', 'AY', 'AZ');
+
+        $obj = $objRead->load($file);  //建立excel对象
+        $currSheet = $obj->getSheet(0);   //获取指定的sheet表
+        $columnH = $currSheet->getHighestColumn();   //取得最大的列号
+        $columnCnt = array_search($columnH, $cellName);
+        $rowCnt = $currSheet->getHighestRow();   //获取总行数
+
+        $data = array();
+        for ($_row = 1; $_row <= $rowCnt; $_row++) {  //读取内容
+            for ($_column = 0; $_column <= $columnCnt; $_column++) {
+                $cellId = $cellName[$_column] . $_row;
+                $cellValue = $currSheet->getCell($cellId)->getValue();
+                if ($cellValue instanceof \PHPExcel_RichText) {   //富文本转换字符串
+                    $cellValue = $cellValue->__toString();
+                }
+                $data[$_row][$cellName[$_column]] = $cellValue;
+            }
+        }
+        // 处理数据
+        Db::startTrans();
+        $logData = [];
+        foreach ($data as $k => $v) {
+            if ($k >= 2) {
+                $v['C'] = round($v['C']);
+                $goodsInfo = M('goods')->where(['goods_sn' => $v['A']])->field('goods_id, goods_sn, goods_name, retail_pv, integral_pv')->find();
+                if (empty($goodsInfo)) {
+                    $logData[] = [
+                        'goods_id' => 0,
+                        'goods_sn' => $v['A'],
+                        'goods_name' => $v['B'],
+                        'new_integral_pv' => $v['C'],
+                        'status' => 0,
+                        'note' => '商品编码不匹配',
+                        'create_time' => time()
+                    ];
+                    continue;
+                }
+                // 更新商品pv
+                M('goods')->where(['goods_id' => $goodsInfo['goods_id']])->update([
+                    'integral_pv' => $v['C']
+                ]);
+                $logData[] = [
+                    'goods_id' => $goodsInfo['goods_id'],
+                    'goods_sn' => $v['A'],
+                    'goods_name' => $v['B'],
+                    'old_integral_pv' => $goodsInfo['integral_pv'],
+                    'new_integral_pv' => $v['C'],
+                    'status' => 1,
+                    'create_time' => time()
+                ];
+            }
+        }
+        $goodspvUpdateLog = new GoodspvUpdateLog();
+        $res = $goodspvUpdateLog->saveAll($logData);
+        if ($res) {
+            Db::commit();
+            var_dump('ok');
+        } else {
+            Db::rollback();
+            var_dump('fail');
+        }
     }
 }

@@ -82,11 +82,6 @@
                             <option value="0">请选择商品分类</option>
                         </select>
                     </div>
-                    <!--<div id="link_goods"> &lt;!&ndash; 商品链接 &ndash;&gt;-->
-                        <!--<a id="add_type" class="ncap-btn" onclick="select_goods_dialog()">选择商品</a>-->
-                        <!--<span id="goods_name">{$info.goods_name}</span>-->
-                        <!--<input name="goods_id" id="goods_id" type="hidden" value="{$info.ad_link}">-->
-                    <!--</div>-->
                 </dd>
             </dl>
             <if condition='$Request.param.is_app_ad eq 1'>
@@ -296,11 +291,11 @@
         <else/>
             refresh_media_type(5); //如果是编辑
         </if>
-        <if condition = "$info['cat_id2'] gt 0" >
+        <if condition = "isset($info['cat_id2']) && $info['cat_id2'] gt 0" >
             // 商品分类第二个下拉菜单
             get_category('{$info[cat_id1]}', 'cat_id2', '{$info[cat_id2]}');
         </if>
-        <if condition = "$info['cat_id3'] gt 0" >
+        <if condition = "isset($info['cat_id3']) && $info['cat_id3'] gt 0" >
             // 商品分类第二个下拉菜单
             get_category('{$info[cat_id2]}', 'cat_id3', '{$info[cat_id3]}');
         </if>

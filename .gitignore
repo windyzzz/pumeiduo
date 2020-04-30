@@ -1,5 +1,6 @@
 .idea
+.env
 runtime
 thinkphp
-.env
 public
+jpush.log

@@ -162,7 +162,7 @@ class PushLogic
                     'extras' => $extra,
                 ]
             )->options([
-                'apns_production' => true   // 生成环境
+                'apns_production' => \think\Env::get('JPUSH.APNS.PRODUCTION')   // 生成环境
             ]);
         try {
             $response = $push->send();

@@ -150,17 +150,19 @@ function update_user_distribut($user_id, $order_id)
         //2.3推荐人奖励
         $firstLeaderLevel = M('users')->where(['user_id' => $user_info['first_leader']])->value('distribut_level');
         $updateRebate = false;
-        if (tpCache('distribut.referee_vip_money') != 0 && in_array($firstLeaderLevel, [2, 3])) {
+        if (tpCache('distribut.referee_vip_money') > 0 && in_array($firstLeaderLevel, [2, 3])) {
             // 奖励金额
             accountLog($user_info['first_leader'], tpCache('distribut.referee_vip_money'), 0, '推荐人VIP套组奖励金额', 0, $order_id, '', 0, 14, false);
             $updateRebate = true;
         }
-        if (tpCache('distribut.referee_vip_point') != 0 && in_array($firstLeaderLevel, [2, 3])) {
+        if (tpCache('distribut.referee_vip_point') > 0 && in_array($firstLeaderLevel, [2, 3])) {
             // 奖励积分
             accountLog($user_info['first_leader'], 0, tpCache('distribut.referee_vip_point'), '推荐人VIP套组奖励积分', 0, $order_id, '', 0, 14, false);
             $updateRebate = true;
         }
         if ($updateRebate) {
+            // 更新订单已分成
+            M('order')->where(['order_id' => $order_id])->update(['is_distribut' => 1]);
             // 更新分成记录
             M('rebate_log')->where(['buy_user_id' => $order['user_id'], 'order_id' => $order['order_id']])->update([
                 'status' => 3,
@@ -970,7 +972,24 @@ function accountLog($user_id, $user_money = 0.00, $pay_points = 0.00, $desc = ''
     if (0 == ($user_money + $pay_points + $distribut_money + $user_electronic)) {
         return false;
     }
-    $update = Db::name('users')->where('user_id', $user_id)->update($update_data);
+    $where = ['user_id' => $user_id];
+    if (bccomp(0, $user_money, 2) == 1) {
+        // 扣减余额
+        $where['user_money'] = ['egt', abs($user_money)];
+    }
+    if (bccomp(0, $pay_points, 2) == 1) {
+        // 扣减积分
+        $where['pay_points'] = ['egt', abs($pay_points)];
+    }
+    if (bccomp(0, $distribut_money, 2) == 1) {
+        // 扣减累积佣金
+        $where['distribut_money'] = ['egt', abs($distribut_money)];
+    }
+    if (bccomp(0, $user_electronic, 2) == 1) {
+        // 扣减电子币
+        $where['user_electronic'] = ['egt', abs($user_electronic)];
+    }
+    $update = Db::name('users')->where($where)->update($update_data);
     if ($update) {
         M('account_log')->add($account_log);
         if ($isOneself) {
@@ -1513,7 +1532,7 @@ function confirm_order($id, $user_id = 0)
 
     order_give($order); // 调用送礼物方法, 给下单这个人赠送相应的礼物
     //分销设置
-    M('rebate_log')->where('order_id', $id)->save(['status' => 2, 'confirm' => time()]);
+    M('rebate_log')->where(['order_id' => $id, 'status' => ['NOT IN', ['3', '4', '5']]])->save(['status' => 2, 'confirm' => time()]);
 
     // 邀请任务 (开始)
 //    $orderGoodsArr = M('OrderGoods')->where(['order_id' => $id])->select();
