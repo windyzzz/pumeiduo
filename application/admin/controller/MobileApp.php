@@ -11,6 +11,8 @@
 
 namespace app\admin\controller;
 
+use think\Page;
+
 class MobileApp extends Base
 {
     public function android_audit()
@@ -54,6 +56,17 @@ class MobileApp extends Base
                 ]);
             }
         }
+        // 更新记录
+        $appLog = M('app_log')->where(['type' => $inc_type, 'app_version' => $param['app_version']])->find();
+        $param['update_time'] = time();
+        if (empty($appLog)) {
+            $param['type'] = $inc_type;
+            $param['create_time'] = time();
+            M('app_log')->add($param);
+        } else {
+            M('app_log')->where(['id' => $appLog['id']])->update($param);
+        }
+
         switch ($inc_type) {
             case 'ios':
                 return $this->success('操作成功', url('MobileApp/ios_audit'));
@@ -83,5 +96,22 @@ class MobileApp extends Base
 //        if (!$file) {
 //            return $this->success('保存成功，但是没有文件上传', url('MobileApp/android_audit'));
 //        }
+    }
+
+    /**
+     * APP版本记录
+     * @return mixed
+     */
+    public function appLog()
+    {
+        $type = I('type');
+        $count = M('app_log')->where(['type' => $type])->count();
+        $page = new Page($count, 10);
+        $appLog = M('app_log')->where(['type' => $type])->order('app_version desc')->limit($page->firstRow . ',' . $page->listRows)->select();
+
+        $this->assign('type', $type);
+        $this->assign('page', $page);
+        $this->assign('list', $appLog);
+        return $this->fetch('app_log');
     }
 }
