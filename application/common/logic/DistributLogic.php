@@ -76,20 +76,48 @@ class DistributLogic
         if ($invite_uid == 0) $invite_uid = M('Users')->where('user_id', $order['user_id'])->getField('first_leader');
         $OrderCommonLogic = new \app\common\logic\OrderLogic();
         if ($is_vip) {
-            //vip商品
-            //$referee_vip_money = tpCache('distribut.referee_vip_money');
-
-            $referee_vip_money = $OrderCommonLogic->getRongMoney(0, 1, $order['add_time'], 0, true);
-
-            $referee_vip_point = tpCache('distribut.referee_vip_point');
-
+            // vip商品
             $invite_uid_info = get_user_info($invite_uid, 0);
-            if (($referee_vip_money > 0 || $referee_vip_point > 0) && $invite_uid_info['distribut_level'] >= 2) { //直推人是VIP级别以上 奖励100元+xx积分
-                $rebate_info['order_money'] = $referee_vip_money;
+            $referee_money = 0;     // 奖励金额
+            $referee_point = 0;     // 奖励积分
+            $referee_vip_svip_money = 0;    // VIP直属SVIP奖励金额
+            $referee_vip_svip_point = 0;    // VIP直属SVIP奖励积分
+            switch ($invite_uid_info['distribut_level']) {
+                case 1:
+                    break;
+                case 2:
+                    // VIP推荐VIP奖励
+                    $referee_money = tpCache('distribut.referee_vip_money');
+                    $referee_point = tpCache('distribut.referee_vip_point');
+                    // VIP的直接上级SVIP
+                    $vipSvipInfo = M('users')->where(['user_id' => $invite_uid_info['first_leader']])->field('distribut_level')->find();
+                    if (!empty($vipSvipInfo) && $vipSvipInfo['distribut_level'] >= 3) {
+                        $referee_vip_svip_money = tpCache('distribut.referee_vip_svip_money');
+                        $referee_vip_svip_point = tpCache('distribut.referee_vip_svip_point');
+                    }
+                    break;
+                case 3:
+                    // SVIP推荐VIP奖励
+                    $referee_money = tpCache('distribut.referee_svip_money');
+                    $referee_point = tpCache('distribut.referee_svip_point');
+                    break;
+            }
+            if (($referee_money > 0 || $referee_point > 0) && $invite_uid_info['distribut_level'] >= 2) {
+                $rebate_info['order_money'] = $referee_money;
                 $data = [];
                 $data['user_id'] = $invite_uid;
-                $data['money'] = $referee_vip_money;
-                $data['point'] = $referee_vip_point;
+                $data['money'] = $referee_money;
+                $data['point'] = $referee_point;
+                $data['level'] = 1;
+                $data = array_merge($rebate_info, $data);
+                M('rebate_log')->add($data);
+            }
+            if (($referee_vip_svip_money > 0 || $referee_vip_svip_point > 0) && !empty($vipSvipInfo) && $vipSvipInfo['distribut_level'] >= 3) {
+                $rebate_info['order_money'] = $referee_vip_svip_money;
+                $data = [];
+                $data['user_id'] = $invite_uid_info['first_leader'];
+                $data['money'] = $referee_vip_svip_money;
+                $data['point'] = $referee_vip_svip_point;
                 $data['level'] = 1;
                 $data = array_merge($rebate_info, $data);
                 M('rebate_log')->add($data);
@@ -105,7 +133,6 @@ class DistributLogic
             $second_leader = 0;//$second_leader = $this->_getShopUid($invite_uid, 2, [$first_leader]);//取消2代
             $third_leader = 0; //$third_leader = $this->_getShopUid($invite_uid, 2, [$first_leader, $second_leader]);//取消3代
             $shop_uid = 0;//$this->_getShopUid($invite_uid, 3) //取消店铺奖励
-
 
             if ($distribut_total_money > 0) {
                 $rebate_info['order_money'] = $distribut_total_money;

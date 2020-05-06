@@ -7,7 +7,6 @@
     .flexigrid input[type="text"] {
         width: 120px;
     }
-
     .w150 {
         text-align: center;
         width: 150px;
@@ -15,6 +14,9 @@
     .w80 {
         text-align: center;
         width: 80px;
+    }
+    input {
+        text-align: center;
     }
 </style>
 <script src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
@@ -59,14 +61,28 @@
                 </dd>
                 <span class="err" id="err_type"></span>
             </dl>
+            <!--
             <dl class="row">
                 <dt class="tit">
                     <label><em>*</em>是否启用默认配送配置</label>
                 </dt>
                 <dd class="opt ctype">
-                    <input name="is_enable_default" class="is_enable_default" type="radio" value="0" <if condition="$freightTemplate['is_enable_default'] heq 0">checked='checked'</if>>
+                    <input name="is_enable_default" class="is_enable_default" type="radio" value="0" <if condition="$freightTemplate['is_enable_default'] eq 0">checked='checked'</if>>
                     <label>否</label>
-                    <input name="is_enable_default" class="is_enable_default" type="radio" value="1" <if condition="$freightTemplate['is_enable_default'] heq 1">checked='checked'</if>>
+                    <input name="is_enable_default" class="is_enable_default" type="radio" value="1" <if condition="$freightTemplate['is_enable_default'] eq 1">checked='checked'</if>>
+                    <label>是</label>
+                </dd>
+                <span class="err" id="err_enable_default"></span>
+            </dl>
+            -->
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>不启用商城免运费设置</label>
+                </dt>
+                <dd class="opt ctype">
+                    <input name="is_out_setting"  type="radio" value="0" <if condition="$freightTemplate['is_out_setting'] eq 0">checked='checked'</if>>
+                    <label>否</label>
+                    <input name="is_out_setting"  type="radio" value="1" <if condition="$freightTemplate['is_out_setting'] eq 1">checked='checked'</if>>
                     <label>是</label>
                 </dd>
                 <span class="err" id="err_enable_default"></span>
@@ -80,21 +96,26 @@
                                 <th align="left" abbr="" axis="col1" class="">
                                     <div style="text-align: center; width: 800px;" class="">配送区域</div>
                                 </th>
-                                <th align="left" abbr="" axis="col2" class="">
-                                    <div style="text-align: center; width: 150px;" class="">
-                                        首件
-                                    </div>
+                                <th align="center" abbr="" axis="col2" class="">
+                                    <div style="text-align: center; width: 150px;" class="">首件</div>
                                 </th>
-                                <th align="left" abbr="" axis="col3" class="">
+                                <th align="center" abbr="" axis="col3" class="">
                                     <div style="text-align: center; width: 150px;" class="">运费(元)</div>
                                 </th>
                                 <th align="center" abbr="" axis="col4" class="">
-                                    <div style="text-align: center; width: 150px;" class="">
-                                        续件
-                                    </div>
+                                    <div style="text-align: center; width: 150px;" class="">续件</div>
                                 </th>
                                 <th align="center" abbr="" axis="col5" class="">
                                     <div style="text-align: center; width: 150px;" class="">运费(元)</div>
+                                </th>
+                                <th align="center" abbr="" axis="col5" class="">
+                                    <div style="text-align: center; width: 150px;" class="">设置满优惠类型</div>
+                                </th>
+                                <th align="center" abbr="" axis="col5" class="">
+                                    <div style="text-align: center; width: 150px;" class="">满优惠条件</div>
+                                </th>
+                                <th align="center" abbr="" axis="col5" class="">
+                                    <div style="text-align: center; width: 150px;" class="">满优惠运费</div>
                                 </th>
                                 <th align="center" abbr="" axis="col6" class="">
                                     <div style="text-align: center; width: 150px;" class="">操作</div>
@@ -172,6 +193,33 @@
                                                 <span>元</span>
                                             </div>
                                         </td>
+                                        <td align="left">
+                                            <div class="w150">
+                                                <select name="discount_type[]">
+                                                    <option value="0">不设置</option>
+                                                    <option value="1" <if condition="$config['discount_type'] == 1">selected=selected</if> >按件数</option>
+                                                </select>
+                                            </div>
+                                        </td>
+                                        <td align="left">
+                                            <div class="w150">
+                                                <switch name="$config[discount_type]">
+                                                    <case value="0">
+                                                        无设置
+                                                        <input type="hidden" name="discount_condition" value="0">
+                                                    </case>
+                                                    <case value="1">
+                                                        满<input style="max-width: 50px;" type="text" name="discount_condition" value="{$config.discount_condition}">件
+                                                    </case>
+                                                </switch>
+                                            </div>
+                                        </td>
+                                        <td align="left">
+                                            <div class="w150">
+                                                <input name="discount_money[]" value="{$config.discount_money}" type="text">
+                                                <span>元</span>
+                                            </div>
+                                        </td>
                                         <td align="left" class="handle">
                                             <div class="w150">
                                                 <a class="btn red" href="javascript:void(0)"
@@ -232,11 +280,37 @@
                                                 <span>元</span>
                                             </div>
                                         </td>
+                                        <td align="left">
+                                            <div class="w150">
+                                                <select name="discount_type[]" onchange="discountTypeChange(this)">
+                                                    <option value="0">不设置</option>
+                                                    <option value="1" <if condition="$config['discount_type'] == 1">selected=selected</if> >按件数</option>
+                                                </select>
+                                            </div>
+                                        </td>
+                                        <td align="left">
+                                            <div class="w150">
+                                                <switch name="$config[discount_type]">
+                                                    <case value="0">
+                                                        无设置
+                                                        <input type="hidden" name="discount_condition" value="0">
+                                                    </case>
+                                                    <case value="1">
+                                                        满<input style="max-width: 50px;" type="text" name="discount_condition" value="{$config.discount_condition}">件
+                                                    </case>
+                                                </switch>
+                                            </div>
+                                        </td>
+                                        <td align="left">
+                                            <div class="w150">
+                                                <input name="discount_money[]" value="{$config.discount_money}" type="text">
+                                                <span>元</span>
+                                            </div>
+                                        </td>
                                         <td align="left" class="handle">
                                             <div class="w150">
                                                 <a class="btn red" href="javascript:void(0)"
-                                                   onclick="$(this).parent().parent().parent().remove();"><i
-                                                        class="fa fa-trash-o"></i>删除</a>
+                                                   onclick="$(this).parent().parent().parent().remove();"><i class="fa fa-trash-o"></i>删除</a>
                                             </div>
                                         </td>
                                         <td align="" class="" style="width: 100%;">
@@ -264,16 +338,19 @@
             $('#submit').attr('disabled', true);
             verifyForm();
         })
-    })
+    });
 
     //运费配置单个对象
-    function ConfigItem(config_id, area_ids, first_unit, first_money, continue_unit, continue_money, is_default) {
+    function ConfigItem(config_id, area_ids, first_unit, first_money, continue_unit, continue_money, is_default, discount_type, discount_condition, discount_money) {
         this.config_id = config_id;
         this.area_ids = area_ids;
         this.first_unit = first_unit;
         this.first_money = first_money;
         this.continue_unit = continue_unit;
         this.continue_money = continue_money;
+        this.discount_type = discount_type;
+        this.discount_condition = discount_condition;
+        this.discount_money = discount_money;
         this.is_default = is_default;
     }
 
@@ -284,6 +361,7 @@
         var template_name = $("input[name='template_name']").val();
         var type = $("input[name='type']:checked").val();
         var is_enable_default = $("input[name='is_enable_default']:checked").val();
+        var is_out_setting = $("input[name='is_out_setting']:checked").val();
         var config_item = $("#config_list").find('tr');
         config_item.each(function (i, o) {
             var area_ids_input = $(this).find("input[name^='area_ids']");
@@ -293,11 +371,14 @@
             var continue_unit_val = $(this).find("input[name^='continue_unit']").val();
             var continue_money_val = $(this).find("input[name^='continue_money']").val();
             var is_default_val = $(this).find("input[name^='is_default']").val();
+            var discount_type_val = $(this).find("select[name^='discount_type']").val();
+            var discount_condition_val = $(this).find("input[name^='discount_condition']").val();
+            var discount_money_val = $(this).find("input[name^='discount_money']").val();
             if (area_ids_input.val().length > 0 || $('.default_config').length > 0) {
-                var configItem = new ConfigItem(config_id_val, area_ids_input.val(), first_unit_val, first_money_val, continue_unit_val, continue_money_val, is_default_val);
+                var configItem = new ConfigItem(config_id_val, area_ids_input.val(), first_unit_val, first_money_val, continue_unit_val, continue_money_val, is_default_val, discount_type_val, discount_condition_val, discount_money_val);
                 config_list.push(configItem);
             }
-        })
+        });
         $.ajax({
             type: "POST",
             url: "{:U('Freight/save')}",
@@ -306,7 +387,8 @@
                 template_name: template_name,
                 type: type,
                 config_list: config_list,
-                is_enable_default: is_enable_default
+                is_enable_default: is_enable_default,
+                is_out_setting: is_out_setting,
             },
             async: false,
             dataType: "json",
@@ -344,10 +426,11 @@
                 content: url
             });
         })
-    })
+    });
+
     $(function () {
         $(document).on("click", '.new_config', function (e) {
-            var html = '<tr> <td align="left"> <div class="w150" style="width:556px !important;"> ' +
+            var html = '<tr> <td align="left"> <div class="w150" style="width:800px !important;"> ' +
                 '<input class="select_area" style="width:583px !important;" readonly name="" value="" type="text"> <input name="area_ids[]" class="area_ids" value="" type="hidden"> ' +
                 '<input name="config_id[]" value="" type="hidden"> </div> </td> <td align="left"> <div class="w150"> ' +
                 '<input name="first_unit[]" value="" onpaste="this.value=this.value.replace(/[^\\d.]/g,\'\')" onkeyup="this.value=this.value.replace(/[^\\d.]/g,\'\')" type="text"> ' +
@@ -355,32 +438,43 @@
                 '<input name="first_money[]" value="" type="text"><span>元</span> </div> </td> <td align="left"> <div class="w150">' +
                 '<input name="continue_unit[]" value="" onpaste="this.value=this.value.replace(/[^\\d.]/g,\'\')" onkeyup="this.value=this.value.replace(/[^\\d.]/g,\'\')" type="text"> ' +
                 '<span class="continue_unit_span">' + unit + '</span> </div> </td> <td align="left"> <div class="w150">' +
-                '<input name="continue_money[]" value="" type="text"><span>元</span> </div> </td> <td align="left" class="handle"> <div class="w150"> ' +
-                '<a class="btn red" onclick="$(this).parent().parent().parent().remove();"><i class="fa fa-trash-o"></i>删除</a> </div> </td> </tr>';
+                '<input name="continue_money[]" value="" type="text"><span>元</span> </div> </td>' +
+                '<td align="left"> <div class="w150"><select name="discount_type[]" onchange="discountTypeChange(this)"><option value="0">不设置</option><option value="1">按件数</option></select></div></td>' +
+                '<td align="left"> <div class="w150">无设置</div></td>' +
+                '<td align="left"> <div class="w150"><input name="discount_money[]" value="0" type="text" disabled="disabled"><span>元</span></div></td>' +
+                '<td align="left" class="handle"> <div class="w150"> ' +
+                '<a class="btn red" onclick="$(this).parent().parent().parent().remove();"><i class="fa fa-trash-o"></i>删除</a> </div> </td>' +
+                '<td align="" class="" style="width: 100%;"><div></div></td> </tr>';
             $('#config_list').append(html);
+
         })
-    })
+    });
 
     $(function () {
         $(document).on("click", '.is_enable_default', function (e) {
             initDefault();
         })
-    })
+    });
 
     function initDefault() {
         var default_config_length = $('.default_config').length;
         var is_enable_default = $("input[name='is_enable_default']:checked").val();
         if (is_enable_default == 1 && default_config_length == 0) {
-            var html = '<tr class="default_config"> <td align="left"> <div class="w150"> ' +
-                '<input readonly name="" value="中国" type="text"> <input name="area_ids[]" class="area_ids" value="" type="hidden"> ' +
+            var html = '<tr class="default_config"> <td align="left"> <div class="w150" style="width:800px !important;"> ' +
+                '<input class="select_area" style="width:583px !important;" readonly name="" readonly value="中国" type="text"> <input name="area_ids[]" class="area_ids" value="" type="hidden"> ' +
                 '<input name="config_id[]" value="" type="hidden"> </div> </td> <td align="left"> <div class="w150"> ' +
                 '<input name="first_unit[]" value="" onpaste="this.value=this.value.replace(/[^\\d.]/g,\'\')" onkeyup="this.value=this.value.replace(/[^\\d.]/g,\'\')" type="text"> ' +
                 '<span class="first_unit_span">' + unit + '</span> </div> </td> <td align="left"> <div class="w150"> ' +
                 '<input name="first_money[]" value="" type="text"><span>元</span> </div> </td> <td align="left"> <div class="w150">' +
                 '<input name="continue_unit[]" value="" onpaste="this.value=this.value.replace(/[^\\d.]/g,\'\')" onkeyup="this.value=this.value.replace(/[^\\d.]/g,\'\')" type="text"> ' +
                 '<span class="continue_unit_span">' + unit + '</span> </div> </td> <td align="left"> <div class="w150">' +
-                '<input name="continue_money[]" value="" type="text"><span>元</span> </div> </td> <td align="left" class="handle"> <div class="w150"> ' +
-                '</div> </td> </tr>';
+                '<input name="continue_money[]" value="" type="text"><span>元</span> </div> </td> ' +
+                '<td align="left"> <div class="w150"><select name="discount_type[]" onchange="discountTypeChange(this)"><option value="0">不设置</option><option value="1">按件数</option></select></div></td>' +
+                '<td align="left"> <div class="w150">无设置</div></td>' +
+                '<td align="left"> <div class="w150"><input name="discount_money[]" value="0" type="text" disabled="disabled"><span>元</span></div></td>' +
+                '<td align="left" class="handle"> <div class="w150"> ' +
+                '</div> </td>' +
+                '<td align="" class="" style="width: 100%;"><div></div></td> </tr>';
             $('#config_list').prepend(html);
         } else if (is_enable_default == 0) {
             $('.default_config').remove();
@@ -392,6 +486,7 @@
         initType();
         initDefault();
     });
+
     $(function () {
         $(document).on("click", ".type", function (e) {
             if (typeof (type) != 'undefined' && type != $(this).val()) {
@@ -402,7 +497,7 @@
                 initType();
             }
         })
-    })
+    });
 
     function initType() {
         var config_table = $('#config_table');
@@ -475,6 +570,26 @@
         area_focus.val(area_list_name);
         area_focus.parent().find('.area_ids').val(area_list_id);
         layer.closeAll('iframe');
+    }
+
+    /**
+     * 设置优惠类型
+     */
+    function discountTypeChange(ojb) {
+        discount_condition = $(ojb).parent().parent().next().children();
+        discount_money = $(ojb).parent().parent().next().next().children().find("input[name^='discount_money']");
+        switch (ojb.value) {
+            case '0':
+                // 不设置
+                discount_condition.html('无设置<input type="hidden" name="discount_condition" value="0">');
+                discount_money.val('0');
+                discount_money.attr('disabled', true);
+                break;
+            case '1':
+                // 按数量
+                discount_condition.html('满<input style="max-width: 50px;" type="text" name="discount_condition" value="0">件');
+                discount_money.attr('disabled', false);
+        }
     }
 </script>
 </body>

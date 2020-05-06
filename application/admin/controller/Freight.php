@@ -21,25 +21,20 @@ class Freight extends Base
     public function index()
     {
         $FreightTemplate = new FreightTemplate();
-        $count = $FreightTemplate->where('')->count();
+        $count = $FreightTemplate->count();
         $Page = new Page($count, 10);
         $show = $Page->show();
-        $template_list = $FreightTemplate->append(['type_desc'])->with('freightConfig')->limit($Page->firstRow.','.$Page->listRows)->select();
-
-        foreach($template_list as $key=>$val){
-            foreach($val['freightConfig'] as $k=>$v){
-
+        $template_list = $FreightTemplate->append(['type_desc'])->with('freightConfig')->limit($Page->firstRow . ',' . $Page->listRows)->select();
+        foreach ($template_list as $key => $val) {
+            foreach ($val['freightConfig'] as $k => $v) {
                 $freight_region = M('freight_region')
                     ->alias('f')
-                    ->join('region2 r','r.id = f.region_id')
-                    ->where(array('f.config_id'=>$v['config_id']))
+                    ->join('region2 r', 'r.id = f.region_id')
+                    ->where(array('f.config_id' => $v['config_id']))
                     ->select();
-
                 $template_list[$key]['freightConfig'][$k]['freightRegion'] = $freight_region;
             }
         }
-
-
         $this->assign('page', $show);
         $this->assign('template_list', $template_list);
         return $this->fetch();
@@ -54,23 +49,21 @@ class Freight extends Base
             if (empty($freightTemplate)) {
                 $this->error('非法操作');
             }
-
-
-                foreach($freightTemplate['freightConfig'] as $k=>$v){
-
-                    $freight_region = M('freight_region')
-                        ->alias('f')
-                        ->join('region2 r','r.id = f.region_id')
-                        ->where(array('f.config_id'=>$v['config_id']))
-                        ->select();
-
-                    $freightTemplate['freightConfig'][$k]['freightRegion'] = $freight_region;
+            foreach ($freightTemplate['freightConfig'] as $k => $v) {
+                $freight_region = M('freight_region')
+                    ->alias('f')
+                    ->join('region2 r', 'r.id = f.region_id')
+                    ->where(array('f.config_id' => $v['config_id']))
+                    ->select();
+                $freightTemplate['freightConfig'][$k]['freightRegion'] = $freight_region;
+                switch ($v['discount_type']) {
+                    case 1:
+                        $freightTemplate['freightConfig'][$k]['discount_condition'] = number_format($v['discount_condition']);
+                        break;
                 }
-
-
+            }
             $this->assign('freightTemplate', $freightTemplate);
         }
-
         return $this->fetch();
     }
 
@@ -85,12 +78,14 @@ class Freight extends Base
         $template_name = input('template_name/s');
         $type = input('type/d');
         $is_enable_default = input('is_enable_default/d');
+        $is_out_setting = input('is_out_setting/d');
         $config_list = input('config_list/a', []);
         $data = input('post.');
         $freightTemplateValidate = Loader::validate('FreightTemplate');
         if (!$freightTemplateValidate->batch()->check($data)) {
             $this->ajaxReturn(['status' => 0, 'msg' => '操作失败', 'result' => $freightTemplateValidate->getError()]);
         }
+        Db::startTrans();
         if (empty($template_id)) {
             //添加模板
             $freightTemplate = new FreightTemplate();
@@ -100,18 +95,41 @@ class Freight extends Base
         }
         $freightTemplate['template_name'] = $template_name;
         $freightTemplate['type'] = $type;
-        $freightTemplate['is_enable_default'] = $is_enable_default;
+        $freightTemplate['is_enable_default'] = $is_enable_default ?? 0;
+        $freightTemplate['is_out_setting'] = $is_out_setting ?? 0;
         $freightTemplate->save();
         $config_list_count = count($config_list);
         $config_id_arr = Db::name('freight_config')->where(['template_id' => $template_id])->getField('config_id', true);
         $update_config_id_arr = [];
         if ($config_list_count > 0) {
             for ($i = 0; $i < $config_list_count; ++$i) {
+                // 是否有设置优惠运费
+                switch ($config_list[$i]['discount_type']) {
+                    case 0:
+                        // 不设置
+                        $config_list[$i]['discount_condition'] = 0;
+                        $config_list[$i]['discount_money'] = 0;
+                        break;
+                    case 1:
+                        // 按数量
+                        $config_list[$i]['discount_condition'] = number_format($config_list[$i]['discount_condition']);
+                        if ($config_list[$i]['discount_condition'] == 0) {
+                            Db::rollback();
+                            $this->ajaxReturn(['status' => 0, 'msg' => '请设置优惠条件', 'result' => '']);
+                        }
+                        if ($config_list[$i]['discount_money'] > number_format($config_list[$i]['first_money'], 2)) {
+                            Db::rollback();
+                            $this->ajaxReturn(['status' => 0, 'msg' => '设置优惠运费不能大于普通运费', 'result' => '']);
+                        }
+                }
                 $freight_config_data = [
                     'first_unit' => $config_list[$i]['first_unit'],
                     'first_money' => $config_list[$i]['first_money'],
                     'continue_unit' => $config_list[$i]['continue_unit'],
                     'continue_money' => $config_list[$i]['continue_money'],
+                    'discount_type' => $config_list[$i]['discount_type'],
+                    'discount_condition' => $config_list[$i]['discount_condition'],
+                    'discount_money' => $config_list[$i]['discount_money'],
                     'template_id' => $freightTemplate['template_id'],
                     'is_default' => $config_list[$i]['is_default'],
                 ];
@@ -148,6 +166,7 @@ class Freight extends Base
             Db::name('freight_config')->where(['config_id' => ['IN', $delete_config_id_arr]])->delete();
         }
         $this->checkFreightTemplate($freightTemplate->template_id);
+        Db::commit();
         $this->ajaxReturn(['status' => 1, 'msg' => '保存成功', 'result' => '']);
     }
 
@@ -166,7 +185,7 @@ class Freight extends Base
         if ('confirm' != $action) {
             $goods_count = Db::name('goods')->where(['template_id' => $template_id])->count();
             if ($goods_count > 0) {
-                $this->ajaxReturn(['status' => -1, 'msg' => '已有'.$goods_count.'种商品使用该运费模板，确定删除该模板吗？继续删除将把使用该运费模板的商品设置成包邮。', 'result' => '']);
+                $this->ajaxReturn(['status' => -1, 'msg' => '已有' . $goods_count . '种商品使用该运费模板，确定删除该模板吗？继续删除将把使用该运费模板的商品设置成包邮。', 'result' => '']);
             }
         }
         Db::name('goods')->where(['template_id' => $template_id])->update(['template_id' => 0, 'is_free_shipping' => 1]);

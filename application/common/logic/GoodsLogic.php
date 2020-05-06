@@ -798,10 +798,10 @@ class GoodsLogic extends Model
      *
      * @param $goodsArr
      * @param $region_id
-     *
-     * @return int
+     * @param string $orderPromAmount 订单优惠金额
+     * @return string
      */
-    public function getFreight($goodsArr, $region_id)
+    public function getFreight($goodsArr, $region_id, $orderPromAmount)
     {
         $Goods = new Goods();
         $freightLogic = new FreightLogic();
@@ -809,6 +809,7 @@ class GoodsLogic extends Model
         $goods_ids = get_arr_column($goodsArr, 'goods_id');
         $goodsList = $Goods->field('goods_id,volume,weight,template_id,is_free_shipping')->where('goods_id', 'IN', $goods_ids)->select();
         $goodsList = collection($goodsList)->toArray();
+        $goodsNum = 0;
         foreach ($goodsArr as $cartKey => $cartVal) {
             foreach ($goodsList as $goodsKey => $goodsVal) {
                 if ($cartVal['goods_id'] == $goodsVal['goods_id']) {
@@ -818,16 +819,21 @@ class GoodsLogic extends Model
                     $goodsArr[$cartKey]['is_free_shipping'] = $goodsVal['is_free_shipping'];
                 }
             }
+            $goodsNum += $cartVal['goods_num'];
         }
+        $eachOrderPromAmount = bcdiv($orderPromAmount, $goodsNum, 2);   // 每个商品的优惠金额
         $template_list = [];
         foreach ($goodsArr as $goodsKey => $goodsVal) {
             $template_list[$goodsVal['template_id']][] = $goodsVal;
         }
-        $freight = 0;
+        $freight = 0;               // 启用商城免运费设置的运费
+        $outSettingFreight = 0;     // 不启用商城免运费设置的运费
+        $freightGoodsPrice = 0;     // 启用商城免运费设置的商品价格
         foreach ($template_list as $templateVal => $goodsArr) {
             $temp['template_id'] = $templateVal;
             $temp['is_free_shipping'] = 0;
             foreach ($goodsArr as $goodsKey => $goodsVal) {
+                $temp['member_goods_price'] = bcadd($temp['member_goods_price'], $goodsVal['member_goods_price'], 2);
                 $temp['total_volume'] += $goodsVal['volume'] * $goodsVal['goods_num'];
                 $temp['total_weight'] += $goodsVal['weight'] * $goodsVal['goods_num'];
                 $temp['goods_num'] += $goodsVal['goods_num'];
@@ -835,14 +841,20 @@ class GoodsLogic extends Model
                     $temp['is_free_shipping'] = 1;
                 }
             }
+            $temp['each_order_prom_amount'] = $eachOrderPromAmount;
             $freightLogic->setGoodsModel($temp);
             $freightLogic->setGoodsNum($temp['goods_num']);
             $freightLogic->doCalculation();
             $freight = bcadd($freight, $freightLogic->getFreight(), 2);
+            $outSettingFreight = bcadd($outSettingFreight, $freightLogic->getOutSettingFreight(), 2);
+            $freightGoodsPrice = bcadd($freightGoodsPrice, $freightLogic->getFreightGoodsPrice(), 2);
             unset($temp);
         }
-
-        return $freight;
+        $freightFree = tpCache('shopping.freight_free'); // 全场满多少免运费
+        if ($freightGoodsPrice >= $freightFree) {
+            $freight = 0;
+        }
+        return bcadd($freight, $outSettingFreight, 2);
     }
 
     /**
