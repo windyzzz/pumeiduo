@@ -945,10 +945,25 @@ class Goods extends Base
             json(['status' => 1, 'msg' => 'success', 'result' => $html]);
         }
         $sort = I('get.sort', 'goods_id'); // 排序
-        if ($sort == 'shop_price') {
-            $sort = 'shop_price - exchange_integral';   // 现金价格
-        }
         $sort_asc = I('get.sort_asc', 'desc'); // 排序
+        $sortArr = [];
+        switch ($sort) {
+            case 'sales_sum':
+                // 销量
+                $sortArr = [$sort => $sort_asc];
+                break;
+            case 'shop_price':
+                // 价格
+                $sortArr = ['shop_price - exchange_integral' => $sort_asc];
+                break;
+            case 'goods_id':
+                // 新品
+                $sortArr = [
+                    'is_new' => $sort_asc,
+                    'goods_id' => $sort_asc
+                ];
+                break;
+        }
         $filter_param = []; // 筛选数组
         $id = I('get.id/d', 0); // 当前分类id
         $couponId = I('get.coupon_id', 0); // 优惠券ID
@@ -1027,7 +1042,7 @@ class Goods extends Base
         if ($count > 0) {
             // 获取商品数据
             $goodsLogic = new GoodsLogic();
-            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sort, $sort_asc, $page, $this->user_id);
+            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user_id);
         }
 
 //        $goods_category = M('goods_category')->where('is_show=1')->cache(true)->getField('id,name,parent_id,level'); // 键值分类数组
@@ -1060,14 +1075,27 @@ class Goods extends Base
     public function goodsListNew()
     {
         $sort = I('get.sort', 'goods_id'); // 排序
-        if ($sort == 'shop_price') {
-            $sort = 'shop_price - exchange_integral';   // 现金价格
-        }
         $sort_asc = I('get.sort_asc', 'desc'); // 排序
-
+        $sortArr = [];
+        switch ($sort) {
+            case 'sales_sum':
+                // 销量
+                $sortArr = [$sort => $sort_asc];
+                break;
+            case 'shop_price':
+                // 价格
+                $sortArr = ['shop_price - exchange_integral' => $sort_asc];
+                break;
+            case 'goods_id':
+                // 新品
+                $sortArr = [
+                    'is_new' => $sort_asc,
+                    'goods_id' => $sort_asc
+                ];
+                break;
+        }
         $id = I('get.id/d', 0); // 当前分类id
         $couponId = I('get.coupon_id', 0); // 优惠券ID
-
         $search = urldecode(trim(I('search', ''))); // 关键字搜索
         if (!empty($search)) {
             $SearchWordLogic = new SearchWordLogic();
@@ -1114,7 +1142,7 @@ class Goods extends Base
         if ($count > 0) {
             // 获取商品数据
             $goodsLogic = new GoodsLogic();
-            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sort, $sort_asc, $page, $this->user_id);
+            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user_id);
         }
         $return['goods_list'] = isset($goodsData) ? $goodsData['goods_list'] : [];
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
@@ -1134,6 +1162,24 @@ class Goods extends Base
         }
         $sort = I('get.sort', 'goods_id'); // 排序
         $sort_asc = I('get.sort_asc', 'asc'); // 排序
+        $sortArr = [];
+        switch ($sort) {
+            case 'sales_sum':
+                // 销量
+                $sortArr = [$sort => $sort_asc];
+                break;
+            case 'shop_price':
+                // 价格
+                $sortArr = ['shop_price - exchange_integral' => $sort_asc];
+                break;
+            case 'goods_id':
+                // 新品
+                $sortArr = [
+                    'is_new' => $sort_asc,
+                    'goods_id' => $sort_asc
+                ];
+                break;
+        }
         $filter_param = []; // 筛选数组
         $id = I('get.id/d', 0); // 当前分类id
         if ($id != 0) {
@@ -1154,7 +1200,7 @@ class Goods extends Base
         if ($count > 0) {
             // 获取商品数据
             $goodsLogic = new GoodsLogic();
-            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sort, $sort_asc, $page, $this->user_id);
+            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user_id);
         }
 
         $navigate_cat = navigate_goods($id); // 面包屑导航
@@ -1487,6 +1533,24 @@ class Goods extends Base
         }
         $sort = I('get.sort', 'goods_id'); // 排序
         $sort_asc = I('get.sort_asc', 'asc'); // 排序
+        $sortArr = [];
+        switch ($sort) {
+            case 'sales_sum':
+                // 销量
+                $sortArr = [$sort => $sort_asc];
+                break;
+            case 'shop_price':
+                // 价格
+                $sortArr = ['shop_price - exchange_integral' => $sort_asc];
+                break;
+            case 'goods_id':
+                // 新品
+                $sortArr = [
+                    'is_new' => $sort_asc,
+                    'goods_id' => $sort_asc
+                ];
+                break;
+        }
         $filter_param = []; // 筛选数组
         $id = I('get.id/d', 0); // 当前分类id
         $filter_param['id'] = $id; //加入筛选条件中
@@ -1550,7 +1614,7 @@ class Goods extends Base
         if ($count > 0) {
             // 获取商品数据
             $goodsLogic = new GoodsLogic();
-            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sort, $sort_asc, $page, $this->user_id);
+            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user_id);
         }
 
         $navigate_cat = navigate_goods($id); // 面包屑导航
@@ -1886,6 +1950,24 @@ class Goods extends Base
         //C('URL_MODEL',0);
         $sort = I('sort', 'goods_id'); // 排序
         $sort_asc = I('sort_asc', 'asc'); // 排序
+        $sortArr = [];
+        switch ($sort) {
+            case 'sales_sum':
+                // 销量
+                $sortArr = [$sort => $sort_asc];
+                break;
+            case 'shop_price':
+                // 价格
+                $sortArr = ['shop_price - exchange_integral' => $sort_asc];
+                break;
+            case 'goods_id':
+                // 新品
+                $sortArr = [
+                    'is_new' => $sort_asc,
+                    'goods_id' => $sort_asc
+                ];
+                break;
+        }
         $filter_param = []; // 筛选数组
         $id = I('get.id/d', 0); // 当前分类id
 //        $brand_id = I('brand_id', 0);
@@ -1957,7 +2039,7 @@ class Goods extends Base
         if ($count > 0) {
             // 获取商品数据
             $goodsLogic = new GoodsLogic();
-            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sort, $sort_asc, $page, $this->user_id);
+            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user_id);
         }
 
         $return['goods_list'] = isset($goodsData) ? $goodsData['goods_list'] : [];
@@ -2375,6 +2457,24 @@ class Goods extends Base
         $cateId = I('cate_id', 0);
         $sort = I('sort', 'goods_id');
         $sortAsc = I('sort_asc', 'desc');
+        $sortArr = [];
+        switch ($sort) {
+            case 'sales_sum':
+                // 销量
+                $sortArr = [$sort => $sortAsc];
+                break;
+            case 'shop_price':
+                // 价格
+                $sortArr = ['shop_price - exchange_integral' => $sortAsc];
+                break;
+            case 'goods_id':
+                // 新品
+                $sortArr = [
+                    'is_new' => $sortAsc,
+                    'goods_id' => $sortAsc
+                ];
+                break;
+        }
         $where = [
             'is_on_sale' => 1,
             'is_abroad' => 1
@@ -2393,7 +2493,7 @@ class Goods extends Base
         $page = new Page($count, 10);
         // 获取商品数据
         $goodsLogic = new GoodsLogic();
-        $goodsList = $goodsLogic->getGoodsList($goodsIds, $sort, $sortAsc, $page, null, ['is_abroad' => 1])['goods_list'];
+        $goodsList = $goodsLogic->getGoodsList($goodsIds, $sortArr, $page, null, ['is_abroad' => 1])['goods_list'];
 
         return json(['status' => 1, 'result' => ['goods_list' => $goodsList]]);
     }
