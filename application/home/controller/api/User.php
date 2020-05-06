@@ -2891,9 +2891,14 @@ class User extends Base
         $taskLogic = new TaskLogic(0);
         // 任务列表
         $taskList = $taskLogic->taskList();
+        // 已失效的任务
+        $invalidTaskIds = [];
         // 任务奖励
         $taskData = [];
         foreach ($taskList as $task) {
+            if ($task['is_open'] == 0 || $task['start_time'] > time() || $task['end_time'] < time()) {
+                $invalidTaskIds[] = $task['id'];
+            }
             $taskReward = $taskLogic->taskReward($task['id']);
             $taskRewardData = [];
             foreach ($taskReward as $k => $reward) {
@@ -3021,13 +3026,21 @@ class User extends Base
         foreach ($cateData as $key => $cate) {
             if (empty($cate['list'])) {
                 unset($cateData[$key]);
+                continue;
             }
-            // 查看分类下的任务是否已全都完成
+            // 查看分类下的任务是否：1、有可领取奖励 2、已全都完成
+            $canGet = false;
             foreach ($cate['list'] as $list) {
                 if ($list['is_finished'] == 0) {
                     $cateData[$key]['is_all_finished'] = 0;
                     break;
+                } elseif ($list['is_got'] == 0) {
+                    $canGet = true;
                 }
+            }
+            if (in_array($cate['list'][0]['task_id'], $invalidTaskIds) && !$canGet) {
+                // 任务已失效，且没有未领取的奖励
+                unset($cateData[$key]);
             }
         }
         $task = [
@@ -3583,7 +3596,7 @@ class User extends Base
         $userTaskLog = M('task_log tl')
             ->join('task t', 't.id = tl.task_id')
             ->join('task_reward tr', 'tr.reward_id = tl.task_reward_id')
-            ->where(['t.is_open' => 1, 't.start_time' => ['<=', time()], 't.end_time' => ['>=', time()]])
+//            ->where(['t.is_open' => 1, 't.start_time' => ['<=', time()], 't.end_time' => ['>=', time()]])
             ->where(['tl.user_id' => $this->user_id, 'tl.type' => 1, 'tl.status' => 0])
             ->order('created_at desc')
             ->field('t.id, t.title')->find();
