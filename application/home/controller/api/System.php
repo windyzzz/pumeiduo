@@ -119,4 +119,13 @@ class System
         $count = M('download_log')->where(['type' => $type])->count('id');
         return json(['status' => 1, 'result' => ['count' => $count]]);
     }
+
+    /**
+     * 是否展示第三方登录方式（针对IOS的苹果登录）
+     * @return \think\response\Json
+     */
+    public function showLoginMethod()
+    {
+        return json(['status' => 1, 'result' => ['state' => 1]]);
+    }
 }
