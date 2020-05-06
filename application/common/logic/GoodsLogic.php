@@ -955,19 +955,18 @@ class GoodsLogic extends Model
      * 获取商品数据
      * @param $filter_goods_id
      * @param $sort
-     * @param $sort_asc
      * @param $page
      * @param null $userId
      * @return array
      */
-    public function getGoodsList($filter_goods_id, $sort, $sort_asc, $page, $userId = null)
+    public function getGoodsList($filter_goods_id, $sort, $page, $userId = null)
     {
         // 商品列表
         $goodsList = Db::name('goods')->where('goods_id', 'in', $filter_goods_id)
             ->field('goods_id, cat_id, extend_cat_id, goods_sn, goods_name, goods_type, brand_id, store_count, comment_count, goods_remark,
                 market_price, shop_price, cost_price, give_integral, exchange_integral, original_img, limit_buy_num, trade_type,
                 is_on_sale, is_free_shipping, is_recommend, is_new, is_hot, sale_type')
-            ->order([$sort => $sort_asc])->limit($page->firstRow . ',' . $page->listRows)
+            ->order($sort)->limit($page->firstRow . ',' . $page->listRows)
             ->select();
         // 商品规格属性
         $goodsItem = Db::name('spec_goods_price')->where(['goods_id' => ['in', $filter_goods_id]])->group('goods_id')->getField('goods_id, item_id', true);
