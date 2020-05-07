@@ -1621,3 +1621,34 @@ function hideStr($string, $bengin = 0, $len = 4, $type = 0, $glue = '')
     }
     return $string;
 }
+
+/**
+ * 检查银行卡卡号（简单）
+ * @param $card
+ * @return bool
+ */
+function checkBankCard($card)
+{
+    $arr_no = str_split($card);
+    $last_n = $arr_no[count($arr_no) - 1];
+    krsort($arr_no);
+    $i = 1;
+    $total = 0;
+    foreach ($arr_no as $n) {
+        if ($i % 2 == 0) {
+            $ix = $n * 2;
+            if ($ix >= 10) {
+                $nx = 1 + ($ix % 10);
+                $total += $nx;
+            } else {
+                $total += $ix;
+            }
+        } else {
+            $total += $n;
+        }
+        $i++;
+    }
+    $total -= $last_n;
+    $total *= 9;
+    return $last_n == ($total % 10);
+}

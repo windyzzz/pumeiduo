@@ -991,6 +991,10 @@ class User extends Base
                 return json(['status' => 0, 'msg' => '请填写正确的身份证格式']);
             }
 
+            if ($post['bank_card'] && !checkBankCard($post['bank_card'])) {
+                return json(['status' => 0, 'msg' => '请填写正确的银行卡卡号']);
+            }
+
             if (!$userLogic->update_info($this->user_id, $post)) {
                 return json(['status' => 0, 'msg' => '操作失败', 'result' => null]);
             }
@@ -2336,7 +2340,7 @@ class User extends Base
             if (!$data['bank_name']) {
                 return json(['status' => 0, 'msg' => '请填写银行名称']);
             }
-            if (!$data['bank_card']) {
+            if (!$data['bank_card'] || !checkBankCard($data['bank_card'])) {
                 return json(['status' => 0, 'msg' => '请填写银行账号']);
             }
             if (!$data['real_name']) {
