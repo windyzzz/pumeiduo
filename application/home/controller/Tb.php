@@ -34,11 +34,12 @@ class Tb extends Controller
                 switch ($v['type']) {
                     case 6:
                         // 订单
-//                        $order_add_time = M('order')->where(array('order_id' => $v['from_id']))->getField('add_time');
-//                        if ($order_add_time < 1561910400) {
-//                            M('tb')->where(array('id' => $v['id']))->data(array('tb_time' => NOW_TIME, 'status' => 1))->save();
-//                            continue;
-//                        }
+                        $order_add_time = M('order')->where(array('order_id' => $v['from_id']))->getField('add_time');
+                        if (empty($order_add_time) || $order_add_time < 1561910400) {
+                            // 旧订单不处理
+                            M('tb')->where(array('id' => $v['id']))->update(array('tb_time' => NOW_TIME, 'status' => 1, 'msg' => '旧订单不处理'));
+                            continue;
+                        }
                         $tb_data['data'] = $this->send_order($v['from_id']);
                         break;
                     case 8:
