@@ -177,7 +177,7 @@ class Cart extends Base
             }
             // 组装数据
             foreach ($cartData as $k => $v) {
-                if ($v['goods']['is_abroad'] == 0) {
+                if ($v['goods']['is_abroad'] == 1) {
                     // 屏蔽海外购
                     $cartNum -= 1;
                     continue;
