@@ -2917,6 +2917,20 @@ class User extends Base
                     case 3:
                         // 优惠券
                         $couponIds = explode('-', $reward['reward_coupon_id']);
+                        $couponInfo = M('coupon')->where(['id' => ['IN', $couponIds], 'status' => 1])->select();
+                        if (empty($couponInfo)) {
+                            // 优惠券无法被领取
+                            continue 2;
+                        }
+                        foreach ($couponInfo as $coupon) {
+                            if ($coupon['send_end_time'] < time()) {
+                                // 领取时间已过
+                                continue 3;
+                            } elseif ($coupon['send_num'] >= $coupon['createnum'] && 0 != $coupon['createnum']) {
+                                // 优惠券被抢完
+                                continue 3;
+                            }
+                        }
                         $rewardThing = '优惠券x' . count($couponIds);
                         break;
                     default:
@@ -3033,7 +3047,6 @@ class User extends Base
             foreach ($cate['list'] as $list) {
                 if ($list['is_finished'] == 0) {
                     $cateData[$key]['is_all_finished'] = 0;
-                    break;
                 } elseif ($list['is_got'] == 0) {
                     $canGet = true;
                 }
@@ -3597,18 +3610,61 @@ class User extends Base
             ->join('task t', 't.id = tl.task_id')
             ->join('task_reward tr', 'tr.reward_id = tl.task_reward_id')
 //            ->where(['t.is_open' => 1, 't.start_time' => ['<=', time()], 't.end_time' => ['>=', time()]])
-            ->where(['tl.user_id' => $this->user_id, 'tl.type' => 1, 'tl.status' => 0])
+            ->where(['t.id' => ['not in', [1, 4]], 'tl.user_id' => $this->user_id, 'tl.type' => 1, 'tl.status' => 0])
             ->order('created_at desc')
-            ->field('t.id, t.title')->find();
+            ->field('t.id, t.title, tr.reward_type, tr.reward_coupon_id')->select();
         if (!empty($userTaskLog)) {
-            $returnData['list'][] = [
-                'type' => 1,
-                'is_note' => 1,
-                'note_data' => [
-                    'id' => $userTaskLog['id'],
-                    'title' => $userTaskLog['title']
-                ]
-            ];
+            $taskData = [];
+            foreach ($userTaskLog as $taskLog) {
+                if ($taskLog['reward_type'] == 3) {
+                    // 查看优惠券是否能领取
+                    $couponIds = explode('-', $taskLog['reward_coupon_id']);
+                    $couponInfo = M('coupon')->where(['id' => ['IN', $couponIds], 'status' => 1])->select();
+                    if (empty($couponInfo)) {
+                        // 优惠券无法被领取
+                        continue;
+                    }
+                    foreach ($couponInfo as $coupon) {
+                        if ($coupon['send_end_time'] < time()) {
+                            // 领取时间已过
+                            continue 2;
+                        } elseif ($coupon['send_num'] >= $coupon['createnum'] && 0 != $coupon['createnum']) {
+                            // 优惠券被抢完
+                            continue 2;
+                        }
+                    }
+                    $taskData = [
+                        'id' => $taskLog['id'],
+                        'title' => $taskLog['title']
+                    ];
+                    break;
+                } else {
+                    $taskData = [
+                        'id' => $taskLog['id'],
+                        'title' => $taskLog['title']
+                    ];
+                    break;
+                }
+            }
+            if (!empty($taskData)) {
+                $returnData['list'][] = [
+                    'type' => 1,
+                    'is_note' => 1,
+                    'note_data' => [
+                        'id' => $taskData['id'],
+                        'title' => $taskData['title']
+                    ]
+                ];
+            } else {
+                $returnData['list'][] = [
+                    'type' => 1,
+                    'is_note' => 0,
+                    'note_data' => [
+                        'id' => '0',
+                        'title' => ''
+                    ]
+                ];
+            }
         } else {
             $returnData['list'][] = [
                 'type' => 1,
