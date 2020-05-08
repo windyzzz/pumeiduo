@@ -2342,7 +2342,7 @@ class User extends Base
                 return json(['status' => 0, 'msg' => '请填写银行名称']);
             }
             if (!$data['bank_card'] || !checkBankCard($data['bank_card'])) {
-                return json(['status' => 0, 'msg' => '请填写银行账号']);
+                return json(['status' => 0, 'msg' => '请填写正确的银行账号']);
             }
             if (!$data['real_name']) {
                 return json(['status' => 0, 'msg' => '请填写开户名']);

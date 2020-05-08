@@ -8685,4 +8685,31 @@ class Cron1 extends Controller
             var_dump('fail');
         }
     }
+
+    function downloadBankImg()
+    {
+//        $urlArr = M('bank')->field('icon')->select();
+        foreach ($urlArr as $url) {
+            $url = $url['icon'];
+            if (!@fopen($url, 'r')) {
+                continue;
+            }
+            $filename = substr($url, strripos($url, '/') + 1);
+
+            $pic_local_path = dirname(__FILE__) . '/temp_pic/';
+            if (!file_exists($pic_local_path)) {
+                mkdir($pic_local_path, 0777);
+                @chmod($pic_local_path, 0777);
+            }
+            $pic_local = $pic_local_path . $filename;
+
+            ob_start(); //打开输出
+            readfile($url); //输出图片文件
+            $img = ob_get_contents(); //得到浏览器输出
+            ob_end_clean(); //清除输出并关闭
+            file_put_contents($pic_local, $img);
+        }
+
+        return json(['status' => 1]);
+    }
 }
