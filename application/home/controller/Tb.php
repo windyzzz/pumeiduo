@@ -173,10 +173,12 @@ class Tb extends Controller
         $data = array();
         $data['order'] = array(
             'order_sn' => $order['order_sn'],
+            'order_type' => $order['order_type'],
             'order_status' => $order['order_status'],
             'shipping_status' => $order['shipping_status'],
             'pay_status' => $order['pay_status'],
             'consignee' => $order['consignee'],
+            'id_card' => $order['id_card'],
             'country' => $order['country'],
             'province' => $order['province'],
             'city' => $order['city'],
@@ -186,7 +188,6 @@ class Tb extends Controller
             'shipping_code' => $order['shipping_code'],
             'shipping_name' => $order['shipping_name'],
             'pay_code' => $order['pay_code'],
-
             'goods_price' => $order['goods_price'],
             'shipping_price' => $order['shipping_price'],
             'order_amount' => $order['order_amount'],
@@ -197,7 +198,6 @@ class Tb extends Controller
             'pay_time' => $order['pay_time'],
             'user_note' => $order['user_note'],
             'goods_area' => 3,
-
         );
         //$user = get_user_info($order['user_id'],0,'','user_name,true_name,mobile');
         $delivery_record = M('delivery_doc')->where('order_id=' . $order_id)->order('id desc')->limit(1)->find();
