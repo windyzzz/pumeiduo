@@ -19,6 +19,7 @@ use app\common\logic\PushLogic;
 use app\common\logic\TaskLogic;
 use app\common\logic\Token as TokenLogic;
 use app\common\logic\UsersLogic;
+use app\home\controller\Api as ApiController;
 use think\Db;
 use think\Hook;
 use think\Loader;
@@ -3694,7 +3695,15 @@ class User extends Base
         if (empty($idCard)) return json(['status' => 0, 'msg' => '请传入身份证号码']);
         if (!check_id_card($idCard)) return json(['status' => 0, 'msg' => '请填写正确的身份证号码']);
         // 第三方验证姓名与身份证
-        return json(['status' => 0, 'msg' => "请填写正确的身份信息\r\n（身份证号以及姓名）"]);
+        $apiController = new ApiController();
+        $query = [
+            'id_card' => $idCard,
+            'real_name' => $realName
+        ];
+        $res = $apiController->checkIdCard($query, 'array');
+        if ($res['status'] != '01') {
+            return json(['status' => 0, 'msg' => "请填写正确的身份信息\r\n（身份证号以及姓名）"]);
+        }
         return json(['status' => 1]);
     }
 }

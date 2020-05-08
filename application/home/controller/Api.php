@@ -455,4 +455,56 @@ class Api extends Base
         Cookie::set('city_id', $city_id);
         Cookie::set('district_id', $district_id);
     }
+
+    /**
+     * 检查身份证信息
+     * @param array $request
+     * @param string $out
+     * @return bool|string|\think\response\Json
+     */
+    public function checkIdCard($request = [], $out = 'json')
+    {
+        $idcard = isset($request['id_card']) ? $request['id_card'] : I('id_card', '');
+        $realname = isset($request['real_name']) ? $request['real_name'] : I('real_name', '');
+        if (!$idcard || !$realname) {
+            switch ($out) {
+                case 'json':
+                    return json(['status' => -1, 'msg' => '参数有误', 'result' => '']);
+                default:
+                    return ['status' => -1, 'msg' => '参数有误', 'result' => ''];
+            }
+        }
+        $host = 'https://checkid.market.alicloudapi.com';
+        $path = '/IDCard';
+        $method = 'GET';
+        $appcode = '0e19cd48e5b6416c8491677adc8e9ae1';
+        $headers = array();
+        array_push($headers, 'Authorization:APPCODE ' . $appcode);
+        $querys = 'idCard=' . $idcard . '&name=' . $realname;
+        $bodys = '';
+        $url = $host . $path . '?' . $querys;
+
+        $curl = curl_init();
+        curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $method);
+        curl_setopt($curl, CURLOPT_URL, $url);
+        curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($curl, CURLOPT_FAILONERROR, false);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($curl, CURLOPT_HEADER, false);
+        //curl_setopt($curl, CURLOPT_HEADER, true); 如不输出json, 请打开这行代码，打印调试头部状态码。
+        //状态码: 200 正常；400 URL无效；401 appCode错误； 403 次数用完； 500 API网管错误
+        if (1 == strpos('$' . $host, 'https://')) {
+            curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
+        }
+        $output = curl_exec($curl);
+        $data = json_decode($output, true);
+
+        switch ($out) {
+            case 'json':
+                return json($data);
+            default:
+                return $data;
+        }
+    }
 }
