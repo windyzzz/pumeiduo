@@ -1159,9 +1159,9 @@ class Pay
             $is_can_buy = true;
             if ($goods_tao_grade) {
                 foreach ($goods_tao_grade as $key => $group_activity) {
-                    if (isset($this->orderPromIds['goods_prom']) && in_array($group_activity['id'], $this->orderPromIds['goods_prom'])) {
-                        continue;
-                    }
+//                    if (isset($this->orderPromIds['goods_prom']) && in_array($group_activity['id'], $this->orderPromIds['goods_prom'])) {
+//                        continue;
+//                    }
                     if ($isOrder && $group_activity['buy_limit'] > 0) {
                         $buy_num = M('order')
                             ->alias('oi')
@@ -1180,12 +1180,11 @@ class Pay
                     }
 //                    $this->payList[$k]['prom_id'] = $group_activity['id'];
 //                    $this->payList[$k]['prom_type'] = 10;
-                    $promAmount = '0';
                     switch ($group_activity['type']) {
                         case 0:
                             // 直接打折
                             $member_goods_price = bcdiv(bcmul($v['member_goods_price'], $group_activity['expression'], 2), 100, 2);
-                            $promAmount = bcmul(bcsub($v['member_goods_price'], $member_goods_price, 2), $v['goods_num'], 2);
+                            $goodsPromAmount = bcadd($goodsPromAmount, bcmul(bcsub($v['member_goods_price'], $member_goods_price, 2), $v['goods_num'], 2), 2);
 
                             $this->payList[$k]['member_goods_price'] = $member_goods_price;
                             $this->orderPromIds['goods_prom'][] = $group_activity['id'];
@@ -1196,7 +1195,7 @@ class Pay
                         case 1:
                             // 减价优惠
                             $member_goods_price = bcsub($v['member_goods_price'], $group_activity['expression'], 2);
-                            $promAmount = bcmul(bcsub($v['member_goods_price'], $member_goods_price, 2), $v['goods_num'], 2);
+                            $goodsPromAmount = bcadd($goodsPromAmount, bcmul(bcsub($v['member_goods_price'], $member_goods_price, 2), $v['goods_num'], 2), 2);
 
                             $this->payList[$k]['member_goods_price'] = $member_goods_price;
                             $this->orderPromIds['goods_prom'][] = $group_activity['id'];
@@ -1229,10 +1228,8 @@ class Pay
                             $pay_list[$k]['prom_id'] = $group_activity['id'];
                             break;
                         default:
-                            $promAmount = '0';
+                            $goodsPromAmount = bcadd($goodsPromAmount, 0, 2);
                     }
-                    $goodsPromAmount = bcadd($goodsPromAmount, $promAmount, 2);
-                    $this->goodsPromAmount = bcadd($this->goodsPromAmount, $goodsPromAmount, 2);
                 }
             }
             if (!$is_can_buy) {
@@ -1240,6 +1237,7 @@ class Pay
                 throw new TpshopException('计算订单价格', 0, ['status' => -1, 'msg' => "超出活动商品：【{$goods_info['goods_name']}】 限购数量， 每人限购 {$group_activity['buy_limit']} 件", 'result' => '']);
             }
         }
+        $this->goodsPromAmount = bcadd($this->goodsPromAmount, $goodsPromAmount, 2);
         // 再计算优惠（满打折、满减价）
         if (!empty($promGoodsData)) {
             $promAmount = '0';

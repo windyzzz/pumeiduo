@@ -2,6 +2,8 @@
 
 namespace app\admin\controller;
 
+use app\admin\logic\GoodsLogic;
+use app\admin\model\Goods as GoodsModel;
 use app\common\model\CateActivity;
 use app\common\model\CateActivityGoods;
 use think\Db;
@@ -123,5 +125,53 @@ class Activity extends Base
         Db::name('cate_activity')->where(['id' => $activityId])->delete();
         Db::name('cate_activity_goods')->where(['cate_act_id' => $activityId])->delete();
         $this->ajaxReturn(['status' => 1, 'msg' => '处理成功']);
+    }
+
+    /**
+     * 商品搜索
+     * @return mixed
+     */
+    public function search_goods()
+    {
+        $goods_id = input('goods_id');
+        $intro = input('intro');
+        $cat_id = input('cat_id');
+        $brand_id = input('brand_id');
+        $keywords = input('keywords');
+        $tpl = input('tpl', 'search_goods');
+        $where = ['store_count' => ['gt', 0], 'is_virtual' => 0, 'is_area_show' => 1];
+        if ($goods_id) {
+            $where['goods_id'] = ['notin', trim($goods_id, ',')];
+        }
+        if ($intro) {
+            $where[$intro] = 1;
+        }
+        if ($cat_id) {
+            $grandson_ids = getCatGrandson($cat_id);
+            $where['cat_id'] = ['in', implode(',', $grandson_ids)];
+        }
+        if ($brand_id) {
+            $where['brand_id'] = $brand_id;
+        }
+        if ($keywords) {
+            $where['goods_name|keywords'] = ['like', '%' . $keywords . '%'];
+        }
+        $Goods = new GoodsModel();
+        $count = $Goods->where($where)->count();
+        $Page = new Page($count, 10);
+        $goodsList = $Goods->where($where)->with('specGoodsPrice')->order('goods_id DESC')->limit($Page->firstRow . ',' . $Page->listRows)->select();
+
+        $types = I('types', 1);
+        $this->assign('types', $types);
+
+        $GoodsLogic = new GoodsLogic();
+        $brandList = $GoodsLogic->getSortBrands();
+        $categoryList = $GoodsLogic->getSortCategory();
+        $this->assign('brandList', $brandList);
+        $this->assign('categoryList', $categoryList);
+        $this->assign('page', $Page);
+        $this->assign('goodsList', $goodsList);
+
+        return $this->fetch($tpl);
     }
 }
