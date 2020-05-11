@@ -1777,7 +1777,9 @@ class Order extends Base
         return $this->fetch();
     }
 
-
+    /**
+     * 导出退换货列表
+     */
     public function export_return_list()
     {
         // 搜索条件
@@ -1796,7 +1798,12 @@ class Order extends Base
         if ('' != $status) {
             $where['status'] = $status;
         }
-        $return_list = M('return_goods')->where($where)->order("$order_by $sort_order")->select();
+        $return_list = M('return_goods rg')->join('order o', 'o.order_id = rg.order_id')->join('users u', 'u.user_id = rg.user_id')
+            ->where($where)->order("$order_by $sort_order")->field('rg.*, o.consignee, u.nickname, u.user_name')->select();
+//        echo '<pre>';
+//        print_r($return_list);
+//        echo '</pre>';
+//        exit();
         $goods_id_arr = get_arr_column($return_list, 'goods_id');
         if (!empty($goods_id_arr)) {
             $goods_list = M('goods')->where('goods_id in (' . implode(',', $goods_id_arr) . ')')->getField('goods_id,goods_name');
@@ -1808,18 +1815,18 @@ class Order extends Base
             $return_list[$key]['return_type'] = $return_type[$item['type']];
             $return_list[$key]['state'] = $state[$item['status']];
         }
-//        echo '<pre>';
-//        print_r($return_list);
-//        echo '</pre>';
-//        exit();
+
         $strTable = '<table width="500" border="1">';
         $strTable .= '<tr>';
         $strTable .= '<td style="text-align:center;font-size:12px;width:180px;">订单编号</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="100">会员ID</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">会员名称</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品名称</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品数量</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">类型</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">金额</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">申请日期</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">收货人</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">状态</td>';
         $strTable .= '</tr>';
 
@@ -1828,10 +1835,14 @@ class Order extends Base
                 $strTable .= '<tr>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;' . $val['order_sn'] . '</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['user_id'] . '</td>';
+                $userName = !empty($val['user_name']) ? $val['user_name'] : $val['nickname'];
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $userName . '</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['goods_name'] . '</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['goods_num'] . '</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['return_type'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['refund_money'] . '</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">' . date('Y-m-d H:i:s', $val['addtime']) . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['consignee'] . '</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['state'] . '</td>';
                 $strTable .= '</tr>';
             }
