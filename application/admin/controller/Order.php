@@ -1840,7 +1840,8 @@ class Order extends Base
                 $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['goods_name'] . '</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['goods_num'] . '</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['return_type'] . '</td>';
-                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['refund_money'] . '</td>';
+                $refundMoney = bcadd($val['refund_money'], $val['refund_electronic'], 2);
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $refundMoney . '</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">' . date('Y-m-d H:i:s', $val['addtime']) . '</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['consignee'] . '</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['state'] . '</td>';
