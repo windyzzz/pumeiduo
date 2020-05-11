@@ -1777,6 +1777,71 @@ class Order extends Base
         return $this->fetch();
     }
 
+
+    public function export_return_list()
+    {
+        // 搜索条件
+        $order_sn = trim(I('order_sn'));
+        $user_id = trim(I('user_id'));
+        $order_by = I('order_by') ? I('order_by') : 'addtime';
+        $sort_order = I('sort_order') ? I('sort_order') : 'desc';
+        $status = I('status');
+        $where = [];
+        if ($order_sn) {
+            $where['order_sn'] = ['like', '%' . $order_sn . '%'];
+        }
+        if ($user_id) {
+            $where['user_id'] = $user_id;
+        }
+        if ('' != $status) {
+            $where['status'] = $status;
+        }
+        $return_list = M('return_goods')->where($where)->order("$order_by $sort_order")->select();
+        $goods_id_arr = get_arr_column($return_list, 'goods_id');
+        if (!empty($goods_id_arr)) {
+            $goods_list = M('goods')->where('goods_id in (' . implode(',', $goods_id_arr) . ')')->getField('goods_id,goods_name');
+        }
+        $state = C('REFUND_STATUS');
+        $return_type = C('RETURN_TYPE');
+        foreach ($return_list as $key => $item) {
+            $return_list[$key]['goods_name'] = isset($goods_list) ? $goods_list[$item['goods_id']] : '';
+            $return_list[$key]['return_type'] = $return_type[$item['type']];
+            $return_list[$key]['state'] = $state[$item['status']];
+        }
+//        echo '<pre>';
+//        print_r($return_list);
+//        echo '</pre>';
+//        exit();
+        $strTable = '<table width="500" border="1">';
+        $strTable .= '<tr>';
+        $strTable .= '<td style="text-align:center;font-size:12px;width:180px;">订单编号</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="100">会员ID</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品名称</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品数量</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">类型</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">申请日期</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">状态</td>';
+        $strTable .= '</tr>';
+
+        if (is_array($return_list)) {
+            foreach ($return_list as $k => $val) {
+                $strTable .= '<tr>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;' . $val['order_sn'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['user_id'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['goods_name'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['goods_num'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['return_type'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . date('Y-m-d H:i:s', $val['addtime']) . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['state'] . '</td>';
+                $strTable .= '</tr>';
+            }
+        }
+        $strTable .= '</table>';
+        unset($orderList);
+        downloadExcel($strTable, 'return_list');
+        exit();
+    }
+
     /**
      * 添加订单.
      */
