@@ -37,7 +37,7 @@ class CreatePush extends Migrator
             ->addColumn('desc', 'string', ['default' => '', 'comment' => '简介'])
             ->addColumn('distribute_level', 'integer', ['default' => 0, 'comment' => '推送范围（会员等级），0为全部'])
             ->addColumn('push_time', 'integer', ['default' => 0, 'comment' => '推送时间'])
-            ->addColumn('status', 'integer', ['limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
+            ->addColumn('status', 'integer', ['default' => 0, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
                 'comment' => '推送状态：0未推送 1推送成功 -1推送失败'])
             ->addColumn('create_time', 'integer', ['comment' => '创建时间'])
             ->create();
