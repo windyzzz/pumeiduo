@@ -1652,3 +1652,43 @@ function checkBankCard($card)
     $total *= 9;
     return $last_n == ($total % 10);
 }
+
+/**
+ * 获取xls(x)文件内容
+ * @param $file
+ * @return array
+ * @throws PHPExcel_Exception
+ * @throws PHPExcel_Reader_Exception
+ */
+function getXlsInfo($file)
+{
+    include_once "plugins/PHPExcel.php";
+    $objRead = new \PHPExcel_Reader_Excel2007();   //建立reader对象
+    if (!$objRead->canRead($file)) {
+        $objRead = new \PHPExcel_Reader_Excel5();
+        if (!$objRead->canRead($file)) {
+            die('No Excel!');
+        }
+    }
+
+    $cellName = array('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'AA', 'AB', 'AC', 'AD', 'AE', 'AF', 'AG', 'AH', 'AI', 'AJ', 'AK', 'AL', 'AM', 'AN', 'AO', 'AP', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AV', 'AW', 'AX', 'AY', 'AZ');
+
+    $obj = $objRead->load($file);  //建立excel对象
+    $currSheet = $obj->getSheet(0);   //获取指定的sheet表
+    $columnH = $currSheet->getHighestColumn();   //取得最大的列号
+    $columnCnt = array_search($columnH, $cellName);
+    $rowCnt = $currSheet->getHighestRow();   //获取总行数
+
+    $data = array();
+    for ($_row = 1; $_row <= $rowCnt; $_row++) {  //读取内容
+        for ($_column = 0; $_column <= $columnCnt; $_column++) {
+            $cellId = $cellName[$_column] . $_row;
+            $cellValue = $currSheet->getCell($cellId)->getValue();
+            if ($cellValue instanceof \PHPExcel_RichText) {   //富文本转换字符串
+                $cellValue = $cellValue->__toString();
+            }
+            $data[$_row][$cellName[$_column]] = $cellValue;
+        }
+    }
+    return $data;
+}
