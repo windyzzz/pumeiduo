@@ -259,6 +259,8 @@ class GroupBuyLogic extends Prom
             // $buyGoods['member_goods_price'] = $this->GroupBuy['price'];
             $buyGoods['prom_type'] = 2;
             $buyGoods['prom_id'] = $this->GroupBuy['id'];
+            $buyGoods['goods']['retail_pv'] = bcmul($buyGoods['goods']['retail_pv'], ($buyGoods['member_goods_price'] / $buyGoods['goods_price']), 2);
+            $buyGoods['goods']['integral_pv'] = bcmul($buyGoods['goods']['integral_pv'], ($buyGoods['member_goods_price'] / $buyGoods['goods_price']), 2);
         }
 
         return $buyGoods;
