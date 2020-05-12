@@ -2513,7 +2513,7 @@ class Goods extends Base
             $cartLogic->setUserId($this->user_id);
             // 获取订单商品数据
             $goodsLogic = new GoodsLogic();
-            $res = $goodsLogic->getOrderGoodsData($cartLogic, $goodsId, $itemId, 1, 1, '', $this->isApp);
+            $res = $goodsLogic->getOrderGoodsData($cartLogic, $goodsId, $itemId, 1, 1, '', $this->isApp, true);
             if ($res['status'] != 1) {
                 return json($res);
             } else {

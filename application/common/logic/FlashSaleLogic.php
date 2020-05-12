@@ -131,7 +131,7 @@ class FlashSaleLogic extends Prom
      *
      * @author lxl 2017-5-11
      *
-     * @param $user_id|用户ID
+     * @param $user_id |用户ID
      *
      * @return mixed
      */
@@ -231,21 +231,21 @@ class FlashSaleLogic extends Prom
      *
      * @throws TpshopException
      */
-    public function buyNow($buyGoods, $buyType)
+    public function buyNow($buyGoods, $buyType, $passAuth)
     {
         if ($this->checkActivityIsAble()) {
-            if ($this->flashSale['buy_limit'] != 0 && $buyGoods['goods_num'] > $this->flashSale['buy_limit']) {
-                throw new TpshopException('抢购商品立即购买', 0, ['status' => 0, 'msg' => '每人限购'.$this->flashSale['buy_limit'].'件', 'result' => '']);
+            if ($this->flashSale['buy_limit'] != 0 && $buyGoods['goods_num'] > $this->flashSale['buy_limit'] && !$passAuth) {
+                throw new TpshopException('抢购商品立即购买', 0, ['status' => 0, 'msg' => '每人限购' . $this->flashSale['buy_limit'] . '件', 'result' => '']);
             }
         }
         $userFlashOrderGoodsNum = $this->getUserFlashOrderGoodsNum($buyGoods['user_id']); //获取用户抢购已购商品数量
         $userBuyGoodsNum = $buyGoods['goods_num'] + $userFlashOrderGoodsNum;
-        if ($this->flashSale['buy_limit'] != 0 && $userBuyGoodsNum > $this->flashSale['buy_limit']) {
-            throw new TpshopException('抢购商品立即购买', 0, ['status' => 0, 'msg' => '每人限购'.$this->flashSale['buy_limit'].'件，您已下单'.$userFlashOrderGoodsNum.'件', 'result' => '']);
+        if ($this->flashSale['buy_limit'] != 0 && $userBuyGoodsNum > $this->flashSale['buy_limit'] && !$passAuth) {
+            throw new TpshopException('抢购商品立即购买', 0, ['status' => 0, 'msg' => '每人限购' . $this->flashSale['buy_limit'] . '件，您已下单' . $userFlashOrderGoodsNum . '件', 'result' => '']);
         }
         $flashSalePurchase = $this->flashSale['goods_num'] - $this->flashSale['buy_num']; //抢购剩余库存
-        if ($buyGoods['goods_num'] > $flashSalePurchase) {
-            throw new TpshopException('抢购商品立即购买', 0, ['status' => 0, 'msg' => '商品库存不足，剩余'.$flashSalePurchase, 'result' => '']);
+        if ($buyGoods['goods_num'] > $flashSalePurchase && !$passAuth) {
+            throw new TpshopException('抢购商品立即购买', 0, ['status' => 0, 'msg' => '商品库存不足，剩余' . $flashSalePurchase, 'result' => '']);
         }
         $member_goods_price = $this->flashSale['price'];
         $use_integral = 0;

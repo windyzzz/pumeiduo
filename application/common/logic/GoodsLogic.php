@@ -1560,9 +1560,10 @@ class GoodsLogic extends Model
      * @param $payType
      * @param $cartIds
      * @param $isApp
+     * @param $passAuth
      * @return array
      */
-    public function getOrderGoodsData($cartLogic, $goodsId, $itemId, $goodsNum, $payType, $cartIds, $isApp)
+    public function getOrderGoodsData($cartLogic, $goodsId, $itemId, $goodsNum, $payType, $cartIds, $isApp, $passAuth = false)
     {
         if (!empty($goodsId) && empty(trim($cartIds))) {
             /*
@@ -1574,7 +1575,7 @@ class GoodsLogic extends Model
             $cartLogic->setType($payType);
             $cartLogic->setCartType(0);
             try {
-                $buyGoods = $cartLogic->buyNow($isApp);
+                $buyGoods = $cartLogic->buyNow($isApp, $passAuth);
             } catch (TpshopException $tpE) {
                 $error = $tpE->getErrorArr();
                 return ['status' => 0, 'msg' => $error['msg']];
