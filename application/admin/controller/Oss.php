@@ -117,7 +117,7 @@ class Oss extends Base
 
         // 4.获取回调body
         $body = file_get_contents('php://input');
-        Log::INFO('直传测试:'.$body);
+        Log::write('直传测试:'.$body,'oss');
         // 5.拼接待签名字符串
         $authStr = '';
         $path = $_SERVER['REQUEST_URI'];
