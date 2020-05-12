@@ -2463,11 +2463,10 @@ class Goods extends Base
             // 用户默认地址
             $userAddress = get_user_address_list_new($this->user_id, true);
         } else {
-            $userAddress = Db::name('UserAddress')->where('address_id', $addressId)->find();
+            $userAddress = get_user_address_list_new($this->user_id, false, $addressId);
             if (empty($userAddress)) {
                 return json(['status' => 0, 'msg' => '收货人信息不存在']);
             }
-            $userAddress = [$userAddress];
         }
         if (!empty($userAddress)) {
             $userAddress[0]['out_range'] = 0;
