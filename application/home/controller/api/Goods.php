@@ -2457,9 +2457,18 @@ class Goods extends Base
     {
         $goodsId = I('goods_id', '');
         $itemId = I('item_id', '');
+        $addressId = I('address_id', '');
 
-        // 用户默认地址
-        $userAddress = get_user_address_list_new($this->user_id, true);
+        if (empty($addressId)) {
+            // 用户默认地址
+            $userAddress = get_user_address_list_new($this->user_id, true);
+        } else {
+            $userAddress = Db::name('UserAddress')->where('address_id', $addressId)->find();
+            if (empty($userAddress)) {
+                return json(['status' => 0, 'msg' => '收货人信息不存在']);
+            }
+            $userAddress = [$userAddress];
+        }
         if (!empty($userAddress)) {
             $userAddress[0]['out_range'] = 0;
             unset($userAddress[0]['zipcode']);
