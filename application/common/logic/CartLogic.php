@@ -194,9 +194,11 @@ class CartLogic extends Model
         if (empty($this->specGoodsPrice)) {
             $buyGoods['goods']['spec_key'] = '';
             $buyGoods['goods']['spec_key_name'] = '';
-            $specGoodsPriceCount = Db::name('SpecGoodsPrice')->where('goods_id', $this->goods['goods_id'])->count('item_id');
-            if ($specGoodsPriceCount > 0) {
-                throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '必须传递商品规格', 'result' => '']);
+            $itemId = Db::name('SpecGoodsPrice')->where('goods_id', $this->goods['goods_id'])->value('item_id');
+            if ($itemId) {
+//                throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '必须传递商品规格', 'result' => '']);
+                // 默认第一个商品规格
+                $this->setSpecGoodsPriceModel($itemId);
             }
             $prom_id = $this->goods['prom_id'];
             $prom_type = $this->goods['prom_type'];
