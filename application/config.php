@@ -260,7 +260,9 @@ return [
     /** oss */
     'OSS_ACCESSKEY_ID' => \think\Env::get('OSS.ACCESSKEY.ID'),
     'OSS_ACCESSKEY_SECRET' => \think\Env::get('OSS.ACCESSKEY.SECRET'),
-    'OSS_CALLBACK_URL'=>\think\Env::get('OSS.CALLBACK.URL'),
+    'OSS_ENDPOINT' => \think\Env::get('OSS.ENDPOINT'),
+    'OSS_BUCKET' => \think\Env::get('OSS.BUCKET'),
+    'OSS_CALLBACK_URL' => \think\Env::get('OSS.CALLBACK.URL'),
     //redis储存数据的时间
     'REDIS_TIME' => 86400,
     'REDIS_DAY' => 7,

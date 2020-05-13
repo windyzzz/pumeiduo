@@ -635,12 +635,12 @@
 		<div class="ncap-form-default tab_div_2" style="display:none;">
 
             <dl class="row">
-                <input type="hidden" value="" name="video_path" id="video_input" />
+                <input type="hidden" value="{$goodsInfo['video']}" name="video_path" id="video_input" />
 
-                <video style="" controls="controls" width="600" height="300" id="aa"></video>
+                <video style="" controls="controls" width="600" height="300" id="video_tag" src="{$video_url}"></video>
                 <div id="container">
                     <a id="selectfiles" href="javascript:void(0);" class='btn'>选择文件</a>
-                    <b style="font-size: 16px; display: none;" id="percent">上传进度:87%</b>
+                    <b style="font-size: 16px; display: none;" id="percent">上传进度:0%</b>
                 </div>
             </dl>
 

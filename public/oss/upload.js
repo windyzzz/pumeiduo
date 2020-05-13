@@ -89,7 +89,7 @@ function calculate_object_name(filename) {
         g_object_name += "${filename}"
     } else if (g_object_name_type == 'random_name') {
         suffix = get_suffix(filename)
-        g_object_name = key + random_string(10) + suffix
+        g_object_name = key + random_string(32) + suffix
     }
     return ''
 }
@@ -160,7 +160,7 @@ var uploader = new plupload.Uploader({
 
             var fr = new mOxie.FileReader();
             fr.onload = function () {
-                $("#aa").attr('src',fr.result);
+                $("#video_tag").attr('src',fr.result);
             }
 
             for (var i=0; i<files.length; i++){
@@ -201,6 +201,7 @@ var uploader = new plupload.Uploader({
         FileUploaded: function (up, file, info) {
             if (info.status == 200) {
                 var res=JSON.parse(info.response)
+                console.log(res)
                 $('#video_input').val(res.filename)
             } else if (info.status == 203) {
                 alert('上传到OSS成功，但是oss访问用户设置的上传回调服务器失败');

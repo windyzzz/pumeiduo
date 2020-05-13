@@ -596,6 +596,8 @@ class Goods extends Base
         $this->assign('brandList', $brandList);
         $this->assign('goodsType', $goodsType);
         $this->assign('goodsInfo', $goodsInfo);  // 商品详情
+        $this->assign('video_url',$goodsInfo['video']?\plugins\Oss::url($goodsInfo['video']):'');  // 视频url
+
         $goodsImages = M('GoodsImages')->where('goods_id =' . I('GET.id', 0))->select();
         $this->assign('goodsImages', $goodsImages);  // 商品相册
         $goodsSeries = M('GoodsSeries')
