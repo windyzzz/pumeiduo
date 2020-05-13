@@ -92,6 +92,7 @@
 <load href="__ROOT__/public/plugins/Ueditor/ueditor.all.min.js"/>
 <script type="text/javascript" charset="utf-8" src="__ROOT__/public/plugins/Ueditor/lang/zh-cn/zh-cn.js"></script>
 <!--以上是在线编辑器 代码  end-->
+
 <body style="background-color: #FFF; overflow: auto;">
 <div id="append_parent"></div>
 <div id="ajaxwaitid"></div>
@@ -632,6 +633,17 @@
 <!--通用信息-->
 <!-- 商品相册-->
 		<div class="ncap-form-default tab_div_2" style="display:none;">
+
+            <dl class="row">
+                <input type="hidden" value="" name="video_path" id="video_input" />
+
+                <video style="" controls="controls" width="600" height="300" id="aa"></video>
+                <div id="container">
+                    <a id="selectfiles" href="javascript:void(0);" class='btn'>选择文件</a>
+                    <b style="font-size: 16px; display: none;" id="percent">上传进度:87%</b>
+                </div>
+            </dl>
+
             <dl class="row">
                          <div class="tab-pane" id="tab_goods_images">
                             <table class="table table-bordered">
@@ -659,6 +671,7 @@
                             </table>
                         </div>
             </dl>
+
         </div>
 <!-- 商品相册-->
 <!-- 商品模型-->
@@ -1212,5 +1225,11 @@ $(document).ready(function(){
 
 
 </script>
+
+<!-- oss直传  start-->
+<link rel="stylesheet" type="text/css" href="/public/oss/style.css"/>
+<script type="text/javascript" src="/public/oss/lib/plupload-2.1.2/js/plupload.full.min.js"></script>
+<script type="text/javascript" src="/public/oss/upload.js"></script>
+<!-- oss直传  end-->
 </body>
 </html>

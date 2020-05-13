@@ -8,8 +8,14 @@ filename = ''
 key = ''
 expire = 0
 g_object_name = ''
-g_object_name_type = ''
+g_object_name_type = 'random_name'
 now = timestamp = Date.parse(new Date()) / 1000;
+
+
+
+
+
+
 
 function send_request() {
     var xmlhttp = null;
@@ -30,6 +36,7 @@ function send_request() {
 };
 
 function check_object_radio() {
+    return;
     var tt = document.getElementsByName('myradio');
     for (var i = 0; i < tt.length; i++) {
         if (tt[i].checked) {
@@ -126,7 +133,7 @@ function set_upload_param(up, filename, ret) {
 var uploader = new plupload.Uploader({
     runtimes: 'html5,flash,silverlight,html4',
     browse_button: 'selectfiles',
-    //multi_selection: false,
+    multi_selection: false,
     container: document.getElementById('container'),
     flash_swf_url: 'lib/plupload-2.1.2/js/Moxie.swf',
     silverlight_xap_url: 'lib/plupload-2.1.2/js/Moxie.xap',
@@ -134,9 +141,7 @@ var uploader = new plupload.Uploader({
 
     filters: {
         mime_types: [ //只允许上传图片和zip文件
-            {title: "图片文件", extensions: "jpg,gif,png,bmp"},
-            {title: "zip或rar格式压缩包", extensions: "zip,rar"},
-            {title: "avi、mp4、flv、wmv格式视频", extensions: "avi,mp4,flv,wmv"},
+            {title: "mp4,webm格式视频", extensions: "mp4,webm"},
         ],
         max_file_size: '1024mb', //最大只能上传10mb的文件
         prevent_duplicates: true //不允许选取重复文件
@@ -144,56 +149,73 @@ var uploader = new plupload.Uploader({
 
     init: {
         PostInit: function () {
-            document.getElementById('ossfile').innerHTML = '';
-            document.getElementById('postfiles').onclick = function () {
-                set_upload_param(uploader, '', false);
-                return false;
-            };
         },
-
+        /**
+         * 文件加入上传队列
+         * @param up
+         * @param files
+         * @constructor
+         */
         FilesAdded: function (up, files) {
-            plupload.each(files, function (file) {
-                document.getElementById('ossfile').innerHTML += '<div id="' + file.id + '">' + file.name + ' (' + plupload.formatSize(file.size) + ')<b></b>'
-                    + '<div class="progress"><div class="progress-bar" style="width: 0%"></div></div>'
-                    + '</div>';
-            });
-        },
 
+            var fr = new mOxie.FileReader();
+            fr.onload = function () {
+                $("#aa").attr('src',fr.result);
+            }
+
+            for (var i=0; i<files.length; i++){
+                if(i != files.length-1){
+                    uploader.removeFile(files[i])
+                }else{
+                    fr.readAsDataURL(files[i].getSource());
+                }
+            }
+            set_upload_param(uploader, '', false);
+        },
+        /**
+         * 上传前事件
+         * @param up
+         * @param file
+         * @constructor
+         */
         BeforeUpload: function (up, file) {
             check_object_radio();
             set_upload_param(up, file.name, true);
         },
-
+        /**
+         * 上传进度
+         * @param up
+         * @param file
+         * @constructor
+         */
         UploadProgress: function (up, file) {
-            var d = document.getElementById(file.id);
-            d.getElementsByTagName('b')[0].innerHTML = '<span>' + file.percent + "%</span>";
-            var prog = d.getElementsByTagName('div')[0];
-            var progBar = prog.getElementsByTagName('div')[0]
-            progBar.style.width = 2 * file.percent + 'px';
-            progBar.setAttribute('aria-valuenow', file.percent);
+            $('#percent').html('上传进度:'+file.percent+'%').show()
         },
-
+        /**
+         * 上传完成事件
+         * @param up
+         * @param file
+         * @param info
+         * @constructor
+         */
         FileUploaded: function (up, file, info) {
-            console.log(info)
             if (info.status == 200) {
-                document.getElementById(file.id).getElementsByTagName('b')[0].innerHTML = 'upload to oss success, object name:' + get_uploaded_object_name(file.name) + ' 回调服务器返回的内容是:' + info.response;
+                var res=JSON.parse(info.response)
+                $('#video_input').val(res.filename)
             } else if (info.status == 203) {
-                document.getElementById(file.id).getElementsByTagName('b')[0].innerHTML = '上传到OSS成功，但是oss访问用户设置的上传回调服务器失败，失败原因是:' + info.response;
+                alert('上传到OSS成功，但是oss访问用户设置的上传回调服务器失败');
             } else {
-                document.getElementById(file.id).getElementsByTagName('b')[0].innerHTML = info.response;
+                alert('上传错误:'+info.response);
             }
         },
-
+        /**
+         * 错误事件
+         * @param up
+         * @param err
+         * @constructor
+         */
         Error: function (up, err) {
-            if (err.code == -600) {
-                document.getElementById('console').appendChild(document.createTextNode("\n选择的文件太大了,可以根据应用情况，在upload.js 设置一下上传的最大大小"));
-            } else if (err.code == -601) {
-                document.getElementById('console').appendChild(document.createTextNode("\n选择的文件后缀不对,可以根据应用情况，在upload.js进行设置可允许的上传文件类型"));
-            } else if (err.code == -602) {
-                document.getElementById('console').appendChild(document.createTextNode("\n这个文件已经上传过一遍了"));
-            } else {
-                document.getElementById('console').appendChild(document.createTextNode("\nError xml:" + err.response));
-            }
+            alert('上传错误:'+err.response);
         }
     }
 });

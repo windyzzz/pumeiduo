@@ -9,10 +9,6 @@ use think\Log;
 class Oss extends Base
 {
 
-    public function index(){
-        return $this->fetch();
-    }
-
 
     /**
      * 签名
@@ -34,7 +30,7 @@ class Oss extends Base
         $host = 'http://pumeiduo-master.oss-cn-shenzhen.aliyuncs.com';
         // $callbackUrl为上传回调服务器的URL，请将下面的IP和Port配置为您自己的真实URL信息。
         $callbackUrl = C('OSS_CALLBACK_URL');
-        $dir = '';          // 用户上传文件时指定的前缀。
+        $dir = 'video/'.date('Y/m/d/H/');          // 用户上传文件时指定的前缀。
 
         $callback_param = array('callbackUrl' => $callbackUrl,
             'callbackBody' => 'filename=${object}&size=${size}&mimeType=${mimeType}&height=${imageInfo.height}&width=${imageInfo.width}',
@@ -132,7 +128,9 @@ class Oss extends Base
         $ok = openssl_verify($authStr, $authorization, $pubKey, OPENSSL_ALGO_MD5);
         if ($ok == 1) {
             header("Content-Type: application/json");
-            $data = array("Status" => "Ok");
+            $res=[];
+            parse_str($body, $res);
+            $data = array_merge($res, ["Status" => "Ok"]);
             echo json_encode($data);
         } else {
             //header("http/1.1 403 Forbidden");
