@@ -2608,6 +2608,15 @@ class Order extends Base
                             break;
                         case 2:
                             // 海外购
+                            // HTNS物流配送记录
+                            $htnsDeliveryLog = M('htns_delivery_log')->where(['order_id' => $orderId])->order('create_time DESC')->select();
+                            $deliveryLog = [];
+                            foreach ($htnsDeliveryLog as $log) {
+                                $deliveryLog[] = [
+                                    'time' => date('Y-m-d H:i:s', $log['create_time']),
+                                    'status' => '第三方物流公司：' . C('HTNS_STATUS')[$log['status']]
+                                ];
+                            }
                             if (in_array($delivery['htns_status'], ['120', '999'])) {
                                 $apiController = new ApiController();
                                 $express = $apiController->queryExpress(['shipping_code' => $delivery['shipping_code'], 'queryNo' => $delivery['invoice_no']], 'array');
@@ -2621,7 +2630,7 @@ class Order extends Base
                                 }
                                 $deliveryStatus = $express['result']['deliverystatus'];
                                 $deliveryStatusDesc = C('DELIVERY_STATUS')[$express['result']['deliverystatus']];
-                            } elseif ($delivery['htns_status'] == '991') {
+                            } elseif (in_array($delivery['htns_status'], ['001', '991'])) {
                                 $express['result']['deliverystatus'] = 4;       // 配送失败
                                 $express['result']['expPhone'] = tpCache('shop_info.mobile');
                                 $express['result']['list'][] = [
@@ -2633,12 +2642,13 @@ class Order extends Base
                             } else {
                                 $express['result']['deliverystatus'] = 1;       // 正在派件
                                 $express['result']['expPhone'] = tpCache('shop_info.mobile');
-                                $express['result']['list'][] = [
-                                    'time' => date('Y-m-d H:i:s', time()),
-                                    'status' => '暂无物流信息'
-                                ];
                                 $deliveryStatus = $express['result']['deliverystatus'];
-                                $deliveryStatusDesc = '第三方物流公司正在配送';
+                                $deliveryStatusDesc = '第三方物流公司正在处理';
+                            }
+                            if (!empty($deliveryLog)) {
+                                foreach ($deliveryLog as $log) {
+                                    $express['result']['list'][] = $log;
+                                }
                             }
                             break;
                     }
@@ -2718,20 +2728,30 @@ class Order extends Base
                             // 海外购
                             $apiController = new ApiController();
                             foreach ($delivery as $item) {
+                                $express['result']['list'] = [];
+                                // HTNS物流配送记录
+                                $htnsDeliveryLog = M('htns_delivery_log')->where(['order_id' => $orderId, 'rec_id' => $item['rec_id'], 'goods_num' => $item['goods_num']])->order('create_time DESC')->select();
+                                $deliveryLog = [];
+                                foreach ($htnsDeliveryLog as $log) {
+                                    $deliveryLog[] = [
+                                        'time' => date('Y-m-d H:i:s', $log['create_time']),
+                                        'status' => '第三方物流公司：' . C('HTNS_STATUS')[$log['status']]
+                                    ];
+                                }
                                 if (in_array($item['htns_status'], ['120', '999'])) {
                                     $express = $apiController->queryExpress(['shipping_code' => $item['shipping_code'], 'queryNo' => $item['invoice_no']], 'array');
                                     if ($express['status'] != '0') {
                                         $express['result']['deliverystatus'] = 1;   // 正在派件
-                                        $express['result']['list'][0] = [
+                                        $express['result']['list'][] = [
                                             'time' => date('Y-m-d H:i:s', time()),
                                             'status' => '暂无物流信息'
                                         ];
                                     }
                                     $deliveryStatus = $express['result']['deliverystatus'];
                                     $deliveryStatusDesc = C('DELIVERY_STATUS')[$express['result']['deliverystatus']];
-                                } elseif ($item['htns_status'] == '991') {
+                                } elseif (in_array($item['htns_status'], ['001', '991'])) {
                                     $express['result']['deliverystatus'] = 4;   // 配送失败
-                                    $express['result']['list'][0] = [
+                                    $express['result']['list'][] = [
                                         'time' => date('Y-m-d H:i:s', time()),
                                         'status' => '暂无物流信息'
                                     ];
@@ -2740,12 +2760,13 @@ class Order extends Base
                                 } else {
                                     $express['result']['deliverystatus'] = 1;       // 正在派件
                                     $express['result']['expPhone'] = tpCache('shop_info.mobile');
-                                    $express['result']['list'][0] = [
-                                        'time' => date('Y-m-d H:i:s', time()),
-                                        'status' => '暂无物流信息'
-                                    ];
                                     $deliveryStatus = $express['result']['deliverystatus'];
                                     $deliveryStatusDesc = '第三方物流公司正在配送';
+                                }
+                                if (!empty($deliveryLog)) {
+                                    foreach ($deliveryLog as $log) {
+                                        $express['result']['list'][] = $log;
+                                    }
                                 }
                                 $return['delivery'][] = [
                                     'rec_id' => $item['rec_id'],
@@ -2792,21 +2813,73 @@ class Order extends Base
             }
             // 物流信息
             $delivery = M('delivery_doc dd')
-                ->field('dd.rec_id, dd.shipping_code, dd.shipping_name, dd.invoice_no, dd.province, dd.city, dd.district, dd.address')
+                ->field('dd.*')
                 ->where($where)->order('id desc')->find();
-            $apiController = new ApiController();
-            $express = $apiController->queryExpress(['shipping_code' => $delivery['shipping_code'], 'queryNo' => $delivery['invoice_no']], 'array');
-            if ($express['status'] != '0') {
-                $express['result']['deliverystatus'] = 1;   // 正在派件
-                $express['result']['expPhone'] = tpCache('shop_info.mobile');
-                $express['result']['list'][] = [
-                    'time' => date('Y-m-d H:i:s', time()),
-                    'status' => '暂无物流信息'
-                ];
+            switch ($order['order_type']) {
+                case 1:
+                    // 圃美多
+                    $apiController = new ApiController();
+                    $express = $apiController->queryExpress(['shipping_code' => $delivery['shipping_code'], 'queryNo' => $delivery['invoice_no']], 'array');
+                    if ($express['status'] != '0') {
+                        $express['result']['deliverystatus'] = 1;   // 正在派件
+                        $express['result']['expPhone'] = tpCache('shop_info.mobile');
+                        $express['result']['list'][] = [
+                            'time' => date('Y-m-d H:i:s', time()),
+                            'status' => '暂无物流信息'
+                        ];
+                    }
+                    $deliveryStatus = $express['result']['deliverystatus'];
+                    $deliveryStatusDesc = C('DELIVERY_STATUS')[$express['result']['deliverystatus']];
+                    break;
+                case 2:
+                    // 海外购
+                    // HTNS物流配送记录
+                    $htnsDeliveryLog = M('htns_delivery_log')->where(['order_id' => $delivery['order_id'], 'rec_id' => $delivery['rec_id'], 'goods_num' => $delivery['goods_num']])->order('create_time DESC')->select();
+                    $deliveryLog = [];
+                    foreach ($htnsDeliveryLog as $log) {
+                        $deliveryLog[] = [
+                            'time' => date('Y-m-d H:i:s', $log['create_time']),
+                            'status' => '第三方物流公司：' . C('HTNS_STATUS')[$log['status']]
+                        ];
+                    }
+                    if (in_array($delivery['htns_status'], ['120', '999'])) {
+                        $apiController = new ApiController();
+                        $express = $apiController->queryExpress(['shipping_code' => $delivery['shipping_code'], 'queryNo' => $delivery['invoice_no']], 'array');
+                        if ($express['status'] != '0') {
+                            $express['result']['deliverystatus'] = 1;   // 正在派件
+                            $express['result']['expPhone'] = tpCache('shop_info.mobile');
+                            $express['result']['list'][] = [
+                                'time' => date('Y-m-d H:i:s', time()),
+                                'status' => '暂无物流信息'
+                            ];
+                        }
+                        $deliveryStatus = $express['result']['deliverystatus'];
+                        $deliveryStatusDesc = C('DELIVERY_STATUS')[$express['result']['deliverystatus']];
+                    } elseif (in_array($delivery['htns_status'], ['001', '991'])) {
+                        $express['result']['deliverystatus'] = 4;       // 配送失败
+                        $express['result']['expPhone'] = tpCache('shop_info.mobile');
+                        $express['result']['list'][] = [
+                            'time' => date('Y-m-d H:i:s', time()),
+                            'status' => '暂无物流信息'
+                        ];
+                        $deliveryStatus = $express['result']['deliverystatus'];
+                        $deliveryStatusDesc = C('DELIVERY_STATUS')[$express['result']['deliverystatus']];
+                    } else {
+                        $express['result']['deliverystatus'] = 1;       // 正在派件
+                        $express['result']['expPhone'] = tpCache('shop_info.mobile');
+                        $deliveryStatus = $express['result']['deliverystatus'];
+                        $deliveryStatusDesc = '第三方物流公司正在处理';
+                    }
+                    if (!empty($deliveryLog)) {
+                        foreach ($deliveryLog as $log) {
+                            $express['result']['list'][] = $log;
+                        }
+                    }
+                    break;
             }
             $return = [
-                'delivery_status' => $express['result']['deliverystatus'],
-                'delivery_status_desc' => C('DELIVERY_STATUS')[$express['result']['deliverystatus']],
+                'delivery_status' => $deliveryStatus,
+                'delivery_status_desc' => $deliveryStatusDesc,
                 'order_id' => $order['order_id'],
                 'order_sn' => $order['order_sn'],
                 'shipping_name' => $delivery['shipping_name'],

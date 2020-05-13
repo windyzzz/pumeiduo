@@ -360,39 +360,55 @@ class Tb extends Controller
         // 更新订单物流信息
         $orderInfo = M('order')->where(array('order_sn' => $order['order_sn']))->field('order_id, user_id')->find();
         $deliveryData = [];
-        foreach ($orderData['delivery_doc'] as $delivery) {
-            $deliveryData[] = [
-                'order_id' => $orderInfo['order_id'],
-                'order_sn' => $order['order_sn'],
-                'rec_id' => M('order_goods')->where(['order_id' => $orderInfo['order_id'], 'goods_sn' => $delivery['goods_sn']])->value('rec_id') ?? '',
-                'goods_num' => $delivery['goods_num'],
-                'user_id' => $orderInfo['user_id'],
-                'admin_id' => $delivery['admin_id'],
-                'consignee' => $delivery['consignee'],
-                'zipcode' => $delivery['zipcode'],
-                'mobile' => $delivery['mobile'],
-                'country' => $delivery['country'],
-                'province' => $delivery['province'],
-                'city' => $delivery['city'],
-                'district' => $delivery['district'],
-                'address' => $delivery['address'],
-                'shipping_code' => $delivery['shipping_code'],
-                'shipping_name' => $delivery['shipping_name'],
-                'shipping_price' => $delivery['shipping_price'],
-                'invoice_no' => $delivery['invoice_no'],
-                'tel' => $delivery['tel'],
-                'note' => $delivery['note'],
-                'best_time' => $delivery['best_time'],
-                'is_del' => $delivery['is_del'],
-                'create_time' => time(),
-                'htns_status' => $delivery['htns_status']
-            ];
+        if (!empty($orderData['delivery_doc'])) {
+            foreach ($orderData['delivery_doc'] as $delivery) {
+                $deliveryData[] = [
+                    'order_id' => $orderInfo['order_id'],
+                    'order_sn' => $order['order_sn'],
+                    'rec_id' => M('order_goods')->where(['order_id' => $orderInfo['order_id'], 'goods_sn' => $delivery['goods_sn']])->value('rec_id') ?? '',
+                    'goods_num' => $delivery['goods_num'],
+                    'user_id' => $orderInfo['user_id'],
+                    'admin_id' => $delivery['admin_id'],
+                    'consignee' => $delivery['consignee'],
+                    'zipcode' => $delivery['zipcode'],
+                    'mobile' => $delivery['mobile'],
+                    'country' => $delivery['country'],
+                    'province' => $delivery['province'],
+                    'city' => $delivery['city'],
+                    'district' => $delivery['district'],
+                    'address' => $delivery['address'],
+                    'shipping_code' => $delivery['shipping_code'],
+                    'shipping_name' => $delivery['shipping_name'],
+                    'shipping_price' => $delivery['shipping_price'],
+                    'invoice_no' => $delivery['invoice_no'],
+                    'tel' => $delivery['tel'],
+                    'note' => $delivery['note'],
+                    'best_time' => $delivery['best_time'],
+                    'is_del' => $delivery['is_del'],
+                    'create_time' => time(),
+                    'htns_status' => $delivery['htns_status']
+                ];
+            }
         }
         if (!empty($deliveryData)) {
             M('delivery_doc')->where(['order_id' => $orderInfo['order_id']])->delete();
             $deliveryDoc = new DeliveryDoc();
             $deliveryDoc->saveAll($deliveryData);
             M('order_goods')->where(['order_id' => $orderInfo['order_id'], 'is_send' => 0])->update(['is_send' => 1]);
+        }
+        // 更新HTNS物流配送记录
+        $htnsDeliveryData = [];
+        if (!empty($orderData['htns_delivery_log'])) {
+            foreach ($orderData['htns_delivery_log'] as $delivery) {
+                $htnsDeliveryData[] = [
+                    'order_id' => $orderInfo['order_id'],
+                    'rec_id' => M('order_goods')->where(['order_id' => $orderInfo['order_id'], 'goods_sn' => $delivery['goods_sn']])->value('rec_id') ?? '',
+                    'goods_num' => $delivery['goods_num'],
+                    'status' => $delivery['status'],
+                    'create_time' => $delivery['create_time'],
+                    'time_zone' => $delivery['time_zone']
+                ];
+            }
         }
         return true;
     }
