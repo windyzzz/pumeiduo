@@ -260,7 +260,7 @@ class PlaceOrder
             $orderData['twon'] = $this->userAddress['twon']; // '街道',
             $orderData['address'] = $this->userAddress['address']; //'详细地址'
             $orderData['mobile'] = $this->userAddress['mobile']; //'手机',
-            $orderData['zipcode'] = $this->userAddress['zipcode']; //'邮编',
+            $orderData['zipcode'] = !empty($this->userAddress['zipcode']) ? $this->userAddress['zipcode'] : M('region2')->where(['id' => $this->userAddress['district']])->value('zipcode'); //'邮编',
         }
         if (!empty($this->userNote)) {
             $orderData['user_note'] = $this->userNote; // 用户下单备注

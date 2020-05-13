@@ -384,7 +384,8 @@ class Tb extends Controller
                 'note' => $delivery['note'],
                 'best_time' => $delivery['best_time'],
                 'is_del' => $delivery['is_del'],
-                'create_time' => time()
+                'create_time' => time(),
+                'htns_status' => $delivery['htns_status']
             ];
         }
         if (!empty($deliveryData)) {
