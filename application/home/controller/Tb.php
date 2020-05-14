@@ -3,6 +3,7 @@
 namespace app\home\controller;
 
 use app\common\model\DeliveryDoc;
+use app\common\model\HtnsDeliveryLog;
 use think\Controller;
 use think\Db;
 
@@ -360,12 +361,14 @@ class Tb extends Controller
         // 更新订单物流信息
         $orderInfo = M('order')->where(array('order_sn' => $order['order_sn']))->field('order_id, user_id')->find();
         $deliveryData = [];
+        $sendRecId = [];
         if (!empty($orderData['delivery_doc'])) {
             foreach ($orderData['delivery_doc'] as $delivery) {
+                $recId = M('order_goods')->where(['order_id' => $orderInfo['order_id'], 'goods_sn' => $delivery['goods_sn']])->value('rec_id');
                 $deliveryData[] = [
                     'order_id' => $orderInfo['order_id'],
                     'order_sn' => $order['order_sn'],
-                    'rec_id' => M('order_goods')->where(['order_id' => $orderInfo['order_id'], 'goods_sn' => $delivery['goods_sn']])->value('rec_id') ?? '',
+                    'rec_id' => $recId,
                     'goods_num' => $delivery['goods_num'],
                     'user_id' => $orderInfo['user_id'],
                     'admin_id' => $delivery['admin_id'],
@@ -388,27 +391,36 @@ class Tb extends Controller
                     'create_time' => time(),
                     'htns_status' => $delivery['htns_status']
                 ];
+                if (!empty($delivery['invoice_no'])) {
+                    $sendRecId[] = $recId;
+                }
             }
         }
         if (!empty($deliveryData)) {
             M('delivery_doc')->where(['order_id' => $orderInfo['order_id']])->delete();
             $deliveryDoc = new DeliveryDoc();
             $deliveryDoc->saveAll($deliveryData);
-            M('order_goods')->where(['order_id' => $orderInfo['order_id'], 'is_send' => 0])->update(['is_send' => 1]);
+            M('order_goods')->where(['rec_id' => ['IN', $sendRecId]])->where(['is_send' => 0])->update(['is_send' => 1]);
         }
         // 更新HTNS物流配送记录
         $htnsDeliveryData = [];
         if (!empty($orderData['htns_delivery_log'])) {
             foreach ($orderData['htns_delivery_log'] as $delivery) {
+                $recId = M('order_goods')->where(['order_id' => $orderInfo['order_id'], 'goods_sn' => $delivery['goods_sn']])->value('rec_id');
                 $htnsDeliveryData[] = [
                     'order_id' => $orderInfo['order_id'],
-                    'rec_id' => M('order_goods')->where(['order_id' => $orderInfo['order_id'], 'goods_sn' => $delivery['goods_sn']])->value('rec_id') ?? '',
+                    'rec_id' => $recId,
                     'goods_num' => $delivery['goods_num'],
                     'status' => $delivery['status'],
                     'create_time' => $delivery['create_time'],
                     'time_zone' => $delivery['time_zone']
                 ];
             }
+        }
+        if (!empty($htnsDeliveryData)) {
+            M('htns_delivery_log')->where(['order_id' => $orderInfo['order_id']])->delete();
+            $htnsDeliveryDoc = new HtnsDeliveryLog();
+            $htnsDeliveryDoc->saveAll($htnsDeliveryData);
         }
         return true;
     }
