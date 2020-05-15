@@ -961,6 +961,8 @@ class GoodsLogic extends Model
      */
     public function getGoodsList($filter_goods_id, $sort, $page, $userId = null)
     {
+        $sort['sort'] = 'desc';
+        $sort['goods_id'] = 'desc';
         // 商品列表
         $goodsList = Db::name('goods')->where('goods_id', 'in', $filter_goods_id)
             ->field('goods_id, cat_id, extend_cat_id, goods_sn, goods_name, goods_type, brand_id, store_count, comment_count, goods_remark,
