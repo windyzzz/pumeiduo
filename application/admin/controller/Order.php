@@ -445,6 +445,17 @@ class Order extends Base
         }
         $this->assign('split', $split);
         $this->assign('express', $express);
+        // HTNS物流配送记录
+        $htnsDeliveryLogGoodsName = M('htns_delivery_log')->where(['order_id' => $order_id])->value('goods_name');
+        $htnsDeliveryLog = M('htns_delivery_log')->where(['order_id' => $order_id, 'goods_name' => $htnsDeliveryLogGoodsName])->order('create_time desc')->select();
+        $deliveryLog = [];
+        foreach ($htnsDeliveryLog as $log) {
+            $deliveryLog[] = [
+                'time' => date('Y-m-d H:i:s', $log['create_time']),
+                'status' => C('HTNS_STATUS')[$log['status']]
+            ];
+        }
+        $this->assign('delivery_log', $deliveryLog);
 
         return $this->fetch();
     }
