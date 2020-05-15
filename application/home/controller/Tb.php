@@ -406,10 +406,9 @@ class Tb extends Controller
         $htnsDeliveryData = [];
         if (!empty($orderData['htns_delivery_log'])) {
             foreach ($orderData['htns_delivery_log'] as $delivery) {
-                $recId = M('order_goods')->where(['order_id' => $orderInfo['order_id'], 'goods_sn' => $delivery['goods_sn']])->value('rec_id');
                 $htnsDeliveryData[] = [
                     'order_id' => $orderInfo['order_id'],
-                    'rec_id' => $recId,
+                    'goods_name' => $delivery['goods_name'],
                     'goods_num' => $delivery['goods_num'],
                     'status' => $delivery['status'],
                     'create_time' => $delivery['create_time'],

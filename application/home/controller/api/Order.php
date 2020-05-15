@@ -2609,7 +2609,8 @@ class Order extends Base
                         case 2:
                             // 海外购
                             // HTNS物流配送记录
-                            $htnsDeliveryLog = M('htns_delivery_log')->where(['order_id' => $orderId])->order('create_time DESC')->select();
+                            $htnsDeliveryLogGoodsName = M('htns_delivery_log')->where(['order_id' => $orderId])->value('goods_name');
+                            $htnsDeliveryLog = M('htns_delivery_log')->where(['order_id' => $orderId, 'goods_name' => $htnsDeliveryLogGoodsName])->order('create_time desc')->select();
                             $deliveryLog = [];
                             foreach ($htnsDeliveryLog as $log) {
                                 $deliveryLog[] = [
