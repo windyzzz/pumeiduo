@@ -214,6 +214,7 @@ class Tb extends Controller
                 'member_goods_price' => $v['member_goods_price'],
                 'spec_key' => $v['spec_key'],
                 'spec_key_name' => $v['spec_key_name'],
+                'other_rec_id' => $v['rec_id']
             );
         }
 
@@ -364,11 +365,10 @@ class Tb extends Controller
         $sendRecId = [];
         if (!empty($orderData['delivery_doc'])) {
             foreach ($orderData['delivery_doc'] as $delivery) {
-                $recId = M('order_goods')->where(['order_id' => $orderInfo['order_id'], 'goods_sn' => $delivery['goods_sn']])->value('rec_id');
                 $deliveryData[] = [
                     'order_id' => $orderInfo['order_id'],
                     'order_sn' => $order['order_sn'],
-                    'rec_id' => $recId,
+                    'rec_id' => $delivery['other_rec_id'],
                     'goods_num' => $delivery['goods_num'],
                     'user_id' => $orderInfo['user_id'],
                     'admin_id' => $delivery['admin_id'],
@@ -392,7 +392,7 @@ class Tb extends Controller
                     'htns_status' => $delivery['htns_status']
                 ];
                 if (!empty($delivery['invoice_no'])) {
-                    $sendRecId[] = $recId;
+                    $sendRecId[] = $delivery['other_rec_id'];
                 }
             }
         }

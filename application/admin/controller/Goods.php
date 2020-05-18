@@ -262,7 +262,7 @@ class Goods extends Base
                 $suppliers = M('Suppliers')->where('suppliers_id', $val['suppliers_id'])->getField('suppliers_name');
                 $price = $val['shop_price'] - $val['exchange_integral'];
                 $strTable .= '<tr>';
-                $strTable .= '<td style="text-align:center;font-size:12px; vnd.ms-excel.numberformat:@;">' .$val['goods_sn'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px; vnd.ms-excel.numberformat:@;">' . $val['goods_sn'] . '</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">' . $first_cat . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $secend_cat . ' </td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $third_cat . '</td>';
@@ -316,6 +316,16 @@ class Goods extends Base
         $is_area_show = I('is_area_show');
         if ($is_area_show == 1) {
             $where .= ' and is_area_show = 1';
+        }
+
+        $goodsType = I('goods_type');
+        switch ($goodsType) {
+            case 1:
+                $where .= ' and is_abroad = 0';
+                break;
+            case 2:
+                $where .= ' and is_abroad = 1';
+                break;
         }
 
         $count = M('Goods')->where($where)->count();
