@@ -516,6 +516,7 @@ class Tb extends Controller
             }
             $goods_data['commission'] = tpCache('distribut.default_rate');//新增商品  默认分成
             $goods_data['is_on_sale'] = 0;//新增商品  默认下架
+            $goods_data['sort'] = M('goods')->max('sort') + 1;  // 新增商品的排序
             $goods_id = M('goods')->data($goods_data)->add();
         }
 
