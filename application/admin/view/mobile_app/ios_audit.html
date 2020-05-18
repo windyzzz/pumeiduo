@@ -44,8 +44,7 @@
                     <label for="app_version">苹果App版本号</label>
                 </dt>
                 <dd class="opt">
-                    <input id="app_version" name="app_version" value="{$config.app_version}" class="input-txt"
-                           type="text"/>
+                    <input id="app_version" name="app_version" value="{$config.app_version}" class="input-txt" type="text"/>
                     <p class="notic">请填写苹果App版本号</p>
                 </dd>
             </dl>
@@ -87,6 +86,15 @@
                         <input id="is_force1" name="is_force" <if condition="$config['is_force'] eq 1">checked="checked"</if> value="1" type="radio">
                         <input id="is_force0" name="is_force" <if condition="$config['is_force'] eq 0">checked="checked"</if> value="0" type="radio">
                     </div>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label for="app_version">不显示第三方登录的App版本号</label>
+                </dt>
+                <dd class="opt">
+                    <input name="not_show_version" value="{$config.not_show_version}" class="input-txt" type="text"/>
+                    <p class="notic">用于审核期间绕开苹果登录检测的操作，审核通过后正式发布前必须置空</p>
                 </dd>
             </dl>
             <div class="bot">

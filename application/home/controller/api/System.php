@@ -66,11 +66,11 @@ class System
         // 当前配置
         $config = M('config')->where(['inc_type' => $type])->group('name')->order('id desc')->getField('name, value', true);
         $version = explode('.', $config['app_version']);    // 当前版本
-        $nowVersion = '';
+        $version_ = '';
         foreach ($version as $item) {
-            $nowVersion .= $item * 10;
+            $version_ .= $item * 10;
         }
-        if ($appVersion == $nowVersion || $appVersion > $nowVersion) {
+        if ($appVersion == $version_ || $appVersion > $version_) {
             $result['state'] = 0;   // 无需更新
         } else {
             $result['state'] = $config['is_update'] ? (int)$config['is_update'] : 0;    // 是否需要更新
@@ -79,6 +79,21 @@ class System
         $result['app_url'] = htmlspecialchars_decode($config['app_path']);
         $result['target_version'] = $config['app_version'];
         $result['version_log'] = $config['app_log'];
+        // 是否展示第三方登录方法
+        if (!$config['not_show_version']) {
+            $result['show_login_method'] = 1;
+        } else {
+            $notShowVersion = explode('.', $config['not_show_version']);
+            $notShowVersion_ = '';
+            foreach ($notShowVersion as $item) {
+                $notShowVersion_ .= $item * 10;
+            }
+            if ($appVersion == $notShowVersion_) {
+                $result['show_login_method'] = 0;
+            } else {
+                $result['show_login_method'] = 1;
+            }
+        }
         return json(['status' => 1, 'result' => $result]);
     }
 
@@ -119,14 +134,5 @@ class System
         }
         $count = M('download_log')->where(['type' => $type])->count('id');
         return json(['status' => 1, 'result' => ['count' => $count]]);
-    }
-
-    /**
-     * 是否展示第三方登录方式（针对IOS的苹果登录）
-     * @return \think\response\Json
-     */
-    public function showLoginMethod()
-    {
-        return json(['status' => 1, 'result' => ['state' => 1]]);
     }
 }
