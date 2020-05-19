@@ -811,6 +811,10 @@ class GoodsLogic extends Model
         $goodsList = collection($goodsList)->toArray();
         $goodsNum = 0;
         foreach ($goodsArr as $cartKey => $cartVal) {
+            if (isset($cartVal['re_id']) && $cartVal['re_id'] > 0) {
+                // 跳过兑换券商品
+                continue;
+            }
             foreach ($goodsList as $goodsKey => $goodsVal) {
                 if ($cartVal['goods_id'] == $goodsVal['goods_id']) {
                     $goodsArr[$cartKey]['volume'] = $goodsVal['volume'];
@@ -823,8 +827,12 @@ class GoodsLogic extends Model
         }
         $eachOrderPromAmount = bcdiv($orderPromAmount, $goodsNum, 2);   // 每个商品的优惠金额
         $template_list = [];
-        foreach ($goodsArr as $goodsKey => $goodsVal) {
-            $template_list[$goodsVal['template_id']][] = $goodsVal;
+        foreach ($goodsArr as $cartKey => $cartVal) {
+            if (isset($cartVal['re_id']) && $cartVal['re_id'] > 0) {
+                // 跳过兑换券商品
+                continue;
+            }
+            $template_list[$cartVal['template_id']][] = $cartVal;
         }
         $freight = 0;               // 启用商城免运费设置的运费
         $outSettingFreight = 0;     // 不启用商城免运费设置的运费
