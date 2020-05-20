@@ -258,6 +258,8 @@ class FlashSaleLogic extends Prom
         $buyGoods['use_integral'] = $use_integral;
         $buyGoods['prom_type'] = 1;
         $buyGoods['prom_id'] = $this->flashSale['id'];
+        $buyGoods['goods']['retail_pv'] = bcmul($buyGoods['goods']['retail_pv'], ($buyGoods['member_goods_price'] / $buyGoods['goods_price']), 2);
+        $buyGoods['goods']['integral_pv'] = bcmul($buyGoods['goods']['integral_pv'], ($buyGoods['member_goods_price'] / $buyGoods['goods_price']), 2);
 
         return $buyGoods;
     }
