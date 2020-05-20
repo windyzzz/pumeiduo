@@ -16,6 +16,7 @@ use app\common\model\GoodspvUpdateLog;
 use app\common\model\SpecialSmsLog;
 use think\Controller;
 use think\Db;
+use think\Exception;
 
 // 自动任务调度类
 class Cron1 extends Controller
@@ -8681,6 +8682,24 @@ class Cron1 extends Controller
             Db::commit();
             var_dump('ok');
         } else {
+            Db::rollback();
+            var_dump('fail');
+        }
+    }
+
+
+    public function updateGoodsSort()
+    {
+        $maxSort = M('goods')->max('sort');
+        $goodsList = M('goods')->field('goods_id, sort')->select();
+        try {
+            Db::startTrans();
+            foreach ($goodsList as $goods) {
+                M('goods')->where(['goods_id' => $goods['goods_id']])->update(['sort' => (bcsub($maxSort, $goods['sort']))]);
+            }
+            Db::commit();
+            var_dump('ok');
+        } catch (Exception $e) {
             Db::rollback();
             var_dump('fail');
         }
