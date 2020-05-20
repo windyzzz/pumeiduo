@@ -841,7 +841,7 @@ class GoodsLogic extends Model
             $temp['template_id'] = $templateVal;
             $temp['is_free_shipping'] = 0;
             foreach ($goodsArr as $goodsKey => $goodsVal) {
-                $temp['member_goods_price'] = bcadd($temp['member_goods_price'], $goodsVal['member_goods_price'], 2);
+                $temp['member_goods_price'] = bcadd($temp['member_goods_price'], bcmul($goodsVal['member_goods_price'], $goodsVal['goods_num'], 2), 2);
                 $temp['total_volume'] += $goodsVal['volume'] * $goodsVal['goods_num'];
                 $temp['total_weight'] += $goodsVal['weight'] * $goodsVal['goods_num'];
                 $temp['goods_num'] += $goodsVal['goods_num'];
