@@ -812,6 +812,10 @@ class GoodsLogic extends Model
         $goodsList = collection($goodsList)->toArray();
         $goodsNum = 0;
         foreach ($goodsArr as $cartKey => $cartVal) {
+            if (isset($cartVal['re_id']) && $cartVal['re_id'] > 0) {
+                // 跳过兑换券商品
+                continue;
+            }
             foreach ($goodsList as $goodsKey => $goodsVal) {
                 if ($cartVal['goods_id'] == $goodsVal['goods_id']) {
                     $goodsArr[$cartKey]['volume'] = $goodsVal['volume'];
@@ -824,8 +828,12 @@ class GoodsLogic extends Model
         }
         $eachOrderPromAmount = bcdiv($orderPromAmount, $goodsNum, 2);   // 每个商品的优惠金额
         $template_list = [];
-        foreach ($goodsArr as $goodsKey => $goodsVal) {
-            $template_list[$goodsVal['template_id']][] = $goodsVal;
+        foreach ($goodsArr as $cartKey => $cartVal) {
+            if (isset($cartVal['re_id']) && $cartVal['re_id'] > 0) {
+                // 跳过兑换券商品
+                continue;
+            }
+            $template_list[$cartVal['template_id']][] = $cartVal;
         }
         $freight = 0;               // 启用商城免运费设置的运费
         $outSettingFreight = 0;     // 不启用商城免运费设置的运费
@@ -834,7 +842,7 @@ class GoodsLogic extends Model
             $temp['template_id'] = $templateVal;
             $temp['is_free_shipping'] = 0;
             foreach ($goodsArr as $goodsKey => $goodsVal) {
-                $temp['member_goods_price'] = bcadd($temp['member_goods_price'], $goodsVal['member_goods_price'], 2);
+                $temp['member_goods_price'] = bcadd($temp['member_goods_price'], bcmul($goodsVal['member_goods_price'], $goodsVal['goods_num'], 2), 2);
                 $temp['total_volume'] += $goodsVal['volume'] * $goodsVal['goods_num'];
                 $temp['total_weight'] += $goodsVal['weight'] * $goodsVal['goods_num'];
                 $temp['goods_num'] += $goodsVal['goods_num'];
@@ -962,6 +970,8 @@ class GoodsLogic extends Model
      */
     public function getGoodsList($filter_goods_id, $sort, $page, $userId = null)
     {
+        $sort['sort'] = 'desc';
+        $sort['goods_id'] = 'desc';
         // 商品列表
         $goodsList = Db::name('goods')->where('goods_id', 'in', $filter_goods_id)
             ->field('goods_id, cat_id, extend_cat_id, goods_sn, goods_name, goods_type, brand_id, store_count, comment_count, goods_remark,
