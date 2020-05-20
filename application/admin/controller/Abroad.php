@@ -25,6 +25,7 @@ class Abroad extends Base
                     M('abroad_config')->add($data);
                 }
             }
+            $this->success('操作成功', U('Admin/Abroad/config'));
         }
         $abroadConfig = M('abroad_config')->select();
         $config = [];
