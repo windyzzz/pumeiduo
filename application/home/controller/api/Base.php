@@ -92,6 +92,7 @@ class Base extends Controller
             'c=api.Goods&a=getHotGoodsList',   // 热销商品
             'c=api.Goods&a=getFlashSalesGoodsList',   // 秒杀商品
             'c=api.Goods&a=look_see',   // 猜你喜欢
+            'c=api.Goods&a=indexGoods',   // 主页展示不同类型商品
             'c=api.User&a=findPassword',   // 找回密码（登录前忘记密码）
             'c=api.Adv&a=index',   // 广告
         ];

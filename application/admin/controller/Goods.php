@@ -326,7 +326,7 @@ class Goods extends Base
          * }
          */
         $show = $Page->show();
-        $order_str = "`{$_POST['orderby1']}` {$_POST['orderby2']}";
+        $order_str = "`{$_POST['orderby1']}` {$_POST['orderby2']}, " . "sort desc, goods_id desc";
         $goodsList = M('Goods')->where($where)->order($order_str)->limit($Page->firstRow . ',' . $Page->listRows)->select();
 
         $catList = D('goods_category')->select();
