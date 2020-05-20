@@ -939,6 +939,11 @@ class CartLogic extends Model
                     unset($cartList[$cartKey]);
                     continue;
                 }
+                if (in_array($cart['prom_type'], [1, 2])) {
+                    // 秒杀、团购更新商品pv
+                    $cartList[$cartKey]['goods']['retail_pv'] = bcmul($cart['goods']['retail_pv'], ($cart['member_goods_price'] / $cart['goods_price']), 2);
+                    $cartList[$cartKey]['goods']['integral_pv'] = bcmul($cart['goods']['integral_pv'], ($cart['member_goods_price'] / $cart['goods_price']), 2);
+                }
             }
         }
         return $cartList;
