@@ -905,11 +905,21 @@ class Order extends Base
                 case 0:
                 case 1:
                 case 2:
+                    if (isset($refundMoney)) {
+                        if (isset($refundElectronic)) {
+                            $return['return_price'] = bcadd($refundMoney, $refundElectronic, 2);
+                        } else {
+                            $return['return_price'] = $refundMoney . '';
+                        }
+                    } elseif (isset($refundElectronic)) {
+                        $return['return_price'] = $refundElectronic . '';
+                    } else {
+                        $return['return_price'] = '0.00';
+                    }
                     $return['return_reason'] = C('RETURN_REASON')[$type];
                     $return['return_contact'] = tpCache('shop_info.contact');
                     $return['return_mobile'] = tpCache('shop_info.mobile');
                     $return['return_address'] = isset($address) ? $address : '';
-                    $return['return_price'] = isset($refundMoney) ? $refundMoney . '' : isset($refundElectronic) ? $refundElectronic . '' : 0;
                     $return['return_electronic'] = isset($refundElectronic) ? $refundElectronic . '' : 0;
                     $return['return_integral'] = isset($refundIntegral) ? $refundIntegral . '' : 0;
                     break;
