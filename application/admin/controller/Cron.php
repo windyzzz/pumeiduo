@@ -13,6 +13,7 @@ namespace app\admin\controller;
 
 use app\common\logic\PushLogic;
 use app\common\logic\SmsLogic;
+use app\common\logic\Token as TokenLogic;
 use app\common\logic\wechat\WechatUtil;
 use think\Controller;
 use think\Db;
@@ -1423,5 +1424,67 @@ AND log_id NOT IN
         }
         // 更新记录状态
         M('order')->where(['order_id' => ['in', $orderIds]])->update(['pv_tb' => 1]);
+    }
+
+    /**
+     * 查询计算订单商品价格，普通会员升级到VIP
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     */
+    public function autoUpgradeVip()
+    {
+        // 普通用户升级成为VIP所需购买的金额
+        $vipBuyMoney = tpCache('distribut.vip_buy_money');
+        if (isset($vipBuyMoney) && $vipBuyMoney > 0) {
+            $where = [
+                'order_status' => ['IN', [2, 4, 6]],    // 已收货 已完成 售后
+                'pay_status' => 1,                      // 已支付
+                'shipping_status' => 1,                 // 已发货
+                'end_sale_time' => ['<=', time()],      // 售后期结束
+                'add_time' => ['>=', '1589904000']      // 功能上线时间
+            ];
+            // 订单列表
+            $orderList = M('order o')->join('users u', 'u.user_id = o.user_id')
+                ->where($where)->where(['u.distribut_level' => 1])->field('o.order_id, o.user_id')->order('o.user_id')->select();
+            // 用户购买的金额
+            $userOrderGoodsPrice = [];
+            foreach ($orderList as $order) {
+                $orderGoodsPrice = M('order_goods')->where([
+                    'order_id' => $order['order_id'],
+                    'is_gift' => 0,
+                    're_id' => 0
+                ])->sum('goods_price - use_integral');
+                if (!isset($userOrderGoodsPrice[$order['user_id']])) {
+                    $userOrderGoodsPrice[$order['user_id']] = [
+                        'goods_price' => $orderGoodsPrice
+                    ];
+                } else {
+                    $userOrderGoodsPrice[$order['user_id']]['goods_price'] = bcadd($userOrderGoodsPrice[$order['user_id']]['goods_price'], $orderGoodsPrice, 2);
+                }
+            }
+            foreach ($userOrderGoodsPrice as $userId => $orderGoodsPrice) {
+                if ($orderGoodsPrice['goods_price'] >= $vipBuyMoney) {
+                    $userOldLevel = M('users')->where(['user_id' => $userId])->value('distribut_level');
+                    if ($userOldLevel > 1) {
+                        continue;
+                    }
+                    // 升级用户
+                    $update['is_distribut'] = 1;
+                    $update['distribut_level'] = 2;
+                    M('users')->where('user_id', $userId)->save($update);
+                    $user = Db::name('users')->where('user_id', $userId)->find();
+                    // 更新用户推送tags
+                    $res = (new PushLogic())->bindPushTag($user);
+                    if ($res['status'] == 2) {
+                        $user = Db::name('users')->where('user_id', $userId)->find();
+                    }
+                    // 更新缓存
+                    TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
+                    // 升级记录
+                    logDistribut('', $userId, $update['distribut_level'], $userOldLevel, 3);
+                }
+            }
+        }
     }
 }
