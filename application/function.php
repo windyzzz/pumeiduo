@@ -1652,3 +1652,15 @@ function checkBankCard($card)
     $total *= 9;
     return $last_n == ($total % 10);
 }
+
+/**
+ * 去除字符串所有空格回车
+ * @param $str
+ * @return mixed
+ */
+function trim_all($str)
+{
+    $oldchar = array(" ", "　", "\t", "\n", "\r");
+    $newchar = array("", "", "", "", "");
+    return str_replace($oldchar, $newchar, $str);
+}
