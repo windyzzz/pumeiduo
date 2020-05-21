@@ -30,6 +30,8 @@ class UpdateRegion220200521 extends Migrator
     {
         $this->table('region2')
             ->changeColumn('name', 'string', ['limit' => 50, 'comment' => '地区名称'])
+            ->addColumn('status', 'integer', ['default' => 1, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
+                'comment' => '开启状态'])
             ->addColumn('ml_region_id', 'integer', ['default' => 0, 'comment' => '供应链地区ID'])
             ->update();
     }

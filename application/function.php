@@ -1664,3 +1664,32 @@ function trim_all($str)
     $newchar = array("", "", "", "", "");
     return str_replace($oldchar, $newchar, $str);
 }
+
+/**
+ * HMAC-MD5 签名算法
+ * @param $app_id
+ * @param array $data
+ * @return bool|string
+ */
+function hmac_md5_sign($app_id, array $data)
+{
+    if (empty($data)) return false;
+    Ksort($data);
+    $data = http_build_query($data);
+    $app_key = iconv("GB2312", "UTF-8//IGNORE", $app_id);
+    $data = iconv("GB2312", "UTF-8//IGNORE", $data);
+    $b = 64;
+    //如果AppKey大于64位，则装入一个二进制字符串pack()
+    if (strlen($app_key) > $b) {
+        $app_key = pack("H*", md5($app_key));
+    }
+    //str_pad() 填充字符串到右侧，到$b(64)个字符的新长度，chr()从不同的ASCII值返回字符
+    $app_key = str_pad($app_key, $b, chr(0x00));
+    $ipad = str_pad('', $b, chr(0x36));
+    $opad = str_pad('', $b, chr(0x5c));
+
+    $k_ipad = $app_key ^ $ipad;
+    $k_opad = $app_key ^ $opad;
+    //$k_opad拼接 二进制字符串的一个md5加密字符串
+    return md5($k_opad . pack("H*", md5($k_ipad . $data)));
+}
