@@ -130,14 +130,14 @@ class Coupon extends Base
                         // 指定商品折扣券
                         $title = '满' . floatval($coupon['condition']) . '打' . floatval($coupon['money']) . '折';
                         $desc = '指定商品满' . floatval($coupon['condition']) . '享受' . floatval($coupon['money']) . '折';
-//                        foreach ($couponGoods as $goods) {
-//                            if ($coupon['id'] == $goods['coupon_id']) {
-//                                $couponList[$k . '-1']['goods_list'][] = [
-//                                    'goods_id' => $goods['goods_id'],
-//                                    'original_img' => $goods['original_img']
-//                                ];
-//                            }
-//                        }
+                        foreach ($couponGoods as $goods) {
+                            if ($coupon['id'] == $goods['coupon_id']) {
+                                $couponList[$k . '-1']['goods_list'][] = [
+                                    'goods_id' => $goods['goods_id'],
+                                    'original_img' => $goods['original_img']
+                                ];
+                            }
+                        }
                         break;
                     case 5:
                         // 兑换商品券
@@ -246,14 +246,14 @@ class Coupon extends Base
                         // 指定商品折扣券
                         $title = '满' . floatval($coupon['condition']) . '打' . floatval($coupon['money']) . '折';
                         $desc = '指定商品满' . floatval($coupon['condition']) . '享受' . floatval($coupon['money']) . '折';
-//                        foreach ($couponGoods as $goods) {
-//                            if ($coupon['cid'] == $goods['coupon_id']) {
-//                                $couponList[$k . '-1']['goods_list'][] = [
-//                                    'goods_id' => $goods['goods_id'],
-//                                    'original_img' => $goods['original_img']
-//                                ];
-//                            }
-//                        }
+                        foreach ($couponGoods as $goods) {
+                            if ($coupon['cid'] == $goods['coupon_id']) {
+                                $couponList[$k . '-1']['goods_list'][] = [
+                                    'goods_id' => $goods['goods_id'],
+                                    'original_img' => $goods['original_img']
+                                ];
+                            }
+                        }
                         break;
                     case 5:
                         // 兑换商品券
