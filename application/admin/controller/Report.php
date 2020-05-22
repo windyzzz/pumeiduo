@@ -76,21 +76,21 @@ class Report extends Base
             //销售不含税价
             $tmp_c_amout = 0;
             $result = Db::name('order')
-                ->field('oi.order_id, og.rec_id, og.use_integral, og.member_goods_price as prom_goods_price, og.use_integral as prom_use_integral, og.goods_num, g.goods_id, g.goods_name, g.ctax_price, g.stax_price, og.re_id, g.zone')
                 ->alias('oi')
                 ->join('order_goods og', 'og.order_id = oi.order_id', 'left')
                 ->join('goods g', 'og.goods_id = g.goods_id', 'left')
-                ->where("oi.add_time >$i and oi.add_time < $j AND oi.pay_status=1  and oi.order_status in(1,2,4) ")
+                ->where("oi.add_time >$i AND oi.add_time < $j AND oi.pay_status=1 AND oi.order_status in(1,2,4) ")
+                ->field('oi.order_id, og.rec_id, og.goods_price, og.member_goods_price, og.use_integral, og.re_id, og.goods_num, g.goods_id, g.goods_name, g.ctax_price, g.stax_price, g.zone')
                 ->select();
             $vip_order_num = 0;
             if ($result) {
                 foreach ($result as $k => $v) {
                     if ($v['re_id'] == 0) {
-                        if ($v['prom_goods_price'] > 0 || $v['prom_use_integral'] > 0) {
+                        if ($v['member_goods_price'] > 0 || $v['use_integral'] > 0) {
                             if ($v['use_integral'] > 0) {
-                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul($v['ctax_price'], $v['goods_num'], 2), 2);
+                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['ctax_price'], ($v['member_goods_price'] / $v['goods_price']), 2), $v['goods_num'], 2), 2);
                             } else {
-                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul($v['stax_price'], $v['goods_num'], 2), 2);
+                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['stax_price'], ($v['member_goods_price'] / $v['goods_price']), 2), $v['goods_num'], 2), 2);
                             }
                         }
                     }
@@ -121,10 +121,9 @@ class Report extends Base
         foreach ($res as $val) {
             $arr[$val['gap']] = $val['tnum'];
             $brr[$val['gap']] = $val['amount'];
-            $tnum += $val['tnum'];
-            $tamount += $val['amount'];
+//            $tnum += $val['tnum'];
+//            $tamount += $val['amount'];
         }
-
         for ($i = $this->begin; $i <= $this->end; $i = $i + 24 * 3600) {
             $tmp_num = empty($arr[date('Y-m-d', $i)]) ? 0 : $arr[date('Y-m-d', $i)];
             $tmp_amount = empty($brr[date('Y-m-d', $i)]) ? 0 : $brr[date('Y-m-d', $i)];
@@ -137,24 +136,23 @@ class Report extends Base
             //销售不含税价
             $tmp_c_amout = 0;
             $result = Db::name('order')
-                ->field('oi.order_id,og.rec_id,og.use_integral,og.member_goods_price as prom_goods_price,og.use_integral as prom_use_integral,og.goods_num,g.goods_id,g.goods_name,g.ctax_price,g.stax_price,og.re_id,g.zone')
                 ->alias('oi')
                 ->join('order_goods og', 'og.order_id = oi.order_id', 'left')
                 ->join('goods g', 'og.goods_id = g.goods_id', 'left')
-                ->where("oi.add_time >$i and oi.add_time < $j AND oi.pay_status=1  and oi.order_status in(1,2,4) ")
+                ->where("oi.add_time >$i AND oi.add_time < $j AND oi.pay_status=1 AND oi.order_status in(1,2,4) ")
+                ->field('oi.order_id, og.rec_id, og.goods_price, og.member_goods_price, og.use_integral, og.re_id, og.goods_num, g.goods_id, g.goods_name, g.ctax_price, g.stax_price, g.zone')
                 ->select();
             $vip_order_num = 0;
             if ($result) {
                 foreach ($result as $k => $v) {
                     if ($v['re_id'] == 0) {
-                        if ($v['prom_goods_price'] > 0 || $v['prom_use_integral'] > 0) {
+                        if ($v['member_goods_price'] > 0 || $v['use_integral'] > 0) {
                             if ($v['use_integral'] > 0) {
-                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul($v['ctax_price'], $v['goods_num'], 2), 2);
+                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['ctax_price'], ($v['member_goods_price'] / $v['goods_price']), 2), $v['goods_num'], 2), 2);
                             } else {
-                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul($v['stax_price'], $v['goods_num'], 2), 2);
+                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['stax_price'], ($v['member_goods_price'] / $v['goods_price']), 2), $v['goods_num'], 2), 2);
                             }
                         }
-
                     }
                     if ($v['zone'] == 3) {
                         $vip_order_num++;
@@ -164,7 +162,6 @@ class Report extends Base
             $list[] = ['day' => $date, 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
             $day[] = $date;
         }
-
         $strTable = '<table width="500" border="1">';
         $strTable .= '<tr>';
         $strTable .= '<td style="text-align:left;font-size:12px;width:120px;">时间</td>';
@@ -238,12 +235,10 @@ class Report extends Base
 //            $tnum += $val['tnum'];
 //            $tamount += $val['amount'];
         }
-
         for ($i = $this->begin; $i <= $this->end;) {
             $year = date('Y', $i);
             $m = date('m', $i);
             $day_num = date('t', strtotime("$year-$m"));
-
             $tmp_num = empty($arr[date('Y-m', $i)]) ? 0 : $arr[date('Y-m', $i)];
             $tmp_amount = empty($brr[date('Y-m', $i)]) ? 0 : $brr[date('Y-m', $i)];
             $tmp_sign = empty($tmp_num) ? 0 : round($tmp_amount / $tmp_num, 2);
@@ -255,21 +250,21 @@ class Report extends Base
             //销售不含税价
             $tmp_c_amout = 0;
             $result = Db::name('order')
-                ->field('oi.order_id,og.rec_id,og.use_integral,og.member_goods_price as prom_goods_price,og.use_integral as prom_use_integral,og.prom_id,og.goods_num,g.goods_id,g.goods_name,g.ctax_price,g.stax_price,FROM_UNIXTIME(oi.add_time,"%Y-%m-%d") as time,og.re_id,g.zone')
                 ->alias('oi')
                 ->join('order_goods og', 'og.order_id = oi.order_id', 'left')
                 ->join('goods g', 'og.goods_id = g.goods_id', 'left')
-                ->where("oi.add_time >$i and oi.add_time < $j AND oi.pay_status=1  and oi.order_status in(1,2,4) ")
+                ->where("oi.add_time >$i AND oi.add_time < $j AND oi.pay_status=1 AND oi.order_status in(1,2,4) ")
+                ->field('oi.order_id, og.rec_id, og.goods_price, og.member_goods_price, og.use_integral, og.re_id, og.goods_num, g.goods_id, g.goods_name, g.ctax_price, g.stax_price, g.zone')
                 ->select();
             $vip_order_num = 0;
             if ($result) {
                 foreach ($result as $k => $v) {
                     if ($v['re_id'] == 0) {
-                        if ($v['prom_goods_price'] > 0 || $v['prom_use_integral'] > 0) {
+                        if ($v['member_goods_price'] > 0 || $v['use_integral'] > 0) {
                             if ($v['use_integral'] > 0) {
-                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul($v['ctax_price'], $v['goods_num'], 2), 2);
+                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['ctax_price'], ($v['member_goods_price'] / $v['goods_price']), 2), $v['goods_num'], 2), 2);
                             } else {
-                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul($v['stax_price'], $v['goods_num'], 2), 2);
+                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['stax_price'], ($v['member_goods_price'] / $v['goods_price']), 2), $v['goods_num'], 2), 2);
                             }
                         }
                     }
@@ -343,7 +338,6 @@ class Report extends Base
 //            $tnum += $val['tnum'];
 //            $tamount += $val['amount'];
         }
-
         for ($i = $this->begin; $i <= $this->end;) {
             $year = date('Y', $i);
             $m = date('m', $i);
@@ -360,21 +354,21 @@ class Report extends Base
             //销售不含税价
             $tmp_c_amout = 0;
             $result = Db::name('order')
-                ->field('oi.order_id,og.rec_id,og.use_integral,og.member_goods_price as prom_goods_price,og.use_integral as prom_use_integral,og.prom_id,og.goods_num,g.goods_id,g.goods_name,g.ctax_price,g.stax_price,FROM_UNIXTIME(oi.add_time,"%Y-%m-%d") as time,og.re_id,g.zone')
                 ->alias('oi')
                 ->join('order_goods og', 'og.order_id = oi.order_id', 'left')
                 ->join('goods g', 'og.goods_id = g.goods_id', 'left')
-                ->where("oi.add_time >$i and oi.add_time < $j AND oi.pay_status=1  and oi.order_status in(1,2,4) ")
+                ->where("oi.add_time >$i AND oi.add_time < $j AND oi.pay_status=1 AND oi.order_status in(1,2,4) ")
+                ->field('oi.order_id, og.rec_id, og.goods_price, og.member_goods_price, og.use_integral, og.re_id, og.goods_num, g.goods_id, g.goods_name, g.ctax_price, g.stax_price, g.zone')
                 ->select();
+            $vip_order_num = 0;
             if ($result) {
-                $vip_order_num = 0;
                 foreach ($result as $k => $v) {
                     if ($v['re_id'] == 0) {
-                        if ($v['prom_goods_price'] > 0 || $v['prom_use_integral'] > 0) {
+                        if ($v['member_goods_price'] > 0 || $v['use_integral'] > 0) {
                             if ($v['use_integral'] > 0) {
-                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul($v['ctax_price'], $v['goods_num'], 2), 2);
+                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['ctax_price'], ($v['member_goods_price'] / $v['goods_price']), 2), $v['goods_num'], 2), 2);
                             } else {
-                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul($v['stax_price'], $v['goods_num'], 2), 2);
+                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['stax_price'], ($v['member_goods_price'] / $v['goods_price']), 2), $v['goods_num'], 2), 2);
                             }
                         }
                     }
@@ -479,21 +473,21 @@ class Report extends Base
             //销售不含税价
             $tmp_c_amout = 0;
             $result = Db::name('order')
-                ->field('oi.order_id,og.rec_id,og.use_integral,og.goods_num,og.member_goods_price as prom_goods_price,og.use_integral as prom_use_integral,g.goods_id,g.goods_name,g.ctax_price,g.stax_price,og.re_id,g.zone')
                 ->alias('oi')
                 ->join('order_goods og', 'og.order_id = oi.order_id', 'left')
                 ->join('goods g', 'og.goods_id = g.goods_id', 'left')
-                ->where("oi.add_time >$i and oi.add_time < $j AND oi.pay_status=1  and oi.order_status in(1,2,4) ")
+                ->where("oi.add_time >$i AND oi.add_time < $j AND oi.pay_status=1 AND oi.order_status in(1,2,4) ")
+                ->field('oi.order_id, og.rec_id, og.goods_price, og.member_goods_price, og.use_integral, og.re_id, og.goods_num, g.goods_id, g.goods_name, g.ctax_price, g.stax_price, g.zone')
                 ->select();
+            $vip_order_num = 0;
             if ($result) {
-                $vip_order_num = 0;
                 foreach ($result as $k => $v) {
                     if ($v['re_id'] == 0) {
-                        if ($v['prom_goods_price'] > 0 || $v['prom_use_integral'] > 0) {
+                        if ($v['member_goods_price'] > 0 || $v['use_integral'] > 0) {
                             if ($v['use_integral'] > 0) {
-                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul($v['ctax_price'], $v['goods_num'], 2), 2);
+                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['ctax_price'], ($v['member_goods_price'] / $v['goods_price']), 2), $v['goods_num'], 2), 2);
                             } else {
-                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul($v['stax_price'], $v['goods_num'], 2), 2);
+                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['stax_price'], ($v['member_goods_price'] / $v['goods_price']), 2), $v['goods_num'], 2), 2);
                             }
                         }
                     }
@@ -569,23 +563,22 @@ class Report extends Base
             $date = date('Y', $i);
             $j = $i + 365 * 24 * 3600;
             //销售不含税价
-            $tmp_c_amout = 0;
             $result = Db::name('order')
-                ->field('oi.order_id,og.rec_id,og.use_integral,og.goods_num,og.member_goods_price as prom_goods_price,og.use_integral as prom_use_integral,g.goods_id,g.goods_name,g.ctax_price,g.stax_price,og.re_id,g.zone')
                 ->alias('oi')
                 ->join('order_goods og', 'og.order_id = oi.order_id', 'left')
                 ->join('goods g', 'og.goods_id = g.goods_id', 'left')
-                ->where("oi.add_time >$i and oi.add_time < $j AND oi.pay_status=1  and oi.order_status in(1,2,4) ")
+                ->where("oi.add_time >$i AND oi.add_time < $j AND oi.pay_status=1 AND oi.order_status in(1,2,4) ")
+                ->field('oi.order_id, og.rec_id, og.goods_price, og.member_goods_price, og.use_integral, og.re_id, og.goods_num, g.goods_id, g.goods_name, g.ctax_price, g.stax_price, g.zone')
                 ->select();
+            $vip_order_num = 0;
             if ($result) {
-                $vip_order_num = 0;
                 foreach ($result as $k => $v) {
                     if ($v['re_id'] == 0) {
-                        if ($v['prom_goods_price'] > 0 || $v['prom_use_integral'] > 0) {
+                        if ($v['member_goods_price'] > 0 || $v['use_integral'] > 0) {
                             if ($v['use_integral'] > 0) {
-                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul($v['ctax_price'], $v['goods_num'], 2), 2);
+                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['ctax_price'], ($v['member_goods_price'] / $v['goods_price']), 2), $v['goods_num'], 2), 2);
                             } else {
-                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul($v['stax_price'], $v['goods_num'], 2), 2);
+                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['stax_price'], ($v['member_goods_price'] / $v['goods_price']), 2), $v['goods_num'], 2), 2);
                             }
                         }
                     }
