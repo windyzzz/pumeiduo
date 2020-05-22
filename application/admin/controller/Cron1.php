@@ -8757,7 +8757,7 @@ class Cron1 extends Controller
                             if (stristr(mb_substr(trim_all($region1_2['name']), 0, 2), mb_substr(trim_all($region2_2['name']), 0, 2))) {
                                 // 两边都有的
                                 $mlRegionIdsL2[] = $region2_2['id'];
-                                M('region2')->where(['id' => $region1_2['id']])->update(['ml_region_id' => $region2_2['id'], 'status' => $region2_2['is']]);
+                                M('region2')->where(['id' => $region1_2['id']])->update(['ml_region_id' => $region2_2['id']]);
                                 // 本地三级地区
                                 $localRegion3 = M('region2')->where(['parent_id' => $region1_2['id']])->field('id, name')->select();
                                 // 供应链三级地区
@@ -8767,7 +8767,7 @@ class Cron1 extends Controller
                                         if (stristr(mb_substr(trim_all($region1_3['name']), 0, 2), mb_substr(trim_all($region2_3['name']), 0, 2))) {
                                             $mlRegionIdsL3[] = $region2_3['id'];
                                             // 两边都有的
-                                            M('region2')->where(['id' => $region1_3['id']])->update(['ml_region_id' => $region2_3['id'], 'status' => $region2_3['is']]);
+                                            M('region2')->where(['id' => $region1_3['id']])->update(['ml_region_id' => $region2_3['id']]);
                                             // 供应链第四级地区
                                             $mlRegion4 = M('ml_region')->where(['parent_id' => $region2_3['id']])->field('id, name, is')->select();
                                             foreach ($mlRegion4 as $region2_4) {
@@ -8776,7 +8776,6 @@ class Cron1 extends Controller
                                                     'parent_id' => $region1_3['id'],
                                                     'level' => 3,
                                                     'zipcode' => 0,
-                                                    'status' => $region2_4['is'],
                                                     'ml_region_id' => $region2_4['id']
                                                 ];
                                             }
@@ -8802,7 +8801,6 @@ class Cron1 extends Controller
                 'parent_id' => 0,
                 'level' => 0,
                 'zipcode' => 0,
-                'status' => $region1['is'],
                 'ml_region_id' => $region1['id']
             ]);
             // 第二级地区
@@ -8813,7 +8811,6 @@ class Cron1 extends Controller
                     'parent_id' => $insertId1,
                     'level' => 1,
                     'zipcode' => 0,
-                    'status' => $region2['is'],
                     'ml_region_id' => $region2['id']
                 ]);
                 // 第三级地区
@@ -8824,7 +8821,6 @@ class Cron1 extends Controller
                         'parent_id' => $insertId2,
                         'level' => 2,
                         'zipcode' => 0,
-                        'status' => $region3['is'],
                         'ml_region_id' => $region3['id']
                     ]);
                     // 第四级地区
@@ -8835,7 +8831,6 @@ class Cron1 extends Controller
                             'parent_id' => $insertId3,
                             'level' => 3,
                             'zipcode' => 0,
-                            'status' => $region4['is'],
                             'ml_region_id' => $region4['id']
                         ]);
                     }
@@ -8858,7 +8853,6 @@ class Cron1 extends Controller
                 'parent_id' => $parentId,
                 'level' => 1,
                 'zipcode' => 0,
-                'status' => $region2['is'],
                 'ml_region_id' => $region2['id']
             ]);
             // 第三级地区
@@ -8869,7 +8863,6 @@ class Cron1 extends Controller
                     'parent_id' => $insertId2,
                     'level' => 2,
                     'zipcode' => 0,
-                    'status' => $region3['is'],
                     'ml_region_id' => $region3['id']
                 ]);
                 // 第四级地区
@@ -8880,7 +8873,6 @@ class Cron1 extends Controller
                         'parent_id' => $insertId3,
                         'level' => 3,
                         'zipcode' => 0,
-                        'status' => $region4['is'],
                         'ml_region_id' => $region4['id']
                     ]);
                 }
@@ -8901,7 +8893,6 @@ class Cron1 extends Controller
                 'parent_id' => $parentId,
                 'level' => 2,
                 'zipcode' => 0,
-                'status' => $region3['is'],
                 'ml_region_id' => $region3['id']
             ]);
             // 第四级地区
@@ -8912,7 +8903,6 @@ class Cron1 extends Controller
                     'parent_id' => $insertId3,
                     'level' => 3,
                     'zipcode' => 0,
-                    'status' => $region4['is'],
                     'ml_region_id' => $region4['id']
                 ]);
             }
@@ -8937,10 +8927,10 @@ class Cron1 extends Controller
             unset($region['ml_region_id']);
             $specialRegionData[] = $region;
         }
-//        if (!empty($specialRegionData)) {
-//            $localRegionModel = new SpecialRegionModel();
-//            $localRegionModel->saveAll($specialRegionData);
-//        }
+        if (!empty($specialRegionData)) {
+            $localRegionModel = new SpecialRegionModel();
+            $localRegionModel->saveAll($specialRegionData);
+        }
         var_dump('ok');
     }
 }
