@@ -390,6 +390,7 @@ class Order extends Base
         // 组合数据
         $orderData = [
             'order_id' => $orderInfo['order_id'],
+            'order_type' => $orderInfo['order_type'],
             'order_sn' => $orderInfo['order_sn'],
             'transaction_id' => $orderInfo['transaction_id'] ?? '',
             'order_status' => $orderInfo['order_status'],
