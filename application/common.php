@@ -1128,7 +1128,7 @@ function get_user_address_list_new($user_id, $default = false, $addressId = 0)
         ->join('region2 r3', 'r3.id = ua.district', 'LEFT')
         ->where($where)->order('is_default desc')->limit(20)
         ->field('address_id, consignee, mobile, province, r1.name province_name, city, r2.name city_name, district, r3.name district_name,
-        address, zipcode, is_default, is_pickup, tabs')
+        address, ua.zipcode, is_default, is_pickup, tabs')
         ->order('ua.is_default DESC, ua.address_id DESC')
         ->select();
 
