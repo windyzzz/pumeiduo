@@ -135,7 +135,7 @@
                                 <div style="text-align: center; width: 100px;">
                                     <a href="{:U('Ad/popupInfo', array('act'=>'edit','id'=>$vo['id']))}" class="btn blue"><i
                                             class="fa fa-pencil-square-o"></i>编辑</a>
-                                    <a class="btn red" onClick="delfunc(this)" data-url="{:U('Ad/popupInfo')}"
+                                    <a class="btn red" onClick="delfunc(this)" data-url="{:U('Ad/popupDel')}"
                                        data-id="{$vo.id}"><i class="fa fa-trash-o"></i>删除</a>
                                 </div>
                             </td>
@@ -173,7 +173,7 @@
                 $.ajax({
                     type: 'post',
                     url: $(obj).attr('data-url'),
-                    data: {act: 'del', del_id: $(obj).attr('data-id')},
+                    data: {id: $(obj).attr('data-id')},
                     dataType: 'json',
                     success: function (data) {
                         layer.closeAll();

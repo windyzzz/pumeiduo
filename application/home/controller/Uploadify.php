@@ -592,6 +592,7 @@ class Uploadify extends Base
         $return_data['original'] = ''; // 这里好像没啥用 暂时注释起来
         $return_data['state'] = $state;
         $return_data['path'] = $path;
+        $return_data['status'] = 1;
         $this->ajaxReturn($return_data, 'json');
     }
 

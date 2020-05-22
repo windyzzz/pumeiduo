@@ -391,4 +391,14 @@ class Ad extends Base
         $this->assign('end_time', date('Y-m-d H:i:s', strtotime('+1 week')));
         return $this->fetch('popup_info');
     }
+
+    /**
+     * 删除活动弹窗
+     */
+    public function popupDel()
+    {
+        $id = I('id', '');
+        M('popup')->where(['id' => $id])->delete();
+        $this->ajaxReturn(['status' => 1, 'msg' => '删除成功']);
+    }
 }
