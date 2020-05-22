@@ -391,6 +391,7 @@ class Order extends Base
         $orderData = [
             'order_id' => $orderInfo['order_id'],
             'order_type' => $orderInfo['order_type'],
+            'order_type_tips' => '海外购商品收货后如有质量或破损问题申请退换货时，请联系总部客服进行处理',
             'order_sn' => $orderInfo['order_sn'],
             'transaction_id' => $orderInfo['transaction_id'] ?? '',
             'order_status' => $orderInfo['order_status'],
