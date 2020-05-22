@@ -807,13 +807,16 @@ class Order extends Base
         $order_goods['goods_img'] = M('goods')->where(['goods_id' => $order_goods['goods_id']])->getField('original_img');
 //        $order = M('order')->where(['order_id' => $order_goods['order_id'], 'user_id' => $this->user_id])->find();
         $order = M('order')->where(['order_id' => $order_goods['order_id']])->find();
+        if (empty($order)) {
+            return json(['status' => 0, 'msg' => '非法操作', 'result' => null]);
+        }
+        if ($order['order_type'] == 2) {
+            return json(['status' => 0, 'msg' => '海外购商品收货后如有质量或破损问题申请退换货时，请联系总部客服进行处理']);
+        }
         $confirm_time_config = tpCache('shopping.auto_service_date'); //后台设置多少天内可申请售后
         $confirm_time = $confirm_time_config * 24 * 60 * 60;
         if ((time() - $order['confirm_time']) > $confirm_time && !empty($order['confirm_time'])) {
             return json(['status' => 0, 'msg' => '已经超过' . $confirm_time_config . '天内退货时间', 'result' => null]);
-        }
-        if (empty($order)) {
-            return json(['status' => 0, 'msg' => '非法操作', 'result' => null]);
         }
         if ($request->isPost()) {
             $model = new OrderLogic();
@@ -855,6 +858,9 @@ class Order extends Base
         $order = Db::name('order')->where(['order_id' => $orderGoods['order_id']])->find();
         if (empty($order)) {
             return json(['status' => 0, 'msg' => '非法操作']);
+        }
+        if ($order['order_type'] == 2) {
+            return json(['status' => 0, 'msg' => '海外购商品收货后如有质量或破损问题申请退换货时，请联系总部客服进行处理']);
         }
         $confirmTimeConfig = tpCache('shopping.auto_service_date');   // 后台设置多少天内可申请售后
         $confirmTime = $confirmTimeConfig * 24 * 60 * 60;
