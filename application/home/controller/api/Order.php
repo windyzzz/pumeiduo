@@ -372,6 +372,10 @@ class Order extends Base
         if (!$orderInfo) {
             return json(['status' => 0, 'msg' => '没有获取到订单信息', 'result' => null]);
         }
+        $orderTypeTips = '';
+        if ($orderInfo['order_type'] == 2) {
+            $orderTypeTips = '海外购商品收货后如有质量或破损问题申请退换货时，请联系总部客服进行处理';
+        }
         $orderInfo = set_btn_order_status($orderInfo);  // 添加属性  包括按钮显示属性 和 订单状态显示属性
         // 获取订单商品
         $userLogic = new UsersLogic();
@@ -391,7 +395,7 @@ class Order extends Base
         $orderData = [
             'order_id' => $orderInfo['order_id'],
             'order_type' => $orderInfo['order_type'],
-            'order_type_tips' => '海外购商品收货后如有质量或破损问题申请退换货时，请联系总部客服进行处理',
+            'order_type_tips' => $orderTypeTips,
             'order_sn' => $orderInfo['order_sn'],
             'transaction_id' => $orderInfo['transaction_id'] ?? '',
             'order_status' => $orderInfo['order_status'],
