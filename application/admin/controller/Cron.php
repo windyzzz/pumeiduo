@@ -1454,7 +1454,7 @@ AND log_id NOT IN
                     'order_id' => $order['order_id'],
                     'is_gift' => 0,
                     're_id' => 0
-                ])->sum('goods_price - use_integral');
+                ])->sum('(goods_price - use_integral) * goods_num');
                 if (!isset($userOrderGoodsPrice[$order['user_id']])) {
                     $userOrderGoodsPrice[$order['user_id']] = [
                         'goods_price' => $orderGoodsPrice
