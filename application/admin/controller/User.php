@@ -370,17 +370,6 @@ class User extends Base
     {
         if (IS_POST) {
             $uid = I('post.id');
-            $data = [
-                'bindUserId' => I('post.merge_uid'),
-                'username' => I('post.merge_uid'),
-            ];
-            $usersLogic = new CommonUsersLogic();
-            $res = $usersLogic->bindUser($uid, 4, $data);
-            if ($res['status'] !== 1) {
-                exit($this->error($res['msg']));
-            }
-            exit($this->success('合并成功'));
-
             $user = D('users')->where(['user_id' => $uid])->find();
             if (!$user) {
                 exit($this->error('会员不存在'));
@@ -445,6 +434,7 @@ class User extends Base
                 $user_data['user_name'] = $c['user_name'];
                 $user_data['type'] = 2;
                 $user_data['bind_time'] = time();
+                $user_data['bind_uid'] = $merge_uid;
                 $user_data['time_out'] = strtotime('+' . config('REDIS_DAY') . ' days');
                 $user_data['invite_uid'] = $c['will_invite_uid'] != 0 ? $c['will_invite_uid'] : $c['invite_uid'];
                 $user_data['invite_time'] = $c['will_invite_uid'] != 0 ? time() : $c['invite_time'];
@@ -510,6 +500,27 @@ class User extends Base
             }
         }
 
+        return $this->fetch();
+    }
+
+    /**
+     * 会员合并.
+     */
+    public function merge2()
+    {
+        if (IS_POST) {
+            $uid = I('post.id');
+            $data = [
+                'bindUserId' => I('post.merge_uid'),
+                'username' => I('post.merge_uid'),
+            ];
+            $usersLogic = new CommonUsersLogic();
+            $res = $usersLogic->bindUser($uid, 4, $data);
+            if ($res['status'] !== 1) {
+                exit($this->error($res['msg']));
+            }
+            exit($this->success('合并成功'));
+        }
         return $this->fetch();
     }
 
