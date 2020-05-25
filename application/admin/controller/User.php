@@ -1458,7 +1458,7 @@ class User extends Base
             if ($info['bind_uid'] == $info['user_id']) {
                 $this->error('该会员是通过申请金卡成为金卡的，不能解绑');
             }
-
+            Db::startTrans();
             M('users')->where('user_id', $user_id)->update([
                 'oauth' => '',
                 'openid' => '',
@@ -1470,12 +1470,6 @@ class User extends Base
             ]);
             $o = M('oauth_users')->where('user_id', $user_id)->find();
             M('oauth_users')->where('user_id', $user_id)->delete();
-            M('users')->where('user_id', $user_id)->update([
-                'openid' => '',
-                'oauth' => '',
-                'head_pic' => '',
-                'nickname' => ''
-            ]);
             if ($o) {
                 M('bind_log')->add([
                     'user_id' => $user_id,
@@ -1487,11 +1481,13 @@ class User extends Base
                     'unionid' => $o['unionid'],
                     'oauth' => $o['oauth'],
                 ]);
+                Db::commit();
+                return $this->success('解绑成功');
+            } else {
+                Db::rollback();
+                $this->error('解绑失败');
             }
-
-            return $this->success('解绑成功');
         }
-
         return $this->fetch();
     }
 
