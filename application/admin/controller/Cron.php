@@ -1482,7 +1482,7 @@ AND log_id NOT IN
                     // 更新缓存
                     TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
                     // 升级记录
-                    logDistribut('', $userId, $update['distribut_level'], $userOldLevel, 3);
+                    logDistribut('', $userId, $update['distribut_level'], $userOldLevel, 3, $vipBuyMoney);
                 }
             }
         }

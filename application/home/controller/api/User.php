@@ -3601,7 +3601,7 @@ class User extends Base
     }
 
     /**
-     * 查看用户通知
+     * 查看用户通知（我的页面）
      * @return \think\response\Json
      */
     public function checkNote()
@@ -3679,6 +3679,49 @@ class User extends Base
                 ]
             ];
         }
+        /*
+         * 用户是否已经升级成为VIP
+         */
+        $distributeLog = M('distribut_log')->where(['user_id' => $this->user_id, 'type' => 3, 'note_status' => 0])->field('id, upgrade_money')->find();
+        if (!empty($distributeLog)) {
+            $returnData['list'][] = [
+                'type' => 2,
+                'is_note' => 1,
+                'note_data' => [
+                    'id' => $distributeLog['id'],
+                    'title' => '消费满' . $distributeLog['upgrade_money'] . '元成功升级为VIP会员'
+                ]
+            ];
+        } else {
+            $returnData['list'][] = [
+                'type' => 2,
+                'is_note' => 0,
+                'note_data' => [
+                    'id' => '0',
+                    'title' => ''
+                ]
+            ];
+        }
         return json(['status' => 1, 'result' => $returnData]);
+    }
+
+    /**
+     * 关闭用户通知（我的页面）
+     * @return \think\response\Json
+     */
+    public function closeNote()
+    {
+        $type = I('type', 2);
+        switch ($type) {
+            case '2':
+                /*
+                 * 用户升级成为VIP弹窗
+                 */
+                M('distribut_log')->where(['user_id' => $this->user_id, 'type' => 3, 'note_status' => 0])->update(['note_status' => 1]);
+                break;
+            default:
+                return json(['status' => 0, 'msg' => '通知类型错误']);
+        }
+        return json(['status' => 1]);
     }
 }
