@@ -553,6 +553,13 @@ class Goods extends Base
 
         $goods['freight_free'] = tpCache('shopping.freight_free'); // 全场满多少免运费
         $goods['qr_code'] = ''; // 分享二维码
+        if (!empty($goods['nature'])) {
+            $goods['share_price'] = $goods['nature']['price'];
+            $goods['share_integral'] = $goods['nature']['exchange_integral'];
+        } else {
+            $goods['share_price'] = $goods['exchange_price'];
+            $goods['share_integral'] = $goods['exchange_integral'];
+        }
 
         // 组装数据
         $result['goods'] = $goods;
