@@ -839,14 +839,14 @@ class GoodsLogic extends Model
         $freightGoodsPrice = 0;     // 启用商城免运费设置的商品价格
         foreach ($template_list as $templateVal => $goodsArr) {
             $temp['template_id'] = $templateVal;
-            $temp['is_free_shipping'] = 0;
+            $temp['is_free_shipping'] = 1;
             foreach ($goodsArr as $goodsKey => $goodsVal) {
                 $temp['member_goods_price'] = bcadd($temp['member_goods_price'], bcmul($goodsVal['member_goods_price'], $goodsVal['goods_num'], 2), 2);
                 $temp['total_volume'] += $goodsVal['volume'] * $goodsVal['goods_num'];
                 $temp['total_weight'] += $goodsVal['weight'] * $goodsVal['goods_num'];
                 $temp['goods_num'] += $goodsVal['goods_num'];
-                if ($goodsVal['is_free_shipping'] == 1) {
-                    $temp['is_free_shipping'] = 1;
+                if ($goodsVal['is_free_shipping'] == 0) {
+                    $temp['is_free_shipping'] = 0;
                 }
             }
             $temp['each_order_prom_amount'] = $eachOrderPromAmount;
