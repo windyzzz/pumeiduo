@@ -6,7 +6,6 @@ namespace app\home\controller\api;
 use app\common\logic\UsersLogic;
 use app\common\logic\ArticleLogic;
 use app\common\logic\MessageLogic;
-use think\Page;
 
 class Message extends Base
 {

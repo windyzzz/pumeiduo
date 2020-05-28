@@ -76,25 +76,26 @@ class Base extends Controller
     private function whiteListPath()
     {
         return [
-            'c=api.Login&a=checkLogin', // 检查登录（旧版）
-            'c=api.Login&a=reg', // 用户注册
-            'c=api.Login&a=reg', // 用户注册
-            'c=api.Login&a=do_login', // 用户登录,
-            'c=api.Index&a=indexNew',   // 主页
-            'c=api.Goods&a=all_category',   // 商品分类
-            'c=api.Goods&a=calcSpecPrice',   // 获取规格组合价格
-            'c=api.Goods&a=goodsListNew',   // 商品列表
-            'c=api.Goods&a=searchList',   // 商品搜索列表
-            'c=api.Goods&a=getSeriesGoodsList',   // 超值套装列表
-            'c=api.Goods&a=getGroupBuyGoodsListNew',   // 团购商品列表
-            'c=api.Goods&a=getNewGoodsList',   // 新品列表
-            'c=api.Goods&a=getRecommendGoodsList',   // 促销商品
-            'c=api.Goods&a=getHotGoodsList',   // 热销商品
-            'c=api.Goods&a=getFlashSalesGoodsList',   // 秒杀商品
-            'c=api.Goods&a=look_see',   // 猜你喜欢
-            'c=api.Goods&a=indexGoods',   // 主页展示不同类型商品
-            'c=api.User&a=findPassword',   // 找回密码（登录前忘记密码）
-            'c=api.Adv&a=index',   // 广告
+            'c=api.Login&a=checkLogin',                 // 检查登录（旧版）
+            'c=api.Login&a=reg',                        // 用户注册
+            'c=api.Login&a=reg',                        // 用户注册
+            'c=api.Login&a=do_login',                   // 用户登录
+            'c=api.Index&a=indexNew',                   // 主页
+            'c=api.Goods&a=all_category',               // 商品分类
+            'c=api.Goods&a=calcSpecPrice',              // 获取规格组合价格
+            'c=api.Goods&a=goodsListNew',               // 商品列表
+            'c=api.Goods&a=searchList',                 // 商品搜索列表
+            'c=api.Goods&a=getSeriesGoodsList',         // 超值套装列表
+            'c=api.Goods&a=getGroupBuyGoodsListNew',    // 团购商品列表
+            'c=api.Goods&a=getNewGoodsList',            // 新品列表
+            'c=api.Goods&a=getRecommendGoodsList',      // 促销商品
+            'c=api.Goods&a=getHotGoodsList',            // 热销商品
+            'c=api.Goods&a=getFlashSalesGoodsList',     // 秒杀商品
+            'c=api.Goods&a=look_see',                   // 猜你喜欢
+            'c=api.Goods&a=indexGoods',                 // 主页展示不同类型商品
+            'c=api.User&a=findPassword',                // 找回密码（登录前忘记密码）
+            'c=api.Adv&a=index',                        // 广告
+            'c=api.Message&a=floatMessage',             // 浮窗消息列表
         ];
     }
 
@@ -106,9 +107,9 @@ class Base extends Controller
     private function specialListPath()
     {
         return [
-            'c=api.Message&a=announce',   // 公告列表
-            'c=api.Goods&a=goodsInfoNew',   // 商品详情
-            'c=api.Adv&a=popup',   // 活动弹窗
+            'c=api.Message&a=announce',                 // 公告列表
+            'c=api.Goods&a=goodsInfoNew',               // 商品详情
+            'c=api.Adv&a=popup',                        // 活动弹窗
         ];
     }
 }
