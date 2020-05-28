@@ -228,7 +228,7 @@ class Message extends Base
                     ->where($where)->group('o.user_id')
                     ->limit(10 * ($page - 1) . ',' . 10)
                     ->order('o.add_time DESC')
-                    ->field('u.nickname, u.user_name, og.goods_num')->select();
+                    ->field('u.nickname, u.user_name, u.head_pic, og.goods_num')->select();
                 if ($page != 1 && empty($userInfo)) {
                     $page = 1;
                     $userInfo = M('order_goods og')
@@ -237,15 +237,15 @@ class Message extends Base
                         ->where($where)->group('o.user_id')
                         ->limit(10 * ($page - 1) . ',' . 10)
                         ->order('o.add_time DESC')
-                        ->field('u.nickname, u.user_name, og.goods_num')->select();
+                        ->field('u.nickname, u.user_name, u.head_pic, og.goods_num')->select();
                 } elseif (empty($userInfo)) {
                     $page = 0;
                 }
                 $returnData = [];
                 foreach ($userInfo as $user) {
                     $returnData[] = [
-                        'user_name' => $user['nickname'] ?? $user['user_name'],
-                        'goods_num' => $user['goods_num']
+                        'head_pic' => $user['head_pic'],
+                        'title' => $user['nickname'] ?? $user['user_name'] . '买了' . $user['goods_num'] . '件该商品'
                     ];
                 }
                 $return = [
