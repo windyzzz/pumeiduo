@@ -440,7 +440,7 @@ class User extends Base
                 $user_data['invite_time'] = $c['will_invite_uid'] != 0 ? time() : $c['invite_time'];
                 M('Users')->where('user_id', $uid)->update($user_data);
                 // 授权登录
-//                M('OauthUsers')->where('user_id', $merge_uid)->delete();
+                M('OauthUsers')->where('user_id', $merge_uid)->delete();
                 // 下级推荐人
                 if ($user['invite_uid'] != $c['invite_uid']) {
                     M('users')->where('first_leader', $uid)->update(['second_leader' => $user_data['first_leader'], 'third_leader' => $user_data['second_leader']]);
