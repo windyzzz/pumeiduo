@@ -1539,7 +1539,7 @@ class GoodsLogic extends Model
     }
 
     /**
-     * 算出多个商品的购物券的最大使用数量 BY J.
+     * 算出多个商品的积分的最大使用数量 BY J.
      *
      * @param $goodsArr
      *
@@ -1551,10 +1551,15 @@ class GoodsLogic extends Model
         $goods_ids = get_arr_column($goodsArr, 'goods_id');
         $max_discount_integral = 0;
         $goodsList = $Goods->field('goods_id,zone,distribut_id')->where('goods_id', 'IN', $goods_ids)->cache(true)->select();
-
-        //如果是分销商的升级商品，则不能使用积分
+        // 如果是分销商的升级商品，则不能使用积分
         foreach ($goodsList as $goodsKey => $goodsVal) {
-            $max_discount_integral += (3 == $goodsVal['zone'] && $goodsVal['distribut_id'] > 0) ? 0 : $goodsArr[$goodsKey]['member_goods_price'];
+            if (3 == $goodsVal['zone'] && $goodsVal['distribut_id'] > 0) {
+                $max_discount_integral = bcadd($max_discount_integral, 0, 2);
+            } elseif ($goodsArr[$goodsKey]['member_goods_price'] > 0) {
+                $max_discount_integral = bcadd($goodsArr[$goodsKey]['member_goods_price'], 0, 2);
+            } else {
+                $max_discount_integral = bcadd($goodsArr[$goodsKey]['use_integral'], 0, 2);
+            }
         }
 
         return $max_discount_integral;
