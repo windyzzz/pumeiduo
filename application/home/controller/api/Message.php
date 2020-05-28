@@ -220,7 +220,8 @@ class Message extends Base
                 $goodsId = I('goods_id', '');
                 $where = [
                     'og.goods_id' => $goodsId,
-                    'o.order_status' => ['IN', [2, 4, 6]]
+                    'o.order_status' => ['IN', [2, 4, 6]],
+                    'u.head_pic' => ['NEQ', '']
                 ];
                 $userInfo = M('order_goods og')
                     ->join('order o', 'o.order_id = og.order_id')
@@ -243,9 +244,10 @@ class Message extends Base
                 }
                 $returnData = [];
                 foreach ($userInfo as $user) {
+                    $userName = $user['nickname'] ?? $user['user_name'];
                     $returnData[] = [
                         'head_pic' => $user['head_pic'],
-                        'title' => $user['nickname'] ?? $user['user_name'] . '买了' . $user['goods_num'] . '件该商品'
+                        'title' =>  $userName. '买了' . $user['goods_num'] . '件该商品'
                     ];
                 }
                 $return = [
