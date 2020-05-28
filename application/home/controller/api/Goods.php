@@ -340,6 +340,7 @@ class Goods extends Base
                 continue;
             }
             $imageUrl = 'public' . explode('&quot;', $value)[0];
+            if (!file_exists($baseUrl . $imageUrl)) continue;
             $imageIdentify = md5($imageUrl);
             $contentImage = M('goods_content_images')->where(['goods_id' => $goods_id, 'image_identify' => $imageIdentify])->find();
             if (!empty($contentImage)) {
