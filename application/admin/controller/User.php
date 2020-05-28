@@ -370,17 +370,6 @@ class User extends Base
     {
         if (IS_POST) {
             $uid = I('post.id');
-            $data = [
-                'bindUserId' => I('post.merge_uid'),
-                'username' => I('post.merge_uid'),
-            ];
-            $usersLogic = new CommonUsersLogic();
-            $res = $usersLogic->bindUser($uid, 4, $data);
-            if ($res['status'] !== 1) {
-                exit($this->error($res['msg']));
-            }
-            exit($this->success('合并成功'));
-
             $user = D('users')->where(['user_id' => $uid])->find();
             if (!$user) {
                 exit($this->error('会员不存在'));
@@ -445,12 +434,13 @@ class User extends Base
                 $user_data['user_name'] = $c['user_name'];
                 $user_data['type'] = 2;
                 $user_data['bind_time'] = time();
+                $user_data['bind_uid'] = $merge_uid;
                 $user_data['time_out'] = strtotime('+' . config('REDIS_DAY') . ' days');
                 $user_data['invite_uid'] = $c['will_invite_uid'] != 0 ? $c['will_invite_uid'] : $c['invite_uid'];
                 $user_data['invite_time'] = $c['will_invite_uid'] != 0 ? time() : $c['invite_time'];
                 M('Users')->where('user_id', $uid)->update($user_data);
                 // 授权登录
-//                M('OauthUsers')->where('user_id', $merge_uid)->delete();
+                M('OauthUsers')->where('user_id', $merge_uid)->delete();
                 // 下级推荐人
                 if ($user['invite_uid'] != $c['invite_uid']) {
                     M('users')->where('first_leader', $uid)->update(['second_leader' => $user_data['first_leader'], 'third_leader' => $user_data['second_leader']]);
@@ -510,6 +500,27 @@ class User extends Base
             }
         }
 
+        return $this->fetch();
+    }
+
+    /**
+     * 会员合并.
+     */
+    public function merge2()
+    {
+        if (IS_POST) {
+            $uid = I('post.id');
+            $data = [
+                'bindUserId' => I('post.merge_uid'),
+                'username' => I('post.merge_uid'),
+            ];
+            $usersLogic = new CommonUsersLogic();
+            $res = $usersLogic->bindUser($uid, 4, $data);
+            if ($res['status'] !== 1) {
+                exit($this->error($res['msg']));
+            }
+            exit($this->success('合并成功'));
+        }
         return $this->fetch();
     }
 
@@ -1458,7 +1469,7 @@ class User extends Base
             if ($info['bind_uid'] == $info['user_id']) {
                 $this->error('该会员是通过申请金卡成为金卡的，不能解绑');
             }
-
+            Db::startTrans();
             M('users')->where('user_id', $user_id)->update([
                 'oauth' => '',
                 'openid' => '',
@@ -1470,12 +1481,6 @@ class User extends Base
             ]);
             $o = M('oauth_users')->where('user_id', $user_id)->find();
             M('oauth_users')->where('user_id', $user_id)->delete();
-            M('users')->where('user_id', $user_id)->update([
-                'openid' => '',
-                'oauth' => '',
-                'head_pic' => '',
-                'nickname' => ''
-            ]);
             if ($o) {
                 M('bind_log')->add([
                     'user_id' => $user_id,
@@ -1487,11 +1492,13 @@ class User extends Base
                     'unionid' => $o['unionid'],
                     'oauth' => $o['oauth'],
                 ]);
+                Db::commit();
+                return $this->success('解绑成功');
+            } else {
+                Db::rollback();
+                $this->error('解绑失败');
             }
-
-            return $this->success('解绑成功');
         }
-
         return $this->fetch();
     }
 

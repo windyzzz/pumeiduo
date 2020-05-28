@@ -70,6 +70,50 @@ class Goods extends Base
             'coupon_price' => 100.00,
             'user_name' => $user_id,
         ];
+        // 判断商品性质
+        $flashSale = Db::name('flash_sale fs')
+            ->join('goods g', 'g.goods_id = fs.goods_id')
+            ->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
+            ->where(['fs.goods_id' => $goods_id, 'fs.start_time' => ['<=', time()], 'fs.end_time' => ['>=', time()]])
+            ->where(['fs.source' => ['LIKE', $this->isApp ? '%' . 3 . '%' : '%' . 1 . '%']])
+            ->field('fs.goods_id, sgp.key spec_key, fs.price, fs.goods_num, fs.buy_num, fs.order_num, fs.buy_limit, fs.start_time, fs.end_time, fs.can_integral, g.exchange_integral')->select();
+        if (!empty($flashSale)) {
+            // 秒杀商品
+            // 商品参加活动数限制
+            if ($flashSale[0]['goods_num'] <= $flashSale[0]['buy_num'] || $flashSale[0]['goods_num'] <= $flashSale[0]['order_num']) {
+                $goods['nature'] = [];
+            } else {
+                $goods['nature'] = [
+                    'price' => bcsub($flashSale[0]['price'], $flashSale[0]['can_integral'] == 0 ? 0 : $flashSale[0]['exchange_integral'], 2),
+                    'exchange_integral' => $flashSale[0]['can_integral'] == 0 ? '0' : $flashSale[0]['exchange_integral']
+                ];
+            }
+        } else {
+            $goods['nature'] = [];
+        }
+        if (empty($goods['nature'])) {
+            $groupBuy = Db::name('group_buy gb')
+                ->join('goods g', 'g.goods_id = gb.goods_id')
+                ->join('spec_goods_price sgp', 'sgp.item_id = gb.item_id', 'LEFT')
+                ->where(['gb.goods_id' => $goods_id, 'gb.start_time' => ['<=', time()], 'gb.end_time' => ['>=', time()]])
+                ->field('gb.goods_id, gb.price, sgp.key spec_key, gb.price, gb.group_goods_num, gb.goods_num, gb.buy_num, gb.order_num, gb.buy_limit, gb.start_time, gb.end_time, gb.can_integral, g.exchange_integral')->select();
+            if (!empty($groupBuy)) {
+                // 团购商品
+                // 商品参加活动数限制
+                if ($groupBuy[0]['goods_num'] <= $groupBuy[0]['buy_num'] || $groupBuy[0]['goods_num'] <= $groupBuy[0]['order_num']) {
+                    $goods['nature'] = [];
+                } else {
+                    $goods['nature'] = [
+                        'price' => bcsub($groupBuy[0]['price'], $groupBuy[0]['can_integral'] == 0 ? '0' : $groupBuy[0]['exchange_integral'], 2),
+                        'exchange_integral' => $groupBuy[0]['can_integral'] == 0 ? '0' : $groupBuy[0]['exchange_integral']
+                    ];
+                }
+            }
+        }
+        if (!empty($goods['nature'])) {
+            $gData['price'] = $goods['nature']['price'];
+            $gData['point'] = $goods['nature']['exchange_integral'];
+        }
 
         $filename = 'public/images/qrcode/goods/goods_' . $user_id . '_' . $goods_id . '.png';
 
