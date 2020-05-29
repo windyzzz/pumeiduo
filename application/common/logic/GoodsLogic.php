@@ -799,10 +799,10 @@ class GoodsLogic extends Model
      *
      * @param $goodsArr
      * @param $region_id
-     *
-     * @return int
+     * @param string $orderPromAmount 订单优惠金额
+     * @return string
      */
-    public function getFreight($goodsArr, $region_id)
+    public function getFreight($goodsArr, $region_id, $orderPromAmount)
     {
         $Goods = new Goods();
         $freightLogic = new FreightLogic();
@@ -810,7 +810,12 @@ class GoodsLogic extends Model
         $goods_ids = get_arr_column($goodsArr, 'goods_id');
         $goodsList = $Goods->field('goods_id,volume,weight,template_id,is_free_shipping')->where('goods_id', 'IN', $goods_ids)->select();
         $goodsList = collection($goodsList)->toArray();
+        $goodsNum = 0;
         foreach ($goodsArr as $cartKey => $cartVal) {
+            if (isset($cartVal['re_id']) && $cartVal['re_id'] > 0) {
+                // 跳过兑换券商品
+                continue;
+            }
             foreach ($goodsList as $goodsKey => $goodsVal) {
                 if ($cartVal['goods_id'] == $goodsVal['goods_id']) {
                     $goodsArr[$cartKey]['volume'] = $goodsVal['volume'];
@@ -819,31 +824,46 @@ class GoodsLogic extends Model
                     $goodsArr[$cartKey]['is_free_shipping'] = $goodsVal['is_free_shipping'];
                 }
             }
+            $goodsNum += $cartVal['goods_num'];
         }
+        $eachOrderPromAmount = bcdiv($orderPromAmount, $goodsNum, 2);   // 每个商品的优惠金额
         $template_list = [];
-        foreach ($goodsArr as $goodsKey => $goodsVal) {
-            $template_list[$goodsVal['template_id']][] = $goodsVal;
+        foreach ($goodsArr as $cartKey => $cartVal) {
+            if (isset($cartVal['re_id']) && $cartVal['re_id'] > 0) {
+                // 跳过兑换券商品
+                continue;
+            }
+            $template_list[$cartVal['template_id']][] = $cartVal;
         }
-        $freight = 0;
+        $freight = 0;               // 启用商城免运费设置的运费
+        $outSettingFreight = 0;     // 不启用商城免运费设置的运费
+        $freightGoodsPrice = 0;     // 启用商城免运费设置的商品价格
         foreach ($template_list as $templateVal => $goodsArr) {
             $temp['template_id'] = $templateVal;
-            $temp['is_free_shipping'] = 0;
+            $temp['is_free_shipping'] = 1;
             foreach ($goodsArr as $goodsKey => $goodsVal) {
+                $temp['member_goods_price'] = bcadd($temp['member_goods_price'], bcmul($goodsVal['member_goods_price'], $goodsVal['goods_num'], 2), 2);
                 $temp['total_volume'] += $goodsVal['volume'] * $goodsVal['goods_num'];
                 $temp['total_weight'] += $goodsVal['weight'] * $goodsVal['goods_num'];
                 $temp['goods_num'] += $goodsVal['goods_num'];
-                if ($goodsVal['is_free_shipping'] == 1) {
-                    $temp['is_free_shipping'] = 1;
+                if ($goodsVal['is_free_shipping'] == 0) {
+                    $temp['is_free_shipping'] = 0;
                 }
             }
+            $temp['each_order_prom_amount'] = $eachOrderPromAmount;
             $freightLogic->setGoodsModel($temp);
             $freightLogic->setGoodsNum($temp['goods_num']);
             $freightLogic->doCalculation();
             $freight = bcadd($freight, $freightLogic->getFreight(), 2);
+            $outSettingFreight = bcadd($outSettingFreight, $freightLogic->getOutSettingFreight(), 2);
+            $freightGoodsPrice = bcadd($freightGoodsPrice, $freightLogic->getFreightGoodsPrice(), 2);
             unset($temp);
         }
-
-        return $freight;
+        $freightFree = tpCache('shopping.freight_free'); // 全场满多少免运费
+        if ($freightGoodsPrice >= $freightFree) {
+            $freight = 0;
+        }
+        return bcadd($freight, $outSettingFreight, 2);
     }
 
     /**
@@ -944,19 +964,20 @@ class GoodsLogic extends Model
      * 获取商品数据
      * @param $filter_goods_id
      * @param $sort
-     * @param $sort_asc
      * @param $page
      * @param null $userId
      * @return array
      */
-    public function getGoodsList($filter_goods_id, $sort, $sort_asc, $page, $userId = null)
+    public function getGoodsList($filter_goods_id, $sort, $page, $userId = null)
     {
+        $sort['sort'] = 'desc';
+        $sort['goods_id'] = 'desc';
         // 商品列表
         $goodsList = Db::name('goods')->where('goods_id', 'in', $filter_goods_id)
             ->field('goods_id, cat_id, extend_cat_id, goods_sn, goods_name, goods_type, brand_id, store_count, comment_count, goods_remark,
                 market_price, shop_price, cost_price, give_integral, exchange_integral, original_img, limit_buy_num, trade_type,
                 is_on_sale, is_free_shipping, is_recommend, is_new, is_hot, sale_type')
-            ->order([$sort => $sort_asc])->limit($page->firstRow . ',' . $page->listRows)
+            ->order($sort)->limit($page->firstRow . ',' . $page->listRows)
             ->select();
         // 商品规格属性
         $goodsItem = Db::name('spec_goods_price')->where(['goods_id' => ['in', $filter_goods_id]])->group('goods_id')->getField('goods_id, item_id', true);
@@ -1519,7 +1540,7 @@ class GoodsLogic extends Model
     }
 
     /**
-     * 算出多个商品的购物券的最大使用数量 BY J.
+     * 算出多个商品的积分的最大使用数量 BY J.
      *
      * @param $goodsArr
      *
@@ -1531,10 +1552,15 @@ class GoodsLogic extends Model
         $goods_ids = get_arr_column($goodsArr, 'goods_id');
         $max_discount_integral = 0;
         $goodsList = $Goods->field('goods_id,zone,distribut_id')->where('goods_id', 'IN', $goods_ids)->cache(true)->select();
-
-        //如果是分销商的升级商品，则不能使用积分
+        // 如果是分销商的升级商品，则不能使用积分
         foreach ($goodsList as $goodsKey => $goodsVal) {
-            $max_discount_integral += (3 == $goodsVal['zone'] && $goodsVal['distribut_id'] > 0) ? 0 : $goodsArr[$goodsKey]['member_goods_price'];
+            if (3 == $goodsVal['zone'] && $goodsVal['distribut_id'] > 0) {
+                $max_discount_integral = bcadd($max_discount_integral, 0, 2);
+            } elseif ($goodsArr[$goodsKey]['member_goods_price'] > 0) {
+                $max_discount_integral = bcadd($goodsArr[$goodsKey]['member_goods_price'], 0, 2);
+            } else {
+                $max_discount_integral = bcadd($goodsArr[$goodsKey]['use_integral'], 0, 2);
+            }
         }
 
         return $max_discount_integral;

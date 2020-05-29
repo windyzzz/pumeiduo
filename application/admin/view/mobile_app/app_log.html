@@ -1,0 +1,122 @@
+<include file="public/layout"/>
+<body style="background-color: rgb(255, 255, 255); overflow: auto; cursor: default; -moz-user-select: inherit;">
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title">
+            <div class="subject">
+                <h3>{$type}版本更新记录</h3>
+            </div>
+        </div>
+    </div>
+    <div class="flexigrid">
+        <div class="hDiv">
+            <div class="hDivBox">
+                <table cellspacing="0" cellpadding="0">
+                    <thead>
+                    <tr>
+                        <th class="sign" axis="col0">
+                            <div style="width: 24px;"><i class="ico-check"></i></div>
+                        </th>
+                        <th align="center" abbr="ac_id" axis="col4" class="">
+                            <div style="text-align: center; width: 100px;" class="">版本号</div>
+                        </th>
+                        <th align="center" abbr="ac_id" axis="col4" class="">
+                            <div style="text-align: center; width: 300px;" class="">版本日志</div>
+                        </th>
+                        <th align="center" abbr="ac_id" axis="col4" class="">
+                            <div style="text-align: center; width: 500px;" class="">下载链接</div>
+                        </th>
+                        <th align="center" abbr="article_time" axis="col6" class="">
+                            <div style="text-align: center; width: 100px;" class="">是否需要更新</div>
+                        </th>
+                        <th align="center" abbr="article_time" axis="col6" class="">
+                            <div style="text-align: center; width: 100px;" class="">是否强制更新</div>
+                        </th>
+                        <th align="center" abbr="article_time" axis="col6" class="">
+                            <div style="text-align: center; width: 150px;" class="">创建时间</div>
+                        </th>
+                        <th align="center" abbr="article_time" axis="col6" class="">
+                            <div style="text-align: center; width: 150px;" class="">更新时间</div>
+                        </th>
+                        <th style="width:100%" axis="col7">
+                            <div></div>
+                        </th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+        <div class="bDiv" style="height: auto;">
+            <div id="flexigrid" cellpadding="0" cellspacing="0" border="0">
+                <table>
+                    <tbody>
+                    <foreach name="list" item="vo" key="k">
+                        <tr>
+                            <td class="sign">
+                                <div style="width: 24px;"><i class="ico-check"></i></div>
+                            </td>
+                            <td align="center" class="">
+                                <div style="text-align: center; width: 100px;">{$vo.app_version}</div>
+                            </td>
+                            <td align="center" class="">
+                                <div style="text-align: center; width: 300px;">
+                                    <textarea id="app_log" name="app_log" style="width: 80%; height: 100%; line-height: 200%;">{$vo.app_log}</textarea>
+                                </div>
+                            </td>
+                            <td align="center" class="">
+                                <div style="text-align: center; width: 500px;">
+                                    <textarea id="app_path" name="app_path" style="width: 80%; height: 100%; line-height: 150%;">{$vo.app_path}</textarea>
+                                </div>
+                            </td>
+                            <td align="center" class="">
+                                <div style="text-align: center; width: 100px;">
+                                    <switch name="$vo[is_update]">
+                                        <case value="0">不需要</case>
+                                        <case value="1">需要</case>
+                                    </switch>
+                                </div>
+                            </td>
+                            <td align="center" class="">
+                                <div style="text-align: center; width: 100px;">
+                                    <switch name="$vo[is_force]">
+                                        <case value="0">不需要</case>
+                                        <case value="1">需要</case>
+                                    </switch>
+                                </div>
+                            </td>
+                            <td align="center" class="">
+                                <div style="text-align: center; width: 150px;">{$vo.create_time|date='Y-m-d H:i:s',###}</div>
+                            </td>
+                            <td align="center" class="">
+                                <div style="text-align: center; width: 150px;">{$vo.update_time|date='Y-m-d H:i:s',###}</div>
+                            </td>
+                            <td align="" class="" style="width: 100%;">
+                                <div>&nbsp;</div>
+                            </td>
+                        </tr>
+                    </foreach>
+                    </tbody>
+                </table>
+                <!--分页位置-->
+                {$page->show()}
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        // 表格行点击选中切换
+        $('#flexigrid > table>tbody >tr').click(function () {
+            $(this).toggleClass('trSelected');
+        });
+
+        // 点击刷新数据
+        $('.fa-refresh').click(function () {
+            location.href = location.href;
+        });
+    });
+</script>
+</body>
+</html>

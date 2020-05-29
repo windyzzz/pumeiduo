@@ -1259,6 +1259,9 @@ AND log_id NOT IN
                             $data['second_leader'] = $referee_users['first_leader'];
                             $data['third_leader'] = $referee_users['second_leader'];
                             $data['invite_uid'] = $referee_users['user_id'];
+                        } else {
+                            Db::rollback();
+                            continue;
                         }
                     }
                     $bool = M('users')->add($data);
@@ -1397,13 +1400,13 @@ AND log_id NOT IN
     public function autoSendOrderPv()
     {
         $where = [
-            'order_status' => ['IN', [2, 6]],   // 已收货 售后
-            'pay_status' => 1,                  // 已支付
-            'shipping_status' => 1,             // 已发货
+            'order_status' => ['IN', [2, 4, 6]],    // 已收货 已完成 售后
+            'pay_status' => 1,                      // 已支付
+            'shipping_status' => 1,                 // 已发货
             'order_pv' => ['>', 0],
             'pv_tb' => 0,
             'pv_send' => 0,
-            'end_sale_time' => ['<=', time()]  // 售后期结束
+            'end_sale_time' => ['<=', time()]       // 售后期结束
         ];
         $orderIds = M('order')->where($where)->getField('order_id', true);
         // 查看订单商品是否正在申请售后（未处理完成）

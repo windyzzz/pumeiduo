@@ -59,7 +59,7 @@ class TaskLogic
     {
         $taskList = M('task t')->join('task_reward tr', 'tr.task_id = t.id')
             ->where(['t.id' => ['not in', [1, 4]]])
-            ->where(['t.is_open' => 1, 't.start_time' => ['<=', time()], 't.end_time' => ['>=', time()]])
+//            ->where(['t.is_open' => 1, 't.start_time' => ['<=', time()], 't.end_time' => ['>=', time()]])
             ->group('tr.task_id')->field('t.*, tr.reward_type')->select();
         return $taskList;
     }

@@ -74,7 +74,7 @@ class Login
         //     }
         // }
         $logic = new UsersLogic();
-        $res = $logic->login($username, $password, null, 2);
+        $res = $logic->login($username, $password, 2);
         if (1 == $res['status']) {
             $res['url'] = htmlspecialchars_decode(I('post.referurl'));
             session('user', $res['result']);

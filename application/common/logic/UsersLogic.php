@@ -375,7 +375,7 @@ class UsersLogic extends Model
     /*
      * 登陆
      */
-    public function login($username, $password, $userToken = null, $source = 1)
+    public function login($username, $password, $source = 1)
     {
         if (!$username || !$password) {
             return ['status' => 0, 'msg' => '请填写账号或密码'];
@@ -405,11 +405,10 @@ class UsersLogic extends Model
             $result = ['status' => -2, 'msg' => '密码错误!'];
         } else {
             // 更新用户token
-            if (!$userToken) $userToken = TokenLogic::setToken();
             $save = [
                 'last_login' => time(),
                 'last_login_source' => $source,
-                'token' => $userToken,
+                'token' => TokenLogic::setToken(),
                 'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
             ];
             Db::name('users')->where('user_id', $userId)->update($save);

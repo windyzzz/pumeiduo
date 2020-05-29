@@ -81,11 +81,11 @@ class Login extends Base
         // }
         $source = $this->isApp == 1 ? 3 : 1;    // 1微信 3APP
         $logic = new UsersLogic();
-        $res = $logic->login($username, $password, $this->userToken, $source);
+        $res = $logic->login($username, $password, $source);
         if (1 == $res['status']) {
             $res['url'] = htmlspecialchars_decode(I('post.referurl'));
             session('user', $res['result']);
-            $this->redis->set('user_' . $this->userToken, $res['result'], config('REDIS_TIME'));
+            $this->redis->set('user_' . $res['result']['token'], $res['result'], config('REDIS_TIME'));
             setcookie('user_id', $res['result']['user_id'], null, '/');
             setcookie('is_distribut', $res['result']['is_distribut'], null, '/');
             $nickname = empty($res['result']['nickname']) ? $username : $res['result']['nickname'];
@@ -94,7 +94,7 @@ class Login extends Base
             // 用户登录后 需要对购物车 一些操作
             $cartLogic = new CartLogic();
             $cartLogic->setUserId($res['result']['user_id']);
-            $cartLogic->setUserToken($this->userToken);
+            $cartLogic->setUserToken($res['result']['token']);
             $cartLogic->doUserLoginHandle();
             // 登录后将超时未支付订单给取消掉
             $orderLogic = new OrderLogic();
@@ -119,7 +119,7 @@ class Login extends Base
                 'level_name' => M('DistributLevel')->where('level_id', $user['distribut_level'])->getField('level_name') ?? '普通会员',
                 'is_not_show_jk' => $user['is_not_show_jk'],  // 是否提示加入金卡弹窗
                 'has_pay_pwd' => $user['paypwd'] ? 1 : 0,
-                'is_app' => TokenLogic::getValue('is_app', $this->userToken) ? 1 : 0,
+                'is_app' => TokenLogic::getValue('is_app', $user['token']) ? 1 : 0,
                 'token' => $user['token'],
                 'jpush_tags' => [$user['push_tag']]
             ];
