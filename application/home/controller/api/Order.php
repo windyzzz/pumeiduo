@@ -2640,7 +2640,7 @@ class Order extends Base
                                     'status' => '第三方物流公司：' . C('HTNS_STATUS')[$log['status']]
                                 ];
                             }
-                            if (in_array($delivery['htns_status'], ['120', '999'])) {
+                            if (in_array($delivery['htns_status'], ['000', '120', '999'])) {
                                 $apiController = new ApiController();
                                 $express = $apiController->queryExpress(['shipping_code' => $delivery['shipping_code'], 'queryNo' => $delivery['invoice_no']], 'array');
                                 if ($express['status'] != '0') {
@@ -2761,7 +2761,7 @@ class Order extends Base
                                         'status' => '第三方物流公司：' . C('HTNS_STATUS')[$log['status']]
                                     ];
                                 }
-                                if (in_array($item['htns_status'], ['120', '999'])) {
+                                if (in_array($item['htns_status'], ['000', '120', '999'])) {
                                     $express = $apiController->queryExpress(['shipping_code' => $item['shipping_code'], 'queryNo' => $item['invoice_no']], 'array');
                                     if ($express['status'] != '0') {
                                         $express['result']['deliverystatus'] = 1;   // 正在派件
@@ -2865,7 +2865,7 @@ class Order extends Base
                             'status' => '第三方物流公司：' . C('HTNS_STATUS')[$log['status']]
                         ];
                     }
-                    if (in_array($delivery['htns_status'], ['120', '999'])) {
+                    if (in_array($delivery['htns_status'], ['000', '120', '999'])) {
                         $apiController = new ApiController();
                         $express = $apiController->queryExpress(['shipping_code' => $delivery['shipping_code'], 'queryNo' => $delivery['invoice_no']], 'array');
                         if ($express['status'] != '0') {
