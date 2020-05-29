@@ -415,7 +415,6 @@ class Goods extends Base
                 $data['commission'] = 0;
             }
 
-
             $goods_item = I('item/a');
             $specStock = Db::name('spec_goods_price')->where('goods_id = ' . $goods_id)->getField('key,store_count,item_id,store_count,item_sn');
             if ($goods_item) {
@@ -531,6 +530,10 @@ class Goods extends Base
             $Goods->afterSave($goods_id);
             $GoodsLogic->saveGoodsAttr($goods_id, I('goods_type')); // 处理商品 属性
             $GoodsLogic->saveGoodsTabs($goods_id, $data['tabs']);
+            if (isset($data['goodsSpec'])) {
+                // 处理商品规格属性
+                $GoodsLogic->saveGoodsSpec($data['goodsSpec']);
+            }
             $return_arr = [
                 'status' => 1,
                 'msg' => '操作成功',
@@ -578,7 +581,7 @@ class Goods extends Base
         foreach ($tabsList as $k => $v) {
             $tabsList[$k]['title'] = '';
             $tabsList[$k]['status'] = 0;
-            if ($goodsTabList) {
+            if (isset($goodsTabList)) {
                 $tabsList[$k]['status'] = $goodsTabList[$v['id']]['status'];
                 $tabsList[$k]['title'] = $goodsTabList[$v['id']]['title'];
             }
@@ -611,9 +614,13 @@ class Goods extends Base
                 $goodsSeries[$k]['spec_image'] = M('spec_image')->where('spec_image_id', $v['key'])->where('goods_id', $v['g_id'])->getField('src');
             }
         }
-        // dump($goodsSeries);
-        // exit;
-        $this->assign('goodsSeries', $goodsSeries);  // 商品相册
+        $this->assign('goodsSeries', $goodsSeries);
+
+        if ($goodsInfo['is_supply'] == 1) {
+            $goodsSpec = M('spec_goods_price')->where(['goods_id' => I('GET.id', 0)])->select();
+            $this->assign('goodsSpec', $goodsSpec);
+        }
+
         return $this->fetch('_goods');
     }
 

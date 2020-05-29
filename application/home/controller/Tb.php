@@ -2,6 +2,7 @@
 
 namespace app\home\controller;
 
+use app\common\model\GoodsImages;
 use think\Controller;
 use think\Db;
 
@@ -478,6 +479,10 @@ class Tb extends Controller
         } else {
             $trade_type = 1;
         }
+        $isSupply = 0;  // 供应链商品
+        if ($goods['is_supply'] == 1 && $goods['supplier_goods_id'] != 0) {
+            $isSupply = 1;
+        }
         $goods_data = array(
             'goods_sn' => $goods['goods_sn'],
             'goods_name' => $goods['goods_name'],
@@ -487,7 +492,14 @@ class Tb extends Controller
             'weight' => $goods['weight'],//重量 - 克
             'on_time' => $goods['on_time'],//上架时间戳
             'out_time' => $goods['out_time'],//下架时间戳
-            'trade_type' => $trade_type
+            'trade_type' => $trade_type,
+            'is_supply' => $isSupply,
+            'keywords' => $goods['keywords'],
+            'goods_remark' => $goods['goods_remark'],
+            'goods_content' => $goods['goods_content'],
+            'original_img' => $goods['original_img'],
+            'video' => $goods['video'],
+            'store_count' => $goods['store_count'],
         );
 
         if ($goods['is_one_send'] == 0) {
@@ -496,21 +508,23 @@ class Tb extends Controller
 
         $spec_goods_price = $goods['spec_goods_price'];
         $tao_arr = $goods['tao_arr'];//套组商品
+        $goods_images = $goods['goods_images'];
 
         //检查该商品为新商品
         $agoods = M('goods')->where(array('goods_sn' => $goods_data['goods_sn']))->field('goods_id')->find();
 
         $goods_data['is_area_show'] = $area3 == 1 ? 1 : 0; //是否可以显示在本区
-
-        if ($agoods) {//存在于重销区
-            if ($area3 == 0) { //不显示本区 直接下架
+        if ($agoods) {
+            //存在于重销区
+            if ($area3 == 0) {
+                //不显示本区 直接下架
                 $goods_data['is_on_sale'] = 0;
             }
             unset($goods_data['goods_name']);
             M('goods')->where(array('goods_id' => $agoods['goods_id']))->data($goods_data)->save();
             $goods_id = $agoods['goods_id'];
-        } else {//不存在于重销区 可以显示在重销区 则新增
-
+        } else {
+            //不存在于重销区 可以显示在重销区 则新增
             if ($goods_data['is_area_show'] == 0) {  //之前没有、现在也不在本区  则不导入
                 return true;
             }
@@ -522,18 +536,17 @@ class Tb extends Controller
 
         //规格
         $spec_goods_price_old = M('spec_goods_price')->where(array('goods_id' => $goods_id))->getField('key,key_name,item_sn');
-
         if ($spec_goods_price) {
             //获取旧规格
             foreach ($spec_goods_price as $key => $val) {
-
                 $save_data = array(
                     'goods_id' => $goods_id,
                     'item_sn' => $val['item_sn'],
                     'key' => $val['key'],
-                    'key_name' => $val['key_name']
+                    'key_name' => $val['key_name'],
+                    'store_count' => $val['store_count'],
+                    'spec_img' => $val['image'],
                 );
-
                 if (isset($spec_goods_price_old[$val['key']])) {
                     //更新
                     M('spec_goods_price')->where(array('goods_id' => $goods_id, 'key' => $val['key']))->data($save_data)->save();
@@ -544,21 +557,18 @@ class Tb extends Controller
                 }
             }
         }
-
         //删除
-        if ($spec_goods_price_old && $goods_data['trade_type'] == 1) {//一键待发 不要删除规格
+        if ($spec_goods_price_old && $goods_data['trade_type'] == 1) {
+            //一键待发 不要删除规格
             foreach ($spec_goods_price_old as $key => $val) {
                 M('spec_goods_price')->where(array('goods_id' => $goods_id, 'key' => $val['key']))->delete();
             }
         }
 
         //删除旧套组
-
         M('goods_series')->where(array('goods_id' => $goods_id))->delete();
-
         if ($tao_arr) {
             foreach ($tao_arr as $key => $val) {
-
                 //获取商品id  规格id
                 $goods_sn = $val['goods_sn'];
                 $child_goods_id = M('goods')->where(array('goods_sn' => $goods_sn))->getField('goods_id');
@@ -573,9 +583,21 @@ class Tb extends Controller
                     'item_id' => $item_id,
                     'g_number' => $val['stock']
                 );
-
                 M('goods_series')->data($save_data)->add();
             }
+        }
+
+        //商品图片
+        if ($goods_images) {
+            M('goods_images')->where(['goods_id' => $goods_id])->delete();
+            $goodsImagesData = [];
+            foreach ($goods_images as $image) {
+                $goodsImagesData[] = [
+                    'goods_id' => $goods_id,
+                    'image_url' => $image['image_url']
+                ];
+            }
+            (new GoodsImages())->saveAll($goodsImagesData);
         }
 
         return true;
