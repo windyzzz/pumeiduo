@@ -3,6 +3,7 @@
 namespace app\home\controller;
 
 use app\common\model\GoodsImages;
+use app\common\model\SupplierGoodsSpec;
 use think\Controller;
 use think\Db;
 
@@ -506,10 +507,6 @@ class Tb extends Controller
             $goods_data['goods_type'] = $goods['goods_type'];//模型
         }
 
-        $spec_goods_price = $goods['spec_goods_price'];
-        $tao_arr = $goods['tao_arr'];//套组商品
-        $goods_images = $goods['goods_images'];
-
         //检查该商品为新商品
         $agoods = M('goods')->where(array('goods_sn' => $goods_data['goods_sn']))->field('goods_id')->find();
 
@@ -536,9 +533,9 @@ class Tb extends Controller
 
         //规格
         $spec_goods_price_old = M('spec_goods_price')->where(array('goods_id' => $goods_id))->getField('key,key_name,item_sn');
-        if ($spec_goods_price) {
+        if ($goods['spec_goods_price']) {
             //获取旧规格
-            foreach ($spec_goods_price as $key => $val) {
+            foreach ($goods['spec_goods_price'] as $key => $val) {
                 $save_data = array(
                     'goods_id' => $goods_id,
                     'item_sn' => $val['item_sn'],
@@ -546,6 +543,8 @@ class Tb extends Controller
                     'key_name' => $val['key_name'],
                     'store_count' => $val['store_count'],
                     'spec_img' => $val['image'],
+                    'price' => $val['m_price'],
+                    'supplier_goods_spec' => $val['supplier_goods_spec'],
                 );
                 if (isset($spec_goods_price_old[$val['key']])) {
                     //更新
@@ -567,8 +566,8 @@ class Tb extends Controller
 
         //删除旧套组
         M('goods_series')->where(array('goods_id' => $goods_id))->delete();
-        if ($tao_arr) {
-            foreach ($tao_arr as $key => $val) {
+        if ($goods['tao_arr']) {
+            foreach ($goods['tao_arr'] as $key => $val) {
                 //获取商品id  规格id
                 $goods_sn = $val['goods_sn'];
                 $child_goods_id = M('goods')->where(array('goods_sn' => $goods_sn))->getField('goods_id');
@@ -588,16 +587,34 @@ class Tb extends Controller
         }
 
         //商品图片
-        if ($goods_images) {
+        if ($goods['goods_images']) {
             M('goods_images')->where(['goods_id' => $goods_id])->delete();
             $goodsImagesData = [];
-            foreach ($goods_images as $image) {
+            foreach ($goods['goods_images'] as $image) {
                 $goodsImagesData[] = [
                     'goods_id' => $goods_id,
                     'image_url' => $image['image_url']
                 ];
             }
             (new GoodsImages())->saveAll($goodsImagesData);
+        }
+
+        //供应商商品规格标识
+        if (isset($goods['supplier_goods_spec'])) {
+            $supplierId = 0;
+            $goodsSpecData = [];
+            foreach ($goods['supplier_goods_spec'] as $spec) {
+                $supplierId = $spec['supplier_id'];
+                $goodsSpecData[] = [
+                    'spec_id' => $spec['spec_id'],
+                    'name' => C('SUPPLIER_GOODS_SPEC')[$spec['name']],
+                    'supplier_id' => $spec['supplier_id'],
+                ];
+            }
+            if (!empty($goodsSpecData)) {
+                M('supplier_goods_spec')->where(['supplier_id' => $supplierId])->delete();
+                (new SupplierGoodsSpec())->saveAll($goodsSpecData);
+            }
         }
 
         return true;

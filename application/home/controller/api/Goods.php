@@ -661,7 +661,6 @@ class Goods extends Base
             $goods['tabs'] = $goodsTab;
         }
         $goods['goods_images_list'] = M('GoodsImages')->where('goods_id', $goods_id)->select(); // 商品图片列表
-        $goods['share_goods_image'] = !empty($goods['goods_images_list']) ? $goods['goods_images_list'][0]['image_url'] : ''; // 商品分享图
         // 判断商品性质
         $flashSale = Db::name('flash_sale fs')
             ->join('goods g', 'g.goods_id = fs.goods_id')
@@ -801,6 +800,7 @@ class Goods extends Base
         unset($goods['zone']);
 
         $goods['freight_free'] = tpCache('shopping.freight_free'); // 全场满多少免运费
+        $goods['share_goods_image'] = !empty($goods['original_img']) ? $goods['original_img'] : ''; // 商品分享图
         $goods['qr_code'] = ''; // 分享二维码
 
         // 组装数据
@@ -844,7 +844,7 @@ class Goods extends Base
         $itemId = I('item_id/d', '');
         if (!$goodsId) return json(['status' => 0, 'msg' => '请传入正确的商品ID']);
         // 商品价格属性
-        $goodsInfo = M('goods')->where(['goods_id' => $goodsId])->field('shop_price, exchange_integral, store_count, limit_buy_num buy_limit, least_buy_num buy_least')->find();
+        $goodsInfo = M('goods')->where(['goods_id' => $goodsId])->field('shop_price, exchange_integral, store_count, limit_buy_num buy_limit, least_buy_num buy_least, is_supply')->find();
         $goodsInfo['nature_type'] = 'normal';
         $goodsInfo['exchange_price'] = bcsub($goodsInfo['shop_price'], $goodsInfo['exchange_integral'], 2);
         // 商品活动属性
@@ -870,10 +870,23 @@ class Goods extends Base
         }
         // 商品规格
         $goodsLogic = new GoodsLogic();
-        $getGoodsSpec = $goodsLogic->get_spec_new($goodsId, $itemId);
-        $goodsSpec = $getGoodsSpec['spec'];
-        $defaultKey = $getGoodsSpec['default_key'];
+        if ($goodsInfo['is_supply'] == 0) {
+            /*
+             * 非供应链商品
+             */
+            $getGoodsSpec = $goodsLogic->get_spec_new($goodsId, $itemId);
+            $goodsSpec = $getGoodsSpec['spec'];
+            $defaultKey = $getGoodsSpec['default_key'];
+        } else {
+            /*
+             * 供应链商品
+             */
+            $getGoodsSpec = $goodsLogic->get_supply_spec($goodsId, $itemId);
+            $goodsSpec = $getGoodsSpec['spec'];
+            $defaultKey = $getGoodsSpec['default_key'];
+        }
         $goodsSpecPrice = $goodsLogic->get_spec_price($goodsId);
+        $goodsSpecPrice = array_combine(array_column($goodsSpecPrice, 'key'), array_values($goodsSpecPrice));
         // 根据商品活动属性计算商品价格
         if (empty($goodsSpec) || empty($goodsSpecPrice)) {
             $goodsSpec = [];
@@ -891,13 +904,20 @@ class Goods extends Base
                     // 是否能使用积分
                     if ($spec['can_integral'] == 0) {
                         $goodsInfo['exchange_integral'] = '0';
-                        $goodsInfo['exchange_price'] = $goodsInfo['shop_price'];
+                        $goodsInfo['exchange_price'] = $spec['price'];
                     } else {
-                        $goodsInfo['exchange_price'] = bcsub($goodsInfo['shop_price'], $goodsInfo['exchange_integral'], 2);
+                        $goodsInfo['exchange_price'] = bcsub($spec['price'], $goodsInfo['exchange_integral'], 2);
                     }
                     break;
                 }
             }
+        }
+        // 处理输出数据
+        unset($goodsInfo['is_supply']);
+        foreach ($goodsSpecPrice as &$item) {
+            unset($item['key']);
+            unset($item['price']);
+            unset($item['store_count']);
         }
         $returnData = [
             'goods_info' => $goodsInfo,
@@ -905,7 +925,8 @@ class Goods extends Base
                 ['id' => 1, 'name' => '现金 + 积分'],
                 ['id' => 2, 'name' => '现金']
             ],
-            'goods_spec' => $goodsSpec
+            'goods_spec' => $goodsSpec,
+            'goods_spec_price' => $goodsSpecPrice
         ];
         return json(['status' => 1, 'result' => $returnData]);
     }

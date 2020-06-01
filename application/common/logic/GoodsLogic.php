@@ -326,6 +326,77 @@ class GoodsLogic extends Model
                     if ($k2 == 0) {
                         $itemKey .= $item['item_id'] . '_';
                         $specData[$k1]['type_value'][$k2]['is_default'] = 1;
+                        break;
+                    }
+                }
+            }
+            $itemKey = rtrim($itemKey, '_');
+        }
+        return ['spec' => array_values($specData), 'default_key' => $itemKey];
+    }
+
+
+    public function get_supply_spec($goods_id, $itemId = null)
+    {
+        $itemKey = '';
+        if ($itemId) {
+            $itemKey = Db::name('spec_goods_price')->where(['item_id' => $itemId])->value('key');
+            $itemKey = explode('_', $itemKey);
+        }
+        // 规格信息
+        $specGoodsPrice = M('spec_goods_price')->where('goods_id', $goods_id)->select();
+        if (empty($specGoodsPrice)) {
+            return [];
+        }
+        // 规格标识
+        $goodsSpec = M('supplier_goods_spec')->where(['supplier_id' => 1])->getField('spec_id, name', true);
+        // 整合规格信息
+        $specData = [];
+        foreach ($specGoodsPrice as $specPrice) {
+            $spec = explode('_', $specPrice['supplier_goods_spec']);
+            $key = explode('_', $specPrice['key']);
+            $keyName = explode(',', $specPrice['key_name']);
+            // 组合规格
+            $specKey = [];
+            $count = count($key);
+            for ($a = 0; $a < $count; $a++) {
+                if (!empty($itemKey) && in_array($key[$a], $itemKey)) {
+                    $isDefault = 1;
+                } else {
+                    $isDefault = 0;
+                }
+                $specKey[] = [
+                    'item_id' => $key[$a],
+                    'item' => $keyName[$a],
+                    'src' => $specPrice['spec_img'],
+                    'is_default' => $isDefault,
+                    'can_select' => 1,
+                ];
+            }
+            // 组合规格标识
+            foreach ($spec as $k => $v) {
+                if (!isset($specData[$v])) {
+                    $specData[$v] = [
+                        'type' => $goodsSpec[$v],
+                        'type_value' => []
+                    ];
+                }
+                $specData[$v]['type_value'][$specKey[$k]['item_id']] = $specKey[$k];
+            }
+        }
+        foreach ($specData as &$spec) {
+            $spec['type_value'] = array_values($spec['type_value']);
+        }
+        // 给定默认选中规格
+        if ($itemId) {
+            $itemKey = implode('_', $itemKey);
+        } else {
+            foreach ($specData as $k1 => $value) {
+                foreach ($value['type_value'] as $k2 => $item) {
+                    if ($k2 == 0) {
+                        $itemKey .= $item['item_id'] . '_';
+                        $specData[$k1]['type_value'][$k2]['is_default'] = 1;
+                        break;
                     }
                 }
             }
