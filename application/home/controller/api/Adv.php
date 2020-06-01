@@ -30,7 +30,7 @@ class Adv extends Base
                 ];
                 unset($adList[$k]['target_type_id']);
                 // 是否需要登录
-                if (in_array($item['target_type'], [3, 4])) {
+                if (in_array($item['target_type'], [3, 4, 7, 10])) {
                     $adList[$k]['need_login'] = 1;
                 } else {
                     $adList[$k]['need_login'] = 0;
