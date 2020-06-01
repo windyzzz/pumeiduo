@@ -2397,7 +2397,7 @@ class Goods extends Base
             // 更新的商品信息
             $goodsInfo = $goodsLogic->addressGoodsInfo($goodsId, $itemId, !empty($userAddress) ? $userAddress[0]['district'] : 0);
             $return = [
-                'user_address' => $userAddress,
+                'user_address' => $userAddress[0],
                 'goods_info' => $goodsInfo
             ];
         } else {
