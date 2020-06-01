@@ -477,6 +477,7 @@ class Cart extends Base
             $goodsList[$key]['member_goods_price'] = bcsub($goods['goods_price'], $goods['use_integral'], 2);
         }
         $pay = new Pay();
+        $pay->setUserId($this->user_id);
         $pay->setPayList($goodsList);
         // 商品优惠促销
         $discountPrice1 = $pay->goodsPromotion($goodsList, false, 'amount');

@@ -313,7 +313,8 @@ class GoodsLogic extends Model
                 'item_id' => $value['id'],
                 'item' => $value['item'],
                 'src' => $specImage[$value['id']] ?? '',
-                'is_default' => $isDefault
+                'is_default' => $isDefault,
+                'can_select' => 1   // 能否被选
             ];
         }
         // 给定默认选中规格
@@ -839,14 +840,14 @@ class GoodsLogic extends Model
         $freightGoodsPrice = 0;     // 启用商城免运费设置的商品价格
         foreach ($template_list as $templateVal => $goodsArr) {
             $temp['template_id'] = $templateVal;
-            $temp['is_free_shipping'] = 0;
+            $temp['is_free_shipping'] = 1;
             foreach ($goodsArr as $goodsKey => $goodsVal) {
                 $temp['member_goods_price'] = bcadd($temp['member_goods_price'], bcmul($goodsVal['member_goods_price'], $goodsVal['goods_num'], 2), 2);
                 $temp['total_volume'] += $goodsVal['volume'] * $goodsVal['goods_num'];
                 $temp['total_weight'] += $goodsVal['weight'] * $goodsVal['goods_num'];
                 $temp['goods_num'] += $goodsVal['goods_num'];
-                if ($goodsVal['is_free_shipping'] == 1) {
-                    $temp['is_free_shipping'] = 1;
+                if ($goodsVal['is_free_shipping'] == 0) {
+                    $temp['is_free_shipping'] = 0;
                 }
             }
             $temp['each_order_prom_amount'] = $eachOrderPromAmount;
@@ -1539,7 +1540,7 @@ class GoodsLogic extends Model
     }
 
     /**
-     * 算出多个商品的购物券的最大使用数量 BY J.
+     * 算出多个商品的积分的最大使用数量 BY J.
      *
      * @param $goodsArr
      *
@@ -1551,10 +1552,15 @@ class GoodsLogic extends Model
         $goods_ids = get_arr_column($goodsArr, 'goods_id');
         $max_discount_integral = 0;
         $goodsList = $Goods->field('goods_id,zone,distribut_id')->where('goods_id', 'IN', $goods_ids)->cache(true)->select();
-
-        //如果是分销商的升级商品，则不能使用积分
+        // 如果是分销商的升级商品，则不能使用积分
         foreach ($goodsList as $goodsKey => $goodsVal) {
-            $max_discount_integral += (3 == $goodsVal['zone'] && $goodsVal['distribut_id'] > 0) ? 0 : $goodsArr[$goodsKey]['member_goods_price'];
+            if (3 == $goodsVal['zone'] && $goodsVal['distribut_id'] > 0) {
+                $max_discount_integral = bcadd($max_discount_integral, 0, 2);
+            } elseif ($goodsArr[$goodsKey]['member_goods_price'] > 0) {
+                $max_discount_integral = bcadd($goodsArr[$goodsKey]['member_goods_price'], 0, 2);
+            } else {
+                $max_discount_integral = bcadd($goodsArr[$goodsKey]['use_integral'], 0, 2);
+            }
         }
 
         return $max_discount_integral;
