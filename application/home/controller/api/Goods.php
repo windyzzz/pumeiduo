@@ -420,7 +420,7 @@ class Goods extends Base
             $goods['tabs'] = $goodsTab;
         }
         $goods['goods_images_list'] = M('GoodsImages')->where('goods_id', $goods_id)->select(); // 商品图片列表
-        $goods['share_goods_image'] = !empty($goods['goods_images_list']) ? $goods['goods_images_list'][0]['image_url'] : ''; // 商品分享图
+        $goods['share_goods_image'] = !empty($goods['original_img']) ? $goods['original_img'] : ''; // 商品分享图
         // 规格参数
         $specData = $goodsLogic->get_spec_new($goods_id, $itemId);
         $goods['spec'] = $specData['spec'];
