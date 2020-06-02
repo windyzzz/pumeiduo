@@ -1180,11 +1180,12 @@ class Pay
                     }
 //                    $this->payList[$k]['prom_id'] = $group_activity['id'];
 //                    $this->payList[$k]['prom_type'] = 10;
+                    $oldMGoodsPrice = $v['member_goods_price'];
                     switch ($group_activity['type']) {
                         case 0:
                             // 直接打折
-                            $member_goods_price = bcdiv(bcmul($v['member_goods_price'], $group_activity['expression'], 2), 100, 2);
-                            $goodsPromAmount = bcadd($goodsPromAmount, bcmul(bcsub($v['member_goods_price'], $member_goods_price, 2), $v['goods_num'], 2), 2);
+                            $member_goods_price = bcdiv(bcmul($oldMGoodsPrice, $group_activity['expression'], 2), 100, 2);
+                            $goodsPromAmount = bcadd($goodsPromAmount, bcmul(bcsub($oldMGoodsPrice, $member_goods_price, 2), $v['goods_num'], 2), 2);
 
                             $this->payList[$k]['member_goods_price'] = $member_goods_price;
                             $this->orderPromIds['goods_prom'][] = $group_activity['id'];
@@ -1194,13 +1195,13 @@ class Pay
                             break;
                         case 1:
                             // 减价优惠
-                            $member_goods_price = bcsub($v['member_goods_price'], $group_activity['expression'], 2);
-                            $goodsPromAmount = bcadd($goodsPromAmount, bcmul(bcsub($v['member_goods_price'], $member_goods_price, 2), $v['goods_num'], 2), 2);
+                            $member_goods_price = bcsub($oldMGoodsPrice, $group_activity['expression'], 2);
+                            $goodsPromAmount = bcadd($goodsPromAmount, bcmul(bcsub($oldMGoodsPrice, $member_goods_price, 2), $v['goods_num'], 2), 2);
 
                             $this->payList[$k]['member_goods_price'] = $member_goods_price;
                             $this->orderPromIds['goods_prom'][] = $group_activity['id'];
                             if (isset($v['goods_pv'])) {
-                                $this->payList[$k]['goods_pv'] = bcmul($v['goods_pv'], ($member_goods_price / $v['member_goods_price']), 2);
+                                $this->payList[$k]['goods_pv'] = bcmul($v['goods_pv'], ($member_goods_price / $oldMGoodsPrice), 2);
                             }
                             break;
                         case 2:
@@ -1208,7 +1209,7 @@ class Pay
                             $this->payList[$k]['member_goods_price'] = $group_activity['expression'];
                             $this->orderPromIds['goods_prom'][] = $group_activity['id'];
                             if (isset($v['goods_pv'])) {
-                                $this->payList[$k]['goods_pv'] = bcmul($v['goods_pv'], ($group_activity['expression'] / $v['member_goods_price']), 2);
+                                $this->payList[$k]['goods_pv'] = bcmul($v['goods_pv'], ($group_activity['expression'] / $oldMGoodsPrice), 2);
                             }
                             break;
                         case 4:
@@ -1218,7 +1219,7 @@ class Pay
                             if (empty($promGoodsData[$group_activity['id']])) {
                                 $promGoodsData[$group_activity['id']] = [
                                     'goods_num' => $v['goods_num'],
-                                    'goods_price' => bcmul($v['member_goods_price'], $v['goods_num'], 2)
+                                    'goods_price' => bcmul($oldMGoodsPrice, $v['goods_num'], 2)
                                 ];
                             } else {
                                 $promGoodsData[$group_activity['id']]['goods_num'] += $v['goods_num'];
@@ -1251,9 +1252,10 @@ class Pay
                             // 优惠设置的商品
                             $promGoods = M('goods_tao_grade')->where(['promo_id' => $promId])->field('goods_id, item_id')->select();
                             foreach ($pay_list as $k => $v) {
+                                $oldMGoodsPrice = $v['member_goods_price'];
                                 foreach ($promGoods as $goods) {
                                     if ($v['goods_id'] == $goods['goods_id'] && $v['item_id'] == $goods['item_id']) {
-                                        $pay_list[$k]['member_goods_price'] = bcdiv(bcmul($v['member_goods_price'], $promInfo['expression'], 2), 100, 2);
+                                        $pay_list[$k]['member_goods_price'] = bcdiv(bcmul($oldMGoodsPrice, $promInfo['expression'], 2), 100, 2);
                                         if (isset($v['goods_pv'])) {
                                             $this->payList[$k]['goods_pv'] = bcdiv(bcmul($v['goods_pv'], $promInfo['expression'], 2), 100, 2);
                                         }
@@ -1268,11 +1270,12 @@ class Pay
                             // 优惠设置的商品
                             $promGoods = M('goods_tao_grade')->where(['promo_id' => $promId])->field('goods_id, item_id')->select();
                             foreach ($pay_list as $k => $v) {
+                                $oldMGoodsPrice = $v['member_goods_price'];
                                 foreach ($promGoods as $goods) {
                                     if ($v['goods_id'] == $goods['goods_id'] && $v['item_id'] == $goods['item_id']) {
-                                        $pay_list[$k]['member_goods_price'] = bcsub($v['member_goods_price'], $promInfo['expression'], 2);
+                                        $pay_list[$k]['member_goods_price'] = bcsub($oldMGoodsPrice, $promInfo['expression'], 2);
                                         if (isset($v['goods_pv'])) {
-                                            $this->payList[$k]['goods_pv'] = bcmul($v['goods_pv'], ($pay_list[$k]['member_goods_price'] / $v['member_goods_price']), 2);
+                                            $this->payList[$k]['goods_pv'] = bcmul($v['goods_pv'], ($pay_list[$k]['member_goods_price'] / $oldMGoodsPrice), 2);
                                         }
                                     }
                                 }

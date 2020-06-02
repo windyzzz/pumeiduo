@@ -51,7 +51,7 @@
                     <label><em>*</em>用户ID：</label>
                 </dt>
                 <dd class="opt">
-                    <input id="id" name="id"  class="input-txt" type="text" autocomplete="off">
+                    <input id="merge_uid" name="id"  class="input-txt" type="text" autocomplete="off">
                 </dd>
                 <dt class="tit">
                     <label>用户名：</label>
@@ -83,7 +83,6 @@
     {
         var id = $('#id').val();
         var merge_uid = $('#merge_uid').val();
-        var user_name = $('#user_name').val();
         var error ='';
         if(id == '')
         {

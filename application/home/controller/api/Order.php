@@ -1803,7 +1803,7 @@ class Order extends Base
 
         $cartGoodsList = get_arr_column($cartList['cartList'], 'goods');
         $cartGoodsId = get_arr_column($cartGoodsList, 'goods_id');
-        $cartGoodsCatId = get_arr_column($cartGoodsList, 'cat_id');
+        $cartGoodsCatId = array_merge(get_arr_column($cartGoodsList, 'cat_id'), get_arr_column($cartGoodsList, 'extend_cat_id'));
         $couponLogic = new CouponLogic();
         // 用户可用的优惠券列表
         $userCouponList = $couponLogic->getUserAbleCouponList($this->user_id, $cartGoodsId, $cartGoodsCatId, $this->isApp);
