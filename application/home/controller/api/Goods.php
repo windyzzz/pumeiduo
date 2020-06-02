@@ -842,6 +842,7 @@ class Goods extends Base
     {
         $goodsId = I('goods_id/d', '');
         $itemId = I('item_id/d', '');
+        $addressId = I('address_id', '');
         if (!$goodsId) return json(['status' => 0, 'msg' => '请传入正确的商品ID']);
         // 商品价格属性
         $goodsInfo = M('goods')->where(['goods_id' => $goodsId])->field('shop_price, exchange_integral, store_count, limit_buy_num buy_limit, least_buy_num buy_least, is_supply')->find();
@@ -877,6 +878,8 @@ class Goods extends Base
             $getGoodsSpec = $goodsLogic->get_spec_new($goodsId, $itemId);
             $goodsSpec = $getGoodsSpec['spec'];
             $defaultKey = $getGoodsSpec['default_key'];
+            // 查看地址商品信息
+            $addressGoodsData = $goodsLogic->addressGoods($this->user, $goodsId, $itemId, $addressId);
         } else {
             /*
              * 供应链商品
@@ -884,6 +887,8 @@ class Goods extends Base
             $getGoodsSpec = $goodsLogic->get_supply_spec($goodsId, $itemId);
             $goodsSpec = $getGoodsSpec['spec'];
             $defaultKey = $getGoodsSpec['default_key'];
+            // 查看地址商品信息
+            $addressGoodsData = $goodsLogic->addressGoods($this->user, $goodsId, $itemId, $addressId, true);
         }
         $goodsSpecPrice = $goodsLogic->get_spec_price($goodsId);
         $goodsSpecPrice = array_combine(array_column($goodsSpecPrice, 'key'), array_values($goodsSpecPrice));
@@ -920,6 +925,7 @@ class Goods extends Base
             unset($item['store_count']);
         }
         $returnData = [
+            'user_address' => $addressGoodsData['user_address'],
             'goods_info' => $goodsInfo,
             'pay_type' => [
                 ['id' => 1, 'name' => '现金 + 积分'],

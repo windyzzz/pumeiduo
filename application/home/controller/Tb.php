@@ -501,6 +501,7 @@ class Tb extends Controller
             'original_img' => $goods['original_img'],
             'video' => $goods['video'],
             'store_count' => $goods['store_count'],
+            'supplier_goods_id' => $goods['supplier_goods_id'],
         );
 
         if ($goods['is_one_send'] == 0) {
