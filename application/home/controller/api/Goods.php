@@ -21,6 +21,7 @@ use app\common\logic\TaskLogic;
 use app\common\model\Goods as GoodsModel;
 use app\common\model\GroupBuy;
 use app\common\model\SpecGoodsPrice;
+use app\common\util\TpshopException;
 use think\AjaxPage;
 use think\Db;
 use think\Hook;
@@ -869,63 +870,72 @@ class Goods extends Base
                 $extendGoodsSpec = ['type' => 'group_buy', 'data' => $groupBuy];
             }
         }
-        // 商品规格
-        $goodsLogic = new GoodsLogic();
-        if ($goodsInfo['is_supply'] == 0) {
-            /*
-             * 非供应链商品
-             */
-            $getGoodsSpec = $goodsLogic->get_spec_new($goodsId, $itemId);
-            $goodsSpec = $getGoodsSpec['spec'];
-            $defaultKey = $getGoodsSpec['default_key'];
-            // 查看地址商品信息
-            $addressGoodsData = $goodsLogic->addressGoods($this->user, $goodsId, $itemId, $addressId);
-        } else {
-            /*
-             * 供应链商品
-             */
-            $getGoodsSpec = $goodsLogic->get_supply_spec($goodsId, $itemId);
-            $goodsSpec = $getGoodsSpec['spec'];
-            $defaultKey = $getGoodsSpec['default_key'];
-            // 查看地址商品信息
-            $addressGoodsData = $goodsLogic->addressGoods($this->user, $goodsId, $itemId, $addressId, true);
-        }
-        $goodsSpecPrice = $goodsLogic->get_spec_price($goodsId);
-        $goodsSpecPrice = array_combine(array_column($goodsSpecPrice, 'key'), array_values($goodsSpecPrice));
-        // 根据商品活动属性计算商品价格
-        if (empty($goodsSpec) || empty($goodsSpecPrice)) {
-            $goodsSpec = [];
-        } elseif (empty($extendGoodsSpec) && !empty($goodsSpecPrice)) {
-            $goodsInfo['shop_price'] = $goodsSpecPrice[$defaultKey]['price'];
-            $goodsInfo['store_count'] = $goodsSpecPrice[$defaultKey]['store_count'];
-            $goodsInfo['exchange_price'] = bcsub($goodsSpecPrice[$defaultKey]['price'], $goodsInfo['exchange_integral'], 2);
-        } elseif (!empty($extendGoodsSpec) && !empty($goodsSpecPrice)) {
-            foreach ($extendGoodsSpec['data'] as $spec) {
-                if ($spec['spec_key'] == $defaultKey) {
-                    $goodsInfo['nature_type'] = $extendGoodsSpec['type'];
-                    $goodsInfo['shop_price'] = $spec['price'];
-                    $goodsInfo['store_count'] = $spec['goods_num'];
-                    $goodsInfo['buy_limit'] = $spec['buy_limit'];
-                    // 是否能使用积分
-                    if ($spec['can_integral'] == 0) {
-                        $goodsInfo['exchange_integral'] = '0';
-                        $goodsInfo['exchange_price'] = $spec['price'];
-                    } else {
-                        $goodsInfo['exchange_price'] = bcsub($spec['price'], $goodsInfo['exchange_integral'], 2);
+        try {
+            // 商品规格
+            $goodsLogic = new GoodsLogic();
+            if ($goodsInfo['is_supply'] == 0) {
+                /*
+                 * 非供应链商品
+                 */
+                $getGoodsSpec = $goodsLogic->get_spec_new($goodsId, $itemId);
+                $goodsSpec = $getGoodsSpec['spec'];
+                $defaultKey = $getGoodsSpec['default_key'];
+                // 查看地址商品信息
+                $addressGoodsData = $goodsLogic->addressGoods($this->user, $goodsId, $itemId, '', $addressId);
+            } else {
+                /*
+                 * 供应链商品
+                 */
+                $getGoodsSpec = $goodsLogic->get_supply_spec($goodsId, $itemId);
+                $goodsSpec = $getGoodsSpec['spec'];
+                $defaultKey = $getGoodsSpec['default_key'];
+                // 查看地址商品信息
+                $addressGoodsData = $goodsLogic->addressGoods($this->user, $goodsId, 0, $defaultKey, $addressId, true);
+                $goodsInfo['store_count'] = $addressGoodsData['store_count'];
+                if (isset($addressGoodsData['buy_least'])) $goodsInfo['buy_least'] = $addressGoodsData['buy_least'];
+            }
+            $goodsSpecPrice = $goodsLogic->get_spec_price($goodsId);
+            $goodsSpecPrice = array_combine(array_column($goodsSpecPrice, 'key'), array_values($goodsSpecPrice));
+            // 根据商品活动属性计算商品价格
+            if (empty($goodsSpec) || empty($goodsSpecPrice)) {
+                $goodsSpec = [];
+            } elseif (empty($extendGoodsSpec) && !empty($goodsSpecPrice)) {
+                $goodsInfo['shop_price'] = $goodsSpecPrice[$defaultKey]['price'];
+                $goodsInfo['store_count'] = $goodsSpecPrice[$defaultKey]['store_count'];
+                $goodsInfo['exchange_price'] = bcsub($goodsSpecPrice[$defaultKey]['price'], $goodsInfo['exchange_integral'], 2);
+            } elseif (!empty($extendGoodsSpec) && !empty($goodsSpecPrice)) {
+                foreach ($extendGoodsSpec['data'] as $spec) {
+                    if ($spec['spec_key'] == $defaultKey) {
+                        $goodsInfo['nature_type'] = $extendGoodsSpec['type'];
+                        $goodsInfo['shop_price'] = $spec['price'];
+                        $goodsInfo['store_count'] = $spec['goods_num'];
+                        $goodsInfo['buy_limit'] = $spec['buy_limit'];
+                        // 是否能使用积分
+                        if ($spec['can_integral'] == 0) {
+                            $goodsInfo['exchange_integral'] = '0';
+                            $goodsInfo['exchange_price'] = $spec['price'];
+                        } else {
+                            $goodsInfo['exchange_price'] = bcsub($spec['price'], $goodsInfo['exchange_integral'], 2);
+                        }
+                        break;
                     }
-                    break;
                 }
             }
-        }
-        // 处理输出数据
-        unset($goodsInfo['is_supply']);
-        foreach ($goodsSpecPrice as &$item) {
-            unset($item['key']);
-            unset($item['price']);
-            unset($item['store_count']);
+            // 处理输出数据
+            unset($goodsInfo['is_supply']);
+            foreach ($goodsSpecPrice as &$item) {
+                unset($item['key']);
+                unset($item['price']);
+                unset($item['store_count']);
+            }
+        } catch (TpshopException $e) {
+            $goodsInfo['store_count'] = '0';
+            $addressGoodsData = [];
+            $goodsSpec = [];
+            $goodsSpecPrice = [];
         }
         $returnData = [
-            'user_address' => $addressGoodsData['user_address'],
+            'user_address' => !empty($addressGoodsData['user_address']) ? [$addressGoodsData['user_address']] : [],
             'goods_info' => $goodsInfo,
             'pay_type' => [
                 ['id' => 1, 'name' => '现金 + 积分'],

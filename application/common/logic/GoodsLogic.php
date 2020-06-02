@@ -1720,13 +1720,14 @@ class GoodsLogic extends Model
      * 地址商品信息
      * @param $user
      * @param $goodsId
-     * @param string $itemId
+     * @param int $itemId
+     * @param string $key 规格key
      * @param string $addressId
      * @param bool $isSupply 是否是供应链商品
      * @return array
      * @throws TpshopException
      */
-    public function addressGoods($user, $goodsId, $itemId = '', $addressId = '', $isSupply = false)
+    public function addressGoods($user, $goodsId, $itemId = 0, $key = '', $addressId = '', $isSupply = false)
     {
         if (empty($addressId)) {
             // 用户默认地址
@@ -1797,31 +1798,45 @@ class GoodsLogic extends Model
                         $userAddress['out_range'] = 1;
                     }
                 }
-                $return = [
-                    'user_address' => $userAddress
-                ];
             } else {
                 /*
                  * 供应链商品
                  */
+                // 获取最新库存信息
                 $goodsId = M('goods')->where(['goods_id' => $goodsId])->value('supplier_goods_id');
+                if ($itemId > 0 && $key == '') {
+                    $key = M('spec_goods_price')->where(['item_id' => $itemId])->value('key');
+                }
+                $goodsData = [
+                    'goods_id' => $goodsId,
+                    'key' => $key
+                ];
+                $goodsService = new GoodsService();
+                $res = $goodsService->getGoodsCount([$goodsData]);
+                if (empty($res)) {
+                    throw new TpshopException('获取供应链商品库存信息失败', 0, []);
+                }
+                $return['store_count'] = $res[0]['store_count'];
+                // 地区购买限制的库存和最低购买数量
                 $province = M('region2')->where(['id' => $userAddress['province']])->value('ml_region_id');
                 $city = M('region2')->where(['id' => $userAddress['city']])->value('ml_region_id');
                 $district = M('region2')->where(['id' => $userAddress['district']])->value('ml_region_id');
 //                $town = M('region2')->where(['parent_id' => $userAddress['district'], 'status' => 1])->value('ml_region_id') ?? 0;
                 $town = 0;
-                $specKey = [];
-                if ($itemId > 0) {
-                    $key = M('spec_goods_price')->where(['item_id' => $itemId])->value('key');
-                    $specKey = [
-                        ['goods_id' => $goodsId, 'key' => $key]
-                    ];
+                $goodsData = [
+                    'goods_id' => $goodsId,
+                    'spec_key' => $key,
+                    'goods_num' => 1
+                ];
+                $res = $goodsService->checkGoodsRegion([$goodsData], $province, $city, $district, $town);
+                if (!empty($res)) {
+                    $res = $res[0];
+                    $return['store_count'] = $res['store_count'] <= 0 ? 0 : $res['store_count'];
+                    $return['buy_least'] = $res['buy_num'];
+                    $userAddress['out_range'] = isset($res['isAreaRestrict']) && $res['isAreaRestrict'] == true ? 1 : 0;
                 }
-                $goodsService = new GoodsService();
-                $res = $goodsService->queryGoodsCheck([$goodsId], $province, $city, $district, $town, $specKey);
-                print_r($res);
-                exit();
             }
+            $return['user_address'] = $userAddress;
         } else {
             $return = [
                 'user_address' => []
