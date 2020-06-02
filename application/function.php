@@ -1669,11 +1669,11 @@ function trim_all($str)
  * HMAC-MD5 签名算法
  * @param $app_id
  * @param array $data
- * @return bool|string
+ * @return string
  */
 function hmac_md5_sign($app_id, array $data)
 {
-    if (empty($data)) return false;
+    if (empty($data)) return '';
     Ksort($data);
     $data = http_build_query($data);
     $app_key = iconv("GB2312", "UTF-8//IGNORE", $app_id);

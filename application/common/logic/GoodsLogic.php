@@ -14,6 +14,7 @@ namespace app\common\logic;
 use app\common\logic\Pay as PayLogic;
 use app\common\model\Goods;
 use app\common\util\TpshopException;
+use app\home\controller\api\supplier\GoodsService;
 use think\Db;
 use think\Model;
 
@@ -1773,6 +1774,7 @@ class GoodsLogic extends Model
                     'is_selected' => 1
                 ];
             }
+            $userAddress = $userAddress[0];
             if (!$isSupply) {
                 /*
                  * 非供应链商品
@@ -1790,19 +1792,35 @@ class GoodsLogic extends Model
                 $payLogic->payCart($cartList);
                 // 配送物流
                 if (!empty($userAddress)) {
-                    $res = $payLogic->delivery($userAddress[0]['district']);
+                    $res = $payLogic->delivery($userAddress['district']);
                     if (isset($res['status']) && $res['status'] == -1) {
-                        $userAddress[0]['out_range'] = 1;
+                        $userAddress['out_range'] = 1;
                     }
                 }
                 $return = [
-                    'user_address' => $userAddress[0]
+                    'user_address' => $userAddress
                 ];
             } else {
                 /*
                  * 供应链商品
                  */
-
+                $goodsId = M('goods')->where(['goods_id' => $goodsId])->value('supplier_goods_id');
+                $province = M('region2')->where(['id' => $userAddress['province']])->value('ml_region_id');
+                $city = M('region2')->where(['id' => $userAddress['city']])->value('ml_region_id');
+                $district = M('region2')->where(['id' => $userAddress['district']])->value('ml_region_id');
+//                $town = M('region2')->where(['parent_id' => $userAddress['district'], 'status' => 1])->value('ml_region_id') ?? 0;
+                $town = 0;
+                $specKey = [];
+                if ($itemId > 0) {
+                    $key = M('spec_goods_price')->where(['item_id' => $itemId])->value('key');
+                    $specKey = [
+                        ['goods_id' => $goodsId, 'key' => $key]
+                    ];
+                }
+                $goodsService = new GoodsService();
+                $res = $goodsService->queryGoodsCheck([$goodsId], $province, $city, $district, $town, $specKey);
+                print_r($res);
+                exit();
             }
         } else {
             $return = [

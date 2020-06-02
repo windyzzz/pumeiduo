@@ -680,7 +680,7 @@ class Goods extends Base
                 'now_time' => time(),
                 'exchange_integral' => $flashSale[0]['can_integral'] == 0 ? '0' : $flashSale[0]['exchange_integral']
             ];
-            $goods['nature']['exchange_price'] = bcdiv(bcsub(bcmul($goods['nature']['price'], 100), bcmul($goods['nature']['exchange_integral'], 100)), 100, 2);
+            $goods['nature']['exchange_price'] = bcsub($goods['nature']['price'], $goods['nature']['exchange_integral'], 2);
         } else {
             $groupBuy = Db::name('group_buy gb')
                 ->join('goods g', 'g.goods_id = gb.goods_id')
@@ -700,7 +700,7 @@ class Goods extends Base
                     'now_time' => time() . '',
                     'exchange_integral' => $groupBuy[0]['can_integral'] == 0 ? '0' : $groupBuy[0]['exchange_integral']
                 ];
-                $goods['nature']['exchange_price'] = bcdiv(bcsub(bcmul($goods['nature']['price'], 100), bcmul($goods['nature']['exchange_integral'], 100)), 100, 2);
+                $goods['nature']['exchange_price'] = bcsub($goods['nature']['price'], $goods['nature']['exchange_integral'], 2);
             } else {
                 $goods['nature'] = [];
             }
