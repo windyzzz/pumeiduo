@@ -559,23 +559,23 @@ class Goods extends Base
                 switch ($coupon['use_type']) {
                     case 0:
                         // 全店通用
-                        $title = '￥' . $coupon['money'];
-                        $desc = '全场商品满' . $coupon['condition'] . '减' . $coupon['money'];
+                        $title = '全场商品满' . floatval($coupon['money']) . '可用';
+                        $desc = '全场商品满' . floatval($coupon['condition']) . '减' . floatval($coupon['money']);
                         break;
                     case 1:
                         // 指定商品
-                        $title = '￥' . $coupon['money'];
+                        $title = '￥' . floatval($coupon['money']) . '仅限' . $goods['goods_name'] . '可用';
                         $desc = '仅限' . $coupon['goods_name'] . '可用';
                         break;
                     case 2:
                         // 指定分类可用
-                        $title = '￥' . $coupon['money'];
-                        $desc = $coupon['cat_name'] . '满' . $coupon['condition'] . '可用';
+                        $title = $coupon['cat_name'] . '满' . floatval($coupon['condition']) . '可用';
+                        $desc = $coupon['cat_name'] . '满' . floatval($coupon['condition']) . '可用';
                         break;
                     case 4:
                         // 指定商品折扣券
-                        $title = '满' . $coupon['condition'] . '打' . floatval($coupon['money']) . '折';
-                        $desc = '指定商品满' . $coupon['condition'] . '享受' . floatval($coupon['money']) . '折';
+                        $title = '指定商品满' . floatval($coupon['condition']) . '享受' . floatval($coupon['money']) . '折';
+                        $desc = '指定商品满' . floatval($coupon['condition']) . '享受' . floatval($coupon['money']) . '折';
                         break;
                     case 5:
                         // 兑换商品券

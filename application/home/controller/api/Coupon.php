@@ -84,7 +84,7 @@ class Coupon extends Base
                             'goods_name' => $goods['goods_name'],
                             'original_img' => $goods['original_img'],
                             'goods_list' => [],
-                            'title' => '￥' . floatval($coupon['money']),
+                            'title' => '￥' . floatval($coupon['money']) . '仅限' . $goods['goods_name'] . '可用',
                             'desc' => '￥' . floatval($coupon['money']) . '仅限' . $goods['goods_name'] . '可用',
                             'target' => $target,
                             'content' => $coupon['content'] ?? ''
@@ -204,7 +204,7 @@ class Coupon extends Base
                             'goods_name' => $goods['goods_name'],
                             'original_img' => $goods['original_img'],
                             'goods_list' => [],
-                            'title' => '￥' . floatval($coupon['money']),
+                            'title' => '￥' . floatval($coupon['money']) . '仅限' . $goods['goods_name'] . '可用',
                             'desc' => '￥' . floatval($coupon['money']) . '仅限' . $goods['goods_name'] . '可用',
                             'content' => $coupon['content'] ?? ''
                         ];

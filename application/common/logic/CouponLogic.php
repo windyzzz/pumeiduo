@@ -270,6 +270,7 @@ class CouponLogic extends Model
                                     if (in_array($goodsCouponItem['goods_category_id'], $goods_cat_id)) {
                                         $tmp = $userCouponItem;
                                         $tmp['coupon'] = array_merge($couponItem->append(['use_type_title'])->toArray(), $goodsCouponItem->toArray());
+                                        $tmp['cat_name'] = M('goods_category')->where(['id' => $tmp['coupon']['goods_category_id']])->value('name');
                                         $userCouponArr[] = $tmp;
                                         break;
                                     }
