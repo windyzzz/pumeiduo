@@ -118,17 +118,17 @@ class Coupon extends Base
                 switch ($coupon['use_type']) {
                     case 0:
                         // 全店通用
-                        $title = '￥' . floatval($coupon['money']);
-                        $desc = '满' . floatval($coupon['condition']) . '减' . floatval($coupon['money']);
+                        $title = '全场商品满' . floatval($coupon['money']) . '可用';
+                        $desc = '全场商品满' . floatval($coupon['condition']) . '减' . floatval($coupon['money']);
                         break;
                     case 2:
                         // 指定分类可用
-                        $title = '￥' . floatval($coupon['money']);
+                        $title = $couponList[$k . '-1']['cate_name'] . '满' . floatval($coupon['money']) . '可用';
                         $desc = $couponList[$k . '-1']['cate_name'] . '满' . floatval($coupon['condition']) . '可用';
                         break;
                     case 4:
                         // 指定商品折扣券
-                        $title = '满' . floatval($coupon['condition']) . '打' . floatval($coupon['money']) . '折';
+                        $title = '指定商品满' . floatval($coupon['condition']) . '享受' . floatval($coupon['money']) . '折';
                         $desc = '指定商品满' . floatval($coupon['condition']) . '享受' . floatval($coupon['money']) . '折';
                         foreach ($couponGoods as $goods) {
                             if ($coupon['id'] == $goods['coupon_id']) {
@@ -234,17 +234,17 @@ class Coupon extends Base
                 switch ($coupon['use_type']) {
                     case 0:
                         // 全店通用
-                        $title = '￥' . floatval($coupon['money']);
+                        $title = '全场商品满' . floatval($coupon['money']) . '可用';
                         $desc = '全场商品满' . floatval($coupon['condition']) . '减' . floatval($coupon['money']);
                         break;
                     case 2:
                         // 指定分类可用
-                        $title = '￥' . floatval($coupon['money']);
+                        $title = $couponList[$k]['cate_name'] . '满' . floatval($coupon['money']) . '可用';
                         $desc = $couponList[$k]['cate_name'] . '满' . floatval($coupon['condition']) . '可用';
                         break;
                     case 4:
                         // 指定商品折扣券
-                        $title = '满' . floatval($coupon['condition']) . '打' . floatval($coupon['money']) . '折';
+                        $title = '指定商品满' . floatval($coupon['condition']) . '享受' . floatval($coupon['money']) . '折';
                         $desc = '指定商品满' . floatval($coupon['condition']) . '享受' . floatval($coupon['money']) . '折';
                         foreach ($couponGoods as $goods) {
                             if ($coupon['cid'] == $goods['coupon_id']) {
