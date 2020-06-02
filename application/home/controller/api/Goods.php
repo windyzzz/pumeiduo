@@ -2232,6 +2232,19 @@ class Goods extends Base
     }
 
     /**
+     * 是否开启海外购
+     * @return \think\response\Json
+     */
+    public function abroadStatus()
+    {
+        if (tpCache('basic.abroad_open') == 1) {
+            return json(['status' => 1, 'result' => ['state' => 1, 'title' => '']]);
+        } else {
+            return json(['status' => 1, 'result' => ['state' => 0, 'title' => '功能尚未开启']]);
+        }
+    }
+
+    /**
      * 海外购商品分类
      * @return \think\response\Json
      */
