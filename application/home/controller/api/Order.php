@@ -1938,6 +1938,7 @@ class Order extends Base
                             unset($goods['coupon'][$k]);
                             continue 2;
                     }
+                    $couponList[$key]['name'] = $title;
                     $couponList[$key]['title'] = $title;
                     $couponList[$key]['desc'] = $desc;
                 }
