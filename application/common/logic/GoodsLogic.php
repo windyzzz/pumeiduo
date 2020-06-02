@@ -1012,6 +1012,12 @@ class GoodsLogic extends Model
             ->order('discount_price desc')->value('title');
         // 循环处理数据
         foreach ($goodsList as $k => $v) {
+            // 处理商品缩略图丢失情况
+            if (!file_exists(SITE_URL . $v['original_img'])) {
+                $imageUrl = M('goods_images')->where(['goods_id' => $v['goods_id']])->value('image_url');
+                $goodsList[$k]['original_img'] = $imageUrl;
+                M('goods')->where(['goods_id' => $v['goods_id']])->update(['original_img' => $imageUrl]);
+            }
             // 商品规格属性
             if (isset($goodsItem[$v['goods_id']])) {
                 $goodsList[$k]['item_id'] = $goodsItem[$v['goods_id']];
