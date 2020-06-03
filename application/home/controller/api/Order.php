@@ -1906,40 +1906,15 @@ class Order extends Base
                         unset($couponList[$key]);
                         continue;
                     }
-                    unset($couponList[$key]['is_usual']);
-                    switch ($coupon['use_type']) {
-                        case 0:
-                            // 全店通用
-                            $title = '全场商品满' . floatval($coupon['money']) . '可用';
-                            $desc = '全场商品满' . floatval($coupon['condition']) . '减' . floatval($coupon['money']);
-                            break;
-                        case 1:
-                            // 指定商品
-                            $title = '￥' . floatval($coupon['money']) . '仅限' . $goods['goods_name'] . '可用';
-                            $desc = '仅限' . $coupon['goods_name'] . '可用';
-                            break;
-                        case 2:
-                            // 指定分类可用
-                            $title = '满' . floatval($coupon['condition']) . '可用';
-                            $desc = '满' . floatval($coupon['condition']) . '可用';
-                            break;
-                        case 4:
-                            // 指定商品折扣券
-                            $title = '指定商品满' . floatval($coupon['condition']) . '享受' . floatval($coupon['money']) . '折';
-                            $desc = '指定商品满' . floatval($coupon['condition']) . '享受' . floatval($coupon['money']) . '折';
-                            break;
-                        case 5:
-                            // 兑换商品券
-                            $title = $coupon['name'];
-                            $desc = '购买任意商品可用';
-                            break;
-                        default:
-                            unset($goods['coupon'][$k]);
-                            continue 2;
+                    $res = $couponLogic->couponTitleDesc($coupon, $coupon['goods_name']);
+                    if (empty($res)) {
+                        unset($couponList[$key]);
+                        continue;
                     }
-                    $couponList[$key]['name'] = $title;
-                    $couponList[$key]['title'] = $title;
-                    $couponList[$key]['desc'] = $desc;
+                    $couponList[$key]['name'] = $res['title'];
+                    $couponList[$key]['title'] = $res['title'];
+                    $couponList[$key]['desc'] = $res['desc'];
+                    unset($couponList[$key]['is_usual']);
                 }
             }
             if (!empty($couponList)) {

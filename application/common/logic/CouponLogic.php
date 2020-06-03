@@ -22,6 +22,50 @@ class CouponLogic extends Model
     private $order;
 
     /**
+     * 获取优惠券展示描述
+     * @param $coupon
+     * @param $goodsName
+     * @return array
+     */
+    public function couponTitleDesc($coupon, $goodsName)
+    {
+        $title = '';
+        $desc = '';
+        switch ($coupon['use_type']) {
+            case 0:
+                // 全店通用
+                $title = '全场商品满' . floatval($coupon['condition']) . '可用';
+                $desc = '全场商品满' . floatval($coupon['condition']) . '减' . floatval($coupon['money']);
+                break;
+            case 1:
+                // 指定商品
+                $title = '￥' . floatval($coupon['money']) . '仅限' . $goodsName . '可用';
+                $desc = '仅限' . $goodsName . '可用';
+                break;
+            case 2:
+                // 指定分类可用
+                $title = '满' . floatval($coupon['condition']) . '可用';
+                $desc = '满' . floatval($coupon['condition']) . '可用';
+                break;
+            case 4:
+                // 指定商品折扣券
+                $title = '指定商品满' . floatval($coupon['condition']) . '享受' . floatval($coupon['money']) . '折';
+                $desc = '指定商品满' . floatval($coupon['condition']) . '享受' . floatval($coupon['money']) . '折';
+                break;
+            case 5:
+                // 兑换商品券
+                $title = $coupon['name'];
+                $desc = '购买任意商品可用';
+                break;
+        }
+        if (!$title || !$desc) {
+            return [];
+        } else {
+            return ['title' => $title, 'desc' => $desc];
+        }
+    }
+
+    /**
      * 设置order模型.
      *
      * @param $order

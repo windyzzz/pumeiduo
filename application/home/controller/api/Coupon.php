@@ -3,6 +3,7 @@
 namespace app\home\controller\api;
 
 
+use app\common\logic\CouponLogic;
 use app\common\logic\UsersLogic;
 use think\Db;
 
@@ -45,6 +46,7 @@ class Coupon extends Base
         $couponCate = Db::name('goods_coupon gc1')->join('goods_category gc2', 'gc1.goods_category_id = gc2.id')->where(['gc1.coupon_id' => ['in', $couponIds]])->getField('gc1.coupon_id, gc2.id cate_id, gc2.name cate_name', true);
         // 组合数据
         $couponList = [];
+        $couponLogic = new CouponLogic();
         foreach ($couponData as $k => $coupon) {
             // 检查是否已经领取
             $isReceived = M('coupon_list')->where(array('cid' => $coupon['id'], 'uid' => $this->user_id))->field('id')->find();
@@ -115,21 +117,18 @@ class Coupon extends Base
                     'target' => '',
                     'content' => $coupon['content'] ?? ''
                 ];
+                // 优惠券展示描述
+                $res = $couponLogic->couponTitleDesc($coupon, '');
+                if (empty($res)) {
+                    continue;
+                }
+                $couponList[$k . '-1']['title'] = $res['title'];
+                $couponList[$k . '-1']['desc'] = $res['desc'];
+                $couponList[$k . '-1']['target'] = $target;
+                // 优惠券下的商品
                 switch ($coupon['use_type']) {
-                    case 0:
-                        // 全店通用
-                        $title = '全场商品满' . floatval($coupon['money']) . '可用';
-                        $desc = '全场商品满' . floatval($coupon['condition']) . '减' . floatval($coupon['money']);
-                        break;
-                    case 2:
-                        // 指定分类可用
-                        $title = '满' . floatval($coupon['money']) . '可用';
-                        $desc = '满' . floatval($coupon['condition']) . '可用';
-                        break;
                     case 4:
                         // 指定商品折扣券
-                        $title = '指定商品满' . floatval($coupon['condition']) . '享受' . floatval($coupon['money']) . '折';
-                        $desc = '指定商品满' . floatval($coupon['condition']) . '享受' . floatval($coupon['money']) . '折';
                         foreach ($couponGoods as $goods) {
                             if ($coupon['id'] == $goods['coupon_id']) {
                                 $couponList[$k . '-1']['goods_list'][] = [
@@ -141,8 +140,6 @@ class Coupon extends Base
                         break;
                     case 5:
                         // 兑换商品券
-                        $title = $coupon['name'];
-                        $desc = '购买任意商品可用';
                         foreach ($couponGoods as $goods) {
                             if ($coupon['id'] == $goods['coupon_id']) {
                                 $couponList[$k . '-1']['goods_list'][] = [
@@ -153,12 +150,9 @@ class Coupon extends Base
                         }
                         break;
                     default:
-                        continue;
+                        continue 2;
                         break;
                 }
-                $couponList[$k . '-1']['title'] = $title;
-                $couponList[$k . '-1']['desc'] = $desc;
-                $couponList[$k . '-1']['target'] = $target;
             }
         }
         return json(['status' => 1, 'result' => array_values($couponList)]);
@@ -183,6 +177,7 @@ class Coupon extends Base
         $couponCate = Db::name('goods_coupon gc1')->join('goods_category gc2', 'gc1.goods_category_id = gc2.id')->where(['gc1.coupon_id' => ['in', $couponIds]])->getField('gc1.coupon_id, gc2.id cate_id, gc2.name cate_name', true);
         // 组合数据
         $couponList = [];
+        $couponLogic = new CouponLogic();
         foreach ($couponData as $k => $coupon) {
             if ($coupon['use_type'] == 1) {
                 // 指定商品可用
@@ -231,23 +226,19 @@ class Coupon extends Base
                     'desc' => '',
                     'content' => $coupon['content'] ?? ''
                 ];
+                // 优惠券展示描述
+                $res = $couponLogic->couponTitleDesc($coupon, '');
+                if (empty($res)) {
+                    continue;
+                }
+                $couponList[$k . '-1']['title'] = $res['title'];
+                $couponList[$k . '-1']['desc'] = $res['desc'];
+                // 优惠券下的商品
                 switch ($coupon['use_type']) {
-                    case 0:
-                        // 全店通用
-                        $title = '全场商品满' . floatval($coupon['money']) . '可用';
-                        $desc = '全场商品满' . floatval($coupon['condition']) . '减' . floatval($coupon['money']);
-                        break;
-                    case 2:
-                        // 指定分类可用
-                        $title = '满' . floatval($coupon['money']) . '可用';
-                        $desc = '满' . floatval($coupon['condition']) . '可用';
-                        break;
                     case 4:
                         // 指定商品折扣券
-                        $title = '指定商品满' . floatval($coupon['condition']) . '享受' . floatval($coupon['money']) . '折';
-                        $desc = '指定商品满' . floatval($coupon['condition']) . '享受' . floatval($coupon['money']) . '折';
                         foreach ($couponGoods as $goods) {
-                            if ($coupon['cid'] == $goods['coupon_id']) {
+                            if ($coupon['id'] == $goods['coupon_id']) {
                                 $couponList[$k . '-1']['goods_list'][] = [
                                     'goods_id' => $goods['goods_id'],
                                     'original_img' => $goods['original_img']
@@ -257,10 +248,8 @@ class Coupon extends Base
                         break;
                     case 5:
                         // 兑换商品券
-                        $title = $coupon['name'];
-                        $desc = '购买任意商品可用';
                         foreach ($couponGoods as $goods) {
-                            if ($coupon['cid'] == $goods['coupon_id']) {
+                            if ($coupon['id'] == $goods['coupon_id']) {
                                 $couponList[$k . '-1']['goods_list'][] = [
                                     'goods_id' => $goods['goods_id'],
                                     'original_img' => $goods['original_img']
@@ -269,11 +258,9 @@ class Coupon extends Base
                         }
                         break;
                     default:
-                        continue;
+                        continue 2;
                         break;
                 }
-                $couponList[$k . '-1']['title'] = $title;
-                $couponList[$k . '-1']['desc'] = $desc;
             }
         }
         return json(['status' => 1, 'result' => array_values($couponList)]);
