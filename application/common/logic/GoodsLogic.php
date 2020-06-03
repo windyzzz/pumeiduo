@@ -1723,11 +1723,12 @@ class GoodsLogic extends Model
      * @param int $itemId
      * @param string $key 规格key
      * @param string $addressId
+     * @param int $goodsNum
      * @param bool $isSupply 是否是供应链商品
      * @return array
      * @throws TpshopException
      */
-    public function addressGoods($user, $goodsId, $itemId = 0, $key = '', $addressId = '', $isSupply = false)
+    public function addressGoods($user, $goodsId, $itemId = 0, $key = '', $addressId = '', $goodsNum = 1, $isSupply = false)
     {
         if (empty($addressId)) {
             // 用户默认地址
@@ -1826,7 +1827,7 @@ class GoodsLogic extends Model
                 $goodsData = [
                     'goods_id' => $goodsId,
                     'spec_key' => $key,
-                    'goods_num' => 1
+                    'goods_num' => $goodsNum
                 ];
                 $res = $goodsService->checkGoodsRegion([$goodsData], $province, $city, $district, $town);
                 if (!empty($res)) {

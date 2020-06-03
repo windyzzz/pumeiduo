@@ -634,88 +634,137 @@ class Goods extends Base
         $goods_id = I('goods_id/d', null);
         $itemId = I('item_id/d', 0);
         if (!$goods_id) {
-            return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
+            return json(['status' => 0, 'msg' => '该商品已经下架']);
         }
-        $goods = Db::name('goods')->where('goods_id', $goods_id)->field('goods_id, cat_id, extend_cat_id, goods_sn, goods_name, goods_type, goods_remark, goods_content, 
-            brand_id, store_count, comment_count, market_price, shop_price, cost_price, give_integral, exchange_integral, original_img, limit_buy_num, least_buy_num,
-            is_on_sale, is_free_shipping, is_recommend, is_new, is_hot, is_virtual, virtual_indate, click_count, zone, commission, integral_pv')->find();
+        $goods = Db::name('goods')->where('goods_id', $goods_id)->find();
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
-            return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
+            return json(['status' => 0, 'msg' => '该商品已经下架']);
         }
-        $goods['goods_content'] = htmlspecialchars_decode($goods['goods_content']); // 商品描述内容
-        $goods['goods_content'] = str_replace('/public', SITE_URL . '/public', $goods['goods_content']);
-        $goods['buy_limit'] = $goods['limit_buy_num'];  // 商品最大购买数量
-        $goods['buy_least'] = $goods['least_buy_num'];  // 商品最低购买数量
-        $zone = $goods['zone'];
-        // 处理显示金额
-        $goods['exchange_price'] = bcsub($goods['shop_price'], $goods['exchange_integral'], 2);
-        // 商品佣金
-        $goods['commission'] = bcdiv(bcmul($goods['shop_price'], $goods['commission'], 2), 100, 2);
-        if ($goods['brand_id']) {
-            // 品牌名称
-            $goods['brand_name'] = M('brand')->where('id', $goods['brand_id'])->getField('name');
+        $goodsInfo = [
+            'type' => 'normal',
+            'goods_id' => $goods['goods_id'],
+            'goods_sn' => $goods['goods_sn'],
+            'goods_name' => $goods['goods_name'],
+            'store_count' => $goods['store_count'],
+            'goods_remark' => $goods['goods_remark'],
+            'goods_content' => htmlspecialchars_decode($goods['goods_content']),
+            'original_img' => SITE_URL . $goods['original_img'],
+            'goods_images_list' => [],
+            'shop_price' => $goods['shop_price'],
+            'exchange_integral' => $goods['exchange_integral'],
+            'exchange_price' => bcsub($goods['shop_price'], $goods['exchange_integral'], 2),
+            'commission' => '',
+            'integral_pv' => '',
+            'buy_limit' => $goods['limit_buy_num'],     // 商品最大购买数量
+            'buy_least' => $goods['least_buy_num'],     // 商品最低购买数量
+            'limit_num' => '0',                                 // 参加活动商品最大数量
+            'group_goods_num' => '0',                           // 成团数
+            'start_time' => '0',
+            'end_time' => '0',
+            'now_time' => NOW_TIME,
+            'freight_free' => tpCache('shopping.freight_free'),     // 全场满多少免运费
+            'share_goods_image' => !empty($goods['original_img']) ? SITE_URL . $goods['original_img'] : '',    // 商品分享图
+            'share_qr_code' => '',    // 分享二维码
+            'tabs' => []
+        ];
+        // 处理商品内容图片
+        if (!strstr($goodsInfo['goods_content'], 'http') && !strstr($goodsInfo['goods_content'], 'https')) {
+            $goodsInfo['goods_content'] = str_replace('/public', SITE_URL . '/public', $goodsInfo['goods_content']);
+        }
+        if ($this->user) {
+            // 商品pv
+            if ($this->user['distribut_level'] < 3) {
+                $goodsInfo['integral_pv'] = '';
+            } elseif ($goods['integral_pv'] == 0) {
+                $goodsInfo['integral_pv'] = '';
+            }
+            // 商品佣金
+            if ($this->user['distribut_level'] < 2) {
+                $goodsInfo['commission'] = '';
+            } elseif ($goods['commission'] == 0) {
+                $goodsInfo['commission'] = '';
+            } else {
+                $goodsInfo['commission'] = bcdiv(bcmul(bcsub($goods['shop_price'], $goods['exchange_integral'], 2), $goods['commission'], 2), 100, 2);
+            }
+            $goodsLogic = new GoodsLogic();
+            // 用户浏览记录
+            $goodsLogic->add_visit_log($this->user_id, $goods);
+            // 用户收藏
+            $goodsCollect = $goodsLogic->getCollectGoods($this->user_id);
+            if (!empty($goodsCollect)) {
+                foreach ($goodsCollect as $value) {
+                    if ($goods_id == $value['goods_id']) {
+                        $isEnshrine = 1;
+                        break;
+                    }
+                }
+            }
+            // 分享二维码
+            $filename = '/public/images/qrcode/goods/goods_' . $this->user_id . '_' . $goods_id . '.png';
+            if (!file_exists(SITE_URL . $filename)) {
+                $this->scerweima($this->user_id, $goods['goods_id']);
+            }
+            $goodsInfo['qr_code'] = SITE_URL . $filename;
+        } else {
+            $goodsInfo['integral_pv'] = '';
+            $goodsInfo['commission'] = '';
         }
         // 商品标签
-        $goods['tabs'] = [];
         $goodsTab = Db::name('goods_tab')->where(['goods_id' => $goods_id, 'status' => 1])->limit(0, 3)->field('tab_id, title')->select();
         if ($goodsTab) {
-            $goods['tabs'] = $goodsTab;
+            $goodsInfo['tabs'] = $goodsTab;
         }
-        $goods['goods_images_list'] = M('GoodsImages')->where('goods_id', $goods_id)->select(); // 商品图片列表
+        // 商品轮播图
+        $goodsInfo['goods_images_list'] = M('GoodsImages')->where('goods_id', $goods_id)->getField('image_url', true);
+        if (!empty($goodsInfo['goods_images_list'])) {
+            foreach ($goodsInfo['goods_images_list'] as &$image) {
+                $image = SITE_URL . $image;
+            }
+        }
         // 判断商品性质
         $flashSale = Db::name('flash_sale fs')
-            ->join('goods g', 'g.goods_id = fs.goods_id')
             ->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
             ->where(['fs.goods_id' => $goods_id, 'fs.item_id' => $itemId, 'fs.start_time' => ['<=', time()], 'fs.end_time' => ['>=', time()]])
             ->where(['fs.source' => ['LIKE', $this->isApp ? '%' . 3 . '%' : '%' . 1 . '%']])
-            ->field('fs.goods_id, sgp.key spec_key, fs.price, fs.goods_num, fs.buy_limit, fs.start_time, fs.end_time, fs.can_integral, g.exchange_integral')->select();
+            ->field('fs.goods_id, sgp.key spec_key, fs.price, fs.goods_num, fs.buy_limit, fs.start_time, fs.end_time, fs.can_integral')->select();
         if (!empty($flashSale)) {
+            $flashSale = $flashSale[0];
             // 秒杀商品
-            $goods['nature'] = [
-                'type' => 'flash_sale',
-                'price' => $flashSale[0]['price'],
-                'limit_num' => $flashSale[0]['goods_num'],
-                'buy_limit' => $flashSale[0]['buy_limit'],
-                'start_time' => $flashSale[0]['start_time'],
-                'end_time' => $flashSale[0]['end_time'],
-                'now_time' => time(),
-                'exchange_integral' => $flashSale[0]['can_integral'] == 0 ? '0' : $flashSale[0]['exchange_integral']
-            ];
-            $goods['nature']['exchange_price'] = bcsub($goods['nature']['price'], $goods['nature']['exchange_integral'], 2);
+            $goodsInfo['type'] = 'flash_sale';
+            $goodsInfo['exchange_integral'] = $flashSale['can_integral'] == 0 ? '0' : $goods['exchange_integral'];
+            $goodsInfo['exchange_price'] = bcsub($flashSale['price'], $goodsInfo['exchange_integral'], 2);
+            $goodsInfo['buy_limit'] = $flashSale['buy_limit'];
+            $goodsInfo['limit_num'] = $flashSale['goods_num'];
+            $goodsInfo['start_time'] = $flashSale['start_time'];
+            $goodsInfo['end_time'] = $flashSale['end_time'];
         } else {
             $groupBuy = Db::name('group_buy gb')
-                ->join('goods g', 'g.goods_id = gb.goods_id')
                 ->join('spec_goods_price sgp', 'sgp.item_id = gb.item_id', 'LEFT')
                 ->where(['gb.goods_id' => $goods_id, 'gb.item_id' => $itemId, 'gb.start_time' => ['<=', time()], 'gb.end_time' => ['>=', time()]])
-                ->field('gb.goods_id, gb.price, sgp.key spec_key, gb.price, gb.group_goods_num, gb.goods_num, gb.buy_limit, gb.start_time, gb.end_time, gb.can_integral, g.exchange_integral')->select();
+                ->field('gb.goods_id, gb.price, sgp.key spec_key, gb.price, gb.group_goods_num, gb.goods_num, gb.buy_limit, gb.start_time, gb.end_time, gb.can_integral')->select();
             if (!empty($groupBuy)) {
+                $groupBuy = $groupBuy[0];
                 // 团购商品
-                $goods['nature'] = [
-                    'type' => 'group_buy',
-                    'price' => $groupBuy[0]['price'],
-                    'group_goods_num' => $groupBuy[0]['group_goods_num'],
-                    'limit_num' => bcdiv($groupBuy[0]['goods_num'], $groupBuy[0]['group_goods_num']),
-                    'buy_limit' => $groupBuy[0]['buy_limit'],
-                    'start_time' => $groupBuy[0]['start_time'],
-                    'end_time' => $groupBuy[0]['end_time'],
-                    'now_time' => time() . '',
-                    'exchange_integral' => $groupBuy[0]['can_integral'] == 0 ? '0' : $groupBuy[0]['exchange_integral']
-                ];
-                $goods['nature']['exchange_price'] = bcsub($goods['nature']['price'], $goods['nature']['exchange_integral'], 2);
-            } else {
-                $goods['nature'] = [];
+                $goodsInfo['type'] = 'group_buy';
+                $goodsInfo['exchange_integral'] = $groupBuy['can_integral'] == 0 ? '0' : $goods['exchange_integral'];
+                $goodsInfo['exchange_price'] = bcsub($groupBuy['price'], $goodsInfo['exchange_integral'], 2);
+                $goodsInfo['buy_limit'] = $groupBuy['buy_limit'];
+                $goodsInfo['limit_num'] = bcdiv($groupBuy['goods_num'], $groupBuy['group_goods_num'], 2);
+                $goodsInfo['group_goods_num'] = $groupBuy['group_goods_num'];
+                $goodsInfo['start_time'] = $groupBuy['start_time'];
+                $goodsInfo['end_time'] = $groupBuy['end_time'];
             }
         }
-        if (!empty($goods['nature']) && in_array($goods['nature']['type'], ['group_buy', 'flash_sale'])) {
-            $goods['buy_least'] = '0';
+        if (in_array($goodsInfo['type'], ['group_buy', 'flash_sale'])) {
+            $goodsInfo['buy_least'] = '0';
         }
         // 商品促销、优惠券
-        if ($zone == 3) {
-            $goods['promotion'] = [];
-            $goods['coupon'] = [];
+        if ($goods['zone'] == 3) {
+            $promotion = [];
+            $couponList = [];
         } else {
             // 促销
-            $goods['promotion'] = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
+            $promotion = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
                     ->where(['gtg.goods_id' => $goods_id, 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
                     ->field('pg.id prom_id, pg.title')->order('expression desc')->find() ?? [];
             // 优惠券
@@ -742,39 +791,39 @@ class Goods extends Base
                 }
                 $couponCate = $couponLogic->getCoupon(null, '', $cateIds, $ext);    // 指定分类优惠券
             }
-            $goods['coupon'] = array_merge_recursive($couponCurrency, $couponGoods, $couponCate);
-            if (!empty($goods['coupon'])) {
+            $couponList = array_merge_recursive($couponCurrency, $couponGoods, $couponCate);
+            if (!empty($couponList)) {
                 // 查看用户是否拥有优惠券
                 if ($this->user) {
-                    foreach ($goods['coupon'] as $k => $coupon) {
+                    foreach ($couponList as $k => $coupon) {
                         if ($coupon['nature'] != 1) {
-                            unset($goods['coupon'][$k]);
+                            unset($couponList[$k]);
                             continue;
                         }
                     }
                 }
             }
-            foreach ($goods['coupon'] as $k => $coupon) {
+            foreach ($couponList as $k => $coupon) {
                 switch ($coupon['use_type']) {
                     case 0:
                         // 全店通用
-                        $title = '￥' . $coupon['money'];
-                        $desc = '全场商品满' . $coupon['condition'] . '减' . $coupon['money'];
+                        $title = '全场商品满' . floatval($coupon['money']) . '可用';
+                        $desc = '全场商品满' . floatval($coupon['condition']) . '减' . floatval($coupon['money']);
                         break;
                     case 1:
                         // 指定商品
-                        $title = '￥' . $coupon['money'];
+                        $title = '￥' . floatval($coupon['money']) . '仅限' . $goods['goods_name'] . '可用';
                         $desc = '仅限' . $coupon['goods_name'] . '可用';
                         break;
                     case 2:
                         // 指定分类可用
-                        $title = '￥' . $coupon['money'];
-                        $desc = $coupon['cat_name'] . '满' . $coupon['condition'] . '可用';
+                        $title = '满' . floatval($coupon['condition']) . '可用';
+                        $desc = '满' . floatval($coupon['condition']) . '可用';
                         break;
                     case 4:
                         // 指定商品折扣券
-                        $title = '满' . $coupon['condition'] . '打' . floatval($coupon['money']) . '折';
-                        $desc = '指定商品满' . $coupon['condition'] . '享受' . floatval($coupon['money']) . '折';
+                        $title = '指定商品满' . floatval($coupon['condition']) . '享受' . floatval($coupon['money']) . '折';
+                        $desc = '指定商品满' . floatval($coupon['condition']) . '享受' . floatval($coupon['money']) . '折';
                         break;
                     case 5:
                         // 兑换商品券
@@ -782,56 +831,22 @@ class Goods extends Base
                         $desc = '购买任意商品可用';
                         break;
                     default:
-                        unset($goods['coupon'][$k]);
+                        unset($couponList[$k]);
                         continue 2;
                 }
-                $goods['coupon'][$k]['title'] = $title;
-                $goods['coupon'][$k]['desc'] = $desc;
+                $couponList[$k]['title'] = $title;
+                $couponList[$k]['desc'] = $desc;
             }
-            $goods['coupon'] = array_values($goods['coupon']);
-            if (!empty($goods['coupon'])) {
-                $goods['coupon'] = [
-                    'coupon_id' => $goods['coupon'][0]['coupon_id'],
-                    'desc' => $goods['coupon'][0]['desc'],
-                ];
-            } else {
-                $goods['coupon'] = [];
-            }
+            $couponList = array_values($couponList);
         }
-        unset($goods['zone']);
-
-        $goods['freight_free'] = tpCache('shopping.freight_free'); // 全场满多少免运费
-        $goods['share_goods_image'] = !empty($goods['original_img']) ? $goods['original_img'] : ''; // 商品分享图
-        $goods['qr_code'] = ''; // 分享二维码
-
         // 组装数据
-        $result['goods'] = $goods;
-        $result['can_cart'] = $zone == 3 ? 0 : 1;   // 能否加入购物车
-        $result['is_enshrine'] = 0; // 是否收藏
-        if ($this->user_id) {
-            $goodsLogic = new GoodsLogic();
-            // 用户浏览记录
-            $goodsLogic->add_visit_log($this->user_id, $goods);
-            // 用户收藏
-            $goodsCollect = $goodsLogic->getCollectGoods($this->user_id);
-            if (!empty($goodsCollect)) {
-                foreach ($goodsCollect as $value) {
-                    if ($goods_id == $value['goods_id']) {
-                        $result['is_enshrine'] = 1;
-                        break;
-                    }
-                }
-            }
-            // 分享二维码
-            $filename = 'public/images/qrcode/goods/goods_' . $this->user_id . '_' . $goods_id . '.png';
-            Url::root('/');
-            $baseUrl = url('/', '', '', true);
-            if (!file_exists($baseUrl . $filename)) {
-                $this->scerweima($this->user_id, $goods['goods_id']);
-            }
-            $result['goods']['qr_code'] = $baseUrl . $filename;
-        }
-
+        $result = [
+            'goods' => $goodsInfo,
+            'promotion' => $promotion,
+            'coupon' => $couponList,
+            'is_enshrine' => $isEnshrine ?? 0,              // 是否收藏
+            'can_cart' => $goods['zone'] == 3 ? 0 : 1,      // 能否加入购物车
+        ];
         return json(['status' => 1, 'msg' => 'success', 'result' => $result]);
     }
 
@@ -844,6 +859,7 @@ class Goods extends Base
         $goodsId = I('goods_id/d', '');
         $itemId = I('item_id/d', '');
         $addressId = I('address_id', '');
+        $goodsNum = I('goods_num', 1);
         if (!$goodsId) return json(['status' => 0, 'msg' => '请传入正确的商品ID']);
         // 商品价格属性
         $goodsInfo = M('goods')->where(['goods_id' => $goodsId])->field('shop_price, exchange_integral, store_count, limit_buy_num buy_limit, least_buy_num buy_least, is_supply')->find();
@@ -890,7 +906,7 @@ class Goods extends Base
                 $goodsSpec = $getGoodsSpec['spec'];
                 $defaultKey = $getGoodsSpec['default_key'];
                 // 查看地址商品信息
-                $addressGoodsData = $goodsLogic->addressGoods($this->user, $goodsId, 0, $defaultKey, $addressId, true);
+                $addressGoodsData = $goodsLogic->addressGoods($this->user, $goodsId, 0, $defaultKey, $addressId, $goodsNum, true);
                 $goodsInfo['store_count'] = $addressGoodsData['store_count'];
                 if (isset($addressGoodsData['buy_least'])) $goodsInfo['buy_least'] = $addressGoodsData['buy_least'];
             }
