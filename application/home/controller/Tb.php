@@ -38,7 +38,7 @@ class Tb extends Controller
                         if (empty($order_add_time) || $order_add_time < 1561910400) {
                             // 旧订单不处理
                             M('tb')->where(array('id' => $v['id']))->update(array('tb_time' => NOW_TIME, 'status' => 1, 'msg' => '旧订单不处理'));
-                            continue;
+                            continue 2;
                         }
                         $tb_data['data'] = $this->send_order($v['from_id']);
                         break;
