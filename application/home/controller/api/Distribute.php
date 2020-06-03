@@ -88,7 +88,8 @@ class Distribute extends Base
 
         $where = [
             'rl.user_id' => $this->user_id,
-            'rl.create_time' => ['BETWEEN', [strtotime(date('Y-m-d 00:00:00', $startAt)), strtotime(date('Y-m-d 23:59:59', $endAt))]]
+            'rl.create_time' => ['BETWEEN', [strtotime(date('Y-m-d 00:00:00', $startAt)), strtotime(date('Y-m-d 23:59:59', $endAt))]],
+            'rl.money' => ['GT', 0]
         ];
         if ($status != '') {
             switch ($status) {
@@ -181,6 +182,7 @@ class Distribute extends Base
             'rl.user_id' => $this->user_id,
             'rl.buy_user_id' => $buyUserId,
             'rl.status' => ['in', [3, 5]],
+            'rl.money' => ['GT', 0]
         ];
         $rebateLogSum = M('rebate_log rl')->where($where)->sum('rl.money');
         // 购买者用户信息
@@ -211,7 +213,8 @@ class Distribute extends Base
         $where = [
             'rl.user_id' => $this->user_id,
             'rl.buy_user_id' => $buyUserId,
-            'rl.create_time' => ['BETWEEN', [strtotime(date('Y-m-d 00:00:00', $startAt)), strtotime(date('Y-m-d 23:59:59', $endAt))]]
+            'rl.create_time' => ['BETWEEN', [strtotime(date('Y-m-d 00:00:00', $startAt)), strtotime(date('Y-m-d 23:59:59', $endAt))]],
+            'rl.money' => ['GT', 0]
         ];
         if ($status != '') {
             switch ($status) {
