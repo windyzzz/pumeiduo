@@ -1818,8 +1818,7 @@ class Order extends Base
                 'is_usual' => $coupon['coupon']['is_usual'],
                 'use_start_time' => date('Y.m.d', $coupon['coupon']['use_start_time']),
                 'use_end_time' => date('Y.m.d', $coupon['coupon']['use_end_time']),
-                'is_selected' => 0,
-                'cat_name' => $coupon['cat_name'] ?? ''
+                'is_selected' => 0
             ];
         }
         // 用户可用的兑换券列表
@@ -1921,8 +1920,8 @@ class Order extends Base
                             break;
                         case 2:
                             // 指定分类可用
-                            $title = $coupon['cat_name'] . '满' . floatval($coupon['condition']) . '可用';
-                            $desc = $coupon['cat_name'] . '满' . floatval($coupon['condition']) . '可用';
+                            $title = '满' . floatval($coupon['condition']) . '可用';
+                            $desc = '满' . floatval($coupon['condition']) . '可用';
                             break;
                         case 4:
                             // 指定商品折扣券

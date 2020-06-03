@@ -123,8 +123,8 @@ class Coupon extends Base
                         break;
                     case 2:
                         // 指定分类可用
-                        $title = $couponList[$k . '-1']['cate_name'] . '满' . floatval($coupon['money']) . '可用';
-                        $desc = $couponList[$k . '-1']['cate_name'] . '满' . floatval($coupon['condition']) . '可用';
+                        $title = '满' . floatval($coupon['money']) . '可用';
+                        $desc = '满' . floatval($coupon['condition']) . '可用';
                         break;
                     case 4:
                         // 指定商品折扣券
@@ -239,8 +239,8 @@ class Coupon extends Base
                         break;
                     case 2:
                         // 指定分类可用
-                        $title = $couponList[$k . '-1']['cate_name'] . '满' . floatval($coupon['money']) . '可用';
-                        $desc = $couponList[$k . '-1']['cate_name'] . '满' . floatval($coupon['condition']) . '可用';
+                        $title = '满' . floatval($coupon['money']) . '可用';
+                        $desc = '满' . floatval($coupon['condition']) . '可用';
                         break;
                     case 4:
                         // 指定商品折扣券
