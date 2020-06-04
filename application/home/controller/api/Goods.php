@@ -1569,8 +1569,8 @@ class Goods extends Base
         }
         $sortArr = [$sort => $sort_asc];
         $filter_param = []; // 筛选数组
-//        $id = I('get.id/d', 0); // 当前分类id
-//        $filter_param['id'] = $id; //加入筛选条件中
+        $id = I('get.id/d', 0); // 当前分类id
+        $filter_param['id'] = $id; //加入筛选条件中
 //        if ($id != 0) {
 //            $goodsLogic = new GoodsLogic(); // 前台商品操作逻辑类
 //            // 分类菜单显示
