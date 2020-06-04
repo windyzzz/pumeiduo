@@ -1014,9 +1014,19 @@ class GoodsLogic extends Model
         foreach ($goodsList as $k => $v) {
             // 处理商品缩略图丢失情况
             if (!file_exists(SITE_URL . $v['original_img'])) {
-                $imageUrl = M('goods_images')->where(['goods_id' => $v['goods_id']])->value('image_url');
-                $goodsList[$k]['original_img'] = $imageUrl;
-                M('goods')->where(['goods_id' => $v['goods_id']])->update(['original_img' => $imageUrl]);
+                $goodsImages = M('goods_images')->where(['goods_id' => $v['goods_id']])->select();
+                foreach ($goodsImages as $image) {
+                    if (file_exists(SITE_URL . $image['image_url'])) {
+                        $goodsList[$k]['original_img'] = $image['image_url'];
+                        M('goods')->where(['goods_id' => $v['goods_id']])->update(['original_img' => $image['image_url']]);
+                        $logData = [
+                            'old_original_img' => $v['original_img'],
+                            'new_original_img' => $image['image_url'],
+                        ];
+                        $this->goodsErrorLog($v['goods_id'], '缩略图文件丢失', $logData);
+                        break;
+                    }
+                }
             }
             // 商品规格属性
             if (isset($goodsItem[$v['goods_id']])) {
@@ -1569,5 +1579,21 @@ class GoodsLogic extends Model
         }
 
         return $max_discount_integral;
+    }
+
+    /**
+     * 商品错误处理记录
+     * @param $goodsId
+     * @param $desc
+     * @param array $data
+     */
+    public function goodsErrorLog($goodsId, $desc, $data = [])
+    {
+        M('goods_error_log')->add([
+            'goods_id' => $goodsId,
+            'desc' => $desc,
+            'log_data' => !empty($data) ? json_encode($data) : '',
+            'add_time' => NOW_TIME
+        ]);
     }
 }
