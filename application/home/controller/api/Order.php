@@ -1818,7 +1818,8 @@ class Order extends Base
                 'is_usual' => $coupon['coupon']['is_usual'],
                 'use_start_time' => date('Y.m.d', $coupon['coupon']['use_start_time']),
                 'use_end_time' => date('Y.m.d', $coupon['coupon']['use_end_time']),
-                'is_selected' => 0
+                'is_selected' => 0,
+                'cat_name' => $coupon['cat_name'] ?? ''
             ];
         }
         // 用户可用的兑换券列表
@@ -1906,7 +1907,7 @@ class Order extends Base
                         unset($couponList[$key]);
                         continue;
                     }
-                    $res = $couponLogic->couponTitleDesc($coupon, $coupon['goods_name']);
+                    $res = $couponLogic->couponTitleDesc($coupon);
                     if (empty($res)) {
                         unset($couponList[$key]);
                         continue;

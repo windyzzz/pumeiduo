@@ -118,7 +118,7 @@ class Coupon extends Base
                     'content' => $coupon['content'] ?? ''
                 ];
                 // 优惠券展示描述
-                $res = $couponLogic->couponTitleDesc($coupon, '');
+                $res = $couponLogic->couponTitleDesc($coupon, $couponList[$k . '-1']['goods_name'], $couponList[$k . '-1']['cate_name']);
                 if (empty($res)) {
                     continue;
                 }
@@ -227,7 +227,7 @@ class Coupon extends Base
                     'content' => $coupon['content'] ?? ''
                 ];
                 // 优惠券展示描述
-                $res = $couponLogic->couponTitleDesc($coupon, '');
+                $res = $couponLogic->couponTitleDesc($coupon, $couponList[$k . '-1']['goods_name'], $couponList[$k . '-1']['cate_name']);
                 if (empty($res)) {
                     continue;
                 }

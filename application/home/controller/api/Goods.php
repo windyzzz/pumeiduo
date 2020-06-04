@@ -556,7 +556,7 @@ class Goods extends Base
                     unset($goods['coupon'][$k]);
                     continue;
                 }
-                $res = $couponLogic->couponTitleDesc($coupon, $coupon['goods_name']);
+                $res = $couponLogic->couponTitleDesc($coupon);
                 if (empty($res)) {
                     unset($goods['coupon'][$k]);
                     continue;
