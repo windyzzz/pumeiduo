@@ -1569,21 +1569,21 @@ class Goods extends Base
         }
         $sortArr = [$sort => $sort_asc];
         $filter_param = []; // 筛选数组
-        $id = I('get.id/d', 0); // 当前分类id
-        $filter_param['id'] = $id; //加入筛选条件中
-        if ($id != 0) {
-            $goodsLogic = new GoodsLogic(); // 前台商品操作逻辑类
-            // 分类菜单显示
-            $goodsCate = M('GoodsCategory')->where('id', $id)->find(); // 当前分类
-            //($goodsCate['level'] == 1) && header('Location:'.U('Home/Channel/index',array('cat_id'=>$id))); //一级分类跳转至大分类馆
-            $cateArr = $goodsLogic->get_goods_cate($goodsCate);
-        }
+//        $id = I('get.id/d', 0); // 当前分类id
+//        $filter_param['id'] = $id; //加入筛选条件中
+//        if ($id != 0) {
+//            $goodsLogic = new GoodsLogic(); // 前台商品操作逻辑类
+//            // 分类菜单显示
+//            $goodsCate = M('GoodsCategory')->where('id', $id)->find(); // 当前分类
+//            //($goodsCate['level'] == 1) && header('Location:'.U('Home/Channel/index',array('cat_id'=>$id))); //一级分类跳转至大分类馆
+//            $cateArr = $goodsLogic->get_goods_cate($goodsCate);
+//        }
         // 筛选 品牌 规格 属性 价格
-        $cat_id_arr = getCatGrandson($id);
+//        $cat_id_arr = getCatGrandson($id);
 //        $goods_where = ['is_on_sale' => 1, 'is_recommend' => 1, 'cat_id' => ['in', $cat_id_arr]];
 //        $filter_goods_id = Db::name('goods')->where($goods_where)->cache(true)->getField('goods_id', true);
 
-        $promId = I('get.prom_id', null);
+        $promId = I('get.prom_id', null) ?? I('get.id', null);
         if ($promId) {
             $return['prom_title'] = Db::name('prom_goods')->where(['id' => $promId])->value('title');
             $where = [
@@ -1592,7 +1592,7 @@ class Goods extends Base
 //                'pg.is_end' => 0,
                 'pg.end_time' => ['>=', time()],
                 'g.is_on_sale' => 1,
-                'g.cat_id' => ['in', $cat_id_arr]
+//                'g.cat_id' => ['in', $cat_id_arr]
             ];
             $filter_goods_id = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
                 ->join('goods g', 'g.goods_id = gtg.goods_id')
