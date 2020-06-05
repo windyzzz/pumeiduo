@@ -215,7 +215,21 @@ class Goods extends Base
         }
         $sale_type = I('sale_type');
         if ($sale_type) {
-            $where = "$where and  sale_type = " . I('sale_type');
+            $where = "$where and sale_type = " . I('sale_type');
+        }
+        $goods_nature = I('goods_nature');
+        if ($goods_nature) {
+            switch ($goods_nature) {
+                case 1:
+                    $where = "$where and is_abroad = 0 and is_supply = 0";
+                    break;
+                case 2:
+                    $where = "$where and is_abroad = 1 and is_supply = 0";
+                    break;
+                case 3:
+                    $where = "$where and is_abroad = 0 and is_supply = 1";
+                    break;
+            }
         }
 
         $is_area_show = I('is_area_show');
@@ -242,6 +256,7 @@ class Goods extends Base
         $strTable .= '<td style="text-align:center;font-size:12px;" width="100">商品分类2</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品分类3</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品名称</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品种类</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">成本价</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">本店售价</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品不含税价</td>';
@@ -255,6 +270,12 @@ class Goods extends Base
         $strTable .= '</tr>';
         if (is_array($goodsList)) {
             foreach ($goodsList as $k => $val) {
+                $goodsNature = '圃美多';
+                if ($val['is_abroad'] == 1) {
+                    $goodsNature = '海外购';
+                } elseif ($val['is_supply'] == 1){
+                    $goodsNature = '供应链';
+                }
                 $level_cat = $GoodsLogic->find_parent_cat($val['cat_id']); // 获取分类默认选中的下拉框
                 $first_cat = M('GoodsCategory')->where('id', $level_cat[1])->getField('name');
                 $secend_cat = M('GoodsCategory')->where('id', $level_cat[2])->getField('name');
@@ -266,6 +287,7 @@ class Goods extends Base
                 $strTable .= '<td style="text-align:center;font-size:12px;">' . $first_cat . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $secend_cat . ' </td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $third_cat . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $goodsNature . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['goods_name'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['cost_price'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['shop_price'] . '</td>';
@@ -306,6 +328,20 @@ class Goods extends Base
         $sale_type = I('sale_type');
         if ($sale_type) {
             $where = "$where and  sale_type = " . I('sale_type');
+        }
+        $goods_nature = I('goods_nature');
+        if ($goods_nature) {
+            switch ($goods_nature) {
+                case 1:
+                    $where = "$where and is_abroad = 0 and is_supply = 0";
+                    break;
+                case 2:
+                    $where = "$where and is_abroad = 1 and is_supply = 0";
+                    break;
+                case 3:
+                    $where = "$where and is_abroad = 0 and is_supply = 1";
+                    break;
+            }
         }
 
         if ($cat_id > 0) {

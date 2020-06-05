@@ -49,6 +49,12 @@
                 <input type="hidden" name="ids">
                 <div class="sDiv">
                     <div class="sDiv2">
+                        <select name="goods_nature" class="select">
+                            <option value="0">商品种类（全部）</option>
+                            <option value="1">圃美多</option>
+                            <option value="2">海外购</option>
+                            <option value="3">供应链</option>
+                        </select>
                         <select name="sale_type" class="select">
                             <option value="0">商品类型（全部）</option>
                             <option value="1">普通商品</option>
@@ -109,6 +115,9 @@
                         </th>
                         <th align="center" abbr="article_show" axis="col6" class="">
                             <div style="text-align: center; width: 100px;" class="" onClick="sort('goods_sn');">货号</div>
+                        </th>
+                        <th align="center" abbr="article_time" axis="col6" class="">
+                            <div style="text-align: center; width: 100px;" class="" onClick="sort('goods_nature');">商品种类</div>
                         </th>
                         <th align="center" abbr="article_time" axis="col6" class="">
                             <div style="text-align: center; width: 100px;" class="" onClick="sort('cat_id');">商品类型</div>
