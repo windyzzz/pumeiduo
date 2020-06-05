@@ -465,7 +465,7 @@ class Goods extends Base
                 }
             }
             $Goods->data($data, true); // 收集数据
-            $Goods->on_time = time(); // 上架时间
+//            $Goods->on_time = time(); // 上架时间
             I('cat_id_2') && ($Goods->cat_id = I('cat_id_2'));
             I('cat_id_3') && ($Goods->cat_id = I('cat_id_3'));
 
