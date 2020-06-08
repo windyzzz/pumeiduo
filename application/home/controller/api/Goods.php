@@ -184,24 +184,90 @@ class Goods extends Base
         $point_rate = tpCache('shopping.point_rate');
 
         $look_see = $goodsLogic->get_look_see($goods);
-        if ($this->user) {
-            // 商品pv
-            if ($this->user['distribut_level'] < 3) {
-                $goods['integral_pv'] = '';
-            } elseif ($goods['integral_pv'] == 0) {
-                $goods['integral_pv'] = '';
+
+        // 判断商品性质
+        $goods['nature'] = [];
+        $flashSaleList = Db::name('flash_sale fs')
+            ->join('goods g', 'g.goods_id = fs.goods_id')
+            ->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
+            ->where(['fs.goods_id' => $goods_id, 'fs.start_time' => ['<=', time()], 'fs.end_time' => ['>=', time()]])
+            ->where(['fs.source' => ['LIKE', $this->isApp ? '%' . 3 . '%' : '%' . 1 . '%']])
+            ->field('fs.goods_id, sgp.key spec_key, fs.price, fs.goods_num, fs.buy_num, fs.order_num, fs.buy_limit, fs.start_time, fs.end_time, fs.can_integral, g.exchange_integral')->select();
+        if (!empty($flashSaleList)) {
+            // 秒杀商品
+            foreach ($flashSaleList as $flashSale) {
+                // 商品参加活动数限制
+                if ($flashSale['goods_num'] <= $flashSale['buy_num'] || $flashSale['goods_num'] <= $flashSale['order_num']) {
+                    $goods['nature'] = [];
+                    continue;
+                } else {
+                    $goods['nature'] = [
+                        'type' => 'flash_sale',
+                        'price' => $flashSale['price'],
+                        'limit_num' => $flashSale['goods_num'],
+                        'buy_limit' => $flashSale['buy_limit'],
+                        'start_time' => $flashSale['start_time'],
+                        'end_time' => $flashSale['end_time'],
+                        'now_time' => time() . '',
+                        'exchange_integral' => $flashSale['can_integral'] == 0 ? '0' : $flashSale['exchange_integral']
+                    ];
+                    break;
+                }
             }
-            // 商品佣金
-            if ($this->user['distribut_level'] < 2) {
-                $goods['commission'] = '';
-            } elseif ($goods['commission'] == 0) {
-                $goods['commission'] = '';
-            } else {
-                $goods['commission'] = bcdiv(bcmul(bcsub($goods['shop_price'], $goods['exchange_integral'], 2), $goods['commission'], 2), 100, 2);
+        }
+        if (empty($goods['nature'])) {
+            $groupBuyList = Db::name('group_buy gb')
+                ->join('goods g', 'g.goods_id = gb.goods_id')
+                ->join('spec_goods_price sgp', 'sgp.item_id = gb.item_id', 'LEFT')
+                ->where(['gb.goods_id' => $goods_id, 'gb.start_time' => ['<=', time()], 'gb.end_time' => ['>=', time()]])
+                ->field('gb.goods_id, gb.price, sgp.key spec_key, gb.price, gb.group_goods_num, gb.goods_num, gb.buy_num, gb.order_num, gb.buy_limit, gb.start_time, gb.end_time, gb.can_integral, g.exchange_integral')->select();
+            if (!empty($groupBuyList)) {
+                // 团购商品
+                foreach ($groupBuyList as $groupBuy) {
+                    // 商品参加活动数限制
+                    if ($groupBuy['goods_num'] <= $groupBuy['buy_num'] || $groupBuy['goods_num'] <= $groupBuy['order_num']) {
+                        $goods['nature'] = [];
+                    } else {
+                        $goods['nature'] = [
+                            'type' => 'group_buy',
+                            'price' => $groupBuy['price'],
+                            'group_goods_num' => $groupBuy['group_goods_num'],
+                            'limit_num' => bcdiv($groupBuy['goods_num'], $groupBuy['group_goods_num']),
+                            'buy_limit' => $groupBuy['buy_limit'],
+                            'start_time' => $groupBuy['start_time'],
+                            'end_time' => $groupBuy['end_time'],
+                            'now_time' => time() . '',
+                            'exchange_integral' => $groupBuy['can_integral'] == 0 ? '0' : $groupBuy['exchange_integral']
+                        ];
+                        break;
+                    }
+                }
             }
-        } else {
+        }
+        if (!empty($goods['nature']) && in_array($goods['nature']['type'], ['group_buy', 'flash_sale'])) {
+            $goods['buy_least'] = '0';
             $goods['integral_pv'] = '';
             $goods['commission'] = '';
+        } else {
+            if ($this->user) {
+                // 商品pv
+                if ($this->user['distribut_level'] < 3) {
+                    $goods['integral_pv'] = '';
+                } elseif ($goods['integral_pv'] == 0) {
+                    $goods['integral_pv'] = '';
+                }
+                // 商品佣金
+                if ($this->user['distribut_level'] < 2) {
+                    $goods['commission'] = '';
+                } elseif ($goods['commission'] == 0) {
+                    $goods['commission'] = '';
+                } else {
+                    $goods['commission'] = bcdiv(bcmul(bcsub($goods['shop_price'], $goods['exchange_integral'], 2), $goods['commission'], 2), 100, 2);
+                }
+            } else {
+                $goods['integral_pv'] = '';
+                $goods['commission'] = '';
+            }
         }
 
         $data = [];
@@ -359,33 +425,37 @@ class Goods extends Base
                 }
             }
         }
-        if (!empty($goods['nature']) && in_array($goods['nature']['type'], ['group_buy', 'flash_sale'])) {
-            $goods['buy_least'] = '0';
-        }
         // 处理显示金额
         if ($goods['exchange_integral'] != 0) {
             $goods['exchange_price'] = bcsub($goods['shop_price'], $goods['exchange_integral'], 2);
         } else {
             $goods['exchange_price'] = $goods['shop_price'];
         }
-        if ($this->user) {
-            // 商品pv
-            if ($this->user['distribut_level'] < 3) {
-                $goods['integral_pv'] = '';
-            } elseif ($goods['integral_pv'] == 0) {
-                $goods['integral_pv'] = '';
-            }
-            // 商品佣金
-            if ($this->user['distribut_level'] < 2) {
-                $goods['commission'] = '';
-            } elseif ($goods['commission'] == 0) {
-                $goods['commission'] = '';
-            } else {
-                $goods['commission'] = bcdiv(bcmul(bcsub($goods['shop_price'], $goods['exchange_integral'], 2), $goods['commission'], 2), 100, 2);
-            }
-        } else {
+
+        if (!empty($goods['nature']) && in_array($goods['nature']['type'], ['group_buy', 'flash_sale'])) {
+            $goods['buy_least'] = '0';
             $goods['integral_pv'] = '';
             $goods['commission'] = '';
+        } else {
+            if ($this->user) {
+                // 商品pv
+                if ($this->user['distribut_level'] < 3) {
+                    $goods['integral_pv'] = '';
+                } elseif ($goods['integral_pv'] == 0) {
+                    $goods['integral_pv'] = '';
+                }
+                // 商品佣金
+                if ($this->user['distribut_level'] < 2) {
+                    $goods['commission'] = '';
+                } elseif ($goods['commission'] == 0) {
+                    $goods['commission'] = '';
+                } else {
+                    $goods['commission'] = bcdiv(bcmul(bcsub($goods['shop_price'], $goods['exchange_integral'], 2), $goods['commission'], 2), 100, 2);
+                }
+            } else {
+                $goods['integral_pv'] = '';
+                $goods['commission'] = '';
+            }
         }
         // 处理商品详情（抽取图片）
         $contentArr = explode('public', $goods['goods_content']);
@@ -582,8 +652,9 @@ class Goods extends Base
         unset($goods['zone']);
 
         $goods['freight_free'] = tpCache('shopping.freight_free'); // 全场满多少免运费
-        $goods['qr_code'] = ''; // 分享二维码
 
+        // 分享信息
+        $goods['qr_code'] = '';
         if (!empty($goods['nature'])) {
             $goods['share_price'] = $goods['nature']['price'];
             $goods['share_integral'] = $goods['nature']['exchange_integral'];
