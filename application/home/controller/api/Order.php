@@ -1435,6 +1435,7 @@ class Order extends Base
         }
 
         $condition['user_id'] = $this->user_id;
+        $condition['money'] = ['GT', 0];
         $count = M('rebate_log')->where($condition)->count();
         $page = new Page($count, 10);
         $rebate_log = M('rebate_log')->where($condition)->limit("{$page->firstRow},{$page->listRows}")->order('id desc')->select();

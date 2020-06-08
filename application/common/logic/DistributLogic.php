@@ -130,8 +130,8 @@ class DistributLogic
             //     ->find();
 
             $first_leader = $this->_getShopUid($invite_uid, 2);
-            $second_leader = 0;//$second_leader = $this->_getShopUid($invite_uid, 2, [$first_leader]);//取消2代
-            $third_leader = 0; //$third_leader = $this->_getShopUid($invite_uid, 2, [$first_leader, $second_leader]);//取消3代
+            $second_leader = $this->_getShopUid($invite_uid, 2, [$first_leader]);
+            $third_leader = $this->_getShopUid($invite_uid, 2, [$first_leader, $second_leader]);
             $shop_uid = 0;//$this->_getShopUid($invite_uid, 3) //取消店铺奖励
 
             if ($distribut_total_money > 0) {
