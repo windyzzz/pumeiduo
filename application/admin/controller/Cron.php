@@ -1334,27 +1334,36 @@ AND log_id NOT IN
                     'desc' => htmlspecialchars_decode($push['desc'])
                 ];
                 // 点击处理数据
-                switch ($push['type']) {
-                    case 2:
-                        // 活动消息
-                        $value = [
-                            'message_url' => SITE_URL . '/#/news/app_news_particulars?article_id=' . $push['type_id']
-                        ];
-                        break;
-                    case 4:
-                        // 商品
-                        $value = [
-                            'goods_id' => $push['type_id'],
-                            'item_id' => $push['item_id']
-                        ];
-                        break;
-                    default:
-                        $value = [];
-                }
                 $extraData = [
                     'type' => $push['type'],
-                    'value' => $value
+                    'value' => [
+                        'need_login' => 0,
+                        'message_url' => '',
+                        'goods_id' => '',
+                        'item_id' => '',
+                    ]
                 ];
+                switch ($push['type']) {
+                    case 1:
+                        // 系统消息列表页
+                    case 3:
+                        // 领券中心页
+                    case 7:
+                        // SVIP专享
+                    case 9:
+                        // 我的礼券
+                        $extraData['value']['need_login'] = 1;
+                        break;
+                    case 2:
+                        // 活动消息详情页
+                        $extraData['value']['message_url'] = SITE_URL . '/#/news/app_news_particulars?article_id=' . $push['type_id'];
+                        break;
+                    case 4:
+                        // 商品详情页
+                        $extraData['value']['goods_id'] = $push['type_id'];
+                        $extraData['value']['item_id'] = $push['item_id'];
+                        break;
+                }
                 // 标签
                 $all = 0;
                 $pushTags = [];
