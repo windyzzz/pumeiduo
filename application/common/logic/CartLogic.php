@@ -850,7 +850,7 @@ class CartLogic extends Model
                 *,CASE type WHEN 1 THEN goods_price - member_goods_price ELSE '0' END AS use_point,
                 CASE use_integral > 0 WHEN 1 THEN 1 ELSE 0 END AS can_integral
                 ")
-            ->with('promGoods,goods')
+            ->with('promGoods,goods,specGoods')
             ->where($cartWhere)
             ->order('id desc')
             ->select();  // 获取购物车商品
@@ -1580,5 +1580,30 @@ class CartLogic extends Model
             default:
                 return ['status' => 1, 'type_value' => $promInfo['title']];
         }
+    }
+
+    /**
+     * 检查下单商品
+     * @param $cartList
+     * @return array
+     */
+    public function checkCartGoods($cartList)
+    {
+        $hasPmd = false;
+        $hasAbroad = false;
+        foreach ($cartList as $cart) {
+            if ($cart['goods']['is_abroad'] == 0) {
+                $hasPmd = true;
+            } else {
+                $hasAbroad = true;
+            }
+        }
+        if ($hasPmd && $hasAbroad) {
+            return ['status' => 0, 'msg' => '海外购商品请分开结算'];
+        }
+        if (!$hasPmd && $hasAbroad) {
+            return ['status' => 2];
+        }
+        return ['status' => 1];
     }
 }

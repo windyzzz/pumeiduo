@@ -34,6 +34,11 @@ class Cart extends Model
         return $this->hasOne('Goods', 'goods_id', 'goods_id')->cache(true, 10);
     }
 
+    public function specGoods()
+    {
+        return $this->hasMany('SpecGoodsPrice', 'goods_id', 'goods_id')->cache(true, 10);
+    }
+
     public function getSpecKeyNameArrAttr($value, $data)
     {
         if ($data['spec_key_name']) {

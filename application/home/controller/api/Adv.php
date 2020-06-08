@@ -12,17 +12,19 @@ class Adv extends Base
         $now_time = time();
         $arr = array();
         foreach ($position_id_arr as $k => $position_id) {
-            $arr[$position_id] = M('ad')->field('ad_code, ad_link, ad_name, target_type, target_type_id')
+            $arr[$position_id] = M('ad')->field('ad_code, ad_link, ad_name, bgcolor, target_type, target_type_id')
                 ->where('pid', $position_id)
                 ->where('enabled', 1)
                 ->where('start_time', 'elt', $now_time)
                 ->where('end_time', 'egt', $now_time)
-                ->order('orderby')
+                ->order('orderby DESC')
                 ->select();
         }
         if (count($arr) == 1) {
             $adList = $arr[$position_id];
             foreach ($adList as $k => $item) {
+                // 十六进制颜色转RGB
+//                $adList[$k]['bgcolor'] = HexToRGBA($item['bgcolor'], 1);
                 // APP跳转页面接口参数
                 $adList[$k]['target_type_ids'] = [
                     'goods_id' => $item['target_type'] == 1 ? $item['target_type_id'] : "0",

@@ -2,6 +2,8 @@
 
 namespace app\home\controller;
 
+use app\common\model\DeliveryDoc;
+use app\common\model\HtnsDeliveryLog;
 use think\Controller;
 use think\Db;
 
@@ -172,10 +174,12 @@ class Tb extends Controller
         $data = array();
         $data['order'] = array(
             'order_sn' => $order['order_sn'],
+            'order_type' => $order['order_type'],
             'order_status' => $order['order_status'],
             'shipping_status' => $order['shipping_status'],
             'pay_status' => $order['pay_status'],
             'consignee' => $order['consignee'],
+            'id_card' => $order['id_card'],
             'country' => $order['country'],
             'province' => $order['province'],
             'city' => $order['city'],
@@ -185,7 +189,6 @@ class Tb extends Controller
             'shipping_code' => $order['shipping_code'],
             'shipping_name' => $order['shipping_name'],
             'pay_code' => $order['pay_code'],
-
             'goods_price' => $order['goods_price'],
             'shipping_price' => $order['shipping_price'],
             'order_amount' => $order['order_amount'],
@@ -196,7 +199,6 @@ class Tb extends Controller
             'pay_time' => $order['pay_time'],
             'user_note' => $order['user_note'],
             'goods_area' => 3,
-
         );
         //$user = get_user_info($order['user_id'],0,'','user_name,true_name,mobile');
         $delivery_record = M('delivery_doc')->where('order_id=' . $order_id)->order('id desc')->limit(1)->find();
@@ -212,6 +214,7 @@ class Tb extends Controller
                 'member_goods_price' => $v['member_goods_price'],
                 'spec_key' => $v['spec_key'],
                 'spec_key_name' => $v['spec_key_name'],
+                'other_rec_id' => $v['rec_id']
             );
         }
 
@@ -251,14 +254,11 @@ class Tb extends Controller
     {
         $tb_data = $_POST['result'];
         if ($tb_data) {
-
             $tb_data = json_decode($tb_data, true);
             $type = $tb_data['type'];
             $data = $tb_data['data'];
             $tb_sn = $tb_data['tb_sn'];
-
             $get_id = M('tb_get')->data(array('tb_sn' => $tb_sn, 'data' => json_encode($tb_data)))->add();
-
             if ($type == 1) {//更新商品
                 $back = $this->save_goods($data);
             } else if ($type == 2) {//更新品牌
@@ -270,13 +270,14 @@ class Tb extends Controller
             } else if ($type == 5) {//更新库存
                 $back = $this->save_stock($data);
             } else if ($type == 6) {//更新订单
-                $back = $this->save_order($data);
+                $back = $this->save_order_v2($data);
             } else if ($type == 7) {//更新快递
                 $back = $this->save_logistics($data);
             } else if ($type == 8) {//更新申请代理
                 $back = $this->save_apply_customs($data);
+            } else {
+                $back = false;
             }
-
             if ($back !== true) {
                 M('tb_get')->where(array('id' => $get_id))->data(array('msg' => $back, 'status' => 0))->save();
                 return json_encode(array('status' => 0, 'msg' => $back));
@@ -316,7 +317,8 @@ class Tb extends Controller
 
     /**
      * 更新订单状态和快递信息
-     * @param $order
+     * @param $order_data
+     * @return bool
      */
     function save_order($order_data)
     {
@@ -336,6 +338,89 @@ class Tb extends Controller
         M('order_goods')->where(array('order_id' => $order_id, 'is_send' => 0))->data(array('is_send' => 1))->save();
 
         M('delivery_doc')->data($delivery_doc)->add();
+        return true;
+    }
+
+    /**
+     * 更新订单状态和快递信息
+     * @param $orderData
+     * @return bool
+     * @throws \Exception
+     */
+    function save_order_v2($orderData)
+    {
+        // 更新订单信息
+        $order = $orderData['order'];
+        $data = [
+            'shipping_status' => $order['shipping_status'],
+            'shipping_code' => $order['shipping_code'],
+            'shipping_name' => $order['shipping_name'],
+            'shipping_time' => $order['shipping_time'],
+            'delivery_type' => $order['delivery_type']
+        ];
+        M('order')->where(array('order_sn' => $order['order_sn']))->data($data)->save();
+        // 更新订单物流信息
+        $orderInfo = M('order')->where(array('order_sn' => $order['order_sn']))->field('order_id, user_id')->find();
+        $deliveryData = [];
+        $sendRecId = [];
+        if (!empty($orderData['delivery_doc'])) {
+            foreach ($orderData['delivery_doc'] as $delivery) {
+                $deliveryData[] = [
+                    'order_id' => $orderInfo['order_id'],
+                    'order_sn' => $order['order_sn'],
+                    'rec_id' => $delivery['other_rec_id'],
+                    'goods_num' => $delivery['goods_num'],
+                    'user_id' => $orderInfo['user_id'],
+                    'admin_id' => $delivery['admin_id'],
+                    'consignee' => $delivery['consignee'],
+                    'zipcode' => $delivery['zipcode'],
+                    'mobile' => $delivery['mobile'],
+                    'country' => $delivery['country'],
+                    'province' => $delivery['province'],
+                    'city' => $delivery['city'],
+                    'district' => $delivery['district'],
+                    'address' => $delivery['address'],
+                    'shipping_code' => $delivery['shipping_code'],
+                    'shipping_name' => $delivery['shipping_name'],
+                    'shipping_price' => $delivery['shipping_price'],
+                    'invoice_no' => $delivery['invoice_no'],
+                    'tel' => $delivery['tel'],
+                    'note' => $delivery['note'],
+                    'best_time' => $delivery['best_time'],
+                    'is_del' => $delivery['is_del'],
+                    'create_time' => time(),
+                    'htns_status' => $delivery['htns_status']
+                ];
+                if (!empty($delivery['invoice_no'])) {
+                    $sendRecId[] = $delivery['other_rec_id'];
+                }
+            }
+        }
+        if (!empty($deliveryData)) {
+            M('delivery_doc')->where(['order_id' => $orderInfo['order_id']])->delete();
+            $deliveryDoc = new DeliveryDoc();
+            $deliveryDoc->saveAll($deliveryData);
+            M('order_goods')->where(['rec_id' => ['IN', $sendRecId]])->where(['is_send' => 0])->update(['is_send' => 1]);
+        }
+        // 更新HTNS物流配送记录
+        $htnsDeliveryData = [];
+        if (!empty($orderData['htns_delivery_log'])) {
+            foreach ($orderData['htns_delivery_log'] as $delivery) {
+                $htnsDeliveryData[] = [
+                    'order_id' => $orderInfo['order_id'],
+                    'goods_name' => $delivery['goods_name'],
+                    'goods_num' => $delivery['goods_num'],
+                    'status' => $delivery['status'],
+                    'create_time' => $delivery['create_time'],
+                    'time_zone' => $delivery['time_zone']
+                ];
+            }
+        }
+        if (!empty($htnsDeliveryData)) {
+            M('htns_delivery_log')->where(['order_id' => $orderInfo['order_id']])->delete();
+            $htnsDeliveryDoc = new HtnsDeliveryLog();
+            $htnsDeliveryDoc->saveAll($htnsDeliveryData);
+        }
         return true;
     }
 
@@ -487,7 +572,8 @@ class Tb extends Controller
             'weight' => $goods['weight'],//重量 - 克
             'on_time' => $goods['on_time'],//上架时间戳
             'out_time' => $goods['out_time'],//下架时间戳
-            'trade_type' => $trade_type
+            'trade_type' => $trade_type,
+            'is_abroad' => $goods['is_abroad']
         );
 
         if ($goods['is_one_send'] == 0) {

@@ -262,7 +262,7 @@ class Goods extends Base
                 $suppliers = M('Suppliers')->where('suppliers_id', $val['suppliers_id'])->getField('suppliers_name');
                 $price = $val['shop_price'] - $val['exchange_integral'];
                 $strTable .= '<tr>';
-                $strTable .= '<td style="text-align:center;font-size:12px; vnd.ms-excel.numberformat:@;">' .$val['goods_sn'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px; vnd.ms-excel.numberformat:@;">' . $val['goods_sn'] . '</td>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">' . $first_cat . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $secend_cat . ' </td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $third_cat . '</td>';
@@ -316,6 +316,16 @@ class Goods extends Base
         $is_area_show = I('is_area_show');
         if ($is_area_show == 1) {
             $where .= ' and is_area_show = 1';
+        }
+
+        $goodsType = I('goods_type');
+        switch ($goodsType) {
+            case 1:
+                $where .= ' and is_abroad = 0';
+                break;
+            case 2:
+                $where .= ' and is_abroad = 1';
+                break;
         }
 
         $count = M('Goods')->where($where)->count();
@@ -415,7 +425,6 @@ class Goods extends Base
                 $data['commission'] = 0;
             }
 
-
             $goods_item = I('item/a');
             $specStock = Db::name('spec_goods_price')->where('goods_id = ' . $goods_id)->getField('key,store_count,item_id,store_count,item_sn');
             if ($goods_item) {
@@ -464,8 +473,19 @@ class Goods extends Base
                     $this->ajaxReturn($return_arr);
                 }
             }
+
             $Goods->data($data, true); // 收集数据
 //            $Goods->on_time = time(); // 上架时间
+
+            // 查看是否选择了海外购分类
+            $catId = I('cat_id');
+            if (M('goods_category')->where(['id' => $catId, 'name' => ['LIKE', '%海外购%']])->value('id')) {
+                // 查看商品是否是海外购商品
+                if (!M('goods')->where(['goods_id' => $goods_id, 'is_abroad' => 1])->value('goods_id')) {
+                    $this->ajaxReturn(['status' => 0, 'msg' => '请选择海外购商品']);
+                }
+            }
+
             I('cat_id_2') && ($Goods->cat_id = I('cat_id_2'));
             I('cat_id_3') && ($Goods->cat_id = I('cat_id_3'));
 

@@ -1711,11 +1711,15 @@ function get_goods_category_tree()
         ->join('__AD_POSITION__ p', 'c.id = p.category_id', 'LEFT')
         // ->cache(true)
         ->where(['is_show' => 1])
-        ->order('sort_order desc')
+        ->order('sort_order desc, id asc')
         ->select(); //所有分类
     if ($cat_list) {
+        $abroadCateId = 0;  // 海外购分类
         // 分类广告
         foreach ($cat_list as $ck => $cv) {
+            if ($cv['parent_id'] == 0 && strstr($cv['name'], '海外购')) {
+                $abroadCateId = $cv['id'];
+            }
             $cat_list[$ck]['ad_list'] = null;
             if ($cv['position_id'] > 0) {
                 $ad_list = M('Ad')->where('pid', $cv['position_id'])->select();
@@ -1731,6 +1735,11 @@ function get_goods_category_tree()
                 $arr[$val['parent_id']][] = $val;
             }
             if (3 == $val['level']) {
+                if ($abroadCateId != 0 && strstr($val['parent_id_path'], $abroadCateId . '')) {
+                    $val['is_abroad'] = 1;
+                } else {
+                    $val['is_abroad'] = 0;
+                }
                 $crr[$val['parent_id']][] = $val;
             }
         }

@@ -37,6 +37,8 @@ class PlaceOrder
     private $payPsw;
     private $promType;
     private $promId;
+    private $userIdCard;
+    private $orderType = 1;
 
     /**
      * PlaceOrder constructor.
@@ -92,6 +94,16 @@ class PlaceOrder
     private function setPromId($prom_id)
     {
         $this->promId = $prom_id;
+    }
+
+    public function setUserIdCard($idCard)
+    {
+        $this->userIdCard = $idCard;
+    }
+
+    public function setOrderType($orderType)
+    {
+        $this->orderType = $orderType;
     }
 
     public function addNormalOrder($source = 1)
@@ -237,6 +249,8 @@ class PlaceOrder
             'coupon_id' => $this->pay->getCouponId(),
             'source' => $source,
             'order_pv' => $this->pay->getOrderPv(),
+            'id_card' => $this->userIdCard,
+            'order_type' => $this->orderType,
         ];
         if (!empty($this->userAddress)) {
             $orderData['consignee'] = $this->userAddress['consignee']; // 收货人
@@ -246,7 +260,7 @@ class PlaceOrder
             $orderData['twon'] = $this->userAddress['twon']; // '街道',
             $orderData['address'] = $this->userAddress['address']; //'详细地址'
             $orderData['mobile'] = $this->userAddress['mobile']; //'手机',
-            $orderData['zipcode'] = $this->userAddress['zipcode']; //'邮编',
+            $orderData['zipcode'] = !empty($this->userAddress['zipcode']) ? $this->userAddress['zipcode'] : M('region2')->where(['id' => $this->userAddress['district']])->value('zipcode'); //'邮编',
         }
         if (!empty($this->userNote)) {
             $orderData['user_note'] = $this->userNote; // 用户下单备注

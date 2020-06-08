@@ -283,7 +283,7 @@ class Goods extends Base
         }
         $goods = Db::name('goods')->where('goods_id', $goods_id)->field('goods_id, cat_id, extend_cat_id, goods_sn, goods_name, goods_type, goods_remark, goods_content, 
             brand_id, store_count, comment_count, market_price, shop_price, cost_price, give_integral, exchange_integral, original_img, limit_buy_num, least_buy_num,
-            is_on_sale, is_free_shipping, is_recommend, is_new, is_hot, is_virtual, virtual_indate, click_count, zone, commission, integral_pv')->find();
+            is_on_sale, is_free_shipping, is_recommend, is_new, is_hot, is_virtual, virtual_indate, click_count, zone, commission, integral_pv, is_abroad')->find();
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
@@ -558,38 +558,13 @@ class Goods extends Base
                     unset($goods['coupon'][$k]);
                     continue;
                 }
-                switch ($coupon['use_type']) {
-                    case 0:
-                        // 全店通用
-                        $title = '￥' . $coupon['money'];
-                        $desc = '全场商品满' . $coupon['condition'] . '减' . $coupon['money'];
-                        break;
-                    case 1:
-                        // 指定商品
-                        $title = '￥' . $coupon['money'];
-                        $desc = '仅限' . $coupon['goods_name'] . '可用';
-                        break;
-                    case 2:
-                        // 指定分类可用
-                        $title = '￥' . $coupon['money'];
-                        $desc = $coupon['cat_name'] . '满' . $coupon['condition'] . '可用';
-                        break;
-                    case 4:
-                        // 指定商品折扣券
-                        $title = '满' . $coupon['condition'] . '打' . floatval($coupon['money']) . '折';
-                        $desc = '指定商品满' . $coupon['condition'] . '享受' . floatval($coupon['money']) . '折';
-                        break;
-                    case 5:
-                        // 兑换商品券
-                        $title = $coupon['name'];
-                        $desc = '购买任意商品可用';
-                        break;
-                    default:
-                        unset($goods['coupon'][$k]);
-                        continue 2;
+                $res = $couponLogic->couponTitleDesc($coupon);
+                if (empty($res)) {
+                    unset($goods['coupon'][$k]);
+                    continue;
                 }
-                $goods['coupon'][$k]['title'] = $title;
-                $goods['coupon'][$k]['desc'] = $desc;
+                $goods['coupon'][$k]['title'] = $res['title'];
+                $goods['coupon'][$k]['desc'] = $res['desc'];
             }
             $goods['coupon'] = array_values($goods['coupon']);
         }
@@ -597,12 +572,31 @@ class Goods extends Base
 
         $goods['freight_free'] = tpCache('shopping.freight_free'); // 全场满多少免运费
         $goods['qr_code'] = ''; // 分享二维码
+
         if (!empty($goods['nature'])) {
             $goods['share_price'] = $goods['nature']['price'];
             $goods['share_integral'] = $goods['nature']['exchange_integral'];
         } else {
             $goods['share_price'] = $goods['exchange_price'];
             $goods['share_integral'] = $goods['exchange_integral'];
+        }
+
+        // 海外购物流流程图
+        $goods['abroad_freight_process'] = [
+            'url' => '',
+            'width' => '',
+            'height' => ''
+        ];
+        if ($goods['is_abroad'] == 1) {
+            $process = M('abroad_config')->where(['type' => 'freight_process'])->value('content');
+            if (!empty($process)) {
+                $imageSize = getimagesize(SITE_URL . $process);
+                $goods['abroad_freight_process'] = [
+                    'url' => SITE_URL . $process,
+                    'width' => $imageSize[0] . '',
+                    'height' => $imageSize[1] . ''
+                ];
+            }
         }
 
         // 组装数据
@@ -2265,6 +2259,104 @@ class Goods extends Base
             }
         }
         return json(['status' => 1, 'result' => $list]);
+    }
+
+    /**
+     * 是否开启海外购
+     * @return \think\response\Json
+     */
+    public function abroadStatus()
+    {
+        if (tpCache('basic.abroad_open') == 1) {
+            return json(['status' => 1, 'result' => ['state' => 1, 'title' => '']]);
+        } else {
+            return json(['status' => 1, 'result' => ['state' => 0, 'title' => '功能尚未开启']]);
+        }
+    }
+
+    /**
+     * 海外购商品分类
+     * @return \think\response\Json
+     */
+    public function abroadCate()
+    {
+        $cateId = I('cate_id', 0);
+        $cateList = M('goods_category gc1')
+            ->join('goods_category gc2', 'gc1.id = gc2.parent_id')
+            ->join('goods_category gc3', 'gc2.id = gc3.parent_id')
+            ->where([
+                'gc1.name' => ['LIKE', '%海外购%'],
+                'gc1.parent_id' => 0,
+                'gc1.is_show' => 1,
+                'gc2.is_show' => 1,
+                'gc3.is_show' => 1,
+            ])
+            ->order('gc3.sort_order DESC')->field('gc3.id cate_id, gc3.name')->select();
+        $cateItem = [
+            'cate_id' => '-1',
+            'name' => '精选'
+        ];
+        array_unshift($cateList, $cateItem);
+        foreach ($cateList as $k => $v) {
+            if ($cateId == 0 && $k == 0) {
+                $cateList[$k]['is_selected'] = 1;
+            } elseif ($cateId == $v['cate_id']) {
+                $cateList[$k]['is_selected'] = 1;
+            } else {
+                $cateList[$k]['is_selected'] = 0;
+            }
+        }
+        return json(['status' => 1, 'result' => ['cate_list' => $cateList]]);
+    }
+
+    /**
+     * 海外购商品列表
+     * @return \think\response\Json
+     */
+    public function abroadGoods()
+    {
+        $cateId = I('cate_id', 0);
+        $sort = I('sort', 'goods_id');
+        $sortAsc = I('sort_asc', 'desc');
+        $sortArr = [];
+        switch ($sort) {
+            case 'sales_sum':
+                // 销量
+                $sortArr = [$sort => $sortAsc];
+                break;
+            case 'shop_price':
+                // 价格
+                $sortArr = ['shop_price - exchange_integral' => $sortAsc];
+                break;
+            case 'goods_id':
+                // 新品
+                $sortArr = [
+                    'is_new' => $sortAsc,
+                    'goods_id' => $sortAsc
+                ];
+                break;
+        }
+        $where = [
+            'is_on_sale' => 1,
+            'is_abroad' => 1
+        ];
+        if ($cateId != 0) {
+            switch ($cateId) {
+                case -1:
+                    $where['abroad_recommend'] = 1;
+                    break;
+                default:
+                    $where['cat_id'] = $cateId;
+            }
+        }
+        $goodsIds = M('goods')->where($where)->getField('goods_id', true);
+        $count = count($goodsIds);
+        $page = new Page($count, 10);
+        // 获取商品数据
+        $goodsLogic = new GoodsLogic();
+        $goodsList = $goodsLogic->getGoodsList($goodsIds, $sortArr, $page, null, ['is_abroad' => 1])['goods_list'];
+
+        return json(['status' => 1, 'result' => ['goods_list' => $goodsList]]);
     }
 
     /**

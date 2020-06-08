@@ -96,6 +96,7 @@ class Base extends Controller
             'c=api.User&a=findPassword',                // 找回密码（登录前忘记密码）
             'c=api.Adv&a=index',                        // 广告
             'c=api.Message&a=floatMessage',             // 浮窗消息列表
+            'c=api.Goods&a=abroadCate',                 // 海外购商品分类
         ];
     }
 
