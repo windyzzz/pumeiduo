@@ -203,4 +203,61 @@ class Message extends Base
         $return = $article;
         return json(['status' => 1, 'result' => $return]);
     }
+
+    /**
+     * 浮窗消息列表
+     * @return \think\response\Json
+     */
+    public function floatMessage()
+    {
+        $position = I('position', 1);
+        $page = I('p', 1);
+        switch ($position) {
+            case 1:
+                /*
+                 * 商品详情
+                 */
+                $goodsId = I('goods_id', '');
+                $where = [
+                    'og.goods_id' => $goodsId,
+                    'o.order_status' => ['IN', [2, 4, 6]],
+                    'u.head_pic' => ['NEQ', '']
+                ];
+                $userInfo = M('order_goods og')
+                    ->join('order o', 'o.order_id = og.order_id')
+                    ->join('users u', 'u.user_id = o.user_id')
+                    ->where($where)->group('o.user_id')
+                    ->limit(10 * ($page - 1) . ',' . 10)
+                    ->order('o.add_time DESC')
+                    ->field('u.nickname, u.user_name, u.head_pic, og.goods_num')->select();
+                if ($page != 1 && empty($userInfo)) {
+                    $page = 1;
+                    $userInfo = M('order_goods og')
+                        ->join('order o', 'o.order_id = og.order_id')
+                        ->join('users u', 'u.user_id = o.user_id')
+                        ->where($where)->group('o.user_id')
+                        ->limit(10 * ($page - 1) . ',' . 10)
+                        ->order('o.add_time DESC')
+                        ->field('u.nickname, u.user_name, u.head_pic, og.goods_num')->select();
+                } elseif (empty($userInfo)) {
+                    $page = 0;
+                }
+                $returnData = [];
+                foreach ($userInfo as $user) {
+                    $userName = $user['nickname'] ?? $user['user_name'];
+                    $returnData[] = [
+                        'head_pic' => $user['head_pic'],
+                        'title' =>  $userName. '买了' . $user['goods_num'] . '件该商品'
+                    ];
+                }
+                $return = [
+                    'next_page' => $page + 1,
+                    'list' => $returnData
+                ];
+                break;
+            default:
+                return json(['status' => 0, 'msg' => '位置错误']);
+        }
+        return json(['status' => 1, 'result' => $return]);
+    }
 }

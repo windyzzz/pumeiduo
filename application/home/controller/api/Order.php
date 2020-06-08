@@ -14,6 +14,7 @@ namespace app\home\controller\api;
 use app\common\logic\CartLogic;
 use app\common\logic\CommentLogic;
 use app\common\logic\CouponLogic;
+use app\common\logic\GoodsLogic;
 use app\common\logic\MessageLogic;
 use app\common\logic\OrderLogic;
 use app\common\logic\Pay;
@@ -1615,80 +1616,6 @@ class Order extends Base
     }
 
     /**
-     * 获取订单商品数据
-     * @param $cartLogic
-     * @param $goodsId
-     * @param $itemId
-     * @param $goodsNum
-     * @param $payType
-     * @param $cartIds
-     * @return array
-     */
-    public function getOrderGoodsData($cartLogic, $goodsId, $itemId, $goodsNum, $payType, $cartIds)
-    {
-        if (!empty($goodsId) && empty(trim($cartIds))) {
-            /*
-             * 单个商品下单
-             */
-            $cartLogic->setGoodsModel($goodsId);
-            $cartLogic->setSpecGoodsPriceModel($itemId);
-            $cartLogic->setGoodsBuyNum($goodsNum);
-            $cartLogic->setType($payType);
-            $cartLogic->setCartType(0);
-            try {
-                $buyGoods = $cartLogic->buyNow($this->isApp);
-            } catch (TpshopException $tpE) {
-                $error = $tpE->getErrorArr();
-                return ['status' => 0, 'msg' => $error['msg']];
-            }
-            return ['status' => 1, 'result' => [$buyGoods]];
-        } elseif (empty($goodsId) && !empty(trim($cartIds))) {
-            /*
-             * 购物车下单
-             */
-            $cartIds = explode(',', $cartIds);
-            foreach ($cartIds as $k => $v) {
-                $data = [];
-                $data['id'] = $v;
-                $data['selected'] = 1;
-                $cartIds[$k] = $data;
-            }
-            $result = $cartLogic->AsyncUpdateCarts($cartIds);
-            if (1 != $result['status']) {
-                return ['status' => 0, 'msg' => $result['msg']];
-            }
-            if (0 == $cartLogic->getUserCartOrderCount()) {
-                return ['status' => 0, 'msg' => '你的购物车没有选中商品'];
-            }
-            $cartList = $cartLogic->getCartList(1); // 获取用户选中的购物车商品
-            $vipGoods = [];
-            foreach ($cartList as $key => $cart) {
-                if ($cart['prom_type'] == 0) {
-                    if ($cart['goods']['least_buy_num'] != 0 && $cart['goods']['least_buy_num'] > $cart['goods_num']) {
-                        return ['status' => 0, 'msg' => $cart['goods']['goods_name'] . '至少购买' . $cart['goods']['least_buy_num'] . '件'];
-                    }
-                }
-                if ($cart['goods']['zone'] == 3 && $cart['goods']['distribut_id'] != 0) {
-                    $vipGoods[] = $cart['goods']['goods_id'];
-                }
-                if ($cart['prom_type'] == 3) {
-                    // 商品促销优惠
-                    $cartList[$key]['member_goods_price'] = bcsub($cart['goods_price'], $cart['use_integral'], 2);
-                }
-            }
-            if (count($vipGoods) > 1) {
-                return ['status' => 0, 'msg' => '不能一次购买两种或以上VIP升级套餐'];
-            }
-            return ['status' => 1, 'result' => $cartList];
-        } else {
-            /*
-             * 单个商品 + 购物车 下单
-             */
-            return ['status' => 0, 'msg' => '暂不支持此下单方式'];
-        }
-    }
-
-    /**
      * 获取提交订单前的信息
      * @return \think\response\Json
      * @throws \app\common\util\TpshopException
@@ -1749,7 +1676,8 @@ class Order extends Base
         $cartLogic = new CartLogic();
         $cartLogic->setUserId($this->user_id);
         // 获取订单商品数据
-        $res = $this->getOrderGoodsData($cartLogic, $goodsId, $itemId, $goodsNum, $payType, $cartIds);
+        $goodsLogic = new GoodsLogic();
+        $res = $goodsLogic->getOrderGoodsData($cartLogic, $goodsId, $itemId, $goodsNum, $payType, $cartIds, $this->isApp);
         if ($res['status'] != 1) {
             return json($res);
         } else {
@@ -2089,7 +2017,8 @@ class Order extends Base
         $cartLogic = new CartLogic();
         $cartLogic->setUserId($this->user_id);
         // 获取订单商品数据
-        $res = $this->getOrderGoodsData($cartLogic, $goodsId, $itemId, $goodsNum, $payType, $cartIds);
+        $goodsLogic = new GoodsLogic();
+        $res = $goodsLogic->getOrderGoodsData($cartLogic, $goodsId, $itemId, $goodsNum, $payType, $cartIds, $this->isApp);
         if ($res['status'] != 1) {
             return json($res);
         } else {
@@ -2294,7 +2223,8 @@ class Order extends Base
         $cartLogic = new CartLogic();
         $cartLogic->setUserId($this->user_id);
         // 获取订单商品数据
-        $res = $this->getOrderGoodsData($cartLogic, $goodsId, $itemId, $goodsNum, $payType, $cartIds);
+        $goodsLogic = new GoodsLogic();
+        $res = $goodsLogic->getOrderGoodsData($cartLogic, $goodsId, $itemId, $goodsNum, $payType, $cartIds, $this->isApp);
         if ($res['status'] != 1) {
             return json($res);
         } else {

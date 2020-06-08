@@ -227,9 +227,9 @@ class PromGoodsLogic extends Prom
      *
      * @throws TpshopException
      */
-    public function buyNow($buyGoods, $buyType)
+    public function buyNow($buyGoods, $buyType, $passAuth = false)
     {
-        if (!$this->checkActivityIsEnd() && $this->checkActivityIsAble()) {
+        if (!$this->checkActivityIsEnd() && $this->checkActivityIsAble() && !$passAuth) {
             if ($this->promGoods['buy_limit'] != 0 && $buyGoods['goods_num'] > $this->promGoods['buy_limit']) {
                 throw new TpshopException('促销商品立即购买', 0, ['status' => 0, 'msg' => '每人限购' . $this->promGoods['buy_limit'] . '件', 'result' => '']);
             }
@@ -238,10 +238,10 @@ class PromGoodsLogic extends Prom
         $residue_buy_limit = $this->getPromoGoodsResidueGoodsNum($buyGoods['user_id']); //获取用户还能购买商品数量
         $userPromOrderGoodsNum = $this->getUserPromOrderGoodsNum($buyGoods['user_id']); //获取用户已购商品数量
         $userBuyGoodsNum = $buyGoods['goods_num'] + $userPromOrderGoodsNum;  //已经下单+要买
-        if ($this->promGoods['buy_limit'] != 0 && $userBuyGoodsNum > $this->promGoods['buy_limit']) {
+        if ($this->promGoods['buy_limit'] != 0 && $userBuyGoodsNum > $this->promGoods['buy_limit'] && !$passAuth) {
             throw new TpshopException('促销商品立即购买', 0, ['status' => 0, 'msg' => '每人限购' . $this->promGoods['buy_limit'] . '件，您已下单' . $userPromOrderGoodsNum . '件', 'result' => '']);
         }
-        if ($buyGoods['goods_num'] > $residue_buy_limit) {  //不算购物车的
+        if ($buyGoods['goods_num'] > $residue_buy_limit && !$passAuth) {  //不算购物车的
             throw new TpshopException('促销商品立即购买', 0, ['status' => 0, 'msg' => '商品库存不足，你只能购买' . $residue_buy_limit, 'result' => '']);
         }
         $buyGoods['prom_type'] = 3;

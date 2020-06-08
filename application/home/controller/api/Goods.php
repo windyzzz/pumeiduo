@@ -16,8 +16,10 @@ use app\common\logic\CouponLogic;
 use app\common\logic\FreightLogic;
 use app\common\logic\GoodsLogic;
 use app\common\logic\GoodsPromFactory;
+use app\common\logic\Pay as PayLogic;
 use app\common\logic\SearchWordLogic;
 use app\common\logic\TaskLogic;
+use app\common\logic\UsersLogic;
 use app\common\model\Goods as GoodsModel;
 use app\common\model\GroupBuy;
 use app\common\model\SpecGoodsPrice;
@@ -595,6 +597,13 @@ class Goods extends Base
 
         $goods['freight_free'] = tpCache('shopping.freight_free'); // 全场满多少免运费
         $goods['qr_code'] = ''; // 分享二维码
+        if (!empty($goods['nature'])) {
+            $goods['share_price'] = $goods['nature']['price'];
+            $goods['share_integral'] = $goods['nature']['exchange_integral'];
+        } else {
+            $goods['share_price'] = $goods['exchange_price'];
+            $goods['share_integral'] = $goods['exchange_integral'];
+        }
 
         // 组装数据
         $result['goods'] = $goods;
@@ -2306,5 +2315,99 @@ class Goods extends Base
             'hot_goods' => $hotGoods
         ];
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
+    }
+
+    /**
+     * 根据地址获取商品信息
+     * @return \think\response\Json
+     * @throws \app\common\util\TpshopException
+     */
+    public function addressGoodsInfo()
+    {
+        $goodsId = I('goods_id', '');
+        $itemId = I('item_id', '');
+        $addressId = I('address_id', '');
+
+        if (empty($addressId)) {
+            // 用户默认地址
+            $userAddress = get_user_address_list_new($this->user_id, true);
+        } else {
+            $userAddress = get_user_address_list_new($this->user_id, false, $addressId);
+        }
+        if (!empty($userAddress)) {
+            $userAddress[0]['out_range'] = 0;
+            unset($userAddress[0]['zipcode']);
+            unset($userAddress[0]['is_pickup']);
+            // 地址标签
+            $addressTab = (new UsersLogic())->getAddressTab($this->user_id);
+            if (!empty($addressTab)) {
+                if (empty($userAddress[0]['tabs'])) {
+                    unset($userAddress[0]['tabs']);
+                    $userAddress[0]['tabs'][] = [
+                        'tab_id' => 0,
+                        'name' => '默认',
+                        'is_selected' => 1
+                    ];
+                } else {
+                    $tabs = explode(',', $userAddress[0]['tabs']);
+                    unset($userAddress[0]['tabs']);
+                    foreach ($addressTab as $item) {
+                        if (in_array($item['tab_id'], $tabs)) {
+                            $userAddress[0]['tabs'][] = [
+                                'tab_id' => $item['tab_id'],
+                                'name' => $item['name'],
+                                'is_selected' => 1
+                            ];
+                        }
+                    }
+                    $userAddress[0]['tabs'][] = [
+                        'tab_id' => 0,
+                        'name' => '默认',
+                        'is_selected' => 1
+                    ];
+                }
+            } else {
+                unset($userAddress[0]['tabs']);
+                $userAddress[0]['tabs'][] = [
+                    'tab_id' => 0,
+                    'name' => '默认',
+                    'is_selected' => 1
+                ];
+            }
+
+            $cartLogic = new CartLogic();
+            $cartLogic->setUserId($this->user_id);
+            // 获取订单商品数据
+            $goodsLogic = new GoodsLogic();
+            $res = $goodsLogic->getOrderGoodsData($cartLogic, $goodsId, $itemId, 1, 1, '', $this->isApp, true);
+            if ($res['status'] != 1) {
+                return json($res);
+            } else {
+                $cartList = $res['result'];
+            }
+            $payLogic = new PayLogic();
+            $payLogic->payCart($cartList);
+            // 配送物流
+            if (!empty($userAddress)) {
+                $res = $payLogic->delivery($userAddress[0]['district']);
+                if (isset($res['status']) && $res['status'] == -1) {
+                    $userAddress[0]['out_range'] = 1;
+                }
+            }
+            // 更新的商品信息
+            $goodsInfo = $goodsLogic->addressGoodsInfo($goodsId, $itemId, !empty($userAddress) ? $userAddress[0]['district'] : 0);
+            $return = [
+                'user_address' => [$userAddress[0]],
+                'goods_info' => $goodsInfo
+            ];
+        } else {
+            $return = [
+                'user_address' => [],
+                'goods_info' => [
+                    'store_count' => '0'
+                ]
+            ];
+        }
+        return json(['status' => 1, 'result' => $return]);
     }
 }
