@@ -1039,15 +1039,16 @@ function accountLog($user_id, $user_money = 0.00, $pay_points = 0.00, $desc = ''
  * 会员升级日志
  * 参数示例.
  *
- * @param type $order_sn 订单编号
- * @param type $user_id 用户ID
- * @param type $new_level 升级的分销等级
- * @param type $old_level 之前的分销等级
- * @param type $type 用户id 升级类型
+ * @param string $order_sn 订单编号
+ * @param int $user_id 用户ID
+ * @param int $new_level 升级的分销等级
+ * @param int $old_level 之前的分销等级
+ * @param int $type 升级类型
+ * @param float $upMoney 升级金额
  *
  * @return bool
  */
-function logDistribut($order_sn, $user_id, $new_level, $old_level, $type = 1)
+function logDistribut($order_sn, $user_id, $new_level, $old_level, $type = 1, $upMoney = 0.00)
 {
     $log_info = [
         'user_id' => $user_id,
@@ -1056,6 +1057,7 @@ function logDistribut($order_sn, $user_id, $new_level, $old_level, $type = 1)
         'order_sn' => $order_sn,
         'type' => $type,
         'add_time' => time(),
+        'upgrade_money' => $upMoney,
     ];
 
     return M('distribut_log')->add($log_info);
