@@ -1349,6 +1349,7 @@ class Goods extends Base
             unset($flashSaleGoods[$k]['flash_sale_price']);
             unset($flashSaleGoods[$k]['can_integral']);
         }
+        $flashSaleGoods = array_values($flashSaleGoods);
         switch ($output) {
             case 'json':
                 return json(['status' => 1, 'msg' => 'success', 'result' => ['now_time' => time() . '', 'end_time' => $endTime, 'goods_list' => $flashSaleGoods]]);
@@ -1412,7 +1413,6 @@ class Goods extends Base
             $goods_list = collection($goods_list)->toArray();
             // 商品规格属性
             $goodsItem = Db::name('spec_goods_price')->where(['goods_id' => ['in', $filter_goods_id]])->group('goods_id')->getField('goods_id, item_id', true);
-
             foreach ($goods_list as $k => $v) {
                 // 商品规格属性
                 if (isset($goodsItem[$v['goods_id']])) {
@@ -1468,7 +1468,7 @@ class Goods extends Base
             }
         }
         $navigate_cat = navigate_goods($id); // 面包屑导航
-        $return['goods_list'] = $goods_list;
+        $return['goods_list'] = array_values($goods_list);
         $return['navigate_cat'] = $navigate_cat;
         $return['goodsCate'] = $goodsCate ?? [];
         $return['cateArr'] = $cateArr ?? [];
@@ -1530,8 +1530,7 @@ class Goods extends Base
             }
             unset($groupBuyData[$k]['can_integral']);
         }
-        $return['goods_list'] = $groupBuyData;
-
+        $return['goods_list'] = array_values($groupBuyData);
         switch ($output) {
             case 'json':
                 return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
