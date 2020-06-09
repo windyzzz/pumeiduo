@@ -2990,22 +2990,24 @@ class UsersLogic extends Model
         $user_data['distribut_level'] = $currentUser['distribut_level'] > $bindUser['distribut_level'] ? $currentUser['distribut_level'] : $bindUser['distribut_level'];
         if ($user_data['distribut_level'] > 1) {
             $user_data['is_distribut'] = 1;
+        } else {
+            // 合并账号是普通会员才变更父级
+            $user_data['invite_uid'] = $currentUser['will_invite_uid'] != 0 ? $currentUser['will_invite_uid'] : $currentUser['invite_uid'];
+            $user_data['invite_time'] = $currentUser['will_invite_uid'] != 0 ? time() : $currentUser['invite_time'];
+            $user_data['first_leader'] = $currentUser['first_leader'];
+            $user_data['second_leader'] = $currentUser['second_leader'];
+            $user_data['third_leader'] = $currentUser['third_leader'];
         }
+        $user_data['mobile'] = $currentUser['mobile'];
+        $user_data['head_pic'] = $currentUser['head_pic'];
+        $user_data['nickname'] = $currentUser['nickname'];
         $user_data['oauth'] = $currentUser['oauth'];
         $user_data['openid'] = $currentUser['openid'];
         $user_data['unionid'] = $currentUser['unionid'];
-        $user_data['head_pic'] = $currentUser['head_pic'];
-        $user_data['nickname'] = $currentUser['nickname'];
         $user_data['bind_uid'] = $currentUser['user_id'];
-        $user_data['mobile'] = $currentUser['mobile'];
-        $user_data['type'] = 2;
         $user_data['bind_time'] = time();
+        $user_data['type'] = 2;
         $user_data['time_out'] = strtotime('+' . config('REDIS_DAY') . ' days');
-        $user_data['invite_uid'] = $currentUser['will_invite_uid'] != 0 ? $currentUser['will_invite_uid'] : $currentUser['invite_uid'];
-        $user_data['invite_time'] = $currentUser['will_invite_uid'] != 0 ? time() : $currentUser['invite_time'];
-        $user_data['first_leader'] = $currentUser['first_leader'];
-        $user_data['second_leader'] = $currentUser['second_leader'];
-        $user_data['third_leader'] = $currentUser['third_leader'];
         M('Users')->where('user_id', $bindUser['user_id'])->update($user_data);
         // 授权登录
         M('OauthUsers')->where('user_id', $bindUser['user_id'])->delete();
