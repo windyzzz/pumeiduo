@@ -210,7 +210,9 @@ class DistributLogic
         if ($user_info['distribut_level'] >= $level && $res) {
             return $user_info['user_id'];
         }
-        $shop_id = $this->_getShopUid($user_info['invite_uid'], $level, $where);
+        if ($user_info['invite_uid'] != $uid) {
+            $shop_id = $this->_getShopUid($user_info['invite_uid'], $level, $where);
+        }
 
         return $shop_id;
     }
