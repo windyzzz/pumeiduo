@@ -1377,14 +1377,8 @@ class Goods extends Base
             ->limit($page->firstRow . ',' . $page->listRows)->order($sortArr)->select();
         // 商品标签
         $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->select();
-        $endTime = 0;
+        $endTime = '0';
         foreach ($flashSaleGoods as $k => $v) {
-            // 商品参加活动数限制
-            if ($v['goods_num'] <= $v['buy_num'] || $v['goods_num'] <= $v['order_num']) {
-                unset($flashSaleGoods[$k]);
-                continue;
-            }
-            $flashSaleGoods[$k]['key_name'] = $v['key_name'] ?? '';
             // 最近的结束时间
             if ($k == 0) {
                 $endTime = $v['end_time'];
@@ -1392,6 +1386,12 @@ class Goods extends Base
             if ($endTime >= $v['end_time']) {
                 $endTime = $v['end_time'];
             }
+            // 商品参加活动数限制
+            if ($v['goods_num'] <= $v['buy_num'] || $v['goods_num'] <= $v['order_num']) {
+                unset($flashSaleGoods[$k]);
+                continue;
+            }
+            $flashSaleGoods[$k]['key_name'] = $v['key_name'] ?? '';
             unset($flashSaleGoods[$k]['end_time']);
             // 是否已售完
             if ($v['goods_num'] <= $v['buy_num']) {
@@ -1432,6 +1432,7 @@ class Goods extends Base
             unset($flashSaleGoods[$k]['can_integral']);
         }
         $flashSaleGoods = array_values($flashSaleGoods);
+        if (empty($flashSaleGoods)) $endTime = '0';
         switch ($output) {
             case 'json':
                 return json(['status' => 1, 'msg' => 'success', 'result' => ['now_time' => time() . '', 'end_time' => $endTime, 'goods_list' => $flashSaleGoods]]);
