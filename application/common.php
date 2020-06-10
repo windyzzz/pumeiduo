@@ -415,6 +415,10 @@ function goods_thum_images($goods_id, $width, $height)
         return '/public/images/icon_goods_thumb_empty_300.png';
     }
 
+    if (strstr($original_img, 'http') || strstr($original_img, 'https')) {
+        return $original_img;
+    }
+
     $ossClient = new \app\common\logic\OssLogic();
     if (($ossUrl = $ossClient->getGoodsThumbImageUrl($original_img, $width, $height))) {
         return $ossUrl;
