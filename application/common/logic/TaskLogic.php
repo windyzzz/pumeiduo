@@ -587,7 +587,7 @@ class TaskLogic
      */
     public function checkLoginProfit()
     {
-        if (M('task_log')->where(['task_id' => $this->task['id'], 'user_id' => $this->userId, 'status' => ['neq', -1]])->value('id')) {
+        if (M('task_log')->where(['task_id' => $this->task['id'], 'user_id' => $this->userId, 'status' => ['NOT IN', [-1, -2]]])->value('id')) {
             return false;
         }
         return true;

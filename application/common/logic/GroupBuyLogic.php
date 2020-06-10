@@ -235,16 +235,16 @@ class GroupBuyLogic extends Prom
      *
      * @throws TpshopException
      */
-    public function buyNow($buyGoods, $buyType)
+    public function buyNow($buyGoods, $buyType, $passAuth = false)
     {
         //活动是否已经结束
-        if (1 == $this->GroupBuy['is_end'] || empty($this->GroupBuy)) {
+        if ((1 == $this->GroupBuy['is_end'] || empty($this->GroupBuy)) && !$passAuth) {
             throw new TpshopException('团购商品立即购买', 0, ['status' => 0, 'msg' => '团购活动已结束', 'result' => '']);
         }
         if ($this->checkActivityIsAble()) {
             $groupBuyPurchase = $this->GroupBuy['goods_num'] - $this->GroupBuy['buy_num']; //团购剩余库存
-            if ($buyGoods['goods_num'] > $groupBuyPurchase) {
-                throw new TpshopException('团购商品立即购买', 0, ['status' => 0, 'msg' => '商品库存不足，剩余'.$groupBuyPurchase, 'result' => '']);
+            if ($buyGoods['goods_num'] > $groupBuyPurchase && !$passAuth) {
+                throw new TpshopException('团购商品立即购买', 0, ['status' => 0, 'msg' => '商品库存不足，剩余' . $groupBuyPurchase, 'result' => '']);
             }
             $member_goods_price = $this->GroupBuy['price'];
             $use_integral = 0;

@@ -269,6 +269,17 @@
                     <p class="notic">否: 第三方账号首次登录时会自动创建账号, 不需要额外绑定账号<br/>是:(推荐)第三方账号首次登录时必须先绑定一个注册账号, 否则无法购买商品(优点:可以避免微商城, PC端产生多账户问题)</p>
                 </dd>
             </dl>
+            <dl class="row">
+                <dt class="tit">是否开启海外购</dt>
+                <dd class="opt">
+                    <div class="onoff">
+                        <label for="abroad_open1" class="cb-enable <if condition='$config[abroad_open] eq 1'>selected</if>">是</label>
+                        <label for="abroad_open0" class="cb-disable <if condition='$config[abroad_open] eq 0'>selected</if>">否</label>
+                        <input id="abroad_open1" name="abroad_open" checked="checked" value="1" type="radio">
+                        <input id="abroad_open0" name="abroad_open" value="0" type="radio">
+                    </div>
+                </dd>
+            </dl>
             <div class="bot"><a href="JavaScript:void(0);" class="ncap-btn-big ncap-btn-green" onclick="fromsubmit();">确认提交</a></div>
         </div>
     </form>

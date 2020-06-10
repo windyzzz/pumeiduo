@@ -300,7 +300,7 @@ class Cart
 
         $cartGoodsList = get_arr_column($cartList['cartList'], 'goods');
         $cartGoodsId = get_arr_column($cartGoodsList, 'goods_id');
-        $cartGoodsCatId = get_arr_column($cartGoodsList, 'cat_id');
+        $cartGoodsCatId = array_merge(get_arr_column($cartGoodsList, 'cat_id'), get_arr_column($cartGoodsList, 'extend_cat_id'));
         $cartPriceInfo = $cartLogic->getCartPriceInfo($cartList['cartList']);  //初始化数据。商品总额/节约金额/商品总共数量
 
         $userCouponList = $couponLogic->getUserAbleCouponList($this->user_id, $cartGoodsId, $cartGoodsCatId); //用户可用的优惠券列表

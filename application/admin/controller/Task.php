@@ -333,9 +333,13 @@ class Task extends Base
                 $userElectronic = $log['reward_electronic'] != 0 ? -$log['reward_electronic'] : 0;
                 accountLog($log['user_id'], 0, $payPoints, '登录奖励重置', 0, 0, 0, $userElectronic, 18, false, 4);
             }
-            // 更新记录
+            // 更新记录（未使用）
             M('task_log')->where(['task_id' => $taskId, 'status' => 1, 'type' => 1, 'finished_at' => 0])->update([
                 'status' => -1
+            ]);
+            // 更新记录（已使用）
+            M('task_log')->where(['task_id' => $taskId, 'status' => 1, 'type' => 1, 'finished_at' => ['NEQ', 0]])->update([
+                'status' => -2
             ]);
             // 更新任务奖励
             M('task_reward')->where(['task_id' => $taskId])->update([

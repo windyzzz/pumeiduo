@@ -91,17 +91,22 @@ class Ad extends Base
 
         $Ad = new AdModel();
         $pid = I('pid', 0);
+
+        $order = 'pid DESC, enabled DESC';
+        $where = [];
         if ($pid) {
             $where['pid'] = $pid;
             $this->assign('pid', I('pid'));
+            $order .= ', orderby DESC';
         }
+        $order .= ', ad_id DESC';
         $keywords = I('keywords/s', false, 'trim');
         if ($keywords) {
             $where['ad_name'] = ['like', '%' . $keywords . '%'];
         }
         $count = $Ad->where($where)->count(); // 查询满足要求的总记录数
         $Page = $pager = new Page($count, 10); // 实例化分页类 传入总记录数和每页显示的记录数
-        $res = $Ad->where($where)->order('pid desc')->limit($Page->firstRow . ',' . $Page->listRows)->select();
+        $res = $Ad->where($where)->order('pid desc')->limit($Page->firstRow . ',' . $Page->listRows)->order($order)->select();
         $list = [];
         if ($res) {
             $media = ['图片', '文字', 'flash'];
@@ -110,7 +115,6 @@ class Ad extends Base
                 $list[] = $val;
             }
         }
-
         $ad_position_list = M('AdPosition')->getField('position_id,position_name,is_open');
         $this->assign('ad_position_list', $ad_position_list); //广告位
         $show = $Page->show(); // 分页显示输出

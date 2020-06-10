@@ -8609,39 +8609,9 @@ class Cron1 extends Controller
         print_r($firstLeaderRebate);
     }
 
-
     public function updateGoodsPv()
     {
-        $file = 'public/temp_excel/goodspv_20200429.xls';
-
-        include_once "plugins/PHPExcel.php";
-        $objRead = new \PHPExcel_Reader_Excel2007();   //建立reader对象
-        if (!$objRead->canRead($file)) {
-            $objRead = new \PHPExcel_Reader_Excel5();
-            if (!$objRead->canRead($file)) {
-                die('No Excel!');
-            }
-        }
-
-        $cellName = array('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'AA', 'AB', 'AC', 'AD', 'AE', 'AF', 'AG', 'AH', 'AI', 'AJ', 'AK', 'AL', 'AM', 'AN', 'AO', 'AP', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AV', 'AW', 'AX', 'AY', 'AZ');
-
-        $obj = $objRead->load($file);  //建立excel对象
-        $currSheet = $obj->getSheet(0);   //获取指定的sheet表
-        $columnH = $currSheet->getHighestColumn();   //取得最大的列号
-        $columnCnt = array_search($columnH, $cellName);
-        $rowCnt = $currSheet->getHighestRow();   //获取总行数
-
-        $data = array();
-        for ($_row = 1; $_row <= $rowCnt; $_row++) {  //读取内容
-            for ($_column = 0; $_column <= $columnCnt; $_column++) {
-                $cellId = $cellName[$_column] . $_row;
-                $cellValue = $currSheet->getCell($cellId)->getValue();
-                if ($cellValue instanceof \PHPExcel_RichText) {   //富文本转换字符串
-                    $cellValue = $cellValue->__toString();
-                }
-                $data[$_row][$cellName[$_column]] = $cellValue;
-            }
-        }
+        $data = getXlsInfo('public/temp_excel/goodspv_20200429.xls');
         // 处理数据
         Db::startTrans();
         $logData = [];
@@ -8687,6 +8657,62 @@ class Cron1 extends Controller
         }
     }
 
+    function downloadBankImg()
+    {
+//        $urlArr = M('bank')->field('icon')->select();
+        foreach ($urlArr as $url) {
+            $url = $url['icon'];
+            if (!@fopen($url, 'r')) {
+                continue;
+            }
+            $filename = substr($url, strripos($url, '/') + 1);
+
+            $pic_local_path = dirname(__FILE__) . '/temp_pic/';
+            if (!file_exists($pic_local_path)) {
+                mkdir($pic_local_path, 0777);
+                @chmod($pic_local_path, 0777);
+            }
+            $pic_local = $pic_local_path . $filename;
+
+            ob_start(); //打开输出
+            readfile($url); //输出图片文件
+            $img = ob_get_contents(); //得到浏览器输出
+            ob_end_clean(); //清除输出并关闭
+            file_put_contents($pic_local, $img);
+        }
+
+        return json(['status' => 1]);
+    }
+
+    public function updateRegion()
+    {
+        $data = getXlsInfo('public/temp_excel/ChinaDistrict3.xlsx');
+        $data = array_combine(array_column($data, 'A'), array_values($data));
+        foreach ($data as $k => $v) {
+            if ($k == 'ID' || $v['D'] == 1) {
+                continue;
+            }
+            if (isset($data[$v['C']])) {
+                // 父级不是市辖区
+                if ($data[$v['C']]['D'] == 1) {
+                    $parentId = M('region2')->where(['name' => ['LIKE', $data[$v['C']]['E'] . '%'], 'level' => 0])->value('id');
+                } else {
+                    $parentId = M('region2')->where(['name' => ['LIKE', $data[$v['C']]['E'] . '%'], 'level' => ['neq', 0]])->value('id');
+                }
+            } else {
+                // 父级是市辖区
+                $parentIds = M('region2')->where(['name' => '市辖区'])->getField('id', true);
+            }
+            $where = ['name' => ['LIKE', $v['E'] . '%']];
+            if (isset($parentId)) {
+                $where['parent_id'] = $parentId;
+            } elseif (isset($parentIds)) {
+                $where['parent_id'] = ['IN', $parentIds];
+            }
+            M('region2')->where($where)->update(['zipcode' => $v['H'] ?? 0]);
+        }
+        var_dump('ok');
+    }
 
     public function updateGoodsSort()
     {

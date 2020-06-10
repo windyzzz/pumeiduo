@@ -9,7 +9,17 @@ class Push extends Model
 {
     public function getTypeDescAttr($value, $data)
     {
-        $parse_type = ['1' => '公告', '2' => '活动消息', '3' => '优惠券', '4' => '商品', '5' => '首页'];
+        $parse_type = [
+            '1' => '公告',
+            '2' => '活动消息',
+            '3' => '领券中心',
+            '4' => '商品',
+            '5' => '首页',
+            '6' => '促销商品区',
+            '7' => 'SVIP专享',
+            '8' => 'VIP申请区',
+            '9' => '我的礼券',
+        ];
 
         return $parse_type[$data['type']];
     }
