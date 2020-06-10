@@ -1386,13 +1386,8 @@ class Goods extends Base
             if ($endTime >= $v['end_time']) {
                 $endTime = $v['end_time'];
             }
-            // 商品参加活动数限制
-            if ($v['goods_num'] <= $v['buy_num'] || $v['goods_num'] <= $v['order_num']) {
-                unset($flashSaleGoods[$k]);
-                continue;
-            }
-            $flashSaleGoods[$k]['key_name'] = $v['key_name'] ?? '';
             unset($flashSaleGoods[$k]['end_time']);
+            $flashSaleGoods[$k]['key_name'] = $v['key_name'] ?? '';
             // 是否已售完
             if ($v['goods_num'] <= $v['buy_num']) {
                 $flashSaleGoods[$k]['sold_out'] = 1;
