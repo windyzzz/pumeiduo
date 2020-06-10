@@ -35,11 +35,11 @@
         <div class="ncap-form-default">
             <dl class="row">
                 <dt class="tit">
-                    <label>重置奖励</label>
+                    <label>重置任务</label>
                 </dt>
                 <dd class="opt">
                     <div title="重置奖励"><i class="fa fa-refresh" style="cursor: pointer;"></i></div>
-                    <p class="notic">重置会将未使用的奖励扣除</p>
+                    <p class="notic">重置会清空目前该任务的完成情况</p>
                 </dd>
             </dl>
             <dl class="row">
@@ -371,7 +371,7 @@
     }
 
     $('.fa-refresh').click(function () {
-        layer.confirm('确认重置奖励？重置后需要再手动启动奖励', {btn: ['确定', '取消']}, function () {
+        layer.confirm('确认重置任务？重置后需要再手动启动任务', {btn: ['确定', '取消']}, function () {
             $.ajax({
                 type: "POST",
                 url: "{:U('Task/reset_reward')}",
