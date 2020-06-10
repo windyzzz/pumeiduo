@@ -671,10 +671,10 @@
                         </if>
                     <else/>
                         <div class="onoff">
-                            <label for="is_virtual1" class="cb-enable <if condition=" $goodsInfo[is_virtual] eq 1">selected</if>">是</label>
-                            <label for="is_virtual0" class="cb-disable <if condition=" $goodsInfo[is_virtual] eq 0">selected</if>">否</label>
-                            <input class="is_virtual" id="is_virtual1" name="is_virtual" value="1" type="radio"<if condition="$goodsInfo[is_virtual] eq 1"> checked="checked"</if>>
-                            <input class="is_virtual" id="is_virtual0" name="is_virtual" value="0" type="radio"<if condition="$goodsInfo[is_virtual] eq 0"> checked="checked"</if>>
+                            <label for="is_virtual1" class="cb-enable <if condition='$goodsInfo[is_virtual] eq 1'>selected</if>">是</label>
+                            <label for="is_virtual0" class="cb-disable <if condition='$goodsInfo[is_virtual] eq 0'>selected</if>">否</label>
+                            <input class="is_virtual" id="is_virtual1" name="is_virtual" value="1" type="radio" <if condition="$goodsInfo[is_virtual] eq 1"> checked="checked"</if>>
+                            <input class="is_virtual" id="is_virtual0" name="is_virtual" value="0" type="radio" <if condition="$goodsInfo[is_virtual] eq 0"> checked="checked"</if>>
                         </div>
                     </if>
                     <p class="notic"></p>
@@ -718,8 +718,9 @@
         <!--商品相册-->
         <div class="ncap-form-default tab_div_2" style="display:none;">
             <dl class="row">
-                <div class="tab-pane" id="tab_goods_spec">
-                    <table class="table table-bordered" id="goods_spec_table">
+                <div class="tab-pane" id="tab_goods_images">
+                    <table class="table table-bordered">
+                        <tbody>
                         <tr>
                             <td>
                                 <foreach name="goodsImages" item="vo" key="k">
