@@ -364,6 +364,7 @@ class Task extends Base
                     // 关闭任务
                     M('task')->where(['id' => $taskId])->update(['is_open' => 0]);
             }
+            adminLog('管理员重置了任务' . $taskId);
             Db::commit();
             $this->ajaxReturn(['status' => 1, 'msg' => '重置成功']);
         } catch (Exception $e) {
