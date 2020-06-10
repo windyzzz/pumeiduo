@@ -848,12 +848,14 @@ class Promotion extends Base
                     M('flash_sale')->where('id=' . $data['id'])->save([
                         'end_time' => time()
                     ]);
+                    adminLog('管理员紧急下架抢购活动 ' . $data['title']);
                     $this->ajaxReturn(['status' => 1, 'msg' => '编辑抢购活动成功', 'result' => '']);
                     break;
                 case 3:
                     M('flash_sale')->where('id=' . $data['id'])->save([
                         'end_time' => strtotime($data['end_time'])
                     ]);
+                    adminLog('管理员继续上架抢购活动 ' . $data['title']);
                     $this->ajaxReturn(['status' => 1, 'msg' => '编辑抢购活动成功', 'result' => '']);
             }
         }
