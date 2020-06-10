@@ -1706,7 +1706,7 @@ class GoodsLogic extends Model
      * @param $passAuth
      * @return array
      */
-    public function getOrderGoodsData($cartLogic, $goodsId, $itemId, $goodsNum, $payType, $cartIds, $isApp, $passAuth = false)
+    public function getOrderGoodsData(CartLogic $cartLogic, $goodsId, $itemId, $goodsNum, $payType, $cartIds, $isApp, $passAuth = false)
     {
         if (!empty($goodsId) && empty(trim($cartIds))) {
             /*
