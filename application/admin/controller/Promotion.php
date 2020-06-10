@@ -788,57 +788,66 @@ class Promotion extends Base
             if (empty($data['source'])) {
                 $this->ajaxReturn(['status' => 0, 'msg' => '请选择展示地方']);
             }
-            $data['source'] = implode(',', $data['source']);
-            $data['can_integral'] = isset($data['can_integral']) ? 1 : 0;
-            $data['start_time'] = strtotime($data['start_time']);
-            $data['end_time'] = strtotime($data['end_time']);
-            $flashSaleValidate = Loader::validate('FlashSale');
-            if (!$flashSaleValidate->batch()->check($data)) {
-                $msg = '';
-                foreach ($flashSaleValidate->getError() as $item) {
-                    $msg .= $item . '，';
-                }
-                $return = ['status' => 0, 'msg' => rtrim($msg, '，')];
-                $this->ajaxReturn($return);
-            }
-            if ($data['can_integral'] == 1) {
-                // 验证秒杀积分
-                $goodsIntegral = Db::name('goods')->where(['goods_id' => $data['goods_id']])->value('exchange_integral');
-                if ($goodsIntegral >= $data['price']) {
-                    $this->ajaxReturn(['status' => 0, 'msg' => '可兑换商品的积分多于秒杀价格，请不要勾选使用积分']);
-                }
-            }
-            if (empty($data['id'])) {
-                $flashSaleInsertId = Db::name('flash_sale')->insertGetId($data);
-                if ($data['item_id'] > 0) {
-                    //设置商品一种规格为活动
-                    Db::name('spec_goods_price')->where('item_id', $data['item_id'])->update(['prom_id' => $flashSaleInsertId, 'prom_type' => 1]);
-                    Db::name('goods')->where('goods_id', $data['goods_id'])->save(['prom_id' => 0, 'prom_type' => 1]);
-                } else {
-                    Db::name('goods')->where('goods_id', $data['goods_id'])->save(['prom_id' => $flashSaleInsertId, 'prom_type' => 1]);
-                }
-                adminLog('管理员添加抢购活动 ' . $data['name']);
-                if (false !== $flashSaleInsertId) {
-                    $this->ajaxReturn(['status' => 1, 'msg' => '添加抢购活动成功', 'result' => '']);
-                } else {
-                    $this->ajaxReturn(['status' => 0, 'msg' => '添加抢购活动失败', 'result' => '']);
-                }
-            } else {
-                $r = M('flash_sale')->where('id=' . $data['id'])->save($data);
-                M('goods')->where(['prom_type' => 1, 'prom_id' => $data['id']])->save(['prom_id' => 0, 'prom_type' => 0]);
-                if ($data['item_id'] > 0) {
-                    //设置商品一种规格为活动
-                    Db::name('spec_goods_price')->where(['prom_type' => 1, 'prom_id' => $data['item_id']])->update(['prom_id' => 0, 'prom_type' => 0]);
-                    Db::name('spec_goods_price')->where('item_id', $data['item_id'])->update(['prom_id' => $data['id'], 'prom_type' => 1]);
-                    M('goods')->where('goods_id', $data['goods_id'])->save(['prom_id' => 0, 'prom_type' => 1]);
-                } else {
-                    M('goods')->where('goods_id', $data['goods_id'])->save(['prom_id' => $data['id'], 'prom_type' => 1]);
-                }
-                if (false !== $r) {
+            switch ($data['action']) {
+                case 1:
+                    $data['source'] = implode(',', $data['source']);
+                    $data['can_integral'] = isset($data['can_integral']) ? 1 : 0;
+                    $data['start_time'] = strtotime($data['start_time']);
+                    $data['end_time'] = strtotime($data['end_time']);
+                    $flashSaleValidate = Loader::validate('FlashSale');
+                    if (!$flashSaleValidate->batch()->check($data)) {
+                        $msg = '';
+                        foreach ($flashSaleValidate->getError() as $item) {
+                            $msg .= $item . '，';
+                        }
+                        $return = ['status' => 0, 'msg' => rtrim($msg, '，')];
+                        $this->ajaxReturn($return);
+                    }
+                    if ($data['can_integral'] == 1) {
+                        // 验证秒杀积分
+                        $goodsIntegral = Db::name('goods')->where(['goods_id' => $data['goods_id']])->value('exchange_integral');
+                        if ($goodsIntegral >= $data['price']) {
+                            $this->ajaxReturn(['status' => 0, 'msg' => '可兑换商品的积分多于秒杀价格，请不要勾选使用积分']);
+                        }
+                    }
+                    if (empty($data['id'])) {
+                        $flashSaleInsertId = Db::name('flash_sale')->insertGetId($data);
+                        if ($data['item_id'] > 0) {
+                            //设置商品一种规格为活动
+                            Db::name('spec_goods_price')->where('item_id', $data['item_id'])->update(['prom_id' => $flashSaleInsertId, 'prom_type' => 1]);
+                            Db::name('goods')->where('goods_id', $data['goods_id'])->save(['prom_id' => 0, 'prom_type' => 1]);
+                        } else {
+                            Db::name('goods')->where('goods_id', $data['goods_id'])->save(['prom_id' => $flashSaleInsertId, 'prom_type' => 1]);
+                        }
+                        adminLog('管理员添加抢购活动 ' . $data['name']);
+                        if (false !== $flashSaleInsertId) {
+                            $this->ajaxReturn(['status' => 1, 'msg' => '添加抢购活动成功', 'result' => '']);
+                        } else {
+                            $this->ajaxReturn(['status' => 0, 'msg' => '添加抢购活动失败', 'result' => '']);
+                        }
+                    } else {
+                        $r = M('flash_sale')->where('id=' . $data['id'])->save($data);
+                        M('goods')->where(['prom_type' => 1, 'prom_id' => $data['id']])->save(['prom_id' => 0, 'prom_type' => 0]);
+                        if ($data['item_id'] > 0) {
+                            //设置商品一种规格为活动
+                            Db::name('spec_goods_price')->where(['prom_type' => 1, 'prom_id' => $data['item_id']])->update(['prom_id' => 0, 'prom_type' => 0]);
+                            Db::name('spec_goods_price')->where('item_id', $data['item_id'])->update(['prom_id' => $data['id'], 'prom_type' => 1]);
+                            M('goods')->where('goods_id', $data['goods_id'])->save(['prom_id' => 0, 'prom_type' => 1]);
+                        } else {
+                            M('goods')->where('goods_id', $data['goods_id'])->save(['prom_id' => $data['id'], 'prom_type' => 1]);
+                        }
+                        if (false !== $r) {
+                            $this->ajaxReturn(['status' => 1, 'msg' => '编辑抢购活动成功', 'result' => '']);
+                        } else {
+                            $this->ajaxReturn(['status' => 0, 'msg' => '编辑抢购活动失败', 'result' => '']);
+                        }
+                    }
+                    break;
+                case 2:
+                    M('flash_sale')->where('id=' . $data['id'])->save([
+                        'end_time' => time()
+                    ]);
                     $this->ajaxReturn(['status' => 1, 'msg' => '编辑抢购活动成功', 'result' => '']);
-                } else {
-                    $this->ajaxReturn(['status' => 0, 'msg' => '编辑抢购活动失败', 'result' => '']);
-                }
             }
         }
         $id = I('id');

@@ -140,17 +140,22 @@
                     <p class="notic">抢购描述介绍</p>
                 </dd>
             </dl>
-            <div class="bot"><a onclick="verifyForm()" class="ncap-btn-big ncap-btn-green">确认提交</a></div>
+            <div class="bot">
+                <input type="hidden" name="action" value="1">
+                <a onclick="verifyForm(1)" class="ncap-btn-big ncap-btn-green">确认提交</a>
+                <a onclick="verifyForm(2)" class="ncap-btn-big ncap-btn-red">紧急下架</a>
+            </div>
         </div>
     </form>
 </div>
 <script type="text/javascript">
-    $(document).ready(function(){
+    $(document).ready(function () {
         $('#start_time').layDate();
         $('#end_time').layDate();
     })
     var ajax_return_status = 1; // 标识ajax 请求是否已经回来 可以进行下一次请求
-    function verifyForm(){
+    function verifyForm(type) {
+        $('input[name="action"]').val(type);
         $('span.err').hide();
         if (ajax_return_status == 0) {
             return false;
@@ -166,11 +171,11 @@
             },
             success: function (data) {
                 if (data.status == 1) {
-                    layer.msg(data.msg, {icon: 1, time: 1000}, function(){
+                    layer.msg(data.msg, {icon: 1, time: 1000}, function () {
                         location.href = "{:U('Admin/Promotion/flash_sale')}";
                     });
                 } else {
-                    layer.msg(data.msg, {icon: 2,time: 2000});
+                    layer.msg(data.msg, {icon: 2, time: 2000});
                     $.each(data.result, function (index, item) {
                         $('#err_' + index).text(item).show();
                     });
@@ -179,7 +184,8 @@
             }
         });
     }
-    function selectGoods(){
+
+    function selectGoods() {
         var url = "{:U('Promotion/search_goods',array('tpl'=>'select_goods','prom_type'=>1,'prom_id'=>$info[id]))}";
         layer.open({
             type: 2,
@@ -190,30 +196,30 @@
             content: url,
         });
     }
-    function selGoodsCallBack(goodsItem){
+
+    function selGoodsCallBack(goodsItem) {
         $('#goods_id').val(goodsItem.goods_id);
         var html = '';
-        if(goodsItem.spec != null){
+        if (goodsItem.spec != null) {
             //有规格
             html = '<div style="float: left;margin: 10px auto;" class="selected-group-goods"><div class="goods-thumb">' +
-                    '<img style="width: 162px;height: 162px" src="'+goodsItem.spec.spec_img+'"/></div> <div class="goods-name"> ' +
-                    '<a target="_blank">'+goodsItem.goods_name+goodsItem.spec.key_name+'</a> </div>' +
-                    ' <div class="goods-price">商城价：￥'+goodsItem.spec.price+'库存:'+goodsItem.spec.store_count+'</div> </div>';
+                '<img style="width: 162px;height: 162px" src="' + goodsItem.spec.spec_img + '"/></div> <div class="goods-name"> ' +
+                '<a target="_blank">' + goodsItem.goods_name + goodsItem.spec.key_name + '</a> </div>' +
+                ' <div class="goods-price">商城价：￥' + goodsItem.spec.price + '库存:' + goodsItem.spec.store_count + '</div> </div>';
             $('input[name=item_id]').val(goodsItem.spec.item_id)
             $('input[name=goods_name]').val(goodsItem.goods_name + goodsItem.spec.key_name);
-        }else{
+        } else {
             html = '<div style="float: left;margin: 10px auto;" class="selected-group-goods"><div class="goods-thumb">' +
-                    '<img style="width: 162px;height: 162px" src="'+goodsItem.goods_image+'"/></div> <div class="goods-name"> ' +
-                    '<a target="_blank">'+goodsItem.goods_name+'</a> </div>' +
-                    ' <div class="goods-price">商城价：￥'+goodsItem.goods_price+'库存:'+goodsItem.store_count+'</div> </div>';
+                '<img style="width: 162px;height: 162px" src="' + goodsItem.goods_image + '"/></div> <div class="goods-name"> ' +
+                '<a target="_blank">' + goodsItem.goods_name + '</a> </div>' +
+                ' <div class="goods-price">商城价：￥' + goodsItem.goods_price + '库存:' + goodsItem.store_count + '</div> </div>';
             $('input[name=goods_name]').val(goodsItem.goods_name);
         }
-        $('#select_goods_button').attr('data-goods-id',goodsItem.goods_id);
+        $('#select_goods_button').attr('data-goods-id', goodsItem.goods_id);
         $('#selected_group_goods').empty().html(html);
         $('.selected-group-goods').show();
         layer.closeAll('iframe');
     }
-
 </script>
 </body>
 </html>
