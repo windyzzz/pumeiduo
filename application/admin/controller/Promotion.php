@@ -819,7 +819,7 @@ class Promotion extends Base
                         } else {
                             Db::name('goods')->where('goods_id', $data['goods_id'])->save(['prom_id' => $flashSaleInsertId, 'prom_type' => 1]);
                         }
-                        adminLog('管理员添加抢购活动 ' . $data['name']);
+                        adminLog('管理员添加抢购活动 ' . $data['title']);
                         if (false !== $flashSaleInsertId) {
                             $this->ajaxReturn(['status' => 1, 'msg' => '添加抢购活动成功', 'result' => '']);
                         } else {
@@ -836,6 +836,7 @@ class Promotion extends Base
                         } else {
                             M('goods')->where('goods_id', $data['goods_id'])->save(['prom_id' => $data['id'], 'prom_type' => 1]);
                         }
+                        adminLog('管理员编辑抢购活动 ' . $data['title']);
                         if (false !== $r) {
                             $this->ajaxReturn(['status' => 1, 'msg' => '编辑抢购活动成功', 'result' => '']);
                         } else {
