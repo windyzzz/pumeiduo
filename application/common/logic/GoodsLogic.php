@@ -471,6 +471,10 @@ class GoodsLogic extends Model
                     $goods_list[] = $take_goods_list[$i];
                 }
                 foreach ($goods_list as $k => $v) {
+                    // 缩略图
+                    if (!strstr($v['original_img'], 'http') && !strstr($v['original_img'], 'https')) {
+                        $goodsList[$k]['original_img'] = SITE_URL . $v['original_img'];
+                    }
                     // 处理显示金额
                     if ($v['exchange_integral'] != 0) {
                         $goods_list[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);
@@ -520,6 +524,10 @@ class GoodsLogic extends Model
             ->where('goods_id', 'in', $ary)
             ->select();
         foreach ($goods_list as $k => $v) {
+            // 缩略图
+            if (!strstr($v['original_img'], 'http') && !strstr($v['original_img'], 'https')) {
+                $goodsList[$k]['original_img'] = SITE_URL . $v['original_img'];
+            }
             // 处理显示金额
             if ($v['exchange_integral'] != 0) {
                 $goods_list[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);
@@ -1087,6 +1095,10 @@ class GoodsLogic extends Model
             ->order('discount_price desc')->value('title');
         // 循环处理数据
         foreach ($goodsList as $k => $v) {
+            // 缩略图
+            if (!strstr($v['original_img'], 'http') && !strstr($v['original_img'], 'https')) {
+                $goodsList[$k]['original_img'] = SITE_URL . $v['original_img'];
+            }
             // 商品规格属性
             if (isset($goodsItem[$v['goods_id']])) {
                 $goodsList[$k]['item_id'] = $goodsItem[$v['goods_id']];

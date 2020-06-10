@@ -640,6 +640,7 @@ class Goods extends Base
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架']);
         }
+        $originalImg = !strstr($goods['original_img'], 'http') && !strstr($goods['original_img'], 'https') ? SITE_URL . $goods['original_img'] : $goods['original_img'];
         $goodsInfo = [
             'type' => 'normal',
             'goods_id' => $goods['goods_id'],
@@ -648,7 +649,7 @@ class Goods extends Base
             'store_count' => $goods['store_count'],
             'goods_remark' => $goods['goods_remark'],
             'goods_content' => htmlspecialchars_decode($goods['goods_content']),
-            'original_img' => SITE_URL . $goods['original_img'],
+            'original_img' => $originalImg,
             'goods_images_list' => [],
             'shop_price' => $goods['shop_price'],
             'exchange_integral' => $goods['exchange_integral'],
@@ -663,7 +664,7 @@ class Goods extends Base
             'end_time' => '0',
             'now_time' => NOW_TIME,
             'freight_free' => tpCache('shopping.freight_free'),     // 全场满多少免运费
-            'share_goods_image' => !empty($goods['original_img']) ? SITE_URL . $goods['original_img'] : '',    // 商品分享图
+            'share_goods_image' => !empty($originalImg) ? $originalImg : '',    // 商品分享图
             'share_qr_code' => '',    // 分享二维码
             'tabs' => []
         ];
@@ -1638,6 +1639,10 @@ class Goods extends Base
                 unset($flashSaleGoods[$k]);
                 continue;
             }
+            // 缩略图
+            if (!strstr($v['original_img'], 'http') && !strstr($v['original_img'], 'https')) {
+                $flashSaleGoods[$k]['original_img'] = SITE_URL . $v['original_img'];
+            }
             $flashSaleGoods[$k]['key_name'] = $v['key_name'] ?? '';
             // 最近的结束时间
             if ($k == 0) {
@@ -1748,8 +1753,11 @@ class Goods extends Base
             $goods_list = collection($goods_list)->toArray();
             // 商品规格属性
             $goodsItem = Db::name('spec_goods_price')->where(['goods_id' => ['in', $filter_goods_id]])->group('goods_id')->getField('goods_id, item_id', true);
-
             foreach ($goods_list as $k => $v) {
+                // 缩略图
+                if (!strstr($v['original_img'], 'http') && !strstr($v['original_img'], 'https')) {
+                    $goods_list[$k]['original_img'] = SITE_URL . $v['original_img'];
+                }
                 // 商品规格属性
                 if (isset($goodsItem[$v['goods_id']])) {
                     $goods_list[$k]['item_id'] = $goodsItem[$v['goods_id']];
@@ -1854,6 +1862,10 @@ class Goods extends Base
             ->select();
         $groupBuyData = collection($groupBuyData)->toArray();
         foreach ($groupBuyData as $k => $groupBuy) {
+            // 缩略图
+            if (!strstr($groupBuy['original_img'], 'http') && !strstr($groupBuy['original_img'], 'https')) {
+                $groupBuyData[$k]['original_img'] = SITE_URL . $groupBuy['original_img'];
+            }
             $groupBuyData[$k]['now_time'] = time() . '';
             // 价格判断
             if ($groupBuy['can_integral'] == 0) {
