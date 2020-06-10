@@ -31,7 +31,7 @@ class UpdateGoods230200528 extends Migrator
         $this->table('goods')
             ->addColumn('is_supply', 'integer', ['default' => 0, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
                 'comment' => '是否是供应链商品'])
-            ->addColumn('supplier_goods_id', 'integer', ['default' => 0, '供应链商品ID'])
+            ->addColumn('supplier_goods_id', 'integer', ['default' => 0, 'comment' => '供应链商品ID'])
             ->update();
     }
 }
