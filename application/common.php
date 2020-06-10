@@ -1702,7 +1702,7 @@ function order_give($order)
  *
  * @return array
  */
-function get_goods_category_tree()
+function get_goods_category_tree($isApp = false)
 {
     $tree = $arr = $result = [];
     $cat_list = M('goods_category')
@@ -1718,6 +1718,10 @@ function get_goods_category_tree()
         // 分类广告
         foreach ($cat_list as $ck => $cv) {
             if ($cv['parent_id'] == 0 && strstr($cv['name'], '海外购')) {
+                if (!$isApp) {
+                    unset($cat_list[$ck]);
+                    continue;
+                }
                 $abroadCateId = $cv['id'];
             }
             $cat_list[$ck]['ad_list'] = null;

@@ -2191,7 +2191,7 @@ class Goods extends Base
      */
     public function all_category()
     {
-        $goods_category_tree = get_goods_category_tree();
+        $goods_category_tree = get_goods_category_tree($this->isApp);
         $return['goods_category_tree'] = $goods_category_tree;
 
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
