@@ -99,6 +99,8 @@ class Order extends Base
         '' != I('shipping_status') ? $condition['shipping_status'] = I('shipping_status') : false;
         '' != I('prom_type') ? $condition['prom_type'] = I('prom_type') : false;
         I('user_id') ? $condition['user_id'] = trim(I('user_id')) : false;
+        '' != I('order_type') ? $condition['order_type'] = I('order_type') : false;
+
         $sort_order = I('order_by', 'DESC') . ' ' . I('sort');
 
         $count = M('order')->where($condition)->count();
@@ -106,7 +108,6 @@ class Order extends Base
         $show = $Page->show();
         //获取订单列表
         $orderList = $orderLogic->getOrderList($condition, $sort_order, $Page->firstRow, $Page->listRows);
-
         foreach ($orderList as $k => $v) {
             if (2 == $v['prom_type']) {
                 $group_details = M('group_detail')->where('group_id', $v['prom_id'])->select();
@@ -375,7 +376,8 @@ class Order extends Base
 
         $orderGoods = $order['orderGoods'];
 //        $orderGoodsNum = M('order_goods')->where(['order_id' => $order_id])->sum('goods_num');
-        $express = Db::name('delivery_doc')->where('order_id', $order_id)->select();  //发货信息（可能多个）
+        $express = Db::name('delivery_doc dd')->join('order_goods og', 'og.rec_id = dd.rec_id', 'LEFT')
+            ->where('dd.order_id', $order_id)->field('dd.*, og.goods_name, og.spec_key_name')->select();  //发货信息（可能多个）
         $user = Db::name('users')->where(['user_id' => $order['user_id']])->find();
         $this->assign('order', $order);
         $this->assign('user', $user);
@@ -443,6 +445,17 @@ class Order extends Base
         }
         $this->assign('split', $split);
         $this->assign('express', $express);
+        // HTNS物流配送记录
+        $htnsDeliveryLogGoodsName = M('htns_delivery_log')->where(['order_id' => $order_id])->value('goods_name');
+        $htnsDeliveryLog = M('htns_delivery_log')->where(['order_id' => $order_id, 'goods_name' => $htnsDeliveryLogGoodsName])->order('create_time desc')->select();
+        $deliveryLog = [];
+        foreach ($htnsDeliveryLog as $log) {
+            $deliveryLog[] = [
+                'time' => date('Y-m-d H:i:s', $log['create_time']),
+                'status' => C('HTNS_STATUS')[$log['status']]
+            ];
+        }
+        $this->assign('delivery_log', $deliveryLog);
 
         return $this->fetch();
     }
@@ -1490,24 +1503,26 @@ class Order extends Base
 
         // 订单数据
         $orderList = Db::name('order o')->join('users u', 'u.user_id = o.user_id', 'LEFT')
-            ->field("o.*, FROM_UNIXTIME(o.add_time,'%Y-%m-%d %H:%i:%s') as add_time, u.distribut_level")
+            ->field("o.*, FROM_UNIXTIME(o.add_time,'%Y-%m-%d %H:%i:%s') as add_time, u.reg_time, u.first_leader, u.distribut_level")
             ->where($condition)->order($sort_order)->select();
         // 等级列表
-        $level_list = M('distribut_level')->getField('level_id, level_name');
-        // 用户父级ID
-        $parent_list = Db::name('users')->getField('user_id, first_leader', true);
+        $levelList = Db::name('distribut_level')->getField('level_id, level_name');
+        // 会员升级记录
+        $distributeLog = M('distribut_log')->where(['new_level' => 2])->group('user_id')->getField('user_id, add_time');
         // 订单来源
         $orderSource = ['1' => '微信', '2' => 'PC', '3' => 'APP', '4' => '管理后台'];
 
         // 表头
         $strTable = '<table width="500" border="1">';
         $strTable .= '<tr>';
-        $strTable .= '<td style="text-align:center;font-size:12px;width:120px;">订单编号</td>';
-        $strTable .= '<td style="text-align:center;font-size:12px;" width="120">下单日期</td>';
-        $strTable .= '<td style="text-align:center;font-size:12px;" width="120">支付日期</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">订单编号</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">下单日期</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">支付日期</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">父级ID</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">会员ID</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">注册时间</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">会员等级</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">升级VIP时间</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">收货人</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">收货地址</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">电话</td>';
@@ -1534,18 +1549,26 @@ class Order extends Base
         if (is_array($orderList)) {
             $region = get_region_list();
             foreach ($orderList as $k => $val) {
+                // 订单商品
                 $orderGoods = D('order_goods')->where('order_id=' . $val['order_id'])->select();
                 $orderGoodsNum = count($orderGoods);
+                // 支付时间
                 $val['pay_time_show'] = $val['pay_time'] ? date('Y-m-d H:i:s', $val['pay_time']) : '';
+                // 用户注册时间
+                $regTime = $val['reg_time'] ? date('Y-m-d H:i:s', $val['reg_time']) : '';
+                // 用户等级
+                $level = $val['distribut_level'] ? $levelList[$val['distribut_level']] : '普通会员';
+                // 升级VIP时间
+                $levelUpTime = $distributeLog[$val['user_id']] ? date('Y-m-d H:i:s', $distributeLog[$val['user_id']]) : '';
                 $strTable .= '<tr>';
                 $strTable .= '<td style="text-align:center;font-size:12px;" rowspan="' . $orderGoodsNum . '">&nbsp;' . $val['order_sn'] . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['create_time'] . ' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['add_time'] . ' </td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['pay_time_show'] . ' </td>';
-                $parentId = $parent_list[$val['user_id']];
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $parentId . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['first_leader'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['user_id'] . '</td>';
-                $level = $val['distribut_level'] ? $level_list[$val['distribut_level']] : '普通会员';
+                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $regTime . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $level . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $levelUpTime . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['consignee'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . "{$region[$val['province']]},{$region[$val['city']]},{$region[$val['district']]},{$region[$val['twon']]}{$val['address']}" . ' </td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['mobile'] . '</td>';
@@ -1657,12 +1680,12 @@ class Order extends Base
 
         // 订单数据
         $orderList = Db::name('order o')->join('users u', 'u.user_id = o.user_id', 'LEFT')
-            ->field("o.*, FROM_UNIXTIME(o.add_time,'%Y-%m-%d %H:%i:%s') as add_time, u.distribut_level")
+            ->field("o.*, FROM_UNIXTIME(o.add_time,'%Y-%m-%d %H:%i:%s') as add_time, u.user_id, u.reg_time, u.distribut_level")
             ->where($condition)->order($sort_order)->select();
         // 等级列表
-        $level_list = M('distribut_level')->getField('level_id, level_name');
-        // 用户父级ID
-        $parent_list = Db::name('users')->getField('user_id, first_leader', true);
+        $levelList = M('distribut_level')->getField('level_id, level_name');
+        // 会员升级记录
+        $distributeLog = M('distribut_log')->where(['new_level' => 2])->group('user_id')->getField('user_id, add_time');
         // 订单来源
         $orderSource = ['1' => '微信', '2' => 'PC', '3' => 'APP', '4' => '管理后台'];
         // 地区数据
@@ -1670,7 +1693,7 @@ class Order extends Base
 
         // 表头
         $headList = [
-            '订单编号', '下单日期', '支付日期', '父级ID', '会员ID', '会员等级', '收货人', '收货地址', '电话',
+            '订单编号', '下单日期', '支付日期', '父级ID', '会员ID', '注册时间', '会员等级', '升级VIP时间', '收货人', '收货地址', '电话',
             '应付金额', '商品金额', '优惠券折扣', '积分折扣', '现金折扣', '运费', '总pv值',
             '订单状态', '支付状态', '发货状态', '订单来源', '支付方式',
             '商品总数', '商品编号', '商品数量', '商品名称', '商品规格', '交易条件'
@@ -1678,15 +1701,23 @@ class Order extends Base
         // 表数据
         $dataList = [];
         foreach ($orderList as $key => $order) {
+            // 支付时间
             $payTime = $order['pay_time'] ? date('Y-m-d H:i:s', $order['pay_time']) : '';
-            $parentId = $parent_list[$order['user_id']];
+            // 用户注册时间
+            $regTime = $order['reg_time'] ? date('Y-m-d H:i:s', $order['reg_time']) : '';
+            // 用户等级
+            $level = $order['distribut_level'] ? $levelList[$order['distribut_level']] : '普通会员';
+            // 升级VIP时间
+            $levelUpTime = $distributeLog[$order['user_id']] ? date('Y-m-d H:i:s', $distributeLog[$order['user_id']]) : '';
             $dataList[$key] = [
                 "\t" . $order['order_sn'],
                 $order['add_time'],
                 $payTime,
-                $parentId,
+                $order['first_leader'],
                 $order['user_id'],
-                $order['distribut_level'] ? $level_list[$order['distribut_level']] : '普通会员',
+                $regTime,
+                $level,
+                $levelUpTime,
                 $order['consignee'],
                 "{$region[$order['province']]},{$region[$order['city']]},{$region[$order['district']]},{$region[$order['twon']]}{$order['address']}",
                 "\t" . $order['mobile'],

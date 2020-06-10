@@ -145,12 +145,12 @@ class CartLogic extends Model
      *
      * @throws TpshopException
      */
-    public function buyNow($isApp = false)
+    public function buyNow($isApp = false, $passAuth = false)
     {
-        if (empty($this->goods)) {
+        if (empty($this->goods) && !$passAuth) {
             throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '购买商品不存在', 'result' => '']);
         }
-        if (empty($this->goodsBuyNum)) {
+        if (empty($this->goodsBuyNum) && !$passAuth) {
             throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '购买商品数量不能为0', 'result' => '']);
         }
 
@@ -194,9 +194,11 @@ class CartLogic extends Model
         if (empty($this->specGoodsPrice)) {
             $buyGoods['goods']['spec_key'] = '';
             $buyGoods['goods']['spec_key_name'] = '';
-            $specGoodsPriceCount = Db::name('SpecGoodsPrice')->where('goods_id', $this->goods['goods_id'])->count('item_id');
-            if ($specGoodsPriceCount > 0) {
-                throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '必须传递商品规格', 'result' => '']);
+            $itemId = Db::name('SpecGoodsPrice')->where('goods_id', $this->goods['goods_id'])->value('item_id');
+            if ($itemId) {
+//                throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '必须传递商品规格', 'result' => '']);
+                // 默认第一个商品规格
+                $this->setSpecGoodsPriceModel($itemId);
             }
             $prom_id = $this->goods['prom_id'];
             $prom_type = $this->goods['prom_type'];
@@ -233,7 +235,7 @@ class CartLogic extends Model
                             'source' => ['LIKE', $isApp ? '%' . 3 . '%' : '%' . 1 . '%']
                         ])->value('id');
                         if (!empty($flashSale)) {
-                            $buyGoods = $goodsPromLogic->buyNow($buyGoods, $this->type);
+                            $buyGoods = $goodsPromLogic->buyNow($buyGoods, $this->type, $passAuth);
                         } else {
                             // 普通价格
                             $member_goods_price = $buyGoods['member_goods_price'];
@@ -246,7 +248,7 @@ class CartLogic extends Model
                             $buyGoods['use_integral'] = $use_integral;
                         }
                     } else {
-                        $buyGoods = $goodsPromLogic->buyNow($buyGoods, $this->type);
+                        $buyGoods = $goodsPromLogic->buyNow($buyGoods, $this->type, $passAuth);
                         if ($prom_type == 3 && 1 == $this->type) {
                             // 商品促销优惠
                             $member_goods_price = bcsub($buyGoods['member_goods_price'], $this->goods['exchange_integral'], 2);
@@ -258,7 +260,7 @@ class CartLogic extends Model
                 } else {
 //                    throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '活动已经结束，无法购买', 'result' => '']);
                     // 按普通商品计算
-                    if ($this->goods['least_buy_num'] != 0 && $this->goods['least_buy_num'] > $this->goodsBuyNum) {
+                    if ($this->goods['least_buy_num'] != 0 && $this->goods['least_buy_num'] > $this->goodsBuyNum && !$passAuth) {
                         throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '至少购买' . $this->goods['least_buy_num'] . '件', 'result' => '']);
                     }
                     $member_goods_price = $buyGoods['member_goods_price'];
@@ -273,7 +275,7 @@ class CartLogic extends Model
             }
         } else {
             if (0 == $this->goods['prom_type']) {
-                if ($this->goods['least_buy_num'] != 0 && $this->goods['least_buy_num'] > $this->goodsBuyNum) {
+                if ($this->goods['least_buy_num'] != 0 && $this->goods['least_buy_num'] > $this->goodsBuyNum && !$passAuth) {
                     throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '至少购买' . $this->goods['least_buy_num'] . '件', 'result' => '']);
                 }
                 if (!empty($this->goods['price_ladder'])) {
@@ -848,7 +850,7 @@ class CartLogic extends Model
                 *,CASE type WHEN 1 THEN goods_price - member_goods_price ELSE '0' END AS use_point,
                 CASE use_integral > 0 WHEN 1 THEN 1 ELSE 0 END AS can_integral
                 ")
-            ->with('promGoods,goods')
+            ->with('promGoods,goods,specGoods')
             ->where($cartWhere)
             ->order('id desc')
             ->select();  // 获取购物车商品
@@ -1578,5 +1580,30 @@ class CartLogic extends Model
             default:
                 return ['status' => 1, 'type_value' => $promInfo['title']];
         }
+    }
+
+    /**
+     * 检查下单商品
+     * @param $cartList
+     * @return array
+     */
+    public function checkCartGoods($cartList)
+    {
+        $hasPmd = false;
+        $hasAbroad = false;
+        foreach ($cartList as $cart) {
+            if ($cart['goods']['is_abroad'] == 0) {
+                $hasPmd = true;
+            } else {
+                $hasAbroad = true;
+            }
+        }
+        if ($hasPmd && $hasAbroad) {
+            return ['status' => 0, 'msg' => '海外购商品请分开结算'];
+        }
+        if (!$hasPmd && $hasAbroad) {
+            return ['status' => 2];
+        }
+        return ['status' => 1];
     }
 }

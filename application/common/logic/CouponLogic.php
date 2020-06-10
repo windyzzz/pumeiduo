@@ -22,6 +22,53 @@ class CouponLogic extends Model
     private $order;
 
     /**
+     * 获取优惠券展示描述
+     * @param $coupon
+     * @param $goodsName
+     * @param $cateName
+     * @return array
+     */
+    public function couponTitleDesc($coupon, $goodsName = '', $cateName = '')
+    {
+        $title = '';
+        $desc = '';
+        $goodsName = !empty($goodsName) ? $goodsName : $coupon['goods_name'];
+        $cateName = !empty($cateName) ? $cateName : $coupon['cat_name'];
+        switch ($coupon['use_type']) {
+            case 0:
+                // 全店通用
+                $title = '全场商品满' . floatval($coupon['condition']) . '可用';
+                $desc = '全场商品满' . floatval($coupon['condition']) . '减' . floatval($coupon['money']);
+                break;
+            case 1:
+                // 指定商品
+                $title = '￥' . floatval($coupon['money']) . '仅限' . $goodsName . '可用';
+                $desc = '仅限' . $goodsName . '可用';
+                break;
+            case 2:
+                // 指定分类可用
+                $title = $cateName . '满' . floatval($coupon['condition']) . '可用';
+                $desc = $cateName . '满' . floatval($coupon['condition']) . '可用';
+                break;
+            case 4:
+                // 指定商品折扣券
+                $title = '指定商品满' . floatval($coupon['condition']) . '享受' . floatval($coupon['money']) . '折';
+                $desc = '指定商品满' . floatval($coupon['condition']) . '享受' . floatval($coupon['money']) . '折';
+                break;
+            case 5:
+                // 兑换商品券
+                $title = $coupon['name'];
+                $desc = '购买任意商品可用';
+                break;
+        }
+        if (!$title || !$desc) {
+            return [];
+        } else {
+            return ['title' => $title, 'desc' => $desc];
+        }
+    }
+
+    /**
      * 设置order模型.
      *
      * @param $order
@@ -270,6 +317,7 @@ class CouponLogic extends Model
                                     if (in_array($goodsCouponItem['goods_category_id'], $goods_cat_id)) {
                                         $tmp = $userCouponItem;
                                         $tmp['coupon'] = array_merge($couponItem->append(['use_type_title'])->toArray(), $goodsCouponItem->toArray());
+                                        $tmp['cat_name'] = M('goods_category')->where(['id' => $tmp['coupon']['goods_category_id']])->value('name');
                                         $userCouponArr[] = $tmp;
                                         break;
                                     }
@@ -277,7 +325,7 @@ class CouponLogic extends Model
                             }
                             break;
                         case 4:
-                            //
+                            // 折扣券
                             if (!empty($couponItem['goods_coupon'])) {
                                 foreach ($couponItem['goods_coupon'] as $goodsCoupon => $goodsCouponItem) {
                                     if (in_array($goodsCouponItem['goods_id'], $goods_ids)) {
@@ -290,7 +338,7 @@ class CouponLogic extends Model
                             }
                             break;
                         case 5:
-                            //
+                            // 兑换券
                             break;
                         default:
                             return [];

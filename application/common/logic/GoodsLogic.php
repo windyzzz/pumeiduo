@@ -12,6 +12,7 @@
 namespace app\common\logic;
 
 use app\common\model\Goods;
+use app\common\util\TpshopException;
 use think\Db;
 use think\Model;
 
@@ -965,14 +966,21 @@ class GoodsLogic extends Model
      * @param $sort
      * @param $page
      * @param null $userId
+     * @param array $whereExt
      * @return array
      */
-    public function getGoodsList($filter_goods_id, $sort, $page, $userId = null)
+    public function getGoodsList($filter_goods_id, $sort, $page, $userId = null, $whereExt = [])
     {
+        $where = [
+            'is_abroad' => 0
+        ];
+        if (isset($whereExt['is_abroad'])) {
+            $where['is_abroad'] = $whereExt['is_abroad'];
+        }
         $sort['sort'] = 'desc';
         $sort['goods_id'] = 'desc';
         // 商品列表
-        $goodsList = Db::name('goods')->where('goods_id', 'in', $filter_goods_id)
+        $goodsList = Db::name('goods')->where('goods_id', 'in', $filter_goods_id)->where($where)
             ->field('goods_id, cat_id, extend_cat_id, goods_sn, goods_name, goods_type, brand_id, store_count, comment_count, goods_remark,
                 market_price, shop_price, cost_price, give_integral, exchange_integral, original_img, limit_buy_num, trade_type,
                 is_on_sale, is_free_shipping, is_recommend, is_new, is_hot, sale_type')
@@ -1595,5 +1603,104 @@ class GoodsLogic extends Model
             'log_data' => !empty($data) ? json_encode($data) : '',
             'add_time' => NOW_TIME
         ]);
+    }
+
+    /**
+     * 获取订单商品数据
+     * @param $cartLogic
+     * @param $goodsId
+     * @param $itemId
+     * @param $goodsNum
+     * @param $payType
+     * @param $cartIds
+     * @param $isApp
+     * @param $passAuth
+     * @return array
+     */
+    public function getOrderGoodsData($cartLogic, $goodsId, $itemId, $goodsNum, $payType, $cartIds, $isApp, $passAuth = false)
+    {
+        if (!empty($goodsId) && empty(trim($cartIds))) {
+            /*
+             * 单个商品下单
+             */
+            $cartLogic->setGoodsModel($goodsId);
+            $cartLogic->setSpecGoodsPriceModel($itemId);
+            $cartLogic->setGoodsBuyNum($goodsNum);
+            $cartLogic->setType($payType);
+            $cartLogic->setCartType(0);
+            try {
+                $buyGoods = $cartLogic->buyNow($isApp, $passAuth);
+            } catch (TpshopException $tpE) {
+                $error = $tpE->getErrorArr();
+                return ['status' => 0, 'msg' => $error['msg']];
+            }
+            return ['status' => 1, 'result' => [$buyGoods]];
+        } elseif (empty($goodsId) && !empty(trim($cartIds))) {
+            /*
+             * 购物车下单
+             */
+            $cartIds = explode(',', $cartIds);
+            foreach ($cartIds as $k => $v) {
+                $data = [];
+                $data['id'] = $v;
+                $data['selected'] = 1;
+                $cartIds[$k] = $data;
+            }
+            $result = $cartLogic->AsyncUpdateCarts($cartIds);
+            if (1 != $result['status']) {
+                return ['status' => 0, 'msg' => $result['msg']];
+            }
+            if (0 == $cartLogic->getUserCartOrderCount()) {
+                return ['status' => 0, 'msg' => '你的购物车没有选中商品'];
+            }
+            $cartList = $cartLogic->getCartList(1); // 获取用户选中的购物车商品
+            $vipGoods = [];
+            foreach ($cartList as $key => $cart) {
+                if ($cart['prom_type'] == 0) {
+                    if ($cart['goods']['least_buy_num'] != 0 && $cart['goods']['least_buy_num'] > $cart['goods_num']) {
+                        return ['status' => 0, 'msg' => $cart['goods']['goods_name'] . '至少购买' . $cart['goods']['least_buy_num'] . '件'];
+                    }
+                }
+                if ($cart['goods']['zone'] == 3 && $cart['goods']['distribut_id'] != 0) {
+                    $vipGoods[] = $cart['goods']['goods_id'];
+                }
+                if ($cart['prom_type'] == 3) {
+                    // 商品促销优惠
+                    $cartList[$key]['member_goods_price'] = bcsub($cart['goods_price'], $cart['use_integral'], 2);
+                }
+            }
+            if (count($vipGoods) > 1) {
+                return ['status' => 0, 'msg' => '不能一次购买两种或以上VIP升级套餐'];
+            }
+            return ['status' => 1, 'result' => $cartList];
+        } else {
+            /*
+             * 单个商品 + 购物车 下单
+             */
+            return ['status' => 0, 'msg' => '暂不支持此下单方式'];
+        }
+    }
+
+    /**
+     * 根据地址获取商品信息
+     * @param $goodsId
+     * @param $itemId
+     * @param $districtId
+     * @return array
+     */
+    public function addressGoodsInfo($goodsId, $itemId, $districtId)
+    {
+        $specGoodsInfo = M('spec_goods_price')->where(['goods_id' => $goodsId, 'item_id' => $itemId])->find();
+        if (!empty($specGoodsInfo)) {
+            $returnData = [
+                'store_count' => $specGoodsInfo['store_count']
+            ];
+        } else {
+            $goodsInfo = M('goods')->where(['goods_id' => $goodsId])->find();
+            $returnData = [
+                'store_count' => $goodsInfo['store_count']
+            ];
+        }
+        return $returnData;
     }
 }

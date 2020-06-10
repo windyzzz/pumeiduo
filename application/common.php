@@ -1039,15 +1039,16 @@ function accountLog($user_id, $user_money = 0.00, $pay_points = 0.00, $desc = ''
  * 会员升级日志
  * 参数示例.
  *
- * @param type $order_sn 订单编号
- * @param type $user_id 用户ID
- * @param type $new_level 升级的分销等级
- * @param type $old_level 之前的分销等级
- * @param type $type 用户id 升级类型
+ * @param string $order_sn 订单编号
+ * @param int $user_id 用户ID
+ * @param int $new_level 升级的分销等级
+ * @param int $old_level 之前的分销等级
+ * @param int $type 升级类型
+ * @param float $upMoney 升级金额
  *
  * @return bool
  */
-function logDistribut($order_sn, $user_id, $new_level, $old_level, $type = 1)
+function logDistribut($order_sn, $user_id, $new_level, $old_level, $type = 1, $upMoney = 0.00)
 {
     $log_info = [
         'user_id' => $user_id,
@@ -1056,6 +1057,7 @@ function logDistribut($order_sn, $user_id, $new_level, $old_level, $type = 1)
         'order_sn' => $order_sn,
         'type' => $type,
         'add_time' => time(),
+        'upgrade_money' => $upMoney,
     ];
 
     return M('distribut_log')->add($log_info);
@@ -1126,11 +1128,20 @@ function get_user_address_list_new($user_id, $default = false, $addressId = 0)
         ->join('region2 r1', 'r1.id = ua.province', 'LEFT')
         ->join('region2 r2', 'r2.id = ua.city', 'LEFT')
         ->join('region2 r3', 'r3.id = ua.district', 'LEFT')
-        ->where($where)->order('is_default desc')->limit(20)
-        ->field('address_id, consignee, mobile, province, r1.name province_name, city, r2.name city_name, district, r3.name district_name,
-        address, ua.zipcode, is_default, is_pickup, tabs')
+        ->where($where)->limit(20)
+        ->field('ua.*, r1.name province_name, city, r2.name city_name, district, r3.name district_name')
         ->order('ua.is_default DESC, ua.address_id DESC')
         ->select();
+    if ($addressId && empty($lists)) {
+        $lists = Db::name('user_address ua')
+            ->join('region2 r1', 'r1.id = ua.province', 'LEFT')
+            ->join('region2 r2', 'r2.id = ua.city', 'LEFT')
+            ->join('region2 r3', 'r3.id = ua.district', 'LEFT')
+            ->where(['user_id' => $user_id])->limit(20)
+            ->field('ua.*, r1.name province_name, city, r2.name city_name, district, r3.name district_name')
+            ->order('ua.is_default DESC, ua.address_id DESC')
+            ->select();
+    }
 
     return $lists;
 }
@@ -1691,7 +1702,7 @@ function order_give($order)
  *
  * @return array
  */
-function get_goods_category_tree()
+function get_goods_category_tree($isApp = false)
 {
     $tree = $arr = $result = [];
     $cat_list = M('goods_category')
@@ -1700,11 +1711,19 @@ function get_goods_category_tree()
         ->join('__AD_POSITION__ p', 'c.id = p.category_id', 'LEFT')
         // ->cache(true)
         ->where(['is_show' => 1])
-        ->order('sort_order desc')
+        ->order('sort_order desc, id asc')
         ->select(); //所有分类
     if ($cat_list) {
+        $abroadCateId = 0;  // 海外购分类
         // 分类广告
         foreach ($cat_list as $ck => $cv) {
+            if ($cv['parent_id'] == 0 && strstr($cv['name'], '海外购')) {
+                if (!$isApp) {
+                    unset($cat_list[$ck]);
+                    continue;
+                }
+                $abroadCateId = $cv['id'];
+            }
             $cat_list[$ck]['ad_list'] = null;
             if ($cv['position_id'] > 0) {
                 $ad_list = M('Ad')->where('pid', $cv['position_id'])->select();
@@ -1720,6 +1739,11 @@ function get_goods_category_tree()
                 $arr[$val['parent_id']][] = $val;
             }
             if (3 == $val['level']) {
+                if ($abroadCateId != 0 && strstr($val['parent_id_path'], $abroadCateId . '')) {
+                    $val['is_abroad'] = 1;
+                } else {
+                    $val['is_abroad'] = 0;
+                }
                 $crr[$val['parent_id']][] = $val;
             }
         }

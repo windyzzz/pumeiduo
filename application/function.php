@@ -523,6 +523,11 @@ function check_password($password, $type = 'login')
     }
 }
 
+/**
+ * 检查身份证格式
+ * @param $id
+ * @return bool
+ */
 function check_id_card($id)
 {
     $id = strtoupper($id);
@@ -531,20 +536,18 @@ function check_id_card($id)
     if (!preg_match($regx, $id)) {
         return false;
     }
-    if (15 == strlen($id)) { //检查15位
+    if (15 == strlen($id)) {
+        //检查15位
         $regx = "/^(\d{6})+(\d{2})+(\d{2})+(\d{2})+(\d{3})$/";
-
         @preg_match($regx, $id, $arr_split);
         //检查生日日期是否正确
         $dtm_birth = '19' . $arr_split[2] . '/' . $arr_split[3] . '/' . $arr_split[4];
         if (!strtotime($dtm_birth)) {
             return false;
         }
-
         return true;
     }
     //检查18位
-
     $regx = "/^(\d{6})+(\d{4})+(\d{2})+(\d{2})+(\d{3})([0-9]|X)$/";
     @preg_match($regx, $id, $arr_split);
     $dtm_birth = $arr_split[2] . '/' . $arr_split[3] . '/' . $arr_split[4];
@@ -1258,6 +1261,11 @@ function rebate_status($status)
     return $rebate_status[$status];
 }
 
+/**
+ * 检查身份证格式
+ * @param $idcard
+ * @return bool
+ */
 function checkIdCard($idcard)
 {
     $preg_card = "/^[1-9]\d{5}[1-9]\d{3}((0\d)|(1[0-2]))(([0|1|2]\d)|3[0-1])\d{3}([0-9]|X)$/i";
@@ -1623,6 +1631,119 @@ function hideStr($string, $bengin = 0, $len = 4, $type = 0, $glue = '')
 }
 
 /**
+ * <<<<<<< HEAD
+ * RGB转十六进制
+ * @param string $rgb RGB颜色的字符串 如：rgb(255,255,255);
+ * @return string 十六进制颜色值 如：#FFFFFF
+ */
+function RGBToHex($rgb)
+{
+    $regexp = "/^rgb\(([0-9]{0,3})\,\s*([0-9]{0,3})\,\s*([0-9]{0,3})\)/";
+    preg_match($regexp, $rgb, $match);
+    array_shift($match);
+    $hexColor = "#";
+    $hex = array('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F');
+    for ($i = 0; $i < 3; $i++) {
+        $r = null;
+        $c = $match[$i];
+        $hexAr = array();
+        while ($c > 16) {
+            $r = $c % 16;
+            $c = ($c / 16) >> 0;
+            array_push($hexAr, $hex[$r]);
+        }
+        array_push($hexAr, $hex[$c]);
+        $ret = array_reverse($hexAr);
+        $item = implode('', $ret);
+        $item = str_pad($item, 2, '0', STR_PAD_LEFT);
+        $hexColor .= $item;
+    }
+    return $hexColor;
+}
+
+/**
+ * 十六进制转RGB
+ * @param string $hexColor
+ * @return array RBG颜色值
+ */
+function HexToRGB($hexColor)
+{
+    $color = str_replace('#', '', $hexColor);
+    if (strlen($color) > 3) {
+        $rgb = array(
+            'r' => hexdec(substr($color, 0, 2)),
+            'g' => hexdec(substr($color, 2, 2)),
+            'b' => hexdec(substr($color, 4, 2))
+        );
+    } else {
+        $color = $hexColor;
+        $r = substr($color, 0, 1) . substr($color, 0, 1);
+        $g = substr($color, 1, 1) . substr($color, 1, 1);
+        $b = substr($color, 2, 1) . substr($color, 2, 1);
+        $rgb = array(
+            'r' => hexdec($r),
+            'g' => hexdec($g),
+            'b' => hexdec($b)
+        );
+    }
+    return $rgb;
+}
+
+/**
+ * 十六精致转RGBA
+ * @param $color
+ * @param integer $opacity 透明度
+ * @return array
+ */
+function HexToRGBA($color, $opacity = 0)
+{
+    $default = [
+        'r' => 0,
+        'g' => 0,
+        'b' => 0,
+    ];
+    // Return default if no color provided
+    if (empty($color))
+        return $default;
+
+    // Sanitize $color if "#" is provided
+    if ($color[0] == '#') {
+        $color = substr($color, 1);
+    }
+
+    // Check if color has 6 or 3 characters and get values
+    if (strlen($color) == 6) {
+        $hex = array($color[0] . $color[1], $color[2] . $color[3], $color[4] . $color[5]);
+    } elseif (strlen($color) == 3) {
+        $hex = array($color[0] . $color[0], $color[1] . $color[1], $color[2] . $color[2]);
+    } else {
+        return $default;
+    }
+
+    // Convert hexadec to rgb
+    $rgb = array_map('hexdec', $hex);
+
+    if ($opacity) {
+        if (abs($opacity) > 1) $opacity = 1.0;
+        array_push($rgb, $opacity);
+        $output = [
+            'r' => $rgb[0],
+            'g' => $rgb[1],
+            'b' => $rgb[2],
+            'a' => $rgb[3]
+        ];
+    } else {
+        $output = [
+            'r' => $rgb[0],
+            'g' => $rgb[1],
+            'b' => $rgb[2],
+        ];
+    }
+
+    return $output;
+}
+
+/**
  * 检查银行卡卡号（简单）
  * @param $card
  * @return bool
@@ -1651,4 +1772,44 @@ function checkBankCard($card)
     $total -= $last_n;
     $total *= 9;
     return $last_n == ($total % 10);
+}
+
+/**
+ * 获取xls(x)文件内容
+ * @param $file
+ * @return array
+ * @throws PHPExcel_Exception
+ * @throws PHPExcel_Reader_Exception
+ */
+function getXlsInfo($file)
+{
+    include_once "plugins/PHPExcel.php";
+    $objRead = new \PHPExcel_Reader_Excel2007();   //建立reader对象
+    if (!$objRead->canRead($file)) {
+        $objRead = new \PHPExcel_Reader_Excel5();
+        if (!$objRead->canRead($file)) {
+            die('No Excel!');
+        }
+    }
+
+    $cellName = array('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'AA', 'AB', 'AC', 'AD', 'AE', 'AF', 'AG', 'AH', 'AI', 'AJ', 'AK', 'AL', 'AM', 'AN', 'AO', 'AP', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AV', 'AW', 'AX', 'AY', 'AZ');
+
+    $obj = $objRead->load($file);  //建立excel对象
+    $currSheet = $obj->getSheet(0);   //获取指定的sheet表
+    $columnH = $currSheet->getHighestColumn();   //取得最大的列号
+    $columnCnt = array_search($columnH, $cellName);
+    $rowCnt = $currSheet->getHighestRow();   //获取总行数
+
+    $data = array();
+    for ($_row = 1; $_row <= $rowCnt; $_row++) {  //读取内容
+        for ($_column = 0; $_column <= $columnCnt; $_column++) {
+            $cellId = $cellName[$_column] . $_row;
+            $cellValue = $currSheet->getCell($cellId)->getValue();
+            if ($cellValue instanceof \PHPExcel_RichText) {   //富文本转换字符串
+                $cellValue = $cellValue->__toString();
+            }
+            $data[$_row][$cellName[$_column]] = $cellValue;
+        }
+    }
+    return $data;
 }
