@@ -1719,6 +1719,10 @@ class Goods extends Base
         $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->select();
         $endTime = '0';
         foreach ($flashSaleGoods as $k => $v) {
+            // 缩略图
+            if (!strstr($v['original_img'], 'http') && !strstr($v['original_img'], 'https')) {
+                $flashSaleGoods[$k]['original_img'] = SITE_URL . $v['original_img'];
+            }
             // 最近的结束时间
             if ($k == 0) {
                 $endTime = $v['end_time'];
@@ -1726,23 +1730,8 @@ class Goods extends Base
             if ($endTime >= $v['end_time']) {
                 $endTime = $v['end_time'];
             }
-            // 商品参加活动数限制
-            if ($v['goods_num'] <= $v['buy_num'] || $v['goods_num'] <= $v['order_num']) {
-                unset($flashSaleGoods[$k]);
-                continue;
-            }
-            // 缩略图
-            if (!strstr($v['original_img'], 'http') && !strstr($v['original_img'], 'https')) {
-                $flashSaleGoods[$k]['original_img'] = SITE_URL . $v['original_img'];
-            }
-            $flashSaleGoods[$k]['key_name'] = $v['key_name'] ?? '';
-            // 商品参加活动数限制
-            if ($v['goods_num'] <= $v['buy_num'] || $v['goods_num'] <= $v['order_num']) {
-                unset($flashSaleGoods[$k]);
-                continue;
-            }
-            $flashSaleGoods[$k]['key_name'] = $v['key_name'] ?? '';
             unset($flashSaleGoods[$k]['end_time']);
+            $flashSaleGoods[$k]['key_name'] = $v['key_name'] ?? '';
             // 是否已售完
             if ($v['goods_num'] <= $v['buy_num']) {
                 $flashSaleGoods[$k]['sold_out'] = 1;
