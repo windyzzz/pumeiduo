@@ -249,7 +249,7 @@ class PlaceOrder
             'coupon_id' => $this->pay->getCouponId(),
             'source' => $source,
             'order_pv' => $this->pay->getOrderPv(),
-            'id_card' => $this->userIdCard,
+            'id_card' => $this->userIdCard ?? '',
             'order_type' => $this->orderType,
         ];
         if (!empty($this->userAddress)) {
