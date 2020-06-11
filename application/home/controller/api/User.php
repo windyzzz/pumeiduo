@@ -2001,7 +2001,8 @@ class User extends Base
         $user_data['distribut_level'] = $current_user['distribut_level'] > $bind_user['distribut_level'] ? $current_user['distribut_level'] : $bind_user['distribut_level'];
         if ($user_data['distribut_level'] > 1) {
             $user_data['is_distribut'] = 1;
-        } else {
+        }
+        if ($bind_user['distribut_level'] == 1) {
             // 合并账号是普通会员才变更父级
             $user_data['invite_uid'] = $current_user['will_invite_uid'] != 0 ? $current_user['will_invite_uid'] : $current_user['invite_uid'];
             $user_data['invite_time'] = $current_user['will_invite_uid'] != 0 ? time() : $current_user['invite_time'];

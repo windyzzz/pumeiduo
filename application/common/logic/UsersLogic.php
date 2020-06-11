@@ -2990,7 +2990,8 @@ class UsersLogic extends Model
         $user_data['distribut_level'] = $currentUser['distribut_level'] > $bindUser['distribut_level'] ? $currentUser['distribut_level'] : $bindUser['distribut_level'];
         if ($user_data['distribut_level'] > 1) {
             $user_data['is_distribut'] = 1;
-        } else {
+        }
+        if ($bindUser['distribut_level'] == 1) {
             // 合并账号是普通会员才变更父级
             $user_data['invite_uid'] = $currentUser['will_invite_uid'] != 0 ? $currentUser['will_invite_uid'] : $currentUser['invite_uid'];
             $user_data['invite_time'] = $currentUser['will_invite_uid'] != 0 ? time() : $currentUser['invite_time'];

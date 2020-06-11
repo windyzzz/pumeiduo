@@ -427,7 +427,8 @@ class User extends Base
                 $user_data['distribut_level'] = $c['distribut_level'] > $user['distribut_level'] ? $c['distribut_level'] : $user['distribut_level'];
                 if ($user_data['distribut_level'] > 1) {
                     $user_data['is_distribut'] = 1;
-                } else {
+                }
+                if ($user['distribut_level'] == 1) {
                     // 合并账号是普通会员才变更父级
                     $user_data['invite_uid'] = $c['will_invite_uid'] != 0 ? $c['will_invite_uid'] : $c['invite_uid'];
                     $user_data['invite_time'] = $c['will_invite_uid'] != 0 ? time() : $c['invite_time'];
