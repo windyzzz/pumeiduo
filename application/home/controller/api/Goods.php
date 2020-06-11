@@ -583,7 +583,7 @@ class Goods extends Base
             // 促销
             $goods['promotion'] = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
                 ->where(['gtg.goods_id' => $goods_id, 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
-                ->field('pg.id prom_id, pg.type, pg.title')->select();
+                ->field('pg.id prom_id, pg.type, pg.title, pg.expression')->select();
             // 优惠券
             $ext['not_type_value'] = [4, 5];
             $couponLogic = new CouponLogic();
@@ -648,6 +648,23 @@ class Goods extends Base
                 $goods['coupon'][$k]['desc'] = $res['desc'];
             }
             $goods['coupon'] = array_values($goods['coupon']);
+        }
+        // 再处理显示金额
+        if (!empty($goods['promotion'])) {
+            foreach ($goods['promotion'] as $promotion) {
+                switch ($promotion['type']) {
+                    case 0:
+                        // 打折
+                        $goods['shop_price'] = bcdiv(bcmul($goods['shop_price'], $promotion['expression'], 2), 100, 2);
+                        $goods['exchange_price'] = bcdiv(bcmul($goods['exchange_price'], $promotion['expression'], 2), 100, 2);
+                        break;
+                    case 1:
+                        // 减价
+                        $goods['shop_price'] = bcsub($goods['shop_price'], $promotion['expression'], 2);
+                        $goods['exchange_price'] = bcsub($goods['exchange_price'], $promotion['expression'], 2);
+                        break;
+                }
+            }
         }
         unset($goods['zone']);
 
