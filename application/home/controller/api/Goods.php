@@ -804,7 +804,9 @@ class Goods extends Base
         $goodsInfo['goods_images_list'] = M('GoodsImages')->where('goods_id', $goods_id)->getField('image_url', true);
         if (!empty($goodsInfo['goods_images_list'])) {
             foreach ($goodsInfo['goods_images_list'] as &$image) {
-                $image = SITE_URL . $image;
+                if (!strstr($image, 'http') && !strstr($image, 'https')) {
+                    $image = SITE_URL . $image;
+                }
             }
         }
         // 判断商品性质
@@ -850,8 +852,8 @@ class Goods extends Base
         if ($goods['zone'] != 3) {
             // 促销
             $promotion = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
-                    ->where(['gtg.goods_id' => $goods_id, 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
-                    ->field('pg.id prom_id, pg.title')->order('expression desc')->select();
+                ->where(['gtg.goods_id' => $goods_id, 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
+                ->field('pg.id prom_id, pg.title')->order('expression desc')->select();
             // 优惠券
             $ext['nature'] = 1;
             $ext['not_type_value'] = [4, 5];
@@ -919,6 +921,11 @@ class Goods extends Base
                         unset($couponList[$k]);
                         continue 2;
                 }
+                $couponList[$k]['goods_id'] = $coupon['goods_id'] ?? '';
+                $couponList[$k]['goods_name'] = $coupon['goods_name'] ?? '';
+                $couponList[$k]['original_img'] = $coupon['original_img'] ?? '';
+                $couponList[$k]['cat_id'] = $coupon['cat_id'] ?? '';
+                $couponList[$k]['cat_name'] = $coupon['cat_name'] ?? '';
                 $couponList[$k]['title'] = $title;
                 $couponList[$k]['desc'] = $desc;
             }
