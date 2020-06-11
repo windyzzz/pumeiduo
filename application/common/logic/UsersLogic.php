@@ -2991,8 +2991,8 @@ class UsersLogic extends Model
         if ($user_data['distribut_level'] > 1) {
             $user_data['is_distribut'] = 1;
         }
-        if ($bindUser['distribut_level'] == 1) {
-            // 合并账号是普通会员才变更父级
+        if ($bindUser['distribut_level'] != 3) {
+            // 合并账号不是SVIP才变更父级
             $user_data['invite_uid'] = $currentUser['will_invite_uid'] != 0 ? $currentUser['will_invite_uid'] : $currentUser['invite_uid'];
             $user_data['invite_time'] = $currentUser['will_invite_uid'] != 0 ? time() : $currentUser['invite_time'];
             $user_data['first_leader'] = $currentUser['first_leader'];

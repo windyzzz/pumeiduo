@@ -2002,8 +2002,8 @@ class User extends Base
         if ($user_data['distribut_level'] > 1) {
             $user_data['is_distribut'] = 1;
         }
-        if ($bind_user['distribut_level'] == 1) {
-            // 合并账号是普通会员才变更父级
+        if ($bind_user['distribut_level'] != 3) {
+            // 合并账号不是SVIP才变更父级
             $user_data['invite_uid'] = $current_user['will_invite_uid'] != 0 ? $current_user['will_invite_uid'] : $current_user['invite_uid'];
             $user_data['invite_time'] = $current_user['will_invite_uid'] != 0 ? time() : $current_user['invite_time'];
             $user_data['first_leader'] = $current_user['first_leader'];
