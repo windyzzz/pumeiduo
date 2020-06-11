@@ -845,10 +845,9 @@ class Goods extends Base
             $goodsInfo['buy_least'] = '0';
         }
         // 商品促销、优惠券
-        if ($goods['zone'] == 3) {
-            $promotion = [];
-            $couponList = [];
-        } else {
+        $promotion = [];
+        $couponList = [];
+        if ($goods['zone'] != 3) {
             // 促销
             $promotion = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
                     ->where(['gtg.goods_id' => $goods_id, 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
@@ -924,6 +923,23 @@ class Goods extends Base
                 $couponList[$k]['desc'] = $desc;
             }
             $couponList = array_values($couponList);
+        }
+        // 海外购物流流程图
+        $goodsInfo['abroad_freight_process'] = [
+            'url' => '',
+            'width' => '',
+            'height' => ''
+        ];
+        if ($goods['is_abroad'] == 1) {
+            $process = M('abroad_config')->where(['type' => 'freight_process'])->value('content');
+            if (!empty($process)) {
+                $imageSize = getimagesize(SITE_URL . $process);
+                $goodsInfo['abroad_freight_process'] = [
+                    'url' => SITE_URL . $process,
+                    'width' => $imageSize[0] . '',
+                    'height' => $imageSize[1] . ''
+                ];
+            }
         }
         // 组装数据
         $result = [
