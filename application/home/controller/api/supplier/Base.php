@@ -39,8 +39,11 @@ class Base
         $data['appid'] = $this->appId;
         $res = json_decode(httpRequest($this->url . $api, 'POST', $data), true);
         if (in_array($res['code'], ['200', '00001'])) {
-            $resData = json_decode($res['data'], true);
-            return $resData;
+            if (is_array($res['data'])) {
+                return $res['data'];
+            } else {
+                return json_decode($res['data'], true);
+            }
         } else {
             return [];
         }

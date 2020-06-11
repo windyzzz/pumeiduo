@@ -748,7 +748,6 @@ class Goods extends Base
             'start_time' => '0',
             'end_time' => '0',
             'now_time' => NOW_TIME,
-            'freight_free' => tpCache('shopping.freight_free'),     // 全场满多少免运费
             'share_goods_image' => !empty($originalImg) ? $originalImg : '',    // 商品分享图
             'share_qr_code' => '',    // 分享二维码
             'tabs' => []
@@ -790,7 +789,7 @@ class Goods extends Base
             if (!file_exists(SITE_URL . $filename)) {
                 $this->scerweima($this->user_id, $goods['goods_id']);
             }
-            $goodsInfo['qr_code'] = SITE_URL . $filename;
+            $goodsInfo['share_qr_code'] = SITE_URL . $filename;
         } else {
             $goodsInfo['integral_pv'] = '';
             $goodsInfo['commission'] = '';
@@ -955,6 +954,7 @@ class Goods extends Base
             'coupon' => $couponList,
             'is_enshrine' => $isEnshrine ?? 0,              // 是否收藏
             'can_cart' => $goods['zone'] == 3 ? 0 : 1,      // 能否加入购物车
+            'freight_free' => tpCache('shopping.freight_free'),     // 全场满多少免运费
         ];
         return json(['status' => 1, 'msg' => 'success', 'result' => $result]);
     }
