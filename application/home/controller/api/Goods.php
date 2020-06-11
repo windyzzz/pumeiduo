@@ -576,14 +576,17 @@ class Goods extends Base
                 }
             }
         }
-        if ($zone == 3) {
-            $goods['promotion'] = [];
-            $goods['coupon'] = [];
-        } else {
+        $goods['promotion'] = [];
+        $goods['coupon'] = [];
+        if ($zone != 3) {
             // 促销
             $goods['promotion'] = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
                 ->where(['gtg.goods_id' => $goods_id, 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
-                ->field('pg.id prom_id, pg.type, pg.title, pg.expression')->select();
+                ->field('pg.id prom_id, pg.type, pg.title, pg.expression');
+            if ($this->user_id) {
+                $goods['promotion'] = $goods['promotion']->where(['pg.group' => ['LIKE', '%' . $this->user['distribut_level'] . '%']]);
+            }
+            $goods['promotion'] = $goods['promotion']->select();
             // 优惠券
             $ext['not_type_value'] = [4, 5];
             $couponLogic = new CouponLogic();
