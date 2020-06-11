@@ -851,7 +851,7 @@ class Goods extends Base
             // 促销
             $promotion = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
                     ->where(['gtg.goods_id' => $goods_id, 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
-                    ->field('pg.id prom_id, pg.title')->order('expression desc')->find() ?? [];
+                    ->field('pg.id prom_id, pg.title')->order('expression desc')->select();
             // 优惠券
             $ext['nature'] = 1;
             $ext['not_type_value'] = [4, 5];
