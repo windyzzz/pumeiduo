@@ -428,12 +428,15 @@ class Tb extends Controller
 
     function save_stock($goods)
     {
+        $isSupply = M('goods')->where(array('goods_sn' => $goods['goods_sn']))->value('is_supply');
+        if ($isSupply == 1) {
+            return true;
+        }
         $spec_goods_price = $goods['spec_goods_price'];
 
         //更新主商品库存
         M('goods')->where(array('goods_sn' => $goods['goods_sn']))->data(array('store_count' => $goods['stock']))->save();
-
-
+        
         if ($spec_goods_price) {
             //获取旧规格
             foreach ($spec_goods_price as $key => $val) {
@@ -585,12 +588,14 @@ class Tb extends Controller
             'goods_content' => $goods['goods_content'],
             'original_img' => $goods['original_img'],
             'video' => $goods['video'],
-            'store_count' => $goods['store_count'],
             'supplier_goods_id' => $goods['supplier_goods_id'],
             'is_abroad' => $goods['is_abroad'],
             'is_free_shipping' => $isSupply
         );
-
+        if ($isSupply == 1) {
+            // 供应链商品直接更新库存
+            $goods_data['store_count'] = $goods['store_count'];
+        }
         if ($goods['is_one_send'] == 0) {
             $goods_data['goods_type'] = $goods['goods_type'];//模型
         }
@@ -621,7 +626,7 @@ class Tb extends Controller
 
         //规格
         $spec_goods_price_old = M('spec_goods_price')->where(array('goods_id' => $goods_id))->getField('key,key_name,item_sn');
-        if ($goods['spec_goods_price']) {
+        if (isset($goods['spec_goods_price'])) {
             //获取旧规格
             foreach ($goods['spec_goods_price'] as $key => $val) {
                 $save_data = array(
@@ -654,7 +659,7 @@ class Tb extends Controller
 
         //删除旧套组
         M('goods_series')->where(array('goods_id' => $goods_id))->delete();
-        if ($goods['tao_arr']) {
+        if (isset($goods['tao_arr'])) {
             foreach ($goods['tao_arr'] as $key => $val) {
                 //获取商品id  规格id
                 $goods_sn = $val['goods_sn'];
@@ -675,7 +680,7 @@ class Tb extends Controller
         }
 
         //商品图片
-        if ($goods['goods_images']) {
+        if (isset($goods['goods_images'])) {
             M('goods_images')->where(['goods_id' => $goods_id])->delete();
             $goodsImagesData = [];
             foreach ($goods['goods_images'] as $image) {
