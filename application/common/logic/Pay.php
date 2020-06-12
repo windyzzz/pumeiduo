@@ -295,11 +295,10 @@ class Pay
             // 子订单的优惠分摊（订单优惠 + 优惠券优惠）
             $this->order1['prom_price'] = bcmul(($this->order1['goods_price'] / bcadd($this->order1['goods_price'], $this->order2['goods_price'], 2)), $promAmount, 2);
             $this->order2['prom_price'] = bcmul(($this->order2['goods_price'] / bcadd($this->order1['goods_price'], $this->order2['goods_price'], 2)), $promAmount, 2);
-            // 子订单的运费分摊
-//            $this->order1['']
             // 子订单的电子币抵扣分摊
-            
-            exit();
+            $this->order1['user_electronic'] = bcdiv($this->userElectronic, 2 ,2);
+            $this->order2['user_electronic'] = bcdiv($this->userElectronic, 2 ,2);
+
         }
     }
 

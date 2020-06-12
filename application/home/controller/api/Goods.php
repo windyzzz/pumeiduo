@@ -747,7 +747,7 @@ class Goods extends Base
         }
         $originalImg = !strstr($goods['original_img'], 'http') && !strstr($goods['original_img'], 'https') ? SITE_URL . $goods['original_img'] : $goods['original_img'];
         $goodsInfo = [
-            'type' => 'normal',
+            'goods_type' => 'normal',
             'goods_id' => $goods['goods_id'],
             'goods_sn' => $goods['goods_sn'],
             'goods_name' => $goods['goods_name'],
@@ -837,7 +837,7 @@ class Goods extends Base
         if (!empty($flashSale)) {
             $flashSale = $flashSale[0];
             // 秒杀商品
-            $goodsInfo['type'] = 'flash_sale';
+            $goodsInfo['goods_type'] = 'flash_sale';
             $goodsInfo['exchange_integral'] = $flashSale['can_integral'] == 0 ? '0' : $goods['exchange_integral'];
             $goodsInfo['exchange_price'] = bcsub($flashSale['price'], $goodsInfo['exchange_integral'], 2);
             $goodsInfo['buy_limit'] = $flashSale['buy_limit'];
@@ -852,7 +852,7 @@ class Goods extends Base
             if (!empty($groupBuy)) {
                 $groupBuy = $groupBuy[0];
                 // 团购商品
-                $goodsInfo['type'] = 'group_buy';
+                $goodsInfo['goods_type'] = 'group_buy';
                 $goodsInfo['exchange_integral'] = $groupBuy['can_integral'] == 0 ? '0' : $goods['exchange_integral'];
                 $goodsInfo['exchange_price'] = bcsub($groupBuy['price'], $goodsInfo['exchange_integral'], 2);
                 $goodsInfo['buy_limit'] = $groupBuy['buy_limit'];
@@ -862,7 +862,7 @@ class Goods extends Base
                 $goodsInfo['end_time'] = $groupBuy['end_time'];
             }
         }
-        if (in_array($goodsInfo['type'], ['group_buy', 'flash_sale'])) {
+        if (in_array($goodsInfo['goods_type'], ['group_buy', 'flash_sale'])) {
             $goodsInfo['buy_least'] = '0';
         }
         // 商品促销、优惠券
@@ -1012,8 +1012,9 @@ class Goods extends Base
         $goodsNum = I('goods_num', 1);
         if (!$goodsId) return json(['status' => 0, 'msg' => '请传入正确的商品ID']);
         // 商品价格属性
-        $goodsInfo = M('goods')->where(['goods_id' => $goodsId])->field('shop_price, exchange_integral, store_count, limit_buy_num buy_limit, least_buy_num buy_least, is_supply')->find();
-        $goodsInfo['nature_type'] = 'normal';
+        $goodsInfo = M('goods')->where(['goods_id' => $goodsId])->field('original_img, shop_price, exchange_integral, store_count, limit_buy_num buy_limit, least_buy_num buy_least, is_supply')->find();
+        $goodsInfo['goods_type'] = 'normal';
+        $goodsInfo['original_img'] = !strstr($goodsInfo['original_img'], 'http') && !strstr($goodsInfo['original_img'], 'https') ? SITE_URL . $goodsInfo['original_img'] : $goodsInfo['original_img'];
         $goodsInfo['exchange_price'] = bcsub($goodsInfo['shop_price'], $goodsInfo['exchange_integral'], 2);
         // 商品活动属性
         $flashSale = Db::name('flash_sale fs')
@@ -1066,13 +1067,14 @@ class Goods extends Base
             if (empty($goodsSpec) || empty($goodsSpecPrice)) {
                 $goodsSpec = [];
             } elseif (empty($extendGoodsSpec) && !empty($goodsSpecPrice)) {
+                $goodsInfo['original_img'] = !empty($goodsSpecPrice[$defaultKey]['spec_img']) ? !strstr($goodsSpecPrice[$defaultKey]['spec_img'], 'http') && !strstr($goodsSpecPrice[$defaultKey]['spec_img'], 'https') ? SITE_URL . $goodsSpecPrice[$defaultKey]['spec_img'] : $goodsSpecPrice[$defaultKey]['spec_img'] : $goodsInfo['original_img'];
                 $goodsInfo['shop_price'] = $goodsSpecPrice[$defaultKey]['price'];
                 $goodsInfo['store_count'] = $goodsSpecPrice[$defaultKey]['store_count'];
                 $goodsInfo['exchange_price'] = bcsub($goodsSpecPrice[$defaultKey]['price'], $goodsInfo['exchange_integral'], 2);
             } elseif (!empty($extendGoodsSpec) && !empty($goodsSpecPrice)) {
                 foreach ($extendGoodsSpec['data'] as $spec) {
                     if ($spec['spec_key'] == $defaultKey) {
-                        $goodsInfo['nature_type'] = $extendGoodsSpec['type'];
+                        $goodsInfo['goods_type'] = $extendGoodsSpec['type'];
                         $goodsInfo['shop_price'] = $spec['price'];
                         $goodsInfo['store_count'] = $spec['goods_num'];
                         $goodsInfo['buy_limit'] = $spec['buy_limit'];
@@ -1093,6 +1095,7 @@ class Goods extends Base
                 unset($item['key']);
                 unset($item['price']);
                 unset($item['store_count']);
+                unset($item['spec_img']);
             }
         } catch (TpshopException $e) {
             $goodsInfo['store_count'] = '0';
