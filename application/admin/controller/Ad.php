@@ -167,6 +167,8 @@ class Ad extends Base
             $data['ad_link'] = $data['goods_id'];
         } elseif (4 == $media_type) {//分类
             $data['ad_link'] = $data['cat_id1'] . '_' . $data['cat_id2'] . '_' . $data['cat_id3'];
+        } else {
+            $data['ad_link'] = htmlspecialchars_decode($data['ad_link']);
         }
         switch ($data['target_type']) {
             case 1:
