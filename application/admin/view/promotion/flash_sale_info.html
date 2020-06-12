@@ -159,14 +159,9 @@
         $('#start_time').layDate();
         $('#end_time').layDate();
     })
-    var ajax_return_status = 1; // 标识ajax 请求是否已经回来 可以进行下一次请求
     function verifyForm(type) {
         $('input[name="action"]').val(type);
         $('span.err').hide();
-        if (ajax_return_status == 0) {
-            return false;
-        }
-        ajax_return_status = 0;
         $.ajax({
             type: "POST",
             url: "{:U('Admin/Promotion/flash_sale_info')}",
@@ -185,7 +180,6 @@
                     $.each(data.result, function (index, item) {
                         $('#err_' + index).text(item).show();
                     });
-                    ajax_return_status = 1;
                 }
             }
         });
