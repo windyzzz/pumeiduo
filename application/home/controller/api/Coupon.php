@@ -85,6 +85,7 @@ class Coupon extends Base
                             'goods_id' => $goods['goods_id'],
                             'goods_name' => $goods['goods_name'],
                             'original_img' => $goods['original_img'],
+                            'original_img_new' => getFullPath($goods['original_img']),
                             'goods_list' => [],
                             'title' => '￥' . floatval($coupon['money']) . '仅限' . $goods['goods_name'] . '可用',
                             'desc' => '￥' . floatval($coupon['money']) . '仅限' . $goods['goods_name'] . '可用',
@@ -111,6 +112,7 @@ class Coupon extends Base
                     'goods_id' => '',
                     'goods_name' => '',
                     'original_img' => '',
+                    'original_img_new' => '',
                     'goods_list' => [],
                     'title' => '',
                     'desc' => '',
@@ -133,7 +135,8 @@ class Coupon extends Base
                             if ($coupon['id'] == $goods['coupon_id']) {
                                 $couponList[$k . '-1']['goods_list'][] = [
                                     'goods_id' => $goods['goods_id'],
-                                    'original_img' => $goods['original_img']
+                                    'original_img' => $goods['original_img'],
+                                    'original_img_new' => getFullPath($goods['original_img']),
                                 ];
                             }
                         }
@@ -144,7 +147,8 @@ class Coupon extends Base
                             if ($coupon['id'] == $goods['coupon_id']) {
                                 $couponList[$k . '-1']['goods_list'][] = [
                                     'goods_id' => $goods['goods_id'],
-                                    'original_img' => $goods['original_img']
+                                    'original_img' => $goods['original_img'],
+                                    'original_img_new' => getFullPath($goods['original_img']),
                                 ];
                             }
                         }
@@ -198,6 +202,7 @@ class Coupon extends Base
                             'goods_id' => $goods['goods_id'],
                             'goods_name' => $goods['goods_name'],
                             'original_img' => $goods['original_img'],
+                            'original_img_new' => getFullPath($goods['original_img']),
                             'goods_list' => [],
                             'title' => '￥' . floatval($coupon['money']) . '仅限' . $goods['goods_name'] . '可用',
                             'desc' => '￥' . floatval($coupon['money']) . '仅限' . $goods['goods_name'] . '可用',
@@ -221,6 +226,7 @@ class Coupon extends Base
                     'goods_id' => '',
                     'goods_name' => '',
                     'original_img' => '',
+                    'original_img_new' => '',
                     'goods_list' => [],
                     'title' => '',
                     'desc' => '',
@@ -241,7 +247,8 @@ class Coupon extends Base
                             if ($coupon['id'] == $goods['coupon_id']) {
                                 $couponList[$k . '-1']['goods_list'][] = [
                                     'goods_id' => $goods['goods_id'],
-                                    'original_img' => $goods['original_img']
+                                    'original_img' => $goods['original_img'],
+                                    'original_img_new' => getFullPath($goods['original_img']),
                                 ];
                             }
                         }
@@ -252,7 +259,8 @@ class Coupon extends Base
                             if ($coupon['id'] == $goods['coupon_id']) {
                                 $couponList[$k . '-1']['goods_list'][] = [
                                     'goods_id' => $goods['goods_id'],
-                                    'original_img' => $goods['original_img']
+                                    'original_img' => $goods['original_img'],
+                                    'original_img_new' => getFullPath($goods['original_img']),
                                 ];
                             }
                         }

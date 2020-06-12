@@ -1850,3 +1850,19 @@ function getXlsInfo($file)
     }
     return $data;
 }
+
+/**
+ * 获取完整路径
+ * @param $path
+ * @return string
+ */
+function getFullPath($path)
+{
+    if (!$path) {
+        return '';
+    }
+    if (!strstr($path, 'http') && !strstr($path, 'https')) {
+        return SITE_URL . $path;
+    }
+    return $path;
+}

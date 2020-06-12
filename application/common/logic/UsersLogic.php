@@ -1215,6 +1215,7 @@ class UsersLogic extends Model
 
         if ($goods_list) {
             foreach ($goods_list as $k => $v) {
+                $goods_list[$k]['original_img_new'] = getFullPath($v['original_img']);
                 $goods_list[$k]['is_return'] = M('ReturnGoods')->where('rec_id', $v['rec_id'])->find() ? 1 : 0;
                 $goods_list[$k]['status_desc'] = C('REFUND_STATUS')[$v['status']];
             }
@@ -1643,6 +1644,7 @@ class UsersLogic extends Model
             ->select();
 
         foreach ($result as $k => $v) {
+            $result[$k]['original_img_new'] = getFullPath($v['original_img']);
 //            // 比起原价的升降关系
 //            if ($v['low_price'] > 0) {
 //                $result[$k]['type'] = 1;    // 降价

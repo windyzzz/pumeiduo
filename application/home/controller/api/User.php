@@ -1500,6 +1500,7 @@ class User extends Base
             $endLastweek = mktime(23, 59, 59, date('m'), date('d') - date('w') + 7 - 7, date('Y'));
             $weekarray = ['日', '一', '二', '三', '四', '五', '六'];
             foreach ($visit_list as $k => $val) {
+                $visit_list[$k]['original_img_new'] = getFullPath($val['original_img']);
                 if ($now - $val['visittime'] < 3600 * 24 * 7) {
                     if (date('Y-m-d') == date('Y-m-d', $val['visittime'])) {
                         $val['date'] = '今天';
@@ -1552,6 +1553,7 @@ class User extends Base
         $return = [];
         $visitLog = [];
         foreach ($visitList as $k => $item) {
+            $visitList[$k]['original_img_new'] = getFullPath($item['original_img']);
             $visitTime = date('Y-m-d', $item['visittime']);
             // 判断访问时间
             if ($visitTime == date('Y-m-d', time())) {

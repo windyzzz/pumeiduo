@@ -650,6 +650,7 @@ class Goods extends Base
                 }
                 $goods['coupon'][$k]['title'] = $res['title'];
                 $goods['coupon'][$k]['desc'] = $res['desc'];
+                $goods['coupon'][$k]['original_img_new'] = getFullPath($coupon['original_img']);
             }
             $goods['coupon'] = array_values($goods['coupon']);
         }
@@ -745,7 +746,7 @@ class Goods extends Base
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架']);
         }
-        $originalImg = !strstr($goods['original_img'], 'http') && !strstr($goods['original_img'], 'https') ? SITE_URL . $goods['original_img'] : $goods['original_img'];
+        $originalImg = getFullPath($goods['original_img']);
         $goodsInfo = [
             'goods_type' => 'normal',
             'goods_id' => $goods['goods_id'],
@@ -823,9 +824,7 @@ class Goods extends Base
         $goodsInfo['goods_images_list'] = M('GoodsImages')->where('goods_id', $goods_id)->getField('image_url', true);
         if (!empty($goodsInfo['goods_images_list'])) {
             foreach ($goodsInfo['goods_images_list'] as &$image) {
-                if (!strstr($image, 'http') && !strstr($image, 'https')) {
-                    $image = SITE_URL . $image;
-                }
+                $image = getFullPath($image);
             }
         }
         // 判断商品性质
@@ -914,43 +913,19 @@ class Goods extends Base
                 }
             }
             foreach ($couponList as $k => $coupon) {
-                switch ($coupon['use_type']) {
-                    case 0:
-                        // 全店通用
-                        $title = '全场商品满' . floatval($coupon['money']) . '可用';
-                        $desc = '全场商品满' . floatval($coupon['condition']) . '减' . floatval($coupon['money']);
-                        break;
-                    case 1:
-                        // 指定商品
-                        $title = '￥' . floatval($coupon['money']) . '仅限' . $goods['goods_name'] . '可用';
-                        $desc = '仅限' . $coupon['goods_name'] . '可用';
-                        break;
-                    case 2:
-                        // 指定分类可用
-                        $title = '满' . floatval($coupon['condition']) . '可用';
-                        $desc = '满' . floatval($coupon['condition']) . '可用';
-                        break;
-                    case 4:
-                        // 指定商品折扣券
-                        $title = '指定商品满' . floatval($coupon['condition']) . '享受' . floatval($coupon['money']) . '折';
-                        $desc = '指定商品满' . floatval($coupon['condition']) . '享受' . floatval($coupon['money']) . '折';
-                        break;
-                    case 5:
-                        // 兑换商品券
-                        $title = $coupon['name'];
-                        $desc = '购买任意商品可用';
-                        break;
-                    default:
-                        unset($couponList[$k]);
-                        continue 2;
+                $res = $couponLogic->couponTitleDesc($coupon);
+                if (empty($res)) {
+                    unset($goods['coupon'][$k]);
+                    continue;
                 }
                 $couponList[$k]['goods_id'] = $coupon['goods_id'] ?? '';
                 $couponList[$k]['goods_name'] = $coupon['goods_name'] ?? '';
                 $couponList[$k]['original_img'] = $coupon['original_img'] ?? '';
+                $couponList[$k]['original_img_new'] = getFullPath($coupon['original_img']);
                 $couponList[$k]['cat_id'] = $coupon['cat_id'] ?? '';
                 $couponList[$k]['cat_name'] = $coupon['cat_name'] ?? '';
-                $couponList[$k]['title'] = $title;
-                $couponList[$k]['desc'] = $desc;
+                $couponList[$k]['title'] = $res['title'];
+                $couponList[$k]['desc'] = $res['desc'];
             }
             $couponList = array_values($couponList);
         }
@@ -1014,7 +989,7 @@ class Goods extends Base
         // 商品价格属性
         $goodsInfo = M('goods')->where(['goods_id' => $goodsId])->field('original_img, shop_price, exchange_integral, store_count, limit_buy_num buy_limit, least_buy_num buy_least, is_supply')->find();
         $goodsInfo['goods_type'] = 'normal';
-        $goodsInfo['original_img'] = !strstr($goodsInfo['original_img'], 'http') && !strstr($goodsInfo['original_img'], 'https') ? SITE_URL . $goodsInfo['original_img'] : $goodsInfo['original_img'];
+        $goodsInfo['original_img'] = getFullPath($goodsInfo['original_img']);
         $goodsInfo['exchange_price'] = bcsub($goodsInfo['shop_price'], $goodsInfo['exchange_integral'], 2);
         // 商品活动属性
         $flashSale = Db::name('flash_sale fs')
@@ -1067,7 +1042,7 @@ class Goods extends Base
             if (empty($goodsSpec) || empty($goodsSpecPrice)) {
                 $goodsSpec = [];
             } elseif (empty($extendGoodsSpec) && !empty($goodsSpecPrice)) {
-                $goodsInfo['original_img'] = !empty($goodsSpecPrice[$defaultKey]['spec_img']) ? !strstr($goodsSpecPrice[$defaultKey]['spec_img'], 'http') && !strstr($goodsSpecPrice[$defaultKey]['spec_img'], 'https') ? SITE_URL . $goodsSpecPrice[$defaultKey]['spec_img'] : $goodsSpecPrice[$defaultKey]['spec_img'] : $goodsInfo['original_img'];
+                $goodsInfo['original_img'] = !empty($goodsSpecPrice[$defaultKey]['spec_img']) ? getFullPath($goodsSpecPrice[$defaultKey]['spec_img']) : $goodsInfo['original_img'];
                 $goodsInfo['shop_price'] = $goodsSpecPrice[$defaultKey]['price'];
                 $goodsInfo['store_count'] = $goodsSpecPrice[$defaultKey]['store_count'];
                 $goodsInfo['exchange_price'] = bcsub($goodsSpecPrice[$defaultKey]['price'], $goodsInfo['exchange_integral'], 2);
@@ -1787,9 +1762,7 @@ class Goods extends Base
         $endTime = '0';
         foreach ($flashSaleGoods as $k => $v) {
             // 缩略图
-            if (!strstr($v['original_img'], 'http') && !strstr($v['original_img'], 'https')) {
-                $flashSaleGoods[$k]['original_img_new'] = SITE_URL . $v['original_img'];
-            }
+            $flashSaleGoods[$k]['original_img_new'] = getFullPath($v['original_img']);
             // 最近的结束时间
             if ($k == 0) {
                 $endTime = $v['end_time'];
@@ -1904,9 +1877,7 @@ class Goods extends Base
             $goodsItem = Db::name('spec_goods_price')->where(['goods_id' => ['in', $filter_goods_id]])->group('goods_id')->getField('goods_id, item_id', true);
             foreach ($goods_list as $k => $v) {
                 // 缩略图
-                if (!strstr($v['original_img'], 'http') && !strstr($v['original_img'], 'https')) {
-                    $goods_list[$k]['original_img_new'] = SITE_URL . $v['original_img'];
-                }
+                $goods_list[$k]['original_img_new'] = getFullPath($v['original_img']);
                 // 商品规格属性
                 if (isset($goodsItem[$v['goods_id']])) {
                     $goods_list[$k]['item_id'] = $goodsItem[$v['goods_id']];
@@ -2012,9 +1983,7 @@ class Goods extends Base
         $groupBuyData = collection($groupBuyData)->toArray();
         foreach ($groupBuyData as $k => $groupBuy) {
             // 缩略图
-            if (!strstr($groupBuy['original_img'], 'http') && !strstr($groupBuy['original_img'], 'https')) {
-                $groupBuyData[$k]['original_img_new'] = SITE_URL . $groupBuy['original_img'];
-            }
+            $groupBuyData[$k]['original_img_new'] = getFullPath($groupBuy['original_img']);
             $groupBuyData[$k]['now_time'] = time() . '';
             // 价格判断
             if ($groupBuy['can_integral'] == 0) {
@@ -2650,16 +2619,16 @@ class Goods extends Base
         $promGoods = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
             ->where(['gtg.goods_id' => ['in', $filterGoodsIds], 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
             ->field('pg.title, gtg.goods_id')->select();    // 促销活动
-        $couponLogic = new CouponLogic();
-        $couponCurrency = $couponLogic->getCoupon(0);    // 通用优惠券
-        $couponGoods = [];
-        $couponCate = [];
-        if (empty($coupon)) {
-            $couponGoods = $couponLogic->getCoupon(null, $filterGoodsIds);    // 指定商品优惠券
-            $filter_cat_id = Db::name('goods')->where(['goods_id' => ['in', $filterGoodsIds]])->getField('cat_id', true);
-            $couponCate = $couponLogic->getCoupon(null, '', $filter_cat_id, null);    // 指定分类优惠券
-        }
-        $promGoods = array_merge_recursive($promGoods, $couponCurrency, $couponGoods, $couponCate);
+//        $couponLogic = new CouponLogic();
+//        $couponCurrency = $couponLogic->getCoupon(0);    // 通用优惠券
+//        $couponGoods = [];
+//        $couponCate = [];
+//        if (empty($coupon)) {
+//            $couponGoods = $couponLogic->getCoupon(null, $filterGoodsIds);    // 指定商品优惠券
+//            $filter_cat_id = Db::name('goods')->where(['goods_id' => ['in', $filterGoodsIds]])->getField('cat_id', true);
+//            $couponCate = $couponLogic->getCoupon(null, '', $filter_cat_id, null);    // 指定分类优惠券
+//        }
+//        $promGoods = array_merge_recursive($promGoods, $couponCurrency, $couponGoods, $couponCate);
         // 循环处理数据
         foreach ($lookSee as $k => $v) {
             // 商品标签
@@ -2747,7 +2716,8 @@ class Goods extends Base
             ->order('sort')
             ->select();
         foreach ($list as $k => $v) {
-            //
+            // 缩略图
+            $list[$k]['original_img_new'] = getFullPath($v['original_img']);
             // 处理显示金额
             if ($v['exchange_integral'] != 0) {
                 $list[$k]['exchange_price'] = bcsub($v['shop_price'], $v['exchange_integral'], 2);

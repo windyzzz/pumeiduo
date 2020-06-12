@@ -223,6 +223,7 @@ class Order extends Base
                         'exchange_integral' => $goods['use_integral'],
                         'exchange_price' => $goods['member_goods_price'],
                         'original_img' => $goods['original_img'],
+                        'original_img_new' => getFullPath($goods['original_img']),
                         'is_return' => $goods['is_return']
                     ];
                     $goodsNum += $goods['goods_num'];
@@ -475,6 +476,7 @@ class Order extends Base
                     'exchange_integral' => $goods['use_integral'],
                     'exchange_price' => $goods['member_goods_price'],
                     'original_img' => $goods['original_img'],
+                    'original_img_new' => getFullPath($goods['original_img']),
 //                    'can_return' => $canReturn == true ? $goods['sale_type'] == 1 ? $goods['is_return'] == 1 ? 0 : 1 : 0 : 0,   // sale_type = 1 普通商品
                     'can_return' => $canReturn == true ? ($goods['is_return'] == 1 || $goods['re_id'] > 0) ? 0 : 1 : 0,
                     'return_status' => $goods['status'] ?? '',
@@ -506,6 +508,7 @@ class Order extends Base
                             'exchange_integral' => $goods['use_integral'],
                             'exchange_price' => $goods['member_goods_price'],
                             'original_img' => $goods['original_img'],
+                            'original_img_new' => getFullPath($goods['original_img']),
                             'can_return' => 0,
                             'return_status' => '',
                         ];
@@ -532,6 +535,7 @@ class Order extends Base
                             'exchange_integral' => $goods['use_integral'],
                             'exchange_price' => $goods['member_goods_price'],
                             'original_img' => $goods['original_img'],
+                            'original_img_new' => getFullPath($goods['original_img']),
                             'can_return' => 0,
                             'return_status' => '',
                         ];
@@ -552,6 +556,7 @@ class Order extends Base
                                 'exchange_integral' => $goods['use_integral'],
                                 'exchange_price' => $goods['member_goods_price'],
                                 'original_img' => $goods['original_img'],
+                                'original_img_new' => getFullPath($goods['original_img']),
                                 'can_return' => 0,
                                 'return_status' => '',
                             ];
@@ -812,6 +817,7 @@ class Order extends Base
         }
         $order_goods = M('order_goods')->where(['rec_id' => $rec_id])->find();
         $order_goods['goods_img'] = M('goods')->where(['goods_id' => $order_goods['goods_id']])->getField('original_img');
+        $order_goods['goods_img_new'] = getFullPath($order_goods['goods_img']);
 //        $order = M('order')->where(['order_id' => $order_goods['order_id'], 'user_id' => $this->user_id])->find();
         $order = M('order')->where(['order_id' => $order_goods['order_id']])->find();
         if (empty($order)) {
@@ -887,7 +893,8 @@ class Order extends Base
                 'goods_name' => $orderGoods['goods_name'],
                 'spec_key_name' => $orderGoods['spec_key_name'] ?? '',
                 'item_id' => $orderGoods['item_id'] ?? '',
-                'original_img' => $orderGoods['original_img']
+                'original_img' => $orderGoods['original_img'],
+                'original_img_new' => getFullPath($orderGoods['original_img']),
             ];
 
             if ($type != -1) {
@@ -971,6 +978,9 @@ class Order extends Base
         if (!empty($goods_id_arr)) {
             $goodsList = M('goods')->where('goods_id', 'in', implode(',', $goods_id_arr))->getField('goods_id,goods_name,original_img,shop_price,exchange_integral');
         }
+        foreach ($goodsList as $k => $v) {
+            $goodsList[$k]['original_img_new'] = getFullPath($v['original_img']);
+        }
         $state = C('REFUND_STATUS');
         $return['state'] = $state;
         $return['goodsList'] = $goodsList;
@@ -1013,6 +1023,7 @@ class Order extends Base
                 'item_id' => $returnGoods['item_id'] ?? '',
                 'goods_num' => $returnGoods['goods_num'],
                 'original_img' => $returnGoods['original_img'],
+                'original_img_new' => getFullPath($returnGoods['original_img']),
                 'return_id' => $returnGoods['id'],
                 'return_type' => $returnGoods['type'],
                 'return_status' => $returnGoods['status']
@@ -1109,7 +1120,8 @@ class Order extends Base
                 'spec_key_name' => $orderGoods['spec_key_name'] ?? '',
                 'item_id' => $orderGoods['item_id'] ?? '',
                 'goods_num' => $orderGoods['goods_num'],
-                'original_img' => $orderGoods['original_img']
+                'original_img' => $orderGoods['original_img'],
+                'original_img_new' => getFullPath($orderGoods['original_img']),
             ],
             'return_id' => $returnGoods['id'],
             'return_title' => '',
@@ -1472,6 +1484,7 @@ class Order extends Base
                 $goodsInfo = M('Goods')->field('exchange_integral,shop_price,shop_price - exchange_integral as integral_price, original_img as imgSrc')->where('goods_id', $ov['goods_id'])->find();
                 $order_goods[$ok]['add_time'] = date('Y-m-d H:i:s', $ov['add_time']);
                 $order_goods[$ok]['imgSrc'] = $goodsInfo['imgSrc'];
+                $order_goods[$ok]['imgSrc_new'] = getFullPath($goodsInfo['imgSrc']);
                 if ($ov['use_integral'] > 0) {
                     $order_goods[$ok]['price'] = $goodsInfo['integral_price'];
                     $order_goods[$ok]['integral'] = $ov['use_integral'];
@@ -1544,6 +1557,7 @@ class Order extends Base
                 $goodsInfo = M('Goods')->field('exchange_integral,shop_price,shop_price - exchange_integral as integral_price, original_img as imgSrc')->where('goods_id', $ov['goods_id'])->find();
                 $order_goods[$ok]['add_time'] = date('Y-m-d H:i:s', $ov['add_time']);
                 $order_goods[$ok]['imgSrc'] = $goodsInfo['imgSrc'];
+                $order_goods[$ok]['imgSrc_new'] = getFullPath($goodsInfo['imgSrc']);
                 if ($ov['use_integral'] > 0) {
                     $order_goods[$ok]['price'] = $goodsInfo['integral_price'];
                     $order_goods[$ok]['integral'] = $ov['use_integral'];
@@ -1776,6 +1790,7 @@ class Order extends Base
             $exchangeGoods = M('goods_coupon gc')->join('goods g', 'g.goods_id = gc.goods_id')
                 ->where(['gc.coupon_id' => $exchangeId])->field('g.goods_id, g.goods_name, g.goods_remark, g.original_img')->select();
             foreach ($exchangeGoods as $key => $goods) {
+                $extraGoods[$key]['original_img_new'] = getFullPath($goods['original_img']);
                 $exchangeGoods[$key]['goods_num'] = 1;
             }
         }
@@ -1887,6 +1902,7 @@ class Order extends Base
                     'goods_remark' => $goods['goods_remark'] ?? $goods['spec_key_name'] ?? '',
                     'spec_key_name' => $goods['spec_key_name'] ?? '',
                     'original_img' => $goods['original_img'],
+                    'original_img_new' => getFullPath($goods['original_img']),
                     'goods_num' => $list['goods_num'],
                     'shop_price' => $goods['shop_price'],
                     'exchange_integral' => $list['use_integral'] ?? 0,
@@ -1921,6 +1937,7 @@ class Order extends Base
                             'goods_name' => $gift['goods_name'],
                             'goods_remark' => $gift['goods']['goods_remark'] ?? $gift['goods']['spec_key_name'] ?? '',
                             'original_img' => $gift['goods']['original_img'],
+                            'original_img_new' => getFullPath($gift['goods']['original_img']),
                             'spec_key_name' => $gift['goods']['spec_key_name'] ?? ''
                         ]]
                     ];
@@ -1934,6 +1951,7 @@ class Order extends Base
                         'goods_name' => $extra['goods_name'],
                         'goods_remark' => $extra['goods_remark'] ?? '',
                         'original_img' => $extra['original_img'],
+                        'original_img_new' => getFullPath($extra['original_img']),
                         'shop_price' => $extra['goods_price'],
                         'exchange_integral' => '0',
                         'exchange_price' => $extra['goods_price'],
@@ -2087,6 +2105,7 @@ class Order extends Base
                     ->where(['gc.coupon_id' => $exchangeId])->field('g.goods_id, g.goods_name, g.goods_remark, g.original_img, g.give_integral, gc.number')->select();
                 foreach ($exchangeGoods as $key => $goods) {
                     $give_integral = bcadd($give_integral, bcmul($goods['give_integral'], $goods['number'], 2), 2);
+                    $exchangeGoods[$key]['original_img_new'] = getFullPath($goods['original_img']);
                     $exchangeGoods[$key]['goods_num'] = 1;
                     unset($exchangeGoods[$key]['give_integral']);
                 }
@@ -2131,6 +2150,7 @@ class Order extends Base
                     'goods_remark' => $goods['goods_remark'] ?? $goods['spec_key_name'] ?? '',
                     'spec_key_name' => $goods['spec_key_name'] ?? '',
                     'original_img' => $goods['original_img'],
+                    'original_img_new' => getFullPath($goods['original_img']),
                     'goods_num' => $list['goods_num'],
                     'shop_price' => $goods['shop_price'],
                     'exchange_integral' => $list['use_integral'] ?? 0,
@@ -2165,6 +2185,7 @@ class Order extends Base
                             'goods_name' => $gift['goods_name'],
                             'goods_remark' => $gift['goods']['goods_remark'] ?? $gift['goods']['spec_key_name'] ?? '',
                             'original_img' => $gift['goods']['original_img'],
+                            'original_img_new' => getFullPath($gift['goods']['original_img']),
                             'spec_key_name' => $gift['goods']['spec_key_name'] ?? ''
                         ]]
                     ];
@@ -2511,6 +2532,7 @@ class Order extends Base
                                 'invoice_no' => '',
                                 'goods_id' => $orderGoods['goods_id'],
                                 'original_img' => SITE_URL . $orderGoods['original_img'],
+                                'original_img_new' => getFullPath($orderGoods['original_img']),
                                 'service_phone' => tpCache('shop_info.mobile'),
                                 'province' => '',
                                 'city' => '',
@@ -2595,6 +2617,7 @@ class Order extends Base
                         'invoice_no' => $delivery['invoice_no'],
                         'goods_id' => $orderGoods['goods_id'],
                         'original_img' => SITE_URL . $orderGoods['original_img'],
+                        'original_img_new' => getFullPath($orderGoods['original_img']),
                         'service_phone' => $express['result']['expPhone'],
                         'province' => Db::name('region2')->where(['id' => $delivery['province']])->value('name'),
                         'city' => Db::name('region2')->where(['id' => $delivery['city']])->value('name'),
@@ -2625,6 +2648,7 @@ class Order extends Base
                                 'express' => [],
                                 'goods_id' => $orderGoods['goods_id'],
                                 'original_img' => SITE_URL . $orderGoods['original_img'],
+                                'original_img_new' => getFullPath($orderGoods['original_img']),
                             ];
                             return json(['status' => 1, 'result' => $return]);
                     }
@@ -2655,6 +2679,7 @@ class Order extends Base
                                     'express' => $express['result']['list'][0],
                                     'goods_id' => $item['goods_id'],
                                     'original_img' => SITE_URL . $item['original_img'],
+                                    'original_img_new' => getFullPath($item['original_img']),
                                 ];
                             }
                             break;
@@ -2712,6 +2737,7 @@ class Order extends Base
                                     'express' => $express['result']['list'][0],
                                     'goods_id' => $item['goods_id'],
                                     'original_img' => SITE_URL . $item['original_img'],
+                                    'original_img_new' => getFullPath($item['original_img']),
                                 ];
                             }
                             break;
@@ -2737,6 +2763,7 @@ class Order extends Base
                         'invoice_no' => '',
                         'goods_id' => $orderGoods['goods_id'],
                         'original_img' => SITE_URL . $orderGoods['original_img'],
+                        'original_img_new' => getFullPath($orderGoods['original_img']),
                         'service_phone' => tpCache('shop_info.mobile'),
                         'province' => '',
                         'city' => '',
@@ -2820,6 +2847,7 @@ class Order extends Base
                 'invoice_no' => $delivery['invoice_no'],
                 'goods_id' => $orderGoods['goods_id'],
                 'original_img' => SITE_URL . $orderGoods['original_img'],
+                'original_img_new' => getFullPath($orderGoods['original_img']),
                 'service_phone' => $express['result']['expPhone'],
                 'province' => Db::name('region2')->where(['id' => $delivery['province']])->value('name'),
                 'city' => Db::name('region2')->where(['id' => $delivery['city']])->value('name'),
