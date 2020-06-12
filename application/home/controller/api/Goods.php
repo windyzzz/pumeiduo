@@ -1108,7 +1108,7 @@ class Goods extends Base
                 ['id' => 2, 'name' => '现金']
             ],
             'goods_spec' => $goodsSpec,
-            'goods_spec_price' => $goodsSpecPrice
+            'goods_spec_price' => (object)$goodsSpecPrice
         ];
         return json(['status' => 1, 'result' => $returnData]);
     }

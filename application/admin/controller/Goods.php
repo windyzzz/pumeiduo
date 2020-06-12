@@ -434,15 +434,16 @@ class Goods extends Base
             $virtual_indate = input('post.virtual_indate'); //虚拟商品有效期
             $return_url = $is_distribut > 0 ? U('admin/Distribut/goods_list') : U('admin/Goods/goodsList');
             $data = input('post.');
+            $data['is_free_shipping'] = $data['is_supply'] == 1 ? 1 : $data['is_free_shipping'];
             $validate = \think\Loader::validate('Goods');
             if (!$validate->batch()->check($data)) {
                 $error = $validate->getError();
                 $error_msg = array_values($error);
-                $return_arr = [
+                $return_arr = "{
                     'status' => -1,
                     'msg' => $error_msg[0],
                     'data' => $error,
-                ];
+                }";
                 $this->ajaxReturn($return_arr);
             }
             $data['virtual_indate'] = !empty($virtual_indate) ? strtotime($virtual_indate) : 0;

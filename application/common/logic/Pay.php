@@ -63,9 +63,9 @@ class Pay
     private $goodsPv = '0';                       // 商品pv
     private $orderPv = '0';                       // 订单总pv
 
-    private $order1 = [];
+    private $order1 = [];                   // 圃美多、海外购商品子订单
     private $order1Goods = [];
-    private $order2 = [];
+    private $order2 = [];                   // 供应链商品子订单
     private $order2Goods = [];
 
     public function __construct()
@@ -296,7 +296,7 @@ class Pay
             $this->order1['prom_price'] = bcmul(($this->order1['goods_price'] / bcadd($this->order1['goods_price'], $this->order2['goods_price'], 2)), $promAmount, 2);
             $this->order2['prom_price'] = bcmul(($this->order2['goods_price'] / bcadd($this->order1['goods_price'], $this->order2['goods_price'], 2)), $promAmount, 2);
             // 子订单的运费分摊
-
+//            $this->order1['']
             // 子订单的电子币抵扣分摊
             
             exit();

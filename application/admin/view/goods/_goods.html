@@ -597,8 +597,8 @@
                 </dt>
                 <dd class="opt">
                     <div class="onoff">
-                        <label id="is_free_shipping_label_1" for="is_free_shipping1" class="cb-enable <if condition=" $goodsInfo[is_free_shipping] eq 1">selected</if>">是</label>
-                        <label id="is_free_shipping_label_0" for="is_free_shipping0" class="cb-disable <if condition=" $goodsInfo[is_free_shipping] eq 0">selected</if>">否</label>
+                        <label id="is_free_shipping_label_1" for="is_free_shipping1" class="cb-enable <if condition='$goodsInfo[is_free_shipping] eq 1'>selected</if>">是</label>
+                        <label id="is_free_shipping_label_0" for="is_free_shipping0" class="cb-disable <if condition='$goodsInfo[is_free_shipping] eq 0'>selected</if>">否</label>
                         <input id="is_free_shipping1" class="is_free_shipping" name="is_free_shipping" value="1" type="radio" <if condition="$goodsInfo[is_free_shipping] eq 1"> checked="checked"</if>>
                         <input id="is_free_shipping0" class="is_free_shipping" name="is_free_shipping" value="0" type="radio" <if condition="$goodsInfo[is_free_shipping] eq 0"> checked="checked"</if>>
                         <div class="freight_template" style="display: none;">
@@ -613,8 +613,7 @@
                                     >{$template.template_name}</option>
                                 </volist>
                             </select>
-                            <empty name="freight_template"><span style="color: red;">没有可选的运费模板，请前去<a
-                                    href="{:U('Freight/index')}" target="_blank">添加</a></span></empty>
+                            <empty name="freight_template"><span style="color: red;">没有可选的运费模板，请前去<a href="{:U('Freight/index')}" target="_blank">添加</a></span></empty>
                         </div>
                     </div>
                     <p class="notic"></p>
@@ -957,6 +956,7 @@
         <div class="ncap-form-default">
             <div class="bot">
                 <input type="hidden" name="goods_id" value="{$goodsInfo.goods_id}">
+                <input type="hidden" name="is_supply" value="{$goodsInfo.is_supply}">
                 <input type="hidden" name="__token__" value="{$Request.token}"/>
                 <a href="JavaScript:void(0);" class="ncap-btn-big ncap-btn-green"
                    onClick="ajax_submit_form('addEditGoodsForm','{:U('Goods/addEditGoods?is_ajax=1')}');">确认提交</a>
@@ -1275,7 +1275,19 @@
 
     $(function () {
         $(document).on("click", '.is_free_shipping', function (e) {
-            initFreight();
+            var is_supply = {$goodsInfo[is_supply]};
+            if (is_supply == 1) {
+                var is_free_shipping = $("input[name='is_free_shipping']:checked").val();
+                if (is_free_shipping == 0) {
+                    $('#is_free_shipping_label_1').removeClass('cb-disable');
+                    $('#is_free_shipping_label_1').addClass('cb-enable selected');
+                    $('#is_free_shipping_label_0').removeClass('cb-enable selected');
+                    $('#is_free_shipping_label_0').addClass('cb-disable');
+                    layer.msg('供应链商品不能设置邮费规则', {icon: 2});
+                }
+            } else {
+                initFreight();
+            }
         })
     })
 

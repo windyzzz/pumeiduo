@@ -1952,7 +1952,7 @@ class Order extends Base
             }
 
             // 拆分订单处理
-//            $payLogic->setOrderSplit();
+            $payLogic->setOrderSplit();
         } catch (TpshopException $tpE) {
             return json($tpE->getErrorArr());
         }

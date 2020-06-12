@@ -587,7 +587,8 @@ class Tb extends Controller
             'video' => $goods['video'],
             'store_count' => $goods['store_count'],
             'supplier_goods_id' => $goods['supplier_goods_id'],
-            'is_abroad' => $goods['is_abroad']
+            'is_abroad' => $goods['is_abroad'],
+            'is_free_shipping' => $isSupply
         );
 
         if ($goods['is_one_send'] == 0) {
