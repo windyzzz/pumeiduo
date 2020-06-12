@@ -338,7 +338,12 @@ class GoodsLogic extends Model
         return ['spec' => array_values($specData), 'default_key' => $itemKey];
     }
 
-
+    /**
+     * 获取供应链商品规格属性
+     * @param $goods_id
+     * @param null $itemId
+     * @return array
+     */
     public function get_supply_spec($goods_id, $itemId = null)
     {
         $itemKey = '';
