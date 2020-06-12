@@ -692,7 +692,7 @@ class Promotion extends Base
         $keywords = input('keywords');
         $prom_id = input('prom_id');
         $tpl = input('tpl', 'search_goods');
-        $where = ['store_count' => ['gt', 0], 'is_virtual' => 0, 'is_area_show' => 1, 'is_on_sale' => 1];
+        $where = ['store_count' => ['gt', 0], 'is_virtual' => 0, 'is_area_show' => 1];
         $prom_type = input('prom_type/d');
         $coupon_use_type = input('coupon_use_type', '');
         if ($goods_id) {
@@ -1049,7 +1049,7 @@ class Promotion extends Base
         $this->assign('page', $Page);
         $this->assign('goodsList', $goodsList);
 
-        return $this->fetch('order_search_goods');
+        return $this->fetch('search_goods');
     }
 
     /**
