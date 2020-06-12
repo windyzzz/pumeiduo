@@ -473,7 +473,7 @@ class GoodsLogic extends Model
                 foreach ($goods_list as $k => $v) {
                     // 缩略图
                     if (!strstr($v['original_img'], 'http') && !strstr($v['original_img'], 'https')) {
-                        $goodsList[$k]['original_img'] = SITE_URL . $v['original_img'];
+                        $goodsList[$k]['original_img_new'] = SITE_URL . $v['original_img'];
                     }
                     // 处理显示金额
                     if ($v['exchange_integral'] != 0) {
@@ -526,7 +526,7 @@ class GoodsLogic extends Model
         foreach ($goods_list as $k => $v) {
             // 缩略图
             if (!strstr($v['original_img'], 'http') && !strstr($v['original_img'], 'https')) {
-                $goodsList[$k]['original_img'] = SITE_URL . $v['original_img'];
+                $goodsList[$k]['original_img_new'] = SITE_URL . $v['original_img'];
             }
             // 处理显示金额
             if ($v['exchange_integral'] != 0) {
@@ -1120,7 +1120,7 @@ class GoodsLogic extends Model
             }
             // 缩略图
             if (!strstr($v['original_img'], 'http') && !strstr($v['original_img'], 'https')) {
-                $goodsList[$k]['original_img'] = SITE_URL . $v['original_img'];
+                $goodsList[$k]['original_img_new'] = SITE_URL . $v['original_img'];
             }
             // 商品规格属性
             if (isset($goodsItem[$v['goods_id']])) {

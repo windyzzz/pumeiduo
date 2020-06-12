@@ -1785,7 +1785,7 @@ class Goods extends Base
         foreach ($flashSaleGoods as $k => $v) {
             // 缩略图
             if (!strstr($v['original_img'], 'http') && !strstr($v['original_img'], 'https')) {
-                $flashSaleGoods[$k]['original_img'] = SITE_URL . $v['original_img'];
+                $flashSaleGoods[$k]['original_img_new'] = SITE_URL . $v['original_img'];
             }
             // 最近的结束时间
             if ($k == 0) {
@@ -1902,7 +1902,7 @@ class Goods extends Base
             foreach ($goods_list as $k => $v) {
                 // 缩略图
                 if (!strstr($v['original_img'], 'http') && !strstr($v['original_img'], 'https')) {
-                    $goods_list[$k]['original_img'] = SITE_URL . $v['original_img'];
+                    $goods_list[$k]['original_img_new'] = SITE_URL . $v['original_img'];
                 }
                 // 商品规格属性
                 if (isset($goodsItem[$v['goods_id']])) {
@@ -2010,7 +2010,7 @@ class Goods extends Base
         foreach ($groupBuyData as $k => $groupBuy) {
             // 缩略图
             if (!strstr($groupBuy['original_img'], 'http') && !strstr($groupBuy['original_img'], 'https')) {
-                $groupBuyData[$k]['original_img'] = SITE_URL . $groupBuy['original_img'];
+                $groupBuyData[$k]['original_img_new'] = SITE_URL . $groupBuy['original_img'];
             }
             $groupBuyData[$k]['now_time'] = time() . '';
             // 价格判断
@@ -2744,6 +2744,7 @@ class Goods extends Base
             ->order('sort')
             ->select();
         foreach ($list as $k => $v) {
+            //
             // 处理显示金额
             if ($v['exchange_integral'] != 0) {
                 $list[$k]['exchange_price'] = bcsub($v['shop_price'], $v['exchange_integral'], 2);
