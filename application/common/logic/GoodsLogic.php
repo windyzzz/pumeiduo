@@ -1694,7 +1694,6 @@ class GoodsLogic extends Model
     }
 
     /**
-     * >>>>>>> master
      * 获取订单商品数据
      * @param $cartLogic
      * @param $goodsId

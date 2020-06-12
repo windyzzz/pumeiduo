@@ -63,6 +63,11 @@ class Pay
     private $goodsPv = '0';                       // 商品pv
     private $orderPv = '0';                       // 订单总pv
 
+    private $order1 = [];
+    private $order1Goods = [];
+    private $order2 = [];
+    private $order2Goods = [];
+
     public function __construct()
     {
         $this->giftLogic = new GiftLogic();
@@ -230,6 +235,72 @@ class Pay
         // 优惠比例
         $promRate = bcsub(1, ($promAmount / $this->totalAmount), 2);
         $this->orderPv = $promRate < 1 ? bcmul($promRate, $this->goodsPv, 2) : $this->goodsPv;
+    }
+
+
+    public function setOrderSplitGoods($payGoods)
+    {
+        $goodsData = [
+            'goods_num' => $payGoods['goods_num'],
+            'goods_price' => $payGoods['goods_price'],
+            'member_goods_price' => $payGoods['member_goods_price'],
+            'use_integral' => $payGoods['integral'],
+            'spec_key' => $payGoods['spec_key'],
+            'spec_key_name' => $payGoods['spec_key_name'],
+            'goods_pv' => $payGoods['goods_pv'],
+        ];
+        if ($payGoods['goods']['is_supply'] == 0) {
+            $this->order1Goods[$payGoods['goods_id'] . '_' . $payGoods['item_id']] = $goodsData;
+        } elseif ($payGoods['goods']['is_supply'] == 1) {
+            $this->order2Goods[$payGoods['goods_id'] . '_' . $payGoods['item_id']] = $goodsData;
+        }
+    }
+
+
+    public function setOrderSplit()
+    {
+        if (!empty($this->order1Goods) && !empty($this->order2Goods)) {
+            // 订单优惠的价格
+            $promAmount = bcsub(bcadd($this->orderPromAmount, $this->couponPrice, 2), $this->goodsPromAmount, 2);
+            // 优惠比例
+            $promRate = bcsub(1, ($promAmount / $this->totalAmount), 2);
+            /*
+             * 子订单1
+             */
+            $goodsPrice = 0;
+            $integral = 0;
+            $goodsPv = 0;
+            foreach ($this->order1Goods as $goods) {
+                $goodsPrice = bcadd($goodsPrice, bcmul($goods['member_goods_price'], $goods['goods_num'], 2), 2);
+                $integral = bcadd($integral, bcmul($goods['use_integral'], $goods['goods_num'], 2), 2);
+                $goodsPv = bcadd($goodsPv, bcmul($goods['goods_pv'], $goods['goods_num'], 2), 2);
+            }
+            $this->order1['goods_price'] = $goodsPrice;
+            $this->order1['integral'] = $integral;
+            $this->order1['order_pv'] = $promRate < 1 ? bcmul($promRate, $goodsPv, 2) : $goodsPv;
+            /*
+             * 子订单2
+             */
+            $goodsPrice = 0;
+            $integral = 0;
+            $goodsPv = 0;
+            foreach ($this->order2Goods as $goods) {
+                $goodsPrice = bcadd($goodsPrice, bcmul($goods['member_goods_price'], $goods['goods_num'], 2), 2);
+                $integral = bcadd($integral, bcmul($goods['use_integral'], $goods['goods_num'], 2), 2);
+                $goodsPv = bcadd($goodsPv, bcmul($goods['goods_pv'], $goods['goods_num'], 2), 2);
+            }
+            $this->order2['goods_price'] = $goodsPrice;
+            $this->order2['integral'] = $integral;
+            $this->order2['order_pv'] = $promRate < 1 ? bcmul($promRate, $goodsPv, 2) : $goodsPv;
+            // 子订单的优惠分摊（订单优惠 + 优惠券优惠）
+            $this->order1['prom_price'] = bcmul(($this->order1['goods_price'] / bcadd($this->order1['goods_price'], $this->order2['goods_price'], 2)), $promAmount, 2);
+            $this->order2['prom_price'] = bcmul(($this->order2['goods_price'] / bcadd($this->order1['goods_price'], $this->order2['goods_price'], 2)), $promAmount, 2);
+            // 子订单的运费分摊
+
+            // 子订单的电子币抵扣分摊
+            
+            exit();
+        }
     }
 
     /**
@@ -1237,6 +1308,8 @@ class Pay
                 $goods_info = M('goods')->where(array('goods_id' => $v['goods_id']))->find();
                 throw new TpshopException('计算订单价格', 0, ['status' => -1, 'msg' => "超出活动商品：【{$goods_info['goods_name']}】 限购数量， 每人限购 {$group_activity['buy_limit']} 件", 'result' => '']);
             }
+            // 组合拆分订单数据
+            $this->setOrderSplitGoods($this->payList[$k]);
         }
         $this->goodsPromAmount = bcadd($this->goodsPromAmount, $goodsPromAmount, 2);
         // 再计算优惠（满打折、满减价）
@@ -1261,6 +1334,8 @@ class Pay
                                         }
                                     }
                                 }
+                                // 组合拆分订单数据
+                                $this->setOrderSplitGoods($this->payList[$k]);
                             }
                         }
                         break;
@@ -1279,6 +1354,8 @@ class Pay
                                         }
                                     }
                                 }
+                                // 组合拆分订单数据
+                                $this->setOrderSplitGoods($this->payList[$k]);
                             }
                         }
                         break;
