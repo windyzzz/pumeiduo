@@ -187,7 +187,7 @@
         this.goods_price = goods_price;
         this.goods_image = goods_image;
         this.spec = spec;
-        if (this.spec.spec_img == '') {
+        if (this.spec != null && this.spec.spec_img == '') {
             this.spec.spec_img = goods_image;
         }
     }
