@@ -199,8 +199,15 @@
                                            value="{$goods.goods_id}"/>
                                     <div class="ys-btn-close" style="top: 15px;left: 172px;">×</div>
                                     <div class="selected-group-goods">
-                                        <div class="goods-thumb"><img style="width: 162px;height: 162px"
-                                                                      src="{$goods[SpecGoodsPrice][spec_img]}"/></div>
+                                        <div class="goods-thumb">
+                                            <img style="width: 162px;height: 162px"
+                                            <notempty name="$goods[SpecGoodsPrice][spec_img]">
+                                                src="{$goods[SpecGoodsPrice][spec_img]}"
+                                                <else/>
+                                                src="{$goods['goods_id']|goods_thum_images=162,162}"
+                                            </notempty>
+                                            />
+                                        </div>
                                         <div class="goods-name">
                                             <a target="_blank"
                                                href="{:U('Home/Goods/goodsInfo',array('id'=>$goods['goods_id'],'item_id'=>$goods[SpecGoodsPrice]['item_id']))}">{$goods.goods_name}{$goods[SpecGoodsPrice]['key_name']}</a>
