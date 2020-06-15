@@ -87,7 +87,7 @@ class Coupon extends Base
                             'original_img' => $goods['original_img'],
                             'original_img_new' => getFullPath($goods['original_img']),
                             'goods_list' => [],
-                            'title' => '￥' . floatval($coupon['money']) . '仅限' . $goods['goods_name'] . '可用',
+                            'title' => $coupon['name'],
                             'desc' => '￥' . floatval($coupon['money']) . '仅限' . $goods['goods_name'] . '可用',
                             'target' => $target,
                             'content' => $coupon['content'] ?? ''
@@ -204,7 +204,7 @@ class Coupon extends Base
                             'original_img' => $goods['original_img'],
                             'original_img_new' => getFullPath($goods['original_img']),
                             'goods_list' => [],
-                            'title' => '￥' . floatval($coupon['money']) . '仅限' . $goods['goods_name'] . '可用',
+                            'title' => $coupon['name'],
                             'desc' => '￥' . floatval($coupon['money']) . '仅限' . $goods['goods_name'] . '可用',
                             'content' => $coupon['content'] ?? ''
                         ];

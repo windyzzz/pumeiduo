@@ -95,56 +95,56 @@
                     <p class="notic">促销活动类型</p>
                 </dd>
             </dl>
-            <dl class="row" id="buy_goods" style="display: none;">
-                <dt class="tit">
-                    <label><em>*</em>参与活动商品</label>
-                </dt>
-                <dd class="opt">
-                    <div style="overflow: hidden;" id="selected_group_goods">
-                        <volist name="buy_goods" id="goods">
-                            <if condition="!$goods[SpecGoodsPrice]">
-                                <div style="float: left;margin-right: 20px">
-                                    <input type="hidden" name="buy_goods[{$goods.goods_id}_0][goods_id]"
-                                           value="{$goods.goods_id}"/>
-                                    <div class="ys-btn-close" style="top: 15px;left: 172px;">×</div>
-                                    <div class="selected-group-goods">
-                                        <div class="goods-thumb">
-                                            <img style="width: 162px;height: 162px" src="{$goods['goods_id']|goods_thum_images=162,162}"/>
-                                        </div>
-                                        <div class="goods-name">
-                                            <a target="_blank"
-                                               href="{:U('Home/Goods/goodsInfo',array('id'=>$goods['goods_id']))}">{$goods.goods_name}</a>
-                                        </div>
-                                        <div class="goods-price">商城价：￥{$goods.shop_price}库存:{$goods.store_count}</div>
-                                    </div>
-                                </div>
-                                <else/>
-                                <div style="float: left;margin-right: 20px">
-                                    <input type="hidden"
-                                           name="buy_goods[{$goods.goods_id}_{$goods[SpecGoodsPrice]['item_id']}][goods_id]"
-                                           value="{$goods.goods_id}"/>
-                                    <div class="ys-btn-close" style="top: 15px;left: 172px;">×</div>
-                                    <div class="selected-group-goods">
-                                        <div class="goods-thumb"><img style="width: 162px;height: 162px"
-                                                                      src="{$goods[SpecGoodsPrice][spec_img]}"/></div>
-                                        <div class="goods-name">
-                                            <a target="_blank"
-                                               href="{:U('Home/Goods/goodsInfo',array('id'=>$goods['goods_id'],'item_id'=>$goods[SpecGoodsPrice]['item_id']))}">{$goods.goods_name}{$goods[SpecGoodsPrice]['key_name']}</a>
-                                        </div>
-                                        <div class="goods-price">
-                                            商城价：￥{$goods[SpecGoodsPrice]['price']}库存:{$goods[SpecGoodsPrice]['store_count']}
-                                        </div>
-                                    </div>
-                                </div>
-                            </if>
-                        </volist>
-                    </div>
-                    <span class="err" id="err_goods" style="color:#F00;">请添加活动商品</span>
-                    <p class="notic">
-                        <a onclick="selectGoods()" class="ncap-btn"><i class="fa fa-search"></i>选择商品</a>
-                    </p>
-                </dd>
-            </dl>
+            <!--<dl class="row" id="buy_goods">-->
+                <!--<dt class="tit">-->
+                    <!--<label><em>*</em>参与活动商品</label>-->
+                <!--</dt>-->
+                <!--<dd class="opt">-->
+                    <!--<div style="overflow: hidden;" id="selected_group_goods">-->
+                        <!--<volist name="buy_goods" id="goods">-->
+                            <!--<if condition="!$goods[SpecGoodsPrice]">-->
+                                <!--<div style="float: left;margin-right: 20px">-->
+                                    <!--<input type="hidden" name="buy_goods[{$goods.goods_id}_0][goods_id]"-->
+                                           <!--value="{$goods.goods_id}"/>-->
+                                    <!--<div class="ys-btn-close" style="top: 15px;left: 172px;">×</div>-->
+                                    <!--<div class="selected-group-goods">-->
+                                        <!--<div class="goods-thumb">-->
+                                            <!--<img style="width: 162px;height: 162px" src="{$goods['goods_id']|goods_thum_images=162,162}"/>-->
+                                        <!--</div>-->
+                                        <!--<div class="goods-name">-->
+                                            <!--<a target="_blank"-->
+                                               <!--href="{:U('Home/Goods/goodsInfo',array('id'=>$goods['goods_id']))}">{$goods.goods_name}</a>-->
+                                        <!--</div>-->
+                                        <!--<div class="goods-price">商城价：￥{$goods.shop_price}库存:{$goods.store_count}</div>-->
+                                    <!--</div>-->
+                                <!--</div>-->
+                                <!--<else/>-->
+                                <!--<div style="float: left;margin-right: 20px">-->
+                                    <!--<input type="hidden"-->
+                                           <!--name="buy_goods[{$goods.goods_id}_{$goods[SpecGoodsPrice]['item_id']}][goods_id]"-->
+                                           <!--value="{$goods.goods_id}"/>-->
+                                    <!--<div class="ys-btn-close" style="top: 15px;left: 172px;">×</div>-->
+                                    <!--<div class="selected-group-goods">-->
+                                        <!--<div class="goods-thumb"><img style="width: 162px;height: 162px"-->
+                                                                      <!--src="{$goods[SpecGoodsPrice][spec_img]}"/></div>-->
+                                        <!--<div class="goods-name">-->
+                                            <!--<a target="_blank"-->
+                                               <!--href="{:U('Home/Goods/goodsInfo',array('id'=>$goods['goods_id'],'item_id'=>$goods[SpecGoodsPrice]['item_id']))}">{$goods.goods_name}{$goods[SpecGoodsPrice]['key_name']}</a>-->
+                                        <!--</div>-->
+                                        <!--<div class="goods-price">-->
+                                            <!--商城价：￥{$goods[SpecGoodsPrice]['price']}库存:{$goods[SpecGoodsPrice]['store_count']}-->
+                                        <!--</div>-->
+                                    <!--</div>-->
+                                <!--</div>-->
+                            <!--</if>-->
+                        <!--</volist>-->
+                    <!--</div>-->
+                    <!--<span class="err" id="err_goods" style="color:#F00;">请添加活动商品</span>-->
+                    <!--<p class="notic">-->
+                        <!--<a onclick="selectGoods()" class="ncap-btn"><i class="fa fa-search"></i>选择商品</a>-->
+                    <!--</p>-->
+                <!--</dd>-->
+            <!--</dl>-->
             <dl class="row" id="order_price">
                 <dt class="tit">
                     <label><em>*</em>订单满足价格</label>
@@ -199,8 +199,15 @@
                                            value="{$goods.goods_id}"/>
                                     <div class="ys-btn-close" style="top: 15px;left: 172px;">×</div>
                                     <div class="selected-group-goods">
-                                        <div class="goods-thumb"><img style="width: 162px;height: 162px"
-                                                                      src="{$goods[SpecGoodsPrice][spec_img]}"/></div>
+                                        <div class="goods-thumb">
+                                            <img style="width: 162px;height: 162px"
+                                            <notempty name="$goods[SpecGoodsPrice][spec_img]">
+                                                src="{$goods[SpecGoodsPrice][spec_img]}"
+                                                <else/>
+                                                src="{$goods['goods_id']|goods_thum_images=162,162}"
+                                            </notempty>
+                                            />
+                                        </div>
                                         <div class="goods-name">
                                             <a target="_blank"
                                                href="{:U('Home/Goods/goodsInfo',array('id'=>$goods['goods_id'],'item_id'=>$goods[SpecGoodsPrice]['item_id']))}">{$goods.goods_name}{$goods[SpecGoodsPrice]['key_name']}</a>

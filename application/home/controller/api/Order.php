@@ -1906,7 +1906,7 @@ class Order extends Base
                     'goods_num' => $list['goods_num'],
                     'shop_price' => $goods['shop_price'],
                     'exchange_integral' => $list['use_integral'] ?? 0,
-                    'exchange_price' => in_array($list['prom_type'], [1, 2]) ? $list['member_goods_price'] : '',
+                    'exchange_price' => in_array($list['prom_type'], [1, 2]) ? bcadd($list['member_goods_price'], 0, 2) : '',
                     'prom_type' => $list['prom_type'] ?? 0,
                     'gift_goods' => [],
                 ];
@@ -2154,7 +2154,7 @@ class Order extends Base
                     'goods_num' => $list['goods_num'],
                     'shop_price' => $goods['shop_price'],
                     'exchange_integral' => $list['use_integral'] ?? 0,
-                    'exchange_price' => in_array($list['prom_type'], [1, 2]) ? $list['member_goods_price'] : '',
+                    'exchange_price' => in_array($list['prom_type'], [1, 2]) ? bcadd($list['member_goods_price'], 0, 2) : '',
                     'prom_type' => $list['prom_type'] ?? 0,
                     'gift_goods' => [],
                 ];
