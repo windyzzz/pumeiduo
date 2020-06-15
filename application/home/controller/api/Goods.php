@@ -2590,11 +2590,12 @@ class Goods extends Base
                 'goods_info' => $goodsInfo
             ];
         } else {
+            // 更新的商品信息
+            $goodsLogic = new GoodsLogic();
+            $goodsInfo = $goodsLogic->addressGoodsInfo($goodsId, $itemId, 0);
             $return = [
                 'user_address' => [],
-                'goods_info' => [
-                    'store_count' => '0'
-                ]
+                'goods_info' => $goodsInfo
             ];
         }
         return json(['status' => 1, 'result' => $return]);
