@@ -1591,18 +1591,24 @@ class CartLogic extends Model
     {
         $hasPmd = false;
         $hasAbroad = false;
+        $hasSupply = false;
         foreach ($cartList as $cart) {
-            if ($cart['goods']['is_abroad'] == 0) {
-                $hasPmd = true;
-            } else {
+            if ($cart['goods']['is_abroad'] == 1) {
                 $hasAbroad = true;
+            } elseif ($cart['goods']['is_supply'] == 1) {
+                $hasSupply = true;
+            } else {
+                $hasPmd = true;
             }
         }
-        if ($hasPmd && $hasAbroad) {
+        if (($hasPmd && $hasAbroad) || ($hasSupply && $hasAbroad)) {
             return ['status' => 0, 'msg' => '海外购商品请分开结算'];
         }
         if (!$hasPmd && $hasAbroad) {
             return ['status' => 2];
+        }
+        if ($hasSupply) {
+            return ['status' => 3];
         }
         return ['status' => 1];
     }

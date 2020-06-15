@@ -1968,9 +1968,6 @@ class Order extends Base
                     }
                 }
             }
-
-            // 拆分订单处理
-            $payLogic->setOrderSplit();
         } catch (TpshopException $tpE) {
             return json($tpE->getErrorArr());
         }
@@ -2284,6 +2281,9 @@ class Order extends Base
             case 2:
                 $orderType = 2; // 海外购
                 break;
+            case 3:
+                $orderType = 3; // 供应链
+                break;
         }
 
         // 初始化数据 商品总额/节约金额/商品总共数量/商品使用积分
@@ -2337,6 +2337,8 @@ class Order extends Base
             $payLogic->setOrderPv();
             // 使用电子币
             $payLogic->useUserElectronic($userElectronic);
+            // 拆分订单处理
+            $payLogic->setOrderSplit();
         } catch (TpshopException $tpE) {
             return json($tpE->getErrorArr());
         }

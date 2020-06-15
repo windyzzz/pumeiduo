@@ -237,10 +237,14 @@ class Pay
         $this->orderPv = $promRate < 1 ? bcmul($promRate, $this->goodsPv, 2) : $this->goodsPv;
     }
 
-
+    /**
+     * 拆分订单商品数据
+     * @param $payGoods
+     */
     public function setOrderSplitGoods($payGoods)
     {
         $goodsData = [
+            'goods_id' => $payGoods['goods_id'],
             'goods_num' => $payGoods['goods_num'],
             'goods_price' => $payGoods['goods_price'],
             'member_goods_price' => $payGoods['member_goods_price'],
@@ -256,11 +260,13 @@ class Pay
         }
     }
 
-
+    /**
+     * 拆分订单数据
+     */
     public function setOrderSplit()
     {
         if (!empty($this->order1Goods) && !empty($this->order2Goods)) {
-            // 订单优惠的价格
+            // 订单属性优惠价格（订单优惠 + 优惠券优惠 - 商品优惠）
             $promAmount = bcsub(bcadd($this->orderPromAmount, $this->couponPrice, 2), $this->goodsPromAmount, 2);
             // 优惠比例
             $promRate = bcsub(1, ($promAmount / $this->totalAmount), 2);
@@ -292,13 +298,24 @@ class Pay
             $this->order2['goods_price'] = $goodsPrice;
             $this->order2['integral'] = $integral;
             $this->order2['order_pv'] = $promRate < 1 ? bcmul($promRate, $goodsPv, 2) : $goodsPv;
+
+            $order1GoodsRate = $this->order1['goods_price'] / bcadd($this->order1['goods_price'], $this->order2['goods_price'], 2);
+            $order2GoodsRate = $this->order2['goods_price'] / bcadd($this->order1['goods_price'], $this->order2['goods_price'], 2);
             // 子订单的优惠分摊（订单优惠 + 优惠券优惠）
-            $this->order1['prom_price'] = bcmul(($this->order1['goods_price'] / bcadd($this->order1['goods_price'], $this->order2['goods_price'], 2)), $promAmount, 2);
-            $this->order2['prom_price'] = bcmul(($this->order2['goods_price'] / bcadd($this->order1['goods_price'], $this->order2['goods_price'], 2)), $promAmount, 2);
+            $this->order1['goods_prom_price'] = bcmul($order1GoodsRate, $promAmount, 2);
+            $this->order2['goods_prom_price'] = bcmul($order2GoodsRate, $promAmount, 2);
             // 子订单的电子币抵扣分摊
             $this->order1['user_electronic'] = bcdiv($this->userElectronic, 2 ,2);
             $this->order2['user_electronic'] = bcdiv($this->userElectronic, 2 ,2);
-
+            // 子订单实付价
+            $this->order1['order_amount'] = bcsub(bcsub($this->order1['goods_price'], $this->order1['goods_prom_price'], 2), $this->order1['user_electronic'], 2);
+            $this->order2['order_amount'] = bcsub(bcsub($this->order2['goods_price'], $this->order2['goods_prom_price'], 2), $this->order2['user_electronic'], 2);
+            // 子订单的订单优惠分摊
+            $this->order1['order_prom_price'] = bcmul($order1GoodsRate, $this->orderPromAmount, 2);
+            $this->order2['order_prom_price'] = bcmul($order2GoodsRate, $this->orderPromAmount, 2);
+            // 子订单的优惠券优惠分摊
+            $this->order1['order_coupon_price'] = bcmul($order1GoodsRate, $this->couponPrice, 2);
+            $this->order2['order_coupon_price'] = bcmul($order2GoodsRate, $this->couponPrice, 2);
         }
     }
 
@@ -1516,6 +1533,19 @@ class Pay
     public function getOrderPv()
     {
         return $this->orderPv;
+    }
+
+    public function getOrderSplit()
+    {
+        if (!empty($this->order1) && !empty($this->order2)) {
+            return ['order1' => $this->order1, 'order2' => $this->order2];
+        }
+        return [];
+    }
+
+    public function getOrderSplitGoods()
+    {
+        return ['order1_goods' => $this->order1Goods, 'order2_goods' => $this->order2Goods];
     }
 
     public function toArray()
