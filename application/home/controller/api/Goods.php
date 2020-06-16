@@ -755,7 +755,6 @@ class Goods extends Base
             'store_count' => $goods['store_count'],
             'goods_remark' => $goods['goods_remark'],
             'goods_content' => htmlspecialchars_decode($goods['goods_content']),
-            'original_img' => $goods['original_img'],
             'original_img_new' => $originalImg,
             'goods_images_list' => [],
             'shop_price' => $goods['shop_price'],
@@ -921,7 +920,6 @@ class Goods extends Base
                 }
                 $couponList[$k]['goods_id'] = $coupon['goods_id'] ?? '';
                 $couponList[$k]['goods_name'] = $coupon['goods_name'] ?? '';
-                $couponList[$k]['original_img'] = $coupon['original_img'] ?? '';
                 $couponList[$k]['original_img_new'] = getFullPath($coupon['original_img']);
                 $couponList[$k]['cat_id'] = $coupon['cat_id'] ?? '';
                 $couponList[$k]['cat_name'] = $coupon['cat_name'] ?? '';
@@ -1066,6 +1064,7 @@ class Goods extends Base
                 }
             }
             // 处理输出数据
+            unset($goodsInfo['original_img']);
             unset($goodsInfo['is_supply']);
             foreach ($goodsSpecPrice as &$item) {
                 unset($item['key']);
