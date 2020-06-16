@@ -1260,6 +1260,7 @@ AND log_id NOT IN
                             $data['second_leader'] = $referee_users['first_leader'];
                             $data['third_leader'] = $referee_users['second_leader'];
                             $data['invite_uid'] = $referee_users['user_id'];
+                            $data['invite_time'] = NOW_TIME;
                         } else {
                             Db::rollback();
                             continue;
