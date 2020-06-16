@@ -69,7 +69,7 @@ class Order extends Base
         $pay_end = strtotime($pay_end);
 
         // 搜索条件
-        $condition = [];
+        $condition = ['parent_id' => 0];
         $keyType = I('keytype');
         $keywords = I('keywords', '', 'trim');
         $user_id = I('user_id', '', 'trim');

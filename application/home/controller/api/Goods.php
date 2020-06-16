@@ -16,10 +16,8 @@ use app\common\logic\CouponLogic;
 use app\common\logic\FreightLogic;
 use app\common\logic\GoodsLogic;
 use app\common\logic\GoodsPromFactory;
-use app\common\logic\Pay as PayLogic;
 use app\common\logic\SearchWordLogic;
 use app\common\logic\TaskLogic;
-use app\common\logic\UsersLogic;
 use app\common\model\Goods as GoodsModel;
 use app\common\model\GroupBuy;
 use app\common\model\SpecGoodsPrice;
@@ -984,10 +982,10 @@ class Goods extends Base
         $goodsId = I('goods_id/d', '');
         $itemId = I('item_id/d', '');
         $addressId = I('address_id', '');
-        $goodsNum = I('goods_num', 1);
         if (!$goodsId) return json(['status' => 0, 'msg' => '请传入正确的商品ID']);
         // 商品价格属性
         $goodsInfo = M('goods')->where(['goods_id' => $goodsId])->field('original_img, shop_price, exchange_integral, store_count, limit_buy_num buy_limit, least_buy_num buy_least, is_supply')->find();
+        if (!$goodsInfo) return json(['status' => 0, 'msg' => '请传入正确的商品ID']);
         $goodsInfo['goods_type'] = 'normal';
         $goodsInfo['original_img'] = getFullPath($goodsInfo['original_img']);
         $goodsInfo['exchange_price'] = bcsub($goodsInfo['shop_price'], $goodsInfo['exchange_integral'], 2);
@@ -1023,7 +1021,7 @@ class Goods extends Base
                 $goodsSpec = $getGoodsSpec['spec'];
                 $defaultKey = $getGoodsSpec['default_key'];
                 // 查看地址商品信息
-                $addressGoodsData = $goodsLogic->addressGoods($this->user, $goodsId, $itemId, '', $addressId);
+                $addressGoodsData = $goodsLogic->addressGoods($this->user, $goodsId, $itemId, $addressId);
             } else {
                 /*
                  * 供应链商品
@@ -1032,7 +1030,7 @@ class Goods extends Base
                 $goodsSpec = $getGoodsSpec['spec'];
                 $defaultKey = $getGoodsSpec['default_key'];
                 // 查看地址商品信息
-                $addressGoodsData = $goodsLogic->addressGoods($this->user, $goodsId, 0, $defaultKey, $addressId, $goodsNum, true);
+                $addressGoodsData = $goodsLogic->addressGoods($this->user, $goodsId, $itemId, $addressId, 1, true);
                 $goodsInfo['store_count'] = $addressGoodsData['store_count'];
                 if (isset($addressGoodsData['buy_least'])) $goodsInfo['buy_least'] = $addressGoodsData['buy_least'];
             }
@@ -1044,14 +1042,14 @@ class Goods extends Base
             } elseif (empty($extendGoodsSpec) && !empty($goodsSpecPrice)) {
                 $goodsInfo['original_img'] = !empty($goodsSpecPrice[$defaultKey]['spec_img']) ? getFullPath($goodsSpecPrice[$defaultKey]['spec_img']) : $goodsInfo['original_img'];
                 $goodsInfo['shop_price'] = $goodsSpecPrice[$defaultKey]['price'];
-                $goodsInfo['store_count'] = $goodsSpecPrice[$defaultKey]['store_count'];
+                $goodsInfo['store_count'] = $goodsInfo['is_supply'] == 0 ? $goodsSpecPrice[$defaultKey]['store_count'] : $goodsInfo['store_count'];
                 $goodsInfo['exchange_price'] = bcsub($goodsSpecPrice[$defaultKey]['price'], $goodsInfo['exchange_integral'], 2);
             } elseif (!empty($extendGoodsSpec) && !empty($goodsSpecPrice)) {
                 foreach ($extendGoodsSpec['data'] as $spec) {
                     if ($spec['spec_key'] == $defaultKey) {
                         $goodsInfo['goods_type'] = $extendGoodsSpec['type'];
                         $goodsInfo['shop_price'] = $spec['price'];
-                        $goodsInfo['store_count'] = $spec['goods_num'];
+                        $goodsInfo['store_count'] = $goodsInfo['is_supply'] == 0 ? $spec['goods_num'] : $goodsInfo['store_count'];
                         $goodsInfo['buy_limit'] = $spec['buy_limit'];
                         // 是否能使用积分
                         if ($spec['can_integral'] == 0) {
@@ -2879,92 +2877,69 @@ class Goods extends Base
     /**
      * 根据地址获取商品信息
      * @return \think\response\Json
-     * @throws \app\common\util\TpshopException
      */
-    public function addressGoodsInfo()
+    public function addressGoods()
     {
         $goodsId = I('goods_id', '');
         $itemId = I('item_id', '');
         $addressId = I('address_id', '');
-
-        if (empty($addressId)) {
-            // 用户默认地址
-            $userAddress = get_user_address_list_new($this->user_id, true);
-        } else {
-            $userAddress = get_user_address_list_new($this->user_id, false, $addressId);
-        }
-        if (!empty($userAddress)) {
-            $userAddress[0]['out_range'] = 0;
-            unset($userAddress[0]['zipcode']);
-            unset($userAddress[0]['is_pickup']);
-            // 地址标签
-            $addressTab = (new UsersLogic())->getAddressTab($this->user_id);
-            if (!empty($addressTab)) {
-                if (empty($userAddress[0]['tabs'])) {
-                    unset($userAddress[0]['tabs']);
-                    $userAddress[0]['tabs'][] = [
-                        'tab_id' => 0,
-                        'name' => '默认',
-                        'is_selected' => 1
-                    ];
-                } else {
-                    $tabs = explode(',', $userAddress[0]['tabs']);
-                    unset($userAddress[0]['tabs']);
-                    foreach ($addressTab as $item) {
-                        if (in_array($item['tab_id'], $tabs)) {
-                            $userAddress[0]['tabs'][] = [
-                                'tab_id' => $item['tab_id'],
-                                'name' => $item['name'],
-                                'is_selected' => 1
-                            ];
-                        }
-                    }
-                    $userAddress[0]['tabs'][] = [
-                        'tab_id' => 0,
-                        'name' => '默认',
-                        'is_selected' => 1
-                    ];
-                }
-            } else {
-                unset($userAddress[0]['tabs']);
-                $userAddress[0]['tabs'][] = [
-                    'tab_id' => 0,
-                    'name' => '默认',
-                    'is_selected' => 1
-                ];
-            }
-
-            $cartLogic = new CartLogic();
-            $cartLogic->setUserId($this->user_id);
-            // 获取订单商品数据
+        if (!$goodsId) return json(['status' => 0, 'msg' => '请传入正确的商品ID']);
+        if (!$addressId) return json(['status' => 0, 'msg' => '请传入地址ID']);
+        $goodsInfo = M('goods')->where(['goods_id' => $goodsId])->field('store_count, is_supply')->find();
+        if (!$goodsInfo) return json(['status' => 0, 'msg' => '请传入正确的商品ID']);
+        $storeCount = $goodsInfo['store_count'];
+        try {
             $goodsLogic = new GoodsLogic();
-            $res = $goodsLogic->getOrderGoodsData($cartLogic, $goodsId, $itemId, 1, 1, '', $this->isApp, true);
-            if ($res['status'] != 1) {
-                return json($res);
+            if ($goodsInfo['is_supply'] == 0) {
+                /*
+                 * 非供应链商品
+                 */
+                // 查看地址商品信息
+                $addressGoodsData = $goodsLogic->addressGoods($this->user, $goodsId, $itemId, $addressId);
+                // 默认规格
+                $getGoodsSpec = $goodsLogic->get_spec_new($goodsId, $itemId);
+                $defaultKey = $getGoodsSpec['default_key'];
             } else {
-                $cartList = $res['result'];
+                /*
+                 * 供应链商品
+                 */
+                // 查看地址商品信息
+                $addressGoodsData = $goodsLogic->addressGoods($this->user, $goodsId, $itemId, $addressId, 1, true);
+                $storeCount = $addressGoodsData['store_count'];
+                // 默认规格
+                $getGoodsSpec = $goodsLogic->get_supply_spec($goodsId, $itemId);
+                $defaultKey = $getGoodsSpec['default_key'];
             }
-            $payLogic = new PayLogic();
-            $payLogic->payCart($cartList);
-            // 配送物流
-            if (!empty($userAddress)) {
-                $res = $payLogic->delivery($userAddress[0]['district']);
-                if (isset($res['status']) && $res['status'] == -1) {
-                    $userAddress[0]['out_range'] = 1;
+            if (empty($addressGoodsData['user_address'])) {
+                throw new TpshopException('地址商品信息', 0, ['msg' => '地址信息不存在']);
+            }
+            if ($addressGoodsData['user_address']['out_range'] == 1) {
+                throw new TpshopException('地址商品信息', 0, ['msg' => '地址不在配送范围内']);
+            }
+            $goodsSpecPrice = $goodsLogic->get_spec_price($goodsId);
+            $goodsSpecPrice = array_combine(array_column($goodsSpecPrice, 'key'), array_values($goodsSpecPrice));
+            // 根据商品活动属性计算商品价格
+            if (empty($extendGoodsSpec) && !empty($goodsSpecPrice)) {
+                $storeCount = $goodsInfo['is_supply'] == 0 ? $goodsSpecPrice[$defaultKey]['store_count'] : $storeCount;
+            } elseif (!empty($extendGoodsSpec) && !empty($goodsSpecPrice)) {
+                foreach ($extendGoodsSpec['data'] as $spec) {
+                    if ($spec['spec_key'] == $defaultKey) {
+                        $storeCount = $goodsInfo['is_supply'] == 0 ? $spec['goods_num'] : $storeCount;
+                        break;
+                    }
                 }
             }
-            // 更新的商品信息
-            $goodsInfo = $goodsLogic->addressGoodsInfo($goodsId, $itemId, !empty($userAddress) ? $userAddress[0]['district'] : 0);
+            if ($storeCount <= 0) {
+                throw new TpshopException('地址商品信息', 0, ['msg' => '当前地址暂无库存']);
+            }
             $return = [
-                'user_address' => [$userAddress[0]],
-                'goods_info' => $goodsInfo
+                'state' => 1,
+                'msg' => 'ok'
             ];
-        } else {
+        } catch (TpshopException $e) {
             $return = [
-                'user_address' => [],
-                'goods_info' => [
-                    'store_count' => '0'
-                ]
+                'state' => 0,
+                'msg' => $e->getErrorArr()['msg']
             ];
         }
         return json(['status' => 1, 'result' => $return]);

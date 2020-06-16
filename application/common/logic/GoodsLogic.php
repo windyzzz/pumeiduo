@@ -1772,14 +1772,13 @@ class GoodsLogic extends Model
      * @param $user
      * @param $goodsId
      * @param int $itemId
-     * @param string $key 规格key
      * @param string $addressId
      * @param int $goodsNum
      * @param bool $isSupply 是否是供应链商品
      * @return array
      * @throws TpshopException
      */
-    public function addressGoods($user, $goodsId, $itemId = 0, $key = '', $addressId = '', $goodsNum = 1, $isSupply = false)
+    public function addressGoods($user, $goodsId, $itemId = 0, $addressId = '', $goodsNum = 1, $isSupply = false)
     {
         if (empty($addressId)) {
             // 用户默认地址
@@ -1837,7 +1836,7 @@ class GoodsLogic extends Model
                 // 获取订单商品数据
                 $res = $this->getOrderGoodsData($cartLogic, $goodsId, $itemId, 1, 1, '', 1, true);
                 if ($res['status'] != 1) {
-                    return $res;
+                    throw new TpshopException('地址商品信息', 0, ['status' => 0, 'msg' => $res['msg']]);
                 } else {
                     $cartList = $res['result'];
                 }
@@ -1856,7 +1855,8 @@ class GoodsLogic extends Model
                  */
                 // 获取最新库存信息
                 $goodsId = M('goods')->where(['goods_id' => $goodsId])->value('supplier_goods_id');
-                if ($itemId > 0 && $key == '') {
+                $key = '';
+                if ($itemId > 0) {
                     $key = M('spec_goods_price')->where(['item_id' => $itemId])->value('key');
                 }
                 $goodsData = [
@@ -1895,28 +1895,5 @@ class GoodsLogic extends Model
             ];
         }
         return $return;
-    }
-
-    /**
-     * 根据地址获取商品信息
-     * @param $goodsId
-     * @param $itemId
-     * @param $districtId
-     * @return array
-     */
-    public function addressGoodsInfo($goodsId, $itemId, $districtId)
-    {
-        $specGoodsInfo = M('spec_goods_price')->where(['goods_id' => $goodsId, 'item_id' => $itemId])->find();
-        if (!empty($specGoodsInfo)) {
-            $returnData = [
-                'store_count' => $specGoodsInfo['store_count']
-            ];
-        } else {
-            $goodsInfo = M('goods')->where(['goods_id' => $goodsId])->find();
-            $returnData = [
-                'store_count' => $goodsInfo['store_count']
-            ];
-        }
-        return $returnData;
     }
 }
