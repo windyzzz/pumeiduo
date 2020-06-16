@@ -2002,21 +2002,24 @@ class User extends Base
         if ($user_data['distribut_level'] > 1) {
             $user_data['is_distribut'] = 1;
         }
+        if ($bind_user['distribut_level'] != 3) {
+            // 合并账号不是SVIP才变更父级
+            $user_data['invite_uid'] = $current_user['will_invite_uid'] != 0 ? $current_user['will_invite_uid'] : $current_user['invite_uid'];
+            $user_data['invite_time'] = $current_user['will_invite_uid'] != 0 ? time() : $current_user['invite_time'];
+            $user_data['first_leader'] = $current_user['first_leader'];
+            $user_data['second_leader'] = $current_user['second_leader'];
+            $user_data['third_leader'] = $current_user['third_leader'];
+        }
+        $user_data['mobile'] = $current_user['mobile'];
+        $user_data['head_pic'] = $current_user['head_pic'];
+        $user_data['nickname'] = $current_user['nickname'];
         $user_data['oauth'] = $current_user['oauth'];
         $user_data['openid'] = $current_user['openid'];
         $user_data['unionid'] = $current_user['unionid'];
-        $user_data['head_pic'] = $current_user['head_pic'];
-        $user_data['nickname'] = $current_user['nickname'];
         $user_data['bind_uid'] = $current_user['user_id'];
-        $user_data['mobile'] = $current_user['mobile'];
-        $user_data['type'] = 2;
         $user_data['bind_time'] = time();
+        $user_data['type'] = 2;
         $user_data['time_out'] = strtotime('+' . config('REDIS_DAY') . ' days');
-        $user_data['invite_uid'] = $current_user['will_invite_uid'] != 0 ? $current_user['will_invite_uid'] : $current_user['invite_uid'];
-        $user_data['invite_time'] = $current_user['will_invite_uid'] != 0 ? time() : $current_user['invite_time'];
-        $user_data['first_leader'] = $current_user['first_leader'];
-        $user_data['second_leader'] = $current_user['second_leader'];
-        $user_data['third_leader'] = $current_user['third_leader'];
         M('Users')->where('user_id', $bind_user['user_id'])->update($user_data);
         // 授权登录
         M('OauthUsers')->where('user_id', $bind_user['user_id'])->delete();
