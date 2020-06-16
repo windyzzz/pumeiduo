@@ -456,6 +456,10 @@ class Order extends Base
             ];
         }
         $this->assign('delivery_log', $deliveryLog);
+        // 子订单
+        if ($order['order_type'] == 3) {
+//            $split
+        }
 
         return $this->fetch();
     }

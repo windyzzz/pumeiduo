@@ -115,7 +115,6 @@ class PlaceOrder
         $this->addOrder($source);
         $this->addSplitOrder($source);
         $this->addOrderGoods();
-
         Hook::listen('user_add_order', $this->order); //下单行为
         $reduce = tpCache('shopping.reduce');
         if (1 == $reduce || empty($reduce)) {
@@ -666,7 +665,7 @@ class PlaceOrder
          */
         $orderData = [
             'parent_id' => $this->order['order_id'],
-            'order_sn' => $orderLogic->get_order_sn(),
+            'order_sn' => 'C' . $orderLogic->get_order_sn(),
             'order_type' => 1,
             'user_id' => $this->pay->getUser()['user_id'],
             'goods_price' => $order1['goods_price'],
@@ -708,7 +707,7 @@ class PlaceOrder
          */
         $orderData = [
             'parent_id' => $this->order['order_id'],
-            'order_sn' => $orderLogic->get_order_sn(),
+            'order_sn' => 'C' . $orderLogic->get_order_sn(),
             'order_type' => 3,
             'user_id' => $this->pay->getUser()['user_id'],
             'goods_price' => $order2['goods_price'],
