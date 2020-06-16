@@ -218,7 +218,7 @@ class CartLogic extends Model
         }
 
         if ($this->goodsBuyNum > $store_count) {
-            throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => $this->goods['goods_name'] . '，商品库存不足，剩余' . $this->goods['store_count'], 'result' => '']);
+            throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => $this->goods['goods_name'] . '，商品库存不足，剩余' . $store_count, 'result' => '']);
         }
 
         $goodsPromFactory = new GoodsPromFactory();
