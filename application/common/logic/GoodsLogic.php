@@ -1768,6 +1768,29 @@ class GoodsLogic extends Model
     }
 
     /**
+     * 根据地址获取商品信息
+     * @param $goodsId
+     * @param $itemId
+     * @param $districtId
+     * @return array
+     */
+    public function addressGoodsInfo($goodsId, $itemId, $districtId)
+    {
+        $specGoodsInfo = M('spec_goods_price')->where(['goods_id' => $goodsId, 'item_id' => $itemId])->find();
+        if (!empty($specGoodsInfo)) {
+            $returnData = [
+                'store_count' => $specGoodsInfo['store_count']
+            ];
+        } else {
+            $goodsInfo = M('goods')->where(['goods_id' => $goodsId])->find();
+            $returnData = [
+                'store_count' => $goodsInfo['store_count']
+            ];
+        }
+        return $returnData;
+    }
+
+    /**
      * 地址商品信息
      * @param $user
      * @param $goodsId
