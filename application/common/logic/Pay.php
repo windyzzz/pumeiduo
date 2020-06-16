@@ -245,6 +245,7 @@ class Pay
     {
         $goodsData = [
             'goods_id' => $payGoods['goods_id'],
+            'supplier_goods_id' => $payGoods['goods']['supplier_goods_id'],
             'goods_num' => $payGoods['goods_num'],
             'goods_price' => $payGoods['goods_price'],
             'member_goods_price' => $payGoods['member_goods_price'],
@@ -302,20 +303,20 @@ class Pay
             $order1GoodsRate = $this->order1['goods_price'] / bcadd($this->order1['goods_price'], $this->order2['goods_price'], 2);
             $order2GoodsRate = $this->order2['goods_price'] / bcadd($this->order1['goods_price'], $this->order2['goods_price'], 2);
             // 子订单的优惠分摊（订单优惠 + 优惠券优惠）
-            $this->order1['goods_prom_price'] = bcmul($order1GoodsRate, $promAmount, 2);
-            $this->order2['goods_prom_price'] = bcmul($order2GoodsRate, $promAmount, 2);
-            // 子订单的电子币抵扣分摊
-            $this->order1['user_electronic'] = bcdiv($this->userElectronic, 2 ,2);
-            $this->order2['user_electronic'] = bcdiv($this->userElectronic, 2 ,2);
-            // 子订单实付价
-            $this->order1['order_amount'] = bcsub(bcsub($this->order1['goods_price'], $this->order1['goods_prom_price'], 2), $this->order1['user_electronic'], 2);
-            $this->order2['order_amount'] = bcsub(bcsub($this->order2['goods_price'], $this->order2['goods_prom_price'], 2), $this->order2['user_electronic'], 2);
+            $this->order1['goods_prom_price'] = bcdiv($promAmount, 2, 2);
+            $this->order2['goods_prom_price'] = bcdiv($promAmount, 2, 2);
             // 子订单的订单优惠分摊
-            $this->order1['order_prom_price'] = bcmul($order1GoodsRate, $this->orderPromAmount, 2);
-            $this->order2['order_prom_price'] = bcmul($order2GoodsRate, $this->orderPromAmount, 2);
+            $this->order1['order_prom_price'] = bcdiv($this->orderPromAmount, 2, 2);
+            $this->order2['order_prom_price'] = bcdiv($this->orderPromAmount, 2, 2);
             // 子订单的优惠券优惠分摊
-            $this->order1['order_coupon_price'] = bcmul($order1GoodsRate, $this->couponPrice, 2);
-            $this->order2['order_coupon_price'] = bcmul($order2GoodsRate, $this->couponPrice, 2);
+            $this->order1['order_coupon_price'] = bcdiv($this->couponPrice, 2, 2);
+            $this->order2['order_coupon_price'] = bcdiv($this->couponPrice, 2, 2);
+            // 子订单的电子币抵扣分摊
+            $this->order1['user_electronic'] = bcdiv($this->userElectronic, 2, 2);
+            $this->order2['user_electronic'] = bcdiv($this->userElectronic, 2, 2);
+            // 子订单实付价
+            $this->order1['order_amount'] = bcmul($order1GoodsRate, $this->orderAmount, 2);
+            $this->order2['order_amount'] = bcmul($order2GoodsRate, $this->orderAmount, 2);
         }
     }
 

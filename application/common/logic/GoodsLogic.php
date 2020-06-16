@@ -12,9 +12,9 @@
 namespace app\common\logic;
 
 use app\common\logic\Pay as PayLogic;
+use app\common\logic\supplier\GoodsService;
 use app\common\model\Goods;
 use app\common\util\TpshopException;
-use app\home\controller\api\supplier\GoodsService;
 use think\Db;
 use think\Model;
 

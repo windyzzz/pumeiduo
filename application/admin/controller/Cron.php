@@ -13,6 +13,7 @@ namespace app\admin\controller;
 
 use app\common\logic\PushLogic;
 use app\common\logic\SmsLogic;
+use app\common\logic\supplier\OrderService;
 use app\common\logic\Token as TokenLogic;
 use app\common\logic\wechat\WechatUtil;
 use think\Controller;
@@ -1493,6 +1494,42 @@ AND log_id NOT IN
                     TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
                     // 升级记录
                     logDistribut('', $userId, $update['distribut_level'], $userOldLevel, 3, $vipBuyMoney);
+                }
+            }
+        }
+    }
+
+    /**
+     * 发送订单数据到供应链系统
+     */
+    public function supplierOrderSend()
+    {
+        $orderArr = M('order')->where(['parent_id' => ['GT', 0], 'pay_status' => 1, 'supply_send' => 0])->select();
+        if (!empty($orderArr)) {
+            $orderData = [];
+            foreach ($orderArr as $order) {
+                $orderData[] = [
+                    'order_sn' => $order['order_sn'],
+                    'consignee' => $order['consignee'],
+                    'province' => M('region2')->where(['id' => $order['province']])->value('ml_region_id'),
+                    'city' => M('region2')->where(['id' => $order['city']])->value('ml_region_id'),
+                    'district' => M('region2')->where(['id' => $order['district']])->value('ml_region_id'),
+                    'twon' => M('region2')->where(['parent_id' => $order['district'], 'status' => 1])->value('ml_region_id') ?? 0,
+                    'address' => $order['address'],
+                    'mobile' => $order['mobile'],
+                    'goods_price' => $order['goods_price'],
+                    'total_amount' => $order['total_amount'],
+                    'note' => $order['user_note'],
+                    'order_goods' => M('order_goods')->where(['order_id2' => $order['order_id']])->field('supplier_goods_id goods_id, goods_num, spec_key, member_goods_price final_price')->select(),
+                ];
+            }
+            // 发送到供应链系统
+            $res = (new OrderService())->submitOrder($orderData);
+            if (!empty($res)) {
+                // 发送成功
+                $resData = $res[0]['order'];
+                foreach ($resData as $data) {
+                    M('order')->where(['order_sn' => $data['order_sn']])->update(['supply_send' => 1]);
                 }
             }
         }

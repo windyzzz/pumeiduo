@@ -11,6 +11,7 @@
 
 namespace app\common\logic;
 
+use app\common\logic\supplier\OrderService;
 use app\common\logic\Token as TokenLogic;
 use app\common\logic\wechat\WechatUtil;
 use app\common\model\SpecGoodsPrice;
@@ -1087,5 +1088,34 @@ class OrderLogic
             $returnGoods = $returnGoods->limit($page->firstRow . ',' . $page->listRows);
         }
         return $returnGoods->select();
+    }
+
+    /**
+     * 拆分订单处理
+     * @param $orderId
+     */
+    public function splitOrderHandle($orderId)
+    {
+        $order = M('order')->where(['parent_id' => $orderId, 'order_type' => 3])->find();
+        // 发送到供应链系统
+        $orderData = [
+            'order_sn' => $order['order_sn'],
+            'consignee' => $order['consignee'],
+            'province' => M('region2')->where(['id' => $order['province']])->value('ml_region_id'),
+            'city' => M('region2')->where(['id' => $order['city']])->value('ml_region_id'),
+            'district' => M('region2')->where(['id' => $order['district']])->value('ml_region_id'),
+            'twon' => M('region2')->where(['parent_id' => $order['district'], 'status' => 1])->value('ml_region_id') ?? 0,
+            'address' => $order['address'],
+            'mobile' => $order['mobile'],
+            'goods_price' => $order['goods_price'],
+            'total_amount' => $order['total_amount'],
+            'note' => $order['user_note'],
+            'order_goods' => M('order_goods')->where(['order_id2' => $order['order_id']])->field('supplier_goods_id goods_id, goods_num, spec_key, member_goods_price final_price')->select(),
+        ];
+        $res = (new OrderService())->submitOrder([$orderData]);
+        if (!empty($res)) {
+            // 发送成功
+            M('order')->where(['order_id' => $order['order_id']])->update(['supply_send' => 1]);
+        }
     }
 }

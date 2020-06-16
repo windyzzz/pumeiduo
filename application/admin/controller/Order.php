@@ -458,7 +458,8 @@ class Order extends Base
         $this->assign('delivery_log', $deliveryLog);
         // 子订单
         if ($order['order_type'] == 3) {
-//            $split
+            $splitOrder = M('order')->where(['parent_id' => $order_id])->select();
+            $this->assign('split_order', $splitOrder);
         }
 
         return $this->fetch();

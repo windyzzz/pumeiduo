@@ -186,7 +186,7 @@ class OrderLogic
                 return true;
             case 'confirm': //确认订单
                 $updata['order_status'] = 1;
-                $order = Db::name('order')->where(['order_id' => $order_id])->field('order_id, order_sn, user_id, add_time')->find();
+                $order = Db::name('order')->where(['order_id' => $order_id])->field('order_id, order_type, order_sn, user_id, add_time')->find();
                 // 推荐任务
                 $task1 = new \app\common\logic\TaskLogic(2);
                 $task1->setOrder($order);
@@ -195,6 +195,10 @@ class OrderLogic
                 $task2 = new \app\common\logic\TaskLogic(3);
                 $task2->setOrder($order);
                 $task2->doOrderPayAfterSell();
+                // 更新子订单状态
+                if ($order['order_type'] == 3) {
+                    M('order')->where(['parent_id' => $order_id])->update($updata);
+                }
                 break;
             case 'cancel': //取消确认
                 $updata['order_status'] = 0;

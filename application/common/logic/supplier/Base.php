@@ -1,6 +1,6 @@
 <?php
 
-namespace app\home\controller\api\supplier;
+namespace app\common\logic\supplier;
 
 
 class Base
@@ -38,6 +38,8 @@ class Base
         $data['sign'] = $this->makeSign($data);
         $data['appid'] = $this->appId;
         $res = json_decode(httpRequest($this->url . $api, 'POST', $data), true);
+        var_dump($res);
+        exit();
         if (in_array($res['code'], ['200', '00001'])) {
             if (is_array($res['data'])) {
                 return $res['data'];

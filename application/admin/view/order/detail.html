@@ -97,9 +97,6 @@
 
     </div>
     <div class="ncap-order-style" style="width: 80%;">
-        <div class="titile">
-            <h3></h3>
-        </div>
         <div class="ncap-order-details">
             <form id="order-action">
                 <div class="tabs-panels">
@@ -427,14 +424,42 @@
                         </table>
                     </div>
                     <if condition="$order.order_type == 3">
-                        <div class="contact-info">
-                            <h4>子订单1</h4>
-
-                        </div>
-                        <div class="contact-info">
-                            <h4>子订单2</h4>
-
-                        </div>
+                        <foreach name="$split_order" item="v">
+                            <div class="contact-info">
+                                <if condition="$v[order_type] == 1">
+                                    <h3>子订单1</h3>
+                                <else/>
+                                    <h3>子订单2</h3>
+                                </if>
+                                <dl>
+                                    <dt>订单状态：</dt>
+                                    <dd>{$order_status[$v[order_status]]} / {$pay_status[$v[pay_status]]}
+                                        <if condition="$v['pay_code'] eq 'cod'"><span style="color: red">(货到付款)</span></if>
+                                        / {$shipping_status[$v[shipping_status]]}
+                                    </dd>
+                                </dl>
+                                <dl>
+                                    <dt>小计：</dt>
+                                    <dd>{$v.goods_price}</dd>
+                                    <dt>运费：</dt>
+                                    <dd>+{$v.shipping_price}</dd>
+                                    <dt>积分 ：</dt>
+                                    <dd>-{$v.integral_money}</dd>
+                                </dl>
+                                <dl>
+                                    <dt>电子币抵扣：</dt>
+                                    <dd>-{$v.user_electronic}</dd>
+                                    <dt>优惠券抵扣：</dt>
+                                    <dd>-{$v.coupon_price}</dd>
+                                    <dt>价格调整：</dt>
+                                    <dd>-{$v.discount}</dd>
+                                </dl>
+                                <dl>
+                                    <dt>应付：</dt>
+                                    <dd><strong class="red_common">{$v.order_amount}</strong></dd>
+                                </dl>
+                            </div>
+                        </foreach>
                     </if>
                 </div>
             </form>

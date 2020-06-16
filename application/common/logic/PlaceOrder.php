@@ -111,7 +111,7 @@ class PlaceOrder
     public function addNormalOrder($source = 1)
     {
         $this->check();
-//        $this->queueInc();
+        $this->queueInc();
         $this->addOrder($source);
         $this->addSplitOrder($source);
         $this->addOrderGoods();
@@ -527,12 +527,14 @@ class PlaceOrder
                 foreach ($this->order1Goods as $order1Goods) {
                     if ($orderGoods['goods_id'] == $order1Goods['goods_id'] && $orderGoods['spec_key'] == $order1Goods['spec_key']) {
                         $orderGoods['order_id2'] = $order1Goods['order_id'];
+                        $orderGoods['supplier_goods_id'] = $order1Goods['supplier_goods_id'];
                         break;
                     }
                 }
                 foreach ($this->order2Goods as $order2Goods) {
                     if ($orderGoods['goods_id'] == $order2Goods['goods_id'] && $orderGoods['spec_key'] == $order2Goods['spec_key']) {
                         $orderGoods['order_id2'] = $order2Goods['order_id'];
+                        $orderGoods['supplier_goods_id'] = $order2Goods['supplier_goods_id'];
                         break;
                     }
                 }
@@ -711,7 +713,7 @@ class PlaceOrder
             'order_type' => 3,
             'user_id' => $this->pay->getUser()['user_id'],
             'goods_price' => $order2['goods_price'],
-            'shipping_price' => $this->pay->getShippingPrice(),
+            'shipping_price' => 0,
             'user_electronic' => $order2['user_electronic'],
             'coupon_price' => $order2['order_coupon_price'],
             'order_prom_amount' => $order2['order_prom_price'],

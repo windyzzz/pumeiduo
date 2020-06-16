@@ -30,6 +30,7 @@ class UpdateOrderGoods20200615 extends Migrator
     {
         $this->table('order_goods')
             ->addColumn('order_id2', 'integer', ['default' => 0, 'comment' => '子订单ID', 'after' => 'order_id'])
+            ->addColumn('supplier_goods_id', 'integer', ['default' => 0, 'comment' => '供应链商品ID', 'after' => 'goods_id'])
             ->update();
     }
 }

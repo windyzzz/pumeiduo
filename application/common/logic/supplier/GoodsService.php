@@ -1,6 +1,6 @@
 <?php
 
-namespace app\home\controller\api\supplier;
+namespace app\common\logic\supplier;
 
 
 class GoodsService extends Base
