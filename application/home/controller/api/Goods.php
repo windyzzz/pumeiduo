@@ -1740,7 +1740,7 @@ class Goods extends Base
         $where = [
             'fs.start_time' => ['<=', time()],
             'fs.end_time' => ['>=', time()],
-//            'fs.is_end' => 0,
+            'fs.is_end' => 0,
             'source' => ['LIKE', $this->isApp ? '%' . 3 . '%' : '%' . 1 . '%']
         ];
         // 秒杀商品ID
@@ -1848,7 +1848,7 @@ class Goods extends Base
         $where = [
             'gb.start_time' => ['elt', time()],
             'gb.end_time' => ['egt', time()],
-//            'gb.is_end' => 0,
+            'gb.is_end' => 0,
             'g.is_on_sale' => 1,
         ];
         // 查询满足要求的总记录数
@@ -1963,7 +1963,7 @@ class Goods extends Base
         $where = [
             'gb.start_time' => ['elt', time()],
             'gb.end_time' => ['egt', time()],
-//            'gb.is_end' => 0,
+            'gb.is_end' => 0,
             'g.is_on_sale' => 1,
         ];
         // 查询满足要求的总记录数
@@ -2055,7 +2055,7 @@ class Goods extends Base
             $where = [
                 'pg.id' => $promId,
                 'pg.is_open' => 1,
-//                'pg.is_end' => 0,
+                'pg.is_end' => 0,
                 'pg.end_time' => ['>=', time()],
                 'g.is_on_sale' => 1,
 //                'g.cat_id' => ['in', $cat_id_arr]
