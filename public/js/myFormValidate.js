@@ -2,11 +2,11 @@
 * ajax 提交表单 到后台去验证然后回到前台提示错误
 * 验证通过后,再通过 form 自动提交
 */
-before_request = 1; // 标识上一次ajax 请求有没回来, 没有回来不再进行下一次
+// before_request = 1; // 标识上一次ajax 请求有没回来, 没有回来不再进行下一次
 function ajax_submit_form(form_id,submit_url){
 
-         if(before_request == 0)
-            return false;
+         // if(before_request == 0)
+         //    return false;
 
 	$("[id^='err_']").hide();  // 隐藏提示
     $.ajax({
@@ -17,7 +17,7 @@ function ajax_submit_form(form_id,submit_url){
                         alert("服务器繁忙, 请联系管理员!");
                 },
                 success: function(v) {
-                    before_request = 1; // 标识ajax 请求已经返回
+                    // before_request = 1; // 标识ajax 请求已经返回
                     var v =  eval('('+v+')');
                         // 验证成功提交表单
                     if(v.hasOwnProperty('status'))
@@ -58,7 +58,7 @@ function ajax_submit_form(form_id,submit_url){
                      }
                 }
             });
-            before_request = 0; // 标识ajax 请求已经发出
+            // before_request = 0; // 标识ajax 请求已经发出
 }
 
 

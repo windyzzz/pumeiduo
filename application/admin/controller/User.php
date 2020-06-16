@@ -428,16 +428,19 @@ class User extends Base
                 if ($user_data['distribut_level'] > 1) {
                     $user_data['is_distribut'] = 1;
                 }
-                $user_data['invite_uid'] = $user_data['first_leader'] = $c['first_leader'];
-                $user_data['second_leader'] = $c['second_leader'];
-                $user_data['third_leader'] = $c['third_leader'];
+                if ($user['distribut_level'] != 3) {
+                    // 合并账号不是SVIP才变更父级
+                    $user_data['invite_uid'] = $c['will_invite_uid'] != 0 ? $c['will_invite_uid'] : $c['invite_uid'];
+                    $user_data['invite_time'] = $c['will_invite_uid'] != 0 ? time() : $c['invite_time'];
+                    $user_data['first_leader'] = $c['first_leader'];
+                    $user_data['second_leader'] = $c['second_leader'];
+                    $user_data['third_leader'] = $c['third_leader'];
+                }
                 $user_data['user_name'] = $c['user_name'];
                 $user_data['type'] = 2;
-                $user_data['bind_time'] = time();
                 $user_data['bind_uid'] = $merge_uid;
+                $user_data['bind_time'] = time();
                 $user_data['time_out'] = strtotime('+' . config('REDIS_DAY') . ' days');
-                $user_data['invite_uid'] = $c['will_invite_uid'] != 0 ? $c['will_invite_uid'] : $c['invite_uid'];
-                $user_data['invite_time'] = $c['will_invite_uid'] != 0 ? time() : $c['invite_time'];
                 M('Users')->where('user_id', $uid)->update($user_data);
                 // 授权登录
                 M('OauthUsers')->where('user_id', $merge_uid)->delete();
