@@ -755,7 +755,8 @@ class Goods extends Base
             'store_count' => $goods['store_count'],
             'goods_remark' => $goods['goods_remark'],
             'goods_content' => htmlspecialchars_decode($goods['goods_content']),
-            'original_img' => $originalImg,
+            'original_img' => $goods['original_img'],
+            'original_img_new' => $originalImg,
             'goods_images_list' => [],
             'shop_price' => $goods['shop_price'],
             'exchange_integral' => $goods['exchange_integral'],
@@ -989,7 +990,7 @@ class Goods extends Base
         $goodsInfo = M('goods')->where(['goods_id' => $goodsId])->field('original_img, shop_price, exchange_integral, store_count, limit_buy_num buy_limit, least_buy_num buy_least, is_supply')->find();
         if (!$goodsInfo) return json(['status' => 0, 'msg' => '请传入正确的商品ID']);
         $goodsInfo['goods_type'] = 'normal';
-        $goodsInfo['original_img'] = getFullPath($goodsInfo['original_img']);
+        $goodsInfo['original_img_new'] = getFullPath($goodsInfo['original_img']);
         $goodsInfo['exchange_price'] = bcsub($goodsInfo['shop_price'], $goodsInfo['exchange_integral'], 2);
         // 商品活动属性
         $flashSale = Db::name('flash_sale fs')
@@ -1042,7 +1043,7 @@ class Goods extends Base
             if (empty($goodsSpec) || empty($goodsSpecPrice)) {
                 $goodsSpec = [];
             } elseif (empty($extendGoodsSpec) && !empty($goodsSpecPrice)) {
-                $goodsInfo['original_img'] = !empty($goodsSpecPrice[$defaultKey]['spec_img']) ? getFullPath($goodsSpecPrice[$defaultKey]['spec_img']) : $goodsInfo['original_img'];
+                $goodsInfo['original_img_new'] = !empty($goodsSpecPrice[$defaultKey]['spec_img']) ? getFullPath($goodsSpecPrice[$defaultKey]['spec_img']) : $goodsInfo['original_img_new'];
                 $goodsInfo['shop_price'] = $goodsSpecPrice[$defaultKey]['price'];
                 $goodsInfo['store_count'] = $goodsInfo['is_supply'] == 0 ? $goodsSpecPrice[$defaultKey]['store_count'] : $goodsInfo['store_count'];
                 $goodsInfo['exchange_price'] = bcsub($goodsSpecPrice[$defaultKey]['price'], $goodsInfo['exchange_integral'], 2);

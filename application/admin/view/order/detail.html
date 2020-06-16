@@ -408,7 +408,7 @@
                             </dd>
                         </dl>
                     </div>
-                    <div class="goods-info">
+                    <div class="contact-info">
                         <h4>操作记录</h4>
                         <table>
                             <thead>
@@ -426,6 +426,16 @@
                             </tbody>
                         </table>
                     </div>
+                    <if condition="$order.order_type == 3">
+                        <div class="contact-info">
+                            <h4>子订单1</h4>
+
+                        </div>
+                        <div class="contact-info">
+                            <h4>子订单2</h4>
+
+                        </div>
+                    </if>
                 </div>
             </form>
         </div>
