@@ -1805,6 +1805,9 @@ class Order extends Base
             // 参与活动促销
             $payLogic->goodsPromotion();
 
+            // 检查供应链商品地区购买限制
+            $payLogic->checkOrderSplitGoods($userAddress[0]);
+
             // 使用积分
             $pay_points = $payLogic->getUsePoint();
             if ($this->user['pay_points'] < $pay_points) {
@@ -2081,6 +2084,9 @@ class Order extends Base
             // 加价购活动
             $payLogic->activityPayBeforeNew($extraGoods, $cartLogic);
 
+            // 检查供应链商品地区购买限制
+            $payLogic->checkOrderSplitGoods($userAddress);
+
             // 使用积分
             $pay_points = $payLogic->getUsePoint();
             if ($this->user['pay_points'] < $pay_points) {
@@ -2306,6 +2312,9 @@ class Order extends Base
             $payLogic->goodsPromotion();
             // 加价购活动
             $payLogic->activityPayBeforeNew($extraGoods, $cartLogic);
+
+            // 检查供应链商品地区购买限制
+            $payLogic->checkOrderSplitGoods($userAddress);
 
             // 使用积分
             $pay_points = $payLogic->getUsePoint();

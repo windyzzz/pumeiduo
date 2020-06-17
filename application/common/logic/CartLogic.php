@@ -912,7 +912,7 @@ class CartLogic extends Model
                 $cartList[$cartKey]['item_id'] = $specGoodsPrice['item_id'];
             } else {
                 $specGoodsPrice = SpecGoodsPrice::get(['goods_id' => $cart['goods_id']], '', false);
-                if ($specGoodsPrice) {
+                if ($specGoodsPrice && $specGoodsPrice['key'] != '') {
                     $cart->delete();
                     unset($cartList[$cartKey]);
                     continue;

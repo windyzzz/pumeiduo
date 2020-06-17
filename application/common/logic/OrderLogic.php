@@ -1091,12 +1091,14 @@ class OrderLogic
     }
 
     /**
-     * 拆分订单处理
+     * 订单发送到供应链系统
      * @param $orderId
+     * @param $time
      */
-    public function splitOrderHandle($orderId)
+    public function supplierOrderSend($orderId, $time)
     {
         $order = M('order')->where(['parent_id' => $orderId, 'order_type' => 3])->find();
+        $orderGoods = M('order_goods')->where(['order_id2' => $order['order_id']])->field('supplier_goods_id goods_id, goods_num, spec_key, member_goods_price final_price')->select();
         // 发送到供应链系统
         $orderData = [
             'order_sn' => $order['order_sn'],
@@ -1110,12 +1112,16 @@ class OrderLogic
             'goods_price' => $order['goods_price'],
             'total_amount' => $order['total_amount'],
             'note' => $order['user_note'],
-            'order_goods' => M('order_goods')->where(['order_id2' => $order['order_id']])->field('supplier_goods_id goods_id, goods_num, spec_key, member_goods_price final_price')->select(),
+            'order_goods' => $orderGoods
         ];
-        $res = (new OrderService())->submitOrder([$orderData]);
-        if (!empty($res)) {
+        $res = (new OrderService())->submitOrder($orderData);
+        if ($res['status'] == 0) {
+            // 发送失败
+            $updata = ['supplier_submit_status' => -1, 'supplier_submit_time' => $time, 'supplier_submit_remark' => $res['msg']];
+        } else {
             // 发送成功
-            M('order')->where(['order_id' => $order['order_id']])->update(['supply_send' => 1]);
+            $updata = ['supplier_submit_status' => 1, 'supplier_submit_time' => $time];
         }
+        M('order')->where(['order_id' => $order['order_id']])->update($updata);
     }
 }

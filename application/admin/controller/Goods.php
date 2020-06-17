@@ -439,11 +439,11 @@ class Goods extends Base
             if (!$validate->batch()->check($data)) {
                 $error = $validate->getError();
                 $error_msg = array_values($error);
-                $return_arr = "{
+                $return_arr = [
                     'status' => -1,
                     'msg' => $error_msg[0],
                     'data' => $error,
-                }";
+                ];
                 $this->ajaxReturn($return_arr);
             }
             $data['virtual_indate'] = !empty($virtual_indate) ? strtotime($virtual_indate) : 0;

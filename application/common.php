@@ -1551,7 +1551,7 @@ function update_pay_status($order_sn, $ext = [])
                 'pay_name' => $order['pay_name']
             ]);
             // 发送到供应链系统
-            (new \app\common\logic\OrderLogic())->splitOrderHandle($order['order_id']);
+            (new \app\common\logic\OrderLogic())->supplierOrderSend($order['order_id'], $time);
         }
     }
 }
