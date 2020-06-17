@@ -81,14 +81,14 @@
             </div>
             <div class="subject" style="width:62%">
                 <if condition="$order['order_status'] lt 2 and $order.pay_status eq 0">
-                    <a href="{:U('Admin/order/edit_order',array('order_id'=>$order['order_id']))}"
-                       style="float:right;margin-right:10px" class="ncap-btn-big ncap-btn-green"><i
-                            class="fa fa-pencil-square-o"></i>修改订单</a>
+                    <!--<a href="{:U('Admin/order/edit_order',array('order_id'=>$order['order_id']))}"-->
+                       <!--style="float:right;margin-right:10px" class="ncap-btn-big ncap-btn-green"><i-->
+                            <!--class="fa fa-pencil-square-o"></i>修改订单</a>-->
                 </if>
                 <if condition="($split eq 1) and ($order['order_status'] lt 2)">
-                    <a href="{:U('Admin/order/split_order',array('order_id'=>$order['order_id']))}"
-                       style="float:right;margin-right:10px" class="ncap-btn-big ncap-btn-green"><i
-                            class="fa fa-external-link-square"></i>拆分订单</a>
+                    <!--<a href="{:U('Admin/order/split_order',array('order_id'=>$order['order_id']))}"-->
+                       <!--style="float:right;margin-right:10px" class="ncap-btn-big ncap-btn-green"><i-->
+                            <!--class="fa fa-external-link-square"></i>拆分订单</a>-->
                 </if>
                 <a href="{:U('Order/order_print',array('order_id'=>$order['order_id']))}" target="_blank"
                    style="float:right;margin-right:10px" class="ncap-btn-big ncap-btn-green"><i class="fa fa-print"></i>打印订单</a>
@@ -470,9 +470,9 @@
                                             </case>
                                             <case value="1">
                                                 <if condition="$v[order_status] == 0">
-                                                    <dd>同步成功，待确认后可以支付</dd>
+                                                    <dd>同步成功，待确认后进行支付操作</dd>
                                                 <elseif condition="$v[order_status] == 1 && $v[pay_status] == 0" />
-                                                    <dd></dd>
+                                                    <dd>同步成功，请到仓储系统进行支付操作</dd>
                                                 <elseif condition="$v[order_status] == 1 && $v[pay_status] == 1" />
                                                     <dd>同步成功，支付成功</dd>
                                                 </if>
@@ -504,13 +504,13 @@
         });
     }
 
-    before_request = 1; // 标识上一次ajax 请求有没回来, 没有回来不再进行下一次
+    // before_request = 1; // 标识上一次ajax 请求有没回来, 没有回来不再进行下一次
     function verifyForm(form_id, submit_url) {
         layer.confirm('操作确认？', {
             btn: ['确定'] //按钮
         }, function () {
-            if (before_request == 0)
-                return false;
+            // if (before_request == 0)
+            //     return false;
             $("[id^='err_']").hide();  // 隐藏提示
             $.ajax({
                 type: "POST",
@@ -521,7 +521,7 @@
                     layer.msg("服务器繁忙, 请联系管理员!", {icon: 1, time: 2000});
                 },
                 success: function (data) {
-                    before_request = 1; // 标识ajax 请求已经返回
+                    // before_request = 1; // 标识ajax 请求已经返回
                     // 验证成功提交表单
                     if (data.status == 1) {
                         layer.msg(data.msg, {icon: 1, time: 2000}, function () {
@@ -532,7 +532,7 @@
                     }
                 }
             });
-            before_request = 0; // 标识ajax 请求已经发出
+            // before_request = 0; // 标识ajax 请求已经发出
         }, function () {
             console.log("取消");
         });

@@ -201,6 +201,8 @@ class Tb extends Controller
             'pay_time' => $order['pay_time'],
             'user_note' => $order['user_note'],
             'goods_area' => 3,
+            'parent_sn' => $order['parent_id'] > 0 ? M('order')->where(['order_id' => $order['parent_id']])->value('order_sn') : '',
+            'supplier_order_sn' => $order['supplier_order_sn']
         );
         //$user = get_user_info($order['user_id'],0,'','user_name,true_name,mobile');
         $delivery_record = M('delivery_doc')->where('order_id=' . $order_id)->order('id desc')->limit(1)->find();
@@ -216,10 +218,10 @@ class Tb extends Controller
                 'member_goods_price' => $v['member_goods_price'],
                 'spec_key' => $v['spec_key'],
                 'spec_key_name' => $v['spec_key_name'],
-                'other_rec_id' => $v['rec_id']
+                'other_rec_id' => $v['rec_id'],
+                'order_sn2' => $v['order_id2'] > 0 ? M('order')->where(['order_id' => $v['order_id2']])->value('order_sn') : ''
             );
         }
-
         return $data;
     }
 
@@ -436,7 +438,7 @@ class Tb extends Controller
 
         //更新主商品库存
         M('goods')->where(array('goods_sn' => $goods['goods_sn']))->data(array('store_count' => $goods['stock']))->save();
-        
+
         if ($spec_goods_price) {
             //获取旧规格
             foreach ($spec_goods_price as $key => $val) {

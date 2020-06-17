@@ -1120,7 +1120,7 @@ class OrderLogic
             $updata = ['supplier_submit_status' => -1, 'supplier_submit_time' => $time, 'supplier_submit_remark' => $res['msg']];
         } else {
             // 发送成功
-            $updata = ['supplier_submit_status' => 1, 'supplier_submit_time' => $time];
+            $updata = ['supplier_submit_status' => 1, 'supplier_submit_time' => $time, 'supplier_order_sn' => $res['data']['order']['order_sn']];
         }
         M('order')->where(['order_id' => $order['order_id']])->update($updata);
     }

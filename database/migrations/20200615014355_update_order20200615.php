@@ -36,6 +36,7 @@ class UpdateOrder20200615 extends Migrator
                 'comment' => '供应链系统同步状态：0未同步 1同步成功 -1同步失败'])
             ->addColumn('supplier_submit_time', 'integer', ['null' => true, 'comment' => '供应链系统同步时间'])
             ->addColumn('supplier_submit_remark', 'text', ['null' => true, 'comment' => '供应链系统同步记录'])
+            ->addColumn('supplier_order_sn', 'string', ['null' => true, 'default' => '', 'limit' => 20, 'comment' => '供应链订单编号'])
             ->update();
     }
 }
