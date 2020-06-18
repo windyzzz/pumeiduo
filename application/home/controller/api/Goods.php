@@ -3009,7 +3009,7 @@ class Goods extends Base
                 throw new TpshopException('地址商品信息', 0, ['msg' => '地址信息不存在']);
             }
             if ($addressGoodsData['user_address']['out_range'] == 1) {
-                throw new TpshopException('地址商品信息', 0, ['msg' => '地址不在配送范围内']);
+                throw new TpshopException('地址商品信息', 0, ['msg' => '当前地址暂无库存']);
             }
             $goodsSpecPrice = $goodsLogic->get_spec_price($goodsId);
             $goodsSpecPrice = array_combine(array_column($goodsSpecPrice, 'key'), array_values($goodsSpecPrice));
