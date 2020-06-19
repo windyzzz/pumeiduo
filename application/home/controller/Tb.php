@@ -202,7 +202,8 @@ class Tb extends Controller
             'user_note' => $order['user_note'],
             'goods_area' => 3,
             'parent_sn' => $order['parent_id'] > 0 ? M('order')->where(['order_id' => $order['parent_id']])->value('order_sn') : '',
-            'supplier_order_sn' => $order['supplier_order_sn']
+            'supplier_order_sn' => $order['supplier_order_sn'],
+            'supplier_order_status' => $order['supplier_order_status'],
         );
         //$user = get_user_info($order['user_id'],0,'','user_name,true_name,mobile');
         $delivery_record = M('delivery_doc')->where('order_id=' . $order_id)->order('id desc')->limit(1)->find();
