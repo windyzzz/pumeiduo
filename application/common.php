@@ -898,7 +898,7 @@ function tpCache($config_key, $data = [])
     return F($param[0], $newData, TEMP_PATH);
 }
 
-function taskLog($user_id, $task, $reward, $order_sn = '', $reward_electronic = 0, $reward_integral = 0, $type = 1, $status = 0, $reward_coupon_id = 0, $user_task_id = 0)
+function taskLog($user_id, $task, $reward, $order_sn = '', $reward_electronic = 0, $reward_integral = 0, $type = 1, $status = 0, $reward_coupon_id = 0, $user_task_id = 0, $remark = '')
 {
 //    $reward_coupon_money = '0.00';
 //    $reward_coupon_name = '';
@@ -937,6 +937,7 @@ function taskLog($user_id, $task, $reward, $order_sn = '', $reward_electronic = 
         'order_sn' => $order_sn,
         'type' => $type,
         'status' => $status,
+        'remark' => $remark
     ];
 
     // $update_data = array(
