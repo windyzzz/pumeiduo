@@ -1071,10 +1071,14 @@ class Goods extends Base
                 unset($item['spec_img']);
             }
         } catch (TpshopException $e) {
-            $goodsInfo['store_count'] = '0';
+            $goodsInfo['store_count'] = '-1';   // 不显示库存
             $addressGoodsData = [];
             $goodsSpec = [];
             $goodsSpecPrice = [];
+        }
+        if (isset($addressGoodsData['user_address']) && $addressGoodsData['user_address']['out_range'] == 1) {
+            // 超出配送范围，不显示库存
+            $goodsInfo['store_count'] = '-1';
         }
         $returnData = [
             'user_address' => !empty($addressGoodsData['user_address']) ? [$addressGoodsData['user_address']] : [],

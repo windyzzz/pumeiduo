@@ -217,7 +217,7 @@ class CartLogic extends Model
             $store_count = $this->specGoodsPrice['store_count'];
         }
 
-        if ($this->goodsBuyNum > $store_count) {
+        if ($this->goodsBuyNum > $store_count && !$passAuth) {
             throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => $this->goods['goods_name'] . '，商品库存不足，剩余' . $store_count, 'result' => '']);
         }
 
