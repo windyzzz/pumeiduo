@@ -361,7 +361,10 @@ class Tb extends Controller
             'shipping_code' => $order['shipping_code'],
             'shipping_name' => $order['shipping_name'],
             'shipping_time' => $order['shipping_time'],
-            'delivery_type' => $order['delivery_type']
+            'delivery_type' => $order['delivery_type'],
+            'supplier_order_status' => $order['supplier_order_status'],
+            'supplier_pay_status' => $order['supplier_pay_status'],
+            'supplier_shipping_status' => $order['supplier_shipping_status'],
         ];
         M('order')->where(array('order_sn' => $order['order_sn']))->data($data)->save();
         // 更新订单物流信息
