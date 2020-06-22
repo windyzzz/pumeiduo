@@ -256,7 +256,7 @@ class OrderLogic
         }
         // 根据order表查看消费记录 给他会员等级升级 修改他的折扣 和 总金额
         M('order')->where("order_id=$order_id")->save(['pay_status' => 0]);
-        update_user_level($order['user_id']);
+//        update_user_level($order['user_id']);
         // 记录订单操作日志
         logOrder($order['order_id'], '订单取消付款', '付款取消', $order['user_id']);
         //分销设置
