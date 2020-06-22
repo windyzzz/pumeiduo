@@ -1495,7 +1495,7 @@ function update_pay_status($order_sn, $ext = [])
             }
         }
         // 给他升级, 根据order表查看消费记录 给他会员等级升级 修改他的折扣 和 总金额
-        update_user_level($order['user_id']);
+//        update_user_level($order['user_id']);
 
         // 记录订单操作日志
         if (array_key_exists('admin_id', $ext)) {
