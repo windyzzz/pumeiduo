@@ -58,6 +58,7 @@ class RefundLogic extends Model
                     $return_goods['refund_deposit'] = $return_goods['refund_deposit'] - $coupon['money']; //更新实际退还余额
                     M('return_goods')->where(['id' => $return_goods['id']])->save(['refund_deposit' => $return_goods['refund_deposit']]);
                 }
+                M('coupon')->where(['id' => $coupon_info['cid']])->setDec('use_num', 1);
             } else {
                 M('coupon_list')->where(['id' => $coupon_info['id']])->delete();
                 M('coupon')->where(['id' => $coupon_info['cid']])->setDec('send_num'); //优惠券追回
@@ -104,6 +105,7 @@ class RefundLogic extends Model
         if (!empty($coupon_list)) {
             $update_coupon_data = ['status' => 0, 'use_time' => 0, 'order_id' => 0];
             M('coupon_list')->where(['id' => $coupon_list['id'], 'status' => 1])->save($update_coupon_data);
+            M('coupon')->where(['id' => $coupon_list['cid']])->setDec('use_num', 1);
         }
         M('order')->where(['order_id' => $order['order_id']])->save(['pay_status' => 3]); //更改订单状态
         $orderLogic = new \app\common\logic\OrderLogic();

@@ -257,15 +257,12 @@ class OrderLogic
         // 分销追回 (上级)
         M('rebate_log')->where('order_sn', $order['order_sn'])->update(['status' => 4, 'confirm_time' => time(), 'remark' => '追回佣金']);
 
-        // 退还现金券
-        if ($order['coupon_price'] > 0) {
-            /*$res = ['use_time' => 0, 'status' => 0, 'order_id' => 0];
-            M('coupon_list')->where(['order_id' => $order_id, 'uid' => $user_id])->save($res);*/
+        // 退还券
+        if ($order['coupon_id'] > 0) {
+            $res = ['use_time' => 0, 'status' => 0, 'order_id' => 0];
+            M('coupon_list')->where(['order_id' => $order_id, 'uid' => $user_id])->save($res);
+            M('coupon')->where(['id' => $order['coupon_id']])->setDec('use_num', 1);
         }
-
-        //退还券
-        $res = ['use_time' => 0, 'status' => 0, 'order_id' => 0];
-        M('coupon_list')->where(['order_id' => $order_id, 'uid' => $user_id])->save($res);
 
         $row = M('order')->where(['order_id' => $order_id, 'user_id' => $user_id])->save(['order_status' => 3, 'cancel_time' => time()]);
         $reduce = tpCache('shopping.reduce');
