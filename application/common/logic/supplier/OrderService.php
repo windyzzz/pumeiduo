@@ -20,4 +20,19 @@ class OrderService extends Base
         ];
         return $this->getData('/api/Order/submitOrder', $data);
     }
+
+    /**
+     * 查询物流
+     * @param $orderSn
+     * @param $goodsId
+     * @return array|mixed
+     */
+    public function getExpress($orderSn, $goodsId)
+    {
+        $data = [
+            'order_sn' => $orderSn,
+            'Goods_id' => $goodsId
+        ];
+        return $this->getData('?m=api&c=order&a=getExpress', $data);
+    }
 }

@@ -368,39 +368,75 @@ class Tb extends Controller
         ];
         M('order')->where(array('order_sn' => $order['order_sn']))->data($data)->save();
         // 更新订单物流信息
-        $orderInfo = M('order')->where(array('order_sn' => $order['order_sn']))->field('order_id, user_id')->find();
+        $orderInfo = M('order')->where(array('order_sn' => $order['order_sn']))->field('order_id, order_sn, user_id, order_type, parent_id')->find();
         $deliveryData = [];
         $sendRecId = [];
         if (!empty($orderData['delivery_doc'])) {
-            foreach ($orderData['delivery_doc'] as $delivery) {
-                $deliveryData[] = [
-                    'order_id' => $orderInfo['order_id'],
-                    'order_sn' => $order['order_sn'],
-                    'rec_id' => $delivery['other_rec_id'],
-                    'goods_num' => $delivery['goods_num'],
-                    'user_id' => $orderInfo['user_id'],
-                    'admin_id' => $delivery['admin_id'],
-                    'consignee' => $delivery['consignee'],
-                    'zipcode' => $delivery['zipcode'],
-                    'mobile' => $delivery['mobile'],
-                    'country' => $delivery['country'],
-                    'province' => $delivery['province'],
-                    'city' => $delivery['city'],
-                    'district' => $delivery['district'],
-                    'address' => $delivery['address'],
-                    'shipping_code' => $delivery['shipping_code'],
-                    'shipping_name' => $delivery['shipping_name'],
-                    'shipping_price' => $delivery['shipping_price'],
-                    'invoice_no' => $delivery['invoice_no'],
-                    'tel' => $delivery['tel'],
-                    'note' => $delivery['note'],
-                    'best_time' => $delivery['best_time'],
-                    'is_del' => $delivery['is_del'],
-                    'create_time' => time(),
-                    'htns_status' => $delivery['htns_status']
-                ];
-                if (!empty($delivery['invoice_no'])) {
-                    $sendRecId[] = $delivery['other_rec_id'];
+            if ($orderInfo['order_type'] == 3 && $orderInfo['parent_id'] > 0) {
+                // 子订单物流信息
+                $parentOrder = M('order')->where(['order_id' => $orderInfo['parent_id']])->field('order_id, order_sn, user_id')->find();
+                foreach ($orderData['delivery_doc'] as $delivery) {
+                    $deliveryData[] = [
+                        'order_id' => $parentOrder['order_id'],
+                        'order_sn' => $parentOrder['order_sn'],
+                        'rec_id' => $delivery['other_rec_id'],
+                        'goods_num' => $delivery['goods_num'],
+                        'user_id' => $parentOrder['user_id'],
+                        'admin_id' => $delivery['admin_id'],
+                        'consignee' => $delivery['consignee'],
+                        'zipcode' => $delivery['zipcode'],
+                        'mobile' => $delivery['mobile'],
+                        'country' => $delivery['country'],
+                        'province' => $delivery['province'],
+                        'city' => $delivery['city'],
+                        'district' => $delivery['district'],
+                        'address' => $delivery['address'],
+                        'shipping_code' => $delivery['shipping_code'],
+                        'shipping_name' => $delivery['shipping_name'],
+                        'shipping_price' => $delivery['shipping_price'],
+                        'invoice_no' => $delivery['invoice_no'],
+                        'tel' => $delivery['tel'],
+                        'note' => $delivery['note'],
+                        'best_time' => $delivery['best_time'],
+                        'is_del' => $delivery['is_del'],
+                        'create_time' => time(),
+                        'htns_status' => $delivery['htns_status']
+                    ];
+                    if (!empty($delivery['invoice_no'])) {
+                        $sendRecId[] = $delivery['other_rec_id'];
+                    }
+                }
+            } else {
+                foreach ($orderData['delivery_doc'] as $delivery) {
+                    $deliveryData[] = [
+                        'order_id' => $orderInfo['order_id'],
+                        'order_sn' => $orderInfo['order_sn'],
+                        'rec_id' => $delivery['other_rec_id'],
+                        'goods_num' => $delivery['goods_num'],
+                        'user_id' => $orderInfo['user_id'],
+                        'admin_id' => $delivery['admin_id'],
+                        'consignee' => $delivery['consignee'],
+                        'zipcode' => $delivery['zipcode'],
+                        'mobile' => $delivery['mobile'],
+                        'country' => $delivery['country'],
+                        'province' => $delivery['province'],
+                        'city' => $delivery['city'],
+                        'district' => $delivery['district'],
+                        'address' => $delivery['address'],
+                        'shipping_code' => $delivery['shipping_code'],
+                        'shipping_name' => $delivery['shipping_name'],
+                        'shipping_price' => $delivery['shipping_price'],
+                        'invoice_no' => $delivery['invoice_no'],
+                        'tel' => $delivery['tel'],
+                        'note' => $delivery['note'],
+                        'best_time' => $delivery['best_time'],
+                        'is_del' => $delivery['is_del'],
+                        'create_time' => time(),
+                        'htns_status' => $delivery['htns_status']
+                    ];
+                    if (!empty($delivery['invoice_no'])) {
+                        $sendRecId[] = $delivery['other_rec_id'];
+                    }
                 }
             }
         }

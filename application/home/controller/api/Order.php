@@ -19,6 +19,7 @@ use app\common\logic\MessageLogic;
 use app\common\logic\OrderLogic;
 use app\common\logic\Pay;
 use app\common\logic\PlaceOrder;
+use app\common\logic\supplier\OrderService;
 use app\common\logic\UsersLogic;
 use app\common\util\TpshopException;
 use app\home\controller\Api as ApiController;
@@ -63,7 +64,7 @@ class Order extends Base
         $navigate_user = navigate_user();
         $return['navigate_user'] = $navigate_user;
 
-        $where = ' user_id=:user_id';
+        $where = 'user_id=:user_id AND parent_id = 0 ';
         $bind['user_id'] = $this->user_id;
         //条件搜索
         if (I('get.type')) {
@@ -153,7 +154,7 @@ class Order extends Base
      */
     public function order_list_new()
     {
-        $where = "user_id = $this->user_id AND deleted != 1";
+        $where = "user_id = $this->user_id AND deleted != 1 AND parent_id = 0";
         if (I('type')) {
             $where .= C(strtoupper(I('get.type')));
         }
@@ -2561,7 +2562,7 @@ class Order extends Base
                             // 圃美多
                             $apiController = new ApiController();
                             $express = $apiController->queryExpress(['shipping_code' => $delivery['shipping_code'], 'queryNo' => $delivery['invoice_no']], 'array');
-                            if ($express['status'] != '0') {
+                            if ($express['status'] != 0) {
                                 $express['result']['deliverystatus'] = 1;   // 正在派件
                                 $express['result']['expPhone'] = tpCache('shop_info.mobile');
                                 $express['result']['list'][] = [
@@ -2587,7 +2588,7 @@ class Order extends Base
                             if (in_array($delivery['htns_status'], ['000', '120', '999'])) {
                                 $apiController = new ApiController();
                                 $express = $apiController->queryExpress(['shipping_code' => $delivery['shipping_code'], 'queryNo' => $delivery['invoice_no']], 'array');
-                                if ($express['status'] != '0') {
+                                if ($express['status'] != 0) {
                                     $express['result']['deliverystatus'] = 1;   // 正在派件
                                     $express['result']['expPhone'] = tpCache('shop_info.mobile');
                                     $express['result']['list'][] = [
@@ -2618,6 +2619,8 @@ class Order extends Base
                                 }
                             }
                             break;
+                        default:
+                            return json(['status' => 0, 'msg' => '订单类型错误']);
                     }
                     $return = [
                         'delivery_status' => $deliveryStatus,
@@ -2665,7 +2668,7 @@ class Order extends Base
                     }
                     $delivery = M('delivery_doc dd')->join('order_goods og', 'og.rec_id = dd.rec_id')
                         ->join('goods g', 'g.goods_id = og.goods_id')
-                        ->field('dd.*, dd.id doc_id, g.goods_id, g.original_img')
+                        ->field('dd.*, dd.id doc_id, g.goods_id, g.original_img, g.supplier_goods_id')
                         ->where($where)->select();
                     switch ($order['order_type']) {
                         case 1:
@@ -2673,7 +2676,7 @@ class Order extends Base
                             $apiController = new ApiController();
                             foreach ($delivery as $item) {
                                 $express = $apiController->queryExpress(['shipping_code' => $item['shipping_code'], 'queryNo' => $item['invoice_no']], 'array');
-                                if ($express['status'] != '0') {
+                                if ($express['status'] != 0) {
                                     $express['result']['deliverystatus'] = 1;   // 正在派件
                                     $express['result']['list'][] = [
                                         'time' => date('Y-m-d H:i:s', time()),
@@ -2710,7 +2713,7 @@ class Order extends Base
                                 }
                                 if (in_array($item['htns_status'], ['000', '120', '999'])) {
                                     $express = $apiController->queryExpress(['shipping_code' => $item['shipping_code'], 'queryNo' => $item['invoice_no']], 'array');
-                                    if ($express['status'] != '0') {
+                                    if ($express['status'] != 0) {
                                         $express['result']['deliverystatus'] = 1;   // 正在派件
                                         $express['result']['list'][] = [
                                             'time' => date('Y-m-d H:i:s', time()),
@@ -2752,6 +2755,52 @@ class Order extends Base
                                 ];
                             }
                             break;
+                        case 3:
+                            // 供应链
+                            $apiController = new ApiController();
+                            $orderService = new OrderService();
+                            foreach ($delivery as $item) {
+                                if ($item['supplier_goods_id'] == 0) {
+                                    $express = $apiController->queryExpress(['shipping_code' => $item['shipping_code'], 'queryNo' => $item['invoice_no']], 'array');
+
+                                    if ($express['status'] != 0) {
+                                        $express['result']['deliverystatus'] = 1;   // 正在派件
+                                        $express['result']['list'][] = [
+                                            'time' => date('Y-m-d H:i:s', time()),
+                                            'status' => '暂无物流信息'
+                                        ];
+                                    }
+                                } else {
+                                    // 供应链商品
+                                    continue;
+                                    $express = $orderService->getExpress($item['order_sn'], $item['supplier_goods_id']);
+                                    if ($express['status'] == 0) {
+                                        $express['result']['deliverystatus'] = 1;   // 正在派件
+                                        $express['result']['list'][] = [
+                                            'time' => date('Y-m-d H:i:s', time()),
+                                            'status' => '暂无物流信息'
+                                        ];
+                                    } else {
+                                        $express['result']['deliverystatus'] = 1;   // 正在派件
+                                        $express['result']['list'][] = [
+                                            'time' => $express['data']['express_info']['time'],
+                                            'status' => $express['data']['express_info']['context'],
+                                        ];
+                                    }
+                                }
+                                $return['delivery'][] = [
+                                    'rec_id' => $item['rec_id'],
+                                    'doc_id' => $item['doc_id'],
+                                    'status' => $express['result']['deliverystatus'],
+                                    'status_desc' => C('DELIVERY_STATUS')[$express['result']['deliverystatus']],
+                                    'shipping_name' => $item['shipping_name'],
+                                    'invoice_no' => $item['invoice_no'],
+                                    'express' => $express['result']['list'][0],
+                                    'goods_id' => $item['goods_id'],
+                                    'original_img' => SITE_URL . $item['original_img'],
+                                    'original_img_new' => getFullPath($item['original_img']),
+                                ];
+                            }
                     }
                     break;
                 default:
@@ -2761,7 +2810,7 @@ class Order extends Base
             //--- 订单商品单独物流信息
             // 订单商品
             $orderGoods = M('delivery_doc dd')->join('order_goods og', 'og.rec_id = dd.rec_id')->join('goods g', 'g.goods_id = og.goods_id')
-                ->where($where)->field('g.goods_id, g.original_img')->find();
+                ->where($where)->field('g.goods_id, g.original_img, g.supplier_goods_id')->find();
             switch ($order['shipping_status']) {
                 case 0:
                 case 3:
@@ -2792,7 +2841,7 @@ class Order extends Base
                     // 圃美多
                     $apiController = new ApiController();
                     $express = $apiController->queryExpress(['shipping_code' => $delivery['shipping_code'], 'queryNo' => $delivery['invoice_no']], 'array');
-                    if ($express['status'] != '0') {
+                    if ($express['status'] != 0) {
                         $express['result']['deliverystatus'] = 1;   // 正在派件
                         $express['result']['expPhone'] = tpCache('shop_info.mobile');
                         $express['result']['list'][] = [
@@ -2817,7 +2866,7 @@ class Order extends Base
                     if (in_array($delivery['htns_status'], ['000', '120', '999'])) {
                         $apiController = new ApiController();
                         $express = $apiController->queryExpress(['shipping_code' => $delivery['shipping_code'], 'queryNo' => $delivery['invoice_no']], 'array');
-                        if ($express['status'] != '0') {
+                        if ($express['status'] != 0) {
                             $express['result']['deliverystatus'] = 1;   // 正在派件
                             $express['result']['expPhone'] = tpCache('shop_info.mobile');
                             $express['result']['list'][] = [
@@ -2848,6 +2897,45 @@ class Order extends Base
                         }
                     }
                     break;
+                case 3:
+                    if ($orderGoods['supplier_goods_id'] == 0) {
+                        $apiController = new ApiController();
+                        $express = $apiController->queryExpress(['shipping_code' => $delivery['shipping_code'], 'queryNo' => $delivery['invoice_no']], 'array');
+                        if ($express['status'] != 0) {
+                            $express['result']['deliverystatus'] = 1;   // 正在派件
+                            $express['result']['expPhone'] = tpCache('shop_info.mobile');
+                            $express['result']['list'][] = [
+                                'time' => date('Y-m-d H:i:s', time()),
+                                'status' => '暂无物流信息'
+                            ];
+                        }
+                        $deliveryStatus = $express['result']['deliverystatus'];
+                        $deliveryStatusDesc = C('DELIVERY_STATUS')[$express['result']['deliverystatus']];
+                    } else {
+                        // 供应链商品
+                        $orderService = new OrderService();
+                        $express = $orderService->getExpress($order['order_sn'], $orderGoods['supplier_goods_id']);
+                        if ($express['status'] == 0) {
+                            $express['result']['deliverystatus'] = 1;   // 正在派件
+                            $express['result']['list'][] = [
+                                'time' => date('Y-m-d H:i:s', time()),
+                                'status' => '暂无物流信息'
+                            ];
+                        } else {
+                            $express['result']['deliverystatus'] = 1;   // 正在派件
+                            foreach ($express['data']['express_info'] as $item) {
+                                $express['result']['list'][] = [
+                                    'time' => $item['time'],
+                                    'status' => $item['context'],
+                                ];
+                            }
+                        }
+                        $deliveryStatus = $express['result']['deliverystatus'];
+                        $deliveryStatusDesc = C('DELIVERY_STATUS')[$express['result']['deliverystatus']];
+                    }
+                    break;
+                default:
+                    return json(['status' => 0, 'msg' => '订单类型错误']);
             }
             $return = [
                 'delivery_status' => $deliveryStatus,

@@ -38,7 +38,7 @@ class Base
         $data['sign'] = $this->makeSign($data);
         $data['appid'] = $this->appId;
         $res = json_decode(httpRequest($this->url . $api, 'POST', $data), true);
-        if (in_array($res['code'], ['200', '00001'])) {
+        if (in_array($res['code'], ['200', '00001', '1'])) {
             if (is_array($res['data'])) {
                 $return = ['status' => 1, 'data' => $res['data']];
             } else {
