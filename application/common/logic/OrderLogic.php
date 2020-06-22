@@ -283,6 +283,16 @@ class OrderLogic
         $user = Db::name('users')->where('user_id', $user_id)->find();
         TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
 
+        // 供应链订单取消
+        if ($order['order_type'] == 3) {
+            $cOrderSn = M('order')->where(['parent_id' => $order['order_id'], 'order_type' => 3])->value('order_sn');
+            $res = (new OrderService())->cancelOrder($cOrderSn);
+            if ($res['status'] == 0) {
+                Db::rollback();
+                return $res;
+            }
+        }
+
         Db::commit();
         return ['status' => 1, 'msg' => '操作成功', 'result' => ''];
     }

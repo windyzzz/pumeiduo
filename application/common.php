@@ -1577,6 +1577,7 @@ function confirm_order($id, $user_id = 0)
     if (empty($order['pay_time']) || 1 != $order['pay_status']) {
         return ['status' => -1, 'msg' => '商家未确定付款，该订单暂不能确定收货', 'result' => null];
     }
+    Db::startTrans();
     $data['order_status'] = 2; // 已收货
     $data['pay_status'] = 1; // 已付款
     $data['confirm_time'] = time(); // 收货确认时间
@@ -1587,6 +1588,7 @@ function confirm_order($id, $user_id = 0)
     }
     $row = M('order')->where(['order_id' => $id])->save($data);
     if (!$row) {
+        Db::rollback();
         return ['status' => -3, 'msg' => '操作失败', 'result' => null];
     }
 
@@ -1624,6 +1626,16 @@ function confirm_order($id, $user_id = 0)
 //    $task2->setOrder($order);
 //    $task2->doOrderPayAfterSell();
 
+    // 供应链订单确认
+    if ($order['order_type'] == 3) {
+        $cOrderSn = M('order')->where(['parent_id' => $order['order_id'], 'order_type' => 3])->value('order_sn');
+        $res = (new \app\common\logic\supplier\OrderService())->confirmOrder($cOrderSn);
+        if ($res['status'] == 0) {
+            Db::rollback();
+            return $res;
+        }
+    }
+
     // 记录订单操作日志
     $action_info = [
         'order_id' => $order['order_id'],
@@ -1637,6 +1649,7 @@ function confirm_order($id, $user_id = 0)
     ];
     M('order_action')->add($action_info);
 
+    Db::commit();
     return ['status' => 1, 'msg' => '操作成功', 'result' => null];
 }
 

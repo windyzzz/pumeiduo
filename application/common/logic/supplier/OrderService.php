@@ -22,6 +22,32 @@ class OrderService extends Base
     }
 
     /**
+     * 确认订单收货
+     * @param $orderSn
+     * @return array|mixed
+     */
+    public function confirmOrder($orderSn)
+    {
+        $data = [
+            'order_sn' => $orderSn
+        ];
+        return $this->getData('?m=api&c=order&a=receOrder', $data);
+    }
+
+    /**
+     * 取消订单
+     * @param $orderSn
+     * @return array|mixed
+     */
+    public function cancelOrder($orderSn)
+    {
+        $data = [
+            'order_sn' => $orderSn
+        ];
+        return $this->getData('?m=api&c=order&a=refund', $data);
+    }
+
+    /**
      * 查询物流
      * @param $orderSn
      * @param $goodsId
@@ -35,4 +61,5 @@ class OrderService extends Base
         ];
         return $this->getData('?m=api&c=order&a=getExpress', $data);
     }
+
 }
