@@ -33,6 +33,9 @@ class Coupon extends Base
         $show = $Page->show();
         $coupon = new CouponModel();
         $lists = $coupon->order('add_time desc')->limit($Page->firstRow . ',' . $Page->listRows)->select();
+        foreach ($lists as &$list) {
+            $list['use_num'] = M('coupon_list')->where(['cid' => $list['id'], 'status' => 1])->count('id');
+        }
         $this->assign('lists', $lists);
         $this->assign('pager', $Page); // 赋值分页输出
         $this->assign('page', $show); // 赋值分页输出
