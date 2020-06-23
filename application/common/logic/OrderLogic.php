@@ -546,10 +546,10 @@ class OrderLogic
                     // 退款余额
                     $returnData['refund_deposit'] = round($useApplyReturnMoney / $userExpenditureMoney * $order['user_money'], 2);
                 } else {
-                    $data['refund_deposit'] = round($useApplyReturnMoney / $userExpenditureMoney * ($order['user_money'] - $order['shipping_price'] + $order['paid_money']) - $integralDeductionMoney, 2); //该退余额支付部分
+                    $returnData['refund_deposit'] = round($useApplyReturnMoney / $userExpenditureMoney * ($order['user_money'] - $order['shipping_price'] + $order['paid_money']) - $integralDeductionMoney, 2); //该退余额支付部分
                 }
             } else {
-                $data['refund_deposit'] = round($useApplyReturnMoney - $integralDeductionMoney, 2); //该退余额支付部分
+                $returnData['refund_deposit'] = round($useApplyReturnMoney - $integralDeductionMoney, 2); //该退余额支付部分
             }
         }
 
