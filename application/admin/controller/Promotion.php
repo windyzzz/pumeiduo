@@ -404,6 +404,7 @@ class Promotion extends Base
         }
 
         if ($prom_id) {
+            M('goods')->where(['prom_type' => 3, 'prom_id' => $prom_id])->save(['prom_id' => 0, 'prom_type' => 0]);
             M('prom_goods')->where(['id' => $prom_id])->save($data);
             $last_id = $prom_id;
             adminLog("管理员修改了商品促销 " . $title);
@@ -411,7 +412,6 @@ class Promotion extends Base
             $last_id = M('prom_goods')->add($data);
             adminLog("管理员添加了商品促销 " . $title);
         }
-
 
         M('goods_tao_grade')->where(array('promo_id' => $last_id))->delete();
         $promGoods = $data['goods'];
@@ -425,7 +425,6 @@ class Promotion extends Base
                     'promo_id' => $last_id,
                     'stock' => 1
                 );
-
                 M('goods_tao_grade')->data($tao_goods)->add();
                 M('goods')->where(['goods_id' => $dfd[0]])->update(['prom_type' => 3, 'prom_id' => $last_id]);
             }
