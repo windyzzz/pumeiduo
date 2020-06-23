@@ -506,10 +506,9 @@ class OrderLogic
      * @param $order
      * @param $orderGoods
      * @param $data
-     * @param array $cOrder 子订单数据
      * @return array
      */
-    public function addReturnGoodsNew($recId, $type, $order, $orderGoods, $data, $cOrder = [])
+    public function addReturnGoodsNew($recId, $type, $order, $orderGoods, $data)
     {
         $returnData['rec_id'] = $recId;
         $returnData['type'] = $type;
@@ -586,24 +585,6 @@ class OrderLogic
         if ($returnId) {
             // 更新订单
             M('order')->where('order_sn', $order['order_sn'])->update(['order_status' => 6]);
-            // 供应链订单处理
-            if (isset($cOrder) && $cOrder['order_type'] == 3) {
-                $returnGoods = [
-                    'order_sn' => $cOrder['order_sn'],
-                    'goods_id' => $orderGoods['supplier_goods_id'],
-                    'spec_key' => $orderGoods['spec_key'],
-                    'type' => $type,
-                    'reason' => $data['return_reason'],
-                    'describe' => $data['describe'],
-                ];
-                $res = (new OrderService())->refundOrder($returnGoods);
-                if ($res['status'] == 0) {
-                    Db::rollback();
-                    return ['status' => 0, 'msg' => $res['msg']];
-                }
-                $afterSaleSn = $res['data'][0]['after_sale_sn'];
-                M('return_goods')->where(['id' => $returnId])->update(['supplier_sale_sn' => $afterSaleSn]);
-            }
             Db::commit();
             return ['status' => 1, 'msg' => '申请成功', 'result' => ['return_id' => $returnId]];
         }

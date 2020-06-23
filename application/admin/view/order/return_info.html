@@ -50,8 +50,10 @@
                         <label >商品</label>
                     </dt>
                     <dd class="opt">
-                        名称：{$order['goods'][goods_name]}
-                        <p>规格：{$order['goods'][spec_key_name]}</p>
+                        <a target="_blank" href="{:U('Admin/Goods/addEditGoods',array('id'=>$return_goods['goods_id']))}">
+                            名称：{$order['goods'][goods_name]}
+                            <p>规格：{$order['goods'][spec_key_name]}</p>
+                        </a>
                     </dd>
                 </dl>
                 <dl class="row">
@@ -136,7 +138,7 @@
                 <div class="bot"><a href="JavaScript:;" subimtid="return_form" data-href="{:U('Admin/Order/checkReturniInfo')}" class="ncap-btn-big ncap-btn-green submitBtn">确认提交</a></div>
             </div>
         </form>
-        <else/>
+    <else/>
         <div class="ncap-form-default">
             <dl class="row">
                 <dt class="tit">
@@ -305,50 +307,72 @@
                     </div>
                 </if>
             </form>
-
+            <if condition="isset($supplier_delivery)">
+                <dl class="row">
+                    <dt class="tit">
+                        <label>供应链退换货物流信息</label>
+                    </dt>
+                    <dd class="opt">
+                        <p>快递公司：{$supplier_delivery[delivery][express_name]}</p>
+                        <p>快递单号：{$supplier_delivery[delivery][express_sn]}</p>
+                        <p>发货时间：{$supplier_delivery[delivery][express_time]}</p>
+                    </dd>
+                    <dt class="tit">
+                        <label>物流详情</label>
+                    </dt>
+                    <dd class="opt">
+                        <volist name="$supplier_delivery[express]" id="express">
+                            <p>{$express.time} - {$express.context}</p>
+                        </volist>
+                    </dd>
+                </dl>
+            </if>
         </div>
     </if>
 </div>
 <script>
     //修改退款金额
-    $(document).on('click','.submitBtn',function(){
-        var subimtid = $(this).attr('subimtid');
-        var formUrl = $(this).data('href')
-        submitForm(subimtid,formUrl);
+    $(document).on('click', '.submitBtn', function () {
+        layer.confirm('确认操作？', {
+            btn: ['确定', '取消'] //按钮
+        }, function () {
+            var subimtid = $(this).attr('subimtid');
+            var formUrl = $(this).data('href')
+            submitForm(subimtid, formUrl);
+        });
     })
 
     //修改退款金额
-    function sellerDelivery(obj){
+    function sellerDelivery(obj) {
         var formUrl = $(obj).data('href')
-        if ($('#express_name').val() == '' || $('#express_sn').val() == ''){
+        if ($('#express_name').val() == '' || $('#express_sn').val() == '') {
             layer.alert('请填写完整物流信息', {icon: 2});
             return false;
         }
-        submitForm('seller_delivery',formUrl);
+        submitForm('seller_delivery', formUrl);
     }
 
     //提交表单
-    function  submitForm(subimtid,formUrl) {
-
+    function submitForm(subimtid, formUrl) {
         $.ajax({
-            type : "POST",
+            type: "POST",
             url: formUrl,
-            data:$('#'+subimtid).serialize(),
-            dataType:'json',
-            async:false,
-            success: function(data){
-                if(data.status ==1){
+            data: $('#' + subimtid).serialize(),
+            dataType: 'json',
+            async: false,
+            success: function (data) {
+                if (data.status == 1) {
                     // layer.msg(data.msg, {icon: 1});
-                    layer.msg(data.msg, {icon: 1},function () {
-                        window.location.href=data.url;
+                    layer.msg(data.msg, {icon: 1}, function () {
+                        window.location.href = data.url;
                     });
 
-                }else{
+                } else {
                     layer.msg(data.msg, {icon: 2});
                 }
             },
-            error:function(){
-                layer.msg('网络异常，请稍后重试',{icon: 2});
+            error: function () {
+                layer.msg('网络异常，请稍后重试', {icon: 2});
             }
         });
     }

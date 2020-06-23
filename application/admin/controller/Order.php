@@ -15,6 +15,7 @@ use app\admin\logic\OrderLogic;
 use app\admin\logic\RefundLogic;
 use app\common\logic\Pay;
 use app\common\logic\PlaceOrder;
+use app\common\logic\supplier\OrderService;
 use app\common\model\OrderGoods;
 use app\common\util\TpshopException;
 use think\AjaxPage;
@@ -458,8 +459,8 @@ class Order extends Base
         $this->assign('delivery_log', $deliveryLog);
         // 子订单
         if ($order['order_type'] == 3) {
-            $splitOrder = M('order')->where(['parent_id' => $order_id])->select();
-            $this->assign('split_order', $splitOrder);
+            $cOrder = M('order')->where(['parent_id' => $order_id])->select();
+            $this->assign('child_order', $cOrder);
         }
 
         return $this->fetch();
@@ -1024,6 +1025,21 @@ class Order extends Base
         $this->assign('return_type', C('RETURN_TYPE')); //退货订单信息
         $this->assign('refund_status', C('REFUND_STATUS'));
 
+        if ($order['order_type'] == 3 && $return_goods['type'] == 2 && !empty($return_goods['supplier_sale_sn'])) {
+            // 供应链订单商品换货物流信息
+            $supplierDelivery = [];
+            $res = (new OrderService())->afterSaleInfo($return_goods['supplier_sale_sn']);
+            if ($res['status'] == 0) {
+                $supplierDelivery['delivery'] = [];
+                $supplierDelivery['express'] = [];
+            } else {
+                $data = $res['data'];
+                $supplierDelivery['delivery'] = $data['delivery'];
+                $supplierDelivery['express'] = $data['express_info']['express_info'];
+            }
+            $this->assign('supplier_delivery', $supplierDelivery);
+        }
+
         return $this->fetch();
     }
 
@@ -1047,8 +1063,8 @@ class Order extends Base
                 $post_data['checktime'] = time();
                 break;
             case 3:
-                $post_data['receivetime'] = time();
-                break;  //卖家收货时间
+                $post_data['receivetime'] = time(); //卖家收货时间
+                break;
             default:
         }
 
@@ -1092,6 +1108,27 @@ class Order extends Base
             if ($return_goods['type'] < 2) {
                 $orderLogic->disposereRurnOrderCoupon($return_goods); // 是退货可能要处理优惠券
 //                $order_info = $order->toArray();
+            }
+            if ($order['order_type'] == 3) {
+                // 供应链订单处理
+                $cOrder = M('order')->where(['order_id' => $order_goods['order_id2']])->find();
+                if (isset($cOrder) && $cOrder['order_type'] == 3) {
+                    $returnGoods = [
+                        'order_sn' => $cOrder['order_sn'],
+                        'goods_id' => M('goods')->where(['goods_id' => $order_goods['goods_id']])->value('supplier_goods_id'),
+                        'spec_key' => $order_goods['spec_key'],
+                        'type' => $return_goods['type'],
+                        'reason' => $return_goods['reason'],
+                        'describe' => $return_goods['describe'],
+                    ];
+                    $res = (new OrderService())->refundOrder($returnGoods);
+                    if ($res['status'] == 0) {
+                        Db::rollback();
+                        return ['status' => 0, 'msg' => $res['msg']];
+                    }
+                    $afterSaleSn = $res['data'][0]['after_sale_sn'];
+                    M('return_goods')->where(['id' => $return_goods['id']])->update(['supplier_sale_sn' => $afterSaleSn]);
+                }
             }
         } elseif (-1 == $post_data['status']) {
             if ($return_goods['type'] < 2 && $order_goods['goods_pv'] == 0) {

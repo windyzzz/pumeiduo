@@ -89,4 +89,17 @@ class OrderService extends Base
         ];
         return $this->getData('?m=api&c=order&a=closeRefundOrder', $data);
     }
+
+    /**
+     * 获取售后服务信息
+     * @param $afterSaleSn
+     * @return array|mixed
+     */
+    public function afterSaleInfo($afterSaleSn)
+    {
+        $data = [
+            'after_sale_sn' => $afterSaleSn
+        ];
+        return $this->getData('?m=api&c=Aftersale&a=queryAftersaleInfo', $data);
+    }
 }

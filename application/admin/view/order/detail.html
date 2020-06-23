@@ -434,7 +434,7 @@
                         </table>
                     </div>
                     <if condition="$order.order_type == 3">
-                        <foreach name="$split_order" item="v">
+                        <foreach name="$child_order" item="v">
                             <div class="contact-info">
                                 <if condition="$v[order_type] == 1">
                                     <h3>子订单1</h3>
