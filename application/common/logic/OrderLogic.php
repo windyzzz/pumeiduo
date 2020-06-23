@@ -504,10 +504,12 @@ class OrderLogic
      * @param $recId
      * @param $type
      * @param $order
+     * @param $orderGoods
      * @param $data
+     * @param array $cOrder 子订单数据
      * @return array
      */
-    public function addReturnGoodsNew($recId, $type, $order, $data)
+    public function addReturnGoodsNew($recId, $type, $order, $orderGoods, $data, $cOrder = [])
     {
         $returnData['rec_id'] = $recId;
         $returnData['type'] = $type;
@@ -533,8 +535,6 @@ class OrderLogic
         $returnData['user_id'] = $order['user_id'];
         $returnData['order_id'] = $order['order_id'];
         $returnData['order_sn'] = $order['order_sn'];
-
-        $orderGoods = M('order_goods')->where(['rec_id' => $recId])->find();
         $returnData['goods_id'] = $orderGoods['goods_id'];
         $returnData['goods_num'] = $orderGoods['goods_num'];
         $returnData['spec_key'] = $orderGoods['spec_key'];
@@ -564,6 +564,7 @@ class OrderLogic
             }
         }
 
+        Db::startTrans();
         // 更新分成记录状态
         M('rebate_log')->where('order_sn', $order['order_sn'])->update(['sale_service' => 1]);
         if ($type < 2 && $orderGoods['goods_pv'] == 0) {
@@ -580,12 +581,33 @@ class OrderLogic
                 ]);
             }
         }
-
-        $res = M('return_goods')->add($returnData);
-        if ($res) {
+        // 售后记录
+        $returnId = M('return_goods')->add($returnData);
+        if ($returnId) {
+            // 更新订单
             M('order')->where('order_sn', $order['order_sn'])->update(['order_status' => 6]);
-            return ['status' => 1, 'msg' => '申请成功', 'result' => ['return_id' => $res]];
+            // 供应链订单处理
+            if (isset($cOrder) && $cOrder['order_type'] == 3) {
+                $returnGoods = [
+                    'order_sn' => $cOrder['order_sn'],
+                    'goods_id' => $orderGoods['supplier_goods_id'],
+                    'spec_key' => $orderGoods['spec_key'],
+                    'type' => $type,
+                    'reason' => $data['return_reason'],
+                    'describe' => $data['describe'],
+                ];
+                $res = (new OrderService())->refundOrder($returnGoods);
+                if ($res['status'] == 0) {
+                    Db::rollback();
+                    return ['status' => 0, 'msg' => $res['msg']];
+                }
+                $afterSaleSn = $res['data'][0]['after_sale_sn'];
+                M('return_goods')->where(['id' => $returnId])->update(['supplier_after_sale_sn' => $afterSaleSn]);
+            }
+            Db::commit();
+            return ['status' => 1, 'msg' => '申请成功', 'result' => ['return_id' => $returnId]];
         }
+        Db::rollback();
         return ['status' => 0, 'msg' => '申请失败'];
     }
 
@@ -1068,7 +1090,7 @@ class OrderLogic
         $orderGoods = Db::name('order_goods og')
             ->join('goods g', 'g.goods_id = og.goods_id')
             ->join('spec_goods_price sgp', 'sgp.goods_id = og.goods_id AND sgp.`key` = og.spec_key', 'LEFT')
-            ->where($where)->field('og.*, sgp.item_id, g.original_img')->find();
+            ->where($where)->field('og.*, sgp.item_id, g.original_img, g.supplier_goods_id')->find();
         return $orderGoods;
     }
 

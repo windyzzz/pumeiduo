@@ -873,8 +873,23 @@ class Order extends Base
         if (empty($order)) {
             return json(['status' => 0, 'msg' => '非法操作']);
         }
-        if ($order['order_type'] == 2) {
-            return json(['status' => 0, 'msg' => '海外购商品收货后如有质量或破损问题申请退换货时，请联系总部客服进行处理']);
+        $cOrder = [];   // 子订单
+        switch ($order['order_type']) {
+            case 2:
+                // 海外购订单
+                return json(['status' => 0, 'msg' => '海外购商品收货后如有质量或破损问题申请退换货时，请联系总部客服进行处理']);
+            case 3:
+                // 供应链订单
+                $cOrder = M('order')->where(['order_id' => $orderGoods['order_id2']])->find();
+                if (empty($cOrder)) {
+                    return json(['status' => 0, 'msg' => '子订单信息不存在，请联系客服进行处理']);
+                }
+                if ($cOrder['order_type'] == 1) {
+                    $cOrder = [];
+                } elseif ($cOrder['order_type'] == 3 && $type == 0) {
+                    return json(['status' => 0, 'msg' => '抱歉，供应链商品不支持仅退款']);
+                }
+                break;
         }
         $confirmTimeConfig = tpCache('shopping.auto_service_date');   // 后台设置多少天内可申请售后
         $confirmTime = $confirmTimeConfig * 24 * 60 * 60;
@@ -884,7 +899,7 @@ class Order extends Base
         if ($this->request->isPost()) {
             // 申请售后
             $orderLogic = new OrderLogic();
-            $res = $orderLogic->addReturnGoodsNew($recId, $type, $order, I('post.'));
+            $res = $orderLogic->addReturnGoodsNew($recId, $type, $order, $orderGoods, I('post.'), $cOrder);
             return json($res);
         } else {
             $return['order_goods'] = [

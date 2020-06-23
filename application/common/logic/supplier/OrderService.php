@@ -5,7 +5,6 @@ namespace app\common\logic\supplier;
 
 class OrderService extends Base
 {
-
     /**
      * 提交订单
      * @param $order
@@ -62,4 +61,32 @@ class OrderService extends Base
         return $this->getData('?m=api&c=order&a=getExpress', $data);
     }
 
+    /**
+     * 提交售后
+     * @param $returnGoods
+     * @return array|mixed
+     */
+    public function refundOrder($returnGoods)
+    {
+        $data = [
+            'return_goods' => json_encode($returnGoods),
+        ];
+        return $this->getData('?m=api&c=order&a=refundOrder', $data);
+    }
+
+    /**
+     * 取消售后
+     * @param $returnGoods
+     * @param $afterSaleSn
+     * @return array|mixed
+     */
+    public function closeRefundOrder($returnGoods, $afterSaleSn)
+    {
+        $data = [
+            'return_goods' => json_encode($returnGoods),
+            'after_sale_sn' => $afterSaleSn,
+            'status' => -2,
+        ];
+        return $this->getData('?m=api&c=order&a=closeRefundOrder', $data);
+    }
 }
