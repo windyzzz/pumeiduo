@@ -602,7 +602,7 @@ class OrderLogic
                     return ['status' => 0, 'msg' => $res['msg']];
                 }
                 $afterSaleSn = $res['data'][0]['after_sale_sn'];
-                M('return_goods')->where(['id' => $returnId])->update(['supplier_after_sale_sn' => $afterSaleSn]);
+                M('return_goods')->where(['id' => $returnId])->update(['supplier_sale_sn' => $afterSaleSn]);
             }
             Db::commit();
             return ['status' => 1, 'msg' => '申请成功', 'result' => ['return_id' => $returnId]];

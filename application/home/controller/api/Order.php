@@ -930,11 +930,15 @@ class Order extends Base
                 }
 
                 // 公司地址
-                $provinceName = Db::name('region2')->where(['id' => tpCache('shop_info.province')])->value('name');
-                $cityName = Db::name('region2')->where(['id' => tpCache('shop_info.city')])->value('name');
-                $districtName = Db::name('region2')->where(['id' => tpCache('shop_info.district')])->value('name');
-                $address = tpCache('shop_info.address');
-                $address = $provinceName . $cityName . $districtName . $address;
+                if (isset($cOrder) && $cOrder['order_type'] == 3) {
+                    $address = '供应链的收获地址需要等待供应链确认售后订单后获取得到';
+                } else {
+                    $provinceName = Db::name('region2')->where(['id' => tpCache('shop_info.province')])->value('name');
+                    $cityName = Db::name('region2')->where(['id' => tpCache('shop_info.city')])->value('name');
+                    $districtName = Db::name('region2')->where(['id' => tpCache('shop_info.district')])->value('name');
+                    $address = tpCache('shop_info.address');
+                    $address = $provinceName . $cityName . $districtName . $address;
+                }
             }
             switch ($type) {
                 case -1:
