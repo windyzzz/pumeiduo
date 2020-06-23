@@ -113,7 +113,7 @@
                                         <!--</div>-->
                                         <!--<div class="goods-name">-->
                                             <!--<a target="_blank"-->
-                                               <!--href="{:U('Home/Goods/goodsInfo',array('id'=>$goods['goods_id']))}">{$goods.goods_name}</a>-->
+                                               <!--href="{:U('Admin/Goods/addEditGoods',array('id'=>$goods['goods_id']))}">{$goods.goods_name}</a>-->
                                         <!--</div>-->
                                         <!--<div class="goods-price">商城价：￥{$goods.shop_price}库存:{$goods.store_count}</div>-->
                                     <!--</div>-->
@@ -129,7 +129,7 @@
                                                                       <!--src="{$goods[SpecGoodsPrice][spec_img]}"/></div>-->
                                         <!--<div class="goods-name">-->
                                             <!--<a target="_blank"-->
-                                               <!--href="{:U('Home/Goods/goodsInfo',array('id'=>$goods['goods_id'],'item_id'=>$goods[SpecGoodsPrice]['item_id']))}">{$goods.goods_name}{$goods[SpecGoodsPrice]['key_name']}</a>-->
+                                               <!--href="{:U('Admin/Goods/addEditGoods',array('id'=>$goods['goods_id'],'item_id'=>$goods[SpecGoodsPrice]['item_id']))}">{$goods.goods_name}{$goods[SpecGoodsPrice]['key_name']}</a>-->
                                         <!--</div>-->
                                         <!--<div class="goods-price">-->
                                             <!--商城价：￥{$goods[SpecGoodsPrice]['price']}库存:{$goods[SpecGoodsPrice]['store_count']}-->
@@ -185,7 +185,7 @@
                                         </div>
                                         <div class="goods-name">
                                             <a target="_blank"
-                                               href="{:U('Home/Goods/goodsInfo',array('id'=>$goods['goods_id']))}">{$goods.goods_name}</a>
+                                               href="{:U('Admin/Goods/addEditGoods',array('id'=>$goods['goods_id']))}">{$goods.goods_name}</a>
                                         </div>
                                         <div class="goods-price">商城价：￥{$goods.shop_price}库存:{$goods.store_count}</div>
                                         数量：<input type="text" name="gift_goods[{$goods.goods_id}_0][goods_num]"
@@ -210,7 +210,7 @@
                                         </div>
                                         <div class="goods-name">
                                             <a target="_blank"
-                                               href="{:U('Home/Goods/goodsInfo',array('id'=>$goods['goods_id'],'item_id'=>$goods[SpecGoodsPrice]['item_id']))}">{$goods.goods_name}{$goods[SpecGoodsPrice]['key_name']}</a>
+                                               href="{:U('Admin/Goods/addEditGoods',array('id'=>$goods['goods_id'],'item_id'=>$goods[SpecGoodsPrice]['item_id']))}">{$goods.goods_name}{$goods[SpecGoodsPrice]['key_name']}</a>
                                         </div>
                                         <div class="goods-price">
                                             商城价：￥{$goods[SpecGoodsPrice]['price']}库存:{$goods[SpecGoodsPrice]['store_count']}
