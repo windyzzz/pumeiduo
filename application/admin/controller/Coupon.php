@@ -267,7 +267,7 @@ class Coupon extends Base
                 return json(['status' => -1, 'msg' => '该优惠券不能发放', 'result' => null]);
             }
             $coupon['type_value'] = explode(',', $coupon['type_value']);
-            if (in_array(5, $coupon['type_value']) || in_array($coupon['use_type'], array(5))) {
+            if (in_array(4, $coupon['type_value']) || in_array(5, $coupon['type_value']) || in_array($coupon['use_type'], array(5))) {
                 return json(['status' => -1, 'msg' => '该优惠券不能发放', 'result' => null]);
             }
             if ($coupon['createnum'] > 0) {
