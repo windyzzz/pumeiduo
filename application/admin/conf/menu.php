@@ -202,6 +202,7 @@ return [
         ]],
         ['name' => '账户信息', 'child' => [
             ['name' => '多账户流水', 'act' => 'account_list', 'op' => 'Finance'],
+            ['name' => '供应链账户', 'act' => 'supplierAccount', 'op' => 'Finance'],
         ]],
     ]],
 

@@ -11,6 +11,7 @@
 
 namespace app\admin\controller;
 
+use app\common\logic\supplier\AccountService;
 use think\AjaxPage;
 use think\Page;
 
@@ -344,6 +345,86 @@ class Finance extends Base
         $this->assign('up_data', $up_data);
         $this->assign('down_data', $down_data);
 
+        return $this->fetch();
+    }
+
+    /**
+     * 供应链账户信息
+     * @return mixed
+     */
+    public function supplierAccount()
+    {
+        $group_list = [
+            'supplier_recharge_log' => '充值记录',
+            'supplier_consume_log' => '消费记录',
+        ];
+        $this->assign('group_list', $group_list);
+        $inc_type = I('get.inc_type', '');
+        if (!$inc_type) {
+            foreach ($group_list as $key => $item) {
+                $inc_type = $key;
+                break;
+            }
+        }
+        $this->assign('inc_type', $inc_type);
+        // 供应链账户余额
+        $res = (new AccountService())->storeMoney();
+        if ($res['status'] == 0) {
+            $balance = 0;
+        } else {
+            $balance = $res['data']['store_money'];
+        }
+        $this->assign('balance', $balance);
+        return $this->fetch($inc_type);
+    }
+
+    /**
+     * 供应链账户记录
+     * @return mixed
+     */
+    public function supplierAccountLog()
+    {
+        $type = I('type', 1);
+        $page = I('page', 1);
+        // 供应链账户记录
+        $res = (new AccountService())->rechargeLog($type, $page);
+        if ($res['status'] == 0) {
+            $count = 0;
+            $logList = [];
+        } else {
+            $count = $res['data']['count'];
+            $logList = [];
+            foreach ($res['data']['list'] as $k => $list) {
+                $logList[$k] = [
+                    'payment_no' => $list['payment_no'],
+                    'pay_type' => $list['pay_type'],
+                    'price' => isset($list['price']) ? $list['price'] : 0.00,
+                    'freight_price' => isset($list['freight_price']) ? $list['freight_price'] : 0.00,
+                    'cost_price' => isset($list['cost_price']) ? $list['cost_price'] : 0.00,
+                    'total_price' => isset($list['total_price']) ? $list['total_price'] : 0.00,
+                    'consume_price' => isset($list['consume_price']) ? $list['consume_price'] : 0.00,
+                    'creat_time' => $type == 1 ? date('Y-m-d H:i:s', $list['creat_time']) : $list['creat_time'],
+                    'pay_time' => isset($list['pay_time']) ? date('Y-m-d H:i:s', $list['pay_time']) : 0,
+                    'order' => '',
+                    'order_goods' => ''
+                ];
+                if (!empty($list['order'])) {
+                    foreach ($list['order'] as $order) {
+                        $logList[$k]['order'] .= '订单号：' . $order['pt_order_sn'] . "\n";
+                    }
+                }
+                if (!empty($list['pay_goods'])) {
+                    foreach ($list['pay_goods'] as $goods) {
+                        $logList[$k]['order_goods'] .= '商品：' . $goods['goods_name'] . ' 数量：' . $goods['goods_num'] . ' 成本价：' . $goods['s_price'] . ' 服务费：' . $goods['service_price'] . "\n";
+                    }
+                }
+            }
+        }
+        $page = new AjaxPage($count, 2);
+        $show = $page->show();
+        $this->assign('page', $show);
+        $this->assign('type', $type);
+        $this->assign('log_list', $logList);
         return $this->fetch();
     }
 }
