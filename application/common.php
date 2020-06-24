@@ -138,6 +138,10 @@ function update_user_distribut($user_id, $order_id)
         if ($res['status'] == 2) {
             $user = Db::name('users')->where('user_id', $user_id)->find();
         }
+        // 升级返还奖励
+        if (tpCache('distribut.referee_get_electronic') > 0) {
+            accountLog($user_id, 0, 0, '购买318套组返消费币', 0, 0, '', tpCache('distribut.referee_get_electronic'), 14, false);
+        }
         // 更新缓存
         TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
         $order = M('order')->where('order_id', $order_id)->find();

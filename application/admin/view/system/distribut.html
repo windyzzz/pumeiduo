@@ -146,11 +146,29 @@
             </dl>
             <dl class="row">
                 <dt class="tit">
-                    <label>升级到VIP会员的购物金额</label>
+                    <label>升级到VIP会员的累积消费金额</label>
                 </dt>
                 <dd class="opt">
-                    <input name="vip_buy_money" id="vip_buy_money" value="{$config.vip_buy_money}" onpaste="this.value=this.value.replace(/[^\d]/g,'')" onkeyup="this.value=this.value.replace(/[^\d]/g,'')" class="input-txt" type="text">
+                    <input name="vip_buy_money" id="distribut_buy_money" value="{$config.vip_buy_money}" onpaste="this.value=this.value.replace(/[^\d]/g,'')" onkeyup="this.value=this.value.replace(/[^\d]/g,'')" class="input-txt" type="text">
                     <p class="notic">元</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>累积消费升级VIP后获得的电子币</label>
+                </dt>
+                <dd class="opt">
+                    <input name="buy_get_electronic" id="distribut_buy_get_electronic" value="{$config.buy_get_electronic}" onpaste="this.value=this.value.replace(/[^\d]/g,'')" onkeyup="this.value=this.value.replace(/[^\d]/g,'')" class="input-txt" type="text">
+                    <p class="notic">电子币</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>购买VIP套组升级VIP后获得的电子币</label>
+                </dt>
+                <dd class="opt">
+                    <input name="referee_get_electronic" id="distribut_referee_get_electronic" value="{$config.referee_get_electronic}" onpaste="this.value=this.value.replace(/[^\d]/g,'')" onkeyup="this.value=this.value.replace(/[^\d]/g,'')" class="input-txt" type="text">
+                    <p class="notic">电子币</p>
                 </dd>
             </dl>
             <dl class="row">
