@@ -1444,7 +1444,7 @@ class Order extends Base
 
     public function export_delivery_order()
     {
-        $condition = [];
+        $condition = ['parent_id' => 0];
         I('consignee') ? $condition['consignee'] = trim(I('consignee')) : false;
         '' != I('order_sn') ? $condition['order_sn'] = trim(I('order_sn')) : false;
         $shipping_status = I('shipping_status');
@@ -1504,7 +1504,7 @@ class Order extends Base
      */
     public function export_order()
     {
-        $condition = [];
+        $condition = ['parent_id' => 0];
         // 下单时间
         $begin = $this->begin;
         $end = $this->end;
@@ -1681,7 +1681,7 @@ class Order extends Base
      */
     public function export_order_v2()
     {
-        $condition = [];
+        $condition = ['parent_id' => 0];
         // 下单时间
         $begin = $this->begin;
         $end = $this->end;
