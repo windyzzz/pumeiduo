@@ -1453,12 +1453,18 @@ class Cart extends Base
                     // 计算商品pv
                     $buyGoods = $cartLogic->calcGoodsPv([$buyGoods])[0];
                 }
+                if ($buyGoods['goods']['is_abroad'] == 1) {
+                    return json(['status' => -1, 'msg' => '海外购商品请在APP进行购买', 'result' => null]);
+                }
                 $cartList[0] = $buyGoods;
                 $pay->payGoodsList($cartList);
             } else {
                 $userCartList = $cartLogic->getCartList(1);
                 $vipGoods = [];
                 foreach ($userCartList as $key => $cart) {
+                    if ($cart['goods']['is_abroad'] == 1) {
+                        return json(['status' => -1, 'msg' => '海外购商品请在APP进行购买', 'result' => null]);
+                    }
                     if ($cart['prom_type'] == 0) {
                         if ($cart['goods']['least_buy_num'] != 0 && $cart['goods']['least_buy_num'] > $cart['goods_num']) {
                             return json(['status' => 0, 'msg' => $cart['goods']['goods_name'] . '至少购买' . $cart['goods']['least_buy_num'] . '件']);
