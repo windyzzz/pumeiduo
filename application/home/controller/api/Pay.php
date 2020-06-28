@@ -64,6 +64,13 @@ class Pay extends Base
                 break;
             case 'weixinApp':
                 // 微信
+                if ($order['order_type'] == 2) {
+                    // 海外购订单
+                    // 导入具体的支付类文件
+                    include_once "plugins/payment/weixinApp_2/weixinApp_2.class.php";
+                    $code = '\\' . 'weixinApp_2';
+                    $this->payment = new $code();
+                }
                 $res = $this->payment->get_code($order);
                 if ($res['status'] == 0) {
                     return json(['status' => 0, 'msg' => $res['msg']]);
