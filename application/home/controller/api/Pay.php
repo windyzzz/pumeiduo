@@ -32,15 +32,15 @@ class Pay extends Base
     {
         $orderId = I('order_id/d', '');
         $order = Db::name('Order')->where(['order_id' => $orderId])->find();
-        if (empty($order) || $order['order_status'] > 1) {
-            return json(['status' => 0, 'msg' => '非法操作！']);
-        }
-        if (time() - $order['add_time'] > 3600) {
-            return json(['status' => 0, 'msg' => '此订单在一个小时内不支付已作废，不能支付，请重新下单!']);
-        }
-        if ($order['pay_status'] == 1) {
-            return json(['status' => 0, 'msg' => '此订单，已完成支付!']);
-        }
+//        if (empty($order) || $order['order_status'] > 1) {
+//            return json(['status' => 0, 'msg' => '非法操作！']);
+//        }
+//        if (time() - $order['add_time'] > 3600) {
+//            return json(['status' => 0, 'msg' => '此订单在一个小时内不支付已作废，不能支付，请重新下单!']);
+//        }
+//        if ($order['pay_status'] == 1) {
+//            return json(['status' => 0, 'msg' => '此订单，已完成支付!']);
+//        }
         // 请求支付
         $signCode = [
             'appid' => '',
@@ -64,13 +64,6 @@ class Pay extends Base
                 break;
             case 'weixinApp':
                 // 微信
-                if ($order['order_type'] == 2) {
-                    // 海外购订单
-                    // 导入具体的支付类文件
-                    include_once "plugins/payment/weixinApp_2/weixinApp_2.class.php";
-                    $code = '\\' . 'weixinApp_2';
-                    $this->payment = new $code();
-                }
                 $res = $this->payment->get_code($order);
                 if ($res['status'] == 0) {
                     return json(['status' => 0, 'msg' => $res['msg']]);

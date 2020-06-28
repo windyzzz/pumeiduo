@@ -40,6 +40,19 @@ class weixinApp
      */
     public function get_code($order)
     {
+        switch ($order['order_type']) {
+            case 2:
+                // 海外购订单
+                $paymentPlugin = M('Plugin')->where(['code' => 'weixinApp_2', 'type' => 'payment'])->find(); // 找到微信支付插件的配置
+                $config_value = unserialize($paymentPlugin['config_value']); // 配置反序列化
+                $this->config_value = $config_value;
+                WxPayConfig::$appid = $config_value['appid']; // * APPID：绑定支付的APPID（必须配置，开户邮件中可查看）
+                WxPayConfig::$mchid = $config_value['mchid']; // * MCHID：商户号（必须配置，开户邮件中可查看）
+                WxPayConfig::$smchid = isset($config_value['smchid']) ? $config_value['smchid'] : ''; // * SMCHID：服务商商户号（必须配置，开户邮件中可查看）
+                WxPayConfig::$key = $config_value['key']; // KEY：商户支付密钥，参考开户邮件设置（必须配置，登录商户平台自行设置）
+                WxPayConfig::$appsecret = $config_value['appsecret']; // 公众帐号secert（仅JSAPI支付的时候需要配置)，
+                break;
+        }
 //        if (false !== stripos($order['order_sn'], 'recharge')) {
 //            $go_url = U('Mobile/User/points', ['type' => 'recharge']);
 //            $back_url = U('Mobile/User/recharge', ['order_id' => $order['order_id']]);
