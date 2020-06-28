@@ -17,26 +17,26 @@ class Pay extends Base
         parent::__construct();
         $this->pay_code = I('pay_code', '');
         if (empty($this->pay_code)) {
-            return json(['status' => 0, 'msg' => 'pay_code不能为空']);
+            die(json_encode(['status' => 0, 'msg' => 'pay_code不能为空']));
         }
         $orderId = I('order_id/d', '');
         $orderType = I('order_type', 1);
         if ($orderId) {
             $this->order = Db::name('Order')->where(['order_id' => $orderId])->find();
-            if (empty($order) || $order['order_status'] > 1) {
-                return json(['status' => 0, 'msg' => '非法操作！']);
+            if (empty($this->order) || $this->order['order_status'] > 1) {
+                die(json_encode(['status' => 0, 'msg' => '非法操作！']));
             }
-            if (time() - $order['add_time'] > 3600) {
-                return json(['status' => 0, 'msg' => '此订单在一个小时内不支付已作废，不能支付，请重新下单!']);
+            if (time() - $this->order['add_time'] > 3600) {
+                die(json_encode(['status' => 0, 'msg' => '此订单在一个小时内不支付已作废，不能支付，请重新下单!']));
             }
-            if ($order['pay_status'] == 1) {
-                return json(['status' => 0, 'msg' => '此订单，已完成支付!']);
+            if ($this->order['pay_status'] == 1) {
+                die(json_encode(['status' => 0, 'msg' => '此订单，已完成支付!']));
             }
         }
         if ((!empty($this->order) && $this->order['order_type'] == 2) || $orderType == 2) {
             // 海外购订单
             // 导入具体的支付类文件
-            include_once "plugins/payment/weixinApp_2/{$this->pay_code}.class.php";
+            include_once "plugins/payment/weixinApp_2/weixinApp.class.php";
             $code = '\\' . $this->pay_code;
             $this->payment = new $code();
         } else {
