@@ -426,7 +426,7 @@ class Tb extends Controller
 
     function save_stock($goods)
     {
-        $spec_goods_price = $goods['spec_goods_price'];
+        $spec_goods_price = !empty($goods['spec_goods_price']) ? $goods['spec_goods_price'] : '';
 
         //更新主商品库存
         M('goods')->where(array('goods_sn' => $goods['goods_sn']))->data(array('store_count' => $goods['stock']))->save();

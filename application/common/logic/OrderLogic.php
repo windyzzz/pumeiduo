@@ -1041,7 +1041,7 @@ class OrderLogic
             ->where($where)->field('og.*, sgp.item_id, g.commission, g.original_img, rg.status return_status, g.zone')->select();
         foreach ($orderGoods as $k => $goods) {
             $orderGoods[$k]['is_return'] = M('ReturnGoods')->where('rec_id', $goods['rec_id'])->find() ? 1 : 0;
-            $orderGoods[$k]['status_desc'] = C('REFUND_STATUS')[$goods['return_status']];
+            $orderGoods[$k]['status_desc'] = isset($goods['return_status']) ? C('REFUND_STATUS')[$goods['return_status']] : '';
         }
         return $orderGoods;
     }
