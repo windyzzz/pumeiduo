@@ -23,7 +23,7 @@ class weixinApp
         require_once 'example/WxPay.JsApiPay.php';
         require_once 'example/WxPay.AppPay.php';
 
-        $paymentPlugin = M('Plugin')->where(['code' => 'weixinApp', 'type' => 'payment'])->find(); // 找到微信支付插件的配置
+        $paymentPlugin = M('Plugin')->where(['code' => 'weixinApp_2', 'type' => 'payment'])->find(); // 找到微信支付插件的配置
         $config_value = unserialize($paymentPlugin['config_value']); // 配置反序列化
         $this->config_value = $config_value;
         WxPayConfig::$appid = $config_value['appid']; // * APPID：绑定支付的APPID（必须配置，开户邮件中可查看）
@@ -62,7 +62,7 @@ class weixinApp
         $input->SetTime_expire(date('YmdHis', time() + 600));
         $input->SetGoods_tag('tp_wx_app_pay');
         $input->SetTrade_type('APP');
-        $input->SetNotify_url(SITE_URL . '/index.php/Home/api.Pay/notifyUrl/pay_code/weixinApp');
+        $input->SetNotify_url(SITE_URL . '/index.php/Home/api.Pay/notifyUrl/pay_code/weixinApp/order_type/' . 2);
 //        $input->SetOpenid($openId);
 
         require_once 'lib/WxPay.Api.php';
