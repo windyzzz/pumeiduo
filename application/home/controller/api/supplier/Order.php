@@ -38,7 +38,7 @@ class Order
             }
             // 更新退换货信息
             M('return_goods')->where(['id' => $return['id']])->update($updateData);
-            return ['status' => 1, 'msg' => '更新成功'];
+            return ['status' => 1, 'msg' => '更新成功', 'data' => ['parent_sn' => $return['order_sn']]];
         } catch (Exception $e) {
             return ['status' => 0, 'msg' => $e->getMessage()];
         }
