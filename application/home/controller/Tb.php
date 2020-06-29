@@ -362,6 +362,8 @@ class Tb extends Controller
             'shipping_name' => $order['shipping_name'],
             'shipping_time' => $order['shipping_time'],
             'delivery_type' => $order['delivery_type'],
+            'pay_status' => $order['pay_status'],
+            'pay_time' => $order['pay_time'],
             'supplier_order_status' => $order['supplier_order_status'],
             'supplier_pay_status' => $order['supplier_pay_status'],
             'supplier_shipping_status' => $order['supplier_shipping_status'],

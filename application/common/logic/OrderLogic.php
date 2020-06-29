@@ -281,7 +281,7 @@ class OrderLogic
         TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
 
         // 供应链订单取消
-        if ($order['order_type'] == 3) {
+        if ($order['order_type'] == 3 && !empty($order['supplier_order_sn'])) {
             $cOrderSn = M('order')->where(['parent_id' => $order['order_id'], 'order_type' => 3])->value('order_sn');
             $res = (new OrderService())->cancelOrder($cOrderSn);
             if ($res['status'] == 0) {

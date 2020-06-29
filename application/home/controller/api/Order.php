@@ -2988,7 +2988,7 @@ class Order extends Base
             'RETURN' => 0,
         ];
         // 订单数据
-        $where = 'user_id = ' . $this->user_id . ' AND deleted != 1 AND prom_type < 5'; // 虚拟拼团订单不列出来
+        $where = 'parent_id = 0 AND user_id = ' . $this->user_id . ' AND deleted != 1 AND prom_type < 5'; // 虚拟拼团订单不列出来
         $orderData = M('order')->where($where)->field('order_id, pay_status, order_status, shipping_status, pay_code')->select();
         foreach ($orderData as $order) {
             if ($order['pay_status'] == 0 && $order['order_status'] == 0 && $order['pay_code'] != 'cod') {
