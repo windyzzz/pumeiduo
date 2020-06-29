@@ -140,7 +140,7 @@ function update_user_distribut($user_id, $order_id)
         }
         // 升级返还奖励
         if (tpCache('distribut.referee_get_electronic') > 0) {
-            accountLog($user_id, 0, 0, '购买318套组返消费币', 0, 0, '', tpCache('distribut.referee_get_electronic'), 14, false);
+            accountLog($user_id, 0, 0, '购买318套组返消费币', 0, $order_id, '', tpCache('distribut.referee_get_electronic'), 14, false);
         }
         // 更新缓存
         TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);

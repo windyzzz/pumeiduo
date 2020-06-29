@@ -1241,6 +1241,52 @@ class Order extends Base
             $this->ajaxReturn(['status' => 0, 'msg' => '该订单支付方式不支持在线退回', 'url' => '']);
             // $this->error('该订单支付方式不支持在线退回');
         }
+        if ($order['pay_status'] > 0) {
+
+            M('order')->where(['order_id' => $order['order_id']])->save(['pay_status' => 3, 'cancel_time' => time()]); //更改订单状态
+
+            // 追回等级
+            $update_info = M('distribut_log')->where('order_sn', $order['order_sn'])->where('type', 1)->find();
+            if ($update_info) {
+                $is_distribut = 0;
+                $level = $update_info['old_level'];
+                if ($level > 1) {
+                    $is_distribut = 1;
+                }
+                M('users')->where('user_id', $order['user_id'])->update([
+                    'distribut_level' => $level,
+                    'is_distribut' => $is_distribut,
+                ]);
+
+                logDistribut($order['order_sn'], $order['user_id'], $level, $update_info['new_level'], 2);
+
+                // 分销追回 (下级)
+                if (1 == $level) {
+                    M('rebate_log')->where('user_id', $order['user_id'])->update(['money' => 0, 'point' => 0, 'confirm_time' => time(), 'remark' => '取消订单，追回佣金']);
+                } elseif (2 == $level) {
+                    M('rebate_log')->where('user_id', $order['user_id'])->where('type', 1)->update(['money' => 0, 'point' => 0, 'confirm_time' => time(), 'remark' => '取消订单，追回佣金']);
+                }
+
+                // 推荐人奖励追回
+                $firstLeaderAccount = M('account_log')->where([
+                    'order_id' => $order['order_id'],
+                    'type' => 14
+                ])->select();
+                if (!empty($firstLeaderAccount)) {
+                    foreach ($firstLeaderAccount as $account) {
+                        if ($account['user_money'] > 0) {
+                            accountLog($account['user_id'], -$account['user_money'], 0, '推广318套组奖励金额追回', 0, $order['order_id'], '', 0, 14, false);
+                        }
+                        if ($account['pay_points']) {
+                            accountLog($account['user_id'], 0, -$account['pay_points'], '推广318套组奖励积分追回', 0, $order['order_id'], '', 0, 14, false);
+                        }
+                        if ($account['user_electronic'] > 0) {
+                            accountLog($account['user_id'], 0, 0, '购买318套组返消费币追回', 0, $order['order_id'], '', -$account['user_electronic'], 14, true);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**
