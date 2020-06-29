@@ -1674,8 +1674,6 @@ class GoodsLogic extends Model
     }
 
     /**
-     * <<<<<<< HEAD
-     * =======
      * 商品错误处理记录
      * @param $goodsId
      * @param $desc
@@ -1893,7 +1891,7 @@ class GoodsLogic extends Model
                     throw new TpshopException('获取供应链商品库存信息失败', 0, ['msg' => $res['msg']]);
                 }
                 $data = $res['data'][0];
-                $return['store_count'] = $data['store_count'];
+                $return['store_count'] = $data['store_count'] . '';
                 // 地区购买限制的库存和最低购买数量
                 $province = M('region2')->where(['id' => $userAddress['province']])->value('ml_region_id');
                 $city = M('region2')->where(['id' => $userAddress['city']])->value('ml_region_id');
@@ -1908,11 +1906,13 @@ class GoodsLogic extends Model
                 if ($res['status'] == 0) {
                     throw new TpshopException('获取供应链商品地区购买限制失败', 0, ['msg' => $res['msg']]);
                 }
-                $data = $res['data'][0];
-                $return['store_count'] = $data['goods_count'] <= 0 ? 0 : $data['goods_count'];
-                $return['buy_least'] = isset($data['buy_num']) ? $data['buy_num'] : 0;
-                $userAddress['out_range'] = isset($data['isAreaRestrict']) && $data['isAreaRestrict'] == true ? 1 : 0;
-                $return['store_count'] = isset($data['isNoStock']) && $data['isNoStock'] == true ? 0 : $return['store_count'];
+                if (!empty($res['data'])) {
+                    $data = $res['data'][0];
+                    $return['store_count'] = $data['goods_count'] <= 0 ? 0 : $data['goods_count'];
+                    $return['buy_least'] = isset($data['buy_num']) ? $data['buy_num'] : 0;
+                    $userAddress['out_range'] = isset($data['isAreaRestrict']) && $data['isAreaRestrict'] == true ? 1 : 0;
+                    $return['store_count'] = isset($data['isNoStock']) && $data['isNoStock'] == true ? 0 : $return['store_count'];
+                }
             }
             $return['user_address'] = $userAddress;
         } else {
