@@ -407,12 +407,12 @@ function get_rand_str($randLength = 6, $addtime = 1, $includenumber = 0)
  * CURL请求
  * @param string $url 请求url地址
  * @param string $method 请求方法 get post
- * @param null $postfields post数据数组
+ * @param array $fields 数据数组
  * @param array $headers 请求header信息
  * @param bool|false $debug 调试开启 默认false
  * @return mixed
  */
-function httpRequest($url, $method = "GET", $postfields = null, $headers = array(), $debug = false)
+function httpRequest($url, $method = "GET", $fields = [], $headers = array(), $debug = false)
 {
     $method = strtoupper($method);
     $ci = curl_init();
@@ -423,16 +423,21 @@ function httpRequest($url, $method = "GET", $postfields = null, $headers = array
     curl_setopt($ci, CURLOPT_TIMEOUT, 7); /* 设置cURL允许执行的最长秒数 */
     curl_setopt($ci, CURLOPT_RETURNTRANSFER, true);
     switch ($method) {
-        case "POST":
+        case 'POST':
             curl_setopt($ci, CURLOPT_POST, true);
-            if (!empty($postfields)) {
-                $tmpdatastr = is_array($postfields) ? http_build_query($postfields) : $postfields;
+            if (!empty($fields)) {
+                $tmpdatastr = is_array($fields) ? http_build_query($fields) : $fields;
                 curl_setopt($ci, CURLOPT_POSTFIELDS, $tmpdatastr);
             }
             break;
-        default:
-            curl_setopt($ci, CURLOPT_CUSTOMREQUEST, $method); /* //设置请求方式 */
+        case 'GET':
+            curl_setopt($ci, CURLOPT_CUSTOMREQUEST, $method);
+            if (!empty($fields)) {
+                $url .= stripos($url, '?') !== false ? '&' : '?' . http_build_query($fields);
+            }
             break;
+        default:
+            return false;
     }
     $ssl = preg_match('/^https:\/\//i', $url) ? TRUE : FALSE;
     curl_setopt($ci, CURLOPT_URL, $url);
@@ -451,7 +456,7 @@ function httpRequest($url, $method = "GET", $postfields = null, $headers = array
     $http_code = curl_getinfo($ci, CURLINFO_HTTP_CODE);
     if ($debug) {
         echo "=====post data======\r\n";
-        var_dump($postfields);
+        var_dump($fields);
         echo "=====info===== \r\n";
         print_r($requestinfo);
         echo "=====response=====\r\n";

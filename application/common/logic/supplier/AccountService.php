@@ -12,9 +12,9 @@ class AccountService extends Base
     public function storeMoney()
     {
         $data = [
-
+            'param' => '{}'
         ];
-        return $this->getData('/api_rechargeapi/queryStoreMoney', $data);
+        return $this->getData('/api_rechargeapi/queryStoreMoney', $data, 'GET');
     }
 
     /**
@@ -27,10 +27,12 @@ class AccountService extends Base
     public function rechargeLog($type, $page, $num = 20)
     {
         $data = [
-            'type' => $type,
-            'page' => $page,
-            'num' => $num
+            'param' => [
+                'type' => $type,
+                'page' => $page,
+                'num' => $num
+            ]
         ];
-        return $this->getData('/api_rechargeapi/queryRechargeLog', $data);
+        return $this->getData('/api_rechargeapi/queryRechargeLog', $data, 'GET');
     }
 }

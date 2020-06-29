@@ -31,13 +31,14 @@ class Base
      * 获取数据
      * @param $api
      * @param $data
+     * @param $method
      * @return array|mixed
      */
-    protected function getData($api, $data)
+    protected function getData($api, $data, $method = 'POST')
     {
         $data['sign'] = $this->makeSign($data);
         $data['appid'] = $this->appId;
-        $res = json_decode(httpRequest($this->url . $api, 'POST', $data), true);
+        $res = json_decode(httpRequest($this->url . $api, $method, $data), true);
         if (in_array($res['code'], ['200', '00001', '1'])) {
             if (is_array($res['data'])) {
                 $return = ['status' => 1, 'data' => $res['data']];
