@@ -3694,7 +3694,7 @@ class User extends Base
      */
     public function checkNote()
     {
-        $returnData = ['list' => []];
+        $noteList = [];
         /*
          * 用户是否有完成未领取的任务奖励
          */
@@ -3739,7 +3739,7 @@ class User extends Base
                 }
             }
             if (!empty($taskData)) {
-                $returnData['list'][] = [
+                $noteList[] = [
                     'type' => 1,
                     'is_note' => 1,
                     'note_data' => [
@@ -3748,7 +3748,7 @@ class User extends Base
                     ]
                 ];
             } else {
-                $returnData['list'][] = [
+                $noteList[] = [
                     'type' => 1,
                     'is_note' => 0,
                     'note_data' => [
@@ -3758,7 +3758,7 @@ class User extends Base
                 ];
             }
         } else {
-            $returnData['list'][] = [
+            $noteList[] = [
                 'type' => 1,
                 'is_note' => 0,
                 'note_data' => [
@@ -3770,27 +3770,55 @@ class User extends Base
         /*
          * 用户是否已经升级成为VIP
          */
-        $distributeLog = M('distribut_log')->where(['user_id' => $this->user_id, 'type' => 3, 'note_status' => 0])->field('id, upgrade_money')->find();
-        if (!empty($distributeLog)) {
-            $returnData['list'][] = [
-                'type' => 2,
-                'is_note' => 1,
-                'note_data' => [
-                    'id' => $distributeLog['id'],
-                    'title' => '消费满' . $distributeLog['upgrade_money'] . '元成功升级为VIP会员'
-                ]
-            ];
-        } else {
-            $returnData['list'][] = [
-                'type' => 2,
-                'is_note' => 0,
-                'note_data' => [
-                    'id' => '0',
-                    'title' => ''
-                ]
-            ];
+        $vip_buy_tips = trim(tpCache('distribut.vip_buy_tips'));
+        $referee_vip_tips = trim(tpCache('distribut.referee_vip_tips'));
+        if ($vip_buy_tips || $referee_vip_tips) {
+            $distributeLog = M('distribut_log')->where(['user_id' => $this->user_id, 'type' => ['IN', [1, 3]], 'note_status' => 0])->select();
+            if (!empty($distributeLog)) {
+                foreach ($distributeLog as $log) {
+                    switch ($log['type']) {
+                        case 1:
+                            // 购买VIP套组升级
+                            if (M('distribut_log')->where(['user_id' => $this->user_id, 'order_sn' => $log['order_sn'], 'type' => 2])->find() || !$referee_vip_tips) {
+                                continue;
+                            }
+                            $noteList[] = [
+                                'type' => 2,
+                                'is_note' => 1,
+                                'note_data' => [
+                                    'id' => $log['id'],
+                                    'title' => $referee_vip_tips
+                                ]
+                            ];
+                            break 2;
+                        case 3:
+                            // 累积消费升级
+                            if (!$vip_buy_tips) {
+                                continue;
+                            }
+                            $noteList[] = [
+                                'type' => 2,
+                                'is_note' => 1,
+                                'note_data' => [
+                                    'id' => $log['id'],
+                                    'title' => $vip_buy_tips
+                                ]
+                            ];
+                            break 2;
+                    }
+                }
+            } else {
+                $noteList[] = [
+                    'type' => 2,
+                    'is_note' => 0,
+                    'note_data' => [
+                        'id' => '0',
+                        'title' => ''
+                    ]
+                ];
+            }
         }
-        return json(['status' => 1, 'result' => $returnData]);
+        return json(['status' => 1, 'result' => ['list' => $noteList]]);
     }
 
     /**
@@ -3805,11 +3833,13 @@ class User extends Base
                 /*
                  * 用户升级成为VIP弹窗
                  */
-                M('distribut_log')->where(['user_id' => $this->user_id, 'type' => 3, 'note_status' => 0])->update(['note_status' => 1]);
+                M('distribut_log')->where(['user_id' => $this->user_id, 'type' => ['IN', [1, 3]], 'note_status' => 0])->update(['note_status' => 1]);
+                $return = ['status' => 1];
                 break;
             default:
-                return json(['status' => 0, 'msg' => '通知类型错误']);
+                $return = ['status' => 0, 'msg' => '通知类型错误'];
         }
+        return json($return);
     }
 
     /**
