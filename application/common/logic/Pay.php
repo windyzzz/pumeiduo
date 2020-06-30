@@ -253,7 +253,7 @@ class Pay
             'use_integral' => $payGoods['integral'],
             'spec_key' => $payGoods['spec_key'],
             'spec_key_name' => $payGoods['spec_key_name'],
-            'goods_pv' => $payGoods['goods_pv'],
+            'goods_pv' => isset($payGoods['goods_pv']) ? $payGoods['goods_pv'] : 0,
         ];
         if ($payGoods['goods']['is_supply'] == 0) {
             $this->order1Goods[$payGoods['goods_id'] . '_' . $payGoods['item_id']] = $goodsData;
