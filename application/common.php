@@ -1937,3 +1937,16 @@ function inviteLog($invite, $userId, $status, $time = null)
         'create_time' => $time ?? time()
     ]);
 }
+
+/**
+ * 供应链返回数据记录
+ * @param $content
+ * @param null $time
+ */
+function supplierReturnLog($content, $time = null)
+{
+    M('supplier_return_log')->add([
+        'content' => json_encode($content),
+        'add_time' => $time ?? NOW_TIME
+    ]);
+}

@@ -1130,6 +1130,7 @@ class Order extends Base
                     $afterSaleSn = $res['data'][0]['after_sale_sn'];
                     if (empty($afterSaleSn)) {
                         Db::rollback();
+                        supplierReturnLog($res);    // 供应链返回数据记录
                         $this->ajaxReturn(['status' => 0, 'msg' => '供应链售后单号缺失']);
                     }
                     M('return_goods')->where(['id' => $return_goods['id']])->update(['supplier_sale_sn' => $afterSaleSn]);
