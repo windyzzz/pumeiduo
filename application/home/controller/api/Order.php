@@ -1116,9 +1116,11 @@ class Order extends Base
             if (!$expressName || !$expressSn) {
                 return json(['status' => 0, 'msg' => '快递信息不能为空']);
             }
+            $expressTime = date('Y-m-d', NOW_TIME);
             $data['delivery'] = [
                 'express_name' => $expressName,
-                'express_sn' => $expressSn
+                'express_sn' => $expressSn,
+                'express_time' => $expressTime
             ];
             $data['delivery'] = serialize($data['delivery']);
             $data['status'] = 2;
@@ -1135,7 +1137,7 @@ class Order extends Base
                         'express_name' => $expressName,
                         'express_fee' => 0,
                         'express_sn' => $expressSn,
-                        'express_time' => NOW_TIME
+                        'express_time' => $expressTime
                     ];
                     $res = (new OrderService())->refundAddress($returnGoods['supplier_sale_sn'], $delivery);
                     if ($res['status'] == 0) {
@@ -1175,12 +1177,19 @@ class Order extends Base
             'return_contact' => tpCache('shop_info.contact'),
             'return_mobile' => tpCache('shop_info.mobile'),
         ];
-        $provinceName = Db::name('region2')->where(['id' => tpCache('shop_info.province')])->value('name');
-        $cityName = Db::name('region2')->where(['id' => tpCache('shop_info.city')])->value('name');
-        $districtName = Db::name('region2')->where(['id' => tpCache('shop_info.district')])->value('name');
-        $address = tpCache('shop_info.address');
-        $address = $provinceName . $cityName . $districtName . $address;
-        $return['return_address'] = $address;
+        if (!empty($returnGoods['supplier_receive_info'])) {
+            $supplierReceiveInfo = json_decode($returnGoods['supplier_receive_info'], true);
+            $return['return_contact'] = $supplierReceiveInfo['consignee'];
+            $return['return_mobile'] = $supplierReceiveInfo['mobile'];
+            $return['return_address'] = $supplierReceiveInfo['address'];
+        } else {
+            $provinceName = Db::name('region2')->where(['id' => tpCache('shop_info.province')])->value('name');
+            $cityName = Db::name('region2')->where(['id' => tpCache('shop_info.city')])->value('name');
+            $districtName = Db::name('region2')->where(['id' => tpCache('shop_info.district')])->value('name');
+            $address = tpCache('shop_info.address');
+            $address = $provinceName . $cityName . $districtName . $address;
+            $return['return_address'] = $address;
+        }
         $return['return_reason'] = $returnGoods['reason'];
         $return['describe'] = $returnGoods['describe'];
         $return['return_price'] = $returnGoods['refund_money'] != 0 ? $returnGoods['refund_money'] : $returnGoods['refund_electronic'];
