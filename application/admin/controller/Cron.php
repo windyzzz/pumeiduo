@@ -1497,4 +1497,21 @@ AND log_id NOT IN
             }
         }
     }
+
+    /**
+     * 更新促销活动状态
+     */
+    public function updatePromGoods()
+    {
+        $promGoods = M('prom_goods')->where(['is_open' => 1])->field('id, end_time')->select();
+        $promIds = [];
+        foreach ($promGoods as $prom) {
+            if ($prom['end_time'] > NOW_TIME) {
+                $promIds[] = $prom['id'];
+            }
+        }
+        if (!empty($promIds)) {
+            M('prom_goods')->where(['id' => ['IN', $promIds]])->update(['is_end' => 0]);
+        }
+    }
 }

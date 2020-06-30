@@ -19,10 +19,10 @@ class PromGoods extends Model
     {
         switch ($data['type']) {
             case 1:
-                $title = '优惠￥'.$data['expression'];
+                $title = '优惠￥' . $data['expression'];
                 break;
             case 2:
-                $title = '促销价￥'.$data['expression'];
+                $title = '促销价￥' . $data['expression'];
                 break;
             case 3:
                 $title = '买就送优惠券';
@@ -35,7 +35,7 @@ class PromGoods extends Model
                 break;
             default:
                 $discount = $data['expression'] / 10;
-                $title = $discount.'折';
+                $title = $discount . '折';
         }
 
         return $title;
@@ -54,7 +54,7 @@ class PromGoods extends Model
         if (1 == $data['is_end']) {
             return '已结束';
         }
-        if($data['is_open']==0){
+        if ($data['is_open'] == 0) {
             return '已暂停';
         }
         if ($data['start_time'] > time()) {
