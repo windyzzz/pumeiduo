@@ -333,18 +333,19 @@
 <script>
     //修改退款金额
     $(document).on('click', '.submitBtn', function () {
-        layer.confirm('确认操作？', {
+        var obj = $(this);
+        layer.confirm('确认操作', {
             btn: ['确定', '取消'] //按钮
         }, function () {
-            var subimtid = $(this).attr('subimtid');
-            var formUrl = $(this).data('href')
+            var subimtid = obj.attr('subimtid');
+            var formUrl = obj.data('href');
             submitForm(subimtid, formUrl);
         });
-    })
+    });
 
     //修改退款金额
     function sellerDelivery(obj) {
-        var formUrl = $(obj).data('href')
+        var formUrl = $(obj).data('href');
         if ($('#express_name').val() == '' || $('#express_sn').val() == '') {
             layer.alert('请填写完整物流信息', {icon: 2});
             return false;

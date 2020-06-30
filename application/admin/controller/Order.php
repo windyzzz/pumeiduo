@@ -1068,7 +1068,7 @@ class Order extends Base
                 break;
             default:
         }
-
+        Db::startTrans();
         if ($return_goods['type'] > 0 && 4 == $post_data['status']) {
             if ($return_goods['type'] < 2 && $order_goods['goods_pv'] == 0) {
                 // 换货成功直接解冻分成
@@ -1125,9 +1125,13 @@ class Order extends Base
                     $res = (new OrderService())->refundOrder($returnGoods);
                     if ($res['status'] == 0) {
                         Db::rollback();
-                        return ['status' => 0, 'msg' => $res['msg']];
+                        $this->ajaxReturn(['status' => 0, 'msg' => $res['msg'] . '(供应链)']);
                     }
                     $afterSaleSn = $res['data'][0]['after_sale_sn'];
+                    if (empty($afterSaleSn)) {
+                        Db::rollback();
+                        $this->ajaxReturn(['status' => 0, 'msg' => '供应链售后单号缺失']);
+                    }
                     M('return_goods')->where(['id' => $return_goods['id']])->update(['supplier_sale_sn' => $afterSaleSn]);
                 }
             }
@@ -1174,7 +1178,7 @@ class Order extends Base
                 ]);
             }
         }
-
+        Db::commit();
         $this->ajaxReturn(['status' => 1, 'msg' => '修改成功', 'url' => '']);
     }
 

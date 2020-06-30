@@ -91,6 +91,22 @@ class OrderService extends Base
     }
 
     /**
+     * 提交申请售后的发货信息
+     * @param $afterSaleSn
+     * @param $delivery
+     * @return array|mixed
+     */
+    public function refundAddress($afterSaleSn, $delivery)
+    {
+        $data = [
+            'after_sale_sn' => $afterSaleSn,
+            'status' => 2,
+            'delivery' => serialize($delivery)
+        ];
+        return $this->getData('/api/order/refundAddress', $data);
+    }
+
+    /**
      * 获取售后服务信息
      * @param $afterSaleSn
      * @return array|mixed

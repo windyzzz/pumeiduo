@@ -863,7 +863,7 @@ class Order extends Base
     {
         $type = I('type', -1);
         $recId = I('rec_id', '');
-        if ($a = Db::name('return_goods')->where(['rec_id' => $recId, 'user_id' => $this->user_id])->find()) {
+        if (Db::name('return_goods')->where(['rec_id' => $recId, 'user_id' => $this->user_id])->find()) {
             return json(['status' => 0, 'msg' => '该商品已申请了售后']);
         }
         // 订单商品信息
@@ -873,27 +873,27 @@ class Order extends Base
         if (empty($order)) {
             return json(['status' => 0, 'msg' => '非法操作']);
         }
-        switch ($order['order_type']) {
-            case 2:
-                // 海外购订单
-                return json(['status' => 0, 'msg' => '海外购商品收货后如有质量或破损问题申请退换货时，请联系总部客服进行处理']);
-            case 3:
-                // 供应链订单
-                $cOrder = M('order')->where(['order_id' => $orderGoods['order_id2']])->find();
-                if (empty($cOrder)) {
-                    return json(['status' => 0, 'msg' => '子订单信息不存在，请联系客服进行处理']);
-                }
-                if ($cOrder['order_type'] == 3 && $type == 0) {
-                    return json(['status' => 0, 'msg' => '抱歉，供应链商品不支持仅退款']);
-                }
-                break;
-        }
         $confirmTimeConfig = tpCache('shopping.auto_service_date');   // 后台设置多少天内可申请售后
         $confirmTime = $confirmTimeConfig * 24 * 60 * 60;
         if ((time() - $order['confirm_time']) > $confirmTime && !empty($order['confirm_time'])) {
             return json(['status' => 0, 'msg' => '已经超过' . $confirmTimeConfig . '天内退货时间']);
         }
         if ($this->request->isPost()) {
+            switch ($order['order_type']) {
+                case 2:
+                    // 海外购订单
+                    return json(['status' => 0, 'msg' => '海外购商品收货后如有质量或破损问题申请退换货时，请联系总部客服进行处理']);
+                case 3:
+                    // 供应链订单
+                    $cOrder = M('order')->where(['order_id' => $orderGoods['order_id2']])->find();
+                    if (empty($cOrder)) {
+                        return json(['status' => 0, 'msg' => '子订单信息不存在，请联系客服进行处理']);
+                    }
+                    if ($cOrder['order_type'] == 3 && $type == 0) {
+                        return json(['status' => 0, 'msg' => '抱歉，供应链商品不支持仅退款']);
+                    }
+                    break;
+            }
             // 申请售后
             $orderLogic = new OrderLogic();
             $res = $orderLogic->addReturnGoodsNew($recId, $type, $order, $orderGoods, I('post.'));
@@ -1101,7 +1101,8 @@ class Order extends Base
     public function return_goods_info_new()
     {
         $returnId = I('return_id', '');
-        $returnGoods = Db::name('return_goods')->where(['id' => $returnId])->find();
+        $returnGoods = Db::name('return_goods rg')->join('order_goods og', 'og.rec_id = rg.rec_id')
+            ->where(['rg.id' => $returnId])->field('rg.*, og.order_id2')->find();
         if (empty($returnGoods)) {
             return json(['status' => 0, 'msg' => '参数错误']);
         }
@@ -1109,6 +1110,7 @@ class Order extends Base
             if ($returnGoods['status'] == 2) {
                 return json(['status' => 0, 'msg' => '该退货单已提交了发货信息']);
             }
+            Db::startTrans();
             $expressName = I('express_name', '');
             $expressSn = I('express_sn', '');
             if (!$expressName || !$expressSn) {
@@ -1121,6 +1123,28 @@ class Order extends Base
             $data['delivery'] = serialize($data['delivery']);
             $data['status'] = 2;
             M('return_goods')->where(['id' => $returnId, 'user_id' => $this->user_id])->save($data);
+            if ($returnGoods['order_id2'] > 0) {
+                $cOrder = M('order')->where(['order_id' => $returnGoods['order_id2']])->field('order_type')->find();
+                if ($cOrder['order_type'] == 3) {
+                    // 提交供应链申请售后的发货信息
+                    if (empty($returnGoods['supplier_sale_sn'])) {
+                        Db::rollback();
+                        return json(['status' => 0, 'msg' => '缺少供应链售后单号']);
+                    }
+                    $delivery = [
+                        'express_name' => $expressName,
+                        'express_fee' => 0,
+                        'express_sn' => $expressSn,
+                        'express_time' => NOW_TIME
+                    ];
+                    $res = (new OrderService())->refundAddress($returnGoods['supplier_sale_sn'], $delivery);
+                    if ($res['status'] == 0) {
+                        Db::rollback();
+                        return json(['status' => 0, 'msg' => $res['msg'] . '(供应链)']);
+                    }
+                }
+            }
+            Db::commit();
             return json(['status' => 1, 'msg' => '发货提交成功']);
         }
         $orderLogic = new OrderLogic();
