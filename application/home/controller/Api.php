@@ -11,6 +11,7 @@
 
 namespace app\home\controller;
 
+use app\common\logic\supplier\OrderService;
 use app\common\logic\Token as TokenLogic;
 use app\common\logic\UsersLogic;
 use think\Cache;
@@ -506,5 +507,32 @@ class Api extends Base
             default:
                 return $data;
         }
+    }
+
+    /**
+     * 供应链物流信息
+     * @return \think\response\Json
+     */
+    public function supplierExpress()
+    {
+        $orderId = I('order_id');
+        $supplierGoodsId = I('supplier_goods_id');
+        $orderSn = M('order')->where(['order_id' => $orderId])->value('order_sn');
+        $express = (new OrderService())->getExpress($orderSn, $supplierGoodsId);
+        $returnData = [];
+        if ($express['status'] == 0) {
+            $returnData[] = [
+                'time' => date('Y-m-d H:i:s', time()),
+                'status' => '暂无物流信息'
+            ];
+        } else {
+            foreach ($express['data']['express_info'] as $item) {
+                $returnData[] = [
+                    'time' => $item['time'],
+                    'status' => $item['context'],
+                ];
+            }
+        }
+        return json(['status' => 1, 'result' => $returnData]);
     }
 }

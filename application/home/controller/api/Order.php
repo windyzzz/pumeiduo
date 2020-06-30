@@ -2570,8 +2570,9 @@ class Order extends Base
                             ]]);
                     }
                     // 物流消息
-                    $delivery = M('delivery_doc dd')
-                        ->field('dd.*')
+                    $delivery = M('delivery_doc dd')->join('order_goods og', 'og.rec_id = dd.rec_id')
+                        ->join('goods g', 'g.goods_id = og.goods_id')
+                        ->field('dd.*, dd.id doc_id, g.supplier_goods_id')
                         ->where($where)->order('id desc')->find();
                     switch ($order['order_type']) {
                         case 1:
@@ -2635,6 +2636,33 @@ class Order extends Base
                                 }
                             }
                             break;
+                        case 3:
+                            // 供应链
+                            if (!M('order')->where(['parent_id' => $orderId, 'order_type' => ['NEQ', 3]])->value('order_sn')) {
+                                $orderSn = M('order')->where(['parent_id' => $orderId, 'order_type' => 3])->value('order_sn');
+                            } else {
+                                $orderSn = $order['order_sn'];
+                            }
+                            $orderService = new OrderService();
+                            $express = $orderService->getExpress($orderSn, $delivery['supplier_goods_id']);
+                            if ($express['status'] == 0) {
+                                $express['result']['deliverystatus'] = 1;   // 正在派件
+                                $express['result']['list'][] = [
+                                    'time' => date('Y-m-d H:i:s', time()),
+                                    'status' => '暂无物流信息'
+                                ];
+                            } else {
+                                $express['result']['deliverystatus'] = 1;   // 正在派件
+                                foreach ($express['data']['express_info'] as $item) {
+                                    $express['result']['list'][] = [
+                                        'time' => $item['time'],
+                                        'status' => $item['context'],
+                                    ];
+                                }
+                            }
+                            $deliveryStatus = $express['result']['deliverystatus'];
+                            $deliveryStatusDesc = C('DELIVERY_STATUS')[$express['result']['deliverystatus']];
+                            break;
                         default:
                             return json(['status' => 0, 'msg' => '订单类型错误']);
                     }
@@ -2684,7 +2712,7 @@ class Order extends Base
                     }
                     $delivery = M('delivery_doc dd')->join('order_goods og', 'og.rec_id = dd.rec_id')
                         ->join('goods g', 'g.goods_id = og.goods_id')
-                        ->field('dd.*, dd.id doc_id, g.goods_id, g.original_img, g.supplier_goods_id')
+                        ->field('dd.*, dd.id doc_id, g.goods_id, g.original_img, g.supplier_goods_id, og.order_id2')
                         ->where($where)->select();
                     switch ($order['order_type']) {
                         case 1:
@@ -2778,7 +2806,6 @@ class Order extends Base
                             foreach ($delivery as $item) {
                                 if ($item['supplier_goods_id'] == 0) {
                                     $express = $apiController->queryExpress(['shipping_code' => $item['shipping_code'], 'queryNo' => $item['invoice_no']], 'array');
-
                                     if ($express['status'] != 0) {
                                         $express['result']['deliverystatus'] = 1;   // 正在派件
                                         $express['result']['list'][] = [
@@ -2788,8 +2815,8 @@ class Order extends Base
                                     }
                                 } else {
                                     // 供应链商品
-                                    continue;
-                                    $express = $orderService->getExpress($item['order_sn'], $item['supplier_goods_id']);
+                                    $orderSn = M('order')->where(['order_id' => $item['order_id2']])->value('order_sn');
+                                    $express = $orderService->getExpress($orderSn, $item['supplier_goods_id']);
                                     if ($express['status'] == 0) {
                                         $express['result']['deliverystatus'] = 1;   // 正在派件
                                         $express['result']['list'][] = [
@@ -2799,8 +2826,8 @@ class Order extends Base
                                     } else {
                                         $express['result']['deliverystatus'] = 1;   // 正在派件
                                         $express['result']['list'][] = [
-                                            'time' => $express['data']['express_info']['time'],
-                                            'status' => $express['data']['express_info']['context'],
+                                            'time' => $express['data']['express_info'][0]['time'],
+                                            'status' => $express['data']['express_info'][0]['context'],
                                         ];
                                     }
                                 }
@@ -2817,10 +2844,11 @@ class Order extends Base
                                     'original_img_new' => getFullPath($item['original_img']),
                                 ];
                             }
+                            break;
                     }
                     break;
                 default:
-                    return json(['status' => 0, 'msg' => '参数错误']);
+                    return json(['status' => 0, 'msg' => '订单类型错误']);
             }
         } elseif ($docId) {
             //--- 订单商品单独物流信息

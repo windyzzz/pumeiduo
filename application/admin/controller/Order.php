@@ -378,7 +378,8 @@ class Order extends Base
         $orderGoods = $order['orderGoods'];
 //        $orderGoodsNum = M('order_goods')->where(['order_id' => $order_id])->sum('goods_num');
         $express = Db::name('delivery_doc dd')->join('order_goods og', 'og.rec_id = dd.rec_id', 'LEFT')
-            ->where('dd.order_id', $order_id)->field('dd.*, og.goods_name, og.spec_key_name')->select();  //发货信息（可能多个）
+            ->join('goods g', 'g.goods_id = og.goods_id')
+            ->where('dd.order_id', $order_id)->field('dd.*, og.goods_name, og.spec_key_name, og.order_id2, g.supplier_goods_id')->select();  //发货信息（可能多个）
         $user = Db::name('users')->where(['user_id' => $order['user_id']])->find();
         $this->assign('order', $order);
         $this->assign('user', $user);

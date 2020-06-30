@@ -301,31 +301,59 @@
                         <script>
                             <foreach name="express" item="v">
                                 <if condition="in_array($v[htns_status], ['000', '120', '999'])">
-                                    $(function () {
-                                        var html = '';
-                                        var goods_name = "{$v['goods_name']}";
-                                        var spec_key_name = "{$v['spec_key_name']}";
-                                        var goods_num = "{$v['goods_num']}";
-                                        var shipping_code = "{$v['shipping_code']}";
-                                        var invoice_no = "{$v['invoice_no']}";
-                                        $.ajax({
-                                            type: "GET",
-                                            dataType: "json",
-                                            url: "/index.php?m=Home&c=Api&a=queryExpress&shipping_code=" + shipping_code + "&queryNo=" + invoice_no,//+tab,
-                                            success: function (data) {
-                                                html = '<tr style="background-color: lightgrey;"><td style="color: red;">商品：' + goods_name + ' ' + spec_key_name + '</td>' +
-                                                    '<td style="color: red; text-align: left;">发货数量：' + goods_num + '</td></tr>';
-                                                if (data.status == 0) {
-                                                    $.each(data.result.list, function (i, n) {
-                                                        html += '<tr><td class="text-center">' + n.time + '</td><td class="text-center">' + n.status + '</td></tr>'
-                                                    });
-                                                } else {
-                                                    html += "<tr><td class='text-center'>" + data.msg + "</td></tr>"
+                                    <if condition="$v[supplier_goods_id] == 0">
+                                        $(function () {
+                                            var html = '';
+                                            var goods_name = "{$v['goods_name']}";
+                                            var spec_key_name = "{$v['spec_key_name']}";
+                                            var goods_num = "{$v['goods_num']}";
+                                            var shipping_code = "{$v['shipping_code']}";
+                                            var invoice_no = "{$v['invoice_no']}";
+                                            $.ajax({
+                                                type: "GET",
+                                                dataType: "json",
+                                                url: "/index.php?m=Home&c=Api&a=queryExpress&shipping_code=" + shipping_code + "&queryNo=" + invoice_no,//+tab,
+                                                success: function (data) {
+                                                    html = '<tr style="background-color: lightgrey;"><td style="color: red;">商品：' + goods_name + ' ' + spec_key_name + '</td>' +
+                                                        '<td style="color: red; text-align: left;">发货数量：' + goods_num + '</td></tr>';
+                                                    if (data.status == 0) {
+                                                        $.each(data.result.list, function (i, n) {
+                                                            html += '<tr><td class="text-center">' + n.time + '</td><td class="text-center">' + n.status + '</td></tr>'
+                                                        });
+                                                    } else {
+                                                        html += "<tr><td class='text-center'>" + data.msg + "</td></tr>"
+                                                    }
+                                                    $("#express_info").append(html);
                                                 }
-                                                $("#express_info").append(html);
-                                            }
-                                        });
-                                    })
+                                            });
+                                        })
+                                    <else/>
+                                        $(function () {
+                                            var html = '';
+                                            var goods_name = "{$v['goods_name']}";
+                                            var spec_key_name = "{$v['spec_key_name']}";
+                                            var goods_num = "{$v['goods_num']}";
+                                            var order_id = "{$v['order_id2']}";
+                                            var supplier_goods_id = "{$v['supplier_goods_id']}";
+                                            $.ajax({
+                                                type: "GET",
+                                                dataType: "json",
+                                                url: "/index.php?m=Home&c=Api&a=supplierExpress&order_id=" + order_id + "&supplier_goods_id=" + supplier_goods_id,//+tab,
+                                                success: function (data) {
+                                                    html = '<tr style="background-color: lightgrey;"><td style="color: red;">商品：' + goods_name + ' ' + spec_key_name + '</td>' +
+                                                        '<td style="color: red; text-align: left;">发货数量：' + goods_num + '</td></tr>';
+                                                    if (data.status == 1) {
+                                                        $.each(data.result, function (i, n) {
+                                                            html += '<tr><td class="text-center">' + n.time + '</td><td class="text-center">' + n.status + '</td></tr>'
+                                                        });
+                                                    } else {
+                                                        html += "<tr><td class='text-center'>" + data.msg + "</td></tr>"
+                                                    }
+                                                    $("#express_info").append(html);
+                                                }
+                                            });
+                                        })
+                                    </if>
                                 <else/>
                                     $(function () {
                                         $("#express_info").append('<tr><td colspan="2">暂无信息</td></tr>');
