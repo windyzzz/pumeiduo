@@ -3797,7 +3797,7 @@ class User extends Base
                                 continue;
                             }
                             $noteList[] = [
-                                'type' => 2,
+                                'type' => 3,
                                 'is_note' => 1,
                                 'note_data' => [
                                     'id' => $log['id'],
@@ -3829,11 +3829,18 @@ class User extends Base
     {
         $type = I('type', 2);
         switch ($type) {
-            case '2':
+            case 2:
                 /*
                  * 用户升级成为VIP弹窗
                  */
-                M('distribut_log')->where(['user_id' => $this->user_id, 'type' => ['IN', [1, 3]], 'note_status' => 0])->update(['note_status' => 1]);
+                M('distribut_log')->where(['user_id' => $this->user_id, 'type' => 1, 'note_status' => 0])->update(['note_status' => 1]);
+                $return = ['status' => 1];
+                break;
+            case 3:
+                /*
+                 * 用户升级成为VIP弹窗
+                 */
+                M('distribut_log')->where(['user_id' => $this->user_id, 'type' => 3, 'note_status' => 0])->update(['note_status' => 1]);
                 $return = ['status' => 1];
                 break;
             default:
