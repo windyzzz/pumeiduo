@@ -343,13 +343,17 @@ class Task extends Base
                     // 所有未使用的记录
                     $taskLog = M('task_log')->where(['task_id' => $taskId, 'status' => 1, 'type' => 1, 'finished_at' => 0])->select();
                     // 更新用户记录
+                    $logIds = [];
                     foreach ($taskLog as $log) {
                         $payPoints = $log['reward_integral'] != 0 ? -$log['reward_integral'] : 0;
                         $userElectronic = $log['reward_electronic'] != 0 ? -$log['reward_electronic'] : 0;
-                        accountLog($log['user_id'], 0, $payPoints, '登录奖励重置', 0, 0, 0, $userElectronic, 18, false, 4);
+                        $res = accountLog($log['user_id'], 0, $payPoints, '登录奖励使用过期', 0, 0, 0, $userElectronic, 18, false, 4);
+                        if ($res) {
+                            $logIds[] = $log['id'];
+                        }
                     }
                     // 更新记录（未使用）
-                    M('task_log')->where(['task_id' => $taskId, 'status' => 1, 'type' => 1, 'finished_at' => 0])->update([
+                    M('task_log')->where(['id' => ['IN', $logIds]])->update([
                         'status' => -1
                     ]);
                     // 更新记录（已使用）
