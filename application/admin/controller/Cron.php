@@ -1301,15 +1301,19 @@ AND log_id NOT IN
         if (time() >= $task['use_end_time']) {
             Db::startTrans();
             // 所有未使用的记录
-            $taskLog = M('task_log')->where(['task_id' => 4, 'status' => 1, 'type' => 1, 'finished_at' => 0])->select();
+            $taskLog = M('task_log')->where(['task_id' => 4, 'status' => 1, 'type' => 1, 'finished_at' => 0])->limit(200)->order('id DESC')->select();
             // 更新用户记录
+            $logIds = [];
             foreach ($taskLog as $log) {
                 $payPoints = $log['reward_integral'] != 0 ? -$log['reward_integral'] : 0;
                 $userElectronic = $log['reward_electronic'] != 0 ? -$log['reward_electronic'] : 0;
-                accountLog($log['user_id'], 0, $payPoints, '登录奖励使用过期', 0, 0, 0, $userElectronic, 18, false, 4);
+                $res = accountLog($log['user_id'], 0, $payPoints, '登录奖励使用过期', 0, 0, 0, $userElectronic, 18, false, 4);
+                if ($res) {
+                    $logIds[] = $log['id'];
+                }
             }
-            // 更新记录
-            M('task_log')->where(['task_id' => 4, 'status' => 1, 'type' => 1, 'finished_at' => 0])->update([
+            // 更新记录（未使用）
+            M('task_log')->where(['id' => ['IN', $logIds]])->update([
                 'status' => -1
             ]);
             Db::commit();
@@ -1496,6 +1500,23 @@ AND log_id NOT IN
                     logDistribut('', $userId, $update['distribut_level'], $userOldLevel, 3, $vipBuyMoney);
                 }
             }
+        }
+    }
+
+    /**
+     * 更新促销活动状态
+     */
+    public function updatePromGoods()
+    {
+        $promGoods = M('prom_goods')->where(['is_open' => 1])->field('id, end_time')->select();
+        $promIds = [];
+        foreach ($promGoods as $prom) {
+            if ($prom['end_time'] > NOW_TIME) {
+                $promIds[] = $prom['id'];
+            }
+        }
+        if (!empty($promIds)) {
+            M('prom_goods')->where(['id' => ['IN', $promIds]])->update(['is_end' => 0]);
         }
     }
 

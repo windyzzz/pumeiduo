@@ -1217,7 +1217,7 @@ class UsersLogic extends Model
             foreach ($goods_list as $k => $v) {
                 $goods_list[$k]['original_img_new'] = getFullPath($v['original_img']);
                 $goods_list[$k]['is_return'] = M('ReturnGoods')->where('rec_id', $v['rec_id'])->find() ? 1 : 0;
-                $goods_list[$k]['status_desc'] = C('REFUND_STATUS')[$v['status']];
+                $goods_list[$k]['status_desc'] = isset($v['status']) ? C('REFUND_STATUS')[$v['status']] : '';
             }
         }
 

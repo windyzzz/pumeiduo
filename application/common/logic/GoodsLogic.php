@@ -1164,6 +1164,7 @@ class GoodsLogic extends Model
                         }
                         $v['shop_price'] = $value['price'];
                         $goodsList[$k]['shop_price'] = $value['price'];
+                        $goodsList[$k]['tags'][0]['type'] = 'activity';
                         $goodsList[$k]['tags'][0]['title'] = '团购';
                         break;
                     }
@@ -1177,6 +1178,7 @@ class GoodsLogic extends Model
                         }
                         $v['shop_price'] = $value['price'];
                         $goodsList[$k]['shop_price'] = $value['price'];
+                        $goodsList[$k]['tags'][0]['type'] = 'activity';
                         $goodsList[$k]['tags'][0]['title'] = '秒杀';
                         break;
                     }

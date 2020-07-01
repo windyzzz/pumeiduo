@@ -335,11 +335,8 @@ class Promotion extends Base
         $this->assign('level', $level);
         $prom_id = I('id');
         $info = M('prom_goods')->where(array('id' => $prom_id))->find();
-
         if ($prom_id > 0) {
-
             $GoodsTao = M('GoodsTaoGrade')->where(array('promo_id' => $prom_id))->select();
-
             foreach ($GoodsTao as $k => $v) {
                 $prom_goods[$k] = M('Goods')->where('goods_id=' . $v['goods_id'])->find();
                 $prom_goods[$k]['stock'] = $v['stock'];
@@ -348,18 +345,15 @@ class Promotion extends Base
                 }
             }
             $this->assign('prom_goods', $prom_goods);
-            $info['start_time'] = date('Y-m-d', $info['start_time']);
-            $info['end_time'] = date('Y-m-d', $info['end_time']);
+            $info['start_time'] = date('Y-m-d H:i:s', $info['start_time']);
+            $info['end_time'] = date('Y-m-d H:i:s', $info['end_time']);
             $info['group'] = array_filter(explode(',', $info['group']));
         } else {
-            $info['start_time'] = date('Y-m-d');
-            $info['end_time'] = date('Y-m-d', time() + 3600 * 60 * 24);
+            $info['start_time'] = date('Y-m-d H:i:s');
+            $info['end_time'] = date('Y-m-d H:i:s', time() + 3600 * 60 * 24);
             $info['group'] = array();
         }
-
         $coupon_list = M('coupon')->where(['type' => 0, 'status' => 1, 'use_start_time' => ['lt', time()], 'use_end_time' => ['gt', time()]])->select();
-
-
         $this->assign('coupon_list', $coupon_list);
         $this->assign('info', $info);
         $this->assign('min_date', date('Y-m-d'));

@@ -2656,6 +2656,7 @@ class Goods extends Base
             if (!empty($groupBuy)) {
                 foreach ($groupBuy as $value) {
                     if ($v['goods_id'] == $value['goods_id']) {
+                        $goodsList[$k]['tags'][0]['type'] = 'activity';
                         $lookSee[$k]['tags'][0]['title'] = '团购';
                         break;
                     }
@@ -2664,6 +2665,7 @@ class Goods extends Base
             if (!empty($flashSale)) {
                 foreach ($flashSale as $value) {
                     if ($v['goods_id'] == $value['goods_id']) {
+                        $goodsList[$k]['tags'][0]['type'] = 'activity';
                         $lookSee[$k]['tags'][0]['title'] = '秒杀';
                         break;
                     }
