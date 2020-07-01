@@ -35,6 +35,15 @@
         <div class="ncap-form-default">
             <dl class="row">
                 <dt class="tit">
+                    <label>重置任务</label>
+                </dt>
+                <dd class="opt">
+                    <div title="重置任务"><i class="fa fa-refresh" style="cursor: pointer;"></i></div>
+                    <p class="notic">重置会清空目前该任务的完成情况</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
                     <label><em>*</em>任务标题</label>
                 </dt>
                 <dd class="opt">
@@ -358,6 +367,37 @@
         $("#img_i").attr('onmouseover', "layer.tips('<img src="+fileurl_tmp+">',this,{tips: [1, '#fff']});");
     }
 
+    $('.fa-refresh').click(function () {
+        layer.confirm('确认重置任务？重置后需要手动启动任务', {btn: ['确定', '取消']}, function () {
+            $.ajax({
+                type: "POST",
+                url: "{:U('Task/reset_reward')}",
+                data: {'task_id': 2},
+                dataType: "json",
+                error: function () {
+                    layer.alert("服务器繁忙, 请联系管理员!");
+                },
+                success: function (data) {
+                    if (data.status == 1) {
+                        layer.msg(data.msg, {
+                            icon: 1,
+                            time: 3000
+                        }, function () {
+                            location.reload();
+                        });
+                    } else {
+                        layer.msg(data.msg, {icon: 2, time: 1000});
+                        $.each(data.result, function (index, item) {
+                            $('#err_' + index).text(item).show();
+                        });
+                    }
+                }
+            });
+        }, function (index) {
+            layer.close(index);
+            return false;// 取消
+        });
+    });
 </script>
 </body>
 </html>

@@ -197,10 +197,13 @@ class Task extends Base
         $task_reward_desc ? $condition['task_reward_desc'] = trim($task_reward_desc) : false;
 
         if ($begin && $end) {
-            $condition['created_at'] = ['between', "$begin,$end"];
+            $condition['created_at'] = ['between', [$begin, $end]];
         }
 
         I('task_id') ? $condition['task_id'] = I('task_id') : false;
+        if (empty($condition['task_id'])) {
+            $condition['task_id'] = ['IN', [2, 3]];
+        }
         ('' !== I('status')) ? $condition['status'] = I('status') : false;
 
         $order_sn = ($keyType && 'order_sn' == $keyType) ? $keywords : I('order_sn', '', 'trim');
@@ -212,8 +215,7 @@ class Task extends Base
 
         $TaskLog = new \app\common\model\TaskLog();
 
-        $count = $TaskLog->where($condition)->where('task_id', 'in', [2, 3])->count();
-
+        $count = $TaskLog->where($condition)->count();
         $Page = new AjaxPage($count, 20);
         $show = $Page->show();
 
@@ -221,7 +223,6 @@ class Task extends Base
         $task_log = $TaskLog
             ->field('*,FROM_UNIXTIME(created_at,"%Y-%m-%d %H:%i:%s") as created_at,FROM_UNIXTIME(finished_at,"%Y-%m-%d %H:%i:%s") as finished_at')
             ->where($condition)
-            ->where('task_id', 'in', [2, 3])
             ->with(['user_task'])
             ->limit($Page->firstRow, $Page->listRows)
             ->order('id desc')
@@ -325,29 +326,45 @@ class Task extends Base
         $taskId = I('task_id', '');
         Db::startTrans();
         try {
-            // 所有未使用的记录
-            $taskLog = M('task_log')->where(['task_id' => $taskId, 'status' => 1, 'type' => 1, 'finished_at' => 0])->select();
-            // 更新用户记录
-            foreach ($taskLog as $log) {
-                $payPoints = $log['reward_integral'] != 0 ? -$log['reward_integral'] : 0;
-                $userElectronic = $log['reward_electronic'] != 0 ? -$log['reward_electronic'] : 0;
-                accountLog($log['user_id'], 0, $payPoints, '登录奖励重置', 0, 0, 0, $userElectronic, 18, false, 4);
+            switch ($taskId) {
+                case 2:
+                case 3:
+                    // 更新记录
+                    M('user_task')->where(['task_id' => $taskId, 'status' => 0])->update([
+                        'status' => -2
+                    ]);
+                    M('task_log')->where(['task_id' => $taskId, 'status' => 0, 'type' => 1])->update([
+                        'status' => -2
+                    ]);
+                    // 关闭任务
+                    M('task')->where(['id' => $taskId])->update(['is_open' => 0]);
+                    break;
+                case 4:
+                    // 所有未使用的记录
+                    $taskLog = M('task_log')->where(['task_id' => $taskId, 'status' => 1, 'type' => 1, 'finished_at' => 0])->select();
+                    // 更新用户记录
+                    foreach ($taskLog as $log) {
+                        $payPoints = $log['reward_integral'] != 0 ? -$log['reward_integral'] : 0;
+                        $userElectronic = $log['reward_electronic'] != 0 ? -$log['reward_electronic'] : 0;
+                        accountLog($log['user_id'], 0, $payPoints, '登录奖励重置', 0, 0, 0, $userElectronic, 18, false, 4);
+                    }
+                    // 更新记录（未使用）
+                    M('task_log')->where(['task_id' => $taskId, 'status' => 1, 'type' => 1, 'finished_at' => 0])->update([
+                        'status' => -1
+                    ]);
+                    // 更新记录（已使用）
+                    M('task_log')->where(['task_id' => $taskId, 'status' => 1, 'type' => 1, 'finished_at' => ['NEQ', 0]])->update([
+                        'status' => -2
+                    ]);
+                    // 更新任务奖励
+                    M('task_reward')->where(['task_id' => $taskId])->update([
+                        'buy_num' => 0,
+                        'order_num' => 0,
+                    ]);
+                    // 关闭任务
+                    M('task')->where(['id' => $taskId])->update(['is_open' => 0]);
             }
-            // 更新记录（未使用）
-            M('task_log')->where(['task_id' => $taskId, 'status' => 1, 'type' => 1, 'finished_at' => 0])->update([
-                'status' => -1
-            ]);
-            // 更新记录（已使用）
-            M('task_log')->where(['task_id' => $taskId, 'status' => 1, 'type' => 1, 'finished_at' => ['NEQ', 0]])->update([
-                'status' => -2
-            ]);
-            // 更新任务奖励
-            M('task_reward')->where(['task_id' => $taskId])->update([
-                'buy_num' => 0,
-                'order_num' => 0,
-            ]);
-            // 关闭任务
-            M('task')->where(['id' => $taskId])->update(['is_open' => 0]);
+            adminLog('管理员重置了任务' . $taskId);
             Db::commit();
             $this->ajaxReturn(['status' => 1, 'msg' => '重置成功']);
         } catch (Exception $e) {
