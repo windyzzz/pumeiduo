@@ -330,10 +330,10 @@ class Task extends Base
                 case 2:
                 case 3:
                     // 更新记录
-                    M('user_task')->where(['task_id' => $taskId, 'status' => 0])->update([
+                    M('user_task')->where(['task_id' => $taskId])->update([
                         'status' => -2
                     ]);
-                    M('task_log')->where(['task_id' => $taskId, 'status' => 0, 'type' => 1])->update([
+                    M('task_log')->where(['task_id' => $taskId, 'type' => 1])->update([
                         'status' => -2
                     ]);
                     // 关闭任务
