@@ -306,6 +306,12 @@
                         <a href="JavaScript:;" subimtid="seller_delivery" data-href="{:U('Admin/Order/checkReturniInfo')}" class="ncap-btn-big ncap-btn-green submitBtn" >确定收货</a>
                     </div>
                 </if>
+                <if condition="$return_goods['status'] EQ 6 && !empty($return_goods['supplier_sale_sn']) && $return_goods['supplier_sale_status'] == 0">
+                    <div class="bot">
+                        <input type="hidden" name="return_id" value="{$id}">
+                        <a href="JavaScript:;" subimtid="seller_delivery" data-href="{:U('Admin/Order/cancelSupplierReturn')}" class="ncap-btn-big ncap-btn-green submitBtn" >取消供应链售后</a>
+                    </div>
+                </if>
             </form>
             <if condition="isset($supplier_delivery)">
                 <dl class="row">

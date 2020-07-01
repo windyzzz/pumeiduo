@@ -2270,4 +2270,36 @@ class Order extends Base
         Db::commit();
         $this->ajaxReturn(['status' => 1, 'msg' => '批量确认订单成功']);
     }
+
+    /**
+     * 取消供应链售后
+     */
+    public function cancelSupplierReturn()
+    {
+        $returnId = I('return_id');
+        $return = M('return_goods rg')->join('order_goods og', 'og.rec_id = rg.rec_id')
+            ->join('order o', 'o.order_id = og.order_id2')
+            ->where(['rg.id' => $returnId])
+            ->field('o.order_sn, og.supplier_goods_id, og.spec_key, rg.supplier_sale_sn')
+            ->find();
+        if (empty($return)) {
+            $this->ajaxReturn(['status' => 0, 'msg' => '退换货信息不存在']);
+        }
+        $afterSaleSn = $return['supplier_sale_sn'];
+        if (empty($afterSaleSn)) {
+            $this->ajaxReturn(['status' => 0, 'msg' => '供应链售后单不存在']);
+        }
+        $returnGoods = [
+            'order_sn' => $return['order_sn'],
+            'goods_id' => $return['supplier_goods_id'],
+            'spec_key' => $return['spec_key'],
+            'status' => -2
+        ];
+        $res = (new OrderService())->closeRefundOrder($returnGoods, $afterSaleSn);
+        if ($res['status'] == 0) {
+            $this->ajaxReturn(['status' => 0, 'msg' => $res['msg']]);
+        }
+        M('return_goods')->where(['id' => $returnId])->update(['supplier_sale_status' => -2]);
+        $this->ajaxReturn(['status' => 1, 'msg' => '供应链取消成功']);
+    }
 }
