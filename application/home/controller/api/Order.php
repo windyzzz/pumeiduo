@@ -1252,6 +1252,10 @@ class Order extends Base
                         $returnTitle = '商家正在审核中……';
                         $returnDesc = '审核时间还剩下 ' . differTimeStr($return['verify_time'], time());
                         break;
+                    case 1:
+                        $returnTitle = '商家审核通过';
+                        $returnDesc = '请按寄回地址将商品寄回';
+                        break;
                     case 2:
                         $returnTitle = '买家已退货，等待商家退款';
                         $returnDesc = '退款时间还剩下 ' . differTimeStr($return['verify_time'], time());
@@ -1286,6 +1290,10 @@ class Order extends Base
                     case 0:
                         $returnTitle = '商家正在审核中……';
                         $returnDesc = '审核时间还剩下 ' . differTimeStr($return['verify_time'], time());
+                        break;
+                    case 1:
+                        $returnTitle = '商家审核通过';
+                        $returnDesc = '请按寄回地址将商品寄回';
                         break;
                     case 2:
                         $returnTitle = '买家已退货，等待商家换货';

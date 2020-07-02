@@ -1098,8 +1098,6 @@ class Order extends Base
             }
         }
         $note = "退换货:{$type_msg[$return_goods['type']]}, 状态:{$status_msg[$post_data['status']]},处理备注：{$post_data['remark']}";
-        // 更新退换货记录
-        M('return_goods')->where(['id' => $post_data['id']])->save($post_data);
 
         if (1 == $post_data['status']) {
             //审核通过才更改订单商品状态，进行退货，退款时要改对应商品修改库存
@@ -1127,7 +1125,7 @@ class Order extends Base
                         Db::rollback();
                         $this->ajaxReturn(['status' => 0, 'msg' => $res['msg'] . '(供应链)']);
                     }
-                    $afterSaleSn = $res['data'][0]['after_sale_sn'];
+                    $afterSaleSn = $res['data']['after_sale_sn'];
                     if (empty($afterSaleSn)) {
                         Db::rollback();
                         supplierReturnLog($res);    // 供应链返回数据记录
@@ -1155,6 +1153,9 @@ class Order extends Base
                 }
             }
         }
+        // 更新退换货记录
+        M('return_goods')->where(['id' => $post_data['id']])->save($post_data);
+        // 订单操作记录
         $orderLogic->orderActionLog($return_goods['order_id'], '退换货', $note);
 
         //仅退款-审核通过 和 退货退款确认收货
@@ -1867,7 +1868,7 @@ class Order extends Base
         $order_by = I('order_by') ? I('order_by') : 'addtime';
         $sort_order = I('sort_order') ? I('sort_order') : 'desc';
         $status = I('status');
-        $where = [];
+        $where = ['o.parent_id' => 0];
         if ($order_sn) {
             $where['order_sn'] = ['like', '%' . $order_sn . '%'];
         }
