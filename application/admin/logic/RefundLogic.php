@@ -30,9 +30,9 @@ class RefundLogic extends Model
             accountLog($return_goods['user_id'], 0, $return_goods['refund_integral'], '用户申请商品退款', 0, $return_goods['order_id'], $return_goods['order_sn'], $return_goods['refund_electronic'], 19);
         }
         //在线支付金额退到余额去
-        if (1 == $refund_type && $return_goods['refund_money'] > 0) {
-            accountLog($return_goods['user_id'], $return_goods['refund_money'], 0, '用户申请商品退款', 0, $return_goods['order_id'], $return_goods['order_sn'], 0, 19);
-        }
+//        if (1 == $refund_type && $return_goods['refund_money'] > 0) {
+//            accountLog($return_goods['user_id'], $return_goods['refund_money'], 0, '用户申请商品退款', 0, $return_goods['order_id'], $return_goods['order_sn'], 0, 19);
+//        }
         M('return_goods')->where(['rec_id' => $rec_id])->save($updata); //更新退款申请状态
         M('order_goods')->where(['rec_id' => $rec_id])->save(['is_send' => 3]); //修改订单商品状态
 //        if (1 == $return_goods['is_receive']) {
