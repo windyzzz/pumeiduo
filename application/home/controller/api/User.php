@@ -3044,7 +3044,7 @@ class User extends Base
                 ];
                 // 查看用户任务记录
                 $userTask = M('user_task')
-                    ->where(['user_id' => $this->user_id, 'task_id' => $task['id'], 'task_reward_id' => $reward['reward_id']])
+                    ->where(['user_id' => $this->user_id, 'task_id' => $task['id'], 'task_reward_id' => $reward['reward_id'], 'status' => ['NEQ', -2]])
                     ->field('id, target_num, finish_num')->order('created_at desc')->find();
                 if (!empty($userTask)) {
                     // 查看用户任务记录领取情况
