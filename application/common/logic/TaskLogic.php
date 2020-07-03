@@ -107,12 +107,12 @@ class TaskLogic
             $this->setUser($user);
 
             $first_leader = $this->user['first_leader'];
-            $second_leader = $this->user['second_leader'];
-            $third_leader = $this->user['third_leader'];
+//            $second_leader = $this->user['second_leader'];
+//            $third_leader = $this->user['third_leader'];
 
             $this->getRewardSell($first_leader);
-            $this->getRewardSell($second_leader);
-            $this->getRewardSell($third_leader);
+//            $this->getRewardSell($second_leader);
+//            $this->getRewardSell($third_leader);
         }
     }
 
