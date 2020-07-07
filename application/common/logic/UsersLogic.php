@@ -38,14 +38,14 @@ class UsersLogic extends Model
         $this->user_id = $user_id;
     }
 
-    private function _hasRelationship($currentUid, $bindUid)
+    private function _hasRelationship($bindUid, $currentUid)
     {
-        $invite_uid = M('Users')->where('user_id', $bindUid)->getField('invite_uid');
+        $invite_uid = M('Users')->where('user_id', $bindUid)->getField('first_leader');
         if ($invite_uid > 0) {
             if ($invite_uid == $currentUid) {
                 return true;
             }
-//            return $this->_hasRelationship($invite_uid);
+            return $this->_hasRelationship($invite_uid, $currentUid);
         }
         return false;
     }
@@ -2974,7 +2974,7 @@ class UsersLogic extends Model
         if ($currentUser['user_id'] == $bindUser['user_id']) {
             return ['status' => -1, 'msg' => '不能绑定自己'];
         }
-        if ($this->_hasRelationship($currentUser['user_id'], $bindUser['user_id'])) {
+        if ($this->_hasRelationship($bindUser['user_id'], $currentUser['user_id'])) {
             return ['status' => 0, 'msg' => '不能绑定有关系的普通会员'];
         }
         if ($bindUser['user_name'] != '') {

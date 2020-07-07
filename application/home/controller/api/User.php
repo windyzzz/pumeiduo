@@ -670,13 +670,13 @@ class User extends Base
 
     private function _hasRelationship($id)
     {
-        $invite_uid = M('Users')->where('user_id', $id)->getField('invite_uid');
+        $invite_uid = M('Users')->where('user_id', $id)->getField('first_leader');
 
         if ($invite_uid > 0) {
             if ($invite_uid == $this->user_id) {
                 return true;
             }
-//            return $this->_hasRelationship($invite_uid);
+            return $this->_hasRelationship($invite_uid);
         }
 
         return false;
