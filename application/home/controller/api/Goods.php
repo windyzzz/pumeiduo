@@ -909,6 +909,21 @@ class Goods extends Base
                             unset($couponList[$k]);
                             continue;
                         }
+                        $userCoupon = Db::name('coupon_list')->where(['cid' => $coupon['coupon_id'], 'uid' => $this->user_id])->find();
+                        if ($userCoupon) {
+                            if ($userCoupon['status'] == 1 || $userCoupon['status'] == 2) {
+                                // 已使用 或 已过期
+                                unset($couponList[$k]);
+                            } else {
+                                $couponList[$k]['is_received'] = 1;
+                            }
+                        } else {
+                            $couponList[$k]['is_received'] = 0;
+                        }
+                    }
+                } else {
+                    foreach ($couponList as $k => $coupon) {
+                        $couponList[$k]['is_received'] = 0;
                     }
                 }
             }
