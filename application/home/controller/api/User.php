@@ -1123,7 +1123,7 @@ class User extends Base
             $logic = new UsersLogic();
             if (1 == $step) {
                 $res = $logic->check_validate_code($code, $old_mobile, 'phone', $session_id, $scene);
-                if (!$res && 1 != $res['status']) {
+                if (!$res || 1 != $res['status']) {
                     return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
                 }
 
@@ -1138,7 +1138,7 @@ class User extends Base
                 return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
             } elseif (2 == $step) {
                 $res = $logic->check_validate_code($code, $old_mobile, 'phone', $session_id, $scene);
-                if (!$res && 1 != $res['status']) {
+                if (!$res ||1 != $res['status']) {
                     return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
                 }
 
@@ -2301,13 +2301,13 @@ class User extends Base
         $logic = new UsersLogic();
         if (1 == $step) {
             $res = $logic->check_validate_code($code, $this->user['mobile'], 'phone', $session_id, $scene);
-            if (!$res && 1 != $res['status']) {
+            if (!$res || 1 != $res['status']) {
                 return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
             }
             return json(['status' => 1, 'msg' => '验证成功', 'result' => null]);
         } elseif ($step > 1) {
             $res = $logic->check_validate_code($code, $this->user['mobile'], 'phone', $session_id, $scene);
-            if (!$res && 1 != $res['status']) {
+            if (!$res || 1 != $res['status']) {
                 return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
             }
             $data = $logic->paypwd($this->user_id, I('post.new_password'), I('post.confirm_password'), $this->userToken);
@@ -2344,7 +2344,7 @@ class User extends Base
 
         $logic = new UsersLogic();
         $res = $logic->check_validate_code($code, $this->user['mobile'], 'phone', $session_id, $scene);
-        if (!$res && 1 != $res['status']) {
+        if (!$res || 1 != $res['status']) {
             return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
         }
 
