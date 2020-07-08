@@ -831,7 +831,7 @@ class User extends Base
      */
     public function set_default()
     {
-        $id = I('get.id/d');
+        $id = I('id/d');
         Db::name('user_address')->where(['user_id' => $this->user_id])->save(['is_default' => 0]);
         $row = Db::name('user_address')->where(['user_id' => $this->user_id, 'address_id' => $id])->save(['is_default' => 1]);
         if (!$row) {
@@ -845,7 +845,7 @@ class User extends Base
      */
     public function del_address()
     {
-        $id = I('get.id/d');
+        $id = I('id/d');
 
         $address = Db::name('user_address')->where('address_id', $id)->find();
         $row = Db::name('user_address')->where(['user_id' => $this->user_id, 'address_id' => $id])->delete();

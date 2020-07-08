@@ -1844,7 +1844,7 @@ class Order extends Base
             $exchangeGoods = M('goods_coupon gc')->join('goods g', 'g.goods_id = gc.goods_id')
                 ->where(['gc.coupon_id' => $exchangeId])->field('g.goods_id, g.goods_name, g.goods_remark, g.original_img')->select();
             foreach ($exchangeGoods as $key => $goods) {
-                $extraGoods[$key]['original_img_new'] = getFullPath($goods['original_img']);
+                $exchangeGoods[$key]['original_img_new'] = getFullPath($goods['original_img']);
                 $exchangeGoods[$key]['goods_num'] = 1;
             }
         }
@@ -2442,6 +2442,7 @@ class Order extends Base
                 'type' => 'payment',
                 'status' => 1,
                 'scene' => 3,   // APP支付
+                'code' => ['NEQ', 'weixinApp_2']    // 微信支付（海外购）不显示
             ];
             $paymentList = M('Plugin')->field('code, name, icon')->where($payment_where)->select();
             foreach ($paymentList as $key => $val) {
