@@ -878,22 +878,16 @@ class Order extends Base
         if ((time() - $order['confirm_time']) > $confirmTime && !empty($order['confirm_time'])) {
             return json(['status' => 0, 'msg' => '已经超过' . $confirmTimeConfig . '天内退货时间']);
         }
+        switch ($order['order_type']) {
+            case 2:
+                // 海外购订单
+                return json(['status' => 0, 'msg' => '海外购商品收货后如有质量或破损问题申请退换货时，请联系总部客服进行处理']);
+            case 3:
+                // 供应链订单
+                $cOrder = M('order')->where(['order_id' => $orderGoods['order_id2']])->find();
+                break;
+        }
         if ($this->request->isPost()) {
-            switch ($order['order_type']) {
-                case 2:
-                    // 海外购订单
-                    return json(['status' => 0, 'msg' => '海外购商品收货后如有质量或破损问题申请退换货时，请联系总部客服进行处理']);
-                case 3:
-                    // 供应链订单
-                    $cOrder = M('order')->where(['order_id' => $orderGoods['order_id2']])->find();
-                    if (empty($cOrder)) {
-                        return json(['status' => 0, 'msg' => '子订单信息不存在，请联系客服进行处理']);
-                    }
-                    if ($cOrder['order_type'] == 3 && $type == 0) {
-                        return json(['status' => 0, 'msg' => '抱歉，供应链商品不支持仅退款']);
-                    }
-                    break;
-            }
             // 申请售后
             $orderLogic = new OrderLogic();
             $res = $orderLogic->addReturnGoodsNew($recId, $type, $order, $orderGoods, I('post.'));
@@ -928,8 +922,10 @@ class Order extends Base
 
                 // 公司地址
                 if (isset($cOrder) && $cOrder['order_type'] == 3) {
-                    $address = '供应链的收获地址需要等待供应链确认售后订单后获取得到';
+                    $address = '暂无售后地址信息';
                 } else {
+                    $contact = tpCache('shop_info.contact');
+                    $mobile = tpCache('shop_info.mobile');
                     $provinceName = Db::name('region2')->where(['id' => tpCache('shop_info.province')])->value('name');
                     $cityName = Db::name('region2')->where(['id' => tpCache('shop_info.city')])->value('name');
                     $districtName = Db::name('region2')->where(['id' => tpCache('shop_info.district')])->value('name');
@@ -955,8 +951,8 @@ class Order extends Base
                         $return['return_price'] = '0.00';
                     }
                     $return['return_reason'] = C('RETURN_REASON')[$type];
-                    $return['return_contact'] = tpCache('shop_info.contact');
-                    $return['return_mobile'] = tpCache('shop_info.mobile');
+                    $return['return_contact'] = isset($contact) ? $contact : '';
+                    $return['return_mobile'] = isset($mobile) ? $mobile : '';
                     $return['return_address'] = isset($address) ? $address : '';
                     $return['return_electronic'] = isset($refundElectronic) ? $refundElectronic . '' : 0;
                     $return['return_integral'] = isset($refundIntegral) ? $refundIntegral . '' : 0;

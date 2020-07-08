@@ -30,7 +30,7 @@ class OrderService extends Base
         $data = [
             'order_sn' => $orderSn
         ];
-        return $this->getData('?m=api&c=order&a=receOrder', $data);
+        return $this->getData('/api/order/receOrder', $data);
     }
 
     /**
@@ -56,9 +56,9 @@ class OrderService extends Base
     {
         $data = [
             'order_sn' => $orderSn,
-            'Goods_id' => $goodsId
+            'goods_id' => $goodsId
         ];
-        return $this->getData('?m=api&c=order&a=getExpress', $data);
+        return $this->getData('/api/order/getExpress', $data);
     }
 
     /**

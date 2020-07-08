@@ -1091,8 +1091,11 @@ class Goods extends Base
             $goodsSpec = [];
             $goodsSpecPrice = [];
         }
-        if ($goodsInfo['store_count'] != 0 && isset($addressGoodsData['user_address']) && $addressGoodsData['user_address']['out_range'] == 1) {
-            // 超出配送范围，不显示库存
+        if (empty($addressGoodsData['user_address'])) {
+            // 没有地址，不显示库存
+            $goodsInfo['store_count'] = '-1';
+        } elseif ($goodsInfo['store_count'] != 0 && $addressGoodsData['user_address']['out_range'] == 1) {
+            // 有地址，超出配送范围，不显示库存
             $goodsInfo['store_count'] = '-1';
         }
         $returnData = [
