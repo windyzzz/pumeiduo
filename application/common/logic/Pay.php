@@ -240,25 +240,27 @@ class Pay
 
     /**
      * 拆分订单商品数据
-     * @param $payGoods
+     * @param $payList
      */
-    public function setOrderSplitGoods($payGoods)
+    public function setOrderSplitGoods($payList)
     {
-        $goodsData = [
-            'goods_id' => $payGoods['goods_id'],
-            'supplier_goods_id' => $payGoods['goods']['supplier_goods_id'],
-            'goods_num' => $payGoods['goods_num'],
-            'goods_price' => $payGoods['goods_price'],
-            'member_goods_price' => $payGoods['member_goods_price'],
-            'use_integral' => $payGoods['integral'],
-            'spec_key' => $payGoods['spec_key'],
-            'spec_key_name' => $payGoods['spec_key_name'],
-            'goods_pv' => isset($payGoods['goods_pv']) ? $payGoods['goods_pv'] : 0,
-        ];
-        if ($payGoods['goods']['is_supply'] == 0) {
-            $this->order1Goods[$payGoods['goods_id'] . '_' . $payGoods['item_id']] = $goodsData;
-        } elseif ($payGoods['goods']['is_supply'] == 1) {
-            $this->order2Goods[$payGoods['goods_id'] . '_' . $payGoods['item_id']] = $goodsData;
+        foreach ($payList as $goods) {
+            $goodsData = [
+                'goods_id' => $goods['goods_id'],
+                'supplier_goods_id' => $goods['goods']['supplier_goods_id'],
+                'goods_num' => $goods['goods_num'],
+                'goods_price' => $goods['goods_price'],
+                'member_goods_price' => $goods['member_goods_price'],
+                'use_integral' => $goods['integral'],
+                'spec_key' => $goods['spec_key'],
+                'spec_key_name' => $goods['spec_key_name'],
+                'goods_pv' => isset($goods['goods_pv']) ? $goods['goods_pv'] : 0,
+            ];
+            if ($goods['goods']['is_supply'] == 0) {
+                $this->order1Goods[$goods['goods_id'] . '_' . $goods['item_id']] = $goodsData;
+            } elseif ($goods['goods']['is_supply'] == 1) {
+                $this->order2Goods[$goods['goods_id'] . '_' . $goods['item_id']] = $goodsData;
+            }
         }
     }
 
@@ -1396,8 +1398,6 @@ class Pay
                 $goods_info = M('goods')->where(array('goods_id' => $v['goods_id']))->find();
                 throw new TpshopException('计算订单价格', 0, ['status' => -1, 'msg' => "超出活动商品：【{$goods_info['goods_name']}】 限购数量， 每人限购 {$group_activity['buy_limit']} 件", 'result' => '']);
             }
-            // 组合拆分订单数据
-            $this->setOrderSplitGoods($this->payList[$k]);
         }
         $this->goodsPromAmount = bcadd($this->goodsPromAmount, $goodsPromAmount, 2);
         // 再计算优惠（满打折、满减价）
@@ -1422,8 +1422,6 @@ class Pay
                                         }
                                     }
                                 }
-                                // 组合拆分订单数据
-                                $this->setOrderSplitGoods($this->payList[$k]);
                             }
                         }
                         break;
@@ -1442,8 +1440,6 @@ class Pay
                                         }
                                     }
                                 }
-                                // 组合拆分订单数据
-                                $this->setOrderSplitGoods($this->payList[$k]);
                             }
                         }
                         break;

@@ -115,7 +115,7 @@
                         </dd>
                     </dl>
                 </if>
-                <if condition="$return_goods['status'] eq 0">
+                <if condition="$return_goods['status'] eq 0 && $return_goods[supplier_sale_status] NEQ 0">
                     <dl class="row">
                         <dt class="tit">
                             <label>审核意见</label>
@@ -134,8 +134,45 @@
                         <textarea name="remark" id="remark" style="width:300px; height:120px;"  placeholder="退货描述" class="tarea" id="subject_desc">{$return_goods['remark']}</textarea>
                     </dd>
                 </dl>
+                <if condition="$return_goods[is_supply] == 1">
+                    <dl class="row">
+                        <dt class="tit">
+                            <label>供应链系统处理状态</label>
+                        </dt>
+                        <dd class="opt">
+                            <switch name="$return_goods[supplier_sale_status]">
+                                <case value="0">
+                                    未处理
+                                </case>
+                                <case value="1">
+                                    同意
+                                </case>
+                                <case value="-1">
+                                    拒绝
+                                    <dt class="tit">
+                                        <label>原因：</label>
+                                    </dt>
+                                    <dd class="opt">
+                                        <textarea style="width:300px; height:120px;" class="tarea">{$return_goods['supplier_sale_remark']}</textarea>
+                                    </dd>
+                                </case>
+                                <case value="-2">
+                                    已取消
+                                </case>
+                            </switch>
+                        </dd>
+                    </dl>
+                </if>
                 <input type="hidden" name="id" value="{$id}">
-                <div class="bot"><a href="JavaScript:;" subimtid="return_form" data-href="{:U('Admin/Order/checkReturniInfo')}" class="ncap-btn-big ncap-btn-green submitBtn">确认提交</a></div>
+                <if condition="$return_goods[is_supply] == 1 && $return_goods[supplier_sale_status] == 0">
+                    <if condition="empty($return_goods[supplier_sale_sn])">
+                        <div class="bot"><a href="JavaScript:;" subimtid="return_form" data-href="{:U('Admin/Order/sendSupplierReturn')}" class="ncap-btn-big ncap-btn-green submitBtn">发送到供应链系统</a></div>
+                    <else/>
+                        <div class="bot"><a class="ncap-btn-big ncap-btn-green">请等待供应链系统处理</a></div>
+                    </if>
+                <else/>
+                    <div class="bot"><a href="JavaScript:;" subimtid="return_form" data-href="{:U('Admin/Order/checkReturniInfo')}" class="ncap-btn-big ncap-btn-green submitBtn">确认提交</a></div>
+                </if>
             </div>
         </form>
     <else/>
@@ -313,6 +350,35 @@
                     </div>
                 </if>
             </form>
+            <if condition="$return_goods[is_supply] == 1">
+                <dl class="row">
+                    <dt class="tit">
+                        <label>供应链系统处理状态</label>
+                    </dt>
+                    <dd class="opt">
+                        <switch name="$return_goods[supplier_sale_status]">
+                            <case value="0">
+                                未处理
+                            </case>
+                            <case value="1">
+                                同意
+                            </case>
+                            <case value="-1">
+                                拒绝
+                    <dt class="tit">
+                        <label>原因：</label>
+                    </dt>
+                    <dd class="opt">
+                        <textarea style="width:300px; height:120px;" class="tarea">{$return_goods['supplier_sale_remark']}</textarea>
+                    </dd>
+                    </case>
+                    <case value="-2">
+                        已取消
+                    </case>
+                    </switch>
+                    </dd>
+                </dl>
+            </if>
             <if condition="isset($supplier_delivery)">
                 <dl class="row">
                     <dt class="tit">

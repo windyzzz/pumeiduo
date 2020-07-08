@@ -1026,7 +1026,7 @@ class Order extends Base
         $this->assign('return_type', C('RETURN_TYPE')); //退货订单信息
         $this->assign('refund_status', C('REFUND_STATUS'));
 
-        if ($order['order_type'] == 3 && $return_goods['type'] == 2 && !empty($return_goods['supplier_sale_sn'])) {
+        if ($return_goods['is_supply'] == 1 && $return_goods['type'] == 2 && !empty($return_goods['supplier_sale_sn'])) {
             // 供应链订单商品换货物流信息
             $supplierDelivery = [];
             $res = (new OrderService())->afterSaleInfo($return_goods['supplier_sale_sn']);
@@ -1107,32 +1107,6 @@ class Order extends Base
             if ($return_goods['type'] < 2) {
                 $orderLogic->disposereRurnOrderCoupon($return_goods); // 是退货可能要处理优惠券
 //                $order_info = $order->toArray();
-            }
-            if ($order['order_type'] == 3) {
-                // 供应链订单处理
-                $cOrder = M('order')->where(['order_id' => $order_goods['order_id2']])->find();
-                if (isset($cOrder) && $cOrder['order_type'] == 3) {
-                    $returnGoods = [
-                        'order_sn' => $cOrder['order_sn'],
-                        'goods_id' => M('goods')->where(['goods_id' => $order_goods['goods_id']])->value('supplier_goods_id'),
-                        'spec_key' => $order_goods['spec_key'],
-                        'type' => $return_goods['type'],
-                        'reason' => $return_goods['reason'],
-                        'describe' => $return_goods['describe'],
-                    ];
-                    $res = (new OrderService())->refundOrder($returnGoods);
-                    if ($res['status'] == 0) {
-                        Db::rollback();
-                        $this->ajaxReturn(['status' => 0, 'msg' => $res['msg'] . '(供应链)']);
-                    }
-                    $afterSaleSn = $res['data']['after_sale_sn'];
-                    if (empty($afterSaleSn)) {
-                        Db::rollback();
-                        supplierReturnLog($res);    // 供应链返回数据记录
-                        $this->ajaxReturn(['status' => 0, 'msg' => '供应链售后单号缺失']);
-                    }
-                    M('return_goods')->where(['id' => $return_goods['id']])->update(['supplier_sale_sn' => $afterSaleSn]);
-                }
             }
         } elseif (-1 == $post_data['status']) {
             if ($return_goods['type'] < 2 && $order_goods['goods_pv'] == 0) {
@@ -2270,6 +2244,42 @@ class Order extends Base
         }
         Db::commit();
         $this->ajaxReturn(['status' => 1, 'msg' => '批量确认订单成功']);
+    }
+
+
+    public function sendSupplierReturn()
+    {
+        $returnId = I('id');
+        $return_goods = Db::name('return_goods')->where(['id' => $returnId])->find();
+        !$return_goods && $this->ajaxReturn(['status' => -1, 'msg' => '非法操作!']);
+        $order_goods = M('order_goods')->where(['rec_id' => $return_goods['rec_id']])->find();
+        $order = \app\common\model\Order::get($return_goods['order_id']);
+        if ($order['order_type'] == 3) {
+            // 供应链订单处理
+            $cOrder = M('order')->where(['order_id' => $order_goods['order_id2']])->find();
+            if (isset($cOrder) && $cOrder['order_type'] == 3) {
+                $returnGoods = [
+                    'order_sn' => $cOrder['order_sn'],
+                    'goods_id' => M('goods')->where(['goods_id' => $order_goods['goods_id']])->value('supplier_goods_id'),
+                    'spec_key' => $order_goods['spec_key'],
+                    'type' => $return_goods['type'],
+                    'reason' => $return_goods['reason'],
+                    'describe' => $return_goods['describe'],
+                ];
+                $res = (new OrderService())->refundOrder($returnGoods);
+                if ($res['status'] == 0) {
+                    $this->ajaxReturn(['status' => 0, 'msg' => $res['msg'] . '(供应链)']);
+                }
+                $afterSaleSn = $res['data']['after_sale_sn'];
+                if (empty($afterSaleSn)) {
+                    supplierReturnLog($res);    // 供应链返回数据记录
+                    $this->ajaxReturn(['status' => 0, 'msg' => '供应链售后单号缺失']);
+                }
+                M('return_goods')->where(['id' => $return_goods['id']])->update(['supplier_sale_sn' => $afterSaleSn]);
+            }
+        } else {
+            $this->ajaxReturn(['status' => -1, 'msg' => '售后单不是供应链订单']);
+        }
     }
 
     /**

@@ -1503,6 +1503,12 @@ class Cart extends Base
 
 //            $pay->orderPromotion();
             $pay->goodsPromotion();
+
+            // 组合拆分订单数据
+            $pay->setOrderSplitGoods($pay->getPayList());
+            // 检查供应链商品地区购买限制
+            $pay->checkOrderSplitGoods($address);
+
             $pay->delivery($address['district']);   // 配送物流
 
             $pay->useCouponById($coupon_id, $pay->getPayList());

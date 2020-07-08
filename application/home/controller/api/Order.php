@@ -832,9 +832,19 @@ class Order extends Base
         if ((time() - $order['confirm_time']) > $confirm_time && !empty($order['confirm_time'])) {
             return json(['status' => 0, 'msg' => '已经超过' . $confirm_time_config . '天内退货时间', 'result' => null]);
         }
+        $cOrder = [];
+        switch ($order['order_type']) {
+            case 2:
+                // 海外购订单
+                return json(['status' => 0, 'msg' => '海外购商品收货后如有质量或破损问题申请退换货时，请联系总部客服进行处理']);
+            case 3:
+                // 供应链订单
+                $cOrder = M('order')->where(['order_id' => $order_goods['order_id2']])->find();
+                break;
+        }
         if ($request->isPost()) {
             $model = new OrderLogic();
-            $res = $model->addReturnGoods($rec_id, $order);  //申请售后
+            $res = $model->addReturnGoods($rec_id, $order, $cOrder);  //申请售后
             if (1 == $res['status']) {
                 return json(['status' => 1, 'msg' => $res['msg'], 'result' => null]);
             }
@@ -878,6 +888,7 @@ class Order extends Base
         if ((time() - $order['confirm_time']) > $confirmTime && !empty($order['confirm_time'])) {
             return json(['status' => 0, 'msg' => '已经超过' . $confirmTimeConfig . '天内退货时间']);
         }
+        $cOrder = [];
         switch ($order['order_type']) {
             case 2:
                 // 海外购订单
@@ -890,7 +901,7 @@ class Order extends Base
         if ($this->request->isPost()) {
             // 申请售后
             $orderLogic = new OrderLogic();
-            $res = $orderLogic->addReturnGoodsNew($recId, $type, $order, $orderGoods, I('post.'));
+            $res = $orderLogic->addReturnGoodsNew($recId, $type, $order, $orderGoods, I('post.'), $cOrder);
             return json($res);
         } else {
             $return['order_goods'] = [
@@ -1179,12 +1190,24 @@ class Order extends Base
             $return['return_mobile'] = $supplierReceiveInfo['mobile'];
             $return['return_address'] = $supplierReceiveInfo['address'];
         } else {
-            $provinceName = Db::name('region2')->where(['id' => tpCache('shop_info.province')])->value('name');
-            $cityName = Db::name('region2')->where(['id' => tpCache('shop_info.city')])->value('name');
-            $districtName = Db::name('region2')->where(['id' => tpCache('shop_info.district')])->value('name');
-            $address = tpCache('shop_info.address');
-            $address = $provinceName . $cityName . $districtName . $address;
-            $return['return_address'] = $address;
+            $cOrder = M('return_goods rg')
+                ->join('order_goods og', 'og.rec_id = rg.rec_id')
+                ->join('order o', 'o.order_id = og.order_id2')
+                ->where(['rg.id' => $returnId])
+                ->field('o.*')
+                ->find();
+            if (isset($cOrder) && $cOrder['order_type'] == 3) {
+                $return['return_contact'] = '';
+                $return['return_mobile'] = '';
+                $return['return_address'] = '暂无售后地址信息';
+            } else {
+                $provinceName = Db::name('region2')->where(['id' => tpCache('shop_info.province')])->value('name');
+                $cityName = Db::name('region2')->where(['id' => tpCache('shop_info.city')])->value('name');
+                $districtName = Db::name('region2')->where(['id' => tpCache('shop_info.district')])->value('name');
+                $address = tpCache('shop_info.address');
+                $address = $provinceName . $cityName . $districtName . $address;
+                $return['return_address'] = $address;
+            }
         }
         $return['return_reason'] = $returnGoods['reason'];
         $return['describe'] = $returnGoods['describe'];
@@ -1859,6 +1882,8 @@ class Order extends Base
             // 参与活动促销
             $payLogic->goodsPromotion();
 
+            // 组合拆分订单数据
+            $payLogic->setOrderSplitGoods($payLogic->getPayList());
             // 检查供应链商品地区购买限制
             $payLogic->checkOrderSplitGoods($userAddress[0]);
 
@@ -2138,6 +2163,8 @@ class Order extends Base
             // 加价购活动
             $payLogic->activityPayBeforeNew($extraGoods, $cartLogic);
 
+            // 组合拆分订单数据
+            $payLogic->setOrderSplitGoods($payLogic->getPayList());
             // 检查供应链商品地区购买限制
             $payLogic->checkOrderSplitGoods($userAddress);
 
@@ -2367,6 +2394,8 @@ class Order extends Base
             // 加价购活动
             $payLogic->activityPayBeforeNew($extraGoods, $cartLogic);
 
+            // 组合拆分订单数据
+            $payLogic->setOrderSplitGoods($payLogic->getPayList());
             // 检查供应链商品地区购买限制
             $payLogic->checkOrderSplitGoods($userAddress);
 

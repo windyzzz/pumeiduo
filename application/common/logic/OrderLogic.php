@@ -351,7 +351,7 @@ class OrderLogic
         return 0;
     }
 
-    public function addReturnGoods($rec_id, $order)
+    public function addReturnGoods($rec_id, $order, $cOrder = [])
     {
         $data = I('post.');
         $confirm_time_config = tpCache('shopping.auto_service_date'); //后台设置多少天内可申请售后
@@ -484,7 +484,9 @@ class OrderLogic
         }
 
         // $dec_money = $data['refund_money'] * $goods_commission / 100;
-
+        if (isset($cOrder) && $cOrder['order_type'] == 3) {
+            $data['is_supply'] = 1;
+        }
         if (!empty($data['id'])) {
             $result = M('return_goods')->where(['id' => $data['id']])->save($data);
         } else {
@@ -506,9 +508,10 @@ class OrderLogic
      * @param $order
      * @param $orderGoods
      * @param $data
+     * @param array $cOrder 子订单信息
      * @return array
      */
-    public function addReturnGoodsNew($recId, $type, $order, $orderGoods, $data)
+    public function addReturnGoodsNew($recId, $type, $order, $orderGoods, $data, $cOrder = [])
     {
         $returnData['rec_id'] = $recId;
         $returnData['type'] = $type;
@@ -581,6 +584,9 @@ class OrderLogic
             }
         }
         // 售后记录
+        if (isset($cOrder) && $cOrder['order_type'] == 3) {
+            $returnData['is_supply'] = 1;
+        }
         $returnId = M('return_goods')->add($returnData);
         if ($returnId) {
             // 更新订单
