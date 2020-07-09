@@ -1497,6 +1497,10 @@ AND log_id NOT IN
                     TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
                     // 升级记录
                     logDistribut('', $userId, $update['distribut_level'], $userOldLevel, 3, $vipBuyMoney);
+                    // 推荐任务
+                    $task = new \app\common\logic\TaskLogic(2);
+                    $task->setUserId($userId);
+                    $task->inviteProfit(true);
                 }
             }
         }

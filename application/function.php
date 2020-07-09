@@ -1813,3 +1813,25 @@ function getXlsInfo($file)
     }
     return $data;
 }
+
+/**
+ * 两个日期相差的年、月、天数
+ * @param $date1
+ * @param $date2
+ * @return mixed
+ * @throws Exception
+ */
+function diffDate($date1, $date2)
+{
+    $datetime1 = new \DateTime(date('Y-m-d H:i:s', $date1));
+    $datetime2 = new \DateTime(date('Y-m-d H:i:s', $date2));
+    $interval = $datetime1->diff($datetime2);
+    $time['y'] = $interval->format('%Y');   // 相差年数
+    $time['m'] = $interval->format('%m');   // 相差月数
+    $time['d'] = $interval->format('%d');
+    $time['h'] = $interval->format('%H');
+    $time['i'] = $interval->format('%i');
+    $time['s'] = $interval->format('%s');
+    $time['a'] = $interval->format('%a');   // 相差天数
+    return $time;
+}
