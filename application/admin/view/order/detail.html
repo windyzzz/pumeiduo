@@ -483,9 +483,9 @@
                                 <dl>
                                     <dt>支付时间：</dt>
                                     <dd>
-                                        <if condition="$order.pay_time neq 0">
+                                        <if condition="$v.pay_time neq 0">
                                             {$v.pay_time|date='Y-m-d H:i',###}
-                                            <else/>
+                                        <else/>
                                             N
                                         </if>
                                     </dd>
