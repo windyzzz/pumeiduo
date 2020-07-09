@@ -185,8 +185,11 @@ class OrderLogic
                         if ($account['user_money'] > 0) {
                             accountLog($account['user_id'], -$account['user_money'], 0, '推广318套组奖励金额追回', 0, $order_id, '', 0, 14, false);
                         }
-                        if ($account['pay_points']) {
+                        if ($account['pay_points'] > 0) {
                             accountLog($account['user_id'], 0, -$account['pay_points'], '推广318套组奖励积分追回', 0, $order_id, '', 0, 14, false);
+                        }
+                        if ($account['user_electronic'] > 0) {
+                            accountLog($account['user_id'], 0, 0, '购买318套组返消费币追回', 0, $order_id, '', -$account['user_electronic'], 14, true);
                         }
                     }
                 }
