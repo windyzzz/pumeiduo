@@ -1380,6 +1380,7 @@ class Order extends Base
         if (empty($id)) {
             return json(['status' => 0, 'msg' => '参数错误']);
         }
+        Db::startTrans();
         $res = M('return_goods')->where(['id' => $id, 'user_id' => $this->user_id])->save(['status' => -2, 'canceltime' => time()]);
 
         // 如果订单没有售后的商品，订单状态变回已确认
@@ -1420,10 +1421,34 @@ class Order extends Base
                 }
             }
         }
+        if (!empty($return_info['supplier_sale_sn'])) {
+            if ($return_info['supplier_sale_status'] != 0) {
+                Db::rollback();
+                return json(['status' => 0, 'msg' => '供应链售后单已被处理，不能取消，请联系客服']);
+            }
+            $return = M('return_goods rg')->join('order_goods og', 'og.rec_id = rg.rec_id')
+                ->join('order o', 'o.order_id = og.order_id2')
+                ->where(['rg.id' => $id])
+                ->field('o.order_sn, og.supplier_goods_id, og.spec_key, rg.supplier_sale_sn')
+                ->find();
+            $returnGoods = [
+                'order_sn' => $return['order_sn'],
+                'goods_id' => $return['supplier_goods_id'],
+                'spec_key' => $return['spec_key'],
+                'status' => -2
+            ];
+            $res = (new OrderService())->closeRefundOrder($returnGoods, $return_info['supplier_sale_sn']);
+            if ($res['status'] == 0) {
+                Db::rollback();
+                return json(['status' => 0, 'msg' => $res['msg']]);
+            }
+            M('return_goods')->where(['id' => $id])->update(['supplier_sale_status' => -2]);
+        }
         if ($res) {
+            Db::commit();
             return json(['status' => 1, 'msg' => '成功取消服务单']);
         }
-
+        Db::rollback();
         return json(['status' => 0, 'msg' => '服务单不存在']);
     }
 
