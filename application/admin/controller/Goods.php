@@ -1168,4 +1168,19 @@ class Goods extends Base
 
         return $this->fetch($tpl);
     }
+
+    /**
+     * 获取分类信息
+     */
+    public function ajaxCategoryList()
+    {
+        $level = I('level', 1);
+
+        $where = [];
+        if ($level != 0) {
+            $where['level'] = $level;
+        }
+        $category = M('goods_category')->where($where)->field('id, name title')->select();
+        $this->ajaxReturn(['status' => 1, 'result' => $category]);
+    }
 }

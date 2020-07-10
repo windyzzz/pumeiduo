@@ -60,12 +60,19 @@ class Ad extends Base
             'id' => 0,
             'title' => 0
         ];
+        $ad_info['goods_category'] = [
+            'id' => 0,
+            'name' => 0
+        ];
         switch ($ad_info['target_type']) {
             case 1:
                 $ad_info['goods'] = M('goods')->where(['goods_id' => $ad_info['target_type_id']])->field('goods_id, goods_name, original_img')->find();
                 break;
             case 2:
                 $ad_info['prom'] = M('prom_goods')->where(['id' => $ad_info['target_type_id']])->field('id, title')->find();
+                break;
+            case 11:
+                $ad_info['goods_category'] = M('goods_category')->where(['id' => $ad_info['target_type_id']])->field('id, name')->find();
                 break;
         }
         // 优惠促销方案
@@ -75,12 +82,15 @@ class Ad extends Base
             'is_end' => 0,
             'is_open' => 1
         ])->field('id, title')->select();
+        // 商品分类
+        $goodsCategory = M('goods_category')->where(['level' => 3])->field('id, name')->select();
 
         $position = D('ad_position')->select();
         $this->assign('info', $ad_info);
         $this->assign('act', $act);
         $this->assign('position', $position);
         $this->assign('prom_list', $promList);
+        $this->assign('goods_category', $goodsCategory);
 
         return $this->fetch();
     }
@@ -182,6 +192,12 @@ class Ad extends Base
                     $this->error('请选择促销优惠');
                 }
                 $data['target_type_id'] = $data['prom_id'];
+                break;
+            case 11:
+                if (!$data['cate_id'] || $data['cate_id'] == 0) {
+                    $this->error('请选择商品分类');
+                }
+                $data['target_type_id'] = $data['cate_id'];
                 break;
             default:
                 $data['target_type_id'] = 0;
@@ -379,6 +395,19 @@ class Ad extends Base
                 }
                 $this->error('操作失败，' . rtrim($msg, ','));
             }
+            switch ($data['type']) {
+                case 9:
+                    // 商品
+                    $goodsId = M('goods')->where(['goods_sn' => $data['goods_sn']])->value('goods_id');
+                    if (empty($goodsId)) {
+                        $this->ajaxReturn(['status' => 0, 'msg' => '商品不存在']);
+                    }
+                    $data['type_id'] = $goodsId;
+                    $data['item_id'] = 0;
+                    unset($data['goods_sn']);
+                    break;
+                    break;
+            }
             unset($data['id']);
             if ($id) {
                 M('popup')->where(['id' => $id])->update($data);
@@ -391,6 +420,11 @@ class Ad extends Base
         if ($popup) {
             $popup['start_time'] = date('Y-m-d H:i:s', $popup['start_time']);
             $popup['end_time'] = date('Y-m-d H:i:s', $popup['end_time']);
+            if ($popup['type'] == 9) {
+                $popup['goods_sn'] = M('goods')->where(['goods_id' => $popup['type_id']])->value('goods_sn');
+            } else {
+                $popup['goods_sn'] = '';
+            }
         }
         $this->assign('popup_info', $popup);
         $this->assign('start_time', date('Y-m-d H:i:s', time()));

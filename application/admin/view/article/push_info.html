@@ -85,6 +85,9 @@
                         <option value="8" <if condition="$push_info[type] eq 8">selected</if> >VIP申请区</option>
                         <option value="9" <if condition="$push_info[type] eq 9">selected</if> >我的礼券</option>
                         <option value="10" <if condition="$push_info[type] eq 10">selected</if> >商品列表</option>
+                        <option value="11" <if condition="$push_info[type] eq 11">selected</if> >超值套装</option>
+                        <option value="12" <if condition="$push_info[type] eq 12">selected</if> >商品分类跳转</option>
+                        <option value="13" <if condition="$push_info[type] eq 13">selected</if> >海外购</option>
                     </select>
                     <p class="notic">用户点击推送后跳转的页面</p>
                 </dd>
@@ -136,6 +139,11 @@
                     // 活动消息
                     url = "{:U('Admin/Article/ajaxArticleList')}";
                     data = {cate_id: 1, distribute_level: $('#distribute_level').find('option:selected').val()};
+                    break;
+                case '12':
+                    // 分类
+                    url = "{:U('Admin/Goods/ajaxCategoryList')}";
+                    data = {level: 3};
                     break;
                 default:
                     $('#push_type_id').parent().parent().hide();
@@ -207,6 +215,11 @@
                     // 活动消息
                     url = "{:U('Admin/Article/ajaxArticleList')}";
                     data = {cate_id: 1, distribute_level: $('#distribute_level').find('option:selected').val()};
+                    break;
+                case '12':
+                    // 分类
+                    url = "{:U('Admin/Goods/ajaxCategoryList')}";
+                    data = {level: 3};
                     break;
                 default:
                     $('#push_type_id').parent().parent().hide();
