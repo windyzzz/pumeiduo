@@ -465,9 +465,9 @@
                         <foreach name="$child_order" item="v">
                             <div class="contact-info">
                                 <if condition="$v[order_type] == 1">
-                                    <h3>子订单1</h3>
+                                    <h3>圃美多订单</h3>
                                 <else/>
-                                    <h3>子订单2</h3>
+                                    <h3>供应链订单</h3>
                                 </if>
                                 <dl>
                                     <dt>订单 ID：</dt>
@@ -550,6 +550,39 @@
                                         </switch>
                                     </dl>
                                 </if>
+                                <dl>
+                                    <dt>对应商品信息：</dt>
+                                    <dd>
+                                        <table>
+                                            <thead>
+                                            <tr>
+                                                <th>商品编号</th>
+                                                <th colspan="2">商品</th>
+                                                <th>规格属性</th>
+                                                <th>数量</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            <volist name="$v[order_goods]" id="good">
+                                                <tr>
+                                                    <td class="w60">{$good.goods_sn}</td>
+                                                    <td class="w30">
+                                                        <div class="goods-thumb">
+                                                            <a><img alt="" src="{$good['goods_id']|goods_thum_images=200,200}"/></a>
+                                                        </div>
+                                                    </td>
+                                                    <td style="text-align: left;">
+                                                        <a>
+                                                            {$good.goods_name}<if condition="$good['re_id']"><span style="color:red;">[兑换券]</span></if>
+                                                        </a>
+                                                    </td>
+                                                    <td class="w80">{$good.spec_key_name}</td>
+                                                    <td class="w60">{$good.goods_num}</td>
+                                                </tr>
+                                            </volist>
+                                        </table>
+                                    </dd>
+                                </dl>
                             </div>
                         </foreach>
                     </if>

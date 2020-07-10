@@ -3049,8 +3049,12 @@ class Order extends Base
                         $deliveryStatusDesc = C('DELIVERY_STATUS')[$express['result']['deliverystatus']];
                     } else {
                         // 供应链商品
+                        $cOrder = M('delivery_doc dd')
+                            ->join('order_goods og', 'og.rec_id = dd.rec_id')
+                            ->join('order o', 'o.order_id = og.order_id2')
+                            ->where(['dd.id' => $docId])->field('o.*')->find();
                         $orderService = new OrderService();
-                        $express = $orderService->getExpress($order['order_sn'], $orderGoods['supplier_goods_id']);
+                        $express = $orderService->getExpress($cOrder['order_sn'], $orderGoods['supplier_goods_id']);
                         if ($express['status'] == 0) {
                             $express['result']['deliverystatus'] = 1;   // 正在派件
                             $express['result']['list'][] = [
@@ -3083,7 +3087,7 @@ class Order extends Base
                 'goods_id' => $orderGoods['goods_id'],
                 'original_img' => SITE_URL . $orderGoods['original_img'],
                 'original_img_new' => getFullPath($orderGoods['original_img']),
-                'service_phone' => $express['result']['expPhone'],
+                'service_phone' => $express['result']['expPhone'] ?? tpCache('shop_info.mobile'),
                 'province' => Db::name('region2')->where(['id' => $delivery['province']])->value('name'),
                 'city' => Db::name('region2')->where(['id' => $delivery['city']])->value('name'),
                 'district' => Db::name('region2')->where(['id' => $delivery['district']])->value('name'),

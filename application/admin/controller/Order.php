@@ -461,6 +461,9 @@ class Order extends Base
         // 子订单
         if ($order['order_type'] == 3) {
             $cOrder = M('order')->where(['parent_id' => $order_id])->select();
+            foreach ($cOrder as &$order) {
+                $order['order_goods'] = M('order_goods')->where(['order_id2' => $order['order_id']])->select();
+            }
             $this->assign('child_order', $cOrder);
         }
 
