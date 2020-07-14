@@ -273,7 +273,7 @@ class Goods extends Base
                 $goodsNature = '圃美多';
                 if ($val['is_abroad'] == 1) {
                     $goodsNature = '海外购';
-                } elseif ($val['is_supply'] == 1){
+                } elseif ($val['is_supply'] == 1) {
                     $goodsNature = '供应链';
                 }
                 $level_cat = $GoodsLogic->find_parent_cat($val['cat_id']); // 获取分类默认选中的下拉框
@@ -307,6 +307,95 @@ class Goods extends Base
         $strTable .= '</table>';
         downloadExcel($strTable, 'goods_list');
         exit();
+    }
+
+
+    public function export_goods_v2()
+    {
+        $where = ' 1 = 1 '; // 搜索条件
+        I('intro') && $where = "$where and " . I('intro') . ' = 1';
+        I('brand_id') && $where = "$where and brand_id = " . I('brand_id');
+        ('' !== I('is_on_sale')) && $where = "$where and is_on_sale = " . I('is_on_sale');
+
+        $cat_id = I('cat_id');
+        // 关键词搜索
+        $key_word = I('key_word') ? trim(I('key_word')) : '';
+        if ($key_word) {
+            $where = "$where and (goods_name like '%$key_word%' or goods_sn like '%$key_word%')";
+        }
+        $sale_type = I('sale_type');
+        if ($sale_type) {
+            $where = "$where and sale_type = " . I('sale_type');
+        }
+        $goods_nature = I('goods_nature');
+        if ($goods_nature) {
+            switch ($goods_nature) {
+                case 1:
+                    $where = "$where and is_abroad = 0 and is_supply = 0";
+                    break;
+                case 2:
+                    $where = "$where and is_abroad = 1 and is_supply = 0";
+                    break;
+                case 3:
+                    $where = "$where and is_abroad = 0 and is_supply = 1";
+                    break;
+            }
+        }
+
+        $is_area_show = I('is_area_show');
+        if ($is_area_show == 1) {
+            $where .= ' and is_area_show = 1';
+        }
+
+        if ($cat_id > 0) {
+            $grandson_ids = getCatGrandson($cat_id);
+            $where .= ' and cat_id in(' . implode(',', $grandson_ids) . ') '; // 初始化搜索条件
+        }
+        $ids = I('ids');
+        $map = [];
+        if ($ids) {
+            $map['goods_id'] = ['in', $ids];
+        }
+        $goodsList = M('Goods')->where($where)->where($map)->select();
+        if (is_array($goodsList)) {
+            $GoodsLogic = new GoodsLogic();
+            foreach ($goodsList as $k => &$val) {
+                $goodsNature = '圃美多';
+                if ($val['is_abroad'] == 1) {
+                    $goodsNature = '海外购';
+                } elseif ($val['is_supply'] == 1) {
+                    $goodsNature = '供应链';
+                }
+                $val['goods_nature'] = $goodsNature;
+                $level_cat = $GoodsLogic->find_parent_cat($val['cat_id']); // 获取分类默认选中的下拉框
+                $val['first_cat'] = M('GoodsCategory')->where('id', $level_cat[1])->getField('name') ?? '';
+                $val['second_cat'] = M('GoodsCategory')->where('id', $level_cat[2])->getField('name') ?? '';
+                $val['third_cat'] = M('GoodsCategory')->where('id', $level_cat[3])->getField('name') ?? '';
+                $val['exchange_price'] = $val['shop_price'] - $val['exchange_integral'];
+                $val['trade_type'] = trade_type($val['trade_type']);
+                $val['supplier'] = M('Suppliers')->where('suppliers_id', $val['suppliers_id'])->getField('suppliers_name') ?? '';
+            }
+        }
+        $expCellName = [
+            ['goods_sn', '货号', 20, 1],
+            ['first_cat', '商品分类1', 20, 1],
+            ['second_cat', '商品分类2', 20, 1],
+            ['third_cat', '商品分类3', 20, 1],
+            ['goods_name', '商品名称', 50, 1],
+            ['goods_nature', '商品种类', 20, 1],
+            ['cost_price', '成本价', 20, 0],
+            ['shop_price', '本店售价', 20, 0],
+            ['stax_price', '商品不含税价', 20, 0],
+            ['exchange_price', '现金金额', 20, 0],
+            ['ctax_price', '现金不含税价', 20, 0],
+            ['exchange_integral', '积分兑换', 20, 0],
+            ['retail_pv', '零售价pv', 20, 0],
+            ['integral_pv', '积分价pv', 20, 0],
+            ['trade_type', '交易条件选择', 20, 1],
+            ['supplier', '供应商', 50, 1],
+            ['original_img', '缩略图', 20, 1],
+        ];
+        exportExcel('产品列表', $expCellName, $goodsList, 'goods');
     }
 
     /**
