@@ -188,6 +188,13 @@ class Order extends Base
                 $payDeadTime = "0";
             }
             $orderList[$k] = set_btn_order_status($list);  // 添加属性  包括按钮显示属性 和 订单状态显示属性
+            $deliveryType = $list['delivery_type'];    // 1统一发货 2分开发货
+            switch ($list['order_type']) {
+                case 3:
+                    if (M('order')->where(['parent_id' => $list['order_id'], 'order_type' => 1])->find()) {
+                        $deliveryType = '2';
+                    }
+            }
             $orderData[$k] = [
                 'type' => 1,
                 'type_value' => '乐活优选',
@@ -205,7 +212,7 @@ class Order extends Base
                     'pay_end_time' => $payEndTime,
                     'pay_dead_time' => $payDeadTime,
                     'now_time' => time() . '',
-                    'delivery_type' => $list['delivery_type'],
+                    'delivery_type' => $deliveryType,
                 ],
                 'order_goods' => []     // 订单商品
             ];
@@ -376,8 +383,15 @@ class Order extends Base
             return json(['status' => 0, 'msg' => '没有获取到订单信息', 'result' => null]);
         }
         $orderTypeTips = '';
-        if ($orderInfo['order_type'] == 2) {
-            $orderTypeTips = '海外购商品收货后如有质量或破损问题申请退换货时，请联系总部客服进行处理';
+        $deliveryType = $orderInfo['delivery_type'];    // 1统一发货 2分开发货
+        switch ($orderInfo['order_type']) {
+            case 2:
+                $orderTypeTips = '海外购商品收货后如有质量或破损问题申请退换货时，请联系总部客服进行处理';
+                break;
+            case 3:
+                if (M('order')->where(['parent_id' => $orderId, 'order_type' => 1])->find()) {
+                    $deliveryType = '2';
+                }
         }
         $orderInfo = set_btn_order_status($orderInfo);  // 添加属性  包括按钮显示属性 和 订单状态显示属性
         // 获取订单商品
@@ -426,7 +440,7 @@ class Order extends Base
             'shipping_time' => $orderInfo['shipping_time'],
             'confirm_time' => $orderInfo['confirm_time'],
             'cancel_time' => $orderInfo['cancel_time'],
-            'delivery_type' => $orderInfo['delivery_type'],   // 1统一发货 2分开发货
+            'delivery_type' => $deliveryType,
             'order_pv' => $this->user['distribut_level'] >= 3 ? $orderInfo['order_pv'] : '',
             'delivery' => [
                 'consignee' => $orderInfo['consignee'],
@@ -2635,7 +2649,14 @@ class Order extends Base
             return json(['status' => 0, 'msg' => '订单信息不存在']);
         }
         if ($orderId) {
-            switch ($order['delivery_type']) {
+            $deliveryType = $order['delivery_type'];    // 1统一发货 2分开发货
+            switch ($order['order_type']) {
+                case 3:
+                    if (M('order')->where(['parent_id' => $orderId, 'order_type' => 1])->find()) {
+                        $deliveryType = '2';
+                    }
+            }
+            switch ($deliveryType) {
                 case 1:
                     //--- 统一发货
                     // 订单商品
