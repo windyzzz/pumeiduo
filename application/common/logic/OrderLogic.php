@@ -260,11 +260,18 @@ class OrderLogic
         // 分销追回 (上级)
         M('rebate_log')->where('order_sn', $order['order_sn'])->update(['status' => 4, 'confirm_time' => time(), 'remark' => '追回佣金']);
 
-        // 退还券
+        // 退还优惠券
         if ($order['coupon_id'] > 0) {
             $res = ['use_time' => 0, 'status' => 0, 'order_id' => 0];
-            M('coupon_list')->where(['order_id' => $order_id, 'uid' => $user_id])->save($res);
+            M('coupon_list')->where(['cid' => $order['coupon_id'], 'uid' => $user_id])->save($res);
             M('coupon')->where(['id' => $order['coupon_id']])->setDec('use_num', 1);
+        }
+        // 退还兑换券
+        $orderExchangeId = M('order_goods')->where(['order_id' => $order_id, 're_id' => ['GT', 0]])->value('re_id');
+        if ($orderExchangeId > 0) {
+            $res = ['use_time' => 0, 'status' => 0, 'order_id' => 0];
+            M('coupon_list')->where(['cid' => $orderExchangeId, 'uid' => $user_id])->save($res);
+            M('coupon')->where(['id' => $orderExchangeId])->setDec('use_num', 1);
         }
 
         $row = M('order')->where(['order_id' => $order_id, 'user_id' => $user_id])->save(['order_status' => 3, 'cancel_time' => time()]);
