@@ -477,12 +477,12 @@ class Goods extends Base
             $Goods->data($data, true); // 收集数据
 //            $Goods->on_time = time(); // 上架时间
 
-            // 查看是否选择了海外购分类
+            // 查看是否选择了韩国购分类
             $catId = I('cat_id');
-            if (M('goods_category')->where(['id' => $catId, 'name' => ['LIKE', '%海外购%']])->value('id')) {
-                // 查看商品是否是海外购商品
+            if (M('goods_category')->where(['id' => $catId, 'name' => ['LIKE', '%韩国购%']])->value('id')) {
+                // 查看商品是否是韩国购商品
                 if (!M('goods')->where(['goods_id' => $goods_id, 'is_abroad' => 1])->value('goods_id')) {
-                    $this->ajaxReturn(['status' => 0, 'msg' => '请选择海外购商品']);
+                    $this->ajaxReturn(['status' => 0, 'msg' => '请选择韩国购商品']);
                 }
             }
 

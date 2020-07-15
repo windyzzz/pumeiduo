@@ -1719,10 +1719,10 @@ function get_goods_category_tree($isApp = false)
         ->order('sort_order desc, id asc')
         ->select(); //所有分类
     if ($cat_list) {
-        $abroadCateId = 0;  // 海外购分类
+        $abroadCateId = 0;  // 韩国购分类
         // 分类广告
         foreach ($cat_list as $ck => $cv) {
-            if ($cv['parent_id'] == 0 && strstr($cv['name'], '海外购')) {
+            if ($cv['parent_id'] == 0 && strstr($cv['name'], '韩国购')) {
                 if (!$isApp) {
                     unset($cat_list[$ck]);
                     continue;

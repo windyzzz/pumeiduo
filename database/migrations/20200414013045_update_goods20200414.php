@@ -30,9 +30,9 @@ class UpdateGoods20200414 extends Migrator
     {
         $this->table('goods')
             ->addColumn('is_abroad', 'integer', ['limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'default' => 0,
-                'comment' => '是否是海外购，0否 1是'])
+                'comment' => '是否是韩国购，0否 1是'])
             ->addColumn('abroad_recommend', 'integer', ['limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'default' => 0,
-                'comment' => '海外购精选，0否 1是'])
+                'comment' => '韩国购精选，0否 1是'])
             ->update();
     }
 }

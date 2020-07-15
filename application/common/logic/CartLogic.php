@@ -1599,7 +1599,7 @@ class CartLogic extends Model
             }
         }
         if ($hasPmd && $hasAbroad) {
-            return ['status' => 0, 'msg' => '海外购商品请分开结算'];
+            return ['status' => 0, 'msg' => '韩国购商品请分开结算'];
         }
         if (!$hasPmd && $hasAbroad) {
             return ['status' => 2];

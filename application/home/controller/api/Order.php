@@ -375,7 +375,7 @@ class Order extends Base
         }
         $orderTypeTips = '';
         if ($orderInfo['order_type'] == 2) {
-            $orderTypeTips = '海外购商品收货后如有质量或破损问题申请退换货时，请联系总部客服进行处理';
+            $orderTypeTips = '韩国购商品收货后如有质量或破损问题申请退换货时，请联系总部客服进行处理';
         }
         $orderInfo = set_btn_order_status($orderInfo);  // 添加属性  包括按钮显示属性 和 订单状态显示属性
         // 获取订单商品
@@ -818,7 +818,7 @@ class Order extends Base
             return json(['status' => 0, 'msg' => '非法操作', 'result' => null]);
         }
         if ($order['order_type'] == 2) {
-            return json(['status' => 0, 'msg' => '海外购商品收货后如有质量或破损问题申请退换货时，请联系总部客服进行处理']);
+            return json(['status' => 0, 'msg' => '韩国购商品收货后如有质量或破损问题申请退换货时，请联系总部客服进行处理']);
         }
         $confirm_time_config = tpCache('shopping.auto_service_date'); //后台设置多少天内可申请售后
         $confirm_time = $confirm_time_config * 24 * 60 * 60;
@@ -867,7 +867,7 @@ class Order extends Base
             return json(['status' => 0, 'msg' => '非法操作']);
         }
         if ($order['order_type'] == 2) {
-            return json(['status' => 0, 'msg' => '海外购商品收货后如有质量或破损问题申请退换货时，请联系总部客服进行处理']);
+            return json(['status' => 0, 'msg' => '韩国购商品收货后如有质量或破损问题申请退换货时，请联系总部客服进行处理']);
         }
         $confirmTimeConfig = tpCache('shopping.auto_service_date');   // 后台设置多少天内可申请售后
         $confirmTime = $confirmTimeConfig * 24 * 60 * 60;
@@ -1716,7 +1716,7 @@ class Order extends Base
                 $abroad['id_card'] = $this->user['id_cart'] ?? '';
                 $abroad['hide_id_card'] = $this->user['id_cart'] ? hideStr($this->user['id_cart'], 4, 4, 4, '*') : '';
                 $abroad['id_card_tips'] = M('abroad_config')->where(['type' => 'id_card'])->value('content');
-                // 获取海外购产品购买须知
+                // 获取韩国购产品购买须知
                 $abroad['purchase_tips'] = M('abroad_config')->where(['type' => 'purchase'])->value('content');
                 break;
         }
@@ -1995,7 +1995,7 @@ class Order extends Base
             'give_integral' => $give_integral,
             'free_shipping_price' => tpCache('shopping.freight_free') <= $payReturn['order_amount'] ? '0' : bcsub(tpCache('shopping.freight_free'), $payReturn['order_amount'], 2),
             'order_pv' => $payReturn['order_pv'] != '0.00' ? $payReturn['order_pv'] : '',
-            // 海外购信息
+            // 韩国购信息
             'abroad' => $abroad,
         ];
         return json(['status' => 1, 'result' => $return]);
@@ -2258,7 +2258,7 @@ class Order extends Base
             case 0:
                 return json($res);
             case 2:
-                $orderType = 2; // 海外购
+                $orderType = 2; // 韩国购
                 break;
         }
 
@@ -2537,7 +2537,7 @@ class Order extends Base
                             $deliveryStatusDesc = C('DELIVERY_STATUS')[$express['result']['deliverystatus']];
                             break;
                         case 2:
-                            // 海外购
+                            // 韩国购
                             // HTNS物流配送记录
                             $htnsDeliveryLogGoodsName = M('htns_delivery_log')->where(['order_id' => $orderId])->value('goods_name');
                             $htnsDeliveryLog = M('htns_delivery_log')->where(['order_id' => $orderId, 'goods_name' => $htnsDeliveryLogGoodsName])->order('create_time desc')->select();
@@ -2656,7 +2656,7 @@ class Order extends Base
                             }
                             break;
                         case 2:
-                            // 海外购
+                            // 韩国购
                             $apiController = new ApiController();
                             foreach ($delivery as $item) {
                                 $express['result']['list'] = [];
@@ -2763,7 +2763,7 @@ class Order extends Base
                     $deliveryStatusDesc = C('DELIVERY_STATUS')[$express['result']['deliverystatus']];
                     break;
                 case 2:
-                    // 海外购
+                    // 韩国购
                     // HTNS物流配送记录
                     $htnsDeliveryLog = M('htns_delivery_log')->where(['order_id' => $delivery['order_id'], 'rec_id' => $delivery['rec_id'], 'goods_num' => $delivery['goods_num']])->order('create_time DESC')->select();
                     $deliveryLog = [];

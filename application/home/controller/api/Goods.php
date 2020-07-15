@@ -684,7 +684,7 @@ class Goods extends Base
             $goods['share_integral'] = $goods['exchange_integral'];
         }
 
-        // 海外购物流流程图
+        // 韩国购物流流程图
         $goods['abroad_freight_process'] = [
             'url' => '',
             'width' => '',
@@ -2362,7 +2362,7 @@ class Goods extends Base
     }
 
     /**
-     * 是否开启海外购
+     * 是否开启韩国购
      * @return \think\response\Json
      */
     public function abroadStatus()
@@ -2375,7 +2375,7 @@ class Goods extends Base
     }
 
     /**
-     * 海外购商品分类
+     * 韩国购商品分类
      * @return \think\response\Json
      */
     public function abroadCate()
@@ -2385,7 +2385,7 @@ class Goods extends Base
             ->join('goods_category gc2', 'gc1.id = gc2.parent_id')
             ->join('goods_category gc3', 'gc2.id = gc3.parent_id')
             ->where([
-                'gc1.name' => ['LIKE', '%海外购%'],
+                'gc1.name' => ['LIKE', '%韩国购%'],
                 'gc1.parent_id' => 0,
                 'gc1.is_show' => 1,
                 'gc2.is_show' => 1,
@@ -2410,7 +2410,7 @@ class Goods extends Base
     }
 
     /**
-     * 海外购商品列表
+     * 韩国购商品列表
      * @return \think\response\Json
      */
     public function abroadGoods()

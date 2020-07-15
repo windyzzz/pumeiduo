@@ -178,7 +178,7 @@ class Cart extends Base
             // 组装数据
             foreach ($cartData as $k => $v) {
                 if ($v['goods']['is_abroad'] == 1) {
-                    // 屏蔽海外购
+                    // 屏蔽韩国购
                     $cartNum -= 1;
                     continue;
                 }
@@ -413,12 +413,12 @@ class Cart extends Base
             'cart_title' => '乐活优选',
             'goods_list' => []
         ];
-        // 海外购商品
+        // 韩国购商品
         $abroadList = [
             'cart_num' => 0,
             'prom_title' => '',
             'prom_title_data' => [],
-            'cart_title' => '海外购',
+            'cart_title' => '韩国购',
             'goods_list' => []
         ];
         // 失效商品
@@ -611,7 +611,7 @@ class Cart extends Base
                         ];
                     }
                 } else {
-                    // 海外购商品
+                    // 韩国购商品
                     $abroadList['cart_num'] += 1;
                     if (isset($promGoods[$key])) {
                         // 促销活动
@@ -751,7 +751,7 @@ class Cart extends Base
         }
         if (!empty($pmdNormalGoods)) array_unshift($pmdList['goods_list'], $pmdNormalGoods);
 
-        // 处理秒杀商品归纳 - 海外购商品
+        // 处理秒杀商品归纳 - 韩国购商品
         $abroadList['goods_list'] = array_values($abroadList['goods_list']);
         $abroadNormalGoods = isset($abroadList['goods_list'][0]) ? $abroadList['goods_list'][0] : [];
         unset($abroadList['goods_list'][0]);
@@ -960,10 +960,10 @@ class Cart extends Base
                 'use_integral' => $res['result']['use_integral'],
                 'cart_ids' => $pmdCart['cart_ids']
             ];
-            // 海外购商品价格
+            // 韩国购商品价格
             $res = json_decode($this->calcCartPrice($abroadCart['cart_ids'], $abroadCart['cart_num'])->getContent(), true);
             $return['data'][] = [
-                'title' => '海外购',
+                'title' => '韩国购',
                 'goods_num' => $res['result']['goods_num'],
                 'total_fee' => '￥' . $res['result']['total_fee'],
                 'use_integral' => $res['result']['use_integral'],

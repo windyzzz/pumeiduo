@@ -30,7 +30,7 @@ class UpdateOrder20200428 extends Migrator
     {
         $this->table('order')
             ->addColumn('order_type', 'integer', ['default' => 1, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
-                'comment' => '订单类型：1圃美多 2海外购', 'after' => 'order_sn'])
+                'comment' => '订单类型：1圃美多 2韩国购', 'after' => 'order_sn'])
             ->addColumn('id_card', 'string', ['default' => 0, 'limit' => 20, 'comment' => '身份证', 'after' => 'consignee'])
             ->update();
     }

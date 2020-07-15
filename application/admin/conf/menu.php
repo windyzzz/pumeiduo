@@ -156,7 +156,7 @@ return [
             ['name' => '投诉与建议', 'act' => 'suggestion_list', 'op' => 'Suggestion'],
         ]],
 
-        ['name' => '海外购', 'child' => [
+        ['name' => '韩国购', 'child' => [
             ['name' => '设置', 'act' => 'config', 'op' => 'Abroad'],
         ]],
 
