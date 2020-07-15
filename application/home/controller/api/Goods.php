@@ -676,7 +676,8 @@ class Goods extends Base
         // 分享信息
         $goods['qr_code'] = '';
         if (!empty($goods['nature'])) {
-            $goods['share_price'] = $goods['nature']['price'];
+            $goods['shop_price'] = $goods['nature']['price'];
+            $goods['share_price'] = bcsub($goods['nature']['price'], $goods['nature']['exchange_integral'], 2);
             $goods['share_integral'] = $goods['nature']['exchange_integral'];
         } else {
             $goods['share_price'] = $goods['exchange_price'];
