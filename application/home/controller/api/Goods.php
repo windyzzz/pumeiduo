@@ -862,6 +862,7 @@ class Goods extends Base
             }
         }
         if (in_array($goodsInfo['goods_type'], ['group_buy', 'flash_sale'])) {
+            $goodsInfo['shop_price'] = bcadd($goodsInfo['exchange_price'], $goods['exchange_integral'], 2);
             $goodsInfo['buy_least'] = '0';
         }
         // 商品促销、优惠券
