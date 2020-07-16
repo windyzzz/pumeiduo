@@ -66,12 +66,7 @@ class Adv extends Base
             } else {
                 $popupList[$key]['need_login'] = 0;
             }
-            $popupList[$key]['type_ids'] = [
-                'goods_id' => $popup['type'] == 9 ? $popup['type_id'] : "0",
-                'item_id' => $popup['type'] == 9 ? $popup['item_id'] : "0",
-                'cate_id' => $popup['type'] == 10 ? $popup['type_id'] : "",
-                'cate_name' => $popup['type'] == 10 ? M('goods_category')->where(['id' => $popup['type_id']])->value('name') : "",
-            ];
+            $popupList[$key]['type_ids'] = [];
             $popupList[$key]['type_ids_2'] = [
                 'goods_id' => $popup['type'] == 9 ? $popup['type_id'] : "0",
                 'item_id' => $popup['type'] == 9 ? $popup['item_id'] : "0",
