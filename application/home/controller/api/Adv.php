@@ -57,7 +57,7 @@ class Adv extends Base
             'end_time' => ['>', time()]
         ];
         // 活动弹窗列表
-        $popupList = M('popup')->where($where)->field('id, type, show_path')->order('sort desc')->limit(0, 3)->select();
+        $popupList = M('popup')->where($where)->field('id, type, type_id, item_id, show_path')->order('sort desc')->limit(0, 3)->select();
         foreach ($popupList as $key => $popup) {
             $popupList[$key]['show_path'] = SITE_URL . $popup['show_path'];
             if (in_array($popup['type'], [6, 7, 8])) {
