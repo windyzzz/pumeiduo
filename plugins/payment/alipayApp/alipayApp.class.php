@@ -28,7 +28,7 @@ class alipayApp
      */
     public function __construct()
     {
-        $paymentPlugin = M('Plugin')->where("code='alipay' and  type = 'payment' ")->find(); // 找到支付插件的配置
+        $paymentPlugin = M('Plugin')->where("code='alipayApp' and type = 'payment'")->find(); // 找到支付插件的配置
         $config_value = unserialize($paymentPlugin['config_value']); // 配置反序列化
         $this->alipay_config = $config_value;
     }
