@@ -1,11 +1,13 @@
-<include file="public/layout" />
+<include file="public/layout"/>
 <body style="background-color: #FFF; overflow: auto;">
-<div id="toolTipLayer" style="position: absolute; z-index: 9999; display: none; visibility: visible; left: 95px; top: 573px;"></div>
+<div id="toolTipLayer"
+     style="position: absolute; z-index: 9999; display: none; visibility: visible; left: 95px; top: 573px;"></div>
 <div id="append_parent"></div>
 <div id="ajaxwaitid"></div>
 <div class="page">
     <div class="fixed-bar">
-        <div class="item-title"><a class="back" href="javascript:history.back();" title="返回列表"><i class="fa fa-arrow-circle-o-left"></i></a>
+        <div class="item-title"><a class="back" href="javascript:history.back();" title="返回列表"><i
+                class="fa fa-arrow-circle-o-left"></i></a>
             <div class="subject">
                 <h3>财务管理 - 提现申请</h3>
                 <h5>网站系统财务管理提现申请</h5>
@@ -114,26 +116,29 @@
             <div class="bot">
                 <switch name="$data[status]">
                     <case value="0">
-                        <a href="JavaScript:void(0);" onclick="handle_withdrawals(1);" class="ncap-btn-big ncap-btn-green">通过审核</a>
-                        <a href="JavaScript:void(0);" onclick="handle_withdrawals(-1);" class="ncap-btn-big ncap-btn-green">拒绝提现</a>
+                        <a href="JavaScript:void(0);" onclick="handle_withdrawals(1);"
+                           class="ncap-btn-big ncap-btn-green">通过审核</a>
+                        <a href="JavaScript:void(0);" onclick="handle_withdrawals(-1);"
+                           class="ncap-btn-big ncap-btn-green">拒绝提现</a>
                     </case>
                     <case value="1">
-                        <a href="JavaScript:void(0);" onclick="handle_withdrawals(2);" class="ncap-btn-big ncap-btn-green">生成转账记录</a>
-                        <a href="JavaScript:void(0);" onclick="handle_withdrawals(3);" class="ncap-btn-big ncap-btn-green">转账失败</a>
+                        <a href="JavaScript:void(0);" onclick="handle_withdrawals(2);"
+                           class="ncap-btn-big ncap-btn-green">生成转账记录</a>
+                        <a href="JavaScript:void(0);" onclick="handle_withdrawals(3);"
+                           class="ncap-btn-big ncap-btn-green">转账失败</a>
                     </case>
                 </switch>
-            <!--    <if condition="$data[status] eq 1">
-                    <a href="JavaScript:void(0);" onclick="$('#editForm').submit();" class="ncap-btn-big ncap-btn-green">修改备注</a>
-                </if>
--->
+                <!--    <if condition="$data[status] eq 1">
+                        <a href="JavaScript:void(0);" onclick="$('#editForm').submit();" class="ncap-btn-big ncap-btn-green">修改备注</a>
+                    </if>
+    -->
             </div>
         </div>
     </form>
 </div>
 <script type="text/javascript">
     // 提现处理
-    function handle_withdrawals(status)
-    {
+    function handle_withdrawals(status) {
         if ($.trim($('#remark').val()).length == 0) {
             layer.alert('请填写转账备注', {icon: 2});
             return false;
@@ -154,27 +159,38 @@
                 break;
         }
         layer.confirm(tips, {
-                    btn: ['确定', '取消'] //按钮
-                }, function () {
-                    // 确定
-                    $('#status').val(status);
-                    $.ajax({
-                        type : "POST",
-                        url:"{:U('Admin/User/withdrawals_update')}",
-                        data : $('#editForm').serialize(),
-                        dataType: "json",
-                        success: function(data){
-                            if(data.status == 1){
-                                layer.alert(data.msg, {icon: 1});
-                                location.reload();
-                            }else{
-                                layer.alert(data.msg, {icon: 2});
-                            }
+                btn: ['确定', '取消'] //按钮
+            }, function () {
+                // 确定
+                $('#status').val(status);
+                $.ajax({
+                    type: "POST",
+                    url: "{:U('Admin/User/withdrawals_update')}",
+                    data: $('#editForm').serialize(),
+                    dataType: "json",
+                    success: function (data) {
+                        if (data.status == 1) {
+                            layer.alert(data.msg, {
+                                // skin: 'layui-layer-molv' //样式类名  自定义样式
+                                closeBtn: 1    // 是否显示关闭按钮
+                                // , anim: 1 //动画类型
+                                , btn: ['确定', '关闭'] //按钮
+                                , icon: 6    // icon
+                                , btn1: function () {
+                                    location.reload();
+                                }
+                                , btn2: function () {
+                                    location.reload();
+                                }
+                            });
+                        } else {
+                            layer.alert(data.msg, {icon: 2, time: 2000});
                         }
-                    });
-                }, function (index) {
-                    layer.close(index);
-                }
+                    }
+                });
+            }, function (index) {
+                layer.close(index);
+            }
         );
     }
 </script>
