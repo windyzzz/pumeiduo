@@ -1346,7 +1346,8 @@ AND log_id NOT IN
                         'message_url' => '',
                         'goods_id' => '',
                         'item_id' => '',
-                        'cate_id' => ''
+                        'cate_id' => '',
+                        'cate_name' => ''
                     ]
                 ];
                 switch ($push['type']) {
@@ -1372,6 +1373,7 @@ AND log_id NOT IN
                     case 12:
                         // 商品分类
                         $extraData['value']['cate_id'] = $push['type_id'];
+                        $extraData['value']['cate_name'] = M('goods_category')->where(['id' => $push['type_id']])->value('name') ?? '';
                 }
                 // 标签
                 $all = 0;

@@ -30,6 +30,7 @@ class Adv extends Base
                     'goods_id' => $item['target_type'] == 1 ? $item['target_type_id'] : "0",
                     'prom_id' => $item['target_type'] == 2 ? $item['target_type_id'] : "0",
                     'cate_id' => $item['target_type'] == 11 ? $item['target_type_id'] : "",
+                    'cate_name' => $item['target_type'] == 11 ? M('goods_category')->where(['id' => $item['target_type_id']])->value('name') : "",
                 ];
                 unset($adList[$k]['target_type_id']);
                 // 是否需要登录
@@ -69,6 +70,7 @@ class Adv extends Base
                 'goods_id' => $popup['type'] == 9 ? $popup['type_id'] : "0",
                 'item_id' => $popup['type'] == 9 ? $popup['item_id'] : "0",
                 'cate_id' => $popup['type'] == 10 ? $popup['type_id'] : "",
+                'cate_name' => $popup['type'] == 10 ? M('goods_category')->where(['id' => $popup['type_id']])->value('name') : "",
             ];
         }
         $returnData = [
