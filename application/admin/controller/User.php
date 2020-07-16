@@ -1172,8 +1172,6 @@ class User extends Base
 
     public function get_withdrawals_list($status = '')
     {
-        // dump(I(''));
-        // exit;
         $user_id = I('user_id/d');
         $realname = I('realname');
         $bank_card = I('bank_card');
@@ -1184,15 +1182,11 @@ class User extends Base
         $create_time3 = explode(' - ', $create_time2);
         $this->assign('start_time', $create_time3[0]);
         $this->assign('end_time', $create_time3[1]);
-        // $where['w.create_time'] =  array(array('gt', strtotime(strtotime($create_time3[0])), array('lt', strtotime($create_time3[1]))));
         $where['w.create_time'] = ['between', [strtotime($create_time3[0]), strtotime($create_time3[1])]];
 
-        // 2018-08-22 14:20:00
         $status = empty($status) ? I('status') : $status;
         if ('' !== $status) {
             $where['w.status'] = $status;
-        } else {
-            $where['w.status'] = ['lt', 2];
         }
         $user_id && $where['u.user_id'] = $user_id;
         $realname && $where['w.realname'] = ['like', '%' . $realname . '%'];
@@ -1203,8 +1197,6 @@ class User extends Base
                 $ids = explode(',', $ids);
                 $where['w.id'] = ['in', $ids];
             }
-            // $ids = explode(',', $ids);
-
             $strTable = '<table width="500" border="1">';
             $strTable .= '<tr>';
             $strTable .= '<td style="text-align:center;font-size:12px;width:120px;">用户ID</td>';
@@ -1298,22 +1290,26 @@ class User extends Base
     public function withdrawals_update()
     {
         $id_arr = I('id/a');
-
-        $data['status'] = $status = I('status');
-        $data['remark'] = I('remark');
-        if (1 == $status) {
-            $data['check_time'] = time();
-        }
-        if (1 != $status) {
-            $data['refuse_time'] = time();
-        }
-
-        if (!$id_arr) {
+        $ids = implode(',', $id_arr);
+        if (empty($ids)) {
             $this->ajaxReturn(['status' => 0, 'msg' => '操作失败,参数为空'], 'JSON');
         }
-
+        $data['status'] = I('status');
+        $data['remark'] = I('remark');
+        switch ($data['status']) {
+            case -1:
+                $data['refuse_time'] = time();
+                break;
+            case 1:
+                $data['check_time'] = time();
+                break;
+            case 2:
+                $data['pay_time'] = time();
+                break;
+        }
         Db::startTrans();
-        if (1 == $status) {
+        if ($data['status'] == 2) {
+            // 扣除用户账户记录
             foreach ($id_arr as $k => $v) {
                 $val = Db::name('withdrawals')->find($v);
                 // 查看用户现在余额
@@ -1329,8 +1325,6 @@ class User extends Base
                 }
             }
         }
-
-        $ids = implode(',', $id_arr);
         $r = Db::name('withdrawals')->whereIn('id', $ids)->update($data);
         if (false !== $r) {
             Db::commit();
