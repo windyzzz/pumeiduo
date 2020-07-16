@@ -28,7 +28,8 @@ class Adv extends Base
                 // APP跳转页面接口参数
                 $adList[$k]['target_type_ids'] = [
                     'goods_id' => $item['target_type'] == 1 ? $item['target_type_id'] : "0",
-                    'prom_id' => $item['target_type'] == 2 ? $item['target_type_id'] : "0"
+                    'prom_id' => $item['target_type'] == 2 ? $item['target_type_id'] : "0",
+                    'cate_id' => $item['target_type'] == 11 ? $item['target_type_id'] : "",
                 ];
                 unset($adList[$k]['target_type_id']);
                 // 是否需要登录
@@ -64,7 +65,11 @@ class Adv extends Base
             } else {
                 $popupList[$key]['need_login'] = 0;
             }
-            $popupList[$key]['type_ids'] = [];
+            $popupList[$key]['type_ids'] = [
+                'goods_id' => $popup['type'] == 9 ? $popup['type_id'] : "0",
+                'item_id' => $popup['type'] == 9 ? $popup['item_id'] : "0",
+                'cate_id' => $popup['type'] == 10 ? $popup['type_id'] : "",
+            ];
         }
         $returnData = [
             'popup_list' => !empty($popupList) ? $popupList : []
