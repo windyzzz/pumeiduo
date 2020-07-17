@@ -1275,19 +1275,19 @@
 
     $(function () {
         $(document).on("click", '.is_free_shipping', function (e) {
-            var is_supply = {$goodsInfo[is_supply]};
-            if (is_supply == 1) {
-                var is_free_shipping = $("input[name='is_free_shipping']:checked").val();
-                if (is_free_shipping == 0) {
-                    $('#is_free_shipping_label_1').removeClass('cb-disable');
-                    $('#is_free_shipping_label_1').addClass('cb-enable selected');
-                    $('#is_free_shipping_label_0').removeClass('cb-enable selected');
-                    $('#is_free_shipping_label_0').addClass('cb-disable');
-                    layer.msg('供应链商品不能设置邮费规则', {icon: 2});
-                }
-            } else {
+            // var is_supply = {$goodsInfo[is_supply]};
+            // if (is_supply == 1) {
+            //     var is_free_shipping = $("input[name='is_free_shipping']:checked").val();
+            //     if (is_free_shipping == 0) {
+            //         $('#is_free_shipping_label_1').removeClass('cb-disable');
+            //         $('#is_free_shipping_label_1').addClass('cb-enable selected');
+            //         $('#is_free_shipping_label_0').removeClass('cb-enable selected');
+            //         $('#is_free_shipping_label_0').addClass('cb-disable');
+            //         layer.msg('供应链商品不能设置邮费规则', {icon: 2});
+            //     }
+            // } else {
                 initFreight();
-            }
+            // }
         })
     })
 
