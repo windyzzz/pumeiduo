@@ -1092,7 +1092,7 @@ class Cart extends Base
             }
             // 团购活动商品
             $groupBuy = Db::name('group_buy gb')->join('spec_goods_price sgp', 'sgp.item_id = gb.item_id', 'LEFT')
-                ->where(['gb.is_end' => 0, 'gb.start_time' => ['<=', time()], 'gb.end_time' => ['>=', time()]])
+//                ->where(['gb.is_end' => 0, 'gb.start_time' => ['<=', time()], 'gb.end_time' => ['>=', time()]])
                 ->field('gb.id, gb.title, gb.goods_id, gb.price, gb.buy_limit, sgp.key spec_key')->select();
             $groupBuyGoods = [];
             foreach ($groupBuy as $item) {
@@ -1121,7 +1121,7 @@ class Cart extends Base
                         }
                     }
                 }
-                if (isset($flashSaleGoods[$key])) {
+                if (isset($groupBuy[$key])) {
                     // 团购活动
                     $cartNum -= 1;
                     continue;
