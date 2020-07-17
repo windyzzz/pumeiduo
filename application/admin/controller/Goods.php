@@ -523,7 +523,7 @@ class Goods extends Base
             $virtual_indate = input('post.virtual_indate'); //虚拟商品有效期
             $return_url = $is_distribut > 0 ? U('admin/Distribut/goods_list') : U('admin/Goods/goodsList');
             $data = input('post.');
-            $data['is_free_shipping'] = $data['is_supply'] == 1 ? 1 : $data['is_free_shipping'];
+//            $data['is_free_shipping'] = $data['is_supply'] == 1 ? 1 : $data['is_free_shipping'];
             $validate = \think\Loader::validate('Goods');
             if (!$validate->batch()->check($data)) {
                 $error = $validate->getError();
