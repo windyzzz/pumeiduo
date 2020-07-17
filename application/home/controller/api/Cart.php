@@ -1121,7 +1121,7 @@ class Cart extends Base
                         }
                     }
                 }
-                if (isset($groupBuy[$key])) {
+                if (isset($groupBuyGoods[$key])) {
                     // 团购活动
                     $cartNum -= 1;
                     continue;
