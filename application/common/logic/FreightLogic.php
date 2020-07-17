@@ -99,6 +99,8 @@ class FreightLogic extends Model
                 // 不启用商城免运费设置
                 $this->outSettingFreight = $this->getFreightPrice($total_unit, $freightConfig);
             }
+        } else {
+            $this->freightGoodsPrice = $this->goods['member_goods_price'];
         }
     }
 
