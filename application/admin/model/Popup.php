@@ -18,6 +18,7 @@ class Popup extends Model
         '9' => '商品详情',
         '10' => '分类跳转',
         '11' => '海外购',
+        '12' => 'SVIP专享',
     ];
 
     public function getType()
