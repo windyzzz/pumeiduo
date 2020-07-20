@@ -419,7 +419,7 @@ class GoodsLogic extends Model
      */
     public function get_spec_price($goods_id)
     {
-        return M('spec_goods_price')->where('goods_id', $goods_id)->getField('key,item_id,price,store_count,spec_img'); // 规格 对应 价格 库存表
+        return M('spec_goods_price')->where('goods_id', $goods_id)->where(['key_name' => ['NEQ', '默认规格']])->getField('key,item_id,price,store_count,spec_img'); // 规格 对应 价格 库存表
     }
 
     /**

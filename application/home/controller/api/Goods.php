@@ -872,7 +872,7 @@ class Goods extends Base
             // 促销
             $promotion = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
                 ->where(['gtg.goods_id' => $goods_id, 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
-                ->field('pg.id prom_id, pg.title')->order('expression desc');
+                ->field('pg.id prom_id, pg.title, pg.type, pg.expression')->order('expression desc');
             if ($this->user_id) {
                 $promotion = $promotion->where(['pg.group' => ['LIKE', '%' . $this->user['distribut_level'] . '%']]);
             }
@@ -1074,6 +1074,31 @@ class Goods extends Base
                             $goodsInfo['exchange_price'] = bcsub($spec['price'], $goodsInfo['exchange_integral'], 2);
                         }
                         break;
+                    }
+                }
+            }
+            // 促销
+            $promotion = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
+                ->where(['gtg.goods_id' => $goodsId, 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
+                ->field('pg.id prom_id, pg.title, pg.type, pg.expression')->order('expression desc');
+            if ($this->user_id) {
+                $promotion = $promotion->where(['pg.group' => ['LIKE', '%' . $this->user['distribut_level'] . '%']]);
+            }
+            $promotion = $promotion->select();
+            // 再处理显示金额：优惠促销
+            if (!empty($promotion)) {
+                foreach ($promotion as $value) {
+                    switch ($value['type']) {
+                        case 0:
+                            // 打折
+                            $goodsInfo['shop_price'] = bcdiv(bcmul($goodsInfo['shop_price'], $value['expression'], 2), 100, 2);
+                            $goodsInfo['exchange_price'] = bcdiv(bcmul($goodsInfo['exchange_price'], $value['expression'], 2), 100, 2);
+                            break;
+                        case 1:
+                            // 减价
+                            $goodsInfo['shop_price'] = bcsub($goodsInfo['shop_price'], $value['expression'], 2);
+                            $goodsInfo['exchange_price'] = bcsub($goodsInfo['exchange_price'], $value['expression'], 2);
+                            break;
                     }
                 }
             }
