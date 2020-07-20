@@ -266,7 +266,7 @@ class GoodsLogic extends Model
     public function get_spec($goods_id)
     {
         //商品规格 价钱 库存表 找出 所有 规格项id
-        $keys = M('SpecGoodsPrice')->where('goods_id', $goods_id)->getField("GROUP_CONCAT(`key` ORDER BY store_count desc SEPARATOR '_') ");
+        $keys = M('SpecGoodsPrice')->where('goods_id', $goods_id)->where(['key' => ['NEQ', '']])->getField("GROUP_CONCAT(`key` ORDER BY store_count desc SEPARATOR '_') ");
         $filter_spec = [];
         if ($keys) {
             $specImage = M('SpecImage')->where(['goods_id' => $goods_id, 'src' => ['<>', '']])->getField('spec_image_id,src'); // 规格对应的 图片表， 例如颜色
@@ -419,7 +419,7 @@ class GoodsLogic extends Model
      */
     public function get_spec_price($goods_id)
     {
-        return M('spec_goods_price')->where('goods_id', $goods_id)->where(['key_name' => ['NEQ', '默认规格']])->getField('key,item_id,price,store_count,spec_img'); // 规格 对应 价格 库存表
+        return M('spec_goods_price')->where('goods_id', $goods_id)->where(['key' => ['NEQ', '']])->getField('key,item_id,price,store_count,spec_img'); // 规格 对应 价格 库存表
     }
 
     /**
