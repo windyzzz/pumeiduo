@@ -61,7 +61,7 @@ class Adv extends Base
         $popupList = M('popup')->where($where)->field('id, type, type_id, item_id, show_path')->order('sort desc')->limit(0, 3)->select();
         foreach ($popupList as $key => $popup) {
             $popupList[$key]['show_path'] = SITE_URL . $popup['show_path'];
-            if (in_array($popup['type'], [6, 7, 8])) {
+            if (in_array($popup['type'], [6, 7, 8, 12])) {
                 $popupList[$key]['need_login'] = 1;
             } else {
                 $popupList[$key]['need_login'] = 0;
