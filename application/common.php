@@ -138,6 +138,10 @@ function update_user_distribut($user_id, $order_id)
         if ($res['status'] == 2) {
             $user = Db::name('users')->where('user_id', $user_id)->find();
         }
+        // 升级返还奖励
+        if (tpCache('distribut.referee_get_electronic') > 0) {
+            accountLog($user_id, 0, 0, '购买318套组返消费币', 0, $order_id, '', tpCache('distribut.referee_get_electronic'), 14, false);
+        }
         // 更新缓存
         TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
         $order = M('order')->where('order_id', $order_id)->find();
@@ -902,7 +906,7 @@ function tpCache($config_key, $data = [])
     return F($param[0], $newData, TEMP_PATH);
 }
 
-function taskLog($user_id, $task, $reward, $order_sn = '', $reward_electronic = 0, $reward_integral = 0, $type = 1, $status = 0, $reward_coupon_id = 0, $user_task_id = 0)
+function taskLog($user_id, $task, $reward, $order_sn = '', $reward_electronic = 0, $reward_integral = 0, $type = 1, $status = 0, $reward_coupon_id = 0, $user_task_id = 0, $remark = '')
 {
 //    $reward_coupon_money = '0.00';
 //    $reward_coupon_name = '';
@@ -941,6 +945,7 @@ function taskLog($user_id, $task, $reward, $order_sn = '', $reward_electronic = 
         'order_sn' => $order_sn,
         'type' => $type,
         'status' => $status,
+        'remark' => $remark
     ];
 
     // $update_data = array(

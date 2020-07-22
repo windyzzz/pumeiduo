@@ -1225,7 +1225,7 @@ class Order extends Base
         }
         $return['return_reason'] = $returnGoods['reason'];
         $return['describe'] = $returnGoods['describe'];
-        $return['return_price'] = $returnGoods['refund_money'] != 0 ? $returnGoods['refund_money'] : $returnGoods['refund_electronic'];
+        $return['return_price'] = $returnGoods['refund_money'] != 0 ? bcadd($returnGoods['refund_money'], $returnGoods['refund_electronic'], 2) : $returnGoods['refund_electronic'];
         $return['return_electronic'] = $returnGoods['refund_electronic'];
         $return['return_integral'] = $returnGoods['refund_integral'];
         $return['voucher'] = $returnGoods['imgs'] ? explode(',', $returnGoods['imgs']) : [];

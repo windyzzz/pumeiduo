@@ -28,7 +28,7 @@ class FlashSale extends Model
 
     public function goods()
     {
-        return $this->hasOne('goods', 'prom_id', 'id');
+        return $this->hasOne('goods', 'goods_id', 'goods_id');
     }
 
     /**

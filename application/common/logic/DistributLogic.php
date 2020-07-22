@@ -73,7 +73,7 @@ class DistributLogic
         }
 
         $invite_uid = M('Users')->where('user_id', $order['user_id'])->getField('invite_uid');
-        if ($invite_uid == 0) $invite_uid = M('Users')->where('user_id', $order['user_id'])->getField('first_leader');
+        if ($invite_uid == 0 || $invite_uid == $order['user_id']) $invite_uid = M('Users')->where('user_id', $order['user_id'])->getField('first_leader');
         $OrderCommonLogic = new \app\common\logic\OrderLogic();
         if ($is_vip) {
             // vip商品
@@ -212,6 +212,8 @@ class DistributLogic
         }
         if ($user_info['invite_uid'] != $uid) {
             $shop_id = $this->_getShopUid($user_info['invite_uid'], $level, $where);
+        } elseif ($user_info['first_leader'] != $uid) {
+            $shop_id = $this->_getShopUid($user_info['first_leader'], $level, $where);
         }
 
         return $shop_id;

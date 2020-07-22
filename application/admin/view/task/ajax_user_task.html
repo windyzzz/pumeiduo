@@ -35,22 +35,6 @@
                         {$list.task_reward_desc}
                     </div>
                 </td>
-                <php>
-                    $html = '';
-                    if($list['user_task']['order_sn_list']){
-                        $order_list = explode(',',$list['user_task']['order_sn_list']);
-                        foreach($order_list as $v){
-                            $order_id = M('order')->where('order_sn',$v)->getField('order_id');
-                            $url = url('Admin/order/detail',['order_id'=>$order_id]);
-                            $html .= "<a target='_blank' href=$url>$v</a> ,";
-                        }
-                    }
-                </php>
-                <td align="left" abbr="consignee" axis="col4" class="">
-                    <div style="text-align: left; width: 360px;" class="" title="{$list.user_task.order_sn_list}">
-                        {$html}
-                    </div>
-                </td>
                 <td align="center" abbr="article_time" axis="col6" class="">
                     <div style="text-align: center; width: 80px;" class="">
                         <switch name="$list[status]">
@@ -77,9 +61,21 @@
                         ''}
                     </div>
                 </td>
-
-                <td style="width: 100%;">
-                    <div></div>
+                <php>
+                    $html = '';
+                    if($list['user_task']['order_sn_list']) {
+                        $order_list = explode(',',$list['user_task']['order_sn_list']);
+                        foreach($order_list as $v) {
+                            $order_id = M('order')->where('order_sn',$v)->getField('order_id');
+                            $url = url('Admin/order/detail',['order_id'=>$order_id]);
+                            $html .= "<a target='_blank' href=$url>$v</a> ,";
+                        }
+                    }
+                </php>
+                <td align="left" abbr="consignee" axis="col4" class="" style="width: 100%;">
+                    <div style="text-align: left; width: auto;" class="" title="{$list.user_task.order_sn_list}">
+                        {$html}
+                    </div>
                 </td>
             </tr>
         </volist>

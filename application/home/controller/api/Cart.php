@@ -532,9 +532,9 @@ class Cart extends Base
                             'original_img_new' => isset($v['goods']) ? getFullPath($v['goods']['original_img']) : '',
                             'spec_key' => $v['spec_key'],
                             'spec_key_name' => $v['spec_key_name'],
-                            'shop_price' => '￥' . $v['member_goods_price'],
+                            'shop_price' => '￥' . bcadd($v['member_goods_price'], $v['use_integral'], 2),
                             'exchange_integral' => $v['use_integral'],
-                            'exchange_price' => '￥' . bcsub($v['member_goods_price'], $v['use_integral'], 2),
+                            'exchange_price' => '￥' . $v['member_goods_price'],
                             'goods_num' => $v['goods_num'],
                             'buy_limit' => $buyLimit,
                             'buy_least' => '1',
@@ -657,9 +657,9 @@ class Cart extends Base
                             'original_img_new' => isset($v['goods']) ? getFullPath($v['goods']['original_img']) : '',
                             'spec_key' => $v['spec_key'],
                             'spec_key_name' => $v['spec_key_name'],
-                            'shop_price' => '￥' . $v['member_goods_price'],
+                            'shop_price' => '￥' . bcadd($v['member_goods_price'], $v['use_integral'], 2),
                             'exchange_integral' => $v['use_integral'],
-                            'exchange_price' => '￥' . bcsub($v['member_goods_price'], $v['use_integral'], 2),
+                            'exchange_price' => '￥' . $v['member_goods_price'],
                             'goods_num' => $v['goods_num'],
                             'buy_limit' => $buyLimit,
                             'buy_least' => '0',
@@ -1103,6 +1103,14 @@ class Cart extends Base
             foreach ($flashSale as $item) {
                 $flashSaleGoods[$item['goods_id'] . '_' . $item['spec_key']] = $item;
             }
+            // 团购活动商品
+            $groupBuy = Db::name('group_buy gb')->join('spec_goods_price sgp', 'sgp.item_id = gb.item_id', 'LEFT')
+//                ->where(['gb.is_end' => 0, 'gb.start_time' => ['<=', time()], 'gb.end_time' => ['>=', time()]])
+                ->field('gb.id, gb.title, gb.goods_id, gb.price, gb.buy_limit, sgp.key spec_key')->select();
+            $groupBuyGoods = [];
+            foreach ($groupBuy as $item) {
+                $groupBuyGoods[$item['goods_id'] . '_' . $item['spec_key']] = $item;
+            }
             foreach ($cartData as $k => $v) {
                 $key = $v['goods_id'] . '_' . $v['spec_key'];
                 if (isset($flashSaleGoods[$key])) {
@@ -1125,6 +1133,11 @@ class Cart extends Base
                             continue;
                         }
                     }
+                }
+                if (isset($groupBuyGoods[$key])) {
+                    // 团购活动
+                    $cartNum -= 1;
+                    continue;
                 }
             }
         } else {

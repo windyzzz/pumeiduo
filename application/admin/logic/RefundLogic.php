@@ -30,9 +30,9 @@ class RefundLogic extends Model
             accountLog($return_goods['user_id'], 0, $return_goods['refund_integral'], '用户申请商品退款', 0, $return_goods['order_id'], $return_goods['order_sn'], $return_goods['refund_electronic'], 19);
         }
         //在线支付金额退到余额去
-        if (1 == $refund_type && $return_goods['refund_money'] > 0) {
-            accountLog($return_goods['user_id'], $return_goods['refund_money'], 0, '用户申请商品退款', 0, $return_goods['order_id'], $return_goods['order_sn'], 0, 19);
-        }
+//        if (1 == $refund_type && $return_goods['refund_money'] > 0) {
+//            accountLog($return_goods['user_id'], $return_goods['refund_money'], 0, '用户申请商品退款', 0, $return_goods['order_id'], $return_goods['order_sn'], 0, 19);
+//        }
         M('return_goods')->where(['rec_id' => $rec_id])->save($updata); //更新退款申请状态
         M('order_goods')->where(['rec_id' => $rec_id])->save(['is_send' => 3]); //修改订单商品状态
 //        if (1 == $return_goods['is_receive']) {
@@ -45,23 +45,25 @@ class RefundLogic extends Model
             }
         }
         //追回订单商品赠送的优惠券
-        $coupon_info = M('coupon_list')->where(['uid' => $return_goods['user_id'], 'get_order_id' => $return_goods['order_id']])->find();
-        if (!empty($coupon_info)) {
-            if (1 == $coupon_info['status']) { //如果优惠券被使用,那么从退款里扣
-                $coupon = M('coupon')->where(['id' => $coupon_info['cid']])->find();
-                if ($return_goods['refund_money'] > $coupon['money']) {
-                    //退款金额大于优惠券金额直接扣
-                    $return_goods['refund_money'] = $return_goods['refund_money'] - $coupon['money']; //更新实际退款金额
-                    M('return_goods')->where(['id' => $return_goods['id']])->save(['refund_money' => $return_goods['refund_money']]);
+        $coupon_infos = M('coupon_list')->where(['uid' => $return_goods['user_id'], 'get_order_id' => $return_goods['order_id']])->select();
+        if (!empty($coupon_infos)) {
+            foreach ($coupon_infos as $coupon_info) {
+                if (1 == $coupon_info['status']) { //如果优惠券被使用,那么从退款里扣
+                    $coupon = M('coupon')->where(['id' => $coupon_info['cid']])->find();
+                    if ($return_goods['refund_money'] > $coupon['money']) {
+                        //退款金额大于优惠券金额直接扣
+                        $return_goods['refund_money'] = $return_goods['refund_money'] - $coupon['money']; //更新实际退款金额
+                        M('return_goods')->where(['id' => $return_goods['id']])->save(['refund_money' => $return_goods['refund_money']]);
+                    } else {
+                        //否则从退还余额里扣
+                        $return_goods['refund_deposit'] = $return_goods['refund_deposit'] - $coupon['money']; //更新实际退还余额
+                        M('return_goods')->where(['id' => $return_goods['id']])->save(['refund_deposit' => $return_goods['refund_deposit']]);
+                    }
+                    M('coupon')->where(['id' => $coupon_info['cid']])->setDec('use_num', 1);
                 } else {
-                    //否则从退还余额里扣
-                    $return_goods['refund_deposit'] = $return_goods['refund_deposit'] - $coupon['money']; //更新实际退还余额
-                    M('return_goods')->where(['id' => $return_goods['id']])->save(['refund_deposit' => $return_goods['refund_deposit']]);
+                    M('coupon_list')->where(['id' => $coupon_info['id']])->delete();
+                    M('coupon')->where(['id' => $coupon_info['cid']])->setDec('send_num'); //优惠券追回
                 }
-                M('coupon')->where(['id' => $coupon_info['cid']])->setDec('use_num', 1);
-            } else {
-                M('coupon_list')->where(['id' => $coupon_info['id']])->delete();
-                M('coupon')->where(['id' => $coupon_info['cid']])->setDec('send_num'); //优惠券追回
             }
         }
 //        }

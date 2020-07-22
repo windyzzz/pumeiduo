@@ -146,11 +146,29 @@
             </dl>
             <dl class="row">
                 <dt class="tit">
-                    <label>升级到VIP会员的购物金额</label>
+                    <label>升级到VIP会员的累积消费金额</label>
                 </dt>
                 <dd class="opt">
-                    <input name="vip_buy_money" id="vip_buy_money" value="{$config.vip_buy_money}" onpaste="this.value=this.value.replace(/[^\d]/g,'')" onkeyup="this.value=this.value.replace(/[^\d]/g,'')" class="input-txt" type="text">
+                    <input name="vip_buy_money" id="distribut_buy_money" value="{$config.vip_buy_money}" onpaste="this.value=this.value.replace(/[^\d]/g,'')" onkeyup="this.value=this.value.replace(/[^\d]/g,'')" class="input-txt" type="text">
                     <p class="notic">元</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>累积消费升级VIP后获得的电子币</label>
+                </dt>
+                <dd class="opt">
+                    <input name="buy_get_electronic" id="distribut_buy_get_electronic" value="{$config.buy_get_electronic}" onpaste="this.value=this.value.replace(/[^\d]/g,'')" onkeyup="this.value=this.value.replace(/[^\d]/g,'')" class="input-txt" type="text">
+                    <p class="notic">电子币</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>购买VIP套组升级VIP后获得的电子币</label>
+                </dt>
+                <dd class="opt">
+                    <input name="referee_get_electronic" id="distribut_referee_get_electronic" value="{$config.referee_get_electronic}" onpaste="this.value=this.value.replace(/[^\d]/g,'')" onkeyup="this.value=this.value.replace(/[^\d]/g,'')" class="input-txt" type="text">
+                    <p class="notic">电子币</p>
                 </dd>
             </dl>
             <dl class="row">
@@ -205,6 +223,24 @@
                 <dd class="opt">
                     <input name="referee_svip_point" id="distribut_referee_svip_point" value="{$config.referee_svip_point}" onpaste="this.value=this.value.replace(/[^\d]/g,'')" onkeyup="this.value=this.value.replace(/[^\d]/g,'')" class="input-txt" type="text">
                     <p class="notic">积分</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>累积升级VIP弹窗提示</label>
+                </dt>
+                <dd class="opt">
+                    <textarea name="vip_buy_tips" id="distribut_vip_buy_tips" rows="6" class="tarea">{$config.vip_buy_tips}</textarea>
+                    <p class="notic">点击跳转位置：APP首页</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>购买VIP套组升级VIP弹窗提示</label>
+                </dt>
+                <dd class="opt">
+                    <textarea name="referee_vip_tips" id="distribut_referee_vip_tips" rows="6" class="tarea">{$config.referee_vip_tips}</textarea>
+                    <p class="notic">点击跳转位置：个人邀请码</p>
                 </dd>
             </dl>
             <dl class="row">

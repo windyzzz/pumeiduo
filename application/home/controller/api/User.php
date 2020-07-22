@@ -670,13 +670,13 @@ class User extends Base
 
     private function _hasRelationship($id)
     {
-        $invite_uid = M('Users')->where('user_id', $id)->getField('invite_uid');
+        $invite_uid = M('Users')->where('user_id', $id)->getField('first_leader');
 
         if ($invite_uid > 0) {
             if ($invite_uid == $this->user_id) {
                 return true;
             }
-//            return $this->_hasRelationship($invite_uid);
+            return $this->_hasRelationship($invite_uid);
         }
 
         return false;
@@ -1123,7 +1123,7 @@ class User extends Base
             $logic = new UsersLogic();
             if (1 == $step) {
                 $res = $logic->check_validate_code($code, $old_mobile, 'phone', $session_id, $scene);
-                if (!$res && 1 != $res['status']) {
+                if (!$res || 1 != $res['status']) {
                     return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
                 }
 
@@ -1138,7 +1138,7 @@ class User extends Base
                 return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
             } elseif (2 == $step) {
                 $res = $logic->check_validate_code($code, $old_mobile, 'phone', $session_id, $scene);
-                if (!$res && 1 != $res['status']) {
+                if (!$res ||1 != $res['status']) {
                     return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
                 }
 
@@ -2303,13 +2303,13 @@ class User extends Base
         $logic = new UsersLogic();
         if (1 == $step) {
             $res = $logic->check_validate_code($code, $this->user['mobile'], 'phone', $session_id, $scene);
-            if (!$res && 1 != $res['status']) {
+            if (!$res || 1 != $res['status']) {
                 return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
             }
             return json(['status' => 1, 'msg' => '验证成功', 'result' => null]);
         } elseif ($step > 1) {
             $res = $logic->check_validate_code($code, $this->user['mobile'], 'phone', $session_id, $scene);
-            if (!$res && 1 != $res['status']) {
+            if (!$res || 1 != $res['status']) {
                 return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
             }
             $data = $logic->paypwd($this->user_id, I('post.new_password'), I('post.confirm_password'), $this->userToken);
@@ -2346,7 +2346,7 @@ class User extends Base
 
         $logic = new UsersLogic();
         $res = $logic->check_validate_code($code, $this->user['mobile'], 'phone', $session_id, $scene);
-        if (!$res && 1 != $res['status']) {
+        if (!$res || 1 != $res['status']) {
             return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
         }
 
@@ -3046,7 +3046,7 @@ class User extends Base
                 ];
                 // 查看用户任务记录
                 $userTask = M('user_task')
-                    ->where(['user_id' => $this->user_id, 'task_id' => $task['id'], 'task_reward_id' => $reward['reward_id']])
+                    ->where(['user_id' => $this->user_id, 'task_id' => $task['id'], 'task_reward_id' => $reward['reward_id'], 'status' => ['NEQ', -2]])
                     ->field('id, target_num, finish_num')->order('created_at desc')->find();
                 if (!empty($userTask)) {
                     // 查看用户任务记录领取情况
@@ -3696,7 +3696,7 @@ class User extends Base
      */
     public function checkNote()
     {
-        $returnData = ['list' => []];
+        $noteList = [];
         /*
          * 用户是否有完成未领取的任务奖励
          */
@@ -3741,7 +3741,7 @@ class User extends Base
                 }
             }
             if (!empty($taskData)) {
-                $returnData['list'][] = [
+                $noteList[] = [
                     'type' => 1,
                     'is_note' => 1,
                     'note_data' => [
@@ -3750,7 +3750,7 @@ class User extends Base
                     ]
                 ];
             } else {
-                $returnData['list'][] = [
+                $noteList[] = [
                     'type' => 1,
                     'is_note' => 0,
                     'note_data' => [
@@ -3760,7 +3760,7 @@ class User extends Base
                 ];
             }
         } else {
-            $returnData['list'][] = [
+            $noteList[] = [
                 'type' => 1,
                 'is_note' => 0,
                 'note_data' => [
@@ -3772,27 +3772,55 @@ class User extends Base
         /*
          * 用户是否已经升级成为VIP
          */
-        $distributeLog = M('distribut_log')->where(['user_id' => $this->user_id, 'type' => 3, 'note_status' => 0])->field('id, upgrade_money')->find();
-        if (!empty($distributeLog)) {
-            $returnData['list'][] = [
-                'type' => 2,
-                'is_note' => 1,
-                'note_data' => [
-                    'id' => $distributeLog['id'],
-                    'title' => '消费满' . $distributeLog['upgrade_money'] . '元成功升级为VIP会员'
-                ]
-            ];
-        } else {
-            $returnData['list'][] = [
-                'type' => 2,
-                'is_note' => 0,
-                'note_data' => [
-                    'id' => '0',
-                    'title' => ''
-                ]
-            ];
+        $vip_buy_tips = trim(tpCache('distribut.vip_buy_tips'));
+        $referee_vip_tips = trim(tpCache('distribut.referee_vip_tips'));
+        if ($vip_buy_tips || $referee_vip_tips) {
+            $distributeLog = M('distribut_log')->where(['user_id' => $this->user_id, 'type' => ['IN', [1, 3]], 'note_status' => 0])->select();
+            if (!empty($distributeLog)) {
+                foreach ($distributeLog as $log) {
+                    switch ($log['type']) {
+                        case 1:
+                            // 购买VIP套组升级
+                            if (M('distribut_log')->where(['user_id' => $this->user_id, 'order_sn' => $log['order_sn'], 'type' => 2])->find() || !$referee_vip_tips) {
+                                continue;
+                            }
+                            $noteList[] = [
+                                'type' => 2,
+                                'is_note' => 1,
+                                'note_data' => [
+                                    'id' => $log['id'],
+                                    'title' => $referee_vip_tips
+                                ]
+                            ];
+                            break 2;
+                        case 3:
+                            // 累积消费升级
+                            if (!$vip_buy_tips) {
+                                continue;
+                            }
+                            $noteList[] = [
+                                'type' => 3,
+                                'is_note' => 1,
+                                'note_data' => [
+                                    'id' => $log['id'],
+                                    'title' => $vip_buy_tips
+                                ]
+                            ];
+                            break 2;
+                    }
+                }
+            } else {
+                $noteList[] = [
+                    'type' => 2,
+                    'is_note' => 0,
+                    'note_data' => [
+                        'id' => '0',
+                        'title' => ''
+                    ]
+                ];
+            }
         }
-        return json(['status' => 1, 'result' => $returnData]);
+        return json(['status' => 1, 'result' => ['list' => $noteList]]);
     }
 
     /**
@@ -3803,15 +3831,24 @@ class User extends Base
     {
         $type = I('type', 2);
         switch ($type) {
-            case '2':
+            case 2:
+                /*
+                 * 用户升级成为VIP弹窗
+                 */
+                M('distribut_log')->where(['user_id' => $this->user_id, 'type' => 1, 'note_status' => 0])->update(['note_status' => 1]);
+                $return = ['status' => 1];
+                break;
+            case 3:
                 /*
                  * 用户升级成为VIP弹窗
                  */
                 M('distribut_log')->where(['user_id' => $this->user_id, 'type' => 3, 'note_status' => 0])->update(['note_status' => 1]);
+                $return = ['status' => 1];
                 break;
             default:
-                return json(['status' => 0, 'msg' => '通知类型错误']);
+                $return = ['status' => 0, 'msg' => '通知类型错误'];
         }
+        return json($return);
     }
 
     /**

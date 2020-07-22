@@ -263,7 +263,7 @@ class Tb extends Controller
             $type = $tb_data['type'];
             $data = $tb_data['data'];
             $tb_sn = $tb_data['tb_sn'];
-            $get_id = M('tb_get')->data(array('tb_sn' => $tb_sn, 'data' => json_encode($tb_data)))->add();
+            $get_id = M('tb_get')->data(array('tb_sn' => $tb_sn, 'data' => json_encode($tb_data), 'add_time' => NOW_TIME))->add();
             if ($type == 1) {//更新商品
                 $back = $this->save_goods($data);
             } else if ($type == 2) {//更新品牌

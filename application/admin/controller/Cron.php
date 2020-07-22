@@ -1488,6 +1488,10 @@ AND log_id NOT IN
                     $update['is_distribut'] = 1;
                     $update['distribut_level'] = 2;
                     M('users')->where('user_id', $userId)->save($update);
+                    // 升级返还奖励
+                    if (tpCache('distribut.buy_get_electronic') > 0) {
+                        accountLog($userId, 0, 0, '购买318套组返消费币', 0, 0, '', tpCache('distribut.buy_get_electronic'), 14, false);
+                    }
                     $user = Db::name('users')->where('user_id', $userId)->find();
                     // 更新用户推送tags
                     $res = (new PushLogic())->bindPushTag($user);
@@ -1498,6 +1502,10 @@ AND log_id NOT IN
                     TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
                     // 升级记录
                     logDistribut('', $userId, $update['distribut_level'], $userOldLevel, 3, $vipBuyMoney);
+                    // 推荐任务
+                    $task = new \app\common\logic\TaskLogic(2);
+                    $task->setUserId($userId);
+                    $task->inviteProfit(true);
                 }
             }
         }

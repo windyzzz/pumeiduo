@@ -107,12 +107,12 @@ class TaskLogic
             $this->setUser($user);
 
             $first_leader = $this->user['first_leader'];
-            $second_leader = $this->user['second_leader'];
-            $third_leader = $this->user['third_leader'];
+//            $second_leader = $this->user['second_leader'];
+//            $third_leader = $this->user['third_leader'];
 
             $this->getRewardSell($first_leader);
-            $this->getRewardSell($second_leader);
-            $this->getRewardSell($third_leader);
+//            $this->getRewardSell($second_leader);
+//            $this->getRewardSell($third_leader);
         }
     }
 
@@ -388,7 +388,7 @@ class TaskLogic
         return false;
     }
 
-    public function doInviteAfter($uid)
+    public function doInviteAfter($uid, $remark = '')
     {
         if ($this->checkTaskEnable()) {
             $uLevel = M('users')->where(['user_id' => $uid])->value('distribut_level');
@@ -548,7 +548,7 @@ class TaskLogic
                         } else {
                             $reward_coupon_id = $tv['reward_coupon_id'];
                         }
-                        taskLog($uid, $this->task, $tv, $order_sn, $reward_price, $reward_num, 1, 0, $reward_coupon_id, $user_task_id);
+                        taskLog($uid, $this->task, $tv, $order_sn, $reward_price, $reward_num, 1, 0, $reward_coupon_id, $user_task_id, $remark);
                     }
                 }
             }
@@ -557,25 +557,34 @@ class TaskLogic
 
     /**
      * 推荐任务奖励
+     * @param bool $isConsume 是否是消费升级VIP
      */
-    public function inviteProfit()
+    public function inviteProfit($isConsume = false)
     {
         if ($this->checkTaskEnable()) {
-            $order_id = $this->order['order_id'];
-            // 查看订单商品
-            $goodsIds = Db::name('order_goods')->where(['order_id' => $order_id])->getField('goods_id', true);
-            $goodsInfo = Db::name('goods')->where(['goods_id' => ['in', $goodsIds]])->field('zone, distribut_id')->select();
-            foreach ($goodsInfo as $value) {
-                if ($value['zone'] == 3 && $value['distribut_id'] > 0) {
-                    $levelUp = true;
-                    break;
+            if (!$isConsume) {
+                $order_id = $this->order['order_id'];
+                // 查看订单商品
+                $goodsIds = Db::name('order_goods')->where(['order_id' => $order_id])->getField('goods_id', true);
+                $goodsInfo = Db::name('goods')->where(['goods_id' => ['in', $goodsIds]])->field('zone, distribut_id')->select();
+                foreach ($goodsInfo as $value) {
+                    if ($value['zone'] == 3 && $value['distribut_id'] > 0) {
+                        $levelUp = true;
+                        break;
+                    }
                 }
-            }
-            if (!empty($levelUp)) {
-                $userInfo = M('users')->master()->field('user_id, distribut_level, first_leader')->where('user_id', $this->order['user_id'])->find() ?: [];
+                if (!empty($levelUp)) {
+                    $userInfo = M('users')->master()->field('user_id, distribut_level, first_leader')->where('user_id', $this->order['user_id'])->find() ?: [];
+                    if (!empty($userInfo) && $userInfo['first_leader'] > 0) {
+                        $this->user = $userInfo;
+                        $this->doInviteAfter($userInfo['first_leader']);
+                    }
+                }
+            } else {
+                $userInfo = M('users')->master()->field('user_id, distribut_level, first_leader')->where('user_id', $this->userId)->find() ?: [];
                 if (!empty($userInfo) && $userInfo['first_leader'] > 0) {
                     $this->user = $userInfo;
-                    $this->doInviteAfter($userInfo['first_leader']);
+                    $this->doInviteAfter($userInfo['first_leader'], '累积消费升级VIP');
                 }
             }
         }

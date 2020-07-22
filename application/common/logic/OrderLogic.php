@@ -186,8 +186,11 @@ class OrderLogic
                         if ($account['user_money'] > 0) {
                             accountLog($account['user_id'], -$account['user_money'], 0, '推广318套组奖励金额追回', 0, $order_id, '', 0, 14, false);
                         }
-                        if ($account['pay_points']) {
+                        if ($account['pay_points'] > 0) {
                             accountLog($account['user_id'], 0, -$account['pay_points'], '推广318套组奖励积分追回', 0, $order_id, '', 0, 14, false);
+                        }
+                        if ($account['user_electronic'] > 0) {
+                            accountLog($account['user_id'], 0, 0, '购买318套组返消费币追回', 0, $order_id, '', -$account['user_electronic'], 14, true);
                         }
                     }
                 }
@@ -258,11 +261,18 @@ class OrderLogic
         // 分销追回 (上级)
         M('rebate_log')->where('order_sn', $order['order_sn'])->update(['status' => 4, 'confirm_time' => time(), 'remark' => '追回佣金']);
 
-        // 退还券
+        // 退还优惠券
         if ($order['coupon_id'] > 0) {
             $res = ['use_time' => 0, 'status' => 0, 'order_id' => 0];
-            M('coupon_list')->where(['order_id' => $order_id, 'uid' => $user_id])->save($res);
+            M('coupon_list')->where(['cid' => $order['coupon_id'], 'uid' => $user_id])->save($res);
             M('coupon')->where(['id' => $order['coupon_id']])->setDec('use_num', 1);
+        }
+        // 退还兑换券
+        $orderExchangeId = M('order_goods')->where(['order_id' => $order_id, 're_id' => ['GT', 0]])->value('re_id');
+        if ($orderExchangeId > 0) {
+            $res = ['use_time' => 0, 'status' => 0, 'order_id' => 0];
+            M('coupon_list')->where(['cid' => $orderExchangeId, 'uid' => $user_id])->save($res);
+            M('coupon')->where(['id' => $orderExchangeId])->setDec('use_num', 1);
         }
 
         $row = M('order')->where(['order_id' => $order_id, 'user_id' => $user_id])->save(['order_status' => 3, 'cancel_time' => time()]);
