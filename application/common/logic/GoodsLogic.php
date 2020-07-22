@@ -1069,7 +1069,7 @@ class GoodsLogic extends Model
             ->order($sort)->limit($page->firstRow . ',' . $page->listRows)
             ->select();
         // 商品规格属性
-        $goodsItem = Db::name('spec_goods_price')->where(['goods_id' => ['in', $filter_goods_id]])->group('goods_id')->getField('goods_id, item_id', true);
+        $goodsItem = Db::name('spec_goods_price')->where(['goods_id' => ['in', $filter_goods_id], 'key' => ['NEQ', '']])->group('goods_id')->getField('goods_id, item_id', true);
         // 用户收藏
         if ($userId) {
             $goodsCollect = $this->getCollectGoods($userId);

@@ -785,6 +785,8 @@ class Goods extends Base
                 $goodsInfo['integral_pv'] = '';
             } elseif ($goods['integral_pv'] == 0) {
                 $goodsInfo['integral_pv'] = '';
+            } else {
+                $goodsInfo['integral_pv'] = $goods['integral_pv'];
             }
             // 商品佣金
             if ($this->user['distribut_level'] < 2) {

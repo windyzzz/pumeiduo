@@ -1208,7 +1208,7 @@ class Pay
                                 $cartLogic->setType(2);
                             }
                             $cartLogic->setCartType(0);
-                            $buyGoods = $cartLogic->buyNow();
+                            $buyGoods = $cartLogic->buyNow(true, true);
                             $buyGoods['member_goods_price'] = '0';
                             $buyGoods['use_integral'] = '0';
                             $buyGoods['re_id'] = $coupon_id;
