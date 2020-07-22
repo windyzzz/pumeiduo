@@ -750,6 +750,7 @@ class Goods extends Base
         $goodsInfo = [
             'goods_type' => 'normal',
             'goods_id' => $goods['goods_id'],
+            'item_id' => $itemId . '',
             'goods_sn' => $goods['goods_sn'],
             'goods_name' => $goods['goods_name'],
             'store_count' => $goods['store_count'],

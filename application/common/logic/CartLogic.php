@@ -103,6 +103,9 @@ class CartLogic extends Model
         if ($item_id > 0) {
             $specGoodsPriceModel = new SpecGoodsPrice();
             $this->specGoodsPrice = $specGoodsPriceModel::get($item_id);
+            if ($this->specGoodsPrice['key'] == '') {
+                $this->specGoodsPrice = null;
+            }
         } else {
             $this->specGoodsPrice = null;
         }
@@ -199,6 +202,7 @@ class CartLogic extends Model
 //                throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '必须传递商品规格', 'result' => '']);
                 // 默认第一个商品规格
                 $this->setSpecGoodsPriceModel($itemId);
+                $buyGoods['goods']['shop_price'] = $this->specGoodsPrice['price'];
             }
             $prom_id = $this->goods['prom_id'];
             $prom_type = $this->goods['prom_type'];
@@ -206,6 +210,7 @@ class CartLogic extends Model
         } else {
             $buyGoods['goods']['spec_key'] = $this->specGoodsPrice['key'];
             $buyGoods['goods']['spec_key_name'] = $this->specGoodsPrice['key_name'];
+            $buyGoods['goods']['shop_price'] = $this->specGoodsPrice['price'];  // 商品现金价
             $buyGoods['member_goods_price'] = $this->specGoodsPrice['price'];
             $buyGoods['goods_price'] = $this->specGoodsPrice['price'];
             $buyGoods['spec_key'] = $this->specGoodsPrice['key'];
@@ -909,6 +914,7 @@ class CartLogic extends Model
                     continue;
                 }
                 $cartList[$cartKey]['item_id'] = $specGoodsPrice['item_id'];
+                $cartList[$cartKey]['goods']['shop_price'] = $specGoodsPrice['price'];  // 商品现金价
             } else {
                 $specGoodsPrice = SpecGoodsPrice::get(['goods_id' => $cart['goods_id']], '', false);
                 if ($specGoodsPrice && $specGoodsPrice['key'] != '') {

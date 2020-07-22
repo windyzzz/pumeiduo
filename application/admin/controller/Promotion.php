@@ -633,9 +633,12 @@ class Promotion extends Base
             $this->ajaxReturn($return);
         }
         $data['rebate'] = number_format($data['price'] / $data['goods_price'] * 10, 1);
+        if ($data['item_id'] > 0 && M('spec_goods_price')->where(['item_id' => $data['item_id']])->value('key') == '') {
+            $data['item_id'] = 0;
+        }
         if ('add' == $data['act']) {
             $r = Db::name('group_buy')->insertGetId($data);
-            if ($data['item_id'] > 0) {
+            if ($data['item_id'] > 0 && M('spec_goods_price')->where(['item_id' => $data['item_id']])->value('key') != '') {
                 //设置商品一种规格为活动
                 Db::name('spec_goods_price')->where('item_id', $data['item_id'])->update(['prom_id' => $r, 'prom_type' => 2]);
                 Db::name('goods')->where('goods_id', $data['goods_id'])->save(['prom_id' => 0, 'prom_type' => 2]);
@@ -645,7 +648,7 @@ class Promotion extends Base
         }
         if ('edit' == $data['act']) {
             $r = Db::name('group_buy')->where(['id' => $data['id']])->update($data);
-            if ($data['item_id'] > 0) {
+            if ($data['item_id'] > 0 && M('spec_goods_price')->where(['item_id' => $data['item_id']])->value('key') != '') {
                 //设置商品一种规格为活动
                 Db::name('spec_goods_price')->where(['prom_type' => 2, 'prom_id' => $data['id']])->update(['prom_id' => 0, 'prom_type' => 0]);
                 Db::name('spec_goods_price')->where('item_id', $data['item_id'])->update(['prom_id' => $data['id'], 'prom_type' => 2]);
@@ -804,9 +807,12 @@ class Promotion extends Base
                             $this->ajaxReturn(['status' => 0, 'msg' => '可兑换商品的积分多于秒杀价格，请不要勾选使用积分']);
                         }
                     }
+                    if ($data['item_id'] > 0 && M('spec_goods_price')->where(['item_id' => $data['item_id']])->value('key') == '') {
+                        $data['item_id'] = 0;
+                    }
                     if (empty($data['id'])) {
                         $flashSaleInsertId = Db::name('flash_sale')->insertGetId($data);
-                        if ($data['item_id'] > 0) {
+                        if ($data['item_id'] > 0 && M('spec_goods_price')->where(['item_id' => $data['item_id']])->value('key') != '') {
                             //设置商品一种规格为活动
                             Db::name('spec_goods_price')->where('item_id', $data['item_id'])->update(['prom_id' => $flashSaleInsertId, 'prom_type' => 1]);
                             Db::name('goods')->where('goods_id', $data['goods_id'])->save(['prom_id' => 0, 'prom_type' => 1]);
@@ -823,7 +829,7 @@ class Promotion extends Base
                     } else {
                         $r = M('flash_sale')->where('id=' . $data['id'])->save($data);
                         M('goods')->where(['prom_type' => 1, 'prom_id' => $data['id']])->save(['prom_id' => 0, 'prom_type' => 0]);
-                        if ($data['item_id'] > 0) {
+                        if ($data['item_id'] > 0 && M('spec_goods_price')->where(['item_id' => $data['item_id']])->value('key') != '') {
                             //设置商品一种规格为活动
                             Db::name('spec_goods_price')->where(['prom_type' => 1, 'prom_id' => $data['item_id']])->update(['prom_id' => 0, 'prom_type' => 0]);
                             Db::name('spec_goods_price')->where('item_id', $data['item_id'])->update(['prom_id' => $data['id'], 'prom_type' => 1]);
