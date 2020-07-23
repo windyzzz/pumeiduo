@@ -1893,3 +1893,15 @@ function getFullPath($path)
     }
     return $path;
 }
+
+/**
+ * 图片转base64
+ * @param string $img
+ * @return string
+ */
+function imgToBase64($img = '')
+{
+    $imageInfo = getimagesize($img);
+    $base64 = chunk_split(base64_encode(file_get_contents($img)));
+    return 'data:' . $imageInfo['mime'] . ';base64,' . chunk_split($base64);
+}

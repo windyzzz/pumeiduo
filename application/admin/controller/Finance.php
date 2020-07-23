@@ -404,7 +404,7 @@ class Finance extends Base
                     'total_price' => isset($list['total_price']) ? $list['total_price'] : 0.00,
                     'consume_price' => isset($list['consume_price']) ? $list['consume_price'] : 0.00,
                     'creat_time' => $type == 1 ? date('Y-m-d H:i:s', $list['creat_time']) : $list['creat_time'],
-                    'pay_time' => isset($list['pay_time']) ? date('Y-m-d H:i:s', $list['pay_time']) : 0,
+                    'pay_time' => isset($list['pay_time']) && $list['pay_time'] != 0 ? date('Y-m-d H:i:s', $list['pay_time']) : '',
                     'order' => '',
                     'order_goods' => ''
                 ];

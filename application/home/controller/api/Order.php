@@ -455,6 +455,7 @@ class Order extends Base
                 'auto_confirm_time' => $autoConfirmTime,
                 'shipping_name' => $orderInfo['shipping_name']
             ],
+            'goods_banner' => '乐活优选',
             'goods' => []
         ];
         if ($orderData['delivery']['city_name'] == '直辖区') {
