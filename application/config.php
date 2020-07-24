@@ -530,6 +530,7 @@ return [
     'SUPPLIER_GOODS_SPEC' => [
         'color' => '颜色',
         'spec' => '尺码',
-        '型号' => '型号'
+        '型号' => '型号',
+        'size' => '尺寸'
     ],
 ];

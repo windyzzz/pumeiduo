@@ -383,8 +383,13 @@ class GoodsLogic extends Model
             // 组合规格标识
             foreach ($spec as $k => $v) {
                 if (!isset($specData[$v])) {
+                    if (isset($goodsSpec[$v])) {
+                        $type = C('SUPPLIER_GOODS_SPEC')[$goodsSpec[$v]] ?? '规格';
+                    } else {
+                        $type = '规格';
+                    }
                     $specData[$v] = [
-                        'type' => $goodsSpec[$v],
+                        'type' => $type,
                         'type_value' => []
                     ];
                 }
@@ -1810,69 +1815,68 @@ class GoodsLogic extends Model
             $userAddress = get_user_address_list_new($user['user_id'], false, $addressId);
         }
         if (!empty($userAddress)) {
-            $userAddress[0]['out_range'] = 0;
-            unset($userAddress[0]['zipcode']);
-            unset($userAddress[0]['is_pickup']);
+            $userAddress = $userAddress[0];
+            $userAddress['out_range'] = 0;
+            unset($userAddress['zipcode']);
+            unset($userAddress['is_pickup']);
             // 地址标签
             $addressTab = (new UsersLogic())->getAddressTab($user['user_id']);
             if (!empty($addressTab)) {
-                if (empty($userAddress[0]['tabs'])) {
-                    unset($userAddress[0]['tabs']);
-                    $userAddress[0]['tabs'][] = [
+                if (empty($userAddress['tabs'])) {
+                    unset($userAddress['tabs']);
+                    $userAddress['tabs'][] = [
                         'tab_id' => 0,
                         'name' => '默认',
                         'is_selected' => 1
                     ];
                 } else {
-                    $tabs = explode(',', $userAddress[0]['tabs']);
-                    unset($userAddress[0]['tabs']);
+                    $tabs = explode(',', $userAddress['tabs']);
+                    unset($userAddress['tabs']);
                     foreach ($addressTab as $item) {
                         if (in_array($item['tab_id'], $tabs)) {
-                            $userAddress[0]['tabs'][] = [
+                            $userAddress['tabs'][] = [
                                 'tab_id' => $item['tab_id'],
                                 'name' => $item['name'],
                                 'is_selected' => 1
                             ];
                         }
                     }
-                    $userAddress[0]['tabs'][] = [
+                    $userAddress['tabs'][] = [
                         'tab_id' => 0,
                         'name' => '默认',
                         'is_selected' => 1
                     ];
                 }
             } else {
-                unset($userAddress[0]['tabs']);
-                $userAddress[0]['tabs'][] = [
+                unset($userAddress['tabs']);
+                $userAddress['tabs'][] = [
                     'tab_id' => 0,
                     'name' => '默认',
                     'is_selected' => 1
                 ];
             }
-            $userAddress = $userAddress[0];
-            if (!$isSupply) {
-                /*
-                 * 非供应链商品
-                 */
-                $cartLogic = new CartLogic();
-                $cartLogic->setUserId($user['user_id']);
-                // 获取订单商品数据
-                $res = $this->getOrderGoodsData($cartLogic, $goodsId, $itemId, 1, 1, '', 1, true);
-                if ($res['status'] != 1) {
-                    throw new TpshopException('地址商品信息', 0, ['status' => 0, 'msg' => $res['msg']]);
-                } else {
-                    $cartList = $res['result'];
-                }
-                $payLogic = new PayLogic();
-                $payLogic->payCart($cartList);
-                // 配送物流
-                if (!empty($userAddress)) {
-                    $res = $payLogic->delivery($userAddress['district']);
-                    if (isset($res['status']) && $res['status'] == -1) {
-                        $userAddress['out_range'] = 1;
-                    }
-                }
+            /*
+             * 商品运费地区限制
+             */
+            $cartLogic = new CartLogic();
+            $cartLogic->setUserId($user['user_id']);
+            // 获取订单商品数据
+            $res = $this->getOrderGoodsData($cartLogic, $goodsId, $itemId, 1, 1, '', 1, true);
+            if ($res['status'] != 1) {
+                throw new TpshopException('地址商品信息', 0, ['status' => 0, 'msg' => $res['msg']]);
             } else {
+                $cartList = $res['result'];
+            }
+            $payLogic = new PayLogic();
+            $payLogic->payCart($cartList);
+            // 配送物流
+            if (!empty($userAddress)) {
+                $res = $payLogic->delivery($userAddress['district']);
+                if (isset($res['status']) && $res['status'] == -1) {
+                    $userAddress['out_range'] = 1;
+                }
+            }
+            if ($isSupply) {
                 /*
                  * 供应链商品
                  */
@@ -1910,10 +1914,10 @@ class GoodsLogic extends Model
                 }
                 if (!empty($res['data'])) {
                     $data = $res['data'][0];
-                    $return['store_count'] = $data['goods_count'] <= 0 ? 0 : $data['goods_count'];
-                    $return['buy_least'] = isset($data['buy_num']) ? $data['buy_num'] : 0;
+                    $return['store_count'] = $data['goods_count'] <= 0 ? '0' : $data['goods_count'];
+                    $return['buy_least'] = isset($data['buy_num']) ? $data['buy_num'] : '0';
                     $userAddress['out_range'] = isset($data['isAreaRestrict']) && $data['isAreaRestrict'] == true ? 1 : 0;
-                    $return['store_count'] = isset($data['isNoStock']) && $data['isNoStock'] == true ? 0 : $return['store_count'];
+                    $return['store_count'] = isset($data['isNoStock']) && $data['isNoStock'] == true ? '0' : $return['store_count'];
                 }
             }
             $return['user_address'] = $userAddress;

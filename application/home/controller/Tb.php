@@ -745,7 +745,7 @@ class Tb extends Controller
                 $supplierId = $spec['supplier_id'];
                 $goodsSpecData[] = [
                     'spec_id' => $spec['spec_id'],
-                    'name' => C('SUPPLIER_GOODS_SPEC')[$spec['name']],
+                    'name' => $spec['name'],
                     'supplier_id' => $spec['supplier_id'],
                 ];
             }
