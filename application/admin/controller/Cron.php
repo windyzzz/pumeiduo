@@ -1536,7 +1536,7 @@ AND log_id NOT IN
         $orderIds = M('order o1')->join('order o2', 'o2.parent_id = o1.order_id')->where([
             'o1.pay_status' => 1,
             'o2.order_type' => 3,
-            'o2.supplier_submit_status' => 0
+            'o2.supplier_order_status' => 0
         ])->getField('o1.order_id', true);
         $orderLogic = new OrderLogic();
         foreach ($orderIds as $orderId) {
