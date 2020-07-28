@@ -545,7 +545,15 @@ class Promotion extends Base
         $group_info['end_time'] = date('Y-m-d', time() + 3600 * 365);
         if ($groupbuy_id) {
             $GroupBy = new GroupBuy();
-            $group_info = $GroupBy->with('specGoodsPrice,goods')->find($groupbuy_id);
+            $group_info = collection($GroupBy->with('specGoodsPrice,goods')->find($groupbuy_id))->toArray();
+            // 数据处理
+            if (!empty($group_info['spec_goods_price'])) {
+                foreach ($group_info['spec_goods_price'] as $k => $specPrice) {
+                    if ($specPrice['key'] == '') {
+                        unset($group_info['spec_goods_price'][$k]);
+                    }
+                }
+            }
             $group_info['start_time'] = date('Y-m-d H:i', $group_info['start_time']);
             $group_info['end_time'] = date('Y-m-d H:i', $group_info['end_time']);
             $act = 'edit';
@@ -566,9 +574,15 @@ class Promotion extends Base
         $group_info['end_time'] = date('Y-m-d', time() + 3600 * 365);
         if ($groupbuy_id) {
             $GroupBy = new GroupBuy();
-            $group_info = $GroupBy->with('specGoodsPrice,goods,groupDetail')->find($groupbuy_id);
-            // dump($group_info->toArray());
-            // exit;
+            $group_info = collection($GroupBy->with('specGoodsPrice,goods,groupDetail')->find($groupbuy_id))->toArray();
+            // 数据处理
+            if (!empty($group_info['spec_goods_price'])) {
+                foreach ($group_info['spec_goods_price'] as $k => $specPrice) {
+                    if ($specPrice['key'] == '') {
+                        unset($group_info['spec_goods_price'][$k]);
+                    }
+                }
+            }
             $group_info['start_time'] = date('Y-m-d H:i', $group_info['start_time']);
             $group_info['end_time'] = date('Y-m-d H:i', $group_info['end_time']);
             $act = 'edit';
@@ -671,7 +685,17 @@ class Promotion extends Base
         $prom_where = ['prom_id' => $prom_id, 'prom_type' => 3];
         $count = $Goods->where($prom_where)->count('goods_id');
         $Page = new Page($count, 10);
-        $goodsList = $Goods->with('specGoodsPrice')->where($prom_where)->order('goods_id DESC')->limit($Page->firstRow . ',' . $Page->listRows)->select();
+        $goodsList = collection($Goods->with('specGoodsPrice')->where($prom_where)->order('goods_id DESC')->limit($Page->firstRow . ',' . $Page->listRows)->select())->toArray();
+        // 数据处理
+        foreach ($goodsList as $k1 => $goods) {
+            if (!empty($goods['spec_goods_price'])) {
+                foreach ($goods['spec_goods_price'] as $k2 => $specPrice) {
+                    if ($specPrice['key'] == '') {
+                        unset($goodsList[$k1]['spec_goods_price'][$k2]);
+                    }
+                }
+            }
+        }
         $show = $Page->show();
         $this->assign('page', $show);
         $this->assign('goodsList', $goodsList);
@@ -727,7 +751,7 @@ class Promotion extends Base
             }
         })->count();
         $Page = new Page($count, 10);
-        $goodsList = $Goods->with('specGoodsPrice')->where($where)->where(function ($query) use ($prom_type, $prom_id) {
+        $goodsList = collection($Goods->with('specGoodsPrice')->where($where)->where(function ($query) use ($prom_type, $prom_id) {
             if (3 == $prom_type) {
                 //优惠促销
                 if ($prom_id) {
@@ -744,8 +768,17 @@ class Promotion extends Base
             } else {
                 $query->where('prom_type', 0);
             }
-        })->order('goods_id DESC')->limit($Page->firstRow . ',' . $Page->listRows)->select();
-
+        })->order('goods_id DESC')->limit($Page->firstRow . ',' . $Page->listRows)->select())->toArray();
+        // 数据处理
+        foreach ($goodsList as $k1 => $goods) {
+            if (!empty($goods['spec_goods_price'])) {
+                foreach ($goods['spec_goods_price'] as $k2 => $specPrice) {
+                    if ($specPrice['key'] == '') {
+                        unset($goodsList[$k1]['spec_goods_price'][$k2]);
+                    }
+                }
+            }
+        }
         $types = I('types', 1);
         $this->assign('types', $types);
 
@@ -875,7 +908,15 @@ class Promotion extends Base
         $info['end_time'] = date('Y-m-d H:i:s', $flash_sale_time + 7200);
         if ($id > 0) {
             $FlashSale = new FlashSale();
-            $info = $FlashSale->with('specGoodsPrice,goods')->find($id);
+            $info = collection($FlashSale->with('specGoodsPrice,goods')->find($id))->toArray();
+            // 数据处理
+            if (!empty($info['spec_goods_price'])) {
+                foreach ($info['spec_goods_price'] as $k => $specPrice) {
+                    if ($specPrice['key'] == '') {
+                        unset($info['spec_goods_price'][$k]);
+                    }
+                }
+            }
             $info['start_time'] = date('Y-m-d H:i', $info['start_time']);
             $info['end_time'] = date('Y-m-d H:i', $info['end_time']);
             $info['source'] = explode(',', $info['source']);
@@ -1041,7 +1082,17 @@ class Promotion extends Base
         $count = $Goods->where($where)->count();
         $Page = new Page($count, 10);
         // 获取商品信息
-        $goodsList = $Goods->with('specGoodsPrice')->where($where)->order('goods_id DESC')->limit($Page->firstRow . ',' . $Page->listRows)->select();
+        $goodsList = collection($Goods->with('specGoodsPrice')->where($where)->order('goods_id DESC')->limit($Page->firstRow . ',' . $Page->listRows)->select())->toArray();
+        // 数据处理
+        foreach ($goodsList as $k1 => $goods) {
+            if (!empty($goods['spec_goods_price'])) {
+                foreach ($goods['spec_goods_price'] as $k2 => $specPrice) {
+                    if ($specPrice['key'] == '') {
+                        unset($goodsList[$k1]['spec_goods_price'][$k2]);
+                    }
+                }
+            }
+        }
         $types = I('types', 1);
         $this->assign('types', $types);
 
