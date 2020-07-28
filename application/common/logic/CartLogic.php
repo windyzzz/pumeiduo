@@ -197,7 +197,7 @@ class CartLogic extends Model
         if (empty($this->specGoodsPrice)) {
             $buyGoods['goods']['spec_key'] = '';
             $buyGoods['goods']['spec_key_name'] = '';
-            $itemId = Db::name('SpecGoodsPrice')->where('goods_id', $this->goods['goods_id'])->where(['key' => ['NEQ', '']])->value('item_id');
+            $itemId = Db::name('SpecGoodsPrice')->where('goods_id', $this->goods['goods_id'])->value('item_id');
             if ($itemId) {
 //                throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '必须传递商品规格', 'result' => '']);
                 // 默认第一个商品规格
@@ -327,7 +327,7 @@ class CartLogic extends Model
         if ($userCartCount >= 50) {
             return ['status' => -9, 'msg' => '购物车最多只能放50种商品', 'result' => ''];
         }
-        $itemId = Db::name('SpecGoodsPrice')->where('goods_id', $this->goods['goods_id'])->where(['key' => ['NEQ', '']])->field('item_id')->find();
+        $itemId = Db::name('SpecGoodsPrice')->where('goods_id', $this->goods['goods_id'])->field('item_id')->find();
         if (empty($this->specGoodsPrice) && !empty($itemId)) {
 //            return ['status' => -1, 'msg' => '必须传递商品规格', 'result' => ''];
             // 默认第一个商品规格

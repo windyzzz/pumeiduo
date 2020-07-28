@@ -674,23 +674,25 @@ class Tb extends Controller
         if (isset($goods['spec_goods_price'])) {
             //获取旧规格
             foreach ($goods['spec_goods_price'] as $key => $val) {
-                $save_data = array(
-                    'goods_id' => $goods_id,
-                    'item_sn' => $val['item_sn'],
-                    'key' => $val['key'],
-                    'key_name' => $val['key_name'],
-                    'store_count' => $val['store_count'],
-                    'spec_img' => $val['image'],
-                    'price' => $val['m_price'],
-                    'supplier_goods_spec' => $val['supplier_goods_spec'],
-                );
-                if (isset($spec_goods_price_old[$val['key']])) {
-                    //更新
-                    M('spec_goods_price')->where(array('goods_id' => $goods_id, 'key' => $val['key']))->data($save_data)->save();
-                    unset($spec_goods_price_old[$val['key']]);
-                } else {
-                    //新增
-                    M('spec_goods_price')->data($save_data)->add();
+                if ($val['key'] != '') {
+                    $save_data = array(
+                        'goods_id' => $goods_id,
+                        'item_sn' => $val['item_sn'],
+                        'key' => $val['key'],
+                        'key_name' => $val['key_name'],
+                        'store_count' => $val['store_count'],
+                        'spec_img' => $val['image'],
+                        'price' => $val['m_price'],
+                        'supplier_goods_spec' => $val['supplier_goods_spec'],
+                    );
+                    if (isset($spec_goods_price_old[$val['key']])) {
+                        //更新
+                        M('spec_goods_price')->where(array('goods_id' => $goods_id, 'key' => $val['key']))->data($save_data)->save();
+                        unset($spec_goods_price_old[$val['key']]);
+                    } else {
+                        //新增
+                        M('spec_goods_price')->data($save_data)->add();
+                    }
                 }
             }
         }
