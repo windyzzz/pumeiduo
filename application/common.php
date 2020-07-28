@@ -1527,7 +1527,7 @@ function update_pay_status($order_sn, $ext = [])
         $res = checkEnableSendSms('4');
         if ($res && 1 == $res['status']) {
             $sender = tpCache('shop_info.mobile');
-            if (!empty($sender)) {
+            if (!empty($sender) && count($sender) == 11) {
                 $params = ['order_id' => $order['order_id']];
                 sendSms('4', $sender, $params);
             }
