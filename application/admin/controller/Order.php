@@ -1296,6 +1296,11 @@ class Order extends Base
     public function refund_balance()
     {
         $data = I('POST.');
+        $return_goods = M('return_goods')->where("id= " . $data['id'])->find();
+        if ($return_goods['type'] == 1 && $return_goods['status'] != 3) {
+            $this->ajaxReturn(['status' => 0, 'msg' => '请先确认收货', 'url' => '']);
+            exit;
+        }
         // $data = I('post.');
         if ($data) {
             M('return_goods')->where('rec_id', $data['rec_id'])->update(['refund_money' => $data['refund_money'], 'refund_electronic' => $data['refund_electronic'], 'refund_integral' => $data['refund_integral']]);
