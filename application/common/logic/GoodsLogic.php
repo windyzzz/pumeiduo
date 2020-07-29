@@ -1129,7 +1129,7 @@ class GoodsLogic extends Model
             if (isset($goodsItem[$v['goods_id']])) {
                 $goodsList[$k]['item_id'] = $goodsItem[$v['goods_id']];
             } else {
-                $goodsList[$k]['item_id'] = 0;
+                $goodsList[$k]['item_id'] = '0';
             }
             // 是否收藏
             $goodsList[$k]['is_enshrine'] = 0;
