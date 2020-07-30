@@ -3772,14 +3772,15 @@ class User extends Base
          */
         $vip_buy_tips = trim(tpCache('distribut.vip_buy_tips'));
         $referee_vip_tips = trim(tpCache('distribut.referee_vip_tips'));
-        if ($vip_buy_tips || $referee_vip_tips) {
+        $referee_svip_tips = trim(tpCache('distribut.referee_svip_tips'));
+        if ($vip_buy_tips || $referee_vip_tips || $referee_svip_tips) {
             $distributeLog = M('distribut_log')->where(['user_id' => $this->user_id, 'type' => ['IN', [1, 3]], 'note_status' => 0])->select();
             if (!empty($distributeLog)) {
                 foreach ($distributeLog as $log) {
                     switch ($log['type']) {
                         case 1:
-                            // 购买VIP套组升级
-                            if (M('distribut_log')->where(['user_id' => $this->user_id, 'order_sn' => $log['order_sn'], 'type' => 2])->find() || !$referee_vip_tips) {
+                            // 购买VIP/SVIP套组升级
+                            if (M('distribut_log')->where(['user_id' => $this->user_id, 'order_sn' => $log['order_sn'], 'type' => 2])->find() || (!$referee_vip_tips && !$referee_svip_tips)) {
                                 continue;
                             }
                             $noteList[] = [
@@ -3787,7 +3788,7 @@ class User extends Base
                                 'is_note' => 1,
                                 'note_data' => [
                                     'id' => $log['id'],
-                                    'title' => $referee_vip_tips
+                                    'title' => $log['new_level'] == 3 ? $referee_svip_tips : $referee_vip_tips
                                 ]
                             ];
                             break 2;
