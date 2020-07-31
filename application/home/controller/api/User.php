@@ -30,8 +30,8 @@ use think\Verify;
 
 class User extends Base
 {
-    public $user_id = 0;
-    public $user = [];
+//    public $user_id = 0;
+//    public $user = [];
 
     public function __construct()
     {
@@ -41,12 +41,12 @@ class User extends Base
             $params['user_token'] = isset($this->userToken) ? $this->userToken : null;
             Hook::exec('app\\home\\behavior\\CheckAuth', 'run', $params);
         }
-        $user = session('user');
-        if ($user) {
-            $this->user = $user;
-            $this->user_id = $user['user_id'];
-            $this->userToken = session_id();
-        }
+//        $user = session('user');
+//        if ($user) {
+//            $this->user = $user;
+//            $this->user_id = $user['user_id'];
+//            $this->userToken = session_id();
+//        }
     }
 
     /**
@@ -2306,9 +2306,11 @@ class User extends Base
             }
             return json(['status' => 1, 'msg' => '验证成功', 'result' => null]);
         } elseif ($step > 1) {
-            $res = $logic->check_validate_code($code, $this->user['mobile'], 'phone', $session_id, $scene);
-            if (!$res || 1 != $res['status']) {
-                return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
+            if ($this->isApp) {
+                $res = $logic->check_validate_code($code, $this->user['mobile'], 'phone', $session_id, $scene);
+                if (!$res || 1 != $res['status']) {
+                    return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
+                }
             }
             $data = $logic->paypwd($this->user_id, I('post.new_password'), I('post.confirm_password'), $this->userToken);
             if (-1 == $data['status']) {

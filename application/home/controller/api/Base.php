@@ -54,6 +54,13 @@ class Base extends Controller
 //            if (!in_array($this->user_id, [1, 107, 24749, 36167, 36175, 36294, 36383, 36430, 36472, 36518, 36527, 36558, 39730])) {
 //                die(json_encode(['status' => $this->user_id, 'msg' => '抱歉，这只是测试服务器，正式服务器已2020-3-9中午12点正式发布，请及时下载最新版APP']));
 //            }
+        } else {
+            $user = session('user');
+            if ($user) {
+                $this->user = $user;
+                $this->user_id = $user['user_id'];
+                $this->userToken = session_id();
+            }
         }
     }
 
