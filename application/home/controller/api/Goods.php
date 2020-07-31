@@ -850,7 +850,7 @@ class Goods extends Base
         } else {
             $groupBuy = Db::name('group_buy gb')
                 ->join('spec_goods_price sgp', 'sgp.item_id = gb.item_id', 'LEFT')
-                ->where(['gb.goods_id' => $goods_id, 'gb.item_id' => $itemId, 'gb.start_time' => ['<=', time()], 'gb.end_time' => ['>=', time()], 'fs.is_end' => 0])
+                ->where(['gb.goods_id' => $goods_id, 'gb.item_id' => $itemId, 'gb.start_time' => ['<=', time()], 'gb.end_time' => ['>=', time()], 'gb.is_end' => 0])
                 ->field('gb.goods_id, gb.price, sgp.key spec_key, gb.price, gb.group_goods_num, gb.goods_num, gb.buy_limit, gb.start_time, gb.end_time, gb.can_integral')->select();
             if (!empty($groupBuy)) {
                 $groupBuy = $groupBuy[0];
