@@ -1890,39 +1890,39 @@ class GoodsLogic extends Model
                     'is_selected' => 1
                 ];
             }
-            /*
-             * 商品运费地区限制
-             */
-            $cartLogic = new CartLogic();
-            $cartLogic->setUserId($user['user_id']);
-            // 获取订单商品数据
-            $res = $this->getOrderGoodsData($cartLogic, $goodsId, $itemId, 1, 1, '', 1, true);
-            if ($res['status'] != 1) {
-                throw new TpshopException('地址商品信息', 0, ['status' => 0, 'msg' => $res['msg']]);
+            // 判断用户地址是否合法
+            $userAddress = (new UsersLogic())->checkUserAddress($userAddress);
+            if ($userAddress['is_illegal'] == 1) {
+                // 不合法
+                $return['store_count'] = '0';
+                $return['user_address'] = $userAddress;
             } else {
-                $cartList = $res['result'];
-            }
-            $payLogic = new PayLogic();
-            $payLogic->payCart($cartList);
-            // 配送物流
-            if (!empty($userAddress)) {
-                $res = $payLogic->delivery($userAddress['district']);
-                if (isset($res['status']) && $res['status'] == -1) {
-                    $userAddress['out_range'] = 1;
-                }
-            }
-            if ($isSupply) {
+                // 合法
                 /*
-                 * 供应链商品
+                 * 商品运费地区限制
                  */
-                // 先判断用户地址是否合法
-                $userAddress = (new UsersLogic())->checkUserAddress($userAddress);
-                if ($userAddress['is_illegal'] == 1) {
-                    // 不合法
-                    $return['store_count'] = '0';
-                    $return['user_address'] = $userAddress;
+                $cartLogic = new CartLogic();
+                $cartLogic->setUserId($user['user_id']);
+                // 获取订单商品数据
+                $res = $this->getOrderGoodsData($cartLogic, $goodsId, $itemId, 1, 1, '', 1, true);
+                if ($res['status'] != 1) {
+                    throw new TpshopException('地址商品信息', 0, ['status' => 0, 'msg' => $res['msg']]);
                 } else {
-                    // 合法
+                    $cartList = $res['result'];
+                }
+                $payLogic = new PayLogic();
+                $payLogic->payCart($cartList);
+                // 配送物流
+                if (!empty($userAddress)) {
+                    $res = $payLogic->delivery($userAddress['district']);
+                    if (isset($res['status']) && $res['status'] == -1) {
+                        $userAddress['out_range'] = 1;
+                    }
+                }
+                if ($isSupply) {
+                    /*
+                     * 供应链商品
+                     */
                     // 获取最新库存信息
                     $supplierGoodsId = M('goods')->where(['goods_id' => $goodsId])->value('supplier_goods_id');
                     if ($itemId > 0) {
