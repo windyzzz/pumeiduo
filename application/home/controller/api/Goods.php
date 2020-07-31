@@ -834,7 +834,7 @@ class Goods extends Base
         // 判断商品性质
         $flashSale = Db::name('flash_sale fs')
             ->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
-            ->where(['fs.goods_id' => $goods_id, 'fs.item_id' => $itemId, 'fs.start_time' => ['<=', time()], 'fs.end_time' => ['>=', time()]])
+            ->where(['fs.goods_id' => $goods_id, 'fs.item_id' => $itemId, 'fs.start_time' => ['<=', time()], 'fs.end_time' => ['>=', time()], 'fs.is_end' => 0])
             ->where(['fs.source' => ['LIKE', $this->isApp ? '%' . 3 . '%' : '%' . 1 . '%']])
             ->field('fs.goods_id, sgp.key spec_key, fs.price, fs.goods_num, fs.buy_limit, fs.start_time, fs.end_time, fs.can_integral')->select();
         if (!empty($flashSale)) {
@@ -850,7 +850,7 @@ class Goods extends Base
         } else {
             $groupBuy = Db::name('group_buy gb')
                 ->join('spec_goods_price sgp', 'sgp.item_id = gb.item_id', 'LEFT')
-                ->where(['gb.goods_id' => $goods_id, 'gb.item_id' => $itemId, 'gb.start_time' => ['<=', time()], 'gb.end_time' => ['>=', time()]])
+                ->where(['gb.goods_id' => $goods_id, 'gb.item_id' => $itemId, 'gb.start_time' => ['<=', time()], 'gb.end_time' => ['>=', time()], 'fs.is_end' => 0])
                 ->field('gb.goods_id, gb.price, sgp.key spec_key, gb.price, gb.group_goods_num, gb.goods_num, gb.buy_limit, gb.start_time, gb.end_time, gb.can_integral')->select();
             if (!empty($groupBuy)) {
                 $groupBuy = $groupBuy[0];
