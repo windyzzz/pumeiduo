@@ -1774,11 +1774,14 @@ class Order extends Base
         if (!empty($userAddress)) {
             $userAddress = $userAddress[0];
             $userAddress['town_name'] = $userAddress['town_name'] ?? '';
-            $userAddress['out_range'] = 0;
+            $userAddress['is_illegal'] = 0;     // 非法地址
+            $userAddress['out_range'] = 0;      // 超出配送范围
+            $userAddress['limit_tips'] = '';    // 限制的提示
             unset($userAddress['zipcode']);
             unset($userAddress['is_pickup']);
+            $userLogic = new UsersLogic();
             // 地址标签
-            $addressTab = (new UsersLogic())->getAddressTab($this->user_id);
+            $addressTab = $userLogic->getAddressTab($this->user_id);
             if (!empty($addressTab)) {
                 if (empty($userAddress['tabs'])) {
                     unset($userAddress['tabs']);
@@ -1813,6 +1816,8 @@ class Order extends Base
                     'is_selected' => 1
                 ];
             }
+            // 判断用户地址是否合法
+            $userAddress = $userLogic->checkUserAddress($userAddress);
         }
 
         $goodsId = I('goods_id', '');           // 商品ID
@@ -2009,6 +2014,11 @@ class Order extends Base
                 if (isset($res['status']) && $res['status'] == -1) {
                     $userAddress['out_range'] = 1;
                 }
+            }
+            if ($userAddress['is_illegal'] == 1) {
+                $userAddress['limit_tips'] = '当前地址信息不完整，请添加街道后补充完整地址信息再提交订单';
+            } elseif ($userAddress['out_range'] == 1) {
+                $userAddress['limit_tips'] = '当前地址不在配送范围内，请重新选择';
             }
             // 订单pv
             $payLogic->setOrderPv();

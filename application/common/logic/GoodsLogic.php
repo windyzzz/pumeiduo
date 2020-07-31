@@ -1968,8 +1968,6 @@ class GoodsLogic extends Model
                 $userAddress['limit_tips'] = '当前地址信息不完整，请添加街道后补充完整地址信息再提交订单';
             } elseif ($userAddress['out_range'] == 1) {
                 $userAddress['limit_tips'] = '当前地址不在配送范围内，请重新选择';
-            } elseif ($userAddress['store_count'] == 0) {
-                $userAddress['limit_tips'] = '当前地址暂无库存';
             }
             $return['user_address'] = $userAddress;
         } else {
