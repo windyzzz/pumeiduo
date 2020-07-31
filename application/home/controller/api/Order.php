@@ -1783,10 +1783,11 @@ class Order extends Base
                 $userAddress = $userAddress[0];
             }
         } else {
-            $userAddress = Db::name('UserAddress')->where('address_id', $addressId)->find();
+            $userAddress = get_user_address_list_new($this->user_id, false, $addressId);
             if (empty($userAddress)) {
                 return json(['status' => 0, 'msg' => '收货人信息不存在']);
             }
+            $userAddress = $userAddress[0];
         }
         if (!empty($userAddress)) {
             $userAddress['town_name'] = $userAddress['town_name'] ?? '';
