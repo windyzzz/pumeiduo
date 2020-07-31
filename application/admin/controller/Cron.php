@@ -1450,14 +1450,15 @@ AND log_id NOT IN
     public function autoUpgradeVip()
     {
         // 普通用户升级成为VIP所需购买的金额
+        $vipBuyDate = tpCache('distribut.vip_buy_date');
         $vipBuyMoney = tpCache('distribut.vip_buy_money');
-        if (isset($vipBuyMoney) && $vipBuyMoney > 0) {
+        if (isset($vipBuyDate) && $vipBuyDate != '' && isset($vipBuyMoney) && $vipBuyMoney > 0) {
             $where = [
                 'order_status' => ['IN', [2, 4, 6]],    // 已收货 已完成 售后
                 'pay_status' => 1,                      // 已支付
                 'shipping_status' => 1,                 // 已发货
                 'end_sale_time' => ['<=', time()],      // 售后期结束
-                'add_time' => ['>=', '1589904000']      // 功能上线时间
+                'add_time' => ['>=', strtotime($vipBuyDate)]
             ];
             // 订单列表
             $orderList = M('order o')->join('users u', 'u.user_id = o.user_id')
@@ -1490,7 +1491,7 @@ AND log_id NOT IN
                     M('users')->where('user_id', $userId)->save($update);
                     // 升级返还奖励
                     if (tpCache('distribut.buy_get_electronic') > 0) {
-                        accountLog($userId, 0, 0, '购买318套组返消费币', 0, 0, '', tpCache('distribut.buy_get_electronic'), 14, false);
+                        accountLog($userId, 0, 0, '累积消费升级返消费币', 0, 0, '', tpCache('distribut.buy_get_electronic'), 14, false);
                     }
                     $user = Db::name('users')->where('user_id', $userId)->find();
                     // 更新用户推送tags

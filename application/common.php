@@ -1528,14 +1528,14 @@ function update_pay_status($order_sn, $ext = [])
         }
         $order['pay_time'] = $time;
         //用户支付, 发送短信给商家
-//        $res = checkEnableSendSms('4');
-//        if ($res && 1 == $res['status']) {
-//            $sender = tpCache('shop_info.mobile');
-//            if (!empty($sender)) {
-//                $params = ['order_id' => $order['order_id']];
-//                sendSms('4', $sender, $params);
-//            }
-//        }
+        $res = checkEnableSendSms('4');
+        if ($res && 1 == $res['status']) {
+            $sender = tpCache('shop_info.mobile');
+            if (!empty($sender) && count($sender) == 11) {
+                $params = ['order_id' => $order['order_id']];
+                sendSms('4', $sender, $params);
+            }
+        }
 
         // 如果有微信公众号 则推送一条消息到微信
         $user = Db::name('OauthUsers')->where(['user_id' => $order['user_id'], 'oauth' => 'weixin', 'oauth_child' => 'mp'])->find();

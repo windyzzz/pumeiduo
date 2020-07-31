@@ -1,4 +1,5 @@
 <include file="public/layout" />
+<script src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
 <body style="background-color: #FFF; overflow: auto;">
 <div id="append_parent"></div>
 <div id="ajaxwaitid"></div>
@@ -142,6 +143,15 @@
                 <dd class="opt">
                     <input name="shop_rate" id="distribut_shop_rate" value="{$config.shop_rate}"onpaste="this.value=this.value.replace(/[^\d]/g,'')" onkeyup="this.value=this.value.replace(/[^\d]/g,'')" class="input-txt" type="text">
                     <p class="notic">购买者推荐人的上上级占商品分销金比例    单位：%</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>累积消费升级到VIP开始时间</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" class="input-txt" id="distribut_vip_buy_date" name="vip_buy_date" value="{$config.vip_buy_date}"/>
+                    <p class="notic">这个时间之后下的单才会统计</p>
                 </dd>
             </dl>
             <dl class="row">
@@ -325,6 +335,10 @@
 </div>
 <div id="goTop"> <a href="JavaScript:void(0);" id="btntop"><i class="fa fa-angle-up"></i></a><a href="JavaScript:void(0);" id="btnbottom"><i class="fa fa-angle-down"></i></a></div>
 <script>
+    $(document).ready(function () {
+        $('#distribut_vip_buy_date').layDate();
+    });
+
     $('#distribut_pattern').change(function(){
         if($(this).val() == 1)
             $('#distribut_order_rate').show();

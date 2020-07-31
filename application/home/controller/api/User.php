@@ -3378,7 +3378,7 @@ class User extends Base
                 $return['amount'] = M('users')->where(['user_id' => $this->user_id])->value('user_money');
                 $return['will_get_amount'] = M('RebateLog')->where('user_id', $this->user_id)->where('status', 'in', [1, 2])->value('SUM(money) as money') ?? '0.00';
                 $return['log_list'] = [];
-                $result = $usersLogic->get_money_log($this->user_id)['result'];
+                $result = $usersLogic->get_money_log($this->user_id, 0, null, true)['result'];
                 foreach ($result as $res) {
                     foreach ($res as $log) {
                         $return['log_list'][] = [
@@ -3395,7 +3395,7 @@ class User extends Base
                 $return['amount'] = M('users')->where(['user_id' => $this->user_id])->value('user_electronic');
                 $return['will_get_amount'] = '0';
                 $return['log_list'] = [];
-                $result = $usersLogic->get_electronic_log($this->user_id)['result'];
+                $result = $usersLogic->get_electronic_log($this->user_id, 0, null, true)['result'];
                 foreach ($result as $res) {
                     foreach ($res as $log) {
                         $return['log_list'][] = [

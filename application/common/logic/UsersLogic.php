@@ -1437,10 +1437,11 @@ class UsersLogic extends Model
      * @param $user_id |用户id
      * @param int $account_type |收入：1,支出:2 所有：0
      * @param null $order_sn
+     * @param bool $isApp
      *
      * @return array
      */
-    public function get_money_log($user_id, $account_type = 0, $order_sn = null)
+    public function get_money_log($user_id, $account_type = 0, $order_sn = null, $isApp = false)
     {
         $account_log_where['user_id'] = ['eq', $user_id];
         $account_log_where['user_money'] = ['not in', ['0.00', '0']];
@@ -1461,7 +1462,7 @@ class UsersLogic extends Model
 
         $list = [];
         foreach ($account_log as $ak => $av) {
-            $key = date('m', strtotime($av['change_time']));
+            $key = $isApp ? date('Y-m', strtotime($av['change_time'])) : date('m', strtotime($av['change_time']));
             $list[$key][] = $av;
         }
 
@@ -1481,10 +1482,11 @@ class UsersLogic extends Model
      * @param $user_id |用户id
      * @param int $account_type |收入：1,支出:2 所有：0
      * @param null $order_sn
+     * @param bool $isApp
      *
      * @return array
      */
-    public function get_electronic_log($user_id, $account_type = 0, $order_sn = null)
+    public function get_electronic_log($user_id, $account_type = 0, $order_sn = null, $isApp)
     {
         $account_log_where['user_id'] = ['eq', $user_id];
         $account_log_where['user_electronic'] = ['not in', ['0.00', '0']];
@@ -1505,7 +1507,7 @@ class UsersLogic extends Model
 
         $list = [];
         foreach ($account_log as $ak => $av) {
-            $key = date('m', strtotime($av['change_time']));
+            $key = $isApp ? date('Y-m', strtotime($av['change_time'])) : date('m', strtotime($av['change_time']));
             $list[$key][] = $av;
         }
 
