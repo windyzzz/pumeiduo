@@ -1175,7 +1175,7 @@ class Goods extends Base
         if ($count > 0) {
             // 获取商品数据
             $goodsLogic = new GoodsLogic();
-            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user_id);
+            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user_id, $this->isApp);
         }
 
 //        $goods_category = M('goods_category')->where('is_show=1')->cache(true)->getField('id,name,parent_id,level'); // 键值分类数组
@@ -1272,7 +1272,7 @@ class Goods extends Base
         if ($count > 0) {
             // 获取商品数据
             $goodsLogic = new GoodsLogic();
-            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user_id);
+            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user_id, $this->isApp);
         }
         $return['goods_list'] = isset($goodsData) ? $goodsData['goods_list'] : [];
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
@@ -1327,7 +1327,7 @@ class Goods extends Base
         if ($count > 0) {
             // 获取商品数据
             $goodsLogic = new GoodsLogic();
-            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user_id);
+            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user_id, $this->isApp);
         }
 
         $navigate_cat = navigate_goods($id); // 面包屑导航
@@ -1732,7 +1732,7 @@ class Goods extends Base
         if ($count > 0) {
             // 获取商品数据
             $goodsLogic = new GoodsLogic();
-            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user_id);
+            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user_id, $this->isApp);
         }
 
         $navigate_cat = navigate_goods($id); // 面包屑导航
@@ -1794,7 +1794,7 @@ class Goods extends Base
         if ($count > 0) {
             // 获取商品数据
             $goodsLogic = new GoodsLogic();
-            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user_id);
+            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user_id, $this->isApp);
         }
         $return['goods_list'] = isset($goodsData) ? $goodsData['goods_list'] : [];
         $return['page'] = $page; // 赋值分页输出
@@ -1838,7 +1838,7 @@ class Goods extends Base
         if ($count > 0) {
             // 获取商品数据
             $goodsLogic = new GoodsLogic();
-            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user_id);
+            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user_id, $this->isApp);
         }
         $return['goods_list'] = isset($goodsData) ? $goodsData['goods_list'] : [];
         $return['page'] = $page; // 赋值分页输出
@@ -1985,7 +1985,7 @@ class Goods extends Base
         if ($count > 0) {
             // 获取商品数据
             $goodsLogic = new GoodsLogic();
-            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user_id);
+            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user_id, $this->isApp);
         }
 
         $return['goods_list'] = isset($goodsData) ? $goodsData['goods_list'] : [];
@@ -2454,7 +2454,7 @@ class Goods extends Base
         $page = new Page($count, 10);
         // 获取商品数据
         $goodsLogic = new GoodsLogic();
-        $goodsList = $goodsLogic->getGoodsList($goodsIds, $sortArr, $page, null, ['is_abroad' => 1])['goods_list'];
+        $goodsList = $goodsLogic->getGoodsList($goodsIds, $sortArr, $page, null, $this->isApp)['goods_list'];
 
         return json(['status' => 1, 'result' => ['goods_list' => $goodsList]]);
     }

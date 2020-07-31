@@ -966,16 +966,19 @@ class GoodsLogic extends Model
      * @param $sort
      * @param $page
      * @param null $userId
-     * @param array $whereExt
+     * @param bool $isApp
      * @return array
      */
-    public function getGoodsList($filter_goods_id, $sort, $page, $userId = null, $whereExt = [])
+    public function getGoodsList($filter_goods_id, $sort, $page, $userId = null, $isApp = false)
     {
-        $where = [
-            'is_abroad' => 0
-        ];
-        if (isset($whereExt['is_abroad'])) {
-            $where['is_abroad'] = $whereExt['is_abroad'];
+        if ($isApp) {
+            $where = [
+                'is_abroad' => 1
+            ];
+        } else {
+            $where = [
+                'is_abroad' => 0
+            ];
         }
         $sort['sort'] = 'desc';
         $sort['goods_id'] = 'desc';
