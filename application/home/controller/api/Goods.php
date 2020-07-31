@@ -3063,6 +3063,9 @@ class Goods extends Base
             if (empty($addressGoodsData['user_address'])) {
                 throw new TpshopException('地址商品信息', 0, ['msg' => '地址信息不存在']);
             }
+            if ($addressGoodsData['user_address']['is_illegal'] == 1) {
+                throw new TpshopException('地址商品信息', 0, ['msg' => '当前地址信息不完整，请添加街道后补充完整地址信息再提交订单。']);
+            }
             if ($addressGoodsData['user_address']['out_range'] == 1) {
                 throw new TpshopException('地址商品信息', 0, ['msg' => '当前地址暂无库存']);
             }

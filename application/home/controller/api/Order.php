@@ -2100,7 +2100,7 @@ class Order extends Base
         // 组合数据
         $return = [
             // 用户地址
-            'user_address' => $userAddress,
+            'user_address' => [$userAddress],
             // 提货
             'delivery' => [
                 'way' => [

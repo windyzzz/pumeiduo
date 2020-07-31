@@ -515,10 +515,11 @@ class User extends Base
             $goodsIds = (new CartLogic())->getCartGoods($cartIds, 'c.goods_id');
             $GoodsLogic = new GoodsLogic();
         }
+        $userLogic = new UsersLogic();
         // 用户地址
         $addressList = get_user_address_list_new($this->user_id);
         // 地址标签
-        $addressTab = (new UsersLogic())->getAddressTab($this->user_id);
+        $addressTab = $userLogic->getAddressTab($this->user_id);
         // 超出范围的地址
         $outRange = [];
         foreach ($addressList as $k1 => $value) {
@@ -542,9 +543,15 @@ class User extends Base
                     'is_selected' => 1
                 ];
             }
+            // 判断用户地址是否合法
+            $addressList[$k1]['is_illegal'] = 0;
+            $userAddress = $userLogic->checkUserAddress($value);
+            if ($userAddress['is_illegal'] == 1) {
+                $addressList[$k1]['is_illegal'] = 1;
+            }
             // 判断传入商品是否能在该地区配送
             if (!empty($goodsIds)) {
-                $checkGoodsShipping = $GoodsLogic->checkGoodsListShipping($goodsIds, $value['district']);
+                $checkGoodsShipping = $GoodsLogic->checkGoodsListShipping($goodsIds, $value['district'], $value);
                 foreach ($checkGoodsShipping as $shippingKey => $shippingVal) {
                     if (true != $shippingVal['shipping_able']) {
                         // 订单中部分商品不支持对当前地址的配送
@@ -1142,7 +1149,7 @@ class User extends Base
                 return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
             } elseif (2 == $step) {
                 $res = $logic->check_validate_code($code, $old_mobile, 'phone', $session_id, $scene);
-                if (!$res ||1 != $res['status']) {
+                if (!$res || 1 != $res['status']) {
                     return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
                 }
 
