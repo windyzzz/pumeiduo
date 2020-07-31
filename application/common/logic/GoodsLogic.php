@@ -1820,6 +1820,7 @@ class GoodsLogic extends Model
         }
         if (!empty($userAddress)) {
             $userAddress = $userAddress[0];
+            $userAddress['town_name'] = $userAddress['town_name'] ?? '';
             $userAddress['out_range'] = 0;
             unset($userAddress['zipcode']);
             unset($userAddress['is_pickup']);
@@ -1906,7 +1907,7 @@ class GoodsLogic extends Model
                 $province = M('region2')->where(['id' => $userAddress['province']])->value('ml_region_id');
                 $city = M('region2')->where(['id' => $userAddress['city']])->value('ml_region_id');
                 $district = M('region2')->where(['id' => $userAddress['district']])->value('ml_region_id');
-                $town = M('region2')->where(['parent_id' => $userAddress['district'], 'status' => 1])->value('ml_region_id') ?? 0;
+                $town = M('region2')->where(['id' => $userAddress['twon']])->value('ml_region_id') ?? 0;
                 $goodsData = [
                     'goods_id' => $supplierGoodsId,
                     'spec_key' => $key,

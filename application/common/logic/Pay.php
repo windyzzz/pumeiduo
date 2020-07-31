@@ -276,7 +276,7 @@ class Pay
             $province = M('region2')->where(['id' => $userAddress['province']])->value('ml_region_id');
             $city = M('region2')->where(['id' => $userAddress['city']])->value('ml_region_id');
             $district = M('region2')->where(['id' => $userAddress['district']])->value('ml_region_id');
-            $town = M('region2')->where(['parent_id' => $userAddress['district'], 'status' => 1])->value('ml_region_id') ?? 0;
+            $town = M('region2')->where(['id' => $userAddress['twon']])->value('ml_region_id') ?? 0;
             $goodsData = [];
             $supplierGoodsData = [];
             foreach ($this->order2Goods as $orderGoods) {

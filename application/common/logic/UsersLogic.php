@@ -1975,13 +1975,14 @@ class UsersLogic extends Model
         if (!check_mobile($post['mobile']) && !check_telephone($post['mobile'])) {
             return ['status' => -1, 'msg' => '手机号码格式有误', 'result' => ''];
         }
-
+        $post['twon'] = $post['town'];
         //编辑模式
         if ($address_id > 0) {
             $address = M('user_address')->where(['address_id' => $address_id, 'user_id' => $user_id])->find();
             if (1 == $post['is_default'] && 1 != $address['is_default']) {
                 M('user_address')->where(['user_id' => $user_id])->save(['is_default' => 0]);
             }
+
             $row = M('user_address')->where(['address_id' => $address_id, 'user_id' => $user_id])->save($post);
             if (false !== $row) {
                 return ['status' => 1, 'msg' => '编辑成功', 'result' => $address_id];

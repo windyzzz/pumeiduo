@@ -451,6 +451,8 @@ class Order extends Base
                 'city_name' => Db::name('region2')->where(['id' => $orderInfo['city']])->value('name'),
                 'district' => $orderInfo['district'],
                 'district_name' => Db::name('region2')->where(['id' => $orderInfo['district']])->value('name'),
+                'town' => $orderInfo['twon'],
+                'town_name' => Db::name('region2')->where(['id' => $orderInfo['twon']])->value('name') ?? '',
                 'address' => $orderInfo['address'],
                 'auto_confirm_time' => $autoConfirmTime,
                 'shipping_name' => $orderInfo['shipping_name']
@@ -1770,6 +1772,7 @@ class Order extends Base
         // 用户默认地址
         $userAddress = get_user_address_list_new($this->user_id, true);
         if (!empty($userAddress)) {
+            $userAddress[0]['town_name'] = $userAddress[0]['town_name'] ?? '';
             $userAddress[0]['out_range'] = 0;
             unset($userAddress[0]['zipcode']);
             unset($userAddress[0]['is_pickup']);

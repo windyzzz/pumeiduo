@@ -2946,6 +2946,7 @@ class Goods extends Base
             $userAddress = get_user_address_list_new($this->user_id, false, $addressId);
         }
         if (!empty($userAddress)) {
+            $userAddress[0]['town_name'] = $userAddress[0]['town_name'] ?? '';
             $userAddress[0]['out_range'] = 0;
             unset($userAddress[0]['zipcode']);
             unset($userAddress[0]['is_pickup']);

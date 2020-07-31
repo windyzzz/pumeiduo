@@ -1137,8 +1137,9 @@ function get_user_address_list_new($user_id, $default = false, $addressId = 0)
         ->join('region2 r1', 'r1.id = ua.province', 'LEFT')
         ->join('region2 r2', 'r2.id = ua.city', 'LEFT')
         ->join('region2 r3', 'r3.id = ua.district', 'LEFT')
+        ->join('region2 r4', 'r4.id = ua.twon', 'LEFT')
         ->where($where)->limit(20)
-        ->field('ua.*, r1.name province_name, city, r2.name city_name, district, r3.name district_name')
+        ->field('ua.*, r1.name province_name, city, r2.name city_name, district, r3.name district_name, ua.twon town, r4.name town_name')
         ->order('ua.is_default DESC, ua.address_id DESC')
         ->select();
     if ($addressId && empty($lists)) {
@@ -1146,8 +1147,9 @@ function get_user_address_list_new($user_id, $default = false, $addressId = 0)
             ->join('region2 r1', 'r1.id = ua.province', 'LEFT')
             ->join('region2 r2', 'r2.id = ua.city', 'LEFT')
             ->join('region2 r3', 'r3.id = ua.district', 'LEFT')
+            ->join('region2 r4', 'r4.id = ua.twon', 'LEFT')
             ->where(['user_id' => $user_id])->limit(20)
-            ->field('ua.*, r1.name province_name, city, r2.name city_name, district, r3.name district_name')
+            ->field('ua.*, r1.name province_name, city, r2.name city_name, district, r3.name district_name, ua.twon town, r4.name town_name')
             ->order('ua.is_default DESC, ua.address_id DESC')
             ->select();
     }

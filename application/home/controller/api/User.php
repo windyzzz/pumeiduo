@@ -522,6 +522,7 @@ class User extends Base
         // 超出范围的地址
         $outRange = [];
         foreach ($addressList as $k1 => $value) {
+            $addressList[$k1]['town_name'] = $value['town_name'] ?? '';
             $tabs = explode(',', $value['tabs']);
             unset($addressList[$k1]['tabs']);
             foreach ($addressTab as $k2 => $item) {
@@ -581,6 +582,7 @@ class User extends Base
         // 地址标签
         $addressTab = (new UsersLogic())->getAddressTab($this->user_id);
         foreach ($addressList as $k1 => $value) {
+            $addressList[$k1]['town_name'] = $value['town_name'] ?? '';
             $tabs = explode(',', $value['tabs']);
             unset($addressList[$k1]['tabs']);
             foreach ($addressTab as $k2 => $item) {
@@ -820,6 +822,7 @@ class User extends Base
         }
         $addressList = get_user_address_list_new($this->user_id, false, $data['result']);
         $address = $addressList[0];
+        $address['town_name'] = $address['town_name'] ?? '';
         unset($address['zipcode']);
         unset($address['is_pickup']);
         unset($address['tabs']);
@@ -874,6 +877,7 @@ class User extends Base
         } else {
             $addressList = get_user_address_list_new($this->user_id, true);
             $address = $addressList[0];
+            $address['town_name'] = $address['town_name'] ?? '';
             unset($address['zipcode']);
             unset($address['is_pickup']);
             unset($address['tabs']);
