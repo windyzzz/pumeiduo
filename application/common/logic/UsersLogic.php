@@ -3083,4 +3083,31 @@ class UsersLogic extends Model
         Db::commit();
         return ['status' => 1, 'msg' => '合并成功'];
     }
+
+    /**
+     * 查看地址是否合法
+     * 第三级地区下是否有子地区
+     * @param $userAddress
+     * @return mixed
+     */
+    public function checkUserAddress($userAddress)
+    {
+//        $cityName = M('region2')->where(['id' => $userAddress['city']])->value('name');
+//        if (in_array($userAddress['province'], [110000, 120000, 310000, 500000])) {
+//            // 直辖市下的第二级
+//            if (!strstr($cityName, '市辖') && $cityName !== '县') {
+//                $userAddress['is_illegal'] = 1;
+//            }
+//        }
+//        $districtName = M('region2')->where(['id' => $userAddress['district']])->value('name');
+//        // 第三级地区
+//        if (strstr($districtName, '市辖')) {
+//            $userAddress['is_illegal'] = 1;
+//        }
+        // 第三级地区下是否有子地区
+        if (M('region2')->where(['parent_id' => $userAddress['district']])->value('id') && $userAddress['twon'] == 0) {
+            $userAddress['is_illegal'] = 1;
+        }
+        return $userAddress;
+    }
 }

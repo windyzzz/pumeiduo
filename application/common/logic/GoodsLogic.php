@@ -1821,7 +1821,8 @@ class GoodsLogic extends Model
         if (!empty($userAddress)) {
             $userAddress = $userAddress[0];
             $userAddress['town_name'] = $userAddress['town_name'] ?? '';
-            $userAddress['out_range'] = 0;
+            $userAddress['is_illegal'] = 0;     // 非法地址
+            $userAddress['out_range'] = 0;      // 超出配送范围
             unset($userAddress['zipcode']);
             unset($userAddress['is_pickup']);
             // 地址标签
@@ -1885,6 +1886,13 @@ class GoodsLogic extends Model
                 /*
                  * 供应链商品
                  */
+                // 先判断用户地址是否合法
+                $userAddress = (new UsersLogic())->checkUserAddress($userAddress);
+                if ($userAddress['is_illegal'] == 1) {
+                    $return['store_count'] = '0';
+                    $return['user_address'] = $userAddress;
+                    return $return;
+                }
                 // 获取最新库存信息
                 $supplierGoodsId = M('goods')->where(['goods_id' => $goodsId])->value('supplier_goods_id');
                 if ($itemId > 0) {

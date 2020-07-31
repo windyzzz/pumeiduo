@@ -1772,41 +1772,42 @@ class Order extends Base
         // 用户默认地址
         $userAddress = get_user_address_list_new($this->user_id, true);
         if (!empty($userAddress)) {
-            $userAddress[0]['town_name'] = $userAddress[0]['town_name'] ?? '';
-            $userAddress[0]['out_range'] = 0;
-            unset($userAddress[0]['zipcode']);
-            unset($userAddress[0]['is_pickup']);
+            $userAddress = $userAddress[0];
+            $userAddress['town_name'] = $userAddress['town_name'] ?? '';
+            $userAddress['out_range'] = 0;
+            unset($userAddress['zipcode']);
+            unset($userAddress['is_pickup']);
             // 地址标签
             $addressTab = (new UsersLogic())->getAddressTab($this->user_id);
             if (!empty($addressTab)) {
-                if (empty($userAddress[0]['tabs'])) {
-                    unset($userAddress[0]['tabs']);
-                    $userAddress[0]['tabs'][] = [
+                if (empty($userAddress['tabs'])) {
+                    unset($userAddress['tabs']);
+                    $userAddress['tabs'][] = [
                         'tab_id' => 0,
                         'name' => '默认',
                         'is_selected' => 1
                     ];
                 } else {
-                    $tabs = explode(',', $userAddress[0]['tabs']);
-                    unset($userAddress[0]['tabs']);
+                    $tabs = explode(',', $userAddress['tabs']);
+                    unset($userAddress['tabs']);
                     foreach ($addressTab as $item) {
                         if (in_array($item['tab_id'], $tabs)) {
-                            $userAddress[0]['tabs'][] = [
+                            $userAddress['tabs'][] = [
                                 'tab_id' => $item['tab_id'],
                                 'name' => $item['name'],
                                 'is_selected' => 1
                             ];
                         }
                     }
-                    $userAddress[0]['tabs'][] = [
+                    $userAddress['tabs'][] = [
                         'tab_id' => 0,
                         'name' => '默认',
                         'is_selected' => 1
                     ];
                 }
             } else {
-                unset($userAddress[0]['tabs']);
-                $userAddress[0]['tabs'][] = [
+                unset($userAddress['tabs']);
+                $userAddress['tabs'][] = [
                     'tab_id' => 0,
                     'name' => '默认',
                     'is_selected' => 1
@@ -1928,7 +1929,7 @@ class Order extends Base
             // 组合拆分订单数据
             $payLogic->setOrderSplitGoods($payLogic->getPayList());
             // 检查供应链商品地区购买限制
-            $payLogic->checkOrderSplitGoods($userAddress[0]);
+            $payLogic->checkOrderSplitGoods($userAddress);
 
             // 使用积分
             $pay_points = $payLogic->getUsePoint();
@@ -2004,9 +2005,9 @@ class Order extends Base
             if (empty($userAddress)) {
                 $payLogic->delivery('0');
             } else {
-                $res = $payLogic->delivery($userAddress[0]['district']);
+                $res = $payLogic->delivery($userAddress['district']);
                 if (isset($res['status']) && $res['status'] == -1) {
-                    $userAddress[0]['out_range'] = 1;
+                    $userAddress['out_range'] = 1;
                 }
             }
             // 订单pv
