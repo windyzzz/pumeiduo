@@ -2873,7 +2873,7 @@ class Goods extends Base
         $page = new Page($count, 10);
         // 获取商品数据
         $goodsLogic = new GoodsLogic();
-        $goodsList = $goodsLogic->getGoodsList($goodsIds, $sortArr, $page, $this->user_id, $this->isApp, ['is_abroad' => 1])['goods_list'];
+        $goodsList = $goodsLogic->getGoodsList($goodsIds, $sortArr, $page, null, $this->isApp)['goods_list'];
 
         return json(['status' => 1, 'result' => ['goods_list' => $goodsList]]);
     }

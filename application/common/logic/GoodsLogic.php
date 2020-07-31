@@ -1082,19 +1082,19 @@ class GoodsLogic extends Model
      * @param $page
      * @param null $userId
      * @param bool $isApp
-     * @param array $whereExt
      * @return array
      */
-    public function getGoodsList($filter_goods_id, $sort, $page, $userId = null, $isApp = true, $whereExt = [])
+    public function getGoodsList($filter_goods_id, $sort, $page, $userId = null, $isApp = false)
     {
-        $where = [
-            'is_abroad' => 0
-        ];
-        if (isset($whereExt['is_abroad'])) {
-            $where['is_abroad'] = $whereExt['is_abroad'];
-        }
-        if (!$isApp) {
-            $where['is_supply'] = 0;
+        if ($isApp) {
+            $where = [
+                'is_abroad' => 1
+            ];
+        } else {
+            $where = [
+                'is_abroad' => 0,
+                'is_supply' => 0
+            ];
         }
         $sort['sort'] = 'desc';
         $sort['goods_id'] = 'desc';
@@ -1115,14 +1115,14 @@ class GoodsLogic extends Model
         $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->select();
         // 秒杀商品
         $flashSale = Db::name('flash_sale')->where(['goods_id' => ['in', $filter_goods_id]])
-            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->limit($page->firstRow . ',' . $page->listRows)->field('goods_id, price, can_integral')->select();
+            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->field('goods_id, price, can_integral')->select();
         // 团购商品
         $groupBuy = Db::name('group_buy')->where(['goods_id' => ['in', $filter_goods_id]])
-            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->limit($page->firstRow . ',' . $page->listRows)->field('goods_id, price, can_integral')->select();
+            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->field('goods_id, price, can_integral')->select();
         // 促销商品
         $promGoods = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
             ->where(['gtg.goods_id' => ['in', $filter_goods_id], 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
-            ->field('pg.title, gtg.goods_id')->limit($page->firstRow . ',' . $page->listRows)->select();    // 促销活动
+            ->field('pg.title, gtg.goods_id')->select();    // 促销活动
 //        $couponLogic = new CouponLogic();
 //        $couponCurrency = $couponLogic->getCoupon(0, null, null, ['nature' => 1]);    // 通用优惠券
 //        $couponGoods = [];
