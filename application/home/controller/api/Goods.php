@@ -1242,8 +1242,8 @@ class Goods extends Base
                 } else {
                     $SearchWordData = [
                         'keywords' => $search,
-                        'pinyin_full' => $SearchWordLogic->getPinyinFull($q),
-                        'pinyin_simple' => $SearchWordLogic->getPinyinSimple($q),
+                        'pinyin_full' => $SearchWordLogic->getPinyinFull($search),
+                        'pinyin_simple' => $SearchWordLogic->getPinyinSimple($search),
                         'search_num' => 1,
                         'goods_num' => $goodsHaveSearchWord,
                     ];
