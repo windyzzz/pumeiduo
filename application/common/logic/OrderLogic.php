@@ -1132,7 +1132,7 @@ class OrderLogic
             'province' => M('region2')->where(['id' => $order['province']])->value('ml_region_id'),
             'city' => M('region2')->where(['id' => $order['city']])->value('ml_region_id'),
             'district' => M('region2')->where(['id' => $order['district']])->value('ml_region_id'),
-            'twon' => M('region2')->where(['parent_id' => $order['district'], 'status' => 1])->value('ml_region_id') ?? 0,
+            'twon' => M('region2')->where(['id' => $order['twon']])->value('ml_region_id') ?? 0,
             'address' => $order['address'],
             'mobile' => $order['mobile'],
             'goods_price' => $order['goods_price'],

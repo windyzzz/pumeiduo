@@ -1961,11 +1961,13 @@ class UsersLogic extends Model
                 return ['status' => -1, 'msg' => '最多只能添加20个收货地址', 'result' => ''];
             }
         }
-
         if ('' == $post['consignee']) {
             return ['status' => -1, 'msg' => '收货人不能为空', 'result' => ''];
         }
         if (!($post['province'] > 0) || !($post['city'] > 0) || !($post['district'] > 0)) {
+            return ['status' => -1, 'msg' => '所在地区不能为空', 'result' => ''];
+        }
+        if ($post['town'] == 0 && M('region2')->where(['parent_id' => $post['district'], 'status' => 1])->find()) {
             return ['status' => -1, 'msg' => '所在地区不能为空', 'result' => ''];
         }
         $post['zipcode'] = M('region2')->where(['id' => $post['district']])->value('zipcode');
@@ -3089,7 +3091,7 @@ class UsersLogic extends Model
      * @param $userAddress
      * @return mixed
      */
-    public function checkUserAddress($userAddress)
+    public function checkAddressIllegal($userAddress)
     {
         $cityName = M('region2')->where(['id' => $userAddress['city']])->value('name');
         if (in_array($userAddress['province'], [110000, 120000, 310000, 500000])) {

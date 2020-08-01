@@ -524,6 +524,9 @@ class User extends Base
         $outRange = [];
         foreach ($addressList as $k1 => $value) {
             $addressList[$k1]['town_name'] = $value['town_name'] ?? '';
+            $addressList[$k1]['is_illegal'] = 0;     // 非法地址
+            $addressList[$k1]['out_range'] = 0;      // 超出配送范围
+            $addressList[$k1]['limit_tips'] = '';    // 限制的提示
             $tabs = explode(',', $value['tabs']);
             unset($addressList[$k1]['tabs']);
             foreach ($addressTab as $k2 => $item) {
@@ -544,8 +547,7 @@ class User extends Base
                 ];
             }
             // 判断用户地址是否合法
-            $addressList[$k1]['is_illegal'] = 0;
-            $userAddress = $userLogic->checkUserAddress($value);
+            $userAddress = $userLogic->checkAddressIllegal($value);
             if ($userAddress['is_illegal'] == 1) {
                 $addressList[$k1]['is_illegal'] = 1;
             }
@@ -556,15 +558,18 @@ class User extends Base
                     if (true != $shippingVal['shipping_able']) {
                         // 订单中部分商品不支持对当前地址的配送
                         $addressList[$k1]['out_range'] = 1;
-                        $outRange[] = $addressList[$k1];
-                        unset($addressList[$k1]);
+                        if ($addressList[$k1]['is_illegal'] == 0) {
+                            $outRange[] = $addressList[$k1];
+                            unset($addressList[$k1]);
+                        }
                         break;
-                    } else {
-                        $addressList[$k1]['out_range'] = 0;
                     }
                 }
-            } else {
-                $addressList[$k1]['out_range'] = 0;
+            }
+            if ($userAddress['is_illegal'] == 1) {
+                $addressList[$k1]['limit_tips'] = '当前地址信息不完整，请添加街道后补充完整地址信息再提交订单';
+            } elseif ($userAddress['out_range'] == 1) {
+                $addressList[$k1]['limit_tips'] = '当前地址不在配送范围内，请重新选择';
             }
         }
         $returnData = [
@@ -878,18 +883,51 @@ class User extends Base
     public function checkAddress()
     {
         $id = I('get.id/d');
-        $addressId = Db::name('user_address')->where(['user_id' => $this->user_id, 'address_id' => $id])->value('address_id');
-        if ($addressId) {
-            $return = ['need_update' => 0, 'user_address' => []];
-        } else {
-            $addressList = get_user_address_list_new($this->user_id, true);
-            $address = $addressList[0];
-            $address['town_name'] = $address['town_name'] ?? '';
-            unset($address['zipcode']);
-            unset($address['is_pickup']);
-            unset($address['tabs']);
-            $return = ['need_update' => 1, 'user_address' => $address];
+        $goodsId = I('goods_id');
+        $cartIds = I('cart_ids');
+        if (!empty($goodsId) && empty(trim($cartIds))) {
+            $goodsIds = [['goods_id' => $goodsId]];
+            $GoodsLogic = new GoodsLogic();
+        } elseif (empty($goodsId) && !empty(trim($cartIds))) {
+            $goodsIds = (new CartLogic())->getCartGoods($cartIds, 'c.goods_id');
+            $GoodsLogic = new GoodsLogic();
         }
+        $userAddress = Db::name('user_address')->where(['user_id' => $this->user_id, 'address_id' => $id])->find();
+        if (empty($userAddress)) {
+            // 默认地址
+            $addressList = get_user_address_list_new($this->user_id, true);
+            $userAddress = $addressList[0];
+        }
+        $userAddress['town_name'] = $userAddress['town_name'] ?? '';
+        $userAddress['is_illegal'] = 0;     // 非法地址
+        $userAddress['out_range'] = 0;      // 超出配送范围
+        $userAddress['limit_tips'] = '';    // 限制的提示
+        unset($userAddress['zipcode']);
+        unset($userAddress['is_pickup']);
+        unset($userAddress['tabs']);
+        // 判断用户地址是否合法
+        $userLogic = new UsersLogic();
+        $userAddress = $userLogic->checkAddressIllegal($userAddress);
+        // 判断传入商品是否能在该地区配送
+        if (!empty($goodsIds)) {
+            $checkGoodsShipping = $GoodsLogic->checkGoodsListShipping($goodsIds, $userAddress['district'], $userAddress);
+            foreach ($checkGoodsShipping as $shippingKey => $shippingVal) {
+                if (true != $shippingVal['shipping_able']) {
+                    // 订单中部分商品不支持对当前地址的配送
+                    $userAddress['out_range'] = 1;
+                    break;
+                } else {
+                    $userAddress['out_range'] = 0;
+                }
+            }
+        }
+        if ($userAddress['is_illegal'] == 1) {
+            $userAddress['limit_tips'] = '当前地址信息不完整，请添加街道后补充完整地址信息再提交订单';
+        } elseif ($userAddress['out_range'] == 1) {
+            $userAddress['limit_tips'] = '当前地址不在配送范围内，请重新选择';
+        }
+        $return = ['need_update' => 1, 'user_address' => $userAddress];
+
         return json(['status' => 1, 'result' => $return]);
     }
 

@@ -1799,42 +1799,29 @@ class Order extends Base
             $userLogic = new UsersLogic();
             // 地址标签
             $addressTab = $userLogic->getAddressTab($this->user_id);
-            if (!empty($addressTab)) {
-                if (empty($userAddress['tabs'])) {
-                    unset($userAddress['tabs']);
-                    $userAddress['tabs'][] = [
-                        'tab_id' => 0,
-                        'name' => '默认',
-                        'is_selected' => 1
-                    ];
-                } else {
-                    $tabs = explode(',', $userAddress['tabs']);
-                    unset($userAddress['tabs']);
-                    foreach ($addressTab as $item) {
-                        if (in_array($item['tab_id'], $tabs)) {
-                            $userAddress['tabs'][] = [
-                                'tab_id' => $item['tab_id'],
-                                'name' => $item['name'],
-                                'is_selected' => 1
-                            ];
-                        }
-                    }
-                    $userAddress['tabs'][] = [
-                        'tab_id' => 0,
-                        'name' => '默认',
-                        'is_selected' => 1
-                    ];
-                }
-            } else {
-                unset($userAddress['tabs']);
+            $tabs = $userAddress['tabs'];
+            $userAddress['tabs'] = [];
+            if ($userAddress['is_default'] == 1) {
                 $userAddress['tabs'][] = [
                     'tab_id' => 0,
                     'name' => '默认',
                     'is_selected' => 1
                 ];
             }
+            if (!empty($addressTab) && !empty($tabs)) {
+                $tabs = explode(',', $tabs);
+                foreach ($addressTab as $item) {
+                    if (in_array($item['tab_id'], $tabs)) {
+                        $userAddress['tabs'][] = [
+                            'tab_id' => $item['tab_id'],
+                            'name' => $item['name'],
+                            'is_selected' => 1
+                        ];
+                    }
+                }
+            }
             // 判断用户地址是否合法
-            $userAddress = $userLogic->checkUserAddress($userAddress);
+            $userAddress = $userLogic->checkAddressIllegal($userAddress);
         }
 
         $cartLogic = new CartLogic();

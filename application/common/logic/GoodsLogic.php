@@ -1887,7 +1887,7 @@ class GoodsLogic extends Model
                 ];
             }
             // 判断用户地址是否合法
-            $userAddress = (new UsersLogic())->checkUserAddress($userAddress);
+            $userAddress = (new UsersLogic())->checkAddressIllegal($userAddress);
             if ($userAddress['is_illegal'] == 1) {
                 // 不合法
                 $return['store_count'] = '0';
