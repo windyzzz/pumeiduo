@@ -788,6 +788,9 @@ class Promotion extends Base
                     $data['can_integral'] = isset($data['can_integral']) ? 1 : 0;
                     $data['start_time'] = strtotime($data['start_time']);
                     $data['end_time'] = strtotime($data['end_time']);
+                    if ($data['end_time'] > time()) {
+                        $data['is_end'] = 0;
+                    }
                     $flashSaleValidate = Loader::validate('FlashSale');
                     if (!$flashSaleValidate->batch()->check($data)) {
                         $msg = '';
@@ -805,6 +808,10 @@ class Promotion extends Base
                         }
                     }
                     if (empty($data['id'])) {
+                        // 查看商品是否已设置活动
+                        if (!M('goods')->where(['goods_id' => $data['goods_id'], 'prom_type' => 0, 'prom_id' => 0])->find()) {
+                            $this->ajaxReturn(['status' => 1, 'msg' => '该商品已设置了优惠活动', 'result' => '']);
+                        }
                         $flashSaleInsertId = Db::name('flash_sale')->insertGetId($data);
                         if ($data['item_id'] > 0) {
                             //设置商品一种规格为活动
@@ -821,7 +828,6 @@ class Promotion extends Base
                             $this->ajaxReturn(['status' => 0, 'msg' => '添加抢购活动失败', 'result' => '']);
                         }
                     } else {
-                        $r = M('flash_sale')->where('id=' . $data['id'])->save($data);
                         M('goods')->where(['prom_type' => 1, 'prom_id' => $data['id']])->save(['prom_id' => 0, 'prom_type' => 0]);
                         if ($data['item_id'] > 0) {
                             //设置商品一种规格为活动
@@ -832,6 +838,7 @@ class Promotion extends Base
                             M('goods')->where('goods_id', $data['goods_id'])->save(['prom_id' => $data['id'], 'prom_type' => 1]);
                         }
                         adminLog('管理员编辑抢购活动 ' . $data['title']);
+                        $r = M('flash_sale')->where('id=' . $data['id'])->save($data);
                         if (false !== $r) {
                             Db::commit();
                             $this->ajaxReturn(['status' => 1, 'msg' => '编辑抢购活动成功', 'result' => '']);
@@ -849,9 +856,11 @@ class Promotion extends Base
                     $this->ajaxReturn(['status' => 1, 'msg' => '编辑抢购活动成功', 'result' => '']);
                     break;
                 case 3:
-                    M('flash_sale')->where('id=' . $data['id'])->save([
-                        'end_time' => strtotime($data['end_time'])
-                    ]);
+                    $data['end_time'] = strtotime($data['end_time']);
+                    if ($data['end_time'] > time()) {
+                        $data['is_end'] = 0;
+                    }
+                    M('flash_sale')->where('id=' . $data['id'])->save($data);
                     adminLog('管理员继续上架抢购活动 ' . $data['title']);
                     Db::commit();
                     $this->ajaxReturn(['status' => 1, 'msg' => '编辑抢购活动成功', 'result' => '']);
