@@ -2783,6 +2783,7 @@ class Order extends Base
                                 ];
                             } else {
                                 $express['result']['deliverystatus'] = 1;   // 正在派件
+                                $express['data']['express_info'] = array_reverse($express['data']['express_info']);
                                 foreach ($express['data']['express_info'] as $item) {
                                     $express['result']['list'][] = [
                                         'time' => $item['time'],
@@ -2955,6 +2956,7 @@ class Order extends Base
                                         ];
                                     } else {
                                         $express['result']['deliverystatus'] = 1;   // 正在派件
+                                        $express['data']['express_info'] = array_reverse($express['data']['express_info']);
                                         $express['result']['list'][] = [
                                             'time' => $express['data']['express_info'][0]['time'],
                                             'status' => $express['data']['express_info'][0]['context'],
@@ -3101,6 +3103,7 @@ class Order extends Base
                             ];
                         } else {
                             $express['result']['deliverystatus'] = 1;   // 正在派件
+                            $express['data']['express_info'] = array_reverse($express['data']['express_info']);
                             foreach ($express['data']['express_info'] as $item) {
                                 $express['result']['list'][] = [
                                     'time' => $item['time'],
