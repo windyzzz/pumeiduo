@@ -829,7 +829,7 @@ class Order extends Base
     public function return_goods(Request $request)
     {
         $rec_id = I('rec_id', 0);
-        $return_goods = M('return_goods')->where(['rec_id' => $rec_id])->find();
+        $return_goods = M('return_goods')->where(['rec_id' => $rec_id, 'status' => ['NEQ', -2]])->find();
         if (!empty($return_goods)) {
             return json(['status' => 0, 'msg' => '已经提交过退货申请!', 'result' => null]);
         }
@@ -890,7 +890,7 @@ class Order extends Base
     {
         $type = I('type', -1);
         $recId = I('rec_id', '');
-        if (Db::name('return_goods')->where(['rec_id' => $recId, 'user_id' => $this->user_id])->find()) {
+        if (Db::name('return_goods')->where(['rec_id' => $recId, 'user_id' => $this->user_id, 'status' => ['NEQ', -2]])->find()) {
             return json(['status' => 0, 'msg' => '该商品已申请了售后']);
         }
         // 订单商品信息
