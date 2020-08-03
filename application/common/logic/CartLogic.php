@@ -150,7 +150,7 @@ class CartLogic extends Model
         if (empty($this->goods) && !$passAuth) {
             throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '购买商品不存在', 'result' => '']);
         }
-        if ($this->goods['is_on_sale'] == 0) {
+        if ($this->goods['is_on_sale'] == 0 && !$passAuth) {
             throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '商品已下架', 'result' => '']);
         }
         if (empty($this->goodsBuyNum) && !$passAuth) {
