@@ -1110,6 +1110,7 @@ class Order extends Base
             $return_goods['imgs'] = explode(',', $return_goods['imgs']);
         }
         $goods = M('goods')->where('goods_id', $return_goods['goods_id'])->find();
+        $goods['original_img_new'] = getFullPath($goods['original_img']);
         $return['state'] = C('REFUND_STATUS');
         $return['return_type'] = C('RETURN_TYPE');
         $return['goods'] = $goods;
@@ -2588,8 +2589,9 @@ class Order extends Base
         $order = Db::name('order o')->join('region2 r1', 'r1.id = o.province', 'LEFT')
             ->join('region2 r2', 'r2.id = o.city', 'LEFT')
             ->join('region2 r3', 'r3.id = o.district', 'LEFT')
+            ->join('region2 r4', 'r4.id = o.twon', 'LEFT')
             ->where(['order_id' => $orderId])->field('order_id, order_sn, user_id, order_status, pay_status, order_amount,
-            consignee, mobile, r1.name province_name, city, r2.name city_name, district, r3.name district_name, address')->find();
+            consignee, mobile, r1.name province_name, city, r2.name city_name, district, r3.name district_name, twon town, r4.name town_name, address')->find();
         if (empty($order)) {
             return json(['status' => 0, 'msg' => '订单不存在']);
         }
@@ -2598,6 +2600,9 @@ class Order extends Base
         }
         if ($order['city_name'] == '直辖市') {
             $order['city_name'] = '';
+        }
+        if (empty($order['town_name'])) {
+            $order['town_name'] = '';
         }
         // 订单赠送优惠券
         $order['coupon'] = [

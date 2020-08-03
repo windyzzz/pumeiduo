@@ -64,11 +64,12 @@ class Goods extends Base
         //数据格式，如没有优惠券coupon_price值为0。
         $gData = [
             'pic' => './' . $goods['original_img'],
+            'pic_new' => getFullPath($goods['original_img']),
             'title' => $goods['goods_name'],
             'price' => $goods['shop_price'] - $goods['exchange_integral'],
             'point' => $goods['exchange_integral'],
             'original_price' => $goods['market_price'] == 0 ? $goods['shop_price'] : $goods['market_price'],
-            'coupon_price' => 100.00,
+            'coupon_price' => 0,
             'user_name' => $user_id,
         ];
         $goods['nature'] = [];
@@ -173,7 +174,14 @@ class Goods extends Base
         if ($goods['brand_id']) {
             $goods['brand_name'] = M('brand')->where('id', $goods['brand_id'])->getField('name');
         }
+        $goods['original_img_new'] = getFullPath($goods['original_img_new']);
         $goods_images_list = M('GoodsImages')->where('goods_id', $goods_id)->select(); // 商品 图册
+        $goods_images_list_new = M('GoodsImages')->where('goods_id', $goods_id)->select(); // 商品 图册
+        if (!empty($goods_images_list_new)) {
+            foreach ($goods_images_list_new as &$image) {
+                $image['image_url'] = getFullPath($image['image_url']);
+            }
+        }
 
         $goods_attribute = M('GoodsAttribute')->getField('attr_id,attr_name'); // 查询属性
         $goods_attr_list = M('GoodsAttr')->where('goods_id', $goods_id)->select(); // 查询商品属性表
@@ -280,6 +288,7 @@ class Goods extends Base
         $data['goods_attr_list'] = $goods_attr_list; //属性列表
         $data['filter_spec'] = $filter_spec; //规格参数
         $data['goods_images_list'] = $goods_images_list; //商品缩略图
+        $data['goods_images_list_new'] = $goods_images_list_new; //商品缩略图
         $data['siblings_cate'] = $goodsLogic->get_siblings_cate($goods['cat_id']); //相关分类
         $data['look_see'] = $look_see; //看了又看
         $data['goods'] = $goods;

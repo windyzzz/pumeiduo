@@ -89,6 +89,7 @@ class Cart extends Base
             $cartList = $Pay->activity2_goods($cartList);
 
             foreach ($cartList as $k => $v) {
+                $cartList[$k]['goods']['original_img_new'] = getFullPath($v['goods']['original_img']);
                 if ($v['prom_type'] == 2) {
                     // 不显示团购
                     continue;
