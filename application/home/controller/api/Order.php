@@ -3164,7 +3164,7 @@ class Order extends Base
             }
         }
         // 退换货数据
-        $where = 'user_id = ' . $this->user_id . ' AND status != 6';
+        $where = 'user_id = ' . $this->user_id . ' AND status != 6 AND status != -2';
         $return['RETURN'] = M('return_goods')->where($where)->count('id');
         return json(['status' => 1, 'result' => $return]);
     }
