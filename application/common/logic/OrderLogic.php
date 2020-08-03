@@ -1046,11 +1046,12 @@ class OrderLogic
         }
         $orderGoods = Db::name('order_goods og')
             ->join('goods g', 'g.goods_id = og.goods_id', 'LEFT')
-            ->join('return_goods rg', 'rg.rec_id = og.rec_id', 'LEFT')
             ->join('spec_goods_price sgp', 'sgp.goods_id = og.goods_id AND sgp.`key` = og.spec_key', 'LEFT')
-            ->where($where)->field('og.*, sgp.item_id, g.commission, g.original_img, rg.status return_status, g.zone')->select();
+            ->where($where)->field('og.*, sgp.item_id, g.commission, g.original_img, g.zone')->select();
         foreach ($orderGoods as $k => $goods) {
-            $orderGoods[$k]['is_return'] = M('ReturnGoods')->where('rec_id', $goods['rec_id'])->find() ? 1 : 0;
+            $returnGoods = M('return_goods')->where(['rec_id' => $goods['rec_id'], 'status' => ['NEQ', -2]])->find();
+            $orderGoods[$k]['is_return'] = $returnGoods ? 1 : 0;
+            $orderGoods[$k]['return_status'] = $returnGoods ? $returnGoods['status'] : 0;
             $orderGoods[$k]['status_desc'] = isset($goods['return_status']) ? C('REFUND_STATUS')[$goods['return_status']] : '';
         }
         return $orderGoods;
