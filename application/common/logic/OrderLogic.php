@@ -121,7 +121,7 @@ class OrderLogic
             } elseif ('weixinApp' == $order['pay_code']) {
                 switch ($order['order_type']) {
                     case 2:
-                        // 海外购订单
+                        // 韩国购订单
                         include_once PLUGIN_PATH . 'payment/weixinApp_2/weixinApp.class.php';
                         $payment_obj = new \weixinApp();
                         break;

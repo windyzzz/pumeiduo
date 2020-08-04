@@ -34,7 +34,7 @@ class Pay extends Base
             }
         }
         if ((!empty($this->order) && $this->order['order_type'] == 2) || $orderType == 2) {
-            // 海外购订单
+            // 韩国购订单
             // 导入具体的支付类文件
             include_once "plugins/payment/weixinApp_2/weixinApp.class.php";
             $code = '\\' . $this->pay_code;
