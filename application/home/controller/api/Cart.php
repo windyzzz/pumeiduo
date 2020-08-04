@@ -90,6 +90,11 @@ class Cart extends Base
 
             foreach ($cartList as $k => $v) {
                 $cartList[$k]['goods']['original_img_new'] = getFullPath($v['goods']['original_img']);
+                if (!$this->isApp && ($v['goods']['is_abroad'] == 1 || $v['goods']['is_supply'] == 1)) {
+                    // 不显示韩国购与供应链商品
+                    unset($cartList[$k]);
+                    continue;
+                }
                 if ($v['prom_type'] == 2) {
                     // 不显示团购
                     continue;
@@ -1113,6 +1118,11 @@ class Cart extends Base
                 $groupBuyGoods[$item['goods_id'] . '_' . $item['spec_key']] = $item;
             }
             foreach ($cartData as $k => $v) {
+                if (!$this->isApp && ($v['goods']['is_abroad'] == 1 && $v['goods']['is_supply'] == 1)) {
+                    // 不计算韩国购商品与供应链商品
+                    $cartNum -= 1;
+                    continue;
+                }
                 $key = $v['goods_id'] . '_' . $v['spec_key'];
                 if (isset($flashSaleGoods[$key])) {
                     // 秒杀活动
