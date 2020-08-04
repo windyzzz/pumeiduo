@@ -20,7 +20,7 @@
                     <label>弹窗类型：</label>
                 </dt>
                 <dd class="opt">
-                    <select name="type" class="input-sm" class="form-control">
+                    <select name="type" class="input-sm" class="form-control" id="popup_type">
                         <option value="1"<if condition="$popup_info.type eq 1 ">selected</if>>无跳转</option>
                         <option value="2"<if condition="$popup_info.type eq 2 ">selected</if>>VIP申请</option>
                         <option value="3"<if condition="$popup_info.type eq 3 ">selected</if>>促销商品</option>
@@ -29,7 +29,31 @@
                         <option value="6"<if condition="$popup_info.type eq 6 ">selected</if>>领券中心</option>
                         <option value="7"<if condition="$popup_info.type eq 7 ">selected</if>>我的礼券</option>
                         <option value="8"<if condition="$popup_info.type eq 8 ">selected</if>>任务中心</option>
+                        <option value="9"<if condition="$popup_info.type eq 9 ">selected</if>>商品详情</option>
+                        <option value="10"<if condition="$popup_info.type eq 10 ">selected</if>>商品分类</option>
+                        <option value="11"<if condition="$popup_info.type eq 11 ">selected</if>>韩国购</option>
+                        <option value="12"<if condition="$popup_info.type eq 11 ">selected</if>>SVIP专享</option>
                     </select>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>弹窗关联</label>
+                </dt>
+                <dd class="opt">
+                    <select name="type_id" id="popup_type_id">
+                        <option value="0">请选择</option>
+                    </select>
+                </dd>
+            </dl>
+            <dl class="row" style="display: none;">
+                <dt class="tit">
+                    <label><em>*</em>商品编号</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="goods_sn" id="goods_sn" value="{$popup_info.goods_sn}" class="input-txt">
+                    <span class="err" id="err_goods_sn"></span>
+                    <p class="notic">请填写商品编号</p>
                 </dd>
             </dl>
             <!--<dl class="row">
@@ -45,7 +69,7 @@
             </dl>-->
             <dl class="row">
                 <dt class="tit">
-                    <label>弹窗图片</label>
+                    <label><em>*</em>弹窗图片</label>
                 </dt>
                 <dd class="opt">
                     <div class="input-file-show">
@@ -111,7 +135,109 @@
     $(document).ready(function () {
         $('#start_time').layDate();
         $('#end_time').layDate();
+        var popup_type = $('#popup_type').find("option:selected").val();
+        if (popup_type == '9') {
+            $('#popup_type_id').parent().parent().hide();
+            $('#goods_sn').parent().parent().show();
+        } else {
+            $('#popup_type_id').parent().parent().show();
+            $('#goods_sn').parent().parent().hide();
+            var popup_type_id = "{$popup_info.type_id}";
+            var url = '';
+            var data = '';
+            switch (popup_type) {
+                case '10':
+                    // 分类
+                    url = "{:U('Admin/Goods/ajaxCategoryList')}";
+                    data = {level: 3};
+                    break;
+                default:
+                    $('#popup_type_id').parent().parent().hide();
+                    return;
+            }
+            $.ajax({
+                type: 'GET',
+                url: url,
+                data: data,
+                dataType: 'json',
+                error: function () {
+                    layer.alert("服务器繁忙, 请联系管理员!");
+                },
+                success: function (data) {
+                    if (data.status == 1) {
+                        if (data.result.length == 0) {
+                            var option = '<option value="0">请选择</option>';
+                        } else {
+                            var option = '';
+                            $.each(data.result, function(index, item) {
+                                if (popup_type_id == item.id) {
+                                    option = option + '<option value="'  +item.id + '" selected>' + item.title + '</option>';
+                                } else {
+                                    option = option + '<option value="'  +item.id + '">' + item.title + '</option>';
+                                }
+                            });
+                        }
+                        $('#popup_type_id').html(option);
+                    }
+                }
+            });
+        }
     });
+
+    /**
+     * 类型选择处理
+     */
+    $('#popup_type').change(function () {
+        selectContact();
+    });
+
+    /**
+     * 选择处理
+     */
+    function selectContact() {
+        var popup_type = $('#popup_type').find("option:selected").val();
+        if (popup_type == '9') {
+            $('#popup_type_id').parent().parent().hide();
+            $('#goods_sn').parent().parent().show();
+        } else {
+            $('#popup_type_id').parent().parent().show();
+            $('#goods_sn').parent().parent().hide();
+            var url = '';
+            var data = '';
+            switch (popup_type) {
+                case '10':
+                    // 分类
+                    url = "{:U('Admin/Goods/ajaxCategoryList')}";
+                    data = {level: 3};
+                    break;
+                default:
+                    $('#popup_type_id').parent().parent().hide();
+                    return;
+            }
+            $.ajax({
+                type: 'GET',
+                url: url,
+                data: data,
+                dataType: 'json',
+                error: function () {
+                    layer.alert("服务器繁忙, 请联系管理员!");
+                },
+                success: function (data) {
+                    if (data.status == 1) {
+                        if (data.result.length == 0) {
+                            var option = '<option value="0">请选择</option>';
+                        } else {
+                            var option = '';
+                            $.each(data.result, function(index, item) {
+                                option = option + '<option value="'  +item.id + '">' + item.title + '</option>';
+                            });
+                        }
+                        $('#popup_type_id').html(option);
+                    }
+                }
+            });
+        }
+    }
 
     function img_call_back(fileurl_tmp) {
         $("#show_path").val(fileurl_tmp);

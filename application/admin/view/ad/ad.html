@@ -189,6 +189,7 @@
                             <option value="8" <if condition="$info[target_type] eq 8">selected</if>>韩国购</option>
                             <option value="9" <if condition="$info[target_type] eq 9">selected</if>>VIP申请</option>
                             <option value="10" <if condition="$info[target_type] eq 10">selected</if>>SVIP专享</option>
+                            <option value="11" <if condition="$info[target_type] eq 11">selected</if>>商品分类</option>
                         </select>
                     </div>
                 </dd>
@@ -226,6 +227,21 @@
                             <option value="0">请选择</option>
                             <volist name="prom_list" id="item">
                                 <option value="{$item.id}" <if condition="$info[prom][id] eq $item[id]">selected</if>>{$item.title}</option>
+                            </volist>
+                        </select>
+                    </div>
+                </dd>
+            </dl>
+            <dl class="row category" style="display: none;">
+                <dt class="tit" colspan="2">
+                    <label>选择跳转的商品分类页</label>
+                </dt>
+                <dd class="opt">
+                    <div>
+                        <select name="cate_id" class="input-sm" class="form-control">
+                            <option value="0">请选择</option>
+                            <volist name="goods_category" id="item">
+                                <option value="{$item.id}" <if condition="$info[goods_category][id] eq $item[id]">selected</if>>{$item.name}</option>
                             </volist>
                         </select>
                     </div>
@@ -314,6 +330,9 @@
             case '2':
                 $('.prom').show();
                 break;
+            case '11':
+                $('.category').show();
+                break;
         }
     });
 
@@ -336,14 +355,22 @@
             case '1':
                 $('.goods').show();
                 $('.prom').hide();
+                $('.category').hide();
                 break;
             case '2':
                 $('.goods').hide();
                 $('.prom').show();
+                $('.category').hide();
+                break;
+            case '11':
+                $('.goods').hide();
+                $('.prom').hide();
+                $('.category').show();
                 break;
             default:
                 $('.goods').hide();
                 $('.prom').hide();
+                $('.category').hide();
         }
     });
 
