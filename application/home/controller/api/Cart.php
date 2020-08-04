@@ -182,11 +182,6 @@ class Cart extends Base
             }
             // 组装数据
             foreach ($cartData as $k => $v) {
-                if ($v['goods']['is_abroad'] == 1) {
-                    // 屏蔽海外购
-                    $cartNum -= 1;
-                    continue;
-                }
                 if (isset($v['item_id'])) {
                     $storeCount = M('spec_goods_price')->where(['item_id' => $v['item_id']])->value('store_count');
                 } else {
