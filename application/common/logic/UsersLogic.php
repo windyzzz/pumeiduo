@@ -1967,9 +1967,9 @@ class UsersLogic extends Model
         if (!($post['province'] > 0) || !($post['city'] > 0) || !($post['district'] > 0)) {
             return ['status' => -1, 'msg' => '所在地区不能为空', 'result' => ''];
         }
-        if ($post['town'] == 0 && M('region2')->where(['parent_id' => $post['district'], 'status' => 1])->find()) {
-            return ['status' => -1, 'msg' => '所在地区不能为空', 'result' => ''];
-        }
+//        if ($post['town'] == 0 && M('region2')->where(['parent_id' => $post['district'], 'status' => 1])->find()) {
+//            return ['status' => -1, 'msg' => '所在城镇街道不能为空', 'result' => ''];
+//        }
         $post['zipcode'] = M('region2')->where(['id' => $post['district']])->value('zipcode');
         if (!$post['address']) {
             return ['status' => -1, 'msg' => '地址不能为空', 'result' => ''];
