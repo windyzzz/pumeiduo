@@ -33,6 +33,17 @@
                 <div style="text-align: center; width: 100px;">{$list.goods_sn}</div>
             </td>
             <td align="center" axis="col0">
+                <div style="text-align: center; width: 100px;">
+                    <if condition="$list[is_abroad] == 1">
+                        <span style="color: green;">韩国购</span>
+                    <elseif condition="$list[is_supply] == 1"/>
+                        <span style="color: blue;">供应链</span>
+                    <else/>
+                        <span style="color: red;">圃美多</span>
+                    </if>
+                </div>
+            </td>
+            <td align="center" axis="col0">
                 <div style="text-align: center; width: 100px;">{$list.sale_type|sale_type}</div>
             </td>
             <td align="center" axis="col0">

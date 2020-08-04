@@ -11,6 +11,7 @@
 
 namespace app\admin\controller;
 
+use app\common\logic\supplier\AccountService;
 use think\AjaxPage;
 use think\Page;
 
@@ -344,6 +345,87 @@ class Finance extends Base
         $this->assign('up_data', $up_data);
         $this->assign('down_data', $down_data);
 
+        return $this->fetch();
+    }
+
+    /**
+     * 供应链账户信息
+     * @return mixed
+     */
+    public function supplierAccount()
+    {
+        $group_list = [
+            'supplier_recharge_log' => '充值记录',
+            'supplier_consume_log' => '消费记录',
+        ];
+        $this->assign('group_list', $group_list);
+        $inc_type = I('get.inc_type', '');
+        if (!$inc_type) {
+            foreach ($group_list as $key => $item) {
+                $inc_type = $key;
+                break;
+            }
+        }
+        $this->assign('inc_type', $inc_type);
+        // 供应链账户余额
+        $res = (new AccountService())->storeMoney();
+        if ($res['status'] == 0) {
+            $balance = 0;
+        } else {
+            $balance = $res['data']['store_money'];
+        }
+        $this->assign('balance', $balance);
+        return $this->fetch($inc_type);
+    }
+
+    /**
+     * 供应链账户记录
+     * @return mixed
+     */
+    public function supplierAccountLog()
+    {
+        $type = I('type', 1);
+        $page = I('page', 1);
+        // 供应链账户记录
+        $res = (new AccountService())->rechargeLog($type, $page);
+//        $res = '{"status":1,"data":{"count":1,"list":[{"payment_no":"202007231557298218","pay_type":"\u786e\u8ba4\u8ba2\u5355\u6263\u6b3e","freight_price":"0.00","consume_price":"41.73","creat_time":"2020-07-23 15:57:29","order":[{"order_id":"10119","order_sn":"221510119082185","pt_order_sn":"C202007231556082185","consignee":"\u738b\u5cf0","pay_goods":[{"order_id":"10119","goods_id":"233591","goods_name":"\u683c\u6717(GL)\u5a74\u513f\u65e5\u5e38\u62a4\u74067\u4ef6\u5957\u793c\u76d2\u88c5","goods_num":"1","s_price":"41.73","service_price":"0.00","is_pay":"1"}]},{"order_id":"10119","order_sn":"221510119082185","pt_order_sn":"C202007231556082185","consignee":"\u738b\u5cf0","pay_goods":[{"order_id":"10119","goods_id":"233591","goods_name":"\u683c\u6717(GL)\u5a74\u513f\u65e5\u5e38\u62a4\u74067\u4ef6\u5957\u793c\u76d2\u88c5","goods_num":"1","s_price":"41.73","service_price":"0.00","is_pay":"1"},{"order_id":"10119","goods_id":"233591","goods_name":"\u683c\u6717(GL)\u5a74\u513f\u65e5\u5e38\u62a4\u74067\u4ef6\u5957\u793c\u76d2\u88c5","goods_num":"1","s_price":"41.73","service_price":"0.00","is_pay":"1"}]}]}]}}';
+        $res = json_decode($res, true);
+        if ($res['status'] == 0) {
+            $count = 0;
+            $logList = [];
+        } else {
+            $count = $res['data']['count'];
+            $logList = [];
+            foreach ($res['data']['list'] as $k1 => $list) {
+                $logList[$k1] = [
+                    'payment_no' => $list['payment_no'],
+                    'pay_type' => $list['pay_type'],
+                    'price' => isset($list['price']) ? $list['price'] : 0.00,
+                    'freight_price' => isset($list['freight_price']) ? $list['freight_price'] : 0.00,
+                    'cost_price' => isset($list['cost_price']) ? $list['cost_price'] : 0.00,
+                    'total_price' => isset($list['total_price']) ? $list['total_price'] : 0.00,
+                    'consume_price' => isset($list['consume_price']) ? $list['consume_price'] : 0.00,
+                    'creat_time' => $type == 1 ? date('Y-m-d H:i:s', $list['creat_time']) : $list['creat_time'],
+                    'pay_time' => isset($list['pay_time']) && $list['pay_time'] != 0 ? date('Y-m-d H:i:s', $list['pay_time']) : '',
+                    'order' => '',
+                ];
+                if (!empty($list['order'])) {
+                    foreach ($list['order'] as $k2 => $order) {
+                        $orderSn = M('order o1')->join('order o2', 'o1.parent_id = o2.order_id')->where(['o1.order_sn' => $order['pt_order_sn']])->value('o2.order_sn');
+                        $logList[$k1]['order'] .= '主订单号：' . $orderSn . '；供应链订单号：' . $order['pt_order_sn'] . '；收件人：' . $order['consignee'] . "；\n";
+                        foreach ($order['pay_goods'] as $goods) {
+                            $logList[$k1]['order'] .= '——商品：' . $goods['goods_name'] . '；数量：' . $goods['goods_num'] . '；成本价：' . $goods['s_price'] . '；服务费：' . $goods['service_price'] . "；\n";
+                        }
+                        $logList[$k1]['order'] .= "\n";
+                    }
+                }
+            }
+        }
+        $page = new AjaxPage($count, 2);
+        $show = $page->show();
+        $this->assign('page', $show);
+        $this->assign('type', $type);
+        $this->assign('log_list', $logList);
         return $this->fetch();
     }
 }

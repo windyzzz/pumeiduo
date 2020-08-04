@@ -1,0 +1,103 @@
+<include file="public/layout"/>
+<script src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
+<body style="background-color: rgb(255, 255, 255); overflow: auto; cursor: default; -moz-user-select: inherit;">
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title">
+            <div class="subject">
+                <h3>供应链账户</h3>
+            </div>
+            <ul class="tab-base nc-row">
+                <foreach name="group_list" item="v" key="k">
+                    <li>
+                        <a href="{:U('Finance/supplierAccount',['inc_type'=> $k])}"<if condition="$k==$inc_type">class="current"</if>>
+                            <span>{$v}</span>
+                        </a>
+                    </li>
+                </foreach>
+            </ul>
+        </div>
+    </div>
+    <div class="flexigrid">
+        <div class="mDiv">
+            <div class="ftitle">
+                <h3>账户余额：</h3>
+                <h5>{$balance}元</h5>
+            </div>
+            <div title="刷新数据" class="pReload"><i class="fa fa-refresh"></i></div>
+            <input type="hidden" name="type" value="2">
+        </div>
+        <div class="hDiv">
+            <div class="hDivBox">
+                <table cellspacing="0" cellpadding="0">
+                    <thead>
+                    <tr>
+                        <th class="sign" axis="col0">
+                            <div style="width: 24px;"><i class="ico-check"></i></div>
+                        </th>
+                        <th align="center" class="">
+                            <div style="text-align: center; width: 150px;" class="">流水号</div>
+                        </th>
+                        <th align="center" class="">
+                            <div style="text-align: center; width: 150px;" class="">扣除方式</div>
+                        </th>
+                        <th align="center" class="">
+                            <div style="text-align: center; width: 80px;" class="">总运费</div>
+                        </th>
+                        <th align="center" class="">
+                            <div style="text-align: center; width: 80px;" class="">扣除预存金额</div>
+                        </th>
+                        <th align="center" class="">
+                            <div style="text-align: center; width: 1000px;" class="">订单信息</div>
+                        </th>
+                        <th align="center" class="">
+                            <div style="text-align: center; width: 150px;" class="">创建时间</div>
+                        </th>
+                        <th style="width:100%" axis="col7">
+                            <div></div>
+                        </th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+        <div class="bDiv" style="height: auto;">
+            <div id="flexigrid" cellpadding="0" cellspacing="0" border="0">
+
+            </div>
+            <div class="iDiv" style="display: none;"></div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        // 点击刷新数据
+        $('.fa-refresh').click(function () {
+            location.href = location.href;
+        });
+
+        // ajax 抓取页面
+        ajax_get_table(1);
+    });
+    function ajax_get_table(page) {
+        var type = $('input[name="type"]').val();
+        $.ajax({
+            type: "POST",
+            url: "/index.php/Admin/Finance/supplierAccountLog/p/" + page,
+            data: {type: type},
+            success: function (data) {
+                $("#flexigrid").html('');
+                $("#flexigrid").append(data);
+                // 表格行点击选中切换
+                $('#flexigrid > table>tbody >tr').click(function () {
+                    $(this).toggleClass('trSelected');
+                });
+            }
+        });
+    }
+</script>
+</body>
+</html>

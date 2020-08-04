@@ -89,7 +89,8 @@ class Cart extends Base
             $cartList = $Pay->activity2_goods($cartList);
 
             foreach ($cartList as $k => $v) {
-                if (!$this->isApp && $v['goods']['is_abroad'] == 1) {
+                $cartList[$k]['goods']['original_img_new'] = getFullPath($v['goods']['original_img']);
+                if (!$this->isApp && ($v['goods']['is_abroad'] == 1 || $v['goods']['is_supply'] == 1)) {
                     // 不显示韩国购与供应链商品
                     unset($cartList[$k]);
                     continue;
@@ -197,6 +198,7 @@ class Cart extends Base
 //                            'goods_sn' => $gift['goods_sn'],
 //                            'goods_name' => $gift['goods_name'],
 //                            'original_img' => $gift['original_img'],
+//                            'original_img_new' => getFullPath($gift['original_img']),
 //                            'spec_key' => $gift['spec_key'],
 //                            'spec_key_name' => $gift['spec_key_name'],
 //                            'goods_num' => $gift['goods_num'],
@@ -211,6 +213,7 @@ class Cart extends Base
                         'goods_sn' => $v['goods_sn'],
                         'goods_name' => $v['goods_name'],
                         'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                        'original_img_new' => isset($v['goods']) ? getFullPath($v['goods']['original_img']) : '',
                         'spec_key' => $v['spec_key'],
                         'spec_key_name' => $v['spec_key_name'],
                         'gift_goods' => $giftGoods
@@ -250,11 +253,12 @@ class Cart extends Base
                         'goods_sn' => $v['goods_sn'],
                         'goods_name' => $v['goods_name'],
                         'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                        'original_img_new' => isset($v['goods']) ? getFullPath($v['goods']['original_img']) : '',
                         'spec_key' => $v['spec_key'],
                         'spec_key_name' => $v['spec_key_name'],
-                        'shop_price' => $v['goods_price'],
+                        'shop_price' => $v['member_goods_price'],
                         'exchange_integral' => $v['use_integral'],
-                        'exchange_price' => bcsub($v['goods_price'], $v['use_integral'], 2),
+                        'exchange_price' => bcsub($v['member_goods_price'], $v['use_integral'], 2),
                         'goods_num' => $v['goods_num'],
                         'buy_limit' => $buyLimit,
                         'buy_least' => '0',
@@ -294,6 +298,7 @@ class Cart extends Base
                         'goods_sn' => $v['goods_sn'],
                         'goods_name' => $v['goods_name'],
                         'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                        'original_img_new' => isset($v['goods']) ? getFullPath($v['goods']['original_img']) : '',
                         'spec_key' => $v['spec_key'],
                         'spec_key_name' => $v['spec_key_name'],
                         'shop_price' => $v['goods_price'],
@@ -322,6 +327,7 @@ class Cart extends Base
                         'goods_sn' => $v['goods_sn'],
                         'goods_name' => $v['goods_name'],
                         'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                        'original_img_new' => isset($v['goods']) ? getFullPath($v['goods']['original_img']) : '',
                         'spec_key' => $v['spec_key'],
                         'spec_key_name' => $v['spec_key_name'],
                         'shop_price' => $v['goods_price'],
@@ -341,6 +347,7 @@ class Cart extends Base
                         'goods_sn' => $v['goods_sn'],
                         'goods_name' => $v['goods_name'],
                         'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                        'original_img_new' => isset($v['goods']) ? getFullPath($v['goods']['original_img']) : '',
                         'spec_key' => $v['spec_key'],
                         'spec_key_name' => $v['spec_key_name'],
                         'shop_price' => $v['goods_price'],
@@ -485,6 +492,7 @@ class Cart extends Base
                         'goods_sn' => $v['goods_sn'],
                         'goods_name' => $v['goods_name'],
                         'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                        'original_img_new' => isset($v['goods']) ? getFullPath($v['goods']['original_img']) : '',
                         'spec_key' => $v['spec_key'],
                         'spec_key_name' => $v['spec_key_name']
                     ];
@@ -522,6 +530,7 @@ class Cart extends Base
                             'goods_sn' => $v['goods_sn'],
                             'goods_name' => $v['goods_name'],
                             'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                            'original_img_new' => isset($v['goods']) ? getFullPath($v['goods']['original_img']) : '',
                             'spec_key' => $v['spec_key'],
                             'spec_key_name' => $v['spec_key_name'],
                             'shop_price' => '￥' . bcadd($v['member_goods_price'], $v['use_integral'], 2),
@@ -567,6 +576,7 @@ class Cart extends Base
                             'goods_sn' => $v['goods_sn'],
                             'goods_name' => $v['goods_name'],
                             'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                            'original_img_new' => isset($v['goods']) ? getFullPath($v['goods']['original_img']) : '',
                             'spec_key' => $v['spec_key'],
                             'spec_key_name' => $v['spec_key_name'],
                             'shop_price' => '￥' . $v['goods_price'],
@@ -599,6 +609,7 @@ class Cart extends Base
                             'goods_sn' => $v['goods_sn'],
                             'goods_name' => $v['goods_name'],
                             'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                            'original_img_new' => isset($v['goods']) ? getFullPath($v['goods']['original_img']) : '',
                             'spec_key' => $v['spec_key'],
                             'spec_key_name' => $v['spec_key_name'],
                             'shop_price' => '￥' . $v['goods_price'],
@@ -644,6 +655,7 @@ class Cart extends Base
                             'goods_sn' => $v['goods_sn'],
                             'goods_name' => $v['goods_name'],
                             'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                            'original_img_new' => isset($v['goods']) ? getFullPath($v['goods']['original_img']) : '',
                             'spec_key' => $v['spec_key'],
                             'spec_key_name' => $v['spec_key_name'],
                             'shop_price' => '￥' . bcadd($v['member_goods_price'], $v['use_integral'], 2),
@@ -685,6 +697,7 @@ class Cart extends Base
                             'goods_sn' => $v['goods_sn'],
                             'goods_name' => $v['goods_name'],
                             'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                            'original_img_new' => isset($v['goods']) ? getFullPath($v['goods']['original_img']) : '',
                             'spec_key' => $v['spec_key'],
                             'spec_key_name' => $v['spec_key_name'],
                             'shop_price' => '￥' . $v['goods_price'],
@@ -716,6 +729,7 @@ class Cart extends Base
                             'goods_sn' => $v['goods_sn'],
                             'goods_name' => $v['goods_name'],
                             'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                            'original_img_new' => isset($v['goods']) ? getFullPath($v['goods']['original_img']) : '',
                             'spec_key' => $v['spec_key'],
                             'spec_key_name' => $v['spec_key_name'],
                             'shop_price' => '￥' . $v['goods_price'],
@@ -1099,8 +1113,8 @@ class Cart extends Base
                 $groupBuyGoods[$item['goods_id'] . '_' . $item['spec_key']] = $item;
             }
             foreach ($cartData as $k => $v) {
-                if (!$this->isApp && $v['goods']['is_abroad'] == 1) {
-                    // 不计算韩国购商品
+                if (!$this->isApp && ($v['goods']['is_abroad'] == 1 && $v['goods']['is_supply'] == 1)) {
+                    // 不计算韩国购商品与供应链商品
                     $cartNum -= 1;
                     continue;
                 }
@@ -1514,6 +1528,12 @@ class Cart extends Base
 
 //            $pay->orderPromotion();
             $pay->goodsPromotion();
+
+            // 组合拆分订单数据
+            $pay->setOrderSplitGoods($pay->getPayList());
+            // 检查供应链商品地区购买限制
+            $pay->checkOrderSplitGoods($address);
+
             $pay->delivery($address['district']);   // 配送物流
 
             $pay->useCouponById($coupon_id, $pay->getPayList());

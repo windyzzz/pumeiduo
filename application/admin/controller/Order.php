@@ -15,6 +15,7 @@ use app\admin\logic\OrderLogic;
 use app\admin\logic\RefundLogic;
 use app\common\logic\Pay;
 use app\common\logic\PlaceOrder;
+use app\common\logic\supplier\OrderService;
 use app\common\model\OrderGoods;
 use app\common\util\TpshopException;
 use think\AjaxPage;
@@ -69,7 +70,7 @@ class Order extends Base
         $pay_end = strtotime($pay_end);
 
         // 搜索条件
-        $condition = [];
+        $condition = ['parent_id' => 0];
         $keyType = I('keytype');
         $keywords = I('keywords', '', 'trim');
         $user_id = I('user_id', '', 'trim');
@@ -377,7 +378,8 @@ class Order extends Base
         $orderGoods = $order['orderGoods'];
 //        $orderGoodsNum = M('order_goods')->where(['order_id' => $order_id])->sum('goods_num');
         $express = Db::name('delivery_doc dd')->join('order_goods og', 'og.rec_id = dd.rec_id', 'LEFT')
-            ->where('dd.order_id', $order_id)->field('dd.*, og.goods_name, og.spec_key_name')->select();  //发货信息（可能多个）
+            ->join('goods g', 'g.goods_id = og.goods_id')
+            ->where('dd.order_id', $order_id)->field('dd.*, og.goods_name, og.spec_key_name, og.order_id2, g.supplier_goods_id')->select();  //发货信息（可能多个）
         $user = Db::name('users')->where(['user_id' => $order['user_id']])->find();
         $this->assign('order', $order);
         $this->assign('user', $user);
@@ -456,6 +458,14 @@ class Order extends Base
             ];
         }
         $this->assign('delivery_log', $deliveryLog);
+        // 子订单
+        if ($order['order_type'] == 3) {
+            $cOrder = M('order')->where(['parent_id' => $order_id])->select();
+            foreach ($cOrder as &$order) {
+                $order['order_goods'] = M('order_goods')->where(['order_id2' => $order['order_id']])->select();
+            }
+            $this->assign('child_order', $cOrder);
+        }
 
         return $this->fetch();
     }
@@ -1019,6 +1029,21 @@ class Order extends Base
         $this->assign('return_type', C('RETURN_TYPE')); //退货订单信息
         $this->assign('refund_status', C('REFUND_STATUS'));
 
+        if ($return_goods['is_supply'] == 1 && $return_goods['type'] == 2 && !empty($return_goods['supplier_sale_sn'])) {
+            // 供应链订单商品换货物流信息
+            $supplierDelivery = [];
+            $res = (new OrderService())->afterSaleInfo($return_goods['supplier_sale_sn']);
+            if ($res['status'] == 0) {
+                $supplierDelivery['delivery'] = [];
+                $supplierDelivery['express'] = [];
+            } else {
+                $data = $res['data'];
+                $supplierDelivery['delivery'] = $data['delivery'];
+                $supplierDelivery['express'] = $data['express_info']['express_info'];
+            }
+            $this->assign('supplier_delivery', $supplierDelivery);
+        }
+
         return $this->fetch();
     }
 
@@ -1042,11 +1067,11 @@ class Order extends Base
                 $post_data['checktime'] = time();
                 break;
             case 3:
-                $post_data['receivetime'] = time();
-                break;  //卖家收货时间
+                $post_data['receivetime'] = time(); //卖家收货时间
+                break;
             default:
         }
-
+        Db::startTrans();
         if ($return_goods['type'] > 0 && 4 == $post_data['status']) {
             if ($return_goods['type'] < 2 && $order_goods['goods_pv'] == 0) {
                 // 换货成功直接解冻分成
@@ -1076,8 +1101,6 @@ class Order extends Base
             }
         }
         $note = "退换货:{$type_msg[$return_goods['type']]}, 状态:{$status_msg[$post_data['status']]},处理备注：{$post_data['remark']}";
-        // 更新退换货记录
-        M('return_goods')->where(['id' => $post_data['id']])->save($post_data);
 
         if (1 == $post_data['status']) {
             //审核通过才更改订单商品状态，进行退货，退款时要改对应商品修改库存
@@ -1107,6 +1130,9 @@ class Order extends Base
                 }
             }
         }
+        // 更新退换货记录
+        M('return_goods')->where(['id' => $post_data['id']])->save($post_data);
+        // 订单操作记录
         $orderLogic->orderActionLog($return_goods['order_id'], '退换货', $note);
 
         //仅退款-审核通过 和 退货退款确认收货
@@ -1131,7 +1157,7 @@ class Order extends Base
                 ]);
             }
         }
-
+        Db::commit();
         $this->ajaxReturn(['status' => 1, 'msg' => '修改成功', 'url' => '']);
     }
 
@@ -1453,7 +1479,7 @@ class Order extends Base
 
     public function export_delivery_order()
     {
-        $condition = [];
+        $condition = ['parent_id' => 0];
         I('consignee') ? $condition['consignee'] = trim(I('consignee')) : false;
         '' != I('order_sn') ? $condition['order_sn'] = trim(I('order_sn')) : false;
         $shipping_status = I('shipping_status');
@@ -1513,7 +1539,7 @@ class Order extends Base
      */
     public function export_order()
     {
-        $condition = [];
+        $condition = ['parent_id' => 0];
         // 下单时间
         $begin = $this->begin;
         $end = $this->end;
@@ -1690,7 +1716,7 @@ class Order extends Base
      */
     public function export_order_v2()
     {
-        $condition = [];
+        $condition = ['parent_id' => 0];
         // 下单时间
         $begin = $this->begin;
         $end = $this->end;
@@ -1870,7 +1896,7 @@ class Order extends Base
         $order_by = I('order_by') ? I('order_by') : 'addtime';
         $sort_order = I('sort_order') ? I('sort_order') : 'desc';
         $status = I('status');
-        $where = [];
+        $where = ['o.parent_id' => 0];
         if ($order_sn) {
             $where['order_sn'] = ['like', '%' . $order_sn . '%'];
         }
@@ -2272,5 +2298,73 @@ class Order extends Base
         }
         Db::commit();
         $this->ajaxReturn(['status' => 1, 'msg' => '批量确认订单成功']);
+    }
+
+
+    public function sendSupplierReturn()
+    {
+        $returnId = I('id');
+        $return_goods = Db::name('return_goods')->where(['id' => $returnId])->find();
+        !$return_goods && $this->ajaxReturn(['status' => -1, 'msg' => '非法操作!']);
+        $order_goods = M('order_goods')->where(['rec_id' => $return_goods['rec_id']])->find();
+        $order = \app\common\model\Order::get($return_goods['order_id']);
+        if ($order['order_type'] == 3) {
+            // 供应链订单处理
+            $cOrder = M('order')->where(['order_id' => $order_goods['order_id2']])->find();
+            if (isset($cOrder) && $cOrder['order_type'] == 3) {
+                $returnGoods = [
+                    'order_sn' => $cOrder['order_sn'],
+                    'goods_id' => M('goods')->where(['goods_id' => $order_goods['goods_id']])->value('supplier_goods_id'),
+                    'spec_key' => $order_goods['spec_key'],
+                    'type' => $return_goods['type'],
+                    'reason' => $return_goods['reason'],
+                    'describe' => $return_goods['describe'],
+                ];
+                $res = (new OrderService())->refundOrder($returnGoods);
+                if ($res['status'] == 0) {
+                    $this->ajaxReturn(['status' => 0, 'msg' => $res['msg'] . '(供应链)']);
+                }
+                $afterSaleSn = $res['data']['after_sale_sn'];
+                if (empty($afterSaleSn)) {
+                    supplierReturnLog($res);    // 供应链返回数据记录
+                    $this->ajaxReturn(['status' => 0, 'msg' => '供应链售后单号缺失']);
+                }
+                M('return_goods')->where(['id' => $return_goods['id']])->update(['supplier_sale_sn' => $afterSaleSn]);
+            }
+        } else {
+            $this->ajaxReturn(['status' => -1, 'msg' => '售后单不是供应链订单']);
+        }
+    }
+
+    /**
+     * 取消供应链售后
+     */
+    public function cancelSupplierReturn()
+    {
+        $returnId = I('return_id');
+        $return = M('return_goods rg')->join('order_goods og', 'og.rec_id = rg.rec_id')
+            ->join('order o', 'o.order_id = og.order_id2')
+            ->where(['rg.id' => $returnId])
+            ->field('o.order_sn, og.supplier_goods_id, og.spec_key, rg.supplier_sale_sn')
+            ->find();
+        if (empty($return)) {
+            $this->ajaxReturn(['status' => 0, 'msg' => '退换货信息不存在']);
+        }
+        $afterSaleSn = $return['supplier_sale_sn'];
+        if (empty($afterSaleSn)) {
+            $this->ajaxReturn(['status' => 0, 'msg' => '供应链售后单不存在']);
+        }
+        $returnGoods = [
+            'order_sn' => $return['order_sn'],
+            'goods_id' => $return['supplier_goods_id'],
+            'spec_key' => $return['spec_key'],
+            'status' => -2
+        ];
+        $res = (new OrderService())->closeRefundOrder($returnGoods, $afterSaleSn);
+        if ($res['status'] == 0) {
+            $this->ajaxReturn(['status' => 0, 'msg' => $res['msg']]);
+        }
+        M('return_goods')->where(['id' => $returnId])->update(['supplier_sale_status' => -2]);
+        $this->ajaxReturn(['status' => 1, 'msg' => '供应链取消成功']);
     }
 }

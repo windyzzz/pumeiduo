@@ -405,46 +405,49 @@ function get_rand_str($randLength = 6, $addtime = 1, $includenumber = 0)
 
 /**
  * CURL请求
- *
- * @param $url string 请求url地址
- * @param $method string 请求方法 get post
- * @param mixed $postfields post数据数组
+ * @param string $url 请求url地址
+ * @param string $method 请求方法 get post
+ * @param array $fields 数据数组
  * @param array $headers 请求header信息
  * @param bool|false $debug 调试开启 默认false
- *
  * @return mixed
  */
-function httpRequest($url, $method = 'GET', $postfields = null, $headers = [], $debug = false)
+function httpRequest($url, $method = "GET", $fields = [], $headers = array(), $debug = false)
 {
     $method = strtoupper($method);
     $ci = curl_init();
     /* Curl settings */
     curl_setopt($ci, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_0);
-    curl_setopt($ci, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 6.2; WOW64; rv:34.0) Gecko/20100101 Firefox/34.0');
+    curl_setopt($ci, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 6.2; WOW64; rv:34.0) Gecko/20100101 Firefox/34.0");
     curl_setopt($ci, CURLOPT_CONNECTTIMEOUT, 60); /* 在发起连接前等待的时间，如果设置为0，则无限等待 */
     curl_setopt($ci, CURLOPT_TIMEOUT, 7); /* 设置cURL允许执行的最长秒数 */
     curl_setopt($ci, CURLOPT_RETURNTRANSFER, true);
     switch ($method) {
         case 'POST':
             curl_setopt($ci, CURLOPT_POST, true);
-            if (!empty($postfields)) {
-                $tmpdatastr = is_array($postfields) ? http_build_query($postfields) : $postfields;
+            if (!empty($fields)) {
+                $tmpdatastr = is_array($fields) ? http_build_query($fields) : $fields;
                 curl_setopt($ci, CURLOPT_POSTFIELDS, $tmpdatastr);
             }
             break;
-        default:
-            curl_setopt($ci, CURLOPT_CUSTOMREQUEST, $method); /* //设置请求方式 */
+        case 'GET':
+            curl_setopt($ci, CURLOPT_CUSTOMREQUEST, $method);
+            if (!empty($fields)) {
+                $url .= stripos($url, '?') !== false ? '&' : '?' . http_build_query($fields);
+            }
             break;
+        default:
+            return false;
     }
-    $ssl = preg_match('/^https:\/\//i', $url) ? true : false;
+    $ssl = preg_match('/^https:\/\//i', $url) ? TRUE : FALSE;
     curl_setopt($ci, CURLOPT_URL, $url);
     if ($ssl) {
-        curl_setopt($ci, CURLOPT_SSL_VERIFYPEER, false); // https请求 不验证证书和hosts
-        curl_setopt($ci, CURLOPT_SSL_VERIFYHOST, false); // 不从证书中检查SSL加密算法是否存在
+        curl_setopt($ci, CURLOPT_SSL_VERIFYPEER, FALSE); // https请求 不验证证书和hosts
+        curl_setopt($ci, CURLOPT_SSL_VERIFYHOST, FALSE); // 不从证书中检查SSL加密算法是否存在
     }
     //curl_setopt($ci, CURLOPT_HEADER, true); /*启用时会将头文件的信息作为数据流输出*/
     curl_setopt($ci, CURLOPT_FOLLOWLOCATION, 1);
-    curl_setopt($ci, CURLOPT_MAXREDIRS, 2); /*指定最多的HTTP重定向的数量，这个选项是和CURLOPT_FOLLOWLOCATION一起使用的*/
+    curl_setopt($ci, CURLOPT_MAXREDIRS, 2);/*指定最多的HTTP重定向的数量，这个选项是和CURLOPT_FOLLOWLOCATION一起使用的*/
     curl_setopt($ci, CURLOPT_HTTPHEADER, $headers);
     curl_setopt($ci, CURLINFO_HEADER_OUT, true);
     /*curl_setopt($ci, CURLOPT_COOKIE, $Cookiestr); * *COOKIE带过去** */
@@ -453,14 +456,13 @@ function httpRequest($url, $method = 'GET', $postfields = null, $headers = [], $
     $http_code = curl_getinfo($ci, CURLINFO_HTTP_CODE);
     if ($debug) {
         echo "=====post data======\r\n";
-        var_dump($postfields);
+        var_dump($fields);
         echo "=====info===== \r\n";
         print_r($requestinfo);
         echo "=====response=====\r\n";
         print_r($response);
     }
     curl_close($ci);
-
     return $response;
     //return array($http_code, $response,$requestinfo);
 }
@@ -1631,7 +1633,6 @@ function hideStr($string, $bengin = 0, $len = 4, $type = 0, $glue = '')
 }
 
 /**
- * <<<<<<< HEAD
  * RGB转十六进制
  * @param string $rgb RGB颜色的字符串 如：rgb(255,255,255);
  * @return string 十六进制颜色值 如：#FFFFFF
@@ -1775,6 +1776,47 @@ function checkBankCard($card)
 }
 
 /**
+ * 去除字符串所有空格回车
+ * @param $str
+ * @return mixed
+ */
+function trim_all($str)
+{
+    $oldchar = array(" ", "　", "\t", "\n", "\r");
+    $newchar = array("", "", "", "", "");
+    return str_replace($oldchar, $newchar, $str);
+}
+
+/**
+ * HMAC-MD5 签名算法
+ * @param $app_id
+ * @param array $data
+ * @return string
+ */
+function hmac_md5_sign($app_id, array $data)
+{
+    if (empty($data)) return '';
+    Ksort($data);
+    $data = http_build_query($data);
+    $app_key = iconv("GB2312", "UTF-8//IGNORE", $app_id);
+    $data = iconv("GB2312", "UTF-8//IGNORE", $data);
+    $b = 64;
+    //如果AppKey大于64位，则装入一个二进制字符串pack()
+    if (strlen($app_key) > $b) {
+        $app_key = pack("H*", md5($app_key));
+    }
+    //str_pad() 填充字符串到右侧，到$b(64)个字符的新长度，chr()从不同的ASCII值返回字符
+    $app_key = str_pad($app_key, $b, chr(0x00));
+    $ipad = str_pad('', $b, chr(0x36));
+    $opad = str_pad('', $b, chr(0x5c));
+
+    $k_ipad = $app_key ^ $ipad;
+    $k_opad = $app_key ^ $opad;
+    //$k_opad拼接 二进制字符串的一个md5加密字符串
+    return md5($k_opad . pack("H*", md5($k_ipad . $data)));
+}
+
+/**
  * 获取xls(x)文件内容
  * @param $file
  * @return array
@@ -1834,4 +1876,32 @@ function diffDate($date1, $date2)
     $time['s'] = $interval->format('%s');
     $time['a'] = $interval->format('%a');   // 相差天数
     return $time;
+}
+
+/**
+ * 获取完整路径
+ * @param $path
+ * @return string
+ */
+function getFullPath($path)
+{
+    if (!$path) {
+        return '';
+    }
+    if (!strstr($path, 'http') && !strstr($path, 'https')) {
+        return SITE_URL . $path;
+    }
+    return $path;
+}
+
+/**
+ * 图片转base64
+ * @param string $img
+ * @return string
+ */
+function imgToBase64($img = '')
+{
+    $imageInfo = getimagesize($img);
+    $base64 = chunk_split(base64_encode(file_get_contents($img)));
+    return 'data:' . $imageInfo['mime'] . ';base64,' . chunk_split($base64);
 }

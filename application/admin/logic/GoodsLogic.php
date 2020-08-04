@@ -726,4 +726,17 @@ class GoodsLogic extends Model
 
         return ['msg' => '编辑预售商品活动失败', 'status' => 0, 'url' => U('Promotion/pre_sell_list')];
     }
+
+    /**
+     * 更新商品规格属性
+     * @param $goodsSpec
+     * @return bool
+     */
+    public function saveGoodsSpec($goodsSpec)
+    {
+        foreach ($goodsSpec as $itemId => $item) {
+            M('spec_goods_price')->where(['item_id' => $itemId])->update(['price' => $item['price']]);
+        }
+        return true;
+    }
 }

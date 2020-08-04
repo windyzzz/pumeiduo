@@ -567,8 +567,6 @@ class Promotion extends Base
         if ($groupbuy_id) {
             $GroupBy = new GroupBuy();
             $group_info = $GroupBy->with('specGoodsPrice,goods,groupDetail')->find($groupbuy_id);
-            // dump($group_info->toArray());
-            // exit;
             $group_info['start_time'] = date('Y-m-d H:i', $group_info['start_time']);
             $group_info['end_time'] = date('Y-m-d H:i', $group_info['end_time']);
             $act = 'edit';
@@ -742,7 +740,6 @@ class Promotion extends Base
                 $query->where('prom_type', 0);
             }
         })->order('goods_id DESC')->limit($Page->firstRow . ',' . $Page->listRows)->select();
-
         $types = I('types', 1);
         $this->assign('types', $types);
 
@@ -879,6 +876,7 @@ class Promotion extends Base
         if ($id > 0) {
             $FlashSale = new FlashSale();
             $info = $FlashSale->with('specGoodsPrice,goods')->find($id);
+
             $info['start_time'] = date('Y-m-d H:i', $info['start_time']);
             $info['end_time'] = date('Y-m-d H:i', $info['end_time']);
             $info['source'] = explode(',', $info['source']);

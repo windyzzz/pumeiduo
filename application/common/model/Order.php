@@ -109,7 +109,8 @@ class Order extends Model
         $province = Region2::where(['id' => $data['province']])->value('name');
         $city = Region2::where(['id' => $data['city']])->value('name');
         $district = Region2::where(['id' => $data['district']])->value('name');
-        $address = $province . '，' . $city . '，' . $district . '，' . $data['address'];
+        $town = Region2::where(['id' => $data['twon']])->value('name');
+        $address = $province . '，' . $city . '，' . $district . '，' . $town . '，' . $data['address'];
 
         return $address;
     }

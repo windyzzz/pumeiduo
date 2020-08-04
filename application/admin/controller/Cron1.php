@@ -8730,4 +8730,22 @@ class Cron1 extends Controller
             var_dump('fail');
         }
     }
+
+    public function updateRegionStatus()
+    {
+        Db::startTrans();
+        // 关闭直辖市下级除了“市辖区”、“市辖县”以外的地区
+        $directProvince = M('region2')->where(['name' => ['LIKE', '%市%'], 'level' => 0])->getField('id', true);
+        foreach ($directProvince as $province) {
+            M('region2')->where(['parent_id' => $province])
+                ->where(function ($query) {
+                    $query->where(['name' => ['NOT LIKE', '%市辖%']]);
+                })
+                ->update(['status' => 0]);
+        }
+        // 关闭第三级的“市辖区”
+        M('region2')->where(['name' => ['LIKE', '%市辖%'], 'level' => 2])->update(['status' => 0]);
+        Db::commit();
+        var_dump('ok');
+    }
 }

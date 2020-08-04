@@ -275,6 +275,7 @@ class ExtraLogic
                     $goods_info = M('goods')->field('goods_id,goods_name,goods_remark,store_count,original_img,shop_price as goods_price,exchange_integral')->where('goods_id', $av['goods_id'])->find();
 //                    $goods_info['goods_price'] = $av['goods_price'];
 //                    $goods_info['goods_price'] = $goods_info['goods_price'] - $goods_info['exchange_integral'];
+                    $goods_info['original_img_new'] = getFullPath($goods_info['original_img']);
                     $goods_info['goods_num'] = $av['goods_num'];
                     $goods_info['buy_limit'] = $av['buy_limit'];
                     $goods_info['prom_type'] = 6;

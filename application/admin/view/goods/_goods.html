@@ -154,7 +154,7 @@
             </ul>
         </div>
     </div>
-    <!-- 操作说明 -->
+    <!--操作说明-->
     <div class="explanation" id="explanation">
         <div class="title" id="checkZoom"><i class="fa fa-lightbulb-o"></i>
             <h4 title="提示相关设置操作时应注意的要点">操作提示</h4>
@@ -173,7 +173,9 @@
                     <label for="record_no">商品名称</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" value="{$goodsInfo.goods_name}" name="goods_name" class="input-txt"/>
+                    <input type="text" value="{$goodsInfo.goods_name}" name="goods_name" class="input-txt"
+                    <if condition="$goodsInfo.is_supply == 1">disabled</if>
+                    />
                     <span class="err" id="err_goods_name" style="color:#F00; display:none;"></span>
                 </dd>
             </dl>
@@ -182,7 +184,9 @@
                     <label for="store_name">商品简介</label>
                 </dt>
                 <dd class="opt">
-                    <textarea rows="3" cols="80" name="goods_remark" class="input-txt">{$goodsInfo.goods_remark}</textarea>
+                    <textarea rows="3" cols="80" name="goods_remark" class="input-txt"
+                    <if condition="$goodsInfo.is_supply == 1">disabled</if>
+                    >{$goodsInfo.goods_remark}</textarea>
                     <span id="err_goods_remark" class="err" style="color:#F00; display:none;"></span>
                 </dd>
             </dl>
@@ -255,7 +259,6 @@
                     <select name="extend_cat_id_3" id="extend_cat_id_3" class="small form-control">
                         <option value="0">请选择商品分类</option>
                     </select>
-                    <span class="err" id="extend_cat_id" style="color:#F00; display:none;"></span>
                 </dd>
             </dl>
             <dl class="row">
@@ -294,7 +297,7 @@
                         <case value="2">一件代发</case>
                         <case value="3">供应链发货</case>
                     </switch>
-                    <input type="hidden" name="trade_type" value="{$goodsInfo['trade_type']}" />
+                    <input type="hidden" name="trade_type" value="{$goodsInfo['trade_type']}"/>
                 </dd>
             </dl>
             <dl class="row">
@@ -303,9 +306,15 @@
                 </dt>
                 <dd class="opt">
                     <select name="zone" id="zone" class="small form-control" onchange="test(this)">
-                        <option value="1" <if condition="1 eq $goodsInfo['zone'] ">selected="selected"</if>>普通商品区</option>
-                        <option value="2" <if condition="2 eq $goodsInfo['zone'] ">selected="selected"</if>>店长专区</option>
-                        <option value="3" <if condition="3 eq $goodsInfo['zone'] ">selected="selected"</if>>会员升级区</option>
+                        <option value="1"
+                        <if condition="1 eq $goodsInfo['zone'] ">selected="selected"</if>
+                        >普通商品区</option>
+                        <option value="2"
+                        <if condition="2 eq $goodsInfo['zone'] ">selected="selected"</if>
+                        >店长专区</option>
+                        <option value="3"
+                        <if condition="3 eq $goodsInfo['zone'] ">selected="selected"</if>
+                        >会员升级区</option>
                     </select>
                 </dd>
             </dl>
@@ -339,10 +348,17 @@
                     <label for="record_no">是否可以使用积分兑换</label>
                 </dt>
                 <dd class="opt">
-                    <select name="exchange_integral_type" id="exchange_integral_type" class="small form-control" onchange="testIntegral(this)">
-                        <option value="1" <if condition="1 eq $goodsInfo['exchange_integral_type'] ">selected="selected"</if>>是</option>
-                        <option value="0" <if condition="0 eq $goodsInfo['exchange_integral_type'] ">selected="selected"</if>>否</option>
-                        <option value="2" <if condition="2 eq $goodsInfo['exchange_integral_type'] ">selected="selected"</if>>自选</option>
+                    <select name="exchange_integral_type" id="exchange_integral_type" class="small form-control"
+                            onchange="testIntegral(this)">
+                        <option value="1"
+                        <if condition="1 eq $goodsInfo['exchange_integral_type'] ">selected="selected"</if>
+                        >是</option>
+                        <option value="0"
+                        <if condition="0 eq $goodsInfo['exchange_integral_type'] ">selected="selected"</if>
+                        >否</option>
+                        <option value="2"
+                        <if condition="2 eq $goodsInfo['exchange_integral_type'] ">selected="selected"</if>
+                        >自选</option>
                     </select>
                 </dd>
             </dl>
@@ -505,20 +521,20 @@
                 </dt>
                 <dd class="opt">
                     <div class="input-file-show">
-            <span class="show">
-                <a id="img_a" target="_blank" class="nyroModal" rel="gal" href="{$goodsInfo.original_img}">
-                    <i id="img_i" class="fa fa-picture-o"
-                       onMouseOver="layer.tips('<img src={$goodsInfo.original_img}>',this,{tips: [1, '#fff']});"
-                       onMouseOut="layer.closeAll();"></i>
-                </a>
-            </span>
+                        <span class="show">
+                            <a id="img_a" target="_blank" class="nyroModal" rel="gal" href="{$goodsInfo.original_img}">
+                                <i id="img_i" class="fa fa-picture-o"
+                                   onMouseOver="layer.tips('<img src={$goodsInfo.original_img}>',this,{tips: [1, '#fff']});"
+                                   onMouseOut="layer.closeAll();"></i>
+                            </a>
+                        </span>
                         <span class="type-file-box">
-                <input type="text" id="imagetext" name="original_img" value="{$goodsInfo.original_img}"
-                       class="type-file-text">
-                <input type="button" name="button" id="button1" value="选择上传..." class="type-file-button">
-                <input class="type-file-file" onClick="GetUploadify(1,'','goods','img_call_back')" size="30"
-                       hidefocus="true" nc_type="change_site_logo" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">
-            </span>
+                            <input type="text" id="imagetext" name="original_img" value="{$goodsInfo.original_img}"
+                                   class="type-file-text">
+                            <input type="button" name="button" id="button1" value="选择上传..." class="type-file-button">
+                            <input class="type-file-file" onClick="GetUploadify(1,'','goods','img_call_back')" size="30"
+                                   hidefocus="true" nc_type="change_site_logo" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">
+                        </span>
                     </div>
                     <span class="err"></span>
                     <p class="notic">请上传图片格式文件</p>
@@ -581,8 +597,8 @@
                 </dt>
                 <dd class="opt">
                     <div class="onoff">
-                        <label id="is_free_shipping_label_1" for="is_free_shipping1" class="cb-enable <if condition=" $goodsInfo[is_free_shipping] eq 1">selected</if>">是</label>
-                        <label id="is_free_shipping_label_0" for="is_free_shipping0" class="cb-disable <if condition=" $goodsInfo[is_free_shipping] eq 0">selected</if>">否</label>
+                        <label id="is_free_shipping_label_1" for="is_free_shipping1" class="cb-enable <if condition='$goodsInfo[is_free_shipping] eq 1'>selected</if>">是</label>
+                        <label id="is_free_shipping_label_0" for="is_free_shipping0" class="cb-disable <if condition='$goodsInfo[is_free_shipping] eq 0'>selected</if>">否</label>
                         <input id="is_free_shipping1" class="is_free_shipping" name="is_free_shipping" value="1" type="radio" <if condition="$goodsInfo[is_free_shipping] eq 1"> checked="checked"</if>>
                         <input id="is_free_shipping0" class="is_free_shipping" name="is_free_shipping" value="0" type="radio" <if condition="$goodsInfo[is_free_shipping] eq 0"> checked="checked"</if>>
                         <div class="freight_template" style="display: none;">
@@ -597,8 +613,7 @@
                                     >{$template.template_name}</option>
                                 </volist>
                             </select>
-                            <empty name="freight_template"><span style="color: red;">没有可选的运费模板，请前去<a
-                                    href="{:U('Freight/index')}" target="_blank">添加</a></span></empty>
+                            <empty name="freight_template"><span style="color: red;">没有可选的运费模板，请前去<a href="{:U('Freight/index')}" target="_blank">添加</a></span></empty>
                         </div>
                     </div>
                     <p class="notic"></p>
@@ -627,7 +642,6 @@
                     <input type="hidden" value="{$goodsInfo.store_count}" class="t_mane" name="store_count"
                            onKeyUp="this.value=this.value.replace(/[^\d.]/g,'')"
                            onpaste="this.value=this.value.replace(/[^\d.]/g,'')"/>
-
                     <span class="err" id="err_store_count" style="color:#F00; display:none;"></span>
                 </dd>
             </dl>
@@ -650,16 +664,16 @@
                         <if condition="$goodsInfo['is_virtual'] eq 1">
                             <span>是</span>
                             <input name="is_virtual" value="1" type="hidden" disabled="disabled">
-                            <else/>
+                        <else/>
                             <span>否</span>
                             <input name="is_virtual" value="0" type="hidden" disabled="disabled">
                         </if>
                     <else/>
                         <div class="onoff">
-                            <label for="is_virtual1" class="cb-enable <if condition=" $goodsInfo[is_virtual] eq 1">selected</if>">是</label>
-                            <label for="is_virtual0" class="cb-disable <if condition=" $goodsInfo[is_virtual] eq 0">selected</if>">否</label>
-                            <input class="is_virtual" id="is_virtual1" name="is_virtual" value="1" type="radio"<if condition="$goodsInfo[is_virtual] eq 1"> checked="checked"</if>>
-                            <input class="is_virtual" id="is_virtual0" name="is_virtual" value="0" type="radio"<if condition="$goodsInfo[is_virtual] eq 0"> checked="checked"</if>>
+                            <label for="is_virtual1" class="cb-enable <if condition='$goodsInfo[is_virtual] eq 1'>selected</if>">是</label>
+                            <label for="is_virtual0" class="cb-disable <if condition='$goodsInfo[is_virtual] eq 0'>selected</if>">否</label>
+                            <input class="is_virtual" id="is_virtual1" name="is_virtual" value="1" type="radio" <if condition="$goodsInfo[is_virtual] eq 1"> checked="checked"</if>>
+                            <input class="is_virtual" id="is_virtual0" name="is_virtual" value="0" type="radio" <if condition="$goodsInfo[is_virtual] eq 0"> checked="checked"</if>>
                         </div>
                     </if>
                     <p class="notic"></p>
@@ -700,7 +714,7 @@
             </dl>
         </div>
         <!--通用信息-->
-        <!-- 商品相册-->
+        <!--商品相册-->
         <div class="ncap-form-default tab_div_2" style="display:none;">
             <dl class="row">
                 <div class="tab-pane" id="tab_goods_images">
@@ -712,18 +726,22 @@
                                     <div style="width:100px; text-align:center; margin: 5px; display:inline-block;"
                                          class="goods_xc">
                                         <input type="hidden" value="{$vo['image_url']}" name="goods_images[]">
-                                        <a onClick="" href="{$vo['image_url']}" target="_blank"><img width="100" height="100"
-                                                                                                     src="{$vo['image_url']}"></a>
+                                        <a onClick="" href="{$vo['image_url']}" target="_blank">
+                                            <img width="100" height="100" src="{$vo['image_url']}">
+                                        </a>
                                         <br>
-                                        <a href="javascript:void(0)" onClick="ClearPicArr2(this,'{$vo['image_url']}')">删除</a>
+                                        <if condition="$goodsInfo[is_supply] == 0">
+                                            <a href="javascript:void(0)" onClick="ClearPicArr2(this,'{$vo[image_url]}')">删除</a>
+                                        <else/>
+                                            <a href="javascript:void(0)" style="color: white;">删除</a>
+                                        </if>
                                     </div>
                                 </foreach>
-
-                                <div class="goods_xc"
-                                     style="width:100px; text-align:center; margin: 5px; display:inline-block;">
+                                <div class="goods_xc" style="width:100px; text-align:center; margin: 5px; display:inline-block;">
                                     <input type="hidden" name="goods_images[]" value=""/>
-                                    <a href="javascript:void(0);" onClick="GetUploadify(10,'','goods','call_back2');"><img
-                                            src="/public/images/add-button.jpg" width="100" height="100"/></a>
+                                    <a href="javascript:void(0);" onClick="GetUploadify(10,'','goods','call_back2');">
+                                        <img src="/public/images/add-button.jpg" width="100" height="100"/>
+                                    </a>
                                     <br/>
                                     <a href="javascript:void(0)">&nbsp;&nbsp;</a>
                                 </div>
@@ -734,46 +752,87 @@
                 </div>
             </dl>
         </div>
-        <!-- 商品相册-->
-        <!-- 商品模型-->
+        <!--商品相册-->
+        <!--商品模型-->
         <div class="ncap-form-default tab_div_3" style="display:none;">
-            <dl class="row">
-                <div class="tab-pane" id="tab_goods_spec">
-                    <table class="table table-bordered" id="goods_spec_table">
-                        <tr>
-                            <td>商品模型:</td>
-                            <td>
-                                <select name="goods_type" id="spec_type" class="form-control" style="width:250px;">
-                                    <option value="0">选择商品模型</option>
-                                    <foreach name="goodsType" item="vo" key="k">
-                                        <option value="{$vo.id}"
-                                        <if condition="$goodsInfo[goods_type] eq $vo[id]"> selected="selected"</if>
-                                        >{$vo.name}</option>
-                                    </foreach>
-                                </select>
-                            </td>
-                        </tr>
-                    </table>
-                    <div class="row">
-                        <!-- ajax 返回规格-->
-                        <div id="ajax_spec_data" class="col-xs-8"></div>
-                        <div id="" class="col-xs-4">
-                            <table class="table table-bordered" id="goods_attr_table">
-                                <tr>
-                                    <td><b>商品属性</b>：</td>
-                                </tr>
-                            </table>
+            <if condition="$goodsInfo[is_supply] == 0">
+                <dl class="row">
+                    <div class="tab-pane" id="goods_spec">
+                        <table class="table table-bordered" id="goods_spec_table">
+                            <tr>
+                                <td>商品模型:</td>
+                                <td>
+                                    <select name="goods_type" id="spec_type" class="form-control" style="width:250px;">
+                                        <option value="0">选择商品模型</option>
+                                        <foreach name="goodsType" item="vo" key="k">
+                                            <option value="{$vo.id}"
+                                            <if condition="$goodsInfo[goods_type] eq $vo[id]"> selected="selected"</if>
+                                            >{$vo.name}</option>
+                                        </foreach>
+                                    </select>
+                                </td>
+                            </tr>
+                        </table>
+                        <div class="row">
+                            <!-- ajax 返回规格-->
+                            <div id="ajax_spec_data" class="col-xs-8"></div>
+                            <div id="" class="col-xs-4">
+                                <table class="table table-bordered" id="goods_attr_table">
+                                    <tr>
+                                        <td><b>商品属性</b>：</td>
+                                    </tr>
+                                </table>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </dl>
+                </dl>
+            <else/>
+                <if condition="!empty($goodsSpec)">
+                    <input type="hidden" name="goods_type" value="0">
+                    <dl class="row">
+                        <div class="tab-pane" >
+                            <table class="table table-bordered">
+                                <div class="row">
+                                    <!-- ajax 返回规格-->
+                                    <div id="ajax_spec_data" class="col-xs-8"></div>
+                                    <div class="col-xs-4">
+                                        <table class="table table-bordered" id="goods_attr_table">
+                                            <tr>
+                                                <td><b>规格属性</b></td>
+                                                <td><b>价格</b></td>
+                                                <td><b>库存</b></td>
+                                                <td><b>图片</b></td>
+                                            </tr>
+                                            <foreach name="goodsSpec" item="vo" key="k">
+                                                <tr>
+                                                    <td>{$vo.key_name}</td>
+                                                    <td><input name="goodsSpec[{$vo.item_id}][price]" value="{$vo.price}" class="input-txt" type="text" onkeyup="this.value=this.value.replace(/[^\d.]/g,'')"></td>
+                                                    <td>{$vo.store_count}</td>
+                                                    <td>
+                                                        <div style="width:100px; text-align:center; margin: 5px; display:inline-block;" class="goods_xc">
+                                                            <input type="hidden" value="{$vo['spec_img']}" name="">
+                                                            <a onClick="" href="{$vo['spec_img']}" target="_blank">
+                                                                <img width="100" height="100" src="{$vo['spec_img']}">
+                                                            </a>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </foreach>
+                                        </table>
+                                    </div>
+                                </div>
+                            </table>
+                        </div>
+                    </dl>
+                </if>
+            </if>
         </div>
-        <!-- 商品模型-->
-        <!-- 标签管理-->
+        <!--商品模型-->
+        <!--标签管理-->
         <div class="ncap-form-default tab_div_4" style="display:none;">
             <dl class="row">
-                <div class="tab-pane" id="tab_goods_spec">
-                    <table class="table table-bordered" id="goods_spec_table">
+                <div class="tab-pane" id="goods_tab">
+                    <table class="table table-bordered" id="goods_tab_table">
                         <thead>
                         <th></th>
                         <th>标签颜色</th>
@@ -796,9 +855,8 @@
                 </div>
             </dl>
         </div>
-        <!-- 标签管理-->
-
-        <!-- 超级套组-->
+        <!--标签管理-->
+        <!--超级套组-->
         <div class="ncap-form-default tab_div_5" style="display:none;">
             <dl class="row">
                 <dl class="row">
@@ -821,7 +879,6 @@
                                         <input type="hidden" name="goodsSeries[{$k}][item_id]" value="{$vo.item_id}"/>
                                         <input type="hidden" name="goodsSeries[{$k}][g_id]" value="{$vo.g_id}"/>
                                         <input type="text" name="goodsSeries[{$k}][g_number]" value="{$vo.g_number}"/>
-
                                         <p><a class="close">移除</a></p>
                                     </div>
                                     <else/>
@@ -835,20 +892,20 @@
                                         <input type="hidden" name="goodsSeries[{$k}][item_id]" value="{$vo.item_id}"/>
                                         <input type="hidden" name="goodsSeries[{$k}][g_id]" value="{$vo.g_id}"/>
                                         <input type="text" name="goodsSeries[{$k}][g_number]" value="{$vo.g_number}"/>
-
                                         <p><a class="close">移除</a></p>
                                     </div>
                                 </if>
                             </foreach>
                         </div>
                         <p class="notic">
-                            <a onclick="selectGoods()" class="ncap-btn" id="select_goods_button"><i class="fa fa-search"></i>选择商品</a>
+                            <a onclick="selectGoods()" class="ncap-btn" id="select_goods_button"><i
+                                    class="fa fa-search"></i>选择商品</a>
                         </p>
                     </dd>
                 </dl>
             </dl>
         </div>
-        <!-- 超级套组-->
+        <!--超级套组-->
         <!--积分折扣-->
         <div class="ncap-form-default tab_div_6" style="display:none;">
             <dl class="row">
@@ -899,6 +956,7 @@
         <div class="ncap-form-default">
             <div class="bot">
                 <input type="hidden" name="goods_id" value="{$goodsInfo.goods_id}">
+                <input type="hidden" name="is_supply" value="{$goodsInfo.is_supply}">
                 <input type="hidden" name="__token__" value="{$Request.token}"/>
                 <a href="JavaScript:void(0);" class="ncap-btn-big ncap-btn-green"
                    onClick="ajax_submit_form('addEditGoodsForm','{:U('Goods/addEditGoods?is_ajax=1')}');">确认提交</a>
@@ -907,8 +965,11 @@
     </form>
 <!--表单数据-->
 </div>
-<div id="goTop"><a href="JavaScript:void(0);" id="btntop"><i class="fa fa-angle-up"></i></a><a
-        href="JavaScript:void(0);" id="btnbottom"><i class="fa fa-angle-down"></i></a></div>
+<div id="goTop">
+    <a href="JavaScript:void(0);" id="btntop"><i class="fa fa-angle-up"></i></a>
+    <a href="JavaScript:void(0);" id="btnbottom"><i class="fa fa-angle-down"></i></a>
+</div>
+
 <script>
     var index = $("#seriesNum").html();
 
@@ -925,11 +986,8 @@
     }
 
     function selGoodsCallBack(goodsItem) {
-
         var html = '';
         var html_a = '';
-
-
         if (goodsItem.spec != null) {
             //有规格
             html = '<div style="float: left;margin: 10px auto;margin-right: 20px;" class="selected-group-goods"><div class="goods-thumb">' +
@@ -1010,6 +1068,7 @@
         initFreight();
     });
 
+    // 商品详情编辑器
     var url = "{:url('Admin/Ueditor/index',array('savePath'=>'goods'))}";
     var ue = UE.getEditor('goods_content', {
         serverUrl: url,
@@ -1021,6 +1080,12 @@
         pasteplain: false, //是否默认为纯文本粘贴。false为不使用纯文本粘贴，true为使用纯文本粘贴
         autoHeightEnabled: true
     });
+    <if condition="$goodsInfo[is_supply] == 1">
+        ue.ready(function () {
+            // 编辑器 禁用
+            ue.setDisabled();
+        });
+    </if>
 
     // 物流设置相 关
     function choosebox(o) {
@@ -1060,29 +1125,34 @@
      * @val      string  删除的图片input
      */
     function ClearPicArr2(obj, path) {
-        $.ajax({
-            type: 'GET',
-            url: "{:U('Admin/Uploadify/delupload')}",
-            data: {action: "del", filename: path},
-            success: function () {
-                $(obj).parent().remove(); // 删除完服务器的, 再删除 html上的图片
-            }
+        layer.confirm('确认删除？', {btn: ['确定', '取消']}, function (index) {
+            layer.close(index);
+            $.ajax({
+                type: 'GET',
+                url: "{:U('Admin/Uploadify/delupload')}",
+                data: {action: "del", filename: path},
+                success: function () {
+                    $(obj).parent().remove(); // 删除完服务器的, 再删除 html上的图片
+                }
+            });
+            // 删除数据库记录
+            $.ajax({
+                type: 'GET',
+                url: "{:U('Admin/Goods/del_goods_images')}",
+                data: {filename: path},
+                success: function () {
+                    //
+                }
+            });
+        }, function (index) {
+            // 取消
+            layer.close(index);
         });
-        // 删除数据库记录
-        $.ajax({
-            type: 'GET',
-            url: "{:U('Admin/Goods/del_goods_images')}",
-            data: {filename: path},
-            success: function () {
-                //
-            }
-        });
-    }
+    };
 
 
     /** 以下 商品属性相关 js*/
-
-// 属性输入框的加减事件
+    // 属性输入框的加减事件
     function addAttr(a) {
         var attr = $(a).parent().parent().prop("outerHTML");
         attr = attr.replace('addAttr', 'delAttr').replace('+', '-');
@@ -1126,7 +1196,6 @@
         });
         // 触发商品规格
         $("#spec_type").trigger('change');
-
         $("input[name='exchange_integral']").blur(function () {
             var shop_price = parseInt($("input[name='shop_price']").val());
             var exchange_integral = parseInt($(this).val());
@@ -1138,25 +1207,24 @@
 
     /** 以下是编辑时默认选中某个商品分类*/
     $(document).ready(function () {
+        <if condition = "$level_cat['2'] gt 0" >
+            // 商品分类第二个下拉菜单
+            get_category('{$level_cat[1]}', 'cat_id_2', '{$level_cat[2]}');
+        </if>
+        <if condition = "$level_cat['3'] gt 0" >
+            // 商品分类第二个下拉菜单
+            get_category('{$level_cat[2]}', 'cat_id_3', '{$level_cat[3]}');
+        </if>
 
-    <if condition = "$level_cat['2'] gt 0" >
-        // 商品分类第二个下拉菜单
-        get_category('{$level_cat[1]}', 'cat_id_2', '{$level_cat[2]}');
-    </if>
-    <if condition = "$level_cat['3'] gt 0" >
-        // 商品分类第二个下拉菜单
-        get_category('{$level_cat[2]}', 'cat_id_3', '{$level_cat[3]}');
-    </if>
-
-    //  扩展分类
-    <if condition = "$level_cat2['2'] gt 0" >
-        // 商品分类第二个下拉菜单
-        get_category('{$level_cat2[1]}', 'extend_cat_id_2', '{$level_cat2[2]}');
-    </if>
-    <if condition = "$level_cat2['3'] gt 0" >
-        // 商品分类第二个下拉菜单
-        get_category('{$level_cat2[2]}', 'extend_cat_id_3', '{$level_cat2[3]}');
-    </if>
+        //  扩展分类
+        <if condition = "$level_cat2['2'] gt 0" >
+            // 商品分类第二个下拉菜单
+            get_category('{$level_cat2[1]}', 'extend_cat_id_2', '{$level_cat2[2]}');
+        </if>
+        <if condition = "$level_cat2['3'] gt 0" >
+            // 商品分类第二个下拉菜单
+            get_category('{$level_cat2[2]}', 'extend_cat_id_3', '{$level_cat2[3]}');
+        </if>
     });
 
     $(document).ready(function () {
@@ -1207,7 +1275,19 @@
 
     $(function () {
         $(document).on("click", '.is_free_shipping', function (e) {
-            initFreight();
+            // var is_supply = {$goodsInfo[is_supply]};
+            // if (is_supply == 1) {
+            //     var is_free_shipping = $("input[name='is_free_shipping']:checked").val();
+            //     if (is_free_shipping == 0) {
+            //         $('#is_free_shipping_label_1').removeClass('cb-disable');
+            //         $('#is_free_shipping_label_1').addClass('cb-enable selected');
+            //         $('#is_free_shipping_label_0').removeClass('cb-enable selected');
+            //         $('#is_free_shipping_label_0').addClass('cb-disable');
+            //         layer.msg('供应链商品不能设置邮费规则', {icon: 2});
+            //     }
+            // } else {
+                initFreight();
+            // }
         })
     })
 

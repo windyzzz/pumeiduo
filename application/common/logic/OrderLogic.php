@@ -11,6 +11,7 @@
 
 namespace app\common\logic;
 
+use app\common\logic\supplier\OrderService;
 use app\common\logic\Token as TokenLogic;
 use app\common\logic\wechat\WechatUtil;
 use app\common\model\SpecGoodsPrice;
@@ -297,6 +298,16 @@ class OrderLogic
         $user = Db::name('users')->where('user_id', $user_id)->find();
         TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
 
+        // 供应链订单取消
+        if ($order['order_type'] == 3 && !empty($order['supplier_order_sn'])) {
+            $cOrderSn = M('order')->where(['parent_id' => $order['order_id'], 'order_type' => 3])->value('order_sn');
+            $res = (new OrderService())->cancelOrder($cOrderSn);
+            if ($res['status'] == 0) {
+                Db::rollback();
+                return $res;
+            }
+        }
+
         Db::commit();
         return ['status' => 1, 'msg' => '操作成功', 'result' => ''];
     }
@@ -358,7 +369,7 @@ class OrderLogic
         return 0;
     }
 
-    public function addReturnGoods($rec_id, $order)
+    public function addReturnGoods($rec_id, $order, $cOrder = [])
     {
         $data = I('post.');
         $confirm_time_config = tpCache('shopping.auto_service_date'); //后台设置多少天内可申请售后
@@ -491,7 +502,9 @@ class OrderLogic
         }
 
         // $dec_money = $data['refund_money'] * $goods_commission / 100;
-
+        if (isset($cOrder) && $cOrder['order_type'] == 3) {
+            $data['is_supply'] = 1;
+        }
         if (!empty($data['id'])) {
             $result = M('return_goods')->where(['id' => $data['id']])->save($data);
         } else {
@@ -511,10 +524,12 @@ class OrderLogic
      * @param $recId
      * @param $type
      * @param $order
+     * @param $orderGoods
      * @param $data
+     * @param array $cOrder 子订单信息
      * @return array
      */
-    public function addReturnGoodsNew($recId, $type, $order, $data)
+    public function addReturnGoodsNew($recId, $type, $order, $orderGoods, $data, $cOrder = [])
     {
         $returnData['rec_id'] = $recId;
         $returnData['type'] = $type;
@@ -540,8 +555,6 @@ class OrderLogic
         $returnData['user_id'] = $order['user_id'];
         $returnData['order_id'] = $order['order_id'];
         $returnData['order_sn'] = $order['order_sn'];
-
-        $orderGoods = M('order_goods')->where(['rec_id' => $recId])->find();
         $returnData['goods_id'] = $orderGoods['goods_id'];
         $returnData['goods_num'] = $orderGoods['goods_num'];
         $returnData['spec_key'] = $orderGoods['spec_key'];
@@ -571,6 +584,7 @@ class OrderLogic
             }
         }
 
+        Db::startTrans();
         // 更新分成记录状态
         M('rebate_log')->where('order_sn', $order['order_sn'])->update(['sale_service' => 1]);
         if ($type < 2 && $orderGoods['goods_pv'] == 0) {
@@ -587,12 +601,18 @@ class OrderLogic
                 ]);
             }
         }
-
-        $res = M('return_goods')->add($returnData);
-        if ($res) {
-            M('order')->where('order_sn', $order['order_sn'])->update(['order_status' => 6]);
-            return ['status' => 1, 'msg' => '申请成功', 'result' => ['return_id' => $res]];
+        // 售后记录
+        if (isset($cOrder) && $cOrder['order_type'] == 3) {
+            $returnData['is_supply'] = 1;
         }
+        $returnId = M('return_goods')->add($returnData);
+        if ($returnId) {
+            // 更新订单
+            M('order')->where('order_sn', $order['order_sn'])->update(['order_status' => 6]);
+            Db::commit();
+            return ['status' => 1, 'msg' => '申请成功', 'result' => ['return_id' => $returnId]];
+        }
+        Db::rollback();
         return ['status' => 0, 'msg' => '申请失败'];
     }
 
@@ -1076,7 +1096,7 @@ class OrderLogic
         $orderGoods = Db::name('order_goods og')
             ->join('goods g', 'g.goods_id = og.goods_id')
             ->join('spec_goods_price sgp', 'sgp.goods_id = og.goods_id AND sgp.`key` = og.spec_key', 'LEFT')
-            ->where($where)->field('og.*, sgp.item_id, g.original_img')->find();
+            ->where($where)->field('og.*, sgp.item_id, g.original_img, g.supplier_goods_id')->find();
         return $orderGoods;
     }
 
@@ -1103,5 +1123,40 @@ class OrderLogic
             $returnGoods = $returnGoods->limit($page->firstRow . ',' . $page->listRows);
         }
         return $returnGoods->select();
+    }
+
+    /**
+     * 订单发送到供应链系统
+     * @param $orderId
+     * @param $time
+     */
+    public function supplierOrderSend($orderId, $time)
+    {
+        $order = M('order')->where(['parent_id' => $orderId, 'order_type' => 3])->find();
+        $orderGoods = M('order_goods')->where(['order_id2' => $order['order_id']])->field('supplier_goods_id goods_id, goods_num, spec_key, member_goods_price final_price')->select();
+        // 发送到供应链系统
+        $orderData = [
+            'order_sn' => $order['order_sn'],
+            'consignee' => $order['consignee'],
+            'province' => M('region2')->where(['id' => $order['province']])->value('ml_region_id'),
+            'city' => M('region2')->where(['id' => $order['city']])->value('ml_region_id'),
+            'district' => M('region2')->where(['id' => $order['district']])->value('ml_region_id'),
+            'twon' => M('region2')->where(['id' => $order['twon']])->value('ml_region_id') ?? 0,
+            'address' => $order['address'],
+            'mobile' => $order['mobile'],
+            'goods_price' => $order['goods_price'],
+            'total_amount' => $order['total_amount'],
+            'note' => $order['user_note'],
+            'order_goods' => $orderGoods
+        ];
+        $res = (new OrderService())->submitOrder($orderData);
+        if ($res['status'] == 0) {
+            // 发送失败
+            $updata = ['supplier_order_status' => 2, 'supplier_submit_time' => $time, 'supplier_submit_remark' => $res['msg']];
+        } else {
+            // 发送成功
+            $updata = ['supplier_order_status' => 1, 'supplier_submit_time' => $time, 'supplier_order_sn' => $res['data']['order']['order_sn']];
+        }
+        M('order')->where(['order_id' => $order['order_id']])->update($updata);
     }
 }

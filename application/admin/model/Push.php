@@ -22,7 +22,7 @@ class Push extends Model
             '10' => '商品列表',
             '11' => '超值套装',
             '12' => '分类跳转',
-            '13' => '海外购',
+            '13' => '韩国购',
         ];
 
         return $parse_type[$data['type']];

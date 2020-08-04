@@ -1215,6 +1215,7 @@ class UsersLogic extends Model
 
         if ($goods_list) {
             foreach ($goods_list as $k => $v) {
+                $goods_list[$k]['original_img_new'] = getFullPath($v['original_img']);
                 $goods_list[$k]['is_return'] = M('ReturnGoods')->where(['rec_id' => $v['rec_id'], 'status' => ['NEQ', -2]])->find() ? 1 : 0;
                 $goods_list[$k]['status_desc'] = isset($v['status']) ? C('REFUND_STATUS')[$v['status']] : '';
             }
@@ -1645,6 +1646,7 @@ class UsersLogic extends Model
             ->select();
 
         foreach ($result as $k => $v) {
+            $result[$k]['original_img_new'] = getFullPath($v['original_img']);
 //            // 比起原价的升降关系
 //            if ($v['low_price'] > 0) {
 //                $result[$k]['type'] = 1;    // 降价
@@ -1959,13 +1961,15 @@ class UsersLogic extends Model
                 return ['status' => -1, 'msg' => '最多只能添加20个收货地址', 'result' => ''];
             }
         }
-
         if ('' == $post['consignee']) {
             return ['status' => -1, 'msg' => '收货人不能为空', 'result' => ''];
         }
         if (!($post['province'] > 0) || !($post['city'] > 0) || !($post['district'] > 0)) {
             return ['status' => -1, 'msg' => '所在地区不能为空', 'result' => ''];
         }
+//        if ($post['town'] == 0 && M('region2')->where(['parent_id' => $post['district'], 'status' => 1])->find()) {
+//            return ['status' => -1, 'msg' => '所在城镇街道不能为空', 'result' => ''];
+//        }
         $post['zipcode'] = M('region2')->where(['id' => $post['district']])->value('zipcode');
         if (!$post['address']) {
             return ['status' => -1, 'msg' => '地址不能为空', 'result' => ''];
@@ -1973,13 +1977,14 @@ class UsersLogic extends Model
         if (!check_mobile($post['mobile']) && !check_telephone($post['mobile'])) {
             return ['status' => -1, 'msg' => '手机号码格式有误', 'result' => ''];
         }
-
+        $post['twon'] = $post['town'];
         //编辑模式
         if ($address_id > 0) {
             $address = M('user_address')->where(['address_id' => $address_id, 'user_id' => $user_id])->find();
             if (1 == $post['is_default'] && 1 != $address['is_default']) {
                 M('user_address')->where(['user_id' => $user_id])->save(['is_default' => 0]);
             }
+
             $row = M('user_address')->where(['address_id' => $address_id, 'user_id' => $user_id])->save($post);
             if (false !== $row) {
                 return ['status' => 1, 'msg' => '编辑成功', 'result' => $address_id];
@@ -3079,5 +3084,31 @@ class UsersLogic extends Model
         ]);
         Db::commit();
         return ['status' => 1, 'msg' => '合并成功'];
+    }
+
+    /**
+     * 查看地址是否合法
+     * @param $userAddress
+     * @return mixed
+     */
+    public function checkAddressIllegal($userAddress)
+    {
+        $cityName = M('region2')->where(['id' => $userAddress['city']])->value('name');
+        if (in_array($userAddress['province'], [110000, 120000, 310000, 500000])) {
+            // 直辖市下的第二级
+            if (!strstr($cityName, '市辖') && $cityName !== '县') {
+                $userAddress['is_illegal'] = 1;
+            }
+        }
+        $districtName = M('region2')->where(['id' => $userAddress['district']])->value('name');
+        // 第三级地区
+        if (strstr($districtName, '市辖')) {
+            $userAddress['is_illegal'] = 1;
+        }
+        // 第三级地区下是否有子地区
+        if (M('region2')->where(['parent_id' => $userAddress['district']])->value('id') && $userAddress['twon'] == 0) {
+            $userAddress['is_illegal'] = 1;
+        }
+        return $userAddress;
     }
 }
