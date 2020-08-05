@@ -54,7 +54,7 @@ class Report extends Base
         $this->assign('today', $today);
         $select_year = $this->select_year;
         $res = Db::name('order' . $select_year)
-            ->field(" COUNT(*) as tnum,sum(total_amount) as amount, FROM_UNIXTIME(add_time,'%Y-%m-%d') as gap ")
+            ->field(" COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-%m-%d') as gap ")
             ->where(" add_time >$this->begin and add_time < $this->end AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4) ")
             ->group('gap')
             ->select();
@@ -114,7 +114,7 @@ class Report extends Base
     {
         $select_year = $this->select_year;
         $res = Db::name('order' . $select_year)
-            ->field(" COUNT(*) as tnum,sum(total_amount) as amount, FROM_UNIXTIME(add_time,'%Y-%m-%d') as gap ")
+            ->field(" COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-%m-%d') as gap ")
             ->where(" add_time >$this->begin and add_time < $this->end AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4) ")
             ->group('gap')
             ->select();
@@ -220,7 +220,7 @@ class Report extends Base
         $this->assign('today', $today);
         $select_year = $this->select_year;
         $res = Db::name('order' . $select_year)
-            ->field(" COUNT(*) as tnum,sum(total_amount) as amount, FROM_UNIXTIME(add_time,'%Y-%m') as gap ")
+            ->field(" COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-%m') as gap ")
             ->where(" add_time >$this->begin and add_time < $this->end AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4) ")
             ->group('gap')
             // ->fetchSql(1)
@@ -323,7 +323,7 @@ class Report extends Base
         $this->assign('today', $today);
         $select_year = $this->select_year;
         $res = Db::name('order' . $select_year)
-            ->field(" COUNT(*) as tnum,sum(total_amount) as amount, FROM_UNIXTIME(add_time,'%Y-%m') as gap ")
+            ->field(" COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-%m') as gap ")
             ->where(" add_time >$this->begin and add_time < $this->end AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4) ")
             ->group('gap')
             // ->fetchSql(1)
@@ -445,7 +445,7 @@ class Report extends Base
         $this->assign('today', $today);
         $select_year = $this->select_year;
         $res = Db::name('order' . $select_year)
-            ->field(" COUNT(*) as tnum,sum(total_amount) as amount, FROM_UNIXTIME(add_time,'%Y-01-01') as gap ")
+            ->field(" COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-01-01') as gap ")
             ->where(" add_time >$this->begin and add_time < $this->end AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4) ")
             ->group('gap')
             // ->fetchSql(1)
@@ -537,7 +537,7 @@ class Report extends Base
 
         $select_year = $this->select_year;
         $res = Db::name('order' . $select_year)
-            ->field(" COUNT(*) as tnum,sum(total_amount) as amount, FROM_UNIXTIME(add_time,'%Y-01-01') as gap ")
+            ->field(" COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-01-01') as gap ")
             ->where(" add_time >$this->begin and add_time < $this->end AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4) ")
             ->group('gap')
             // ->fetchSql(1)
