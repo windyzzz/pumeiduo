@@ -43,9 +43,9 @@ class Report extends Base
     public function index()
     {
         $now = strtotime(date('Y-m-d'));
-        $today['today_amount'] = M('order')->where("add_time>$now AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4)")->sum('total_amount'); //今日销售总额
-        $today['today_order'] = M('order')->where("add_time>$now and (pay_status=1 or pay_code='cod')")->count(); //今日订单数
-        $today['cancel_order'] = M('order')->where("add_time>$now AND order_status=3")->count(); //今日取消订单
+        $today['today_amount'] = M('order')->where('parent_id = 0')->where("add_time>$now AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4)")->sum('total_amount'); //今日销售总额
+        $today['today_order'] = M('order')->where('parent_id = 0')->where("add_time>$now and (pay_status=1 or pay_code='cod')")->count(); //今日订单数
+        $today['cancel_order'] = M('order')->where('parent_id = 0')->where("add_time>$now AND order_status=3")->count(); //今日取消订单
         if (0 == $today['today_order']) {
             $today['sign'] = round(0, 2);
         } else {
@@ -209,9 +209,9 @@ class Report extends Base
         // dump(date('Y-m-d',$this->end));
 
         $now = strtotime(date('Y-m-d'));
-        $today['today_amount'] = M('order')->where("add_time>$now AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4)")->sum('total_amount'); //今日销售总额
-        $today['today_order'] = M('order')->where("add_time>$now and (pay_status=1 or pay_code='cod')")->count(); //今日订单数
-        $today['cancel_order'] = M('order')->where("add_time>$now AND order_status=3")->count(); //今日取消订单
+        $today['today_amount'] = M('order')->where('parent_id = 0')->where("add_time>$now AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4)")->sum('total_amount'); //今日销售总额
+        $today['today_order'] = M('order')->where('parent_id = 0')->where("add_time>$now and (pay_status=1 or pay_code='cod')")->count(); //今日订单数
+        $today['cancel_order'] = M('order')->where('parent_id = 0')->where("add_time>$now AND order_status=3")->count(); //今日取消订单
         if (0 == $today['today_order']) {
             $today['sign'] = round(0, 2);
         } else {
@@ -312,9 +312,9 @@ class Report extends Base
         // dump(date('Y-m-d',$this->end));
 
         $now = strtotime(date('Y-m-d'));
-        $today['today_amount'] = M('order')->where("add_time>$now AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4)")->sum('total_amount'); //今日销售总额
-        $today['today_order'] = M('order')->where("add_time>$now and (pay_status=1 or pay_code='cod')")->count(); //今日订单数
-        $today['cancel_order'] = M('order')->where("add_time>$now AND order_status=3")->count(); //今日取消订单
+        $today['today_amount'] = M('order')->where('parent_id = 0')->where("add_time>$now AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4)")->sum('total_amount'); //今日销售总额
+        $today['today_order'] = M('order')->where('parent_id = 0')->where("add_time>$now and (pay_status=1 or pay_code='cod')")->count(); //今日订单数
+        $today['cancel_order'] = M('order')->where('parent_id = 0')->where("add_time>$now AND order_status=3")->count(); //今日取消订单
         if (0 == $today['today_order']) {
             $today['sign'] = round(0, 2);
         } else {
@@ -434,9 +434,9 @@ class Report extends Base
         // dump(date('Y-m-d',$this->end));
         // exit;
         $now = strtotime(date('Y-m-d'));
-        $today['today_amount'] = M('order')->where("add_time>$now AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4)")->sum('total_amount'); //今日销售总额
-        $today['today_order'] = M('order')->where("add_time>$now and (pay_status=1 or pay_code='cod')")->count(); //今日订单数
-        $today['cancel_order'] = M('order')->where("add_time>$now AND order_status=3")->count(); //今日取消订单
+        $today['today_amount'] = M('order')->where('parent_id = 0')->where("add_time>$now AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4)")->sum('total_amount'); //今日销售总额
+        $today['today_order'] = M('order')->where('parent_id = 0')->where("add_time>$now and (pay_status=1 or pay_code='cod')")->count(); //今日订单数
+        $today['cancel_order'] = M('order')->where('parent_id = 0')->where("add_time>$now AND order_status=3")->count(); //今日取消订单
         if (0 == $today['today_order']) {
             $today['sign'] = round(0, 2);
         } else {
@@ -1018,7 +1018,7 @@ class Report extends Base
         $user['month'] = D('users')->where("reg_time>$month")->count(); //本月新增会员
         $user['total'] = D('users')->count(); //会员总数
         $user['user_money'] = D('users')->sum('user_money'); //会员余额总额
-        $res = M('order')->cache(true)->distinct(true)->field('user_id')->select();
+        $res = M('order')->where('parent_id = 0')->cache(true)->distinct(true)->field('user_id')->select();
         $user['hasorder'] = count($res);
         $this->assign('user', $user);
         $sql = "SELECT COUNT(*) as num,FROM_UNIXTIME(reg_time,'%Y-%m-%d') as gap from __PREFIX__users where reg_time>$this->begin and reg_time<$this->end group by gap";
