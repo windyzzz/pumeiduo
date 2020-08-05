@@ -34,7 +34,13 @@
                         <label for="cate_id">用户</label>
                     </dt>
                     <dd class="opt">
-                        {$user.nickname}
+                        <if condition="!empty($user[nickname])">
+                            {$user.nickname}
+                        <elseif condition="!empty($user[user_name])"/>
+                            {$user.user_name}
+                        <else/>
+                            无名
+                        </if>
                     </dd>
                 </dl>
                 <dl class="row">
@@ -50,8 +56,10 @@
                         <label >商品</label>
                     </dt>
                     <dd class="opt">
-                        名称：{$order['goods'][goods_name]}
-                        <p>规格：{$order['goods'][spec_key_name]}</p>
+                        <a target="_blank" href="{:U('Admin/Goods/addEditGoods',array('id'=>$return_goods['goods_id']))}">
+                            名称：{$order['goods'][goods_name]}
+                            <p>规格：{$order['goods'][spec_key_name]}</p>
+                        </a>
                     </dd>
                 </dl>
                 <dl class="row">
@@ -113,7 +121,7 @@
                         </dd>
                     </dl>
                 </if>
-                <if condition="$return_goods['status'] eq 0">
+                <if condition="$return_goods['status'] eq 0 && $return_goods[supplier_sale_status] NEQ 0">
                     <dl class="row">
                         <dt class="tit">
                             <label>审核意见</label>
@@ -132,11 +140,48 @@
                         <textarea name="remark" id="remark" style="width:300px; height:120px;"  placeholder="退货描述" class="tarea" id="subject_desc">{$return_goods['remark']}</textarea>
                     </dd>
                 </dl>
+                <if condition="$return_goods[is_supply] == 1">
+                    <dl class="row">
+                        <dt class="tit">
+                            <label>供应链系统处理状态</label>
+                        </dt>
+                        <dd class="opt">
+                            <switch name="$return_goods[supplier_sale_status]">
+                                <case value="0">
+                                    未处理
+                                </case>
+                                <case value="1">
+                                    同意
+                                </case>
+                                <case value="-1">
+                                    拒绝
+                                    <dt class="tit">
+                                        <label>原因：</label>
+                                    </dt>
+                                    <dd class="opt">
+                                        <textarea style="width:300px; height:120px;" class="tarea">{$return_goods['supplier_sale_remark']}</textarea>
+                                    </dd>
+                                </case>
+                                <case value="-2">
+                                    已取消
+                                </case>
+                            </switch>
+                        </dd>
+                    </dl>
+                </if>
                 <input type="hidden" name="id" value="{$id}">
-                <div class="bot"><a href="JavaScript:;" subimtid="return_form" data-href="{:U('Admin/Order/checkReturniInfo')}" class="ncap-btn-big ncap-btn-green submitBtn">确认提交</a></div>
+                <if condition="$return_goods[is_supply] == 1 && $return_goods[supplier_sale_status] == 0">
+                    <if condition="empty($return_goods[supplier_sale_sn])">
+                        <div class="bot"><a href="JavaScript:;" subimtid="return_form" data-href="{:U('Admin/Order/sendSupplierReturn')}" class="ncap-btn-big ncap-btn-green submitBtn">发送到供应链系统</a></div>
+                    <else/>
+                        <div class="bot"><a class="ncap-btn-big ncap-btn-green">请等待供应链系统处理</a></div>
+                    </if>
+                <else/>
+                    <div class="bot"><a href="JavaScript:;" subimtid="return_form" data-href="{:U('Admin/Order/checkReturniInfo')}" class="ncap-btn-big ncap-btn-green submitBtn">确认提交</a></div>
+                </if>
             </div>
         </form>
-        <else/>
+    <else/>
         <div class="ncap-form-default">
             <dl class="row">
                 <dt class="tit">
@@ -304,51 +349,109 @@
                         <a href="JavaScript:;" subimtid="seller_delivery" data-href="{:U('Admin/Order/checkReturniInfo')}" class="ncap-btn-big ncap-btn-green submitBtn" >确定收货</a>
                     </div>
                 </if>
+                <if condition="$return_goods['status'] EQ 6 && !empty($return_goods['supplier_sale_sn']) && $return_goods['supplier_sale_status'] == 0">
+                    <div class="bot">
+                        <input type="hidden" name="return_id" value="{$id}">
+                        <a href="JavaScript:;" subimtid="seller_delivery" data-href="{:U('Admin/Order/cancelSupplierReturn')}" class="ncap-btn-big ncap-btn-green submitBtn" >取消供应链售后</a>
+                    </div>
+                </if>
             </form>
-
+            <if condition="$return_goods[is_supply] == 1">
+                <dl class="row">
+                    <dt class="tit">
+                        <label>供应链系统处理状态</label>
+                    </dt>
+                    <dd class="opt">
+                        <switch name="$return_goods[supplier_sale_status]">
+                            <case value="0">
+                                未处理
+                            </case>
+                            <case value="1">
+                                同意
+                            </case>
+                            <case value="-1">
+                                拒绝
+                    <dt class="tit">
+                        <label>原因：</label>
+                    </dt>
+                    <dd class="opt">
+                        <textarea style="width:300px; height:120px;" class="tarea">{$return_goods['supplier_sale_remark']}</textarea>
+                    </dd>
+                    </case>
+                    <case value="-2">
+                        已取消
+                    </case>
+                    </switch>
+                    </dd>
+                </dl>
+            </if>
+            <if condition="isset($supplier_delivery)">
+                <dl class="row">
+                    <dt class="tit">
+                        <label>供应链退换货物流信息</label>
+                    </dt>
+                    <dd class="opt">
+                        <p>快递公司：{$supplier_delivery[delivery][express_name]}</p>
+                        <p>快递单号：{$supplier_delivery[delivery][express_sn]}</p>
+                        <p>发货时间：{$supplier_delivery[delivery][express_time]}</p>
+                    </dd>
+                    <dt class="tit">
+                        <label>物流详情</label>
+                    </dt>
+                    <dd class="opt">
+                        <volist name="$supplier_delivery[express]" id="express">
+                            <p>{$express.time} - {$express.context}</p>
+                        </volist>
+                    </dd>
+                </dl>
+            </if>
         </div>
     </if>
 </div>
 <script>
     //修改退款金额
-    $(document).on('click','.submitBtn',function(){
-        var subimtid = $(this).attr('subimtid');
-        var formUrl = $(this).data('href')
-        submitForm(subimtid,formUrl);
-    })
+    $(document).on('click', '.submitBtn', function () {
+        var obj = $(this);
+        layer.confirm('确认操作', {
+            btn: ['确定', '取消'] //按钮
+        }, function () {
+            var subimtid = obj.attr('subimtid');
+            var formUrl = obj.data('href');
+            submitForm(subimtid, formUrl);
+        });
+    });
 
     //修改退款金额
-    function sellerDelivery(obj){
-        var formUrl = $(obj).data('href')
-        if ($('#express_name').val() == '' || $('#express_sn').val() == ''){
+    function sellerDelivery(obj) {
+        var formUrl = $(obj).data('href');
+        if ($('#express_name').val() == '' || $('#express_sn').val() == '') {
             layer.alert('请填写完整物流信息', {icon: 2});
             return false;
         }
-        submitForm('seller_delivery',formUrl);
+        submitForm('seller_delivery', formUrl);
     }
 
     //提交表单
-    function  submitForm(subimtid,formUrl) {
-
+    function submitForm(subimtid, formUrl) {
         $.ajax({
-            type : "POST",
+            type: "POST",
             url: formUrl,
-            data:$('#'+subimtid).serialize(),
-            dataType:'json',
-            async:false,
-            success: function(data){
-                if(data.status ==1){
+            data: $('#' + subimtid).serialize(),
+            dataType: 'json',
+            async: false,
+            success: function (data) {
+                if (data.status == 1) {
                     // layer.msg(data.msg, {icon: 1});
-                    layer.msg(data.msg, {icon: 1},function () {
-                        window.location.href=data.url;
+                    layer.msg(data.msg, {icon: 1}, function () {
+                        window.location.href = data.url;
                     });
 
-                }else{
+                } else {
                     layer.msg(data.msg, {icon: 2});
                 }
             },
-            error:function(){
-                layer.msg('网络异常，请稍后重试',{icon: 2});
+            error: function () {
+                layer.msg('网络异常，请稍后重试', {icon: 2});
             }
         });
     }

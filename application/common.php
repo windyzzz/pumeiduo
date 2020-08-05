@@ -419,6 +419,10 @@ function goods_thum_images($goods_id, $width, $height)
         return '/public/images/icon_goods_thumb_empty_300.png';
     }
 
+    if (strstr($original_img, 'http') || strstr($original_img, 'https')) {
+        return $original_img;
+    }
+
     $ossClient = new \app\common\logic\OssLogic();
     if (($ossUrl = $ossClient->getGoodsThumbImageUrl($original_img, $width, $height))) {
         return $ossUrl;
@@ -1133,8 +1137,9 @@ function get_user_address_list_new($user_id, $default = false, $addressId = 0)
         ->join('region2 r1', 'r1.id = ua.province', 'LEFT')
         ->join('region2 r2', 'r2.id = ua.city', 'LEFT')
         ->join('region2 r3', 'r3.id = ua.district', 'LEFT')
+        ->join('region2 r4', 'r4.id = ua.twon', 'LEFT')
         ->where($where)->limit(20)
-        ->field('ua.*, r1.name province_name, city, r2.name city_name, district, r3.name district_name')
+        ->field('ua.*, r1.name province_name, city, r2.name city_name, district, r3.name district_name, ua.twon town, r4.name town_name')
         ->order('ua.is_default DESC, ua.address_id DESC')
         ->select();
     if ($addressId && empty($lists)) {
@@ -1142,8 +1147,9 @@ function get_user_address_list_new($user_id, $default = false, $addressId = 0)
             ->join('region2 r1', 'r1.id = ua.province', 'LEFT')
             ->join('region2 r2', 'r2.id = ua.city', 'LEFT')
             ->join('region2 r3', 'r3.id = ua.district', 'LEFT')
+            ->join('region2 r4', 'r4.id = ua.twon', 'LEFT')
             ->where(['user_id' => $user_id])->limit(20)
-            ->field('ua.*, r1.name province_name, city, r2.name city_name, district, r3.name district_name')
+            ->field('ua.*, r1.name province_name, city, r2.name city_name, district, r3.name district_name, ua.twon town, r4.name town_name')
             ->order('ua.is_default DESC, ua.address_id DESC')
             ->select();
     }
@@ -1543,6 +1549,17 @@ function update_pay_status($order_sn, $ext = [])
         // 发送微信消息模板提醒
         // $wechat = new \app\common\logic\WechatLogic;
         // $wechat->sendTemplateMsgOnPaySuccess($order);
+
+        if ($order['order_type'] == 3) {
+            // 更新子订单状态
+            M('order')->where(['parent_id' => $order['order_id'], 'order_type' => 1])->update([
+                'pay_status' => 1,
+                'pay_time' => $time,
+                'pay_name' => $order['pay_name']
+            ]);
+            // 发送到供应链系统
+            (new \app\common\logic\OrderLogic())->supplierOrderSend($order['order_id'], $time);
+        }
     }
 }
 
@@ -1567,6 +1584,7 @@ function confirm_order($id, $user_id = 0)
     if (empty($order['pay_time']) || 1 != $order['pay_status']) {
         return ['status' => -1, 'msg' => '商家未确定付款，该订单暂不能确定收货', 'result' => null];
     }
+    Db::startTrans();
     $data['order_status'] = 2; // 已收货
     $data['pay_status'] = 1; // 已付款
     $data['confirm_time'] = time(); // 收货确认时间
@@ -1577,6 +1595,7 @@ function confirm_order($id, $user_id = 0)
     }
     $row = M('order')->where(['order_id' => $id])->save($data);
     if (!$row) {
+        Db::rollback();
         return ['status' => -3, 'msg' => '操作失败', 'result' => null];
     }
 
@@ -1614,6 +1633,16 @@ function confirm_order($id, $user_id = 0)
 //    $task2->setOrder($order);
 //    $task2->doOrderPayAfterSell();
 
+    // 供应链订单确认
+    if ($order['order_type'] == 3) {
+        $cOrderSn = M('order')->where(['parent_id' => $order['order_id'], 'order_type' => 3])->value('order_sn');
+        $res = (new \app\common\logic\supplier\OrderService())->confirmOrder($cOrderSn);
+        if ($res['status'] == 0) {
+            Db::rollback();
+            return $res;
+        }
+    }
+
     // 记录订单操作日志
     $action_info = [
         'order_id' => $order['order_id'],
@@ -1627,6 +1656,7 @@ function confirm_order($id, $user_id = 0)
     ];
     M('order_action')->add($action_info);
 
+    Db::commit();
     return ['status' => 1, 'msg' => '操作成功', 'result' => null];
 }
 
@@ -1719,10 +1749,10 @@ function get_goods_category_tree($isApp = false)
         ->order('sort_order desc, id asc')
         ->select(); //所有分类
     if ($cat_list) {
-        $abroadCateId = 0;  // 海外购分类
+        $abroadCateId = 0;  // 韩国购分类
         // 分类广告
         foreach ($cat_list as $ck => $cv) {
-            if ($cv['parent_id'] == 0 && strstr($cv['name'], '海外购')) {
+            if ($cv['parent_id'] == 0 && strstr($cv['name'], '韩国购')) {
                 if (!$isApp) {
                     unset($cat_list[$ck]);
                     continue;
@@ -1912,5 +1942,18 @@ function inviteLog($invite, $userId, $status, $time = null)
         'user_id' => $userId,
         'status' => $status,
         'create_time' => $time ?? time()
+    ]);
+}
+
+/**
+ * 供应链返回数据记录
+ * @param $content
+ * @param null $time
+ */
+function supplierReturnLog($content, $time = null)
+{
+    M('supplier_return_log')->add([
+        'content' => json_encode($content),
+        'add_time' => $time ?? NOW_TIME
     ]);
 }

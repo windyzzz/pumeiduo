@@ -39,6 +39,8 @@ class PlaceOrder
     private $promId;
     private $userIdCard;
     private $orderType = 1;
+    private $order1Goods = [];
+    private $order2Goods = [];
 
     /**
      * PlaceOrder constructor.
@@ -111,6 +113,7 @@ class PlaceOrder
         $this->check();
         $this->queueInc();
         $this->addOrder($source);
+        $this->addSplitOrder($source);
         $this->addOrderGoods();
         Hook::listen('user_add_order', $this->order); //下单行为
         $reduce = tpCache('shopping.reduce');
@@ -345,7 +348,9 @@ class PlaceOrder
                 'sale_type' => $goodsArr[$payItem['goods_id']]['sale_type'],
                 're_id' => isset($payItem['re_id']) ? intval($payItem['re_id']) : 0,
                 'goods_pv' => isset($payItem['goods_pv']) ? bcmul(bcmul($payItem['goods_pv'], $payItem['goods_num'], 2), $promRate, 2) : 0,
-                'pay_type' => $payItem['type']      // 购买方式：1现金+积分 2现金
+                'pay_type' => $payItem['type'],      // 购买方式：1现金+积分 2现金
+                'order_id2' => 0,
+                'supplier_goods_id' => 0,
             ];
             if (!empty($payItem['spec_key'])) {
                 $orderGoodsData['spec_key'] = $payItem['spec_key'];
@@ -386,7 +391,9 @@ class PlaceOrder
                         'sale_type' => 1,
                         're_id' => 0,
                         'goods_pv' => 0,
-                        'pay_type' => 0
+                        'pay_type' => 0,
+                        'order_id2' => 0,
+                        'supplier_goods_id' => 0,
                     ];
                     if (!empty($v['spec_key'])) {
                         $orderGoodsData['spec_key'] = $v['spec_key'];           // 商品规格
@@ -422,7 +429,9 @@ class PlaceOrder
                         'sale_type' => 1,
                         're_id' => 0,
                         'goods_pv' => 0,
-                        'pay_type' => 0
+                        'pay_type' => 0,
+                        'order_id2' => 0,
+                        'supplier_goods_id' => 0,
                     ];
                     if (!empty($v['spec_key'])) {
                         $orderGoodsData['spec_key'] = $v['spec_key']; // 商品规格
@@ -478,7 +487,9 @@ class PlaceOrder
                         'sale_type' => 1,
                         're_id' => 0,
                         'goods_pv' => 0,
-                        'pay_type' => 0
+                        'pay_type' => 0,
+                        'order_id2' => 0,
+                        'supplier_goods_id' => 0,
                     ];
                     array_push($orderGoodsAllData, $orderGoodsData);
                 }
@@ -513,12 +524,31 @@ class PlaceOrder
                     'sale_type' => 1,
                     're_id' => 0,
                     'goods_pv' => 0,
-                    'pay_type' => 0
+                    'pay_type' => 0,
+                    'order_id2' => 0,
+                    'supplier_goods_id' => 0,
                 ];
                 array_push($orderGoodsAllData, $orderGoodsData);
             }
         }
-        
+        if (!empty($this->order1Goods) || !empty($this->order2Goods)) {
+            foreach ($orderGoodsAllData as &$orderGoods) {
+                foreach ($this->order1Goods as $order1Goods) {
+                    if ($orderGoods['goods_id'] == $order1Goods['goods_id'] && $orderGoods['spec_key'] == $order1Goods['spec_key']) {
+                        $orderGoods['order_id2'] = $order1Goods['order_id'];
+                        $orderGoods['supplier_goods_id'] = $order1Goods['supplier_goods_id'];
+                        break;
+                    }
+                }
+                foreach ($this->order2Goods as $order2Goods) {
+                    if ($orderGoods['goods_id'] == $order2Goods['goods_id'] && $orderGoods['spec_key'] == $order2Goods['spec_key']) {
+                        $orderGoods['order_id2'] = $order2Goods['order_id'];
+                        $orderGoods['supplier_goods_id'] = $order2Goods['supplier_goods_id'];
+                        break;
+                    }
+                }
+            }
+        }
         Db::name('order_goods')->insertAll($orderGoodsAllData);
         if ($orderDiscount != 0.00) {
             // 增加优惠金额
@@ -621,5 +651,114 @@ class PlaceOrder
     public function setOrder($order)
     {
         $this->order = $order;
+    }
+
+    /**
+     * 添加子订单
+     * @param int $source
+     * @return bool
+     * @throws TpshopException
+     */
+    private function addSplitOrder($source = 1)
+    {
+        $res = $this->pay->getOrderSplit();
+        if (empty($res)) {
+            return true;
+        }
+        $order1 = $res['order1'];
+        $order2 = $res['order2'];
+        $res = $this->pay->getOrderSplitGoods();
+        $order1Goods = $res['order1_goods'];
+        $order2Goods = $res['order2_goods'];
+        $orderLogic = new OrderLogic();
+        // 有供应链商品的情况下才拆分订单
+        if (!empty($order1) && !empty($order2)) {
+            /*
+             * 子订单1
+             */
+            $orderData = [
+                'parent_id' => $this->order['order_id'],
+                'order_sn' => 'C' . $orderLogic->get_order_sn(),
+                'order_type' => 1,
+                'user_id' => $this->pay->getUser()['user_id'],
+                'goods_price' => $order1['goods_price'],
+                'shipping_price' => $this->pay->getShippingPrice(),
+                'user_electronic' => $order1['user_electronic'],
+                'coupon_price' => $order1['order_coupon_price'],
+                'order_prom_amount' => $order1['order_prom_price'],
+                'integral' => $order1['integral'],
+                'integral_money' => $order1['integral'],
+                'total_amount' => $order1['goods_price'],
+                'order_amount' => $order1['order_amount'],
+                'add_time' => $this->order['add_time'],
+                'coupon_id' => $this->pay->getCouponId(),
+                'source' => $source,
+                'order_pv' => $order1['order_pv'],
+                'consignee' => $this->order['consignee'],
+                'id_card' => $this->order['id_card'],
+                'province' => $this->order['province'],
+                'city' => $this->order['city'],
+                'district' => $this->order['district'],
+                'twon' => $this->order['twon'],
+                'address' => $this->order['address'],
+                'mobile' => $this->order['mobile'],
+                'zipcode' => $this->order['zipcode'],
+                'user_note' => $this->order['user_note'] ?? '',
+                'invoice_title' => $this->order['invoice_title'] ?? '',
+                'taxpayer' => $this->order['taxpayer'] ?? '',
+            ];
+            $order1Id = M('order')->add($orderData);
+            if ($order1Id === false) {
+                throw new TpshopException('订单入库', 0, ['status' => -8, 'msg' => '添加子订单1失败', 'result' => '']);
+            }
+            foreach ($order1Goods as &$orderGoods) {
+                $orderGoods['order_id'] = $order1Id;
+            }
+            $this->order1Goods = $order1Goods;
+        }
+        if (!empty($order2)) {
+            /*
+             * 子订单2
+             */
+            $orderData = [
+                'parent_id' => $this->order['order_id'],
+                'order_sn' => 'C' . $orderLogic->get_order_sn(),
+                'order_type' => 3,
+                'user_id' => $this->pay->getUser()['user_id'],
+                'goods_price' => $order2['goods_price'],
+                'shipping_price' => 0,
+                'user_electronic' => $order2['user_electronic'],
+                'coupon_price' => $order2['order_coupon_price'],
+                'order_prom_amount' => $order2['order_prom_price'],
+                'integral' => $order2['integral'],
+                'integral_money' => $order2['integral'],
+                'total_amount' => $order2['goods_price'],
+                'order_amount' => $order2['order_amount'],
+                'add_time' => $this->order['add_time'],
+                'coupon_id' => $this->pay->getCouponId(),
+                'source' => $source,
+                'order_pv' => $order2['order_pv'],
+                'consignee' => $this->order['consignee'],
+                'id_card' => $this->order['id_card'],
+                'province' => $this->order['province'],
+                'city' => $this->order['city'],
+                'district' => $this->order['district'],
+                'twon' => $this->order['twon'],
+                'address' => $this->order['address'],
+                'mobile' => $this->order['mobile'],
+                'zipcode' => $this->order['zipcode'],
+                'user_note' => $this->order['user_note'] ?? '',
+                'invoice_title' => $this->order['invoice_title'] ?? '',
+                'taxpayer' => $this->order['taxpayer'] ?? '',
+            ];
+            $order2Id = M('order')->add($orderData);
+            if ($order2Id === false) {
+                throw new TpshopException('订单入库', 0, ['status' => -8, 'msg' => '添加子订单2失败', 'result' => '']);
+            }
+            foreach ($order2Goods as &$orderGoods) {
+                $orderGoods['order_id'] = $order2Id;
+            }
+            $this->order2Goods = $order2Goods;
+        }
     }
 }

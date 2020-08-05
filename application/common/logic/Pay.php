@@ -14,6 +14,7 @@ namespace app\common\logic;
 use app\common\logic\order\ExtraLogic;
 use app\common\logic\order\GiftLogic;
 use app\common\logic\order\Gift2Logic;
+use app\common\logic\supplier\GoodsService;
 use app\common\model\CouponList;
 use app\common\util\TpshopException;
 use think\Db;
@@ -62,6 +63,11 @@ class Pay
 
     private $goodsPv = '0';                       // 商品pv
     private $orderPv = '0';                       // 订单总pv
+
+    private $order1 = [];                   // 圃美多、韩国购商品子订单
+    private $order1Goods = [];
+    private $order2 = [];                   // 供应链商品子订单
+    private $order2Goods = [];
 
     public function __construct()
     {
@@ -231,6 +237,161 @@ class Pay
         // 优惠比例
         $promRate = $this->totalAmount != '0' ? bcsub(1, ($promAmount / $this->totalAmount), 2) : '0';
         $this->orderPv = $promRate < 1 ? bcmul($promRate, $this->goodsPv, 2) : $this->goodsPv;
+    }
+
+    /**
+     * 拆分订单商品数据
+     * @param $payList
+     */
+    public function setOrderSplitGoods($payList)
+    {
+        foreach ($payList as $goods) {
+            $goodsData = [
+                'goods_id' => $goods['goods_id'],
+                'supplier_goods_id' => $goods['goods']['supplier_goods_id'],
+                'goods_num' => $goods['goods_num'],
+                'goods_price' => $goods['goods_price'],
+                'member_goods_price' => $goods['member_goods_price'],
+                'use_integral' => $goods['integral'],
+                'spec_key' => $goods['spec_key'],
+                'spec_key_name' => $goods['spec_key_name'],
+                'goods_pv' => isset($goods['goods_pv']) ? $goods['goods_pv'] : 0,
+            ];
+            if ($goods['goods']['is_supply'] == 0) {
+                $this->order1Goods[$goods['goods_id'] . '_' . $goods['item_id']] = $goodsData;
+            } elseif ($goods['goods']['is_supply'] == 1) {
+                $this->order2Goods[$goods['goods_id'] . '_' . $goods['item_id']] = $goodsData;
+            }
+        }
+    }
+
+    /**
+     * 检查供应链商品地区购买限制
+     * @param $userAddress
+     * @throws TpshopException
+     */
+    public function checkOrderSplitGoods($userAddress)
+    {
+        if (!empty($this->order2Goods)) {
+            $province = M('region2')->where(['id' => $userAddress['province']])->value('ml_region_id');
+            $city = M('region2')->where(['id' => $userAddress['city']])->value('ml_region_id');
+            $district = M('region2')->where(['id' => $userAddress['district']])->value('ml_region_id');
+            $town = M('region2')->where(['id' => $userAddress['twon']])->value('ml_region_id') ?? 0;
+            $goodsData = [];
+            $supplierGoodsData = [];
+            foreach ($this->order2Goods as $orderGoods) {
+                $goodsData[] = [
+                    'goods_id' => $orderGoods['supplier_goods_id'],
+                    'spec_key' => $orderGoods['spec_key'],
+                    'goods_num' => $orderGoods['goods_num'],
+                ];
+                $supplierGoodsData[$orderGoods['supplier_goods_id']] = [
+                    'goods_num' => $orderGoods['goods_num']
+                ];
+            }
+            $res = (new GoodsService())->checkGoodsRegion($goodsData, $province, $city, $district, $town);
+            if ($res['status'] == 0) {
+                throw new TpshopException('获取供应链商品地区购买限制失败', 0, ['msg' => $res['msg']]);
+            }
+            foreach ($res['data'] as $v) {
+                if ($v['goods_count'] <= 0 || $v['goods_count'] < $supplierGoodsData[$v['goods_id']]['goods_num']) {
+                    throw new TpshopException('获取供应链商品地区购买限制失败', 0, ['status' => 0, 'msg' => $v['goods_name'] . ' 库存不足']);
+                }
+                if ($v['buy_num'] > $supplierGoodsData[$v['goods_id']]['goods_num']) {
+                    throw new TpshopException('获取供应链商品地区购买限制失败', 0, ['status' => 0, 'msg' => $v['goods_name'] . ' 最低购买数量为' . $v['buy_num']]);
+                }
+                if (isset($v['isAreaRestrict']) && $v['isAreaRestrict'] == true) {
+                    throw new TpshopException('获取供应链商品地区购买限制失败', 0, ['status' => 0, 'msg' => $v['goods_name'] . ' 当前地址不可购买']);
+                }
+                if (isset($v['isNoStock']) && $v['isNoStock'] == true) {
+                    throw new TpshopException('获取供应链商品地区购买限制失败', 0, ['status' => 0, 'msg' => $v['goods_name'] . ' 当前地区无库存']);
+                }
+                if (isset($v['isNoGoods']) && $v['isNoGoods'] == true) {
+                    throw new TpshopException('获取供应链商品地区购买限制失败', 0, ['status' => 0, 'msg' => $v['goods_name'] . ' 商品已失效']);
+                }
+                if (isset($v['IsOnSale']) && $v['IsOnSale'] == true) {
+                    throw new TpshopException('获取供应链商品地区购买限制失败', 0, ['status' => 0, 'msg' => $v['goods_name'] . ' 商品已下架']);
+                }
+            }
+        }
+    }
+
+    /**
+     * 拆分订单数据
+     */
+    public function setOrderSplit()
+    {
+        // 订单属性优惠价格（订单优惠 + 优惠券优惠 - 商品优惠）
+        $promAmount = bcsub(bcadd($this->orderPromAmount, $this->couponPrice, 2), $this->goodsPromAmount, 2);
+        // 优惠比例
+        $promRate = bcsub(1, ($promAmount / $this->totalAmount), 2);
+        if (empty($this->order1Goods) || empty($this->order2Goods)) {
+//            $promAmount = $promAmount;
+            $orderPromAmount = $this->orderPromAmount;
+            $couponPrice = $this->couponPrice;
+            $userElectronic = $this->userElectronic;
+        } else {
+            $promAmount = bcdiv($promAmount, 2, 2);
+            $orderPromAmount = bcdiv($this->orderPromAmount, 2, 2);
+            $couponPrice = bcdiv($this->couponPrice, 2, 2);
+            $userElectronic = bcdiv($this->userElectronic, 2, 2);
+        }
+        if (!empty($this->order1Goods)) {
+            /*
+             * 子订单1
+             */
+            $goodsPrice = 0;
+            $integral = 0;
+            $goodsPv = 0;
+            foreach ($this->order1Goods as $goods) {
+                $goodsPrice = bcadd($goodsPrice, bcmul($goods['member_goods_price'], $goods['goods_num'], 2), 2);
+                $integral = bcadd($integral, bcmul($goods['use_integral'], $goods['goods_num'], 2), 2);
+                $goodsPv = bcadd($goodsPv, bcmul($goods['goods_pv'], $goods['goods_num'], 2), 2);
+            }
+            $this->order1['goods_price'] = $goodsPrice;
+            $this->order1['integral'] = $integral;
+            $this->order1['order_pv'] = $promRate < 1 ? bcmul($promRate, $goodsPv, 2) : $goodsPv;
+
+            $order1GoodsRate = $this->order1['goods_price'] / bcadd($this->order1['goods_price'], $this->order2['goods_price'], 2);
+            // 子订单的优惠分摊（订单优惠 + 优惠券优惠）
+            $this->order1['goods_prom_price'] = $promAmount;
+            // 子订单的订单优惠分摊
+            $this->order1['order_prom_price'] = $orderPromAmount;
+            // 子订单的优惠券优惠分摊
+            $this->order1['order_coupon_price'] = $couponPrice;
+            // 子订单的电子币抵扣分摊
+            $this->order1['user_electronic'] = $userElectronic;
+            // 子订单实付价
+            $this->order1['order_amount'] = bcmul($order1GoodsRate, $this->orderAmount, 2);
+        }
+        if (!empty($this->order2Goods)) {
+            /*
+             * 子订单2
+             */
+            $goodsPrice = 0;
+            $integral = 0;
+            $goodsPv = 0;
+            foreach ($this->order2Goods as $goods) {
+                $goodsPrice = bcadd($goodsPrice, bcmul($goods['member_goods_price'], $goods['goods_num'], 2), 2);
+                $integral = bcadd($integral, bcmul($goods['use_integral'], $goods['goods_num'], 2), 2);
+                $goodsPv = bcadd($goodsPv, bcmul($goods['goods_pv'], $goods['goods_num'], 2), 2);
+            }
+            $this->order2['goods_price'] = $goodsPrice;
+            $this->order2['integral'] = $integral;
+            $this->order2['order_pv'] = $promRate < 1 ? bcmul($promRate, $goodsPv, 2) : $goodsPv;
+
+            $order2GoodsRate = $this->order2['goods_price'] / bcadd($this->order1['goods_price'], $this->order2['goods_price'], 2);
+            // 子订单的优惠分摊（订单优惠 + 优惠券优惠）
+            $this->order2['goods_prom_price'] = $promAmount;
+            // 子订单的订单优惠分摊
+            $this->order2['order_prom_price'] = $orderPromAmount;
+            // 子订单的优惠券优惠分摊
+            $this->order2['order_coupon_price'] = $couponPrice;
+            // 子订单的电子币抵扣分摊
+            $this->order2['user_electronic'] = $userElectronic;
+            // 子订单实付价
+            $this->order2['order_amount'] = bcmul($order2GoodsRate, $this->orderAmount, 2);
+        }
     }
 
     /**
@@ -1047,7 +1208,7 @@ class Pay
                                 $cartLogic->setType(2);
                             }
                             $cartLogic->setCartType(0);
-                            $buyGoods = $cartLogic->buyNow();
+                            $buyGoods = $cartLogic->buyNow(true, true);
                             $buyGoods['member_goods_price'] = '0';
                             $buyGoods['use_integral'] = '0';
                             $buyGoods['re_id'] = $coupon_id;
@@ -1441,6 +1602,19 @@ class Pay
     public function getOrderPv()
     {
         return $this->orderPv;
+    }
+
+    public function getOrderSplit()
+    {
+        if (!empty($this->order1) || !empty($this->order2)) {
+            return ['order1' => $this->order1, 'order2' => $this->order2];
+        }
+        return [];
+    }
+
+    public function getOrderSplitGoods()
+    {
+        return ['order1_goods' => $this->order1Goods, 'order2_goods' => $this->order2Goods];
     }
 
     public function toArray()

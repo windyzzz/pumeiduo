@@ -156,7 +156,7 @@ return [
             ['name' => '投诉与建议', 'act' => 'suggestion_list', 'op' => 'Suggestion'],
         ]],
 
-        ['name' => '海外购', 'child' => [
+        ['name' => '韩国购', 'child' => [
             ['name' => '设置', 'act' => 'config', 'op' => 'Abroad'],
         ]],
 
@@ -203,6 +203,7 @@ return [
         ]],
         ['name' => '账户信息', 'child' => [
             ['name' => '多账户流水', 'act' => 'account_list', 'op' => 'Finance'],
+            ['name' => '供应链账户', 'act' => 'supplierAccount', 'op' => 'Finance'],
         ]],
     ]],
 

@@ -4,6 +4,8 @@ namespace app\home\controller;
 
 use app\common\model\DeliveryDoc;
 use app\common\model\HtnsDeliveryLog;
+use app\common\model\GoodsImages;
+use app\common\model\SupplierGoodsSpec;
 use think\Controller;
 use think\Db;
 
@@ -199,6 +201,9 @@ class Tb extends Controller
             'pay_time' => $order['pay_time'],
             'user_note' => $order['user_note'],
             'goods_area' => 3,
+            'parent_sn' => $order['parent_id'] > 0 ? M('order')->where(['order_id' => $order['parent_id']])->value('order_sn') : '',
+            'supplier_order_sn' => $order['supplier_order_sn'],
+            'supplier_order_status' => $order['supplier_order_status'],
         );
         //$user = get_user_info($order['user_id'],0,'','user_name,true_name,mobile');
         $delivery_record = M('delivery_doc')->where('order_id=' . $order_id)->order('id desc')->limit(1)->find();
@@ -214,10 +219,10 @@ class Tb extends Controller
                 'member_goods_price' => $v['member_goods_price'],
                 'spec_key' => $v['spec_key'],
                 'spec_key_name' => $v['spec_key_name'],
-                'other_rec_id' => $v['rec_id']
+                'other_rec_id' => $v['rec_id'],
+                'order_sn2' => $v['order_id2'] > 0 ? M('order')->where(['order_id' => $v['order_id2']])->value('order_sn') : ''
             );
         }
-
         return $data;
     }
 
@@ -356,43 +361,84 @@ class Tb extends Controller
             'shipping_code' => $order['shipping_code'],
             'shipping_name' => $order['shipping_name'],
             'shipping_time' => $order['shipping_time'],
-            'delivery_type' => $order['delivery_type']
+            'delivery_type' => $order['delivery_type'],
+            'pay_status' => $order['pay_status'],
+            'pay_time' => $order['pay_time'],
+            'supplier_order_status' => $order['supplier_order_status'],
+            'supplier_pay_status' => $order['supplier_pay_status'],
+            'supplier_shipping_status' => $order['supplier_shipping_status'],
         ];
         M('order')->where(array('order_sn' => $order['order_sn']))->data($data)->save();
         // 更新订单物流信息
-        $orderInfo = M('order')->where(array('order_sn' => $order['order_sn']))->field('order_id, user_id')->find();
+        $orderInfo = M('order')->where(array('order_sn' => $order['order_sn']))->field('order_id, order_sn, user_id, order_type, parent_id')->find();
         $deliveryData = [];
         $sendRecId = [];
         if (!empty($orderData['delivery_doc'])) {
-            foreach ($orderData['delivery_doc'] as $delivery) {
-                $deliveryData[] = [
-                    'order_id' => $orderInfo['order_id'],
-                    'order_sn' => $order['order_sn'],
-                    'rec_id' => $delivery['other_rec_id'],
-                    'goods_num' => $delivery['goods_num'],
-                    'user_id' => $orderInfo['user_id'],
-                    'admin_id' => $delivery['admin_id'],
-                    'consignee' => $delivery['consignee'],
-                    'zipcode' => $delivery['zipcode'],
-                    'mobile' => $delivery['mobile'],
-                    'country' => $delivery['country'],
-                    'province' => $delivery['province'],
-                    'city' => $delivery['city'],
-                    'district' => $delivery['district'],
-                    'address' => $delivery['address'],
-                    'shipping_code' => $delivery['shipping_code'],
-                    'shipping_name' => $delivery['shipping_name'],
-                    'shipping_price' => $delivery['shipping_price'],
-                    'invoice_no' => $delivery['invoice_no'],
-                    'tel' => $delivery['tel'],
-                    'note' => $delivery['note'],
-                    'best_time' => $delivery['best_time'],
-                    'is_del' => $delivery['is_del'],
-                    'create_time' => time(),
-                    'htns_status' => $delivery['htns_status']
-                ];
-                if (!empty($delivery['invoice_no'])) {
-                    $sendRecId[] = $delivery['other_rec_id'];
+            if ($orderInfo['order_type'] == 3 && $orderInfo['parent_id'] > 0) {
+                // 子订单物流信息
+                $parentOrder = M('order')->where(['order_id' => $orderInfo['parent_id']])->field('order_id, order_sn, user_id')->find();
+                foreach ($orderData['delivery_doc'] as $delivery) {
+                    $deliveryData[] = [
+                        'order_id' => $parentOrder['order_id'],
+                        'order_sn' => $parentOrder['order_sn'],
+                        'rec_id' => $delivery['other_rec_id'],
+                        'goods_num' => $delivery['goods_num'],
+                        'user_id' => $parentOrder['user_id'],
+                        'admin_id' => $delivery['admin_id'],
+                        'consignee' => $delivery['consignee'],
+                        'zipcode' => $delivery['zipcode'],
+                        'mobile' => $delivery['mobile'],
+                        'country' => $delivery['country'],
+                        'province' => $delivery['province'],
+                        'city' => $delivery['city'],
+                        'district' => $delivery['district'],
+                        'address' => $delivery['address'],
+                        'shipping_code' => $delivery['shipping_code'],
+                        'shipping_name' => $delivery['shipping_name'],
+                        'shipping_price' => $delivery['shipping_price'],
+                        'invoice_no' => $delivery['invoice_no'],
+                        'tel' => $delivery['tel'],
+                        'note' => $delivery['note'],
+                        'best_time' => $delivery['best_time'],
+                        'is_del' => $delivery['is_del'],
+                        'create_time' => time(),
+                        'htns_status' => $delivery['htns_status']
+                    ];
+                    if (!empty($delivery['invoice_no'])) {
+                        $sendRecId[] = $delivery['other_rec_id'];
+                    }
+                }
+            } else {
+                foreach ($orderData['delivery_doc'] as $delivery) {
+                    $deliveryData[] = [
+                        'order_id' => $orderInfo['order_id'],
+                        'order_sn' => $orderInfo['order_sn'],
+                        'rec_id' => $delivery['other_rec_id'],
+                        'goods_num' => $delivery['goods_num'],
+                        'user_id' => $orderInfo['user_id'],
+                        'admin_id' => $delivery['admin_id'],
+                        'consignee' => $delivery['consignee'],
+                        'zipcode' => $delivery['zipcode'],
+                        'mobile' => $delivery['mobile'],
+                        'country' => $delivery['country'],
+                        'province' => $delivery['province'],
+                        'city' => $delivery['city'],
+                        'district' => $delivery['district'],
+                        'address' => $delivery['address'],
+                        'shipping_code' => $delivery['shipping_code'],
+                        'shipping_name' => $delivery['shipping_name'],
+                        'shipping_price' => $delivery['shipping_price'],
+                        'invoice_no' => $delivery['invoice_no'],
+                        'tel' => $delivery['tel'],
+                        'note' => $delivery['note'],
+                        'best_time' => $delivery['best_time'],
+                        'is_del' => $delivery['is_del'],
+                        'create_time' => time(),
+                        'htns_status' => $delivery['htns_status']
+                    ];
+                    if (!empty($delivery['invoice_no'])) {
+                        $sendRecId[] = $delivery['other_rec_id'];
+                    }
                 }
             }
         }
@@ -426,11 +472,15 @@ class Tb extends Controller
 
     function save_stock($goods)
     {
+        $isSupply = M('goods')->where(array('goods_sn' => $goods['goods_sn']))->value('is_supply');
+        if ($isSupply == 1) {
+            return true;
+        }
+
         $spec_goods_price = !empty($goods['spec_goods_price']) ? $goods['spec_goods_price'] : '';
 
         //更新主商品库存
         M('goods')->where(array('goods_sn' => $goods['goods_sn']))->data(array('store_count' => $goods['stock']))->save();
-
 
         if ($spec_goods_price) {
             //获取旧规格
@@ -563,6 +613,10 @@ class Tb extends Controller
         } else {
             $trade_type = 1;
         }
+        $isSupply = 0;  // 供应链商品
+        if ($goods['is_supply'] == 1 && $goods['supplier_goods_id'] != 0) {
+            $isSupply = 1;
+        }
         $goods_data = array(
             'goods_sn' => $goods['goods_sn'],
             'goods_name' => $goods['goods_name'],
@@ -573,30 +627,39 @@ class Tb extends Controller
             'on_time' => $goods['on_time'],//上架时间戳
             'out_time' => $goods['out_time'],//下架时间戳
             'trade_type' => $trade_type,
-            'is_abroad' => $goods['is_abroad']
+            'is_supply' => $isSupply,
+            'keywords' => $goods['keywords'],
+            'goods_remark' => $goods['goods_remark'],
+            'goods_content' => $goods['goods_content'],
+            'original_img' => $goods['original_img'],
+            'video' => $goods['video'],
+            'supplier_goods_id' => $goods['supplier_goods_id'],
+            'is_abroad' => $goods['is_abroad'],
+            'is_free_shipping' => $isSupply
         );
-
+        if ($isSupply == 1) {
+            // 供应链商品直接更新库存
+            $goods_data['store_count'] = $goods['store_count'];
+        }
         if ($goods['is_one_send'] == 0) {
             $goods_data['goods_type'] = $goods['goods_type'];//模型
         }
-
-        $spec_goods_price = $goods['spec_goods_price'];
-        $tao_arr = $goods['tao_arr'];//套组商品
 
         //检查该商品为新商品
         $agoods = M('goods')->where(array('goods_sn' => $goods_data['goods_sn']))->field('goods_id')->find();
 
         $goods_data['is_area_show'] = $area3 == 1 ? 1 : 0; //是否可以显示在本区
-
-        if ($agoods) {//存在于重销区
-            if ($area3 == 0) { //不显示本区 直接下架
+        if ($agoods) {
+            //存在于重销区
+            if ($area3 == 0) {
+                //不显示本区 直接下架
                 $goods_data['is_on_sale'] = 0;
             }
             unset($goods_data['goods_name']);
             M('goods')->where(array('goods_id' => $agoods['goods_id']))->data($goods_data)->save();
             $goods_id = $agoods['goods_id'];
-        } else {//不存在于重销区 可以显示在重销区 则新增
-
+        } else {
+            //不存在于重销区 可以显示在重销区 则新增
             if ($goods_data['is_area_show'] == 0) {  //之前没有、现在也不在本区  则不导入
                 return true;
             }
@@ -608,43 +671,43 @@ class Tb extends Controller
 
         //规格
         $spec_goods_price_old = M('spec_goods_price')->where(array('goods_id' => $goods_id))->getField('key,key_name,item_sn');
-
-        if ($spec_goods_price) {
+        if (isset($goods['spec_goods_price'])) {
             //获取旧规格
-            foreach ($spec_goods_price as $key => $val) {
-
-                $save_data = array(
-                    'goods_id' => $goods_id,
-                    'item_sn' => $val['item_sn'],
-                    'key' => $val['key'],
-                    'key_name' => $val['key_name']
-                );
-
-                if (isset($spec_goods_price_old[$val['key']])) {
-                    //更新
-                    M('spec_goods_price')->where(array('goods_id' => $goods_id, 'key' => $val['key']))->data($save_data)->save();
-                    unset($spec_goods_price_old[$val['key']]);
-                } else {
-                    //新增
-                    M('spec_goods_price')->data($save_data)->add();
+            foreach ($goods['spec_goods_price'] as $key => $val) {
+                if ($val['key'] != '') {
+                    $save_data = array(
+                        'goods_id' => $goods_id,
+                        'item_sn' => $val['item_sn'],
+                        'key' => $val['key'],
+                        'key_name' => $val['key_name'],
+                        'store_count' => $val['store_count'],
+                        'spec_img' => $val['image'],
+                        'price' => $val['m_price'],
+                        'supplier_goods_spec' => $val['supplier_goods_spec'],
+                    );
+                    if (isset($spec_goods_price_old[$val['key']])) {
+                        //更新
+                        M('spec_goods_price')->where(array('goods_id' => $goods_id, 'key' => $val['key']))->data($save_data)->save();
+                        unset($spec_goods_price_old[$val['key']]);
+                    } else {
+                        //新增
+                        M('spec_goods_price')->data($save_data)->add();
+                    }
                 }
             }
         }
-
         //删除
-        if ($spec_goods_price_old && $goods_data['trade_type'] == 1) {//一键待发 不要删除规格
+        if ($spec_goods_price_old && $goods_data['trade_type'] == 1) {
+            //一键待发 不要删除规格
             foreach ($spec_goods_price_old as $key => $val) {
                 M('spec_goods_price')->where(array('goods_id' => $goods_id, 'key' => $val['key']))->delete();
             }
         }
 
         //删除旧套组
-
         M('goods_series')->where(array('goods_id' => $goods_id))->delete();
-
-        if ($tao_arr) {
-            foreach ($tao_arr as $key => $val) {
-
+        if (isset($goods['tao_arr'])) {
+            foreach ($goods['tao_arr'] as $key => $val) {
                 //获取商品id  规格id
                 $goods_sn = $val['goods_sn'];
                 $child_goods_id = M('goods')->where(array('goods_sn' => $goods_sn))->getField('goods_id');
@@ -659,8 +722,38 @@ class Tb extends Controller
                     'item_id' => $item_id,
                     'g_number' => $val['stock']
                 );
-
                 M('goods_series')->data($save_data)->add();
+            }
+        }
+
+        //商品图片
+        if (isset($goods['goods_images'])) {
+            M('goods_images')->where(['goods_id' => $goods_id])->delete();
+            $goodsImagesData = [];
+            foreach ($goods['goods_images'] as $image) {
+                $goodsImagesData[] = [
+                    'goods_id' => $goods_id,
+                    'image_url' => $image['image_url']
+                ];
+            }
+            (new GoodsImages())->saveAll($goodsImagesData);
+        }
+
+        //供应商商品规格标识
+        if (isset($goods['supplier_goods_spec'])) {
+            $supplierId = 0;
+            $goodsSpecData = [];
+            foreach ($goods['supplier_goods_spec'] as $spec) {
+                $supplierId = $spec['supplier_id'];
+                $goodsSpecData[] = [
+                    'spec_id' => $spec['spec_id'],
+                    'name' => $spec['name'],
+                    'supplier_id' => $spec['supplier_id'],
+                ];
+            }
+            if (!empty($goodsSpecData)) {
+                M('supplier_goods_spec')->where(['supplier_id' => $supplierId])->delete();
+                (new SupplierGoodsSpec())->saveAll($goodsSpecData);
             }
         }
 
@@ -685,6 +778,5 @@ class Tb extends Controller
         }
         return true;
     }
-
 
 }

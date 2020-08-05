@@ -11,6 +11,8 @@
 
 namespace app\common\logic;
 
+use app\common\logic\Pay as PayLogic;
+use app\common\logic\supplier\GoodsService;
 use app\common\model\Goods;
 use app\common\util\TpshopException;
 use think\Db;
@@ -314,7 +316,8 @@ class GoodsLogic extends Model
                 'item_id' => $value['id'],
                 'item' => $value['item'],
                 'src' => $specImage[$value['id']] ?? '',
-                'is_default' => $isDefault
+                'is_default' => $isDefault,
+                'can_select' => 1   // 能否被选
             ];
         }
         // 给定默认选中规格
@@ -326,6 +329,86 @@ class GoodsLogic extends Model
                     if ($k2 == 0) {
                         $itemKey .= $item['item_id'] . '_';
                         $specData[$k1]['type_value'][$k2]['is_default'] = 1;
+                        break;
+                    }
+                }
+            }
+            $itemKey = rtrim($itemKey, '_');
+        }
+        return ['spec' => array_values($specData), 'default_key' => $itemKey];
+    }
+
+    /**
+     * 获取供应链商品规格属性
+     * @param $goods_id
+     * @param null $itemId
+     * @return array
+     */
+    public function get_supply_spec($goods_id, $itemId = null)
+    {
+        $itemKey = '';
+        if ($itemId) {
+            $itemKey = Db::name('spec_goods_price')->where(['item_id' => $itemId])->value('key');
+            $itemKey = explode('_', $itemKey);
+        }
+        // 规格信息
+        $specGoodsPrice = M('spec_goods_price')->where('goods_id', $goods_id)->select();
+        if (empty($specGoodsPrice)) {
+            return [];
+        }
+        // 规格标识
+        $goodsSpec = M('supplier_goods_spec')->where(['supplier_id' => 1])->getField('spec_id, name', true);
+        // 整合规格信息
+        $specData = [];
+        foreach ($specGoodsPrice as $specPrice) {
+            $spec = explode('_', $specPrice['supplier_goods_spec']);
+            $key = explode('_', $specPrice['key']);
+            $keyName = explode(',', $specPrice['key_name']);
+            // 组合规格
+            $specKey = [];
+            $count = count($key);
+            for ($a = 0; $a < $count; $a++) {
+                if (!empty($itemKey) && in_array($key[$a], $itemKey)) {
+                    $isDefault = 1;
+                } else {
+                    $isDefault = 0;
+                }
+                $specKey[] = [
+                    'item_id' => $key[$a],
+                    'item' => $keyName[$a],
+                    'is_default' => $isDefault,
+                    'can_select' => 1,
+                ];
+            }
+            // 组合规格标识
+            foreach ($spec as $k => $v) {
+                if (!isset($specData[$v])) {
+                    if (isset($goodsSpec[$v])) {
+                        $type = C('SUPPLIER_GOODS_SPEC')[$goodsSpec[$v]] ?? '规格';
+                    } else {
+                        $type = '规格';
+                    }
+                    $specData[$v] = [
+                        'type' => $type,
+                        'type_value' => []
+                    ];
+                }
+                $specData[$v]['type_value'][$specKey[$k]['item_id']] = $specKey[$k];
+            }
+        }
+        foreach ($specData as &$spec) {
+            $spec['type_value'] = array_values($spec['type_value']);
+        }
+        // 给定默认选中规格
+        if ($itemId) {
+            $itemKey = implode('_', $itemKey);
+        } else {
+            foreach ($specData as $k1 => $value) {
+                foreach ($value['type_value'] as $k2 => $item) {
+                    if ($k2 == 0) {
+                        $itemKey .= $item['item_id'] . '_';
+                        $specData[$k1]['type_value'][$k2]['is_default'] = 1;
+                        break;
                     }
                 }
             }
@@ -341,7 +424,7 @@ class GoodsLogic extends Model
      */
     public function get_spec_price($goods_id)
     {
-        return M('spec_goods_price')->where('goods_id', $goods_id)->getField('key,item_id,price,store_count'); // 规格 对应 价格 库存表
+        return M('spec_goods_price')->where('goods_id', $goods_id)->getField('key,item_id,price,store_count,spec_img'); // 规格 对应 价格 库存表
     }
 
     /**
@@ -397,6 +480,8 @@ class GoodsLogic extends Model
                     $goods_list[] = $take_goods_list[$i];
                 }
                 foreach ($goods_list as $k => $v) {
+                    // 缩略图
+                    $goods_list[$k]['original_img_new'] = getFullPath($v['original_img']);
                     // 处理显示金额
                     if ($v['exchange_integral'] != 0) {
                         $goods_list[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);
@@ -446,6 +531,8 @@ class GoodsLogic extends Model
             ->where('goods_id', 'in', $ary)
             ->select();
         foreach ($goods_list as $k => $v) {
+            // 缩略图
+            $goods_list[$k]['original_img_new'] = getFullPath($v['original_img']);
             // 处理显示金额
             if ($v['exchange_integral'] != 0) {
                 $goods_list[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);
@@ -776,19 +863,47 @@ class GoodsLogic extends Model
      *
      * @param $goodsArr
      * @param $region_id
+     * @param $userAddress
      *
      * @return false|\PDOStatement|string|\think\Collection
      */
-    public function checkGoodsListShipping($goodsArr, $region_id)
+    public function checkGoodsListShipping($goodsArr, $region_id, $userAddress = [])
     {
         $Goods = new Goods();
         $freightLogic = new FreightLogic();
         $freightLogic->setRegionId($region_id);
         $goods_ids = get_arr_column($goodsArr, 'goods_id');
-        $goodsList = $Goods->field('goods_id,template_id,is_free_shipping')->where('goods_id', 'IN', $goods_ids)->cache(true)->select();
+        $goodsList = $Goods->field('goods_id, template_id, is_free_shipping, is_supply, supplier_goods_id')->where('goods_id', 'IN', $goods_ids)->cache(true)->select();
+        $goodsService = new GoodsService();
         foreach ($goodsList as $goodsKey => $goodsVal) {
+            /*
+             * 商品运费地区限制
+             */
             $freightLogic->setGoodsModel($goodsVal);
             $goodsList[$goodsKey]['shipping_able'] = $freightLogic->checkShipping();
+            if ($goodsVal['is_supply'] == 1 && !empty($userAddress)) {
+                /*
+                 * 供应链商品
+                 */
+                // 地区购买限制的库存和最低购买数量
+                $province = M('region2')->where(['id' => $userAddress['province']])->value('ml_region_id');
+                $city = M('region2')->where(['id' => $userAddress['city']])->value('ml_region_id');
+                $district = M('region2')->where(['id' => $userAddress['district']])->value('ml_region_id');
+                $town = M('region2')->where(['id' => $userAddress['twon']])->value('ml_region_id') ?? 0;
+                $goodsData = [
+                    'goods_id' => $goodsVal['supplier_goods_id'],
+                    'spec_key' => '',
+                    'goods_num' => 1
+                ];
+                $res = $goodsService->checkGoodsRegion([$goodsData], $province, $city, $district, $town);
+                if ($res['status'] == 0) {
+                    throw new TpshopException('获取供应链商品地区购买限制失败', 0, ['msg' => $res['msg']]);
+                }
+                if (!empty($res['data'])) {
+                    $data = $res['data'][0];
+                    $goodsList[$goodsKey]['shipping_able'] = isset($data['isAreaRestrict']) && $data['isAreaRestrict'] == true ? 1 : 0;
+                }
+            }
         }
 
         return $goodsList;
@@ -966,16 +1081,16 @@ class GoodsLogic extends Model
      * @param $sort
      * @param $page
      * @param null $userId
-     * @param array $whereExt
+     * @param bool $isApp
      * @return array
      */
-    public function getGoodsList($filter_goods_id, $sort, $page, $userId = null, $whereExt = [])
+    public function getGoodsList($filter_goods_id, $sort, $page, $userId = null, $isApp = false)
     {
-        $where = [
-            'is_abroad' => 0
-        ];
-        if (isset($whereExt['is_abroad'])) {
-            $where['is_abroad'] = $whereExt['is_abroad'];
+        if (!$isApp) {
+            $where = [
+                'is_abroad' => 0,
+                'is_supply' => 0
+            ];
         }
         $sort['sort'] = 'desc';
         $sort['goods_id'] = 'desc';
@@ -996,14 +1111,14 @@ class GoodsLogic extends Model
         $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->select();
         // 秒杀商品
         $flashSale = Db::name('flash_sale')->where(['goods_id' => ['in', $filter_goods_id]])
-            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->limit($page->firstRow . ',' . $page->listRows)->field('goods_id, price, can_integral')->select();
+            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->field('goods_id, price, can_integral')->select();
         // 团购商品
         $groupBuy = Db::name('group_buy')->where(['goods_id' => ['in', $filter_goods_id]])
-            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->limit($page->firstRow . ',' . $page->listRows)->field('goods_id, price, can_integral')->select();
+            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->field('goods_id, price, can_integral')->select();
         // 促销商品
         $promGoods = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
             ->where(['gtg.goods_id' => ['in', $filter_goods_id], 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
-            ->field('pg.title, gtg.goods_id')->limit($page->firstRow . ',' . $page->listRows)->select();    // 促销活动
+            ->field('pg.title, gtg.goods_id')->select();    // 促销活动
 //        $couponLogic = new CouponLogic();
 //        $couponCurrency = $couponLogic->getCoupon(0, null, null, ['nature' => 1]);    // 通用优惠券
 //        $couponGoods = [];
@@ -1036,11 +1151,13 @@ class GoodsLogic extends Model
                     }
                 }
             }
+            // 缩略图
+            $goodsList[$k]['original_img_new'] = getFullPath($v['original_img']);
             // 商品规格属性
             if (isset($goodsItem[$v['goods_id']])) {
                 $goodsList[$k]['item_id'] = $goodsItem[$v['goods_id']];
             } else {
-                $goodsList[$k]['item_id'] = 0;
+                $goodsList[$k]['item_id'] = '0';
             }
             // 是否收藏
             $goodsList[$k]['is_enshrine'] = 0;
@@ -1704,5 +1821,156 @@ class GoodsLogic extends Model
             ];
         }
         return $returnData;
+    }
+
+    /**
+     * 地址商品信息
+     * @param $user
+     * @param $goodsId
+     * @param int $itemId
+     * @param string $addressId
+     * @param int $goodsNum
+     * @param bool $isSupply 是否是供应链商品
+     * @return array
+     * @throws TpshopException
+     */
+    public function addressGoods($user, $goodsId, $itemId = 0, $addressId = '', $goodsNum = 1, $isSupply = false)
+    {
+        if (empty($addressId)) {
+            // 用户默认地址
+            $userAddress = get_user_address_list_new($user['user_id'], true);
+        } else {
+            $userAddress = get_user_address_list_new($user['user_id'], false, $addressId);
+        }
+        if (!empty($userAddress)) {
+            $userAddress = $userAddress[0];
+            $userAddress['town_name'] = $userAddress['town_name'] ?? '';
+            $userAddress['is_illegal'] = 0;     // 非法地址
+            $userAddress['out_range'] = 0;      // 超出配送范围
+            $userAddress['limit_tips'] = '';    // 限制的提示
+            unset($userAddress['zipcode']);
+            unset($userAddress['is_pickup']);
+            // 地址标签
+            $addressTab = (new UsersLogic())->getAddressTab($user['user_id']);
+            if (!empty($addressTab)) {
+                if (empty($userAddress['tabs'])) {
+                    unset($userAddress['tabs']);
+                    $userAddress['tabs'][] = [
+                        'tab_id' => 0,
+                        'name' => '默认',
+                        'is_selected' => 1
+                    ];
+                } else {
+                    $tabs = explode(',', $userAddress['tabs']);
+                    unset($userAddress['tabs']);
+                    foreach ($addressTab as $item) {
+                        if (in_array($item['tab_id'], $tabs)) {
+                            $userAddress['tabs'][] = [
+                                'tab_id' => $item['tab_id'],
+                                'name' => $item['name'],
+                                'is_selected' => 1
+                            ];
+                        }
+                    }
+                    $userAddress['tabs'][] = [
+                        'tab_id' => 0,
+                        'name' => '默认',
+                        'is_selected' => 1
+                    ];
+                }
+            } else {
+                unset($userAddress['tabs']);
+                $userAddress['tabs'][] = [
+                    'tab_id' => 0,
+                    'name' => '默认',
+                    'is_selected' => 1
+                ];
+            }
+            // 判断用户地址是否合法
+            $userAddress = (new UsersLogic())->checkAddressIllegal($userAddress);
+            if ($userAddress['is_illegal'] == 1) {
+                // 不合法
+                $return['store_count'] = '0';
+                $return['user_address'] = $userAddress;
+            } else {
+                // 合法
+                /*
+                 * 商品运费地区限制
+                 */
+                $cartLogic = new CartLogic();
+                $cartLogic->setUserId($user['user_id']);
+                // 获取订单商品数据
+                $res = $this->getOrderGoodsData($cartLogic, $goodsId, $itemId, 1, 1, '', 1, true);
+                if ($res['status'] != 1) {
+                    throw new TpshopException('地址商品信息', 0, ['status' => 0, 'msg' => $res['msg']]);
+                } else {
+                    $cartList = $res['result'];
+                }
+                $payLogic = new PayLogic();
+                $payLogic->payCart($cartList);
+                // 配送物流
+                if (!empty($userAddress)) {
+                    $res = $payLogic->delivery($userAddress['district']);
+                    if (isset($res['status']) && $res['status'] == -1) {
+                        $userAddress['out_range'] = 1;
+                    }
+                }
+                if ($isSupply) {
+                    /*
+                     * 供应链商品
+                     */
+                    // 获取最新库存信息
+                    $supplierGoodsId = M('goods')->where(['goods_id' => $goodsId])->value('supplier_goods_id');
+                    if ($itemId > 0) {
+                        $key = M('spec_goods_price')->where(['item_id' => $itemId])->value('key') ?? '';
+                    } else {
+                        $key = M('spec_goods_price')->where(['goods_id' => $goodsId])->value('key') ?? '';
+                    }
+                    $goodsData = [
+                        'goods_id' => $supplierGoodsId,
+                        'key' => $key
+                    ];
+                    $goodsService = new GoodsService();
+                    $res = $goodsService->getGoodsCount([$goodsData]);
+                    if ($res['status'] == 0) {
+                        throw new TpshopException('获取供应链商品库存信息失败', 0, ['msg' => $res['msg']]);
+                    }
+                    $data = $res['data'][0];
+                    $return['store_count'] = $data['store_count'] . '';
+                    // 地区购买限制的库存和最低购买数量
+                    $province = M('region2')->where(['id' => $userAddress['province']])->value('ml_region_id');
+                    $city = M('region2')->where(['id' => $userAddress['city']])->value('ml_region_id');
+                    $district = M('region2')->where(['id' => $userAddress['district']])->value('ml_region_id');
+                    $town = M('region2')->where(['id' => $userAddress['twon']])->value('ml_region_id') ?? 0;
+                    $goodsData = [
+                        'goods_id' => $supplierGoodsId,
+                        'spec_key' => $key,
+                        'goods_num' => $goodsNum
+                    ];
+                    $res = $goodsService->checkGoodsRegion([$goodsData], $province, $city, $district, $town);
+                    if ($res['status'] == 0) {
+                        throw new TpshopException('获取供应链商品地区购买限制失败', 0, ['msg' => $res['msg']]);
+                    }
+                    if (!empty($res['data'])) {
+                        $data = $res['data'][0];
+                        $return['store_count'] = $data['goods_count'] <= 0 ? '0' : $data['goods_count'];
+                        $return['buy_least'] = isset($data['buy_num']) ? $data['buy_num'] : '0';
+                        $userAddress['out_range'] = isset($data['isAreaRestrict']) && $data['isAreaRestrict'] == true ? 1 : 0;
+                        $return['store_count'] = isset($data['isNoStock']) && $data['isNoStock'] == true ? '0' : $return['store_count'];
+                    }
+                }
+            }
+            if ($userAddress['is_illegal'] == 1) {
+                $userAddress['limit_tips'] = '当前地址信息不完整，请添加街道后补充完整地址信息再提交订单';
+            } elseif ($userAddress['out_range'] == 1) {
+                $userAddress['limit_tips'] = '当前地址不在配送范围内，请重新选择';
+            }
+            $return['user_address'] = $userAddress;
+        } else {
+            $return = [
+                'user_address' => []
+            ];
+        }
+        return $return;
     }
 }

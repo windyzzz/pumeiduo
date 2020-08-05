@@ -81,14 +81,14 @@
             </div>
             <div class="subject" style="width:62%">
                 <if condition="$order['order_status'] lt 2 and $order.pay_status eq 0">
-                    <a href="{:U('Admin/order/edit_order',array('order_id'=>$order['order_id']))}"
-                       style="float:right;margin-right:10px" class="ncap-btn-big ncap-btn-green"><i
-                            class="fa fa-pencil-square-o"></i>修改订单</a>
+                    <!--<a href="{:U('Admin/order/edit_order',array('order_id'=>$order['order_id']))}"-->
+                       <!--style="float:right;margin-right:10px" class="ncap-btn-big ncap-btn-green"><i-->
+                            <!--class="fa fa-pencil-square-o"></i>修改订单</a>-->
                 </if>
                 <if condition="($split eq 1) and ($order['order_status'] lt 2)">
-                    <a href="{:U('Admin/order/split_order',array('order_id'=>$order['order_id']))}"
-                       style="float:right;margin-right:10px" class="ncap-btn-big ncap-btn-green"><i
-                            class="fa fa-external-link-square"></i>拆分订单</a>
+                    <!--<a href="{:U('Admin/order/split_order',array('order_id'=>$order['order_id']))}"-->
+                       <!--style="float:right;margin-right:10px" class="ncap-btn-big ncap-btn-green"><i-->
+                            <!--class="fa fa-external-link-square"></i>拆分订单</a>-->
                 </if>
                 <a href="{:U('Order/order_print',array('order_id'=>$order['order_id']))}" target="_blank"
                    style="float:right;margin-right:10px" class="ncap-btn-big ncap-btn-green"><i class="fa fa-print"></i>打印订单</a>
@@ -97,9 +97,6 @@
 
     </div>
     <div class="ncap-order-style" style="width: 80%;">
-        <div class="titile">
-            <h3></h3>
-        </div>
         <div class="ncap-order-details">
             <form id="order-action">
                 <div class="tabs-panels">
@@ -113,8 +110,9 @@
                             <dt>订单种类：</dt>
                             <dd>
                                 <switch name="$order[order_type]">
-                                    <case value="1">圃美多</case>
-                                    <case value="2">海外购</case>
+                                    <case value="1"><span style="color: red;">圃美多</span></case>
+                                    <case value="2"><span style="color: green;">韩国购</span></case>
+                                    <case value="3"><span style="color: blue;">供应链</span></case>
                                 </switch>
                             </dd>
                             <dt>会员：</dt>
@@ -138,8 +136,9 @@
                             <dd>{$order.add_time|date='Y-m-d H:i',###}</dd>
                             <dt>支付时间：</dt>
                             <dd>
-                                <if condition="$order.pay_time neq 0">{$order.pay_time|date='Y-m-d H:i',###}
-                                    <else/>
+                                <if condition="$order.pay_time neq 0">
+                                    {$order.pay_time|date='Y-m-d H:i',###}
+                                <else/>
                                     N
                                 </if>
                             </dd>
@@ -175,10 +174,18 @@
                         <dl>
                             <dt>发货类型：</dt>
                             <dd>
-                                <switch name="$order[delivery_type]">
-                                    <case value="1">统一发货</case>
-                                    <case value="2">分开发货</case>
-                                </switch>
+                                <if condition="$order[shipping_status] eq 0">
+                                    未发货
+                                    <else/>
+                                    <switch name="$order[delivery_type]">
+                                        <case value="1">
+                                            统一发货
+                                        </case>
+                                        <case value="2">
+                                            分开发货
+                                        </case>
+                                    </switch>
+                                </if>
                             </dd>
                         </dl>
                         <dl>
@@ -293,32 +300,60 @@
                         </div>
                         <script>
                             <foreach name="express" item="v">
-                                <if condition="in_array($v[htns_status], ['120', '999'])">
-                                    $(function () {
-                                        var html = '';
-                                        var goods_name = "{$v['goods_name']}";
-                                        var spec_key_name = "{$v['spec_key_name']}";
-                                        var goods_num = "{$v['goods_num']}";
-                                        var shipping_code = "{$v['shipping_code']}";
-                                        var invoice_no = "{$v['invoice_no']}";
-                                        $.ajax({
-                                            type: "GET",
-                                            dataType: "json",
-                                            url: "/index.php?m=Home&c=Api&a=queryExpress&shipping_code=" + shipping_code + "&queryNo=" + invoice_no,//+tab,
-                                            success: function (data) {
-                                                html = '<tr style="background-color: lightgrey;"><td style="color: red;">商品：' + goods_name + ' ' + spec_key_name + '</td>' +
-                                                    '<td style="color: red; text-align: left;">发货数量：' + goods_num + '</td></tr>';
-                                                if (data.status == 0) {
-                                                    $.each(data.result.list, function (i, n) {
-                                                        html += '<tr><td class="text-center">' + n.time + '</td><td class="text-center">' + n.status + '</td></tr>'
-                                                    });
-                                                } else {
-                                                    html += "<tr><td class='text-center'>" + data.msg + "</td></tr>"
+                                <if condition="in_array($v[htns_status], ['000', '120', '999'])">
+                                    <if condition="$v[supplier_goods_id] == 0">
+                                        $(function () {
+                                            var html = '';
+                                            var goods_name = "{$v['goods_name']}";
+                                            var spec_key_name = "{$v['spec_key_name']}";
+                                            var goods_num = "{$v['goods_num']}";
+                                            var shipping_code = "{$v['shipping_code']}";
+                                            var invoice_no = "{$v['invoice_no']}";
+                                            $.ajax({
+                                                type: "GET",
+                                                dataType: "json",
+                                                url: "/index.php?m=Home&c=Api&a=queryExpress&shipping_code=" + shipping_code + "&queryNo=" + invoice_no,//+tab,
+                                                success: function (data) {
+                                                    html = '<tr style="background-color: lightgrey;"><td style="color: red;">商品：' + goods_name + ' ' + spec_key_name + '</td>' +
+                                                        '<td style="color: red; text-align: left;">发货数量：' + goods_num + '</td></tr>';
+                                                    if (data.status == 0) {
+                                                        $.each(data.result.list, function (i, n) {
+                                                            html += '<tr><td class="text-center">' + n.time + '</td><td class="text-center">' + n.status + '</td></tr>'
+                                                        });
+                                                    } else {
+                                                        html += "<tr><td class='text-center'>" + data.msg + "</td></tr>"
+                                                    }
+                                                    $("#express_info").append(html);
                                                 }
-                                                $("#express_info").append(html);
-                                            }
-                                        });
-                                    })
+                                            });
+                                        })
+                                    <else/>
+                                        $(function () {
+                                            var html = '';
+                                            var goods_name = "{$v['goods_name']}";
+                                            var spec_key_name = "{$v['spec_key_name']}";
+                                            var goods_num = "{$v['goods_num']}";
+                                            var order_id = "{$v['order_id2']}";
+                                            var supplier_goods_id = "{$v['supplier_goods_id']}";
+                                            $.ajax({
+                                                type: "GET",
+                                                dataType: "json",
+                                                url: "/index.php?m=Home&c=Api&a=supplierExpress&order_id=" + order_id + "&supplier_goods_id=" + supplier_goods_id,//+tab,
+                                                success: function (data) {
+                                                    html = '<tr style="background-color: lightgrey;"><td style="color: red;">商品：' + goods_name + ' ' + spec_key_name + '</td>' +
+                                                        '<td style="color: red; text-align: left;">发货数量：' + goods_num + '</td></tr>';
+                                                    if (data.status == 1) {
+                                                        $.each(data.result, function (i, n) {
+                                                            html += '<tr><td class="text-center">' + n.time + '</td><td class="text-center">' + n.status + '</td></tr>'
+                                                        });
+                                                    } else {
+                                                        html += "<tr><td class='text-center'>" + data.msg + "</td></tr>"
+                                                    }
+                                                    $("#express_info").append(html);
+                                                }
+                                            });
+                                        })
+                                    </if>
                                 <else/>
                                     $(function () {
                                         $("#express_info").append('<tr><td colspan="2">暂无信息</td></tr>');
@@ -408,7 +443,7 @@
                             </dd>
                         </dl>
                     </div>
-                    <div class="goods-info">
+                    <div class="contact-info">
                         <h4>操作记录</h4>
                         <table>
                             <thead>
@@ -426,6 +461,131 @@
                             </tbody>
                         </table>
                     </div>
+                    <if condition="$order.order_type == 3">
+                        <foreach name="$child_order" item="v">
+                            <div class="contact-info">
+                                <if condition="$v[order_type] == 1">
+                                    <h3>圃美多订单</h3>
+                                <else/>
+                                    <h3>供应链订单</h3>
+                                </if>
+                                <dl>
+                                    <dt>订单 ID：</dt>
+                                    <dd>{$v.order_id}</dd>
+                                    <dt>订单号：</dt>
+                                    <dd>{$v.order_sn}</dd>
+                                    <dt>订单状态：</dt>
+                                    <dd>{$order_status[$v[order_status]]} / {$pay_status[$v[pay_status]]}
+                                        <if condition="$v['pay_code'] eq 'cod'"><span style="color: red">(货到付款)</span></if>
+                                        / {$shipping_status[$v[shipping_status]]}
+                                    </dd>
+                                </dl>
+                                <dl>
+                                    <dt>支付时间：</dt>
+                                    <dd>
+                                        <if condition="$v.pay_time neq 0">
+                                            {$v.pay_time|date='Y-m-d H:i',###}
+                                        <else/>
+                                            N
+                                        </if>
+                                    </dd>
+                                    <dt>支付方式：</dt>
+                                    <dd>{$v.pay_name|default='其他方式'}</dd>
+                                    <dt>支付流水号：</dt>
+                                    <dd>{$v.transaction_id|default=''}</dd>
+                                </dl>
+                                <if condition="$v[order_type] == 3">
+                                    <dl>
+                                        <dt>配送方式：</dt>
+                                        <dd></dd>
+                                        <dt>快递单号：</dt>
+                                        <dd></dd>
+                                    </dl>
+                                </if>
+                                <dl>
+                                    <dt>小计：</dt>
+                                    <dd>{$v.goods_price}</dd>
+                                    <dt>运费：</dt>
+                                    <dd>+{$v.shipping_price}</dd>
+                                    <dt>积分 ：</dt>
+                                    <dd>-{$v.integral_money}</dd>
+                                </dl>
+                                <dl>
+                                    <dt>电子币抵扣：</dt>
+                                    <dd>-{$v.user_electronic}</dd>
+                                    <dt>优惠券抵扣：</dt>
+                                    <dd>-{$v.coupon_price}</dd>
+                                    <dt>价格调整：</dt>
+                                    <dd>-{$v.discount}</dd>
+                                </dl>
+                                <dl>
+                                    <dt>应付：</dt>
+                                    <dd><strong class="red_common">{$v.order_amount}</strong></dd>
+                                </dl>
+                                <if condition="$v[order_type] == 3">
+                                    <dl>
+                                        <dt>供应链订单状态：</dt>
+                                        <switch name="$v[supplier_order_status]">
+                                            <case value="0">
+                                                <dd>未发送到供应链系统，待客户支付成功后同步到供应链系统</dd>
+                                            </case>
+                                            <case value="2">
+                                                <dd>发送到供应链系统失败，失败原因：<strong class="red_common">{$v.supplier_submit_remark}</strong></dd>
+                                            </case>
+                                            <case value="1">
+                                                <dd>同步成功</dd>
+                                            </case>
+                                            <case value="3">
+                                                <dd>已取消</dd>
+                                            </case>
+                                            <case value="4">
+                                                <dd>已完成</dd>
+                                            </case>
+                                            <case value="5">
+                                                <dd>已作废</dd>
+                                            </case>
+                                            <case value="6">
+                                                <dd>售后状态</dd>
+                                            </case>
+                                        </switch>
+                                    </dl>
+                                </if>
+                                <dl>
+                                    <dt>对应商品信息：</dt>
+                                    <dd>
+                                        <table>
+                                            <thead>
+                                            <tr>
+                                                <th>商品编号</th>
+                                                <th colspan="2">商品</th>
+                                                <th>规格属性</th>
+                                                <th>数量</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            <volist name="$v[order_goods]" id="good">
+                                                <tr>
+                                                    <td class="w60">{$good.goods_sn}</td>
+                                                    <td class="w30">
+                                                        <div class="goods-thumb">
+                                                            <a><img alt="" src="{$good['goods_id']|goods_thum_images=200,200}"/></a>
+                                                        </div>
+                                                    </td>
+                                                    <td style="text-align: left;">
+                                                        <a>
+                                                            {$good.goods_name}<if condition="$good['re_id']"><span style="color:red;">[兑换券]</span></if>
+                                                        </a>
+                                                    </td>
+                                                    <td class="w80">{$good.spec_key_name}</td>
+                                                    <td class="w60">{$good.goods_num}</td>
+                                                </tr>
+                                            </volist>
+                                        </table>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </foreach>
+                    </if>
                 </div>
             </form>
         </div>
@@ -447,13 +607,13 @@
         });
     }
 
-    before_request = 1; // 标识上一次ajax 请求有没回来, 没有回来不再进行下一次
+    // before_request = 1; // 标识上一次ajax 请求有没回来, 没有回来不再进行下一次
     function verifyForm(form_id, submit_url) {
         layer.confirm('操作确认？', {
             btn: ['确定'] //按钮
         }, function () {
-            if (before_request == 0)
-                return false;
+            // if (before_request == 0)
+            //     return false;
             $("[id^='err_']").hide();  // 隐藏提示
             $.ajax({
                 type: "POST",
@@ -464,7 +624,7 @@
                     layer.msg("服务器繁忙, 请联系管理员!", {icon: 1, time: 2000});
                 },
                 success: function (data) {
-                    before_request = 1; // 标识ajax 请求已经返回
+                    // before_request = 1; // 标识ajax 请求已经返回
                     // 验证成功提交表单
                     if (data.status == 1) {
                         layer.msg(data.msg, {icon: 1, time: 2000}, function () {
@@ -475,7 +635,7 @@
                     }
                 }
             });
-            before_request = 0; // 标识ajax 请求已经发出
+            // before_request = 0; // 标识ajax 请求已经发出
         }, function () {
             console.log("取消");
         });

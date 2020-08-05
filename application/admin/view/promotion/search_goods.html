@@ -71,8 +71,7 @@
                     <thead>
                     <tr>
                         <th abbr="article_title" axis="col3" class="" align="left">
-                            <div style="text-align: left; width: 50px;" class=""><input type="checkbox"
-                                                                                        class="checkAll"></div>
+                            <div style="text-align: left; width: 50px;" class=""><input type="checkbox" class="checkAll"></div>
                         </th>
                         <th abbr="ac_id" axis="col4" class="" align="left">
                             <div style="text-align: center; width: 80px;" class="">ID</div>
@@ -106,7 +105,7 @@
                     <tbody id="goos_table">
                     <volist name="goodsList" id="list">
                         <tr
-                        <if condition='$list.prom_id gt 0'>hidden</if>
+                            <if condition='$list.prom_id gt 0'>hidden</if>
                         >
                         <td class="" align="left">
                             <div style="text-align: left; width: 50px;">
@@ -302,7 +301,7 @@
                     spec_a.each(function (index, item) {
                         var goodsSpecItem = new GoodsSpecItem($(item).data('item-id'), $(item).data('key-name'), $(item).data('store-count'), $(item).data('price'), $(item).data('spec-img'));
                         goodsSpecItemArr.push(goodsSpecItem);
-                    })
+                    });
                     goodsItem = new GoodsItem(goods_id, $(o).data('name'), $(o).data('count'), $(o).data('price'), $(o).data('img'), goodsSpecItemArr);
                     goodsArr.push(goodsItem);
                 }

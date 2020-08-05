@@ -15,6 +15,10 @@ class Popup extends Model
         '6' => '领券中心',
         '7' => '我的礼券',
         '8' => '任务中心',
+        '9' => '商品详情',
+        '10' => '分类跳转',
+        '11' => '韩国购',
+        '12' => 'SVIP专享',
     ];
 
     public function getType()

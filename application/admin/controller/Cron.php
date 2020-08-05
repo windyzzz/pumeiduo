@@ -11,6 +11,7 @@
 
 namespace app\admin\controller;
 
+use app\common\logic\OrderLogic;
 use app\common\logic\PushLogic;
 use app\common\logic\SmsLogic;
 use app\common\logic\Token as TokenLogic;
@@ -1346,6 +1347,8 @@ AND log_id NOT IN
                         'message_url' => '',
                         'goods_id' => '',
                         'item_id' => '',
+                        'cate_id' => '',
+                        'cate_name' => ''
                     ]
                 ];
                 switch ($push['type']) {
@@ -1368,6 +1371,10 @@ AND log_id NOT IN
                         $extraData['value']['goods_id'] = $push['type_id'];
                         $extraData['value']['item_id'] = $push['item_id'];
                         break;
+                    case 12:
+                        // 商品分类
+                        $extraData['value']['cate_id'] = $push['type_id'];
+                        $extraData['value']['cate_name'] = M('goods_category')->where(['id' => $push['type_id']])->value('name') ?? '';
                 }
                 // 标签
                 $all = 0;
@@ -1525,6 +1532,22 @@ AND log_id NOT IN
         }
         if (!empty($promIds)) {
             M('prom_goods')->where(['id' => ['IN', $promIds]])->update(['is_end' => 0]);
+        }
+    }
+
+    /**
+     * 发送订单数据到供应链系统
+     */
+    public function supplierOrderSend()
+    {
+        $orderIds = M('order o1')->join('order o2', 'o2.parent_id = o1.order_id')->where([
+            'o1.pay_status' => 1,
+            'o2.order_type' => 3,
+            'o2.supplier_order_status' => 0
+        ])->getField('o1.order_id', true);
+        $orderLogic = new OrderLogic();
+        foreach ($orderIds as $orderId) {
+            $orderLogic->supplierOrderSend($orderId, NOW_TIME);
         }
     }
 }

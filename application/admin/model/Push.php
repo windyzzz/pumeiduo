@@ -19,6 +19,10 @@ class Push extends Model
             '7' => 'SVIP专享',
             '8' => 'VIP申请区',
             '9' => '我的礼券',
+            '10' => '商品列表',
+            '11' => '超值套装',
+            '12' => '分类跳转',
+            '13' => '韩国购',
         ];
 
         return $parse_type[$data['type']];

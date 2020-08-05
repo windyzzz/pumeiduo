@@ -8,20 +8,43 @@ use think\Db;
 class Pay extends Base
 {
     protected $payment;    // 具体的支付类
-    protected $pay_code;   //    具体的支付code
+    protected $pay_code;   // 具体的支付code
     protected $web;
+    protected $order = [];
 
     public function __construct()
     {
         parent::__construct();
         $this->pay_code = I('pay_code', '');
         if (empty($this->pay_code)) {
-            return json(['status' => 0, 'msg' => 'pay_code不能为空']);
+            die(json_encode(['status' => 0, 'msg' => 'pay_code不能为空']));
         }
-        // 导入具体的支付类文件
-        include_once "plugins/payment/{$this->pay_code}/{$this->pay_code}.class.php";
-        $code = '\\' . $this->pay_code;
-        $this->payment = new $code();
+        $orderId = I('order_id/d', '');
+        $orderType = I('order_type', 1);
+        if ($orderId) {
+            $this->order = Db::name('Order')->where(['order_id' => $orderId])->find();
+            if (empty($this->order) || $this->order['order_status'] > 1) {
+                die(json_encode(['status' => 0, 'msg' => '非法操作！']));
+            }
+            if (time() - $this->order['add_time'] > 3600) {
+                die(json_encode(['status' => 0, 'msg' => '此订单在一个小时内不支付已作废，不能支付，请重新下单!']));
+            }
+            if ($this->order['pay_status'] == 1) {
+                die(json_encode(['status' => 0, 'msg' => '此订单，已完成支付!']));
+            }
+        }
+        if ((!empty($this->order) && $this->order['order_type'] == 2) || $orderType == 2) {
+            // 韩国购订单
+            // 导入具体的支付类文件
+            include_once "plugins/payment/weixinApp_2/weixinApp.class.php";
+            $code = '\\' . $this->pay_code;
+            $this->payment = new $code();
+        } else {
+            // 导入具体的支付类文件
+            include_once "plugins/payment/{$this->pay_code}/{$this->pay_code}.class.php";
+            $code = '\\' . $this->pay_code;
+            $this->payment = new $code();
+        }
     }
 
     /**
@@ -30,17 +53,6 @@ class Pay extends Base
      */
     public function getCode()
     {
-        $orderId = I('order_id/d', '');
-        $order = Db::name('Order')->where(['order_id' => $orderId])->find();
-        if (empty($order) || $order['order_status'] > 1) {
-            return json(['status' => 0, 'msg' => '非法操作！']);
-        }
-        if (time() - $order['add_time'] > 3600) {
-            return json(['status' => 0, 'msg' => '此订单在一个小时内不支付已作废，不能支付，请重新下单!']);
-        }
-        if ($order['pay_status'] == 1) {
-            return json(['status' => 0, 'msg' => '此订单，已完成支付!']);
-        }
         // 请求支付
         $signCode = [
             'appid' => '',
@@ -55,7 +67,7 @@ class Pay extends Base
         switch ($this->pay_code) {
             case 'alipayApp':
                 // 支付宝
-                $res = $this->payment->get_code($order);
+                $res = $this->payment->get_code($this->order);
                 if ($res['status'] == 0) {
                     return json(['status' => 0, 'msg' => $res['msg']]);
                 }
@@ -64,7 +76,7 @@ class Pay extends Base
                 break;
             case 'weixinApp':
                 // 微信
-                $res = $this->payment->get_code($order);
+                $res = $this->payment->get_code($this->order);
                 if ($res['status'] == 0) {
                     return json(['status' => 0, 'msg' => $res['msg']]);
                 }
@@ -82,9 +94,9 @@ class Pay extends Base
         }
         // 修改订单的支付方式
         $payment = M('Plugin')->where(['code' => $this->pay_code])->value('name');
-        M('order')->where('order_id', $orderId)->save(['pay_code' => $this->pay_code, 'pay_name' => $payment, 'prepare_pay_time' => time()]);
+        M('order')->where('order_id', $this->order['order_id'])->save(['pay_code' => $this->pay_code, 'pay_name' => $payment, 'prepare_pay_time' => time()]);
 
-        return json(['status' => 1, 'msg' => 'success', 'result' => ['order_id' => $orderId, 'sign_code' => $signCode]]);
+        return json(['status' => 1, 'msg' => 'success', 'result' => ['order_id' => $this->order['order_id'], 'sign_code' => $signCode]]);
     }
 
     public function getPay()

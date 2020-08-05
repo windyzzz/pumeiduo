@@ -9,4 +9,6 @@
  * with this source code in the file LICENSE.
  */
 
-return [];
+return [
+    'app\home\command\supplier\Region',     // 匹配保存供应链地区数据
+];

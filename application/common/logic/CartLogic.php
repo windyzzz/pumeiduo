@@ -103,6 +103,9 @@ class CartLogic extends Model
         if ($item_id > 0) {
             $specGoodsPriceModel = new SpecGoodsPrice();
             $this->specGoodsPrice = $specGoodsPriceModel::get($item_id);
+            if ($this->specGoodsPrice['key'] == '') {
+                $this->specGoodsPrice = null;
+            }
         } else {
             $this->specGoodsPrice = null;
         }
@@ -149,6 +152,9 @@ class CartLogic extends Model
     {
         if (empty($this->goods) && !$passAuth) {
             throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '购买商品不存在', 'result' => '']);
+        }
+        if ($this->goods['is_on_sale'] == 0 && !$passAuth) {
+            throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '商品已下架', 'result' => '']);
         }
         if (empty($this->goodsBuyNum) && !$passAuth) {
             throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '购买商品数量不能为0', 'result' => '']);
@@ -199,6 +205,7 @@ class CartLogic extends Model
 //                throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '必须传递商品规格', 'result' => '']);
                 // 默认第一个商品规格
                 $this->setSpecGoodsPriceModel($itemId);
+                $buyGoods['goods']['shop_price'] = $this->specGoodsPrice['price'];
             }
             $prom_id = $this->goods['prom_id'];
             $prom_type = $this->goods['prom_type'];
@@ -206,6 +213,7 @@ class CartLogic extends Model
         } else {
             $buyGoods['goods']['spec_key'] = $this->specGoodsPrice['key'];
             $buyGoods['goods']['spec_key_name'] = $this->specGoodsPrice['key_name'];
+            $buyGoods['goods']['shop_price'] = $this->specGoodsPrice['price'];  // 商品现金价
             $buyGoods['member_goods_price'] = $this->specGoodsPrice['price'];
             $buyGoods['goods_price'] = $this->specGoodsPrice['price'];
             $buyGoods['spec_key'] = $this->specGoodsPrice['key'];
@@ -217,10 +225,9 @@ class CartLogic extends Model
             $store_count = $this->specGoodsPrice['store_count'];
         }
 
-        if ($this->goodsBuyNum > $store_count) {
+        if ($this->goodsBuyNum > $store_count && !$passAuth) {
             throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => $this->goods['goods_name'] . '，商品库存不足，剩余' . $store_count, 'result' => '']);
         }
-
         $goodsPromFactory = new GoodsPromFactory();
         if ($goodsPromFactory->checkPromType($prom_type)) {
             $goodsPromLogic = $goodsPromFactory->makeModule($this->goods, $this->specGoodsPrice);
@@ -910,9 +917,10 @@ class CartLogic extends Model
                     continue;
                 }
                 $cartList[$cartKey]['item_id'] = $specGoodsPrice['item_id'];
+                $cartList[$cartKey]['goods']['shop_price'] = $specGoodsPrice['price'];  // 商品现金价
             } else {
                 $specGoodsPrice = SpecGoodsPrice::get(['goods_id' => $cart['goods_id']], '', false);
-                if ($specGoodsPrice) {
+                if ($specGoodsPrice && $specGoodsPrice['key'] != '') {
                     $cart->delete();
                     unset($cartList[$cartKey]);
                     continue;
@@ -1591,18 +1599,24 @@ class CartLogic extends Model
     {
         $hasPmd = false;
         $hasAbroad = false;
+        $hasSupply = false;
         foreach ($cartList as $cart) {
-            if ($cart['goods']['is_abroad'] == 0) {
-                $hasPmd = true;
-            } else {
+            if ($cart['goods']['is_abroad'] == 1) {
                 $hasAbroad = true;
+            } elseif ($cart['goods']['is_supply'] == 1) {
+                $hasSupply = true;
+            } else {
+                $hasPmd = true;
             }
         }
-        if ($hasPmd && $hasAbroad) {
-            return ['status' => 0, 'msg' => '海外购商品请分开结算'];
+        if (($hasPmd && $hasAbroad) || ($hasSupply && $hasAbroad)) {
+            return ['status' => 0, 'msg' => '韩国购商品请分开结算'];
         }
         if (!$hasPmd && $hasAbroad) {
             return ['status' => 2];
+        }
+        if ($hasSupply) {
+            return ['status' => 3];
         }
         return ['status' => 1];
     }

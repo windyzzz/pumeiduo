@@ -21,7 +21,7 @@ class Address
     public function getRegion()
     {
         $parent_id = I('get.parent_id/d', 0);
-        $data = M('region2')->where('parent_id', $parent_id)->select();
+        $data = M('region2')->where(['parent_id' => $parent_id, 'status' => 1])->select();
 
         return json(['status' => 1, 'msg' => 'success', 'result' => $data]);
     }
@@ -31,7 +31,7 @@ class Address
      */
     public function getProvince()
     {
-        $province = Db::name('region2')->field('id,name')->where(['level' => 1])->cache(true)->select();
+        $province = Db::name('region2')->field('id,name')->where(['level' => 1, 'status' => 1])->cache(true)->select();
 
         return json(['status' => 1, 'msg' => 'success', 'result' => $province]);
     }
@@ -44,7 +44,7 @@ class Address
         $parent_id = I('get.parent_id', 0);
         $res = ['status' => 0, 'msg' => '获取失败，参数错误', 'result' => ''];
         if ($parent_id) {
-            $region_list = Db::name('region2')->field('id,name')->where(['parent_id' => $parent_id])->select();
+            $region_list = Db::name('region2')->field('id,name')->where(['parent_id' => $parent_id, 'status' => 1])->select();
             $res = ['status' => 1, 'msg' => '获取成功', 'result' => $region_list];
         }
 

@@ -54,6 +54,13 @@ class Base extends Controller
 //            if (!in_array($this->user_id, [1, 107, 24749, 36167, 36175, 36294, 36383, 36430, 36472, 36518, 36527, 36558, 39730])) {
 //                die(json_encode(['status' => $this->user_id, 'msg' => '抱歉，这只是测试服务器，正式服务器已2020-3-9中午12点正式发布，请及时下载最新版APP']));
 //            }
+        } else {
+            $user = session('user');
+            if ($user) {
+                $this->user = $user;
+                $this->user_id = $user['user_id'];
+                $this->userToken = session_id();
+            }
         }
     }
 
@@ -93,10 +100,11 @@ class Base extends Controller
             'c=api.Goods&a=getFlashSalesGoodsList',     // 秒杀商品
             'c=api.Goods&a=look_see',                   // 猜你喜欢
             'c=api.Goods&a=indexGoods',                 // 主页展示不同类型商品
+            'c=api.Goods&a=abroadCate',                 // 韩国购商品分类
             'c=api.User&a=findPassword',                // 找回密码（登录前忘记密码）
             'c=api.Adv&a=index',                        // 广告
             'c=api.Message&a=floatMessage',             // 浮窗消息列表
-            'c=api.Goods&a=abroadCate',                 // 海外购商品分类
+            'c=api.Goods&a=abroadCate',                 // 韩国购商品分类
         ];
     }
 

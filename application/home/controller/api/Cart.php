@@ -89,6 +89,12 @@ class Cart extends Base
             $cartList = $Pay->activity2_goods($cartList);
 
             foreach ($cartList as $k => $v) {
+                $cartList[$k]['goods']['original_img_new'] = getFullPath($v['goods']['original_img']);
+                if (!$this->isApp && ($v['goods']['is_abroad'] == 1 || $v['goods']['is_supply'] == 1)) {
+                    // 不显示韩国购与供应链商品
+                    unset($cartList[$k]);
+                    continue;
+                }
                 if ($v['prom_type'] == 2) {
                     // 不显示团购
                     continue;
@@ -177,11 +183,6 @@ class Cart extends Base
             }
             // 组装数据
             foreach ($cartData as $k => $v) {
-                if ($v['goods']['is_abroad'] == 1) {
-                    // 屏蔽海外购
-                    $cartNum -= 1;
-                    continue;
-                }
                 if (isset($v['item_id'])) {
                     $storeCount = M('spec_goods_price')->where(['item_id' => $v['item_id']])->value('store_count');
                 } else {
@@ -197,6 +198,7 @@ class Cart extends Base
 //                            'goods_sn' => $gift['goods_sn'],
 //                            'goods_name' => $gift['goods_name'],
 //                            'original_img' => $gift['original_img'],
+//                            'original_img_new' => getFullPath($gift['original_img']),
 //                            'spec_key' => $gift['spec_key'],
 //                            'spec_key_name' => $gift['spec_key_name'],
 //                            'goods_num' => $gift['goods_num'],
@@ -211,6 +213,7 @@ class Cart extends Base
                         'goods_sn' => $v['goods_sn'],
                         'goods_name' => $v['goods_name'],
                         'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                        'original_img_new' => isset($v['goods']) ? getFullPath($v['goods']['original_img']) : '',
                         'spec_key' => $v['spec_key'],
                         'spec_key_name' => $v['spec_key_name'],
                         'gift_goods' => $giftGoods
@@ -250,11 +253,12 @@ class Cart extends Base
                         'goods_sn' => $v['goods_sn'],
                         'goods_name' => $v['goods_name'],
                         'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                        'original_img_new' => isset($v['goods']) ? getFullPath($v['goods']['original_img']) : '',
                         'spec_key' => $v['spec_key'],
                         'spec_key_name' => $v['spec_key_name'],
-                        'shop_price' => $v['goods_price'],
+                        'shop_price' => $v['member_goods_price'],
                         'exchange_integral' => $v['use_integral'],
-                        'exchange_price' => bcsub($v['goods_price'], $v['use_integral'], 2),
+                        'exchange_price' => bcsub($v['member_goods_price'], $v['use_integral'], 2),
                         'goods_num' => $v['goods_num'],
                         'buy_limit' => $buyLimit,
                         'buy_least' => '0',
@@ -294,6 +298,7 @@ class Cart extends Base
                         'goods_sn' => $v['goods_sn'],
                         'goods_name' => $v['goods_name'],
                         'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                        'original_img_new' => isset($v['goods']) ? getFullPath($v['goods']['original_img']) : '',
                         'spec_key' => $v['spec_key'],
                         'spec_key_name' => $v['spec_key_name'],
                         'shop_price' => $v['goods_price'],
@@ -322,6 +327,7 @@ class Cart extends Base
                         'goods_sn' => $v['goods_sn'],
                         'goods_name' => $v['goods_name'],
                         'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                        'original_img_new' => isset($v['goods']) ? getFullPath($v['goods']['original_img']) : '',
                         'spec_key' => $v['spec_key'],
                         'spec_key_name' => $v['spec_key_name'],
                         'shop_price' => $v['goods_price'],
@@ -341,6 +347,7 @@ class Cart extends Base
                         'goods_sn' => $v['goods_sn'],
                         'goods_name' => $v['goods_name'],
                         'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                        'original_img_new' => isset($v['goods']) ? getFullPath($v['goods']['original_img']) : '',
                         'spec_key' => $v['spec_key'],
                         'spec_key_name' => $v['spec_key_name'],
                         'shop_price' => $v['goods_price'],
@@ -413,12 +420,12 @@ class Cart extends Base
             'cart_title' => '乐活优选',
             'goods_list' => []
         ];
-        // 海外购商品
+        // 韩国购商品
         $abroadList = [
             'cart_num' => 0,
             'prom_title' => '',
             'prom_title_data' => [],
-            'cart_title' => '海外购',
+            'cart_title' => '韩国购',
             'goods_list' => []
         ];
         // 失效商品
@@ -485,6 +492,7 @@ class Cart extends Base
                         'goods_sn' => $v['goods_sn'],
                         'goods_name' => $v['goods_name'],
                         'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                        'original_img_new' => isset($v['goods']) ? getFullPath($v['goods']['original_img']) : '',
                         'spec_key' => $v['spec_key'],
                         'spec_key_name' => $v['spec_key_name']
                     ];
@@ -522,6 +530,7 @@ class Cart extends Base
                             'goods_sn' => $v['goods_sn'],
                             'goods_name' => $v['goods_name'],
                             'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                            'original_img_new' => isset($v['goods']) ? getFullPath($v['goods']['original_img']) : '',
                             'spec_key' => $v['spec_key'],
                             'spec_key_name' => $v['spec_key_name'],
                             'shop_price' => '￥' . bcadd($v['member_goods_price'], $v['use_integral'], 2),
@@ -567,6 +576,7 @@ class Cart extends Base
                             'goods_sn' => $v['goods_sn'],
                             'goods_name' => $v['goods_name'],
                             'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                            'original_img_new' => isset($v['goods']) ? getFullPath($v['goods']['original_img']) : '',
                             'spec_key' => $v['spec_key'],
                             'spec_key_name' => $v['spec_key_name'],
                             'shop_price' => '￥' . $v['goods_price'],
@@ -599,6 +609,7 @@ class Cart extends Base
                             'goods_sn' => $v['goods_sn'],
                             'goods_name' => $v['goods_name'],
                             'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                            'original_img_new' => isset($v['goods']) ? getFullPath($v['goods']['original_img']) : '',
                             'spec_key' => $v['spec_key'],
                             'spec_key_name' => $v['spec_key_name'],
                             'shop_price' => '￥' . $v['goods_price'],
@@ -611,7 +622,7 @@ class Cart extends Base
                         ];
                     }
                 } else {
-                    // 海外购商品
+                    // 韩国购商品
                     $abroadList['cart_num'] += 1;
                     if (isset($promGoods[$key])) {
                         // 促销活动
@@ -644,6 +655,7 @@ class Cart extends Base
                             'goods_sn' => $v['goods_sn'],
                             'goods_name' => $v['goods_name'],
                             'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                            'original_img_new' => isset($v['goods']) ? getFullPath($v['goods']['original_img']) : '',
                             'spec_key' => $v['spec_key'],
                             'spec_key_name' => $v['spec_key_name'],
                             'shop_price' => '￥' . bcadd($v['member_goods_price'], $v['use_integral'], 2),
@@ -685,6 +697,7 @@ class Cart extends Base
                             'goods_sn' => $v['goods_sn'],
                             'goods_name' => $v['goods_name'],
                             'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                            'original_img_new' => isset($v['goods']) ? getFullPath($v['goods']['original_img']) : '',
                             'spec_key' => $v['spec_key'],
                             'spec_key_name' => $v['spec_key_name'],
                             'shop_price' => '￥' . $v['goods_price'],
@@ -716,6 +729,7 @@ class Cart extends Base
                             'goods_sn' => $v['goods_sn'],
                             'goods_name' => $v['goods_name'],
                             'original_img' => isset($v['goods']) ? $v['goods']['original_img'] : '',
+                            'original_img_new' => isset($v['goods']) ? getFullPath($v['goods']['original_img']) : '',
                             'spec_key' => $v['spec_key'],
                             'spec_key_name' => $v['spec_key_name'],
                             'shop_price' => '￥' . $v['goods_price'],
@@ -751,7 +765,7 @@ class Cart extends Base
         }
         if (!empty($pmdNormalGoods)) array_unshift($pmdList['goods_list'], $pmdNormalGoods);
 
-        // 处理秒杀商品归纳 - 海外购商品
+        // 处理秒杀商品归纳 - 韩国购商品
         $abroadList['goods_list'] = array_values($abroadList['goods_list']);
         $abroadNormalGoods = isset($abroadList['goods_list'][0]) ? $abroadList['goods_list'][0] : [];
         unset($abroadList['goods_list'][0]);
@@ -960,10 +974,10 @@ class Cart extends Base
                 'use_integral' => $res['result']['use_integral'],
                 'cart_ids' => $pmdCart['cart_ids']
             ];
-            // 海外购商品价格
+            // 韩国购商品价格
             $res = json_decode($this->calcCartPrice($abroadCart['cart_ids'], $abroadCart['cart_num'])->getContent(), true);
             $return['data'][] = [
-                'title' => '海外购',
+                'title' => '韩国购',
                 'goods_num' => $res['result']['goods_num'],
                 'total_fee' => '￥' . $res['result']['total_fee'],
                 'use_integral' => $res['result']['use_integral'],
@@ -1099,6 +1113,11 @@ class Cart extends Base
                 $groupBuyGoods[$item['goods_id'] . '_' . $item['spec_key']] = $item;
             }
             foreach ($cartData as $k => $v) {
+                if (!$this->isApp && ($v['goods']['is_abroad'] == 1 && $v['goods']['is_supply'] == 1)) {
+                    // 不计算韩国购商品与供应链商品
+                    $cartNum -= 1;
+                    continue;
+                }
                 $key = $v['goods_id'] . '_' . $v['spec_key'];
                 if (isset($flashSaleGoods[$key])) {
                     // 秒杀活动
@@ -1466,12 +1485,18 @@ class Cart extends Base
                     // 计算商品pv
                     $buyGoods = $cartLogic->calcGoodsPv([$buyGoods])[0];
                 }
+                if ($buyGoods['goods']['is_abroad'] == 1) {
+                    return json(['status' => -1, 'msg' => '韩国购商品请在APP进行购买', 'result' => null]);
+                }
                 $cartList[0] = $buyGoods;
                 $pay->payGoodsList($cartList);
             } else {
                 $userCartList = $cartLogic->getCartList(1);
                 $vipGoods = [];
                 foreach ($userCartList as $key => $cart) {
+                    if ($cart['goods']['is_abroad'] == 1) {
+                        return json(['status' => -1, 'msg' => '韩国购商品请在APP进行购买', 'result' => null]);
+                    }
                     if ($cart['prom_type'] == 0) {
                         if ($cart['goods']['least_buy_num'] != 0 && $cart['goods']['least_buy_num'] > $cart['goods_num']) {
                             return json(['status' => 0, 'msg' => $cart['goods']['goods_name'] . '至少购买' . $cart['goods']['least_buy_num'] . '件']);
@@ -1503,6 +1528,12 @@ class Cart extends Base
 
 //            $pay->orderPromotion();
             $pay->goodsPromotion();
+
+            // 组合拆分订单数据
+            $pay->setOrderSplitGoods($pay->getPayList());
+            // 检查供应链商品地区购买限制
+            $pay->checkOrderSplitGoods($address);
+
             $pay->delivery($address['district']);   // 配送物流
 
             $pay->useCouponById($coupon_id, $pay->getPayList());
