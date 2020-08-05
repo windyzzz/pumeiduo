@@ -389,7 +389,7 @@ class Finance extends Base
         // 供应链账户记录
         $res = (new AccountService())->rechargeLog($type, $page);
 //        $res = '{"status":1,"data":{"count":1,"list":[{"payment_no":"202007231557298218","pay_type":"\u786e\u8ba4\u8ba2\u5355\u6263\u6b3e","freight_price":"0.00","consume_price":"41.73","creat_time":"2020-07-23 15:57:29","order":[{"order_id":"10119","order_sn":"221510119082185","pt_order_sn":"C202007231556082185","consignee":"\u738b\u5cf0","pay_goods":[{"order_id":"10119","goods_id":"233591","goods_name":"\u683c\u6717(GL)\u5a74\u513f\u65e5\u5e38\u62a4\u74067\u4ef6\u5957\u793c\u76d2\u88c5","goods_num":"1","s_price":"41.73","service_price":"0.00","is_pay":"1"}]},{"order_id":"10119","order_sn":"221510119082185","pt_order_sn":"C202007231556082185","consignee":"\u738b\u5cf0","pay_goods":[{"order_id":"10119","goods_id":"233591","goods_name":"\u683c\u6717(GL)\u5a74\u513f\u65e5\u5e38\u62a4\u74067\u4ef6\u5957\u793c\u76d2\u88c5","goods_num":"1","s_price":"41.73","service_price":"0.00","is_pay":"1"},{"order_id":"10119","goods_id":"233591","goods_name":"\u683c\u6717(GL)\u5a74\u513f\u65e5\u5e38\u62a4\u74067\u4ef6\u5957\u793c\u76d2\u88c5","goods_num":"1","s_price":"41.73","service_price":"0.00","is_pay":"1"}]}]}]}}';
-        $res = json_decode($res, true);
+//        $res = json_decode($res, true);
         if ($res['status'] == 0) {
             $count = 0;
             $logList = [];
