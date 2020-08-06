@@ -23,9 +23,6 @@ class Coupon extends Base
      */
     function couponList()
     {
-        if ($this->passAuth) {
-            return json(['status' => -999, 'msg' => '请先登录']);
-        }
         // 优惠券信息
         $where = [
             'send_start_time' => array('elt', NOW_TIME),
