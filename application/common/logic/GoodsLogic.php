@@ -1098,7 +1098,7 @@ class GoodsLogic extends Model
         $goodsList = Db::name('goods')->where('goods_id', 'in', $filter_goods_id)->where($where)
             ->field('goods_id, cat_id, extend_cat_id, goods_sn, goods_name, goods_type, brand_id, store_count, comment_count, goods_remark,
                 market_price, shop_price, cost_price, give_integral, exchange_integral, original_img, limit_buy_num, trade_type,
-                is_on_sale, is_free_shipping, is_recommend, is_new, is_hot, sale_type')
+                is_on_sale, is_free_shipping, is_recommend, is_new, is_hot, sale_type, is_supply')
             ->order($sort)->limit($page->firstRow . ',' . $page->listRows)
             ->select();
         // 商品规格属性
@@ -1135,19 +1135,22 @@ class GoodsLogic extends Model
             ->order('discount_price desc')->value('title');
         // 循环处理数据
         foreach ($goodsList as $k => $v) {
-            // 处理商品缩略图丢失情况
-            if (!file_exists(SITE_URL . $v['original_img'])) {
-                $goodsImages = M('goods_images')->where(['goods_id' => $v['goods_id']])->select();
-                foreach ($goodsImages as $image) {
-                    if (file_exists(SITE_URL . $image['image_url'])) {
-                        $goodsList[$k]['original_img'] = $image['image_url'];
-                        M('goods')->where(['goods_id' => $v['goods_id']])->update(['original_img' => $image['image_url']]);
-                        $logData = [
-                            'old_original_img' => $v['original_img'],
-                            'new_original_img' => $image['image_url'],
-                        ];
-                        $this->goodsErrorLog($v['goods_id'], '缩略图文件丢失', $logData);
-                        break;
+            if ($v['is_supply'] == 0) {
+                // 处理商品缩略图丢失情况
+                if (!file_exists(ltrim($v['original_img'], '/'))) {
+                    $goodsImages = M('goods_images')->where(['goods_id' => $v['goods_id']])->select();
+                    foreach ($goodsImages as $image) {
+                        if (file_exists(ltrim($image['image_url'], '/'))) {
+                            $v['original_img'] = $image['image_url'];
+                            $goodsList[$k]['original_img'] = $image['image_url'];
+                            M('goods')->where(['goods_id' => $v['goods_id']])->update(['original_img' => $image['image_url']]);
+                            $logData = [
+                                'old_original_img' => $v['original_img'],
+                                'new_original_img' => $image['image_url'],
+                            ];
+                            $this->goodsErrorLog($v['goods_id'], '缩略图文件丢失', $logData);
+                            break;
+                        }
                     }
                 }
             }

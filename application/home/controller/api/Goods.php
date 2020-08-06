@@ -1814,12 +1814,33 @@ class Goods extends Base
         $flashSaleGoods = Db::name('flash_sale fs')->join('goods g', 'g.goods_id = fs.goods_id')
             ->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
             ->where($where)
-            ->where(['fs.goods_id' => ['in', $filter_goods_id]])->field('fs.id prom_id, g.goods_id, fs.item_id, g.goods_sn, g.goods_name, g.original_img, g.exchange_integral, fs.price flash_sale_price, fs.title, fs.goods_num, fs.buy_num, sgp.key_name, fs.end_time, fs.can_integral')
+            ->where(['fs.goods_id' => ['in', $filter_goods_id]])
+            ->field('fs.id prom_id, g.goods_id, fs.item_id, g.goods_sn, g.goods_name, g.original_img, g.exchange_integral, g.is_supply,
+            fs.price flash_sale_price, fs.title, fs.goods_num, fs.buy_num, sgp.key_name, fs.end_time, fs.can_integral')
             ->limit($page->firstRow . ',' . $page->listRows)->order($sortArr)->select();
         // 商品标签
         $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->select();
         $endTime = '0';
         foreach ($flashSaleGoods as $k => $v) {
+            if ($v['is_supply'] == 0) {
+                // 处理商品缩略图丢失情况
+                if (!file_exists(ltrim($v['original_img'], '/'))) {
+                    $goodsImages = M('goods_images')->where(['goods_id' => $v['goods_id']])->select();
+                    foreach ($goodsImages as $image) {
+                        if (file_exists(ltrim($image['image_url'], '/'))) {
+                            $v['original_img'] = $image['image_url'];
+                            $flashSaleGoods[$k]['original_img'] = $image['image_url'];
+                            M('goods')->where(['goods_id' => $v['goods_id']])->update(['original_img' => $image['image_url']]);
+                            $logData = [
+                                'old_original_img' => $v['original_img'],
+                                'new_original_img' => $image['image_url'],
+                            ];
+                            (new GoodsLogic())->goodsErrorLog($v['goods_id'], '缩略图文件丢失', $logData);
+                            break;
+                        }
+                    }
+                }
+            }
             // 缩略图
             $flashSaleGoods[$k]['original_img_new'] = getFullPath($v['original_img']);
             // 最近的结束时间
@@ -1829,7 +1850,6 @@ class Goods extends Base
             if ($endTime >= $v['end_time']) {
                 $endTime = $v['end_time'];
             }
-            unset($flashSaleGoods[$k]['end_time']);
             $flashSaleGoods[$k]['key_name'] = $v['key_name'] ?? '';
             // 是否已售完
             if ($v['goods_num'] <= $v['buy_num']) {
@@ -1837,8 +1857,6 @@ class Goods extends Base
             } else {
                 $flashSaleGoods[$k]['sold_out'] = 0;
             }
-            unset($flashSaleGoods[$k]['goods_num']);
-            unset($flashSaleGoods[$k]['buy_num']);
             // 商品标签
             $flashSaleGoods[$k]['tabs'] = [];
             if (!empty($goodsTab)) {
@@ -1866,6 +1884,10 @@ class Goods extends Base
                 $flashSaleGoods[$k]['shop_price'] = bcsub($v['flash_sale_price'], $v['exchange_integral'], 2);
                 $flashSaleGoods[$k]['exchange_price'] = bcsub($v['flash_sale_price'], $v['exchange_integral'], 2);
             }
+            unset($flashSaleGoods[$k]['is_supply']);
+            unset($flashSaleGoods[$k]['end_time']);
+            unset($flashSaleGoods[$k]['goods_num']);
+            unset($flashSaleGoods[$k]['buy_num']);
             unset($flashSaleGoods[$k]['flash_sale_price']);
             unset($flashSaleGoods[$k]['can_integral']);
         }
@@ -2036,11 +2058,30 @@ class Goods extends Base
             ->field('gb.*, FROM_UNIXTIME(gb.start_time,"%Y-%m-%d") as start_time, FROM_UNIXTIME(gb.end_time,"%Y-%m-%d") as end_time,
                 (FORMAT((gb.goods_num - gb.buy_num) / gb.goods_num, 2)) as num_percent, gb.goods_num - gb.buy_num as store_count, 
                 CASE gb.buy_num >= gb.goods_num WHEN 1 THEN 1 ELSE 0 END AS is_sale_out, gb.group_goods_num - gb.buy_num % gb.group_goods_num as people_num,
-                g.original_img, g.goods_remark, g.shop_price, g.exchange_integral')
+                g.original_img, g.goods_remark, g.shop_price, g.exchange_integral, g.is_supply')
             ->limit($page->firstRow . ',' . $page->listRows)
             ->select();
         $groupBuyData = collection($groupBuyData)->toArray();
         foreach ($groupBuyData as $k => $groupBuy) {
+            if ($groupBuy['is_supply'] == 0) {
+                // 处理商品缩略图丢失情况
+                if (!file_exists(ltrim($groupBuy['original_img'], '/'))) {
+                    $goodsImages = M('goods_images')->where(['goods_id' => $groupBuy['goods_id']])->select();
+                    foreach ($goodsImages as $image) {
+                        if (file_exists(ltrim($image['image_url'], '/'))) {
+                            $groupBuy['original_img'] = $image['image_url'];
+                            $groupBuyData[$k]['original_img'] = $image['image_url'];
+                            M('goods')->where(['goods_id' => $groupBuy['goods_id']])->update(['original_img' => $image['image_url']]);
+                            $logData = [
+                                'old_original_img' => $groupBuy['original_img'],
+                                'new_original_img' => $image['image_url'],
+                            ];
+                            (new GoodsLogic())->goodsErrorLog($groupBuy['goods_id'], '缩略图文件丢失', $logData);
+                            break;
+                        }
+                    }
+                }
+            }
             // 缩略图
             $groupBuyData[$k]['original_img_new'] = getFullPath($groupBuy['original_img']);
             $groupBuyData[$k]['now_time'] = time() . '';
@@ -2054,6 +2095,7 @@ class Goods extends Base
                 $groupBuyData[$k]['exchange_price'] = bcsub($groupBuy['price'], $groupBuy['exchange_integral']);
             }
             unset($groupBuyData[$k]['can_integral']);
+            unset($groupBuyData[$k]['is_supply']);
         }
         $return['goods_list'] = array_values($groupBuyData);
         switch ($output) {
