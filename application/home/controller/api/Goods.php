@@ -1836,7 +1836,7 @@ class Goods extends Base
         $where = [
             'fs.start_time' => ['<=', time()],
             'fs.end_time' => ['>=', time()],
-            'fs.is_end' => 0,
+//            'fs.is_end' => 0,
             'source' => ['LIKE', $this->isApp ? '%' . 3 . '%' : '%' . 1 . '%']
         ];
         // 秒杀商品ID
