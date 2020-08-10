@@ -1976,4 +1976,14 @@ class GoodsLogic extends Model
         }
         return $return;
     }
+
+
+    public function createGoodsPwd()
+    {
+        $password = 'PMD_' . get_rand_str(12, 0, 1);
+        if (M('goods_password')->where(['password' => $password])->find()) {
+            return $this->createGoodsPwd();
+        }
+        return $password;
+    }
 }

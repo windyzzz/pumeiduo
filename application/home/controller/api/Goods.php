@@ -3183,4 +3183,76 @@ class Goods extends Base
         }
         return json(['status' => 1, 'result' => $return]);
     }
+
+    /**
+     * 获取商品口令
+     * @return \think\response\Json
+     */
+    public function getGoodsPassword()
+    {
+        $goodsId = I('goods_id', 0);
+        $itemId = I('item_id', 0);
+        if (!$goodsId) return json(['status' => 0, 'msg' => '请传入商品ID']);
+        // 生成口令
+        $password = (new GoodsLogic())->createGoodsPwd();
+        // 记录口令
+        $pwdData = [
+            'goods_id' => $goodsId,
+            'item_id' => $itemId,
+            'password' => $password,
+            'user_id' => $this->user_id ?? 0,
+            'add_time' => NOW_TIME,
+            'dead_time' => tpCache('share.goods_pwd_day') ? strtotime('+' . tpCache('share.goods_pwd_day') . 'day') : strtotime('+1 day')
+        ];
+        M('goods_password')->add($pwdData);
+        $return = [
+            'password' => $password
+        ];
+        return json(['status' => 1, 'result' => $return]);
+    }
+
+    /**
+     * 根据口令获取商品数据
+     * @return \think\response\Json
+     */
+    public function checkGoodsPassword()
+    {
+        $password = I('password', 0);
+        if (!$password) return json(['status' => 0, 'msg' => '请传入商品口令']);
+        try {
+            // 获取口令内容
+            $goodsPassword = M('goods_password')->where(['password' => $password])->find();
+            if (empty($goodsPassword)) throw new \Exception('口令不存在');
+            if ($goodsPassword['status'] == 0) throw new \Exception('口令已失效');
+            if ($goodsPassword['dead_time'] < NOW_TIME) throw new \Exception('口令已过期');
+            // 更新口令
+            M('goods_password')->where(['id' => $goodsPassword['id']])->update(['status' => 0]);
+            // 获取商品数据
+            $goods = M('goods')->where([
+                'goods_id' => $goodsPassword['goods_id'],
+                'is_on_sale' => 1
+            ])->field('goods_name, original_img')->find();
+            if (empty($goods)) throw new \Exception('商品已下架');
+            $return = [
+                'state' => 1,
+                'data' => [
+                    'goods_id' => $goodsPassword['goods_id'],
+                    'item_id' => $goodsPassword['item_id'],
+                    'goods_name' => $goods['goods_name'],
+                    'original_img_new' => getFullPath($goods['original_img']),
+                ]
+            ];
+            return json(['status' => 1, 'result' => $return]);
+        } catch (\Exception $e) {
+            return json(['status' => 1, 'result' => [
+                'state' => 0,
+                'data' => [
+                    'goods_id' => '0',
+                    'item_id' => '0',
+                    'goods_name' => '',
+                    'original_img_new' => ''
+                ]
+            ]]);
+        }
+    }
 }
