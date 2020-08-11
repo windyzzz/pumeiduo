@@ -40,4 +40,38 @@ class Community extends Base
         }
         return json(['status' => 1, 'result' => $cateList]);
     }
+
+
+    public function article()
+    {
+        $cateId = I('cate_id', 0);
+
+    }
+
+    /**
+     * 保存更新文章
+     * @return \think\response\Json
+     */
+    public function saveArticle()
+    {
+        $articleId = I('article_id', 0);
+        $post = input('post.');
+        // 验证参数
+        $validate = validate('Community');
+        if (!$validate->scene('add')->check($post)) {
+            return json(['status' => 0, 'msg' => $validate->getError()]);
+        }
+        // 保存更新数据
+        $post['user_id'] = $this->user_id;
+        if ($articleId) {
+            $post['update_time'] = NOW_TIME;
+            $post['status'] = 0;
+            $post['publish_time'] = 0;
+            M('community_article')->where(['id' => $articleId])->update($post);
+        } else {
+            $post['add_time'] = NOW_TIME;
+            $articleId = M('community_article')->add($post);
+        }
+        return json(['status' => 1, 'result' => ['article_id' => $articleId]]);
+    }
 }
