@@ -34,6 +34,10 @@ class Goods extends Base
     {
         $GoodsLogic = new GoodsLogic();
         $cat_list = $GoodsLogic->goods_cat_list();
+//        echo '<pre>';
+//        print_r($cat_list);
+//        echo '</pre>';
+//        exit();
         $this->assign('cat_list', $cat_list);
 
         return $this->fetch();

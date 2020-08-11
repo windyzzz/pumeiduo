@@ -575,6 +575,7 @@ class GoodsLogic extends Model
      */
     public function exportTree($items, $deep = 0, $type_id = 0)
     {
+        $select = '';
         foreach ($items as $item) {
             $select .= '<option value="'.$item['id'].'" ';
             $select .= ($type_id == $item['id']) ? 'selected="selected">' : '>';

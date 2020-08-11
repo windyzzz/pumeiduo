@@ -1977,7 +1977,10 @@ class GoodsLogic extends Model
         return $return;
     }
 
-
+    /**
+     * 生成商品口令
+     * @return string
+     */
     public function createGoodsPwd()
     {
         $password = 'PMD_' . get_rand_str(12, 0, 1);
