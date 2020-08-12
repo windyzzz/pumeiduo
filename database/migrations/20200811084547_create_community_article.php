@@ -32,7 +32,8 @@ class CreateCommunityArticle extends Migrator
             ->addColumn('title', 'string', ['default' => '', 'comment' => '标题'])
             ->addColumn('content', 'text', ['comment' => '内容'])
             ->addColumn('user_id', 'integer', ['comment' => '用户ID'])
-            ->addColumn('cate_id', 'integer', ['comment' => '所属社区分类'])
+            ->addColumn('cate_id1', 'integer', ['comment' => '所属社区顶级分类'])
+            ->addColumn('cate_id2', 'integer', ['comment' => '所属社区下级分类'])
             ->addColumn('goods_id', 'integer', ['default' => 0, 'comment' => '关联商品ID'])
             ->addColumn('item_id', 'integer', ['default' => 0, 'comment' => '关联商品规格ID'])
             ->addColumn('image', 'string', ['default' => '', 'comment' => '图片'])
@@ -44,7 +45,7 @@ class CreateCommunityArticle extends Migrator
             ->addColumn('add_time', 'integer')
             ->addColumn('update_time', 'integer', ['default' => 0, 'comment' => '更新时间'])
             ->addColumn('publish_time', 'integer', ['default' => 0, 'comment' => '审核发布时间'])
-            ->addIndex(['cate_id'], ['name' => 'cate_id'])
+            ->addIndex(['cate_id1', 'cate_id2'], ['name' => 'cate_id'])
             ->create();
     }
 }
