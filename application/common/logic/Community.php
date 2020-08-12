@@ -57,7 +57,7 @@ class Community
         $articleList = M('community_article ca')
             ->join('users u', 'u.user_id = ca.user_id')
             ->join('goods g', 'g.goods_id = ca.goods_id')
-            ->field('ca.*, u.nickname, u.user_name, g.goods_name, g.original_img, g.shop_price, g.exchange_integral')
+            ->field('ca.*, u.nickname, u.user_name, u.head_pic, g.goods_name, g.original_img, g.shop_price, g.exchange_integral')
             ->where($where)->order($sort)->select();
         return ['total' => $count, 'list' => $articleList];
     }

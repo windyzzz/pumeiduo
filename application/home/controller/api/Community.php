@@ -123,10 +123,14 @@ class Community extends Base
             }
             // 组合数据
             $articleList[$key] = [
-                'user_id' => $value['user_id'],
-                'user_name' => !empty($value['user_name']) ? $value['user_name'] : !empty($value['nickname']) ? $value['nickname'] : '',
+                'article_id' => $value['id'],
                 'content' => $value['content'],
                 'share' => $value['share'],
+                'image' => $image,
+                'video' => $value['video'],
+                'user_id' => $value['user_id'],
+                'user_name' => !empty($value['user_name']) ? $value['user_name'] : !empty($value['nickname']) ? $value['nickname'] : '',
+                'head_pic' => getFullPath($value['head_pic']),
                 'goods_type' => $goodsType,
                 'goods_id' => $value['goods_id'],
                 'item_id' => $value['item_id'],
@@ -135,8 +139,6 @@ class Community extends Base
                 'shop_price' => $shopPrice,
                 'exchange_integral' => $exchangeIntegral,
                 'exchange_price' => $exchangePrice,
-                'image' => $image,
-                'video' => $value['video']
             ];
         }
         return json(['status' => 1, 'result' => ['list' => $articleList]]);
@@ -167,5 +169,31 @@ class Community extends Base
             $articleId = M('community_article')->add($post);
         }
         return json(['status' => 1, 'result' => ['article_id' => $articleId]]);
+    }
+
+    /**
+     * 点击文章
+     * @return \think\response\Json
+     */
+    public function clickArticle()
+    {
+        $articleId = I('article_id', 0);
+        if(!$articleId) return json(['status' => 0, 'msg' => '请传入文章ID']);
+        // 点击数+1
+        M('community_article')->where(['id' => $articleId])->setInc('click', 1);
+        return json(['status' => 1, 'msg' => '']);
+    }
+
+    /**
+     * 分享文章
+     * @return \think\response\Json
+     */
+    public function shareArticle()
+    {
+        $articleId = I('article_id', 0);
+        if(!$articleId) return json(['status' => 0, 'msg' => '请传入文章ID']);
+        // 分享数+1
+        M('community_article')->where(['id' => $articleId])->setInc('share', 1);
+        return json(['status' => 1, 'msg' => '分享成功']);
     }
 }
