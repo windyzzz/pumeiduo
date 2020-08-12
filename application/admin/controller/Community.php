@@ -2,6 +2,8 @@
 
 namespace app\admin\controller;
 
+use app\admin\model\CommunityArticle;
+use think\Page;
 
 class Community extends Base
 {
@@ -99,6 +101,64 @@ class Community extends Base
                 // 删除
                 M('community_category')->where(['id' => ['IN', $ids]])->delete();
                 $this->ajaxReturn(['status' => 1, 'msg' => '操作成功', 'url' => U('Admin/Community/category')]);
+                break;
+            case 'low_level':
+                $parentId = I('cate_id', 0);
+                if (!$parentId) {
+                    $category = M('community_category')->where(['level' => 0])->select();
+                } else {
+                    $category = M('community_category')->where(['parent_id' => $parentId])->select();
+                }
+                $this->ajaxReturn(['status' => 1, 'result' => ['list' => $category]]);
+        }
+    }
+
+    /**
+     * 社区文章
+     * @return mixed
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     */
+    public function article()
+    {
+        $act = I('act', 'list');
+        // 一级分类数据
+        $tCategory = M('community_category')->where(['level' => 0])->getField('id, cate_name');
+        $this->assign('t_category', $tCategory);
+        // 二级分类数据
+        $dCategory = M('community_category')->where(['level' => 1])->getField('id, cate_name');
+        switch ($act) {
+            case 'list':
+                // 文章列表数据
+                $cateId1 = I('cate_id1', 0);
+                $cateId2 = I('cate_id2', 0);
+                $status = I('status', '');
+                $where = [];
+                if ($cateId1) {
+                    $where['cate_id1'] = $cateId1;
+                }
+                if ($cateId2) {
+                    $where['cate_id2'] = $cateId2;
+                }
+                if ($status !== '') {
+                    $where['status'] = $status;
+                }
+                $count = M('community_article')->where($where)->count();
+                $page = new Page($count, 10);
+                $articleModel = new CommunityArticle();
+                $articleList = $articleModel->where($where)->limit($page->firstRow . ',' . $page->listRows)->order(['add_time DESC'])->select();
+                foreach ($articleList as &$article) {
+                    $article['cate_id1_desc'] = $tCategory[$article['cate_id1']];
+                    $article['cate_id2_desc'] = $dCategory[$article['cate_id2']];
+                }
+
+                $this->assign('cate_id1', $cateId1);
+                $this->assign('cate_id2', $cateId2);
+                $this->assign('status', $status);
+                $this->assign('page', $page);
+                $this->assign('article_list', $articleList);
+                return $this->fetch('article_list');
                 break;
         }
     }

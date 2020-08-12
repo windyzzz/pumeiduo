@@ -160,7 +160,7 @@ class Community extends Base
         // 保存更新数据
         $post['user_id'] = $this->user_id;
         if ($articleId) {
-            $post['update_time'] = NOW_TIME;
+            $post['up_time'] = NOW_TIME;
             $post['status'] = 0;
             $post['publish_time'] = 0;
             M('community_article')->where(['id' => $articleId])->update($post);

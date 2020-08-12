@@ -1,0 +1,250 @@
+<include file="public/layout" />
+<body style="background-color: rgb(255, 255, 255); overflow: auto; cursor: default; -moz-user-select: inherit;">
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+	<div class="fixed-bar">
+		<div class="item-title">
+			<div class="subject">
+				<h3>商学院文章列表</h3>
+				<h5>商学院文章审核与管理</h5>
+			</div>
+		</div>
+	</div>
+	<div class="flexigrid">
+		<div class="mDiv">
+			<div class="ftitle">
+				<h3>商学院文章列表</h3>
+				<h5>(共{$page->totalRows}条记录)</h5>
+			</div>
+			<div title="刷新数据" class="pReload"><i class="fa fa-refresh"></i></div>
+		</div>
+		<form class="navbar-form form-inline" action="{:U('Admin/Community/article')}" method="post">
+			<div class="sDiv">
+				<div class="sDiv2">
+					<select  name="cate_id1" class="select">
+						<option value="">选择一级分类</option>
+						<foreach name="t_category" item="vo">
+							<option value="{$key}" <if condition="$key eq $cate_id1">selected</if>>{$vo}</option>
+						</foreach>
+					</select>
+				</div>
+				<div class="sDiv2">
+					<select  name="cate_id2" class="select">
+						<option value="">选择二级分类</option>
+					</select>
+				</div>
+				<div class="sDiv2">
+					<select name="status" class="select">
+						<option value="">审核状态</option>
+						<option value="0" <if condition="$status !== '' && $status eq 0">selected</if>>未审核</option>
+						<option value="1" <if condition="$status eq 1">selected</if>>审核通过</option>
+						<option value="-1" <if condition="$status eq -1">selected</if>>拒绝通过</option>
+					</select>
+				</div>
+				<div class="sDiv2">
+					<input type="submit" class="btn" value="搜索">
+				</div>
+			</div>
+		</form>
+		<div class="hDiv">
+			<div class="hDivBox">
+				<table cellspacing="0" cellpadding="0">
+					<thead>
+					<tr>
+						<th class="sign" axis="col0">
+							<div style="width: 24px;"><i class="ico-check"></i></div>
+						</th>
+                        <th align="left" abbr="article_title" axis="col3" class="">
+                            <div style="text-align: center; width: 50px;" class="">文章ID</div>
+                        </th>
+						<th align="left" abbr="article_title" axis="col3" class="">
+							<div style="text-align: center; width: 100px;" class="">一级分类</div>
+						</th>
+						<th align="left" abbr="article_title" axis="col3" class="">
+							<div style="text-align: center; width: 100px;" class="">二级分类</div>
+						</th>
+						<th align="left" abbr="ac_id" axis="col4" class="">
+							<div style="text-align: center; width: 500px;" class="">内容</div>
+						</th>
+						<th align="center" abbr="article_time" axis="col6" class="">
+							<div style="text-align: center; width: 150px;" class="">审核状态</div>
+						</th>
+						<th align="center" abbr="article_time" axis="col6" class="">
+							<div style="text-align: center; width: 150px;" class="">创建时间</div>
+						</th>
+						<th align="center" abbr="article_time" axis="col6" class="">
+							<div style="text-align: center; width: 150px;" class="">更新时间</div>
+						</th>
+						<th align="center" abbr="article_time" axis="col6" class="">
+							<div style="text-align: center; width: 150px;" class="">审核时间</div>
+						</th>
+						<th align="left" axis="col1" class="handle">
+							<div style="text-align: center; width: 150px;">操作</div>
+						</th>
+						<th style="width:100%" axis="col7">
+							<div></div>
+						</th>
+					</tr>
+					</thead>
+				</table>
+			</div>
+		</div>
+		<div class="bDiv" style="height: auto;">
+			<div id="flexigrid" cellpadding="0" cellspacing="0" border="0">
+				<table>
+					<tbody>
+					<foreach name="article_list" item="vo" key="k" >
+						<tr>
+							<td class="sign">
+								<div style="width: 24px;"><i class="ico-check"></i></div>
+							</td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 50px;">{$vo.id}</div>
+                            </td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 100px;">{$vo.cate_id1_desc}</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 100px;">{$vo.cate_id2_desc}</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 500px;">
+									<textarea style="width: 80%; height: 100%; line-height: 150%;" rows="3">{$vo.content}</textarea>
+								</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 150px;">
+									<span
+										<switch name="$vo[status]">
+											<case value="1">
+												style="color: green;"
+											</case>
+											<case value="-1">
+												style="color: red;"
+											</case>
+										</switch>
+									>{$vo.status_desc}</span>
+								</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 150px;">{$vo.add_time|date='Y-m-d H:i:s', ###}</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 150px;">
+									<if condition="$vo[up_time] != 0">
+										{$vo.up_time|date='Y-m-d H:i:s', ###}
+									</if>
+								</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 150px;">
+									<if condition="$vo[publish_time] != 0">
+										{$vo.publish_time|date='Y-m-d H:i:s', ###}
+									</if>
+								</div>
+							</td>
+							<td align="left" class="handle">
+								<div style="text-align: left; width: 150px; max-width:150px;">
+									<a class="btn blue" href="{:U('Community/article', array('act' => 'edit', 'article_id' => $vo['id']))}"><i class="fa fa-pencil-square-o"></i>详情</a>
+									<a class="btn red refuse" data-id="{$vo['id']}"><i class="fa fa-trash-o"></i>拒绝通过</a>
+								</div>
+							</td>
+							<td align="" class="" style="width: 100%;">
+								<div>&nbsp;</div>
+							</td>
+						</tr>
+					</foreach>
+					</tbody>
+				</table>
+			</div>
+			<div class="iDiv" style="display: none;"></div>
+		</div>
+		<!--分页位置-->
+		{$page->show()} </div>
+</div>
+<script>
+	$(document).ready(function() {
+		// 表格行点击选中切换
+		$('#flexigrid > table>tbody >tr').click(function() {
+			$(this).toggleClass('trSelected');
+		});
+
+		// 点击刷新数据
+		$('.fa-refresh').click(function() {
+
+			location.href = location.href;
+		});
+
+		// 分类选择
+		var cate_id1 = {$cate_id1};
+		var cate_id2 = {$cate_id2};
+		if (cate_id1 != 0) {
+			$.ajax({
+				url:"{:U('Community/category')}",
+				data:{act: 'low_level', cate_id: cate_id1},
+				dataType: 'json',
+				success: function (data) {
+					if (data.status == 1) {
+						html = '<option value="">选择二级分类</option>';
+						$.each(data.result.list, function (i, n) {
+							if (cate_id2 != 0 && cate_id2 == n.id) {
+								html += '<option value="' + n.id +'" selected>' + n.cate_name + '</option>';
+							} else {
+								html += '<option value="' + n.id +'">' + n.cate_name + '</option>';
+							}
+						});
+						$('select[name="cate_id2"]').html(html);
+					} else {
+						layer.msg(data.msg, {icon: 2})
+					}
+				}
+			})
+		}
+	});
+
+	$('select[name="cate_id1"]').change(function () {
+		$.ajax({
+			url:"{:U('Community/category')}",
+			data:{act: 'low_level', cate_id: $(this).val()},
+			dataType: 'json',
+			success: function (data) {
+				if (data.status == 1) {
+					html = '<option value="">选择二级分类</option>';
+					$.each(data.result.list, function (i, n) {
+						html += '<option value="' + n.id +'">' + n.cate_name + '</option>';
+					});
+					$('select[name="cate_id2"]').html(html);
+				} else {
+					layer.msg(data.msg, {icon: 2})
+				}
+			}
+		})
+	});
+
+	$(document).on('click', '.refuse', function () {
+		var id = $(this).data('id');
+		layer.confirm('确认审核失败？', {btn: ['确定', '取消']}, function () {
+			// 确定
+			$.ajax({
+				url:"{:U('Community/article')}",
+				data:{act: 'edit', status: -1, article_id: id},
+				dataType: 'json',
+				success: function (data) {
+					if (data.status == 1) {
+						layer.msg(data.msg, {icon: 1, time: 2000}, function () {
+							location.href = '';
+						});
+					} else {
+						layer.msg(data.msg, {icon: 2})
+					}
+				}
+			})
+		}, function (index) {
+			// 取消
+			layer.close(index);
+		});
+	})
+</script>
+</body>
+</html>

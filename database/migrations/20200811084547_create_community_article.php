@@ -43,7 +43,7 @@ class CreateCommunityArticle extends Migrator
             ->addColumn('status', 'integer', ['default' => 0, 'comment' => '状态：0未审核 1通过发布 -1审核失败'])
             ->addColumn('reason', 'string', ['default' => '', 'comment' => '审核失败原因'])
             ->addColumn('add_time', 'integer')
-            ->addColumn('update_time', 'integer', ['default' => 0, 'comment' => '更新时间'])
+            ->addColumn('up_time', 'integer', ['default' => 0, 'comment' => '更新时间'])
             ->addColumn('publish_time', 'integer', ['default' => 0, 'comment' => '审核发布时间'])
             ->addIndex(['cate_id1', 'cate_id2'], ['name' => 'cate_id'])
             ->create();
