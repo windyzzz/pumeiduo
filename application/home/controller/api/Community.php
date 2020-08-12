@@ -178,7 +178,7 @@ class Community extends Base
     public function clickArticle()
     {
         $articleId = I('article_id', 0);
-        if(!$articleId) return json(['status' => 0, 'msg' => '请传入文章ID']);
+        if (!$articleId) return json(['status' => 0, 'msg' => '请传入文章ID']);
         // 点击数+1
         M('community_article')->where(['id' => $articleId])->setInc('click', 1);
         return json(['status' => 1, 'msg' => '']);
@@ -191,9 +191,10 @@ class Community extends Base
     public function shareArticle()
     {
         $articleId = I('article_id', 0);
-        if(!$articleId) return json(['status' => 0, 'msg' => '请传入文章ID']);
+        if (!$articleId) return json(['status' => 0, 'msg' => '请传入文章ID']);
         // 分享数+1
         M('community_article')->where(['id' => $articleId])->setInc('share', 1);
-        return json(['status' => 1, 'msg' => '分享成功']);
+        $share = M('community_article')->where(['id' => $articleId])->value('share');
+        return json(['status' => 1, 'result' => ['share' => $share]]);
     }
 }
