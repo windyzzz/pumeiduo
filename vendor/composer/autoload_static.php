@@ -23,6 +23,10 @@ class ComposerStaticInit73de9b3c2080f19e754b92aa68d5d0d1
             'think\\captcha\\' => 14,
             'think\\' => 6,
         ),
+        'p' => 
+        array (
+            'plugins\\' => 8,
+        ),
         'S' => 
         array (
             'Symfony\\Polyfill\\Mbstring\\' => 26,
@@ -32,6 +36,10 @@ class ComposerStaticInit73de9b3c2080f19e754b92aa68d5d0d1
         'P' => 
         array (
             'Phinx\\' => 6,
+        ),
+        'O' => 
+        array (
+            'OSS\\' => 4,
         ),
         'D' => 
         array (
@@ -65,6 +73,10 @@ class ComposerStaticInit73de9b3c2080f19e754b92aa68d5d0d1
             0 => __DIR__ . '/../..' . '/thinkphp/library/think',
             1 => __DIR__ . '/..' . '/topthink/think-image/src',
         ),
+        'plugins\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/plugins',
+        ),
         'Symfony\\Polyfill\\Mbstring\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-mbstring',
@@ -80,6 +92,10 @@ class ComposerStaticInit73de9b3c2080f19e754b92aa68d5d0d1
         'Phinx\\' => 
         array (
             0 => __DIR__ . '/..' . '/topthink/think-migration/phinx/src/Phinx',
+        ),
+        'OSS\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/aliyuncs/oss-sdk-php/src/OSS',
         ),
         'Doctrine\\Instantiator\\' => 
         array (

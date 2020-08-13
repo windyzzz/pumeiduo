@@ -541,7 +541,7 @@ class Goods extends Base
             }
             $data['virtual_indate'] = !empty($virtual_indate) ? strtotime($virtual_indate) : 0;
             $data['exchange_integral'] = (1 == $data['is_virtual']) ? 0 : $data['exchange_integral'];
-
+            $data['video'] = $data['video_path'];
             //积分按系统默认比例 BY J
             if (1 == $data['exchange_integral_type'] && 1 != $data['is_virtual']) {
                 $data['exchange_integral'] = $data['shop_price'] * tpCache('shopping.point_use_percent') / 100;
@@ -750,6 +750,8 @@ class Goods extends Base
         $this->assign('brandList', $brandList);
         $this->assign('goodsType', $goodsType);
         $this->assign('goodsInfo', $goodsInfo);  // 商品详情
+        $this->assign('video_url', $goodsInfo['video'] ? \plugins\Oss::url($goodsInfo['video']) : '');  // 视频url
+
         $goodsImages = M('GoodsImages')->where('goods_id =' . I('GET.id', 0))->select();
         $this->assign('goodsImages', $goodsImages);  // 商品相册
         $goodsSeries = M('GoodsSeries')

@@ -257,6 +257,12 @@ return [
     'AUTH_CODE' => \think\Env::get('AUTH.CODE'), //安装完毕之后不要改变，否则所有密码都会出错
     'AUTH_CODE_SHOP' => \think\Env::get('AUTH.CODE.SHOP'),
 
+    /** oss */
+    'OSS_ACCESSKEY_ID' => \think\Env::get('OSS.ACCESSKEY.ID'),
+    'OSS_ACCESSKEY_SECRET' => \think\Env::get('OSS.ACCESSKEY.SECRET'),
+    'OSS_ENDPOINT' => \think\Env::get('OSS.ENDPOINT'),
+    'OSS_BUCKET' => \think\Env::get('OSS.BUCKET'),
+    'OSS_CALLBACK_URL' => \think\Env::get('OSS.CALLBACK.URL'),
     //redis储存数据的时间
     'REDIS_TIME' => 86400,
     'REDIS_DAY' => 7,
