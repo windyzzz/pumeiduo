@@ -70,6 +70,8 @@ class Report extends Base
         foreach ($res2 as $val) {
             if (isset($arr[$val['gap']])) {
                 $arr[$val['gap']] += $val['tnum'];
+            } else {
+                $arr[$val['gap']] = $val['tnum'];
             }
         }
         $res3 = Db::name('order o')
@@ -82,6 +84,8 @@ class Report extends Base
         foreach ($res3 as $val) {
             if (isset($brr[$val['gap']])) {
                 $brr[$val['gap']] += $val['amount'];
+            } else {
+                $brr[$val['gap']] = $val['amount'];
             }
         }
         for ($i = $this->begin; $i <= $this->end; $i = $i + 24 * 3600) {
@@ -149,6 +153,8 @@ class Report extends Base
         foreach ($res2 as $val) {
             if (isset($arr[$val['gap']])) {
                 $arr[$val['gap']] += $val['tnum'];
+            } else {
+                $arr[$val['gap']] = $val['tnum'];
             }
         }
         $res3 = Db::name('order o')
@@ -161,6 +167,8 @@ class Report extends Base
         foreach ($res3 as $val) {
             if (isset($brr[$val['gap']])) {
                 $brr[$val['gap']] += $val['amount'];
+            } else {
+                $brr[$val['gap']] = $val['amount'];
             }
         }
         for ($i = $this->begin; $i <= $this->end; $i = $i + 24 * 3600) {
@@ -272,6 +280,8 @@ class Report extends Base
         foreach ($res2 as $val) {
             if (isset($arr[$val['gap']])) {
                 $arr[$val['gap']] += $val['tnum'];
+            } else {
+                $arr[$val['gap']] = $val['tnum'];
             }
         }
         $res3 = Db::name('order o')
@@ -284,6 +294,8 @@ class Report extends Base
         foreach ($res3 as $val) {
             if (isset($brr[$val['gap']])) {
                 $brr[$val['gap']] += $val['amount'];
+            } else {
+                $brr[$val['gap']] = $val['amount'];
             }
         }
         for ($i = $this->begin; $i <= $this->end;) {
@@ -387,6 +399,8 @@ class Report extends Base
         foreach ($res2 as $val) {
             if (isset($arr[$val['gap']])) {
                 $arr[$val['gap']] += $val['tnum'];
+            } else {
+                $arr[$val['gap']] = $val['tnum'];
             }
         }
         $res3 = Db::name('order o')
@@ -399,6 +413,8 @@ class Report extends Base
         foreach ($res3 as $val) {
             if (isset($brr[$val['gap']])) {
                 $brr[$val['gap']] += $val['amount'];
+            } else {
+                $brr[$val['gap']] = $val['amount'];
             }
         }
         for ($i = $this->begin; $i <= $this->end;) {
@@ -516,6 +532,8 @@ class Report extends Base
         foreach ($res2 as $val) {
             if (isset($arr[$val['gap']])) {
                 $arr[$val['gap']] += $val['tnum'];
+            } else {
+                $arr[$val['gap']] = $val['tnum'];
             }
         }
         $res3 = Db::name('order o')
@@ -528,6 +546,8 @@ class Report extends Base
         foreach ($res3 as $val) {
             if (isset($brr[$val['gap']])) {
                 $brr[$val['gap']] += $val['amount'];
+            } else {
+                $brr[$val['gap']] = $val['amount'];
             }
         }
         for ($i = $this->begin; $i <= $this->end;) {
@@ -617,6 +637,8 @@ class Report extends Base
         foreach ($res2 as $val) {
             if (isset($arr[$val['gap']])) {
                 $arr[$val['gap']] += $val['tnum'];
+            } else {
+                $arr[$val['gap']] = $val['tnum'];
             }
         }
         $res3 = Db::name('order o')
@@ -629,6 +651,8 @@ class Report extends Base
         foreach ($res3 as $val) {
             if (isset($brr[$val['gap']])) {
                 $brr[$val['gap']] += $val['amount'];
+            } else {
+                $brr[$val['gap']] = $val['amount'];
             }
         }
         for ($i = $this->begin; $i <= $this->end;) {
