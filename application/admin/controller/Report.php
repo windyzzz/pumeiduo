@@ -31,7 +31,7 @@ class Report extends Base
             $end = urldecode($end_time);
         } else {
             // $begin = date('Y-m-d', strtotime("-1 month"));//30天前
-            $begin = '2018-08-15'; //30天前
+            $begin = '2018-08-15';
             $end = date('Y-m-d', strtotime('+1 days'));
         }
         $this->assign('start_time', $begin);
@@ -52,17 +52,41 @@ class Report extends Base
             $today['sign'] = round($today['today_amount'] / $today['today_order'], 2);
         }
         $this->assign('today', $today);
-        $select_year = $this->select_year;
-        $res = Db::name('order' . $select_year)
+
+        $res1 = Db::name('order')
             ->field(" COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-%m-%d') as gap ")
-            ->where(" add_time >$this->begin and add_time < $this->end AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4) ")
+            ->where(" order_type in(1,3) AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
             ->select();
-        foreach ($res as $val) {
+        foreach ($res1 as $val) {
             $arr[$val['gap']] = $val['tnum'];
             $brr[$val['gap']] = $val['amount'];
-//            $tnum += $val['tnum'];
-//            $tamount += $val['amount'];
+        }
+        $res2 = Db::name('order')
+            ->field(" COUNT(*) as tnum, FROM_UNIXTIME(add_time,'%Y-%m-%d') as gap ")
+            ->where(" order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->group('gap')
+            ->select();
+        foreach ($res2 as $val) {
+            if (isset($arr[$val['gap']])) {
+                $arr[$val['gap']] += $val['tnum'];
+            } else {
+                $arr[$val['gap']] = $val['tnum'];
+            }
+        }
+        $res3 = Db::name('order o')
+            ->join('order_goods og', 'og.order_id = o.order_id')
+            ->join('goods g', 'g.goods_id = og.goods_id')
+            ->field(" sum(g.cost_price * og.goods_num) as amount, FROM_UNIXTIME(o.add_time,'%Y-%m-%d') as gap ")
+            ->where(" order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->group('gap')
+            ->select();
+        foreach ($res3 as $val) {
+            if (isset($brr[$val['gap']])) {
+                $brr[$val['gap']] += $val['amount'];
+            } else {
+                $brr[$val['gap']] = $val['amount'];
+            }
         }
         for ($i = $this->begin; $i <= $this->end; $i = $i + 24 * 3600) {
             $tmp_num = empty($arr[date('Y-m-d', $i)]) ? 0 : $arr[date('Y-m-d', $i)];
@@ -112,17 +136,40 @@ class Report extends Base
 
     public function exportIndex()
     {
-        $select_year = $this->select_year;
-        $res = Db::name('order' . $select_year)
+        $res1 = Db::name('order')
             ->field(" COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-%m-%d') as gap ")
-            ->where(" add_time >$this->begin and add_time < $this->end AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4) ")
+            ->where(" order_type in(1,3) AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
             ->select();
-        foreach ($res as $val) {
+        foreach ($res1 as $val) {
             $arr[$val['gap']] = $val['tnum'];
             $brr[$val['gap']] = $val['amount'];
-//            $tnum += $val['tnum'];
-//            $tamount += $val['amount'];
+        }
+        $res2 = Db::name('order')
+            ->field(" COUNT(*) as tnum, FROM_UNIXTIME(add_time,'%Y-%m-%d') as gap ")
+            ->where(" order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->group('gap')
+            ->select();
+        foreach ($res2 as $val) {
+            if (isset($arr[$val['gap']])) {
+                $arr[$val['gap']] += $val['tnum'];
+            } else {
+                $arr[$val['gap']] = $val['tnum'];
+            }
+        }
+        $res3 = Db::name('order o')
+            ->join('order_goods og', 'og.order_id = o.order_id')
+            ->join('goods g', 'g.goods_id = og.goods_id')
+            ->field(" sum(g.cost_price * og.goods_num) as amount, FROM_UNIXTIME(o.add_time,'%Y-%m-%d') as gap ")
+            ->where(" order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->group('gap')
+            ->select();
+        foreach ($res3 as $val) {
+            if (isset($brr[$val['gap']])) {
+                $brr[$val['gap']] += $val['amount'];
+            } else {
+                $brr[$val['gap']] = $val['amount'];
+            }
         }
         for ($i = $this->begin; $i <= $this->end; $i = $i + 24 * 3600) {
             $tmp_num = empty($arr[date('Y-m-d', $i)]) ? 0 : $arr[date('Y-m-d', $i)];
@@ -205,9 +252,6 @@ class Report extends Base
             $end = $this->end;
         }
 
-        // dump(date('Y-m-d',$this->begin));
-        // dump(date('Y-m-d',$this->end));
-
         $now = strtotime(date('Y-m-d'));
         $today['today_amount'] = M('order')->where('parent_id = 0')->where("add_time>$now AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4)")->sum('total_amount'); //今日销售总额
         $today['today_order'] = M('order')->where('parent_id = 0')->where("add_time>$now and (pay_status=1 or pay_code='cod')")->count(); //今日订单数
@@ -218,22 +262,41 @@ class Report extends Base
             $today['sign'] = round($today['today_amount'] / $today['today_order'], 2);
         }
         $this->assign('today', $today);
-        $select_year = $this->select_year;
-        $res = Db::name('order' . $select_year)
+
+        $res1 = Db::name('order')
             ->field(" COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-%m') as gap ")
-            ->where(" add_time >$this->begin and add_time < $this->end AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4) ")
+            ->where(" order_type in(1,3) AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
-            // ->fetchSql(1)
             ->select();
-        // dump($res);
-        // dump($this->begin);
-        // dump($this->end);
-        // exit;
-        foreach ($res as $val) {
+        foreach ($res1 as $val) {
             $arr[$val['gap']] = $val['tnum'];
             $brr[$val['gap']] = $val['amount'];
-//            $tnum += $val['tnum'];
-//            $tamount += $val['amount'];
+        }
+        $res2 = Db::name('order')
+            ->field(" COUNT(*) as tnum, FROM_UNIXTIME(add_time,'%Y-%m') as gap ")
+            ->where(" order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->group('gap')
+            ->select();
+        foreach ($res2 as $val) {
+            if (isset($arr[$val['gap']])) {
+                $arr[$val['gap']] += $val['tnum'];
+            } else {
+                $arr[$val['gap']] = $val['tnum'];
+            }
+        }
+        $res3 = Db::name('order o')
+            ->join('order_goods og', 'og.order_id = o.order_id')
+            ->join('goods g', 'g.goods_id = og.goods_id')
+            ->field(" sum(g.cost_price * og.goods_num) as amount, FROM_UNIXTIME(o.add_time,'%Y-%m') as gap ")
+            ->where(" order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->group('gap')
+            ->select();
+        foreach ($res3 as $val) {
+            if (isset($brr[$val['gap']])) {
+                $brr[$val['gap']] += $val['amount'];
+            } else {
+                $brr[$val['gap']] = $val['amount'];
+            }
         }
         for ($i = $this->begin; $i <= $this->end;) {
             $year = date('Y', $i);
@@ -308,9 +371,6 @@ class Report extends Base
             $end = $this->end;
         }
 
-        // dump(date('Y-m-d',$this->begin));
-        // dump(date('Y-m-d',$this->end));
-
         $now = strtotime(date('Y-m-d'));
         $today['today_amount'] = M('order')->where('parent_id = 0')->where("add_time>$now AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4)")->sum('total_amount'); //今日销售总额
         $today['today_order'] = M('order')->where('parent_id = 0')->where("add_time>$now and (pay_status=1 or pay_code='cod')")->count(); //今日订单数
@@ -321,22 +381,41 @@ class Report extends Base
             $today['sign'] = round($today['today_amount'] / $today['today_order'], 2);
         }
         $this->assign('today', $today);
-        $select_year = $this->select_year;
-        $res = Db::name('order' . $select_year)
+
+        $res1 = Db::name('order')
             ->field(" COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-%m') as gap ")
-            ->where(" add_time >$this->begin and add_time < $this->end AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4) ")
+            ->where(" order_type in(1,3) AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
-            // ->fetchSql(1)
             ->select();
-        // dump($res);
-        // dump($this->begin);
-        // dump($this->end);
-        // exit;
-        foreach ($res as $val) {
+        foreach ($res1 as $val) {
             $arr[$val['gap']] = $val['tnum'];
             $brr[$val['gap']] = $val['amount'];
-//            $tnum += $val['tnum'];
-//            $tamount += $val['amount'];
+        }
+        $res2 = Db::name('order')
+            ->field(" COUNT(*) as tnum, FROM_UNIXTIME(add_time,'%Y-%m') as gap ")
+            ->where(" order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->group('gap')
+            ->select();
+        foreach ($res2 as $val) {
+            if (isset($arr[$val['gap']])) {
+                $arr[$val['gap']] += $val['tnum'];
+            } else {
+                $arr[$val['gap']] = $val['tnum'];
+            }
+        }
+        $res3 = Db::name('order o')
+            ->join('order_goods og', 'og.order_id = o.order_id')
+            ->join('goods g', 'g.goods_id = og.goods_id')
+            ->field(" sum(g.cost_price * og.goods_num) as amount, FROM_UNIXTIME(o.add_time,'%Y-%m') as gap ")
+            ->where(" order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->group('gap')
+            ->select();
+        foreach ($res3 as $val) {
+            if (isset($brr[$val['gap']])) {
+                $brr[$val['gap']] += $val['amount'];
+            } else {
+                $brr[$val['gap']] = $val['amount'];
+            }
         }
         for ($i = $this->begin; $i <= $this->end;) {
             $year = date('Y', $i);
@@ -415,24 +494,16 @@ class Report extends Base
             $this->begin = strtotime(date('Y-01-01', $this->begin));
             $this->end = $this->begin;
             $end = strtotime(I('end_time'));
-
             $year = date('Y', $this->end);
             $m = 12;
             $day_num = date('t', strtotime("$year-$m"));
             $this->end = strtotime("{$year}-12-{$day_num} 23:59:59");
-
-            // dump(date('Y-m-d',I('start_time')));
-            // dump(date('Y-m-d',I('end_time')));
         } else {
             $this->begin = strtotime(date('Y-01-01', $this->begin));
             $this->end = strtotime('+1 year');
             $this->end = strtotime(date('Y-01-01', $this->end));
             $end = $this->end;
         }
-
-        // dump(date('Y-m-d',$this->begin));
-        // dump(date('Y-m-d',$this->end));
-        // exit;
         $now = strtotime(date('Y-m-d'));
         $today['today_amount'] = M('order')->where('parent_id = 0')->where("add_time>$now AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4)")->sum('total_amount'); //今日销售总额
         $today['today_order'] = M('order')->where('parent_id = 0')->where("add_time>$now and (pay_status=1 or pay_code='cod')")->count(); //今日订单数
@@ -443,24 +514,42 @@ class Report extends Base
             $today['sign'] = round($today['today_amount'] / $today['today_order'], 2);
         }
         $this->assign('today', $today);
-        $select_year = $this->select_year;
-        $res = Db::name('order' . $select_year)
+
+        $res1 = Db::name('order')
             ->field(" COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-01-01') as gap ")
-            ->where(" add_time >$this->begin and add_time < $this->end AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4) ")
+            ->where(" order_type in(1,3) AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
-            // ->fetchSql(1)
             ->select();
-        // dump($res);
-        // dump($this->begin);
-        // dump($this->end);
-        // exit;
-        foreach ($res as $val) {
+        foreach ($res1 as $val) {
             $arr[$val['gap']] = $val['tnum'];
             $brr[$val['gap']] = $val['amount'];
-//            $tnum += $val['tnum'];
-//            $tamount += $val['amount'];
         }
-
+        $res2 = Db::name('order')
+            ->field(" COUNT(*) as tnum, FROM_UNIXTIME(add_time,'%Y-01-01') as gap ")
+            ->where(" order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->group('gap')
+            ->select();
+        foreach ($res2 as $val) {
+            if (isset($arr[$val['gap']])) {
+                $arr[$val['gap']] += $val['tnum'];
+            } else {
+                $arr[$val['gap']] = $val['tnum'];
+            }
+        }
+        $res3 = Db::name('order o')
+            ->join('order_goods og', 'og.order_id = o.order_id')
+            ->join('goods g', 'g.goods_id = og.goods_id')
+            ->field(" sum(g.cost_price * og.goods_num) as amount, FROM_UNIXTIME(o.add_time,'%Y-01-01') as gap ")
+            ->where(" order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->group('gap')
+            ->select();
+        foreach ($res3 as $val) {
+            if (isset($brr[$val['gap']])) {
+                $brr[$val['gap']] += $val['amount'];
+            } else {
+                $brr[$val['gap']] = $val['amount'];
+            }
+        }
         for ($i = $this->begin; $i <= $this->end;) {
             $tmp_num = empty($arr[date('Y-01-01', $i)]) ? 0 : $arr[date('Y-01-01', $i)];
             $tmp_amount = empty($brr[date('Y-01-01', $i)]) ? 0 : $brr[date('Y-01-01', $i)];
@@ -520,14 +609,10 @@ class Report extends Base
             $this->begin = strtotime(date('Y-01-01', $this->begin));
             $this->end = $this->begin;
             $end = strtotime(I('end_time'));
-
             $year = date('Y', $this->end);
             $m = 12;
             $day_num = date('t', strtotime("$year-$m"));
             $this->end = strtotime("{$year}-12-{$day_num} 23:59:59");
-
-            // dump(date('Y-m-d',I('start_time')));
-            // dump(date('Y-m-d',I('end_time')));
         } else {
             $this->begin = strtotime(date('Y-01-01', $this->begin));
             $this->end = strtotime('+1 year');
@@ -535,24 +620,41 @@ class Report extends Base
             $end = $this->end;
         }
 
-        $select_year = $this->select_year;
-        $res = Db::name('order' . $select_year)
+        $res1 = Db::name('order')
             ->field(" COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-01-01') as gap ")
-            ->where(" add_time >$this->begin and add_time < $this->end AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4) ")
+            ->where(" order_type in(1,3) AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
-            // ->fetchSql(1)
             ->select();
-        // dump($res);
-        // dump($this->begin);
-        // dump($this->end);
-        // exit;
-        foreach ($res as $val) {
+        foreach ($res1 as $val) {
             $arr[$val['gap']] = $val['tnum'];
             $brr[$val['gap']] = $val['amount'];
-//            $tnum += $val['tnum'];
-//            $tamount += $val['amount'];
         }
-
+        $res2 = Db::name('order')
+            ->field(" COUNT(*) as tnum, FROM_UNIXTIME(add_time,'%Y-01-01') as gap ")
+            ->where(" order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->group('gap')
+            ->select();
+        foreach ($res2 as $val) {
+            if (isset($arr[$val['gap']])) {
+                $arr[$val['gap']] += $val['tnum'];
+            } else {
+                $arr[$val['gap']] = $val['tnum'];
+            }
+        }
+        $res3 = Db::name('order o')
+            ->join('order_goods og', 'og.order_id = o.order_id')
+            ->join('goods g', 'g.goods_id = og.goods_id')
+            ->field(" sum(g.cost_price * og.goods_num) as amount, FROM_UNIXTIME(o.add_time,'%Y-01-01') as gap ")
+            ->where(" order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->group('gap')
+            ->select();
+        foreach ($res3 as $val) {
+            if (isset($brr[$val['gap']])) {
+                $brr[$val['gap']] += $val['amount'];
+            } else {
+                $brr[$val['gap']] = $val['amount'];
+            }
+        }
         for ($i = $this->begin; $i <= $this->end;) {
             $tmp_num = empty($arr[date('Y-01-01', $i)]) ? 0 : $arr[date('Y-01-01', $i)];
             $tmp_amount = empty($brr[date('Y-01-01', $i)]) ? 0 : $brr[date('Y-01-01', $i)];
@@ -563,6 +665,7 @@ class Report extends Base
             $date = date('Y', $i);
             $j = $i + 365 * 24 * 3600;
             //销售不含税价
+            $tmp_c_amout = 0;
             $result = Db::name('order')
                 ->alias('oi')
                 ->join('order_goods og', 'og.order_id = oi.order_id', 'left')
