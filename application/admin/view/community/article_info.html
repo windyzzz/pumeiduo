@@ -1,0 +1,152 @@
+<include file="public/layout"/>
+<load href="__ROOT__/public/plugins/Ueditor/ueditor.config.js"/>
+<load href="__ROOT__/public/plugins/Ueditor/ueditor.all.min.js"/>
+<script src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
+<style type="text/css">
+    html, body {
+        overflow: visible;
+    }
+</style>
+<body style="background-color: #FFF; overflow: auto;">
+<div id="toolTipLayer"
+     style="position: absolute; z-index: 9999; display: none; visibility: visible; left: 95px; top: 573px;"></div>
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title"><a class="back" href="javascript:history.back();" title="返回列表"><i
+                class="fa fa-arrow-circle-o-left"></i></a>
+            <div class="subject">
+                <h3>商学院文章内容</h3>
+                <h5>商学院文章管理</h5>
+            </div>
+        </div>
+    </div>
+    <form class="form-horizontal" action="{:U('Community/article')}" id="add_post" method="post">
+        <div class="ncap-form-default">
+            <dl class="row">
+                <dt class="tit">
+                    <label>顶级分类</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" value="{$info.cate_id1_desc}" class="input-txt" disabled>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>二级分类</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" value="{$info.cate_id2_desc}" class="input-txt" disabled>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>内容</label>
+                </dt>
+                <dd class="opt">
+                    <textarea class="" style="width: 80%; height: 50%; line-height: 200%" rows="10" disabled>{$info.content}</textarea>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>图片</label>
+                </dt>
+                <dd class="opt">
+                    <foreach name="$info[image]" item="vo" key="k">
+                        <div style="width:100px; text-align:center; margin: 5px; display:inline-block;" class="goods_xc">
+                            <a onClick="" href="{$vo}" target="_blank">
+                                <img width="100" height="100" src="{$vo}">
+                            </a>
+                            <br>
+                        </div>
+                    </foreach>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>视频</label>
+                </dt>
+                <if condition="!empty($info[video])">
+                    <dd class="opt">
+                        <video style="" controls="controls" width="600" height="300" id="video_tag" src="{$info[video]}"></video>
+                    </dd>
+                </if>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>审核状态</label>
+                </dt>
+                <dd class="opt">
+                    <span
+                        <switch name="$info[status]">
+                            <case value="1">
+                                style="color: green;"
+                            </case>
+                            <case value="-1">
+                                style="color: red;"
+                            </case>
+                        </switch>
+                    >{$info[status_desc]}</span>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>拒绝原因</label>
+                </dt>
+                <dd class="opt">
+                    <textarea class="" style="width: 50%; height: 50%; line-height: 200%" rows="5" name="reason">{$log[0][reason]}</textarea>
+                </dd>
+            </dl>
+            <div class="bot">
+                <switch name="$info[status]">
+                    <case value="0">
+                        <a href="JavaScript:verify(1);" class="ncap-btn-big ncap-btn-green">审核通过</a>
+                        <a href="JavaScript:verify(-1);" class="ncap-btn-big ncap-btn-red">审核不通过</a>
+                    </case>
+                    <case value="1">
+                        <a href="JavaScript:verify(-1);" class="ncap-btn-big ncap-btn-red">审核不通过</a>
+                    </case>
+                    <case value="-1">
+                        <a href="JavaScript:verify(1);" class="ncap-btn-big ncap-btn-green">审核通过</a>
+                    </case>
+                </switch>
+            </div>
+        </div>
+        <input type="hidden" name="act" value="{$act}">
+        <input type="hidden" name="article_id" value="{$info.id}">
+    </form>
+</div>
+<script type="text/javascript">
+    function verify(status) {
+        layer.confirm('确认操作？', {btn: ['确定', '取消']}, function () {
+            var act = $('input[name="act"]').val();
+            var article_id = $('input[name="article_id"]').val();
+            var reason = $('textarea[name="reason"]').val();
+            if (status == -1 && reason == '') {
+                layer.alert("请填写拒绝原因");
+                return;
+            }
+            $.ajax({
+                type: "POST",
+                url: "{:U('Community/article')}",
+                data: {act: act, article_id: article_id, status: status, reason: reason},
+                dataType: "json",
+                error: function () {
+                    layer.alert("服务器繁忙, 请联系管理员!");
+                },
+                success: function (data) {
+                    if (data.status === 1) {
+                        layer.msg(data.msg, {icon: 1, time: 1000}, function () {
+                            location.href = "{:U('Admin/Community/article')}";
+                        });
+                    } else {
+                        layer.msg(data.msg, {icon: 2, time: 1000});
+                    }
+                }
+            });
+        });
+    }
+</script>
+</body>
+</html>

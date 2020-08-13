@@ -14,6 +14,7 @@ class Community extends Base
     public function category()
     {
         $act = I('act', 'list');
+        $this->assign('act', $act);
         switch ($act) {
             case 'list':
                 $cateList = [];
@@ -44,7 +45,8 @@ class Community extends Base
                     if ($postData['parent_id'] != 0) {
                         // 查看上级
                         $tCategory = M('community_category')->where(['id' => $postData['parent_id']])->find();
-                        $postData['level'] = !empty($tCategory) ? $tCategory['level'] + 1 : 0;
+                        $postData['level'] = $tCategory['level'] + 1;
+                        $postData['user_can_publish'] = $tCategory['user_can_publish'] == 1 ? 1 : 0;
                     }
                     M('community_category')->add($postData);
                     $this->ajaxReturn(['status' => 1, 'msg' => '操作成功', 'data' => ['url' => U('Admin/Community/category')]]);
@@ -74,9 +76,13 @@ class Community extends Base
                         }
                     }
                     if ($postData['parent_id'] != 0) {
+                        unset($postData['user_can_publish']);
                         // 查看上级
                         $tCategory = M('community_category')->where(['id' => $postData['parent_id']])->find();
                         $postData['level'] = !empty($tCategory) ? $tCategory['level'] + 1 : 0;
+                    } else {
+                        // 下级一并修改
+                        M('community_category')->where(['parent_id' => $id])->update(['user_can_publish' => $postData['user_can_publish']]);
                     }
                     M('community_category')->where(['id' => $id])->update($postData);
                     $this->ajaxReturn(['status' => 1, 'msg' => '操作成功', 'data' => ['url' => U('Admin/Community/category')]]);
@@ -85,7 +91,6 @@ class Community extends Base
                     $parentId = $category['parent_id'];
                     // 一级分类数据
                     $tCategory = M('community_category')->where(['level' => 0])->field('id, cate_name')->select();
-                    $this->assign('act', $act);
                     $this->assign('parent_id', $parentId);
                     $this->assign('t_category', $tCategory);
                     $this->assign('category', $category);
@@ -123,6 +128,7 @@ class Community extends Base
     public function article()
     {
         $act = I('act', 'list');
+        $this->assign('act', $act);
         // 一级分类数据
         $tCategory = M('community_category')->where(['level' => 0])->getField('id, cate_name');
         $this->assign('t_category', $tCategory);
@@ -159,6 +165,42 @@ class Community extends Base
                 $this->assign('page', $page);
                 $this->assign('article_list', $articleList);
                 return $this->fetch('article_list');
+                break;
+            case 'edit':
+                // 审核文章详情
+                $articleId = I('article_id', 0);
+                if (IS_POST) {
+                    $status = I('status', 0);
+                    $updata = ['status' => $status];
+                    switch ($status) {
+                        case 1:
+                            $updata['publish_time'] = NOW_TIME;
+                            break;
+                    }
+                    M('community_article')->where(['id' => $articleId])->update($updata);
+                    // 审核记录
+                    $logData = [
+                        'article_id' => $articleId,
+                        'status' => $status,
+                        'reason' => I('reason'),
+                        'admin_id' => session('admin_id'),
+                        'add_time' => NOW_TIME
+                    ];
+                    M('community_article')->add($logData);
+                    $this->ajaxReturn(['status' => 1, 'msg' => '处理成功']);
+                }
+                $articleModel = new CommunityArticle();
+                $articleInfo = $articleModel->where(['id' => $articleId])->find();
+                $articleInfo['image'] = !empty($articleInfo['image']) ? explode(',', $articleInfo['image']) : [];
+                $articleInfo['video'] = !empty($articleInfo['video']) ? \plugins\Oss::url($articleInfo['video']) : '';
+                $articleInfo['cate_id1_desc'] = $tCategory[$articleInfo['cate_id1']];
+                $articleInfo['cate_id2_desc'] = $dCategory[$articleInfo['cate_id2']];
+                // 文章审核记录
+                $articleLog = M('community_article_log')->where(['article_id' => $articleId])->order('add_time DESC')->select();
+                $this->assign('act', $act);
+                $this->assign('info', $articleInfo);
+                $this->assign('log', $articleLog);
+                return $this->fetch('article_info');
                 break;
         }
     }

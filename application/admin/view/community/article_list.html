@@ -110,7 +110,7 @@
 							</td>
 							<td align="left" class="">
 								<div style="text-align: center; width: 500px;">
-									<textarea style="width: 80%; height: 100%; line-height: 150%;" rows="3">{$vo.content}</textarea>
+									<textarea style="width: 80%; height: 100%; line-height: 200%;" rows="3" disabled>{$vo.content}</textarea>
 								</div>
 							</td>
 							<td align="left" class="">
@@ -145,9 +145,8 @@
 								</div>
 							</td>
 							<td align="left" class="handle">
-								<div style="text-align: left; width: 150px; max-width:150px;">
+								<div style="text-align: center; width: 150px; max-width:150px;">
 									<a class="btn blue" href="{:U('Community/article', array('act' => 'edit', 'article_id' => $vo['id']))}"><i class="fa fa-pencil-square-o"></i>详情</a>
-									<a class="btn red refuse" data-id="{$vo['id']}"><i class="fa fa-trash-o"></i>拒绝通过</a>
 								</div>
 							</td>
 							<td align="" class="" style="width: 100%;">
@@ -221,30 +220,6 @@
 			}
 		})
 	});
-
-	$(document).on('click', '.refuse', function () {
-		var id = $(this).data('id');
-		layer.confirm('确认审核失败？', {btn: ['确定', '取消']}, function () {
-			// 确定
-			$.ajax({
-				url:"{:U('Community/article')}",
-				data:{act: 'edit', status: -1, article_id: id},
-				dataType: 'json',
-				success: function (data) {
-					if (data.status == 1) {
-						layer.msg(data.msg, {icon: 1, time: 2000}, function () {
-							location.href = '';
-						});
-					} else {
-						layer.msg(data.msg, {icon: 2})
-					}
-				}
-			})
-		}, function (index) {
-			// 取消
-			layer.close(index);
-		});
-	})
 </script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 use think\migration\Migrator;
 use think\migration\db\Column;
 
-class CreateCommunityCategory extends Migrator
+class CreateCommunityArticleLog extends Migrator
 {
     /**
      * Change Method.
@@ -28,13 +28,12 @@ class CreateCommunityCategory extends Migrator
      */
     public function change()
     {
-        $this->table('community_category', ['comment' => '社区分类'])
-            ->addColumn('cate_name', 'string', ['comment' => '分类名'])
-            ->addColumn('parent_id', 'integer', ['comment' => '父级ID'])
-            ->addColumn('level', 'integer', ['default' => 0, 'comment' => '等级'])
-            ->addColumn('sort', 'integer', ['default' => 0, 'comment' => '排序'])
-            ->addColumn('status', 'integer', ['default' => 1, 'comment' => '显示状态：1显示 0不显示'])
-            ->addColumn('can_publish', 'integer', ['default' => 0, 'comment' => '分类下能否直接发布文章：0不能 1能够'])
+        $this->table('community_article_log', ['comment' => '社区文章审核记录'])
+            ->addColumn('article_id', 'integer', ['comment' => '社区文章ID'])
+            ->addColumn('status', 'integer', ['comment' => '审核状态：1通过 -1拒绝'])
+            ->addColumn('reason', 'string', ['default' => '', 'comment' => '拒绝原因'])
+            ->addColumn('admin_id', 'integer', ['comment' => '管理员ID'])
+            ->addColumn('add_time', 'integer')
             ->create();
     }
 }

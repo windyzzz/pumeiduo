@@ -57,12 +57,26 @@
                 </dt>
                 <dd class="opt">
                     <div class="onoff">
-                        <label for="goods_category1" class="cb-enable <if condition=" $category[status] eq 1">selected</if>">是</label>
-                        <label for="goods_category0" class="cb-disable <if condition=" $category[status] eq 0">selected</if>">否</label>
-                        <input id="goods_category1" name="status" value="1" type="radio" <if condition="$category[status] eq 1"> checked="checked"</if>>
-                        <input id="goods_category0" name="status" value="0" type="radio" <if condition="$category[status] eq 0"> checked="checked"</if>>
+                        <label for="category_status1" class="cb-enable <if condition=" $category[status] eq 1">selected</if>">是</label>
+                        <label for="category_status0" class="cb-disable <if condition=" $category[status] eq 0">selected</if>">否</label>
+                        <input id="category_status1" name="status" value="1" type="radio" <if condition="$category[status] eq 1"> checked="checked"</if>>
+                        <input id="category_status0" name="status" value="0" type="radio" <if condition="$category[status] eq 0"> checked="checked"</if>>
                     </div>
                     <p class="notic">是否在导航栏显示</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>普通用户分类下能否发布文章</label>
+                </dt>
+                <dd class="opt">
+                    <div class="onoff">
+                        <label for="category_publish1" class="cb-enable <if condition=" $category[user_can_publish] eq 1">selected</if>">是</label>
+                        <label for="category_publish0" class="cb-disable <if condition=" $category[user_can_publish] eq 0">selected</if>">否</label>
+                        <input id="category_publish1" name="user_can_publish" value="1" type="radio" <if condition="$category[status] eq 1"> checked="checked"</if>>
+                        <input id="category_publish0" name="user_can_publish" value="0" type="radio" <if condition="$category[status] eq 0"> checked="checked"</if>>
+                    </div>
+                    <p class="notic">二级分类基于上级分类设置</p>
                 </dd>
             </dl>
             <dl class="row">

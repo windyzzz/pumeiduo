@@ -11,11 +11,16 @@ class Community extends Base
      */
     public function allCategory()
     {
+        $canPublish = I('can_publish', '');
+        $where = [];
+        if ($canPublish !== '') {
+            $where['user_can_publish'] = $canPublish;
+        }
         $cateList = [
             'category' => []
         ];
         // 一级分类
-        $tCategoryList = M('community_category')->where(['level' => 0, 'status' => 1])->order('sort DESC')->field('id, cate_name')->select();
+        $tCategoryList = M('community_category')->where(['level' => 0, 'status' => 1])->where($where)->order('sort DESC')->field('id, cate_name, user_can_publish')->select();
         if (!empty($tCategoryList)) {
             // 二级分类
             $dCategoryList = M('community_category')->where(['level' => 1, 'status' => 1])->order('sort DESC')->field('id, cate_name, parent_id')->select();
@@ -23,6 +28,7 @@ class Community extends Base
                 $cateList['category'][$k] = [
                     'id' => $cate1['id'],
                     'name' => $cate1['cate_name'],
+                    'can_publish' => $cate1['user_can_publish'] == 1 ? 1 : 0,
                     'list' => []
                 ];
                 // 下级分类
@@ -63,6 +69,17 @@ class Community extends Base
         // 文章列表
         $articleList = [];
         foreach ($list as $key => $value) {
+            // 发布时间处理
+            $publishTime = date('Y-m-d', $value['publish_time']);
+            if ($publishTime == date('Y-m-d', time())) {
+                $publishTime = '今天 ' . date('H:i', $value['publish_time']);
+            } elseif ($publishTime == date('Y-m-d', time() - (86400))) {
+                $publishTime = '昨天 ' . date('H:i', $value['publish_time']);
+            } elseif ($publishTime == date('Y-m-d', time() - (86400 * 2))) {
+                $publishTime = '前天 ' . date('H:i', $value['publish_time']);
+            } else {
+                $publishTime = date('Y-m-d H:i', $value['publish_time']);
+            }
             // 商品价格处理
             $goodsType = 'normal';
             $shopPrice = $value['shop_price'];
@@ -126,19 +143,24 @@ class Community extends Base
                 'article_id' => $value['id'],
                 'content' => $value['content'],
                 'share' => $value['share'],
+                'publish_time' => $publishTime,
                 'image' => $image,
                 'video' => $value['video'],
-                'user_id' => $value['user_id'],
-                'user_name' => !empty($value['user_name']) ? $value['user_name'] : !empty($value['nickname']) ? $value['nickname'] : '',
-                'head_pic' => getFullPath($value['head_pic']),
-                'goods_type' => $goodsType,
-                'goods_id' => $value['goods_id'],
-                'item_id' => $value['item_id'],
-                'goods_name' => $value['goods_name'],
-                'original_img_new' => getFullPath($value['original_img']),
-                'shop_price' => $shopPrice,
-                'exchange_integral' => $exchangeIntegral,
-                'exchange_price' => $exchangePrice,
+                'user' => [
+                    'user_id' => $value['user_id'],
+                    'user_name' => !empty($value['user_name']) ? $value['user_name'] : !empty($value['nickname']) ? $value['nickname'] : '',
+                    'head_pic' => getFullPath($value['head_pic']),
+                ],
+                'goods' => [
+                    'goods_type' => $goodsType,
+                    'goods_id' => $value['goods_id'],
+                    'item_id' => $value['item_id'],
+                    'goods_name' => $value['goods_name'],
+                    'original_img_new' => getFullPath($value['original_img']),
+                    'shop_price' => $shopPrice,
+                    'exchange_integral' => $exchangeIntegral,
+                    'exchange_price' => $exchangePrice,
+                ],
             ];
         }
         return json(['status' => 1, 'result' => ['list' => $articleList]]);
