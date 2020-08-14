@@ -8,14 +8,15 @@
     }
 </style>
 <body style="background-color: #FFF; overflow: auto;">
-<div id="toolTipLayer"
-     style="position: absolute; z-index: 9999; display: none; visibility: visible; left: 95px; top: 573px;"></div>
+<div id="toolTipLayer" style="position: absolute; z-index: 9999; display: none; visibility: visible; left: 95px; top: 573px;"></div>
 <div id="append_parent"></div>
 <div id="ajaxwaitid"></div>
 <div class="page">
     <div class="fixed-bar">
-        <div class="item-title"><a class="back" href="javascript:history.back();" title="返回列表"><i
-                class="fa fa-arrow-circle-o-left"></i></a>
+        <div class="item-title">
+            <a class="back" href="javascript:history.back();" title="返回列表">
+                <i class="fa fa-arrow-circle-o-left"></i>
+            </a>
             <div class="subject">
                 <h3>商学院文章内容</h3>
                 <h5>商学院文章管理</h5>
@@ -75,6 +76,21 @@
             </dl>
             <dl class="row">
                 <dt class="tit">
+                    <label>关联商品</label>
+                </dt>
+                <dd class="opt">
+                    <div style="float: left;margin-right: 10px" class="selected-group-goods">
+                        <div class="goods-thumb">
+                            <img style="width: 162px;height: 162px" src="{$info['goods_id']|goods_thum_images=162,162}"/>
+                        </div>
+                        <div class="goods-name">
+                            <a target="_blank" href="{:U('Admin/Goods/addEditGoods',array('id'=>$info['goods_id']))}">{$info.goods_name}</a>
+                        </div>
+                    </div>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
                     <label>审核状态</label>
                 </dt>
                 <dd class="opt">
@@ -111,6 +127,7 @@
                         <a href="JavaScript:verify(1);" class="ncap-btn-big ncap-btn-green">审核通过</a>
                     </case>
                 </switch>
+                <a href="{:U('Admin/Community/article', array('article_id'=>$info['id'],'act'=>'log'))}" class="ncap-btn-big ncap-btn-blue">审核记录</a>
             </div>
         </div>
         <input type="hidden" name="act" value="{$act}">

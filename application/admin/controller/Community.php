@@ -186,7 +186,7 @@ class Community extends Base
                         'admin_id' => session('admin_id'),
                         'add_time' => NOW_TIME
                     ];
-                    M('community_article')->add($logData);
+                    M('community_article_log')->add($logData);
                     $this->ajaxReturn(['status' => 1, 'msg' => '处理成功']);
                 }
                 $articleModel = new CommunityArticle();
@@ -195,12 +195,22 @@ class Community extends Base
                 $articleInfo['video'] = !empty($articleInfo['video']) ? \plugins\Oss::url($articleInfo['video']) : '';
                 $articleInfo['cate_id1_desc'] = $tCategory[$articleInfo['cate_id1']];
                 $articleInfo['cate_id2_desc'] = $dCategory[$articleInfo['cate_id2']];
+                $articleInfo['goods_name'] = M('goods')->where(['goods_id' => $articleInfo['goods_id']])->value('goods_name');
                 // 文章审核记录
                 $articleLog = M('community_article_log')->where(['article_id' => $articleId])->order('add_time DESC')->select();
-                $this->assign('act', $act);
                 $this->assign('info', $articleInfo);
                 $this->assign('log', $articleLog);
                 return $this->fetch('article_info');
+                break;
+            case 'log':
+                $articleId = I('article_id', 0);
+                // 文章审核记录
+                $count = M('community_article_log')->where(['article_id' => $articleId])->count();
+                $page = new Page($count, 10);
+                $articleLog = M('community_article_log')->where(['article_id' => $articleId])->limit($page->firstRow . ',' . $page->listRows)->order('add_time DESC')->select();
+                $this->assign('page', $page);
+                $this->assign('log', $articleLog);
+                return $this->fetch('article_log');
                 break;
         }
     }
