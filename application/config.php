@@ -539,7 +539,10 @@ return [
      */
     'OSS_ACCESSKEY_ID' => \think\Env::get('OSS.ACCESSKEY.ID'),
     'OSS_ACCESSKEY_SECRET' => \think\Env::get('OSS.ACCESSKEY.SECRET'),
-    'OSS_ENDPOINT' => \think\Env::get('OSS.ENDPOINT'),
     'OSS_BUCKET' => \think\Env::get('OSS.BUCKET'),
+    'OSS_ENDPOINT' => \think\Env::get('OSS.ENDPOINT'),
     'OSS_CALLBACK_URL' => \think\Env::get('OSS.CALLBACK.URL'),
+    'OSS_CHILD_ACCESSKEY_ID' => \think\Env::get('OSS.CHLID.ACCESSKEY.ID'),
+    'OSS_CHILD_ACCESSKEY_SECRET' => \think\Env::get('OSS.CHILD.ACCESSKEY.SECRET'),
+    'OSS_CHILD_ROLE_ARN' => \think\Env::get('OSS.CHILD.ROLE.ARN'),
 ];
