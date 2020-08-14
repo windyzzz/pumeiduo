@@ -11,6 +11,7 @@
 
 namespace app\home\controller;
 
+use app\common\logic\OssLogic;
 use common\util\File;
 use think\Exception;
 use think\Request;
@@ -25,7 +26,7 @@ class Uploadify extends Base
     {
         parent::__construct();
         date_default_timezone_set('Asia/Shanghai');
-        $this->savePath = I('savepath', 'temp') . '/';
+        $this->savePath = trim(I('savepath', 'temp') . '/');
         error_reporting(E_ERROR | E_WARNING);
         header('Content-Type: text/html; charset=utf-8');
     }
@@ -543,13 +544,17 @@ class Uploadify extends Base
         if (empty($file)) {
             $file = request()->file('upfile');
         }
-        $result = $this->validate(
-            ['file' => $file],
-            ['file' => 'image|fileSize:40000000|fileExt:jpg,jpeg,gif,png'],
-            ['file.image' => '上传文件必须为图片', 'file.fileSize' => '上传文件过大', 'file.fileExt' => '上传文件后缀名必须为jpg,jpeg,gif,png']
-        );
-        if (true !== $result || !$file) {
-            $state = 'ERROR' . $result;
+//        $result = $this->validate(
+//            ['file' => $file],
+//            ['file' => 'image|fileSize:40000000|fileExt:jpg,jpeg,gif,png'],
+//            ['file.image' => '上传文件必须为图片', 'file.fileSize' => '上传文件过大', 'file.fileExt' => '上传文件后缀名必须为jpg,jpeg,gif,png']
+//        );
+        $res = $file->check(['size' => 10485760]);  // 10M限制
+        if (!$res) {
+            return json(['status' => 0, 'msg' => '上传图片的大小请勿超过10M']);
+        }
+        if (!$res) {
+            $state = 'ERROR：' . '上传图片的大小请勿超过10M';
         } else {
             $user_id = cookie('user_id') ? cookie('user_id') : $this->user_id;
             $savePath = 'user/' . $user_id . '/' . $this->savePath;
@@ -606,41 +611,60 @@ class Uploadify extends Base
         if (empty($fileArr) || !is_array($fileArr)) {
             return json(['status' => 0, 'msg' => '请上传图片']);
         }
-        if (count($fileArr) > 4) {
-            return json(['status' => 0, 'msg' => '上传图片请勿超过3张']);
+        if (count($fileArr) > 9) {
+            return json(['status' => 0, 'msg' => '上传图片请勿超过9张']);
         }
         $returnUrl = [];
         foreach ($fileArr as $file) {
-            $result = $this->validate(
-                ['file' => $file],
-                ['file' => 'image|fileSize:40000000|fileExt:jpg,jpeg,gif,png'],
-                ['file.image' => '上传文件必须为图片', 'file.fileSize' => '上传文件过大', 'file.fileExt' => '上传文件后缀名必须为jpg,jpeg,gif,png']
-            );
-            if (true !== $result) {
-                return json($result);
+            $res = $file->check(['size' => 10485760]);  // 10M限制
+            if (!$res) {
+                return json(['status' => 0, 'msg' => '上传图片的大小请勿超过10M']);
             }
             $savePath = 'user/' . $this->user_id . '/' . $this->savePath;
-            $ossConfig = tpCache('oss');
-            $ossSupportPath = ['comment', 'photo'];
-            if (in_array(I('savepath'), $ossSupportPath) && $ossConfig['oss_switch']) {
-                //商品图片可选择存放在oss
-                $object = UPLOAD_PATH . $savePath . md5(time()) . '.' . pathinfo($file->getInfo('name'), PATHINFO_EXTENSION);
-                $ossClient = new \app\common\logic\OssLogic();
-                $return_url = $ossClient->uploadFile($file->getRealPath(), $object);
-                if (!$return_url) {
-                    return json(['status' => 0, 'msg' => 'ERROR' . $ossClient->getError()]);
-                } else {
-                    $returnUrl[] = $return_url;
-                }
-                @unlink($file->getRealPath());
-            } else {
-                $info = $file->rule(function ($file) {
-                    return md5(mt_rand());      // 使用自定义的文件保存规则
-                })->move(UPLOAD_PATH . $savePath);
-                if (!$info) {
-                    return json(['status' => 0, 'msg' => 'ERROR' . $file->getError()]);
-                }
-                $returnUrl[] = UPLOAD_PATH . $savePath . $info->getSaveName();
+            $info = $file->rule(function () {
+                return md5(mt_rand());      // 使用自定义的文件保存规则
+            })->move(UPLOAD_PATH . $savePath);
+            if (!$info) {
+                return json(['status' => 0, 'msg' => 'ERROR' . $file->getError()]);
+            }
+            $returnUrl[] = UPLOAD_PATH . $savePath . $info->getSaveName();
+        }
+        return json(['status' => 1, 'result' => ['url' => $returnUrl]]);
+    }
+
+    /**
+     * 上传多个视频文件
+     * @return \think\response\Json
+     */
+    public function videoUpArr()
+    {
+        $fileArr = request()->file('file');
+        if (empty($fileArr) || !is_array($fileArr)) {
+            return json(['status' => 0, 'msg' => '请上传视频']);
+        }
+        if (count($fileArr) > 5) {
+            return json(['status' => 0, 'msg' => '上传视频请勿超过5个']);
+        }
+        $returnUrl = [];
+        // 上传到OSS服务器
+        $ossClient = new OssLogic();
+        foreach ($fileArr as $file) {
+            switch ($this->savePath) {
+                case 'community_video/':
+                    // 社区文章视频
+                    $res = $file->check(['size' => 20971520]);  // 20M限制
+                    if (!$res) {
+                        return json(['status' => 0, 'msg' => '上传视频的大小请勿超过20M']);
+                    }
+                    $object = 'video/' . date('Y/m/d/H/') . $this->savePath . md5(time()) . '.' . pathinfo($file->getInfo('name'), PATHINFO_EXTENSION);
+                    $return_url = $ossClient->uploadFile($file->getRealPath(), $object);
+                    if (!$return_url) {
+                        return json(['status' => 0, 'msg' => 'ERROR：' . $ossClient->getError()]);
+                    } else {
+                        $returnUrl[] = $return_url;
+                    }
+                    @unlink($file->getRealPath());
+                    break;
             }
         }
         return json(['status' => 1, 'result' => ['url' => $returnUrl]]);

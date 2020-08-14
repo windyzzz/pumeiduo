@@ -1,6 +1,5 @@
 <?php
 
-
 namespace app\admin\controller;
 
 
@@ -8,8 +7,6 @@ use think\Log;
 
 class Oss extends Base
 {
-
-
     /**
      * 签名
      */
@@ -27,10 +24,10 @@ class Oss extends Base
         $id = C('OSS_ACCESSKEY_ID');          // 请填写您的AccessKeyId。
         $key = C('OSS_ACCESSKEY_SECRET');     // 请填写您的AccessKeySecret。
         // $host的格式为 bucketname.endpoint，请替换为您的真实信息。
-        $host = 'http://'.C('OSS_BUCKET').'.'.C('OSS_ENDPOINT');
+        $host = 'http://' . C('OSS_BUCKET') . '.' . C('OSS_ENDPOINT');
         // $callbackUrl为上传回调服务器的URL，请将下面的IP和Port配置为您自己的真实URL信息。
         $callbackUrl = C('OSS_CALLBACK_URL');
-        $dir = 'video/'.date('Y/m/d/H/');          // 用户上传文件时指定的前缀。
+        $dir = 'video/' . date('Y/m/d/H/');          // 用户上传文件时指定的前缀。
 
         $callback_param = array('callbackUrl' => $callbackUrl,
             'callbackBody' => 'filename=${object}&size=${size}&mimeType=${mimeType}&height=${imageInfo.height}&width=${imageInfo.width}',
@@ -43,7 +40,6 @@ class Oss extends Base
         $end = $now + $expire;
         $expiration = $gmt_iso8601($end);
 
-
         //最大文件大小.用户可以自己设置
         $condition = array(0 => 'content-length-range', 1 => 0, 2 => 1048576000);
         $conditions[] = $condition;
@@ -51,7 +47,6 @@ class Oss extends Base
         // 表示用户上传的数据，必须是以$dir开始，不然上传会失败，这一步不是必须项，只是为了安全起见，防止用户通过policy上传到别人的目录。
         $start = array(0 => 'starts-with', 1 => '$key', 2 => $dir);
         $conditions[] = $start;
-
 
         $arr = array('expiration' => $expiration, 'conditions' => $conditions);
         $policy = json_encode($arr);
@@ -113,7 +108,7 @@ class Oss extends Base
 
         // 4.获取回调body
         $body = file_get_contents('php://input');
-        Log::write('直传测试:'.$body,'oss');
+        Log::write('直传测试:' . $body, 'oss');
         // 5.拼接待签名字符串
         $authStr = '';
         $path = $_SERVER['REQUEST_URI'];
@@ -128,7 +123,7 @@ class Oss extends Base
         $ok = openssl_verify($authStr, $authorization, $pubKey, OPENSSL_ALGO_MD5);
         if ($ok == 1) {
             header("Content-Type: application/json");
-            $res=[];
+            $res = [];
             parse_str($body, $res);
             $data = array_merge($res, ["Status" => "Ok"]);
             echo json_encode($data);
