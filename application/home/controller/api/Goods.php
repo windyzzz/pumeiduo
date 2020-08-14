@@ -820,22 +820,6 @@ class Goods extends Base
             $goodsInfo['goods_content'] = str_replace('/public', SITE_URL . '/public', $goodsInfo['goods_content']);
         }
         if ($this->user) {
-            // 商品pv
-            if ($this->user['distribut_level'] < 3) {
-                $goodsInfo['integral_pv'] = '';
-            } elseif ($goods['integral_pv'] == 0) {
-                $goodsInfo['integral_pv'] = '';
-            } else {
-                $goodsInfo['integral_pv'] = $goods['integral_pv'];
-            }
-            // 商品佣金
-            if ($this->user['distribut_level'] < 2) {
-                $goodsInfo['commission'] = '';
-            } elseif ($goods['commission'] == 0) {
-                $goodsInfo['commission'] = '';
-            } else {
-                $goodsInfo['commission'] = bcdiv(bcmul(bcsub($goods['shop_price'], $goods['exchange_integral'], 2), $goods['commission'], 2), 100, 2);
-            }
             $goodsLogic = new GoodsLogic();
             // 用户浏览记录
             $goodsLogic->add_visit_log($this->user_id, $goods);
@@ -912,6 +896,25 @@ class Goods extends Base
         if (in_array($goodsInfo['goods_type'], ['group_buy', 'flash_sale'])) {
             $goodsInfo['shop_price'] = bcadd($goodsInfo['exchange_price'], $goods['exchange_integral'], 2);
             $goodsInfo['buy_least'] = '0';
+            $goodsInfo['integral_pv'] = '';
+            $goodsInfo['commission'] = '';
+        } elseif ($this->user) {
+            // 商品pv
+            if ($this->user['distribut_level'] < 3) {
+                $goodsInfo['integral_pv'] = '';
+            } elseif ($goods['integral_pv'] == 0) {
+                $goodsInfo['integral_pv'] = '';
+            } else {
+                $goodsInfo['integral_pv'] = $goods['integral_pv'];
+            }
+            // 商品佣金
+            if ($this->user['distribut_level'] < 2) {
+                $goodsInfo['commission'] = '';
+            } elseif ($goods['commission'] == 0) {
+                $goodsInfo['commission'] = '';
+            } else {
+                $goodsInfo['commission'] = bcdiv(bcmul(bcsub($goods['shop_price'], $goods['exchange_integral'], 2), $goods['commission'], 2), 100, 2);
+            }
         }
         // 商品促销、优惠券
         $promotion = [];
