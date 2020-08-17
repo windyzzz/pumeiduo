@@ -32,11 +32,11 @@ class Login extends Base
         parent::__construct();
         // header('Access-Control-Allow-Origin:*');
         // header('Access-Control-Allow-Method:POST,GET');
-        $user = session('user');
-        if ($user) {
-            $this->user = $user;
-            $this->user_id = $user ? $user['user_id'] : 0;
-        }
+//        $user = session('user');
+//        if ($user) {
+//            $this->user = $user;
+//            $this->user_id = $user ? $user['user_id'] : 0;
+//        }
     }
 
     public function getWeChatConfig()
