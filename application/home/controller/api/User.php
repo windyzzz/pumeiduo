@@ -1186,14 +1186,12 @@ class User extends Base
 
                 return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
             } elseif (2 == $step) {
-                $res = $logic->check_validate_code($code, $old_mobile, 'phone', $session_id, $scene);
-                if (!$res || 1 != $res['status']) {
-                    return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
-                }
-
-                //检查原手机是否正确
-                if (1 == $user_info['mobile_validated'] && $old_mobile != $user_info['mobile']) {
-                    return json(['status' => 0, 'msg' => '原手机号码错误', 'result' => null]);
+                if ($this->isApp) {
+                    $old_mobile = $mobile;
+                    $res = $logic->check_validate_code($code, $old_mobile, 'phone', $session_id, $scene);
+                    if (!$res || 1 != $res['status']) {
+                        return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
+                    }
                 }
 
                 //验证有效期
