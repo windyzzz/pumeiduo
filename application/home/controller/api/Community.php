@@ -176,11 +176,12 @@ class Community extends Base
         $post = input('post.');
         // 验证参数
         $validate = validate('Community');
-        if (!$validate->scene('add')->check($post)) {
+        if (!$validate->scene('article_add')->check($post)) {
             return json(['status' => 0, 'msg' => $validate->getError()]);
         }
         // 保存更新数据
         $post['user_id'] = $this->user_id;
+        $post['source'] = 1;
         if ($articleId) {
             $post['up_time'] = NOW_TIME;
             $post['status'] = 0;

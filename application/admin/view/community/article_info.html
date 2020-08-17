@@ -27,6 +27,35 @@
         <div class="ncap-form-default">
             <dl class="row">
                 <dt class="tit">
+                    <label>来源</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" value="{$info.source_desc}" class="input-txt" disabled>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>作者信息</label>
+                </dt>
+                <dd class="opt">
+                    <switch name="$info[source]">
+                        <case value="1">
+                            <a target="_blank" href="{:U('User/detail', array('id'=>$user_info[user_id]))}">
+                                <if condition="!empty($user_info[nickname])">
+                                    {$user_info.nickname}
+                                <else/>
+                                    {$user_info.user_name}
+                                </if>
+                            </a>
+                        </case>
+                        <case value="2">
+                            {$user_info.user_name}
+                        </case>
+                    </switch>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
                     <label>顶级分类</label>
                 </dt>
                 <dd class="opt">

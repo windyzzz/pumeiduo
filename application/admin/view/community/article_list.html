@@ -14,7 +14,6 @@
 	<div class="flexigrid">
 		<div class="mDiv">
 			<div class="ftitle">
-				<h3>商学院文章列表</h3>
 				<h5>(共{$page->totalRows}条记录)</h5>
 			</div>
 			<div title="刷新数据" class="pReload"><i class="fa fa-refresh"></i></div>
@@ -22,8 +21,15 @@
 		<form class="navbar-form form-inline" action="{:U('Admin/Community/article')}" method="post">
 			<div class="sDiv">
 				<div class="sDiv2">
+					<select name="source" class="select">
+						<option value="">选择来源</option>
+						<option value="1" <if condition="$source eq 1">selected</if>>会员用户</option>
+						<option value="2" <if condition="$source eq 2">selected</if>>管理后台</option>
+					</select>
+				</div>
+				<div class="sDiv2">
 					<select  name="cate_id1" class="select">
-						<option value="">选择一级分类</option>
+						<option value="0">选择一级分类</option>
 						<foreach name="t_category" item="vo">
 							<option value="{$key}" <if condition="$key eq $cate_id1">selected</if>>{$vo}</option>
 						</foreach>
@@ -58,6 +64,9 @@
                         <th align="left" abbr="article_title" axis="col3" class="">
                             <div style="text-align: center; width: 50px;" class="">文章ID</div>
                         </th>
+						<th align="left" abbr="article_title" axis="col3" class="">
+							<div style="text-align: center; width: 100px;" class="">来源</div>
+						</th>
 						<th align="left" abbr="article_title" axis="col3" class="">
 							<div style="text-align: center; width: 100px;" class="">一级分类</div>
 						</th>
@@ -112,6 +121,9 @@
                                 <div style="text-align: center; width: 50px;">{$vo.id}</div>
                             </td>
 							<td align="left" class="">
+								<div style="text-align: center; width: 100px;">{$vo.source_desc}</div>
+							</td>
+							<td align="left" class="">
 								<div style="text-align: center; width: 100px;">{$vo.cate_id1_desc}</div>
 							</td>
 							<td align="left" class="">
@@ -131,6 +143,9 @@
 											</case>
 											<case value="-1">
 												style="color: red;"
+											</case>
+											<case value="2">
+												style="color: blue;"
 											</case>
 										</switch>
 									>{$vo.status_desc}</span>
@@ -212,6 +227,10 @@
 	});
 
 	$('select[name="cate_id1"]').change(function () {
+		if ($(this).val() == '0') {
+			$('select[name="cate_id2"]').html('<option value="0">选择二级分类</option>');
+			return;
+		}
 		$.ajax({
 			url:"{:U('Community/category')}",
 			data:{act: 'low_level', cate_id: $(this).val()},

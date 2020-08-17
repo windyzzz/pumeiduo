@@ -31,7 +31,7 @@ class CreateCommunityArticle extends Migrator
         $this->table('community_article', ['comment' => '社区文章表'])
             ->addColumn('title', 'string', ['default' => '', 'comment' => '标题'])
             ->addColumn('content', 'text', ['comment' => '内容'])
-            ->addColumn('user_id', 'integer', ['comment' => '用户ID'])
+            ->addColumn('user_id', 'integer', ['comment' => '用户ID/管理员ID'])
             ->addColumn('cate_id1', 'integer', ['comment' => '所属社区顶级分类'])
             ->addColumn('cate_id2', 'integer', ['comment' => '所属社区下级分类'])
             ->addColumn('goods_id', 'integer', ['default' => 0, 'comment' => '关联商品ID'])
@@ -40,11 +40,12 @@ class CreateCommunityArticle extends Migrator
             ->addColumn('video', 'string', ['default' => '', 'comment' => '视频'])
             ->addColumn('share', 'integer', ['default' => 0, 'comment' => '分享次数'])
             ->addColumn('click', 'integer', ['default' => 0, 'comment' => '点击次数'])
-            ->addColumn('status', 'integer', ['default' => 0, 'comment' => '状态：0未审核 1通过发布 -1审核失败'])
+            ->addColumn('status', 'integer', ['default' => 0, 'comment' => '状态：0未审核 1通过发布 -1审核失败 2预发布'])
             ->addColumn('reason', 'string', ['default' => '', 'comment' => '审核失败原因'])
             ->addColumn('add_time', 'integer')
             ->addColumn('up_time', 'integer', ['default' => 0, 'comment' => '更新时间'])
             ->addColumn('publish_time', 'integer', ['default' => 0, 'comment' => '审核发布时间'])
+            ->addColumn('source', 'integer', ['comment' => '来源：1用户 2管理员'])
             ->addIndex(['cate_id1', 'cate_id2'], ['name' => 'cate_id'])
             ->create();
     }

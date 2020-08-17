@@ -719,7 +719,6 @@
 		<div class="ncap-form-default tab_div_2" style="display:none;">
             <dl class="row">
                 <input type="hidden" value="{$goodsInfo['video']}" name="video_path" id="video_input" />
-
                 <video style="" controls="controls" width="600" height="300" id="video_tag" src="{$video_url}"></video>
                 <div id="container">
                     <a id="selectfiles" href="javascript:void(0);" class='btn'>选择文件</a>
@@ -1118,7 +1117,6 @@
 
     // 上传商品相册回调函数
     function call_back2(paths) {
-
         var last_div = $(".goods_xc:last").prop("outerHTML");
         for (var i = 0; i < paths.length; i++) {
             $(".goods_xc:eq(0)").before(last_div);	// 插入一个 新图片

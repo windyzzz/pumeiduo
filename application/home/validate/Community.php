@@ -22,6 +22,6 @@ class Community extends Validate
     ];
 
     protected $scene = [
-        'add' => ['content', 'cate_id1', 'cate_id2', 'goods_id']
+        'article_add' => ['content', 'cate_id1', 'cate_id2', 'goods_id']
     ];
 }

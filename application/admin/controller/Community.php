@@ -137,10 +137,14 @@ class Community extends Base
         switch ($act) {
             case 'list':
                 // 文章列表数据
+                $source = I('source', '');
                 $cateId1 = I('cate_id1', 0);
                 $cateId2 = I('cate_id2', 0);
                 $status = I('status', '');
                 $where = [];
+                if ($source) {
+                    $where['source'] = $source;
+                }
                 if ($cateId1) {
                     $where['cate_id1'] = $cateId1;
                 }
@@ -159,6 +163,7 @@ class Community extends Base
                     $article['cate_id2_desc'] = $dCategory[$article['cate_id2']];
                 }
 
+                $this->assign('source', $source);
                 $this->assign('cate_id1', $cateId1);
                 $this->assign('cate_id2', $cateId2);
                 $this->assign('status', $status);
@@ -191,6 +196,14 @@ class Community extends Base
                 }
                 $articleModel = new CommunityArticle();
                 $articleInfo = $articleModel->where(['id' => $articleId])->find();
+                switch ($articleInfo['source']) {
+                    case 1:
+                        $userInfo = M('users')->where(['user_id' => $articleInfo['user_id']])->field('user_id, nickname, user_name')->find();
+                        break;
+                    case 2:
+                        $userInfo = M('admin')->where(['admin_id' => $articleInfo['user_id']])->field('user_name')->find();
+                        break;
+                }
                 $articleInfo['image'] = !empty($articleInfo['image']) ? explode(',', $articleInfo['image']) : [];
                 $articleInfo['video'] = !empty($articleInfo['video']) ? \plugins\Oss::url($articleInfo['video']) : '';
                 $articleInfo['cate_id1_desc'] = $tCategory[$articleInfo['cate_id1']];
@@ -199,18 +212,55 @@ class Community extends Base
                 // 文章审核记录
                 $articleLog = M('community_article_log')->where(['article_id' => $articleId])->order('add_time DESC')->select();
                 $this->assign('info', $articleInfo);
+                $this->assign('user_info', $userInfo);
                 $this->assign('log', $articleLog);
                 return $this->fetch('article_info');
                 break;
             case 'log':
-                $articleId = I('article_id', 0);
                 // 文章审核记录
+                $articleId = I('article_id', 0);
                 $count = M('community_article_log')->where(['article_id' => $articleId])->count();
                 $page = new Page($count, 10);
                 $articleLog = M('community_article_log')->where(['article_id' => $articleId])->limit($page->firstRow . ',' . $page->listRows)->order('add_time DESC')->select();
                 $this->assign('page', $page);
                 $this->assign('log', $articleLog);
                 return $this->fetch('article_log');
+                break;
+            case 'add':
+                // 添加文章
+                if (IS_POST) {
+                    $postData = I('post.');
+                    // 验证参数
+                    $validate = validate('Community');
+                    if (!$validate->scene('article_add')->check($postData)) {
+                        return $this->ajaxReturn(['status' => 0, 'msg' => $validate->getError()]);
+                    }
+                    unset($postData['image'][count($postData['image']) - 1]);
+                    switch ($postData['upload_content']) {
+                        case 1:
+                            if (empty($postData['image'])) {
+                                $this->ajaxReturn(['status' => 0, 'msg' => '请上传图片']);
+                            }
+                            $postData['image'] = implode(',', $postData['image']);
+                            $postData['video'] = '';
+                            break;
+                        case 2:
+                            if (empty($postData['video'])) {
+                                $this->ajaxReturn(['status' => 0, 'msg' => '请上传视频']);
+                            }
+                            $postData['image'] = '';
+                            break;
+                    }
+                    unset($postData['upload_content']);
+                    $postData['user_id'] = session('admin_id');
+                    $postData['add_time'] = NOW_TIME;
+                    $postData['publish_time'] = strtotime($postData['publish_time']);
+                    $postData['status'] = 2;
+                    $postData['source'] = 2;
+                    M('community_article')->add($postData);
+                    $this->ajaxReturn(['status' => 1, 'msg' => '添加成功']);
+                }
+                return $this->fetch('article_add');
                 break;
         }
     }
