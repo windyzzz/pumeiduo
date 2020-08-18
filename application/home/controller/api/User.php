@@ -3921,6 +3921,14 @@ class User extends Base
         if ($res['status'] != '01') {
             return json(['status' => 0, 'msg' => "请填写正确的身份信息\r\n（身份证号以及姓名）"]);
         }
+        // 记录身份证信息
+        if (!M('user_id_card_info')->where(['real_name' => $realName, 'id_card' => $idCard])->find()) {
+            M('user_id_card_info')->add([
+                'user_id' => $this->user_id ?? 0,
+                'id_card' => $idCard,
+                'real_name' => $realName
+            ]);
+        }
         return json(['status' => 1]);
     }
 }

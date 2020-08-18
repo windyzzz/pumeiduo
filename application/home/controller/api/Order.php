@@ -2419,7 +2419,10 @@ class Order extends Base
                 return json($res);
             case 2:
                 $orderType = 2; // 韩国购
-                if ($idCard == 0) return json(['status' => 0, 'msg' => '请填写正确的身份证格式']);
+                if ($idCard == 0) {
+                    $idCard = M('user_id_card_info')->where(['user_id' => $this->user_id, 'real_name' => $userAddress['consignee']])->value('id_card');
+                    if (empty($idCard)) return json(['status' => 0, 'msg' => '请填写正确的身份证格式']);
+                }
                 break;
             case 3:
                 $orderType = 3; // 供应链
