@@ -263,12 +263,14 @@ class Login extends Base
      */
     public function logout()
     {
-        setcookie('uname', '', time() - 3600, '/');
-        setcookie('cn', '', time() - 3600, '/');
-        setcookie('user_id', '', time() - 3600, '/');
-        setcookie('PHPSESSID', '', time() - 3600, '/');
-        session_unset();
-        session_destroy();
+        if (!$this->isApp) {
+            setcookie('uname', '', time() - 3600, '/');
+            setcookie('cn', '', time() - 3600, '/');
+            setcookie('user_id', '', time() - 3600, '/');
+            setcookie('PHPSESSID', '', time() - 3600, '/');
+            session_unset();
+            session_destroy();
+        }
         //$this->success("退出成功",U('Home/Index/index'));
         if ($this->userToken) {
             (new UsersLogic())->logout($this->userToken);
