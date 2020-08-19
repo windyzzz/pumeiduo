@@ -12,11 +12,14 @@ class STS extends Base
      */
     public function getVoucher()
     {
+        $type = I('type', 'video');
         $res = (new STSLogic($this->user_id))->sts();
         if (empty($res)) {
             return json(['status' => 0, 'msg' => '凭证获取失败，请重试']);
         } else {
-            $res['url'] = 'http://' . C('OSS_BUCKET') . '.' . C('OSS_ENDPOINT');
+            $res['bucket'] = C('OSS_BUCKET');
+            $res['end_point'] = C('OSS_ENDPOINT');
+            $res['path'] = $type;
             return json(['status' => 1, 'result' => $res]);
         }
     }
