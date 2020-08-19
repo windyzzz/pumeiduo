@@ -630,18 +630,18 @@ class Tb extends Controller
             'out_time' => $goods['out_time'],//下架时间戳
             'trade_type' => $trade_type,
             'is_supply' => $isSupply,
-            'keywords' => $goods['keywords'],
-            'goods_remark' => $goods['goods_remark'],
-            'goods_content' => $goods['goods_content'],
-            'video' => $goods['video'],
             'supplier_goods_id' => $goods['supplier_goods_id'],
             'is_abroad' => $goods['is_abroad'],
             'is_free_shipping' => $isSupply
         );
         if ($isSupply == 1) {
-            // 供应链商品直接更新库存 缩略图
+            // 供应链商品更新数据
+            $goods_data['video'] = $goods['video'];
             $goods_data['store_count'] = $goods['store_count'];
             $goods_data['original_img'] = $goods['original_img'];
+            $goods_data['keywords'] = $goods['keywords'];
+            $goods_data['goods_remark'] = $goods['goods_remark'];
+            $goods_data['goods_content'] = $goods['goods_content'];
         }
         if ($goods['is_one_send'] == 0) {
             $goods_data['goods_type'] = $goods['goods_type'];//模型
