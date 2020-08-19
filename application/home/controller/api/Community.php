@@ -138,6 +138,14 @@ class Community extends Base
                     $image[] = getFullPath($item);
                 }
             }
+            // 视频处理
+            if (empty($value['image']) && !empty($value['video']) && empty($value['video_cover'])) {
+                $videoCover = getVideoCoverImages($value['video']);
+                if ($videoCover) {
+                    $value['video_cover'] = $videoCover;
+                    M('community_article')->where(['id' => $value['id']])->update(['video_cover' => $videoCover]);
+                }
+            }
             // 组合数据
             $articleList[$key] = [
                 'article_id' => $value['id'],
@@ -145,7 +153,10 @@ class Community extends Base
                 'share' => $value['share'],
                 'publish_time' => $publishTime,
                 'image' => $image,
-                'video' => $value['video'],
+                'video' => [
+                    'url' => !empty($value['video']) ? \plugins\Oss::url($value['video']) : '',
+                    'cover' => getFullPath($value['video_cover'])
+                ],
                 'user' => [
                     'user_id' => $value['user_id'],
                     'user_name' => !empty($value['user_name']) ? $value['user_name'] : !empty($value['nickname']) ? $value['nickname'] : '',

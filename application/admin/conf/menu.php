@@ -160,7 +160,7 @@ return [
             ['name' => '设置', 'act' => 'config', 'op' => 'Abroad'],
         ]],
 
-        ['name' => '商学院', 'child' => [
+        ['name' => '社区', 'child' => [
             ['name' => '分类', 'act' => 'category', 'op' => 'Community'],
             ['name' => '文章', 'act' => 'article', 'op' => 'Community'],
         ]],

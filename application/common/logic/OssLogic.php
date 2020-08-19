@@ -228,4 +228,33 @@ class OssLogic
 
         return false;
     }
+
+    /**
+     * 下载文件
+     * @param $filePath
+     * @param $path
+     * @return bool|string
+     */
+    public function downloadFile($filePath, $path)
+    {
+        $ossClient = self::getOssClient();
+        if (!$ossClient) {
+            return false;
+        }
+        $object = $filePath;
+        $localFile = $path . substr($filePath, strrpos($filePath, '/') + 1);
+        if (!is_dir($path)) {
+            mkdir($path, 0755, true);
+        }
+        $options = [
+            OssClient::OSS_FILE_DOWNLOAD => $localFile
+        ];
+        try {
+            $ossClient->getObject(self::$bucket, $object, $options);
+        } catch (OssException $e) {
+            Log($e->getMessage() . "\n");
+            return false;
+        }
+        return $localFile;
+    }
 }

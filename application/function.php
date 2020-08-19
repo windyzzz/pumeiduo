@@ -1905,3 +1905,31 @@ function imgToBase64($img = '')
     $base64 = chunk_split(base64_encode(file_get_contents($img)));
     return 'data:' . $imageInfo['mime'] . ';base64,' . chunk_split($base64);
 }
+
+/**
+ * 获取视频封面图
+ * @param string $file
+ * @return string
+ */
+function getVideoCoverImages($file)
+{
+    $localFile = (new \app\common\logic\OssLogic())->downloadFile($file, PUBLIC_PATH . 'upload/community/video_cover/temp/');
+//    $localFile = 'E:\programme\pumeiduo\pumeiduo_server\public\upload\community\video_cover\temp\JmxExQ8sPG8db6Gm8ZakepfPeQehnM2T.mp4';
+    $filePath = '';
+    if (!empty($localFile)) {
+        if (is_file($localFile)) {
+            $pathParts = pathinfo($localFile);
+            $path = str_replace('temp', '', $pathParts['dirname']) . date('Y-m/');
+            if (!is_dir($path)) {
+                mkdir($path, 0755, true);
+            }
+            $filePath = $path . $pathParts['filename'] . '_1.jpg';
+            // 取第1秒作为封面图
+            $command = \think\Env::get('FFMPEG.FUNC') . " -i {$localFile} -y -f image2 -ss 1 -vframes 1 -s 640x360 {$filePath}";
+            exec($command);
+            $filePath = str_replace('\\', '/', substr($filePath, strrpos($filePath, 'public') - 1));
+        }
+        unlink($localFile);
+    }
+    return $filePath;
+}
