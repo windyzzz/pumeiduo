@@ -219,6 +219,9 @@ class Community extends Base
         // 保存更新数据
         $post['user_id'] = $this->user_id;
         $post['source'] = 1;
+        if (!empty($post['video'])) {
+            $post['video'] = substr($post['video'], strpos($post['video'], 'video'));
+        }
         if ($articleId) {
             $post['up_time'] = NOW_TIME;
             $post['status'] = 0;

@@ -252,7 +252,6 @@ class OssLogic
         try {
             $ossClient->getObject(self::$bucket, $object, $options);
         } catch (OssException $e) {
-            Log($e->getMessage() . "\n");
             return false;
         }
         return $localFile;
