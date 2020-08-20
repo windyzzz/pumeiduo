@@ -42,11 +42,11 @@ class Goods extends Base
         parent::__construct();
         // header('Access-Control-Allow-Origin:*');
         // header('Access-Control-Allow-Method:POST,GET');
-        $user = session('user');
-        if ($user) {
-            $this->user = $user;
-            $this->user_id = $user['user_id'];
-        }
+//        $user = session('user');
+//        if ($user) {
+//            $this->user = $user;
+//            $this->user_id = $user['user_id'];
+//        }
     }
 
     public function getShareImage()

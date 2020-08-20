@@ -1086,6 +1086,7 @@ class GoodsLogic extends Model
      */
     public function getGoodsList($filter_goods_id, $sort, $page, $userId = null, $isApp = false)
     {
+        $where = [];
         if (!$isApp) {
             $where = [
                 'is_abroad' => 0,

@@ -264,6 +264,9 @@ class PlaceOrder
             $orderData['address'] = $this->userAddress['address']; //'详细地址'
             $orderData['mobile'] = $this->userAddress['mobile']; //'手机',
             $orderData['zipcode'] = !empty($this->userAddress['zipcode']) ? $this->userAddress['zipcode'] : M('region2')->where(['id' => $this->userAddress['district']])->value('zipcode'); //'邮编',
+            if (empty($orderData['zipcode'])) {
+                $orderData['zipcode'] = M('region2')->where(['id' => $this->userAddress['city']])->value('zipcode');
+            }
         }
         if (!empty($this->userNote)) {
             $orderData['user_note'] = $this->userNote; // 用户下单备注
