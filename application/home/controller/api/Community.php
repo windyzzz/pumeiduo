@@ -93,56 +93,70 @@ class Community extends Base
             } else {
                 $publishTime = date('Y-m-d H:i', $value['publish_time']);
             }
-            // 商品价格处理
-            $goodsType = 'normal';
-            $shopPrice = $value['shop_price'];
-            $exchangeIntegral = $value['exchange_integral'];
-            $exchangePrice = bcsub($shopPrice, $exchangeIntegral, 2);
-            if (!empty($flashSale)) {
-                foreach ($flashSale as $v) {
-                    if ($value['goods_id'] == $v['goods_id']) {
-                        $goodsType = 'flash_sale';
-                        if ($v['can_integral'] == 0) {
-                            $exchangeIntegral = '0';    // 不能使用积分兑换
-                        }
-                        $shopPrice = $v['price'];
-                        $exchangePrice = bcsub($shopPrice, $exchangeIntegral, 2);
-                        break;
-                    }
-                }
-            }
-            if (!empty($groupBuy)) {
-                foreach ($groupBuy as $v) {
-                    if ($value['goods_id'] == $v['goods_id']) {
-                        $goodsType = 'group_buy';
-                        if ($v['can_integral'] == 0) {
-                            $exchangeIntegral = '0';    // 不能使用积分兑换
-                        }
-                        $shopPrice = $v['price'];
-                        $exchangePrice = bcsub($shopPrice, $exchangeIntegral, 2);
-                        break;
-                    }
-                }
-            }
-            if (!empty($promGoods)) {
-                foreach ($promGoods as $v) {
-                    if ($value['goods_id'] == $v['goods_id']) {
-                        $goodsType = 'promotion';
-                        switch ($v['type']) {
-                            case 0:
-                                // 打折
-                                $shopPrice = bcdiv(bcmul($shopPrice, $v['expression'], 2), 100, 2);
-                                $exchangePrice = bcdiv(bcmul($exchangePrice, $v['expression'], 2), 100, 2);
-                                break 2;
-                            case 1:
-                                // 减价
-                                $shopPrice = bcsub($shopPrice, $v['expression'], 2);
-                                $exchangePrice = bcsub($exchangePrice, $v['expression'], 2);
-                                break 2;
+            // 商品处理
+            $goods = [];
+            if ($value['goods_id'] != 0) {
+                $goodsType = 'normal';
+                $shopPrice = $value['shop_price'];
+                $exchangeIntegral = $value['exchange_integral'];
+                $exchangePrice = bcsub($shopPrice, $exchangeIntegral, 2);
+                if (!empty($flashSale)) {
+                    foreach ($flashSale as $v) {
+                        if ($value['goods_id'] == $v['goods_id']) {
+                            $goodsType = 'flash_sale';
+                            if ($v['can_integral'] == 0) {
+                                $exchangeIntegral = '0';    // 不能使用积分兑换
+                            }
+                            $shopPrice = $v['price'];
+                            $exchangePrice = bcsub($shopPrice, $exchangeIntegral, 2);
+                            break;
                         }
                     }
                 }
+                if (!empty($groupBuy)) {
+                    foreach ($groupBuy as $v) {
+                        if ($value['goods_id'] == $v['goods_id']) {
+                            $goodsType = 'group_buy';
+                            if ($v['can_integral'] == 0) {
+                                $exchangeIntegral = '0';    // 不能使用积分兑换
+                            }
+                            $shopPrice = $v['price'];
+                            $exchangePrice = bcsub($shopPrice, $exchangeIntegral, 2);
+                            break;
+                        }
+                    }
+                }
+                if (!empty($promGoods)) {
+                    foreach ($promGoods as $v) {
+                        if ($value['goods_id'] == $v['goods_id']) {
+                            $goodsType = 'promotion';
+                            switch ($v['type']) {
+                                case 0:
+                                    // 打折
+                                    $shopPrice = bcdiv(bcmul($shopPrice, $v['expression'], 2), 100, 2);
+                                    $exchangePrice = bcdiv(bcmul($exchangePrice, $v['expression'], 2), 100, 2);
+                                    break 2;
+                                case 1:
+                                    // 减价
+                                    $shopPrice = bcsub($shopPrice, $v['expression'], 2);
+                                    $exchangePrice = bcsub($exchangePrice, $v['expression'], 2);
+                                    break 2;
+                            }
+                        }
+                    }
+                }
+                $goods = [
+                    'goods_type' => $goodsType,
+                    'goods_id' => $value['goods_id'],
+                    'item_id' => $value['item_id'],
+                    'goods_name' => $value['goods_name'],
+                    'original_img_new' => getFullPath($value['original_img']),
+                    'shop_price' => $shopPrice,
+                    'exchange_integral' => $exchangeIntegral,
+                    'exchange_price' => $exchangePrice,
+                ];
             }
+
             // 图片处理
             !empty($value['image']) && $value['image'] = explode(',', $value['image']);
             $image = [];
@@ -152,12 +166,23 @@ class Community extends Base
                 }
             }
             // 视频处理
-            if (empty($value['image']) && !empty($value['video']) && empty($value['video_cover'])) {
-                $videoCover = getVideoCoverImages($value['video']);
-                if ($videoCover) {
-                    $value['video_cover'] = $videoCover;
-                    M('community_article')->where(['id' => $value['id']])->update(['video_cover' => $videoCover]);
+            $video = [];
+            if (!empty($value['video'])) {
+                if (empty($value['video_cover'])) {
+                    $videoCover = getVideoCoverImages($value['video']);
+                    $path = $videoCover['path'];
+                    $axis = $videoCover['axis'];
+                    if ($path) {
+                        $value['video_cover'] = $path;
+                        $value['video_axis'] = $axis;
+                        M('community_article')->where(['id' => $value['id']])->update(['video_cover' => $path, 'video_axis' => $axis]);
+                    }
                 }
+                $video = [
+                    'url' => !empty($value['video']) ? \plugins\Oss::url($value['video']) : '',
+                    'cover' => getFullPath($value['video_cover']),
+                    'axis' => $value['video_axis']
+                ];
             }
             // 组合数据
             $articleList[$key] = [
@@ -166,25 +191,13 @@ class Community extends Base
                 'share' => $value['share'],
                 'publish_time' => $publishTime,
                 'image' => $image,
-                'video' => [
-                    'url' => !empty($value['video']) ? \plugins\Oss::url($value['video']) : '',
-                    'cover' => getFullPath($value['video_cover'])
-                ],
+                'video' => (object)$video,
                 'user' => [
                     'user_id' => $value['user_id'],
                     'user_name' => !empty($value['user_name']) ? $value['user_name'] : !empty($value['nickname']) ? $value['nickname'] : '',
                     'head_pic' => getFullPath($value['head_pic']),
                 ],
-                'goods' => [
-                    'goods_type' => $goodsType,
-                    'goods_id' => $value['goods_id'],
-                    'item_id' => $value['item_id'],
-                    'goods_name' => $value['goods_name'],
-                    'original_img_new' => getFullPath($value['original_img']),
-                    'shop_price' => $shopPrice,
-                    'exchange_integral' => $exchangeIntegral,
-                    'exchange_price' => $exchangePrice,
-                ],
+                'goods' => (object)$goods,
             ];
         }
         return json(['status' => 1, 'result' => ['list' => $articleList]]);

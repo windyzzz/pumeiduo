@@ -19,7 +19,8 @@ class STS extends Base
         } else {
             $res['bucket'] = C('OSS_BUCKET');
             $res['end_point'] = C('OSS_ENDPOINT');
-            $res['path'] = $type;
+            $res['path'] = $type . '/' . date('Y/m/d/H/');
+            $res['file_name'] = get_rand_str(32, 1, 1);
             return json(['status' => 1, 'result' => $res]);
         }
     }

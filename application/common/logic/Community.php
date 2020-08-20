@@ -56,7 +56,7 @@ class Community
         $page = new Page($count, $num);
         $articleList = M('community_article ca')
             ->join('users u', 'u.user_id = ca.user_id')
-            ->join('goods g', 'g.goods_id = ca.goods_id')
+            ->join('goods g', 'g.goods_id = ca.goods_id', 'LEFT')
             ->field('ca.*, u.nickname, u.user_name, u.head_pic, g.goods_name, g.original_img, g.shop_price, g.exchange_integral')
             ->where($where)->order($sort)->limit($page->firstRow . ',' . $page->listRows)->select();
         return ['total' => $count, 'list' => $articleList];

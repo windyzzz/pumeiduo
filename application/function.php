@@ -1908,14 +1908,15 @@ function imgToBase64($img = '')
 
 /**
  * 获取视频封面图
- * @param string $file
- * @return string
+ * @param $file
+ * @return array
+ * @throws getid3_exception
  */
 function getVideoCoverImages($file)
 {
     $localFile = (new \app\common\logic\OssLogic())->downloadFile($file, PUBLIC_PATH . 'upload/community/video_cover/temp/');
-//    $localFile = 'E:\programme\pumeiduo\pumeiduo_server\public\upload\community\video_cover\temp\JmxExQ8sPG8db6Gm8ZakepfPeQehnM2T.mp4';
     $filePath = '';
+    $fileAxis = '1';  // 1横向型 2竖向型
     if (!empty($localFile)) {
         if (is_file($localFile)) {
             $pathParts = pathinfo($localFile);
@@ -1924,12 +1925,21 @@ function getVideoCoverImages($file)
                 mkdir($path, 0755, true);
             }
             $filePath = $path . $pathParts['filename'] . '_1.jpg';
+            // 解析视频信息
+            include_once "vendor/getid3/getid3.php";
+            $getID3 = new getID3;
+            $fileInfo = $getID3->analyze($localFile);
+            $x = $fileInfo['video']['resolution_x'];
+            $y = $fileInfo['video']['resolution_y'];
+            if ($x < $y) {
+                $fileAxis = '2';
+            }
             // 取第1秒作为封面图
-            $command = \think\Env::get('FFMPEG.FUNC') . " -i {$localFile} -y -f image2 -ss 1 -vframes 1 -s 640x360 {$filePath}";
+            $command = \think\Env::get('FFMPEG.FUNC') . " -i {$localFile} -y -f image2 -ss 1 -vframes 1 -s {$x}x{$y} {$filePath}";
             exec($command);
             $filePath = str_replace('\\', '/', substr($filePath, strrpos($filePath, 'public') - 1));
         }
         unlink($localFile);
     }
-    return $filePath;
+    return ['path' => $filePath, 'axis' => $fileAxis];
 }
