@@ -80,7 +80,7 @@ class System
         $result['target_version'] = $config['app_version'];
         $result['version_log'] = $config['app_log'];
         // 是否展示第三方登录方法
-        if (!$config['not_show_version']) {
+        if (empty($config['not_show_version'])) {
             $result['show_login_method'] = 1;
         } else {
             $notShowVersion = explode('.', $config['not_show_version']);

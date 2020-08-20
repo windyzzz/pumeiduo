@@ -32,8 +32,8 @@ class CouponLogic extends Model
     {
         $title = '';
         $desc = '';
-        $goodsName = !empty($goodsName) ? $goodsName : $coupon['goods_name'];
-        $cateName = !empty($cateName) ? $cateName : $coupon['cat_name'];
+        $goodsName = !empty($goodsName) ? $goodsName : !empty($coupon['goods_name']) ? $coupon['goods_name'] : '';
+        $cateName = !empty($cateName) ? $cateName : !empty($coupon['cat_name']) ? $coupon['cat_name'] : '';
         switch ($coupon['use_type']) {
             case 0:
                 // 全店通用

@@ -41,11 +41,11 @@ class Order extends Base
         $params['user_token'] = $this->userToken;
         Hook::exec('app\\home\\behavior\\CheckAuth', 'run', $params);
 
-        $user = session('user');
-        if ($user) {
-            $this->user = $user;
-            $this->user_id = $user['user_id'];
-        }
+//        $user = session('user');
+//        if ($user) {
+//            $this->user = $user;
+//            $this->user_id = $user['user_id'];
+//        }
     }
 
     /*
