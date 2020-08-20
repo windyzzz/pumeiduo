@@ -1550,4 +1550,19 @@ AND log_id NOT IN
             $orderLogic->supplierOrderSend($orderId, NOW_TIME);
         }
     }
+
+    /**
+     * 发布社区文章
+     */
+    public function communityArticlePublish()
+    {
+        $where = [
+            'status' => 2,
+            'publish_time' => ['ELT', NOW_TIME]
+        ];
+        $articleIds = M('community_article')->where($where)->getField('id', true);
+        if (!empty($articleIds)) {
+            M('community_article')->where(['id' => ['IN', $articleIds]])->update(['status' => 1, 'publish_time' => NOW_TIME]);
+        }
+    }
 }
