@@ -6,6 +6,19 @@ namespace app\home\controller\api;
 class Community extends Base
 {
     /**
+     * 是否开启社区
+     * @return \think\response\Json
+     */
+    public function communityStatus()
+    {
+        if (tpCache('basic.community_open') == 1) {
+            return json(['status' => 1, 'result' => ['state' => 1, 'title' => '']]);
+        } else {
+            return json(['status' => 1, 'result' => ['state' => 0, 'title' => '功能尚未开启']]);
+        }
+    }
+
+    /**
      * 获取全部分类
      * @return \think\response\Json
      */
