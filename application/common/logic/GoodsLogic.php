@@ -1094,7 +1094,9 @@ class GoodsLogic extends Model
             ];
         }
         $sort['sort'] = 'desc';
-        $sort['goods_id'] = 'desc';
+        if (!isset($sort['goods_id'])) {
+            $sort['goods_id'] = 'desc';
+        }
         // 商品列表
         $goodsList = Db::name('goods')->where('goods_id', 'in', $filter_goods_id)->where($where)
             ->field('goods_id, cat_id, extend_cat_id, goods_sn, goods_name, goods_type, brand_id, store_count, comment_count, goods_remark,

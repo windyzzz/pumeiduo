@@ -2940,7 +2940,6 @@ class Goods extends Base
                 // 新品
                 $sortArr = [
                     'is_new' => $sortAsc,
-                    'goods_id' => $sortAsc
                 ];
                 break;
         }
@@ -2956,6 +2955,8 @@ class Goods extends Base
                 default:
                     $where['cat_id'] = $cateId;
             }
+        } else {
+            $where['abroad_recommend'] = 1; //TODO 临时处理
         }
         $goodsIds = M('goods')->where($where)->getField('goods_id', true);
         $count = count($goodsIds);
