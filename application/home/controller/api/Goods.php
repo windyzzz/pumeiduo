@@ -2940,7 +2940,6 @@ class Goods extends Base
                 // 新品
                 $sortArr = [
                     'is_new' => $sortAsc,
-                    'goods_id' => $sortAsc
                 ];
                 break;
         }
