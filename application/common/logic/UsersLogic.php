@@ -172,7 +172,7 @@ class UsersLogic extends Model
 
         if ($bapply_customs && $badd_tb_zx) {
             Db::commit();
-            $this->error = '提交成功，等待审核';
+            $this->error = "资料提交成功，请等待审核，审核时间为5-7个工作日有任何疑问请联系客服" . tpCache('shop_info.mobile');
             return true;
         } else {
             Db::rollback();

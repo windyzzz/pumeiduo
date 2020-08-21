@@ -22,10 +22,7 @@ class Apply extends Base
                 return json(['status' => 0, 'msg' => $userLogic->getError()]);
             }
         } else {
-            $applyStatus = 11;      // 申请状态 -11不符合资格 11可以申请 0审核中 1审核完成
-            $memberNum = tpCache('basic.apply_check_num');      // 申请资格下级人数
-            $refereeUserId = $userLogic->nk($this->user['invite_uid'], 3) ?? '无';   // 推荐人
-
+//            $applyStatus = 11;      // 申请状态 -11不符合资格 11可以申请 0审核中 1审核完成
             if ($this->user['distribut_level'] >= 3) {
                 // SVIP显示审核完成
                 $applyStatus = 1;
@@ -33,10 +30,16 @@ class Apply extends Base
                 $idCard = $this->user['id_cart'];
                 $mobile = $this->user['mobile'];
             } else {
-                // 用户已升级的下级
-                $memberCount = M('users')->where(['distribut_level' => ['>=', 2]])->where(['first_leader' => $this->user_id])->count('user_id');
-                if ($memberNum > $memberCount) {
+//                // 用户已升级的下级
+//                $memberCount = M('users')->where(['distribut_level' => ['>=', 2]])->where(['first_leader' => $this->user_id])->count('user_id');
+//                if (tpCache('basic.apply_check_num') > $memberCount) {
+//                    $applyStatus = -11; // 不符合资格
+//                }
+                // 查看用户等级预升级记录
+                $userPreLog = M('user_pre_distribute_log')->where(['user_id' => $this->user_id, 'status' => 0])->find();
+                if (empty($userPreLog)) {
                     $applyStatus = -11; // 不符合资格
+                    $tips = "您尚未有资格开通金卡会员\r\n请购买SVIP升级套餐后\r\n按系统提示进行申请\r\n有任何疑问请联系客服" . tpCache('shop_info.mobile');
                 } else {
                     // 获取申请信息
                     $apply = M('apply_customs')->where(['user_id' => $this->user_id])->find();
@@ -53,18 +56,18 @@ class Apply extends Base
                     }
                 }
             }
-
             $return = [
                 'status' => $applyStatus,
                 'true_name' => $trueName ?? '',
                 'id_card' => $idCard ?? '',
                 'mobile' => $mobile ?? '',
-                'referee_user_id' => $refereeUserId,
-                'member_num' => $memberNum,
+                'referee_user_id' => $userLogic->nk($this->user['invite_uid'], 3) ?? '无',   // 推荐人
+                'member_num' => 0,
                 'service_phone' => tpCache('shop_info.mobile'),
                 'card_num' => $this->user['user_name'],
                 'notice' => M('article')->where(['article_id' => 105])->value('app_content'),
-                'card_cover' => tpCache('basic.apply_card_cover') ?? ''
+                'card_cover' => tpCache('basic.apply_card_cover') ?? '',
+                'tips' => $tips ?? ''
             ];
             return json(['status' => 1, 'result' => $return]);
         }

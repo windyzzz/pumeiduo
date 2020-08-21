@@ -101,111 +101,126 @@ function update_user_level($user_id)
 }
 
 /**
- * 更新分销等级,折扣，消费总额 BY J.
- *
- * @param $user_id  用户ID
- * @param $order_id  订单ID
- *
- * @return bool
+ * 更新分销等级
+ * @param $user_id
+ * @param $order_id
+ * @throws \think\Exception
+ * @throws \think\db\exception\DataNotFoundException
+ * @throws \think\db\exception\ModelNotFoundException
+ * @throws \think\exception\DbException
+ * @throws \think\exception\PDOException
  */
 function update_user_distribut($user_id, $order_id)
 {
     $orderGoodsArr = M('OrderGoods')->where(['order_id' => $order_id])->select();
 
-    $level = [];
-
+    $is_vip = false;
+    $vipLevel = 1;
     //1.判断购买的商品是否包含升级专区的商品 zone == 3
-    //且有且只有distribut_id > 0 的商品才更新用户等级
+    //且有且只有distribut_id > 1 的商品才更新用户等级
     foreach ($orderGoodsArr as $v) {
         $goods_info = M('goods')->field('zone, distribut_id')->where(['goods_id' => $v['goods_id']])->find();
-        if (3 == $goods_info['zone'] && $goods_info['distribut_id'] > 0) {
-            $level[] = $goods_info['distribut_id'];
+        if (3 == $goods_info['zone'] && $goods_info['distribut_id'] > 1) {
+            $is_vip = true;
+            $vipLevel = $goods_info['distribut_id'];
+            break;
         }
     }
-
-    //2.更新用户分销等级,等级下属对应关系
-    if ($level) {
-        //2.1更新用户分销等级 根据order_money字段排序更新最大等级
-        $level_list = M('distribut_level')->where('level_id', 'in', $level)->order('order_money')->select();
-        $level = end($level_list);
-        $update['is_distribut'] = 1;
-        $update['distribut_level'] = $level['level_id'];
-        $user_info = M('users')->master()->field('user_id, distribut_level, first_leader')->where('user_id', $user_id)->find() ?: 1;
-        M('users')->where('user_id', $user_id)->save($update);
-        $user = Db::name('users')->where('user_id', $user_id)->find();
-        // 更新用户推送tags
-        $res = (new PushLogic())->bindPushTag($user);
-        if ($res['status'] == 2) {
-            $user = Db::name('users')->where('user_id', $user_id)->find();
-        }
-        // 升级返还奖励
-        if (tpCache('distribut.referee_get_electronic') > 0) {
-            accountLog($user_id, 0, 0, '购买318套组返消费币', 0, $order_id, '', tpCache('distribut.referee_get_electronic'), 14, false);
-        }
-        // 更新缓存
-        TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
-        $order = M('order')->where('order_id', $order_id)->find();
-        logDistribut($order['order_sn'], $user_id, $update['distribut_level'], $user_info['distribut_level'], 1);
-
-        //2.2购买vip套餐用户领取优惠券
-        $CouponLogic = new \app\common\logic\CouponLogic();
-        $CouponLogic->sendNewVipUser($user_id, $order_id);
-
-        //2.3推荐人奖励
-        $firstLeaderInfo = M('users')->where(['user_id' => $user_info['first_leader']])->field('distribut_level, first_leader')->find();
-        $updateRebate = false;
-        switch ($firstLeaderInfo['distribut_level']) {
-            case 1:
-                break;
+    //2.更新用户分销等级,等级下属对应关系（svip升级套餐需要金卡申请通过审核再处理）
+    if ($is_vip) {
+        $user_info = M('users')->master()->field('user_id, distribut_level, first_leader')->where('user_id', $user_id)->find();
+        switch ($vipLevel) {
             case 2:
-                // VIP推荐VIP奖励
-                if (tpCache('distribut.referee_vip_money') > 0) {
-                    // 奖励金额
-                    accountLog($user_info['first_leader'], tpCache('distribut.referee_vip_money'), 0, '推广318套组奖励金额', 0, $order_id, '', 0, 14, false);
-                    $updateRebate = true;
+                //2.1更新用户等级信息
+                $update['is_distribut'] = 1;
+                $update['distribut_level'] = 2;
+                M('users')->where('user_id', $user_id)->save($update);
+                $user = Db::name('users')->where('user_id', $user_id)->find();
+                // 更新用户推送tags
+                $res = (new PushLogic())->bindPushTag($user);
+                if ($res['status'] == 2) {
+                    $user = Db::name('users')->where('user_id', $user_id)->find();
                 }
-                if (tpCache('distribut.referee_vip_point') > 0) {
-                    // 奖励积分
-                    accountLog($user_info['first_leader'], 0, tpCache('distribut.referee_vip_point'), '推广318套组奖励积分', 0, $order_id, '', 0, 14, false);
-                    $updateRebate = true;
+                // 更新缓存
+                TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
+                $order = M('order')->where('order_id', $order_id)->find();
+                logDistribut($order['order_sn'], $user_id, $update['distribut_level'], $user_info['distribut_level'], 1);
+
+                //2.2购买vip套餐用户领取优惠券
+                $CouponLogic = new \app\common\logic\CouponLogic();
+                $CouponLogic->sendNewVipUser($user_id, $order_id);
+
+                //2.3推荐人奖励
+                $updateRebate = false;
+                // 升级返还奖励
+                if (tpCache('distribut.referee_get_electronic') > 0) {
+                    accountLog($user_id, 0, 0, '购买318套组返消费币', 0, $order_id, '', tpCache('distribut.referee_get_electronic'), 14, false);
                 }
-                // VIP的直接上级SVIP
-                $vipSvipInfo = M('users')->where(['user_id' => $firstLeaderInfo['first_leader']])->field('distribut_level')->find();
-                if (!empty($vipSvipInfo) && $vipSvipInfo['distribut_level'] >= 3) {
-                    if (tpCache('distribut.referee_vip_svip_money') > 0) {
-                        // 奖励金额
-                        accountLog($firstLeaderInfo['first_leader'], tpCache('distribut.referee_vip_svip_money'), 0, '直属推广318套组奖励金额', 0, $order_id, '', 0, 14, false);
-                        $updateRebate = true;
-                    }
-                    if (tpCache('distribut.referee_vip_svip_point') > 0) {
-                        // 奖励积分
-                        accountLog($firstLeaderInfo['first_leader'], 0, tpCache('distribut.referee_vip_svip_point'), '直属推广318套组奖励积分', 0, $order_id, '', 0, 14, false);
-                        $updateRebate = true;
-                    }
+                // 直属推荐人奖励金额
+                $firstLeaderInfo = M('users')->where(['user_id' => $user_info['first_leader']])->field('distribut_level, first_leader')->find();
+                switch ($firstLeaderInfo['distribut_level']) {
+                    case 2:
+                        // VIP推荐VIP奖励
+                        if (tpCache('distribut.referee_vip_money') > 0) {
+                            // 奖励金额
+                            accountLog($user_info['first_leader'], tpCache('distribut.referee_vip_money'), 0, '推广318套组奖励金额', 0, $order_id, '', 0, 14, false);
+                            $updateRebate = true;
+                        }
+                        if (tpCache('distribut.referee_vip_point') > 0) {
+                            // 奖励积分
+                            accountLog($user_info['first_leader'], 0, tpCache('distribut.referee_vip_point'), '推广318套组奖励积分', 0, $order_id, '', 0, 14, false);
+                            $updateRebate = true;
+                        }
+                        // VIP的直接上级SVIP
+                        $vipSvipInfo = M('users')->where(['user_id' => $firstLeaderInfo['first_leader']])->field('distribut_level')->find();
+                        if (!empty($vipSvipInfo) && $vipSvipInfo['distribut_level'] >= 3) {
+                            if (tpCache('distribut.referee_vip_svip_money') > 0) {
+                                // 奖励金额
+                                accountLog($firstLeaderInfo['first_leader'], tpCache('distribut.referee_vip_svip_money'), 0, '直属推广318套组奖励金额', 0, $order_id, '', 0, 14, false);
+                                $updateRebate = true;
+                            }
+                            if (tpCache('distribut.referee_vip_svip_point') > 0) {
+                                // 奖励积分
+                                accountLog($firstLeaderInfo['first_leader'], 0, tpCache('distribut.referee_vip_svip_point'), '直属推广318套组奖励积分', 0, $order_id, '', 0, 14, false);
+                                $updateRebate = true;
+                            }
+                        }
+                        break;
+                    case 3:
+                        // SVIP推荐VIP奖励
+                        if (tpCache('distribut.referee_svip_money') > 0) {
+                            // 奖励金额
+                            accountLog($user_info['first_leader'], tpCache('distribut.referee_svip_money'), 0, '推广318套组奖励金额', 0, $order_id, '', 0, 14, false);
+                            $updateRebate = true;
+                        }
+                        if (tpCache('distribut.referee_svip_point') > 0) {
+                            // 奖励积分
+                            accountLog($user_info['first_leader'], 0, tpCache('distribut.referee_svip_point'), '推广318套组奖励积分', 0, $order_id, '', 0, 14, false);
+                            $updateRebate = true;
+                        }
+                        break;
+                }
+                if ($updateRebate) {
+                    // 更新订单已分成
+                    M('order')->where(['order_id' => $order_id])->update(['is_distribut' => 1]);
+                    // 更新分成记录
+                    M('rebate_log')->where(['buy_user_id' => $order['user_id'], 'order_id' => $order['order_id']])->update([
+                        'status' => 3,
+                        'confirm_time' => NOW_TIME
+                    ]);
                 }
                 break;
             case 3:
-                // SVIP推荐VIP奖励
-                if (tpCache('distribut.referee_svip_money') > 0) {
-                    // 奖励金额
-                    accountLog($user_info['first_leader'], tpCache('distribut.referee_svip_money'), 0, '推广318套组奖励金额', 0, $order_id, '', 0, 14, false);
-                    $updateRebate = true;
-                }
-                if (tpCache('distribut.referee_svip_point') > 0) {
-                    // 奖励积分
-                    accountLog($user_info['first_leader'], 0, tpCache('distribut.referee_svip_point'), '推广318套组奖励积分', 0, $order_id, '', 0, 14, false);
-                    $updateRebate = true;
-                }
+                // 记录用户预备等级升级
+                M('user_pre_distribute_log')->add([
+                    'user_id' => $user_id,
+                    'old_level' => $user_info['distribut_level'],
+                    'new_level' => 3,
+                    'upgrade_type' => 1,
+                    'order_id' => $order_id,
+                    'add_time' => NOW_TIME
+                ]);
                 break;
-        }
-        if ($updateRebate) {
-            // 更新订单已分成
-            M('order')->where(['order_id' => $order_id])->update(['is_distribut' => 1]);
-            // 更新分成记录
-            M('rebate_log')->where(['buy_user_id' => $order['user_id'], 'order_id' => $order['order_id']])->update([
-                'status' => 3,
-                'confirm_time' => time()
-            ]);
         }
     }
 }
@@ -1601,7 +1616,7 @@ function confirm_order($id, $user_id = 0)
 
     order_give($order); // 调用送礼物方法, 给下单这个人赠送相应的礼物
     //分销设置
-    M('rebate_log')->where(['order_id' => $id, 'status' => ['NOT IN', ['3', '4', '5']]])->save(['status' => 2, 'confirm' => time()]);
+    M('rebate_log')->where(['order_id' => $id, 'status' => ['NOT IN', ['3', '4', '5']], 'is_vip' => 0])->save(['status' => 2, 'confirm' => time()]);
 
     // 邀请任务 (开始)
 //    $orderGoodsArr = M('OrderGoods')->where(['order_id' => $id])->select();
