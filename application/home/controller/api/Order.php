@@ -2715,6 +2715,7 @@ class Order extends Base
                             $apiController = new ApiController();
                             $express = $apiController->queryExpress(['shipping_code' => $delivery['shipping_code'], 'queryNo' => $delivery['invoice_no']], 'array');
                             if ($express['status'] != 0) {
+                                $express['result'] = [];
                                 $express['result']['deliverystatus'] = 1;   // 正在派件
                                 $express['result']['expPhone'] = tpCache('shop_info.mobile');
                                 $express['result']['list'][] = [
@@ -2741,6 +2742,7 @@ class Order extends Base
                                 $apiController = new ApiController();
                                 $express = $apiController->queryExpress(['shipping_code' => $delivery['shipping_code'], 'queryNo' => $delivery['invoice_no']], 'array');
                                 if ($express['status'] != 0) {
+                                    $express['result'] = [];
                                     $express['result']['deliverystatus'] = 1;   // 正在派件
                                     $express['result']['expPhone'] = tpCache('shop_info.mobile');
                                     $express['result']['list'][] = [
@@ -2857,6 +2859,7 @@ class Order extends Base
                             foreach ($delivery as $item) {
                                 $express = $apiController->queryExpress(['shipping_code' => $item['shipping_code'], 'queryNo' => $item['invoice_no']], 'array');
                                 if ($express['status'] != 0) {
+                                    $express['result'] = [];
                                     $express['result']['deliverystatus'] = 1;   // 正在派件
                                     $express['result']['list'][] = [
                                         'time' => date('Y-m-d H:i:s', time()),
@@ -2894,6 +2897,7 @@ class Order extends Base
                                 if (in_array($item['htns_status'], ['000', '120', '999'])) {
                                     $express = $apiController->queryExpress(['shipping_code' => $item['shipping_code'], 'queryNo' => $item['invoice_no']], 'array');
                                     if ($express['status'] != 0) {
+                                        $express['result'] = [];
                                         $express['result']['deliverystatus'] = 1;   // 正在派件
                                         $express['result']['list'][] = [
                                             'time' => date('Y-m-d H:i:s', time()),
@@ -2943,6 +2947,7 @@ class Order extends Base
                                 if ($item['supplier_goods_id'] == 0) {
                                     $express = $apiController->queryExpress(['shipping_code' => $item['shipping_code'], 'queryNo' => $item['invoice_no']], 'array');
                                     if ($express['status'] != 0) {
+                                        $express['result'] = [];
                                         $express['result']['deliverystatus'] = 1;   // 正在派件
                                         $express['result']['list'][] = [
                                             'time' => date('Y-m-d H:i:s', time()),
@@ -3023,6 +3028,7 @@ class Order extends Base
                     $apiController = new ApiController();
                     $express = $apiController->queryExpress(['shipping_code' => $delivery['shipping_code'], 'queryNo' => $delivery['invoice_no']], 'array');
                     if ($express['status'] != 0) {
+                        $express['result'] = [];
                         $express['result']['deliverystatus'] = 1;   // 正在派件
                         $express['result']['expPhone'] = tpCache('shop_info.mobile');
                         $express['result']['list'][] = [
@@ -3048,6 +3054,7 @@ class Order extends Base
                         $apiController = new ApiController();
                         $express = $apiController->queryExpress(['shipping_code' => $delivery['shipping_code'], 'queryNo' => $delivery['invoice_no']], 'array');
                         if ($express['status'] != 0) {
+                            $express['result'] = [];
                             $express['result']['deliverystatus'] = 1;   // 正在派件
                             $express['result']['expPhone'] = tpCache('shop_info.mobile');
                             $express['result']['list'][] = [
@@ -3083,6 +3090,7 @@ class Order extends Base
                         $apiController = new ApiController();
                         $express = $apiController->queryExpress(['shipping_code' => $delivery['shipping_code'], 'queryNo' => $delivery['invoice_no']], 'array');
                         if ($express['status'] != 0) {
+                            $express['result'] = [];
                             $express['result']['deliverystatus'] = 1;   // 正在派件
                             $express['result']['expPhone'] = tpCache('shop_info.mobile');
                             $express['result']['list'][] = [
