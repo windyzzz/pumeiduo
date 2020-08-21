@@ -13,7 +13,7 @@ class STS extends Base
     public function getVoucher()
     {
         $type = I('type', 'video');
-        $path = $type . '/' . date('Y/m/d/H');
+        $path = $type . '/' . date('Y/m/d/H/');
         $res = (new STSLogic($this->user_id))->sts();
         if (empty($res)) {
             return json(['status' => 0, 'msg' => '凭证获取失败，请重试']);
