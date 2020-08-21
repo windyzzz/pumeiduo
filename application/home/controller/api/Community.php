@@ -222,6 +222,15 @@ class Community extends Base
             $post['up_time'] = NOW_TIME;
             $post['status'] = 0;
             $post['publish_time'] = 0;
+            $articleData = M('community_article')->where(['id' => $articleId])->find();
+            // 更新记录
+            M('community_article_edit_log')->add([
+                'type' => 1,
+                'user_id' => $this->user_id,
+                'data' => json_encode($articleData),
+                'add_time' => NOW_TIME
+            ]);
+            // 更新数据
             M('community_article')->where(['id' => $articleId])->update($post);
         } else {
             $post['add_time'] = NOW_TIME;
