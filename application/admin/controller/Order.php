@@ -1646,6 +1646,7 @@ class Order extends Base
                         break;
                     default:
                         $tradeType = trade_type($orderGoods[0]['trade_type']);
+                        $goodsTradeType = '';
                 }
                 $strTable .= '<tr>';
                 $strTable .= '<td style="text-align:center;font-size:12px;" rowspan="' . $orderGoodsNum . '">&nbsp;' . $val['order_sn'] . '</td>';
@@ -1691,7 +1692,7 @@ class Order extends Base
 
                 if ($orderGoods) {
                     foreach ($orderGoods as $goods) {
-                        if (!isset($goodsTradeType)) {
+                        if (empty($goodsTradeType)) {
                             $goodsTradeType = trade_type($goods['trade_type']);
                         }
                         $strTable .= '<tr>';
