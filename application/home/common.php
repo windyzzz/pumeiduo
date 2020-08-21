@@ -37,25 +37,28 @@ function navigate_user()
  */
 function navigate_goods($id, $type = 0)
 {
-    $cat_id = $id; //
-    // 如果传递过来的是
-    if (1 == $type) {
-        $cat_id = M('goods')->where('goods_id', $id)->getField('cat_id');
-        $cat_id = $cat_id ?? 0;
-    }
-    $categoryList = M('GoodsCategory')->getField('id,name,parent_id');
-
-    // 第一个先装起来
-    $arr[$cat_id] = $categoryList[$cat_id]['name'];
-    while (true) {
-        $cat_id = $categoryList[$cat_id]['parent_id'];
-        if ($cat_id > 0) {
-            $arr[$cat_id] = $categoryList[$cat_id]['name'];
-        } else {
-            break;
+    $arr = [];
+    if ($id != 0) {
+        $cat_id = $id; //
+        // 如果传递过来的是
+        if (1 == $type) {
+            $cat_id = M('goods')->where('goods_id', $id)->getField('cat_id');
+            $cat_id = $cat_id ?? 0;
         }
+        $categoryList = M('GoodsCategory')->getField('id,name,parent_id');
+
+        // 第一个先装起来
+        $arr[$cat_id] = $categoryList[$cat_id]['name'];
+        while (true) {
+            $cat_id = $categoryList[$cat_id]['parent_id'];
+            if ($cat_id > 0) {
+                $arr[$cat_id] = $categoryList[$cat_id]['name'];
+            } else {
+                break;
+            }
+        }
+        $arr = array_reverse($arr, true);
     }
-    $arr = array_reverse($arr, true);
 
     return $arr;
 }

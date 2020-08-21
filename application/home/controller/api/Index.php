@@ -79,6 +79,7 @@ class Index
             ->field('*,FROM_UNIXTIME(start_time,"%Y-%m-%d %H:%i:%s") as start_time,FROM_UNIXTIME(end_time,"%Y-%m-%d %H:%i:%s") as end_time,100*(FORMAT(buy_num/goods_num,2)) as percent, CASE can_integral > 0  WHEN 1 THEN fl.price - g.exchange_integral ELSE fl.price END AS price')
             ->where($where)
             ->page($p, 10)
+            ->order(['fl.end_time' => 'asc'])
             ->select();
         $flashSaleList = array();
         $flashSaleList['flash_sale_goods'] = $flash_sale_goods;

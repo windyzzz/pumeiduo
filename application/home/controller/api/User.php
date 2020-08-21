@@ -1186,14 +1186,12 @@ class User extends Base
 
                 return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
             } elseif (2 == $step) {
-                $res = $logic->check_validate_code($code, $old_mobile, 'phone', $session_id, $scene);
-                if (!$res || 1 != $res['status']) {
-                    return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
-                }
-
-                //检查原手机是否正确
-                if (1 == $user_info['mobile_validated'] && $old_mobile != $user_info['mobile']) {
-                    return json(['status' => 0, 'msg' => '原手机号码错误', 'result' => null]);
+                if ($this->isApp) {
+                    $old_mobile = $mobile;
+                    $res = $logic->check_validate_code($code, $old_mobile, 'phone', $session_id, $scene);
+                    if (!$res || 1 != $res['status']) {
+                        return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
+                    }
                 }
 
                 //验证有效期
@@ -3923,6 +3921,14 @@ class User extends Base
         $res = $apiController->checkIdCard($query, 'array');
         if ($res['status'] != '01') {
             return json(['status' => 0, 'msg' => "请填写正确的身份信息\r\n（身份证号以及姓名）"]);
+        }
+        // 记录身份证信息
+        if (!M('user_id_card_info')->where(['real_name' => $realName, 'id_card' => $idCard])->find()) {
+            M('user_id_card_info')->add([
+                'user_id' => $this->user_id ?? 0,
+                'id_card' => $idCard,
+                'real_name' => $realName
+            ]);
         }
         return json(['status' => 1]);
     }

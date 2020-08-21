@@ -181,7 +181,8 @@ class Pay
     {
         $goodsListCount = count($this->payList);
         for ($payCursor = '0'; $payCursor < $goodsListCount; ++$payCursor) {
-            $this->totalAmount = bcadd($this->totalAmount, $this->payList[$payCursor]['goods_price'], 2);
+//            $this->totalAmount = bcadd($this->totalAmount, $this->payList[$payCursor]['goods_price'], 2);
+            $this->totalAmount = bcadd($this->totalAmount, bcmul($this->payList[$payCursor]['goods_num'], $this->payList[$payCursor]['goods_price'], 2), 2);
             $goods_fee = $this->payList[$payCursor]['goods_fee'] = bcmul($this->payList[$payCursor]['goods_num'], $this->payList[$payCursor]['member_goods_price'], 2);    // 小计
             $this->goodsPrice = bcadd($this->goodsPrice, $goods_fee, 2); // 商品总价
             if (array_key_exists('market_price', $this->payList[$payCursor])) {

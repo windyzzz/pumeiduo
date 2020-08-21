@@ -121,16 +121,30 @@
                         </dd>
                     </dl>
                 </if>
-                <if condition="$return_goods['status'] eq 0 && $return_goods[supplier_sale_status] NEQ 0">
-                    <dl class="row">
-                        <dt class="tit">
-                            <label>审核意见</label>
-                        </dt>
-                        <dd class="opt">
-                            <label><input type="radio" name="status" checked value="1">审核通过</label>
-                            <label><input type="radio" name="status" value="-1">拒绝通过</label>
-                        </dd>
-                    </dl>
+                <if condition="$order[order_type] == 3">
+                    <if condition="$return_goods['status'] eq 0 && $return_goods[supplier_sale_status] NEQ 0">
+                        <dl class="row">
+                            <dt class="tit">
+                                <label>审核意见</label>
+                            </dt>
+                            <dd class="opt">
+                                <label><input type="radio" name="status" checked value="1">审核通过</label>
+                                <label><input type="radio" name="status" value="-1">拒绝通过</label>
+                            </dd>
+                        </dl>
+                    </if>
+                <else/>
+                    <if condition="$return_goods['status'] eq 0">
+                        <dl class="row">
+                            <dt class="tit">
+                                <label>审核意见</label>
+                            </dt>
+                            <dd class="opt">
+                                <label><input type="radio" name="status" checked value="1">审核通过</label>
+                                <label><input type="radio" name="status" value="-1">拒绝通过</label>
+                            </dd>
+                        </dl>
+                    </if>
                 </if>
                 <dl class="row">
                     <dt class="tit">

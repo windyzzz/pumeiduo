@@ -186,7 +186,9 @@ class Tb extends Controller
             'province' => $order['province'],
             'city' => $order['city'],
             'district' => $order['district'],
+            'twon' => $order['twon'],
             'address' => $order['full_address'],
+            'zipcode' => $order['zipcode'],
             'mobile' => $order['mobile'],
             'shipping_code' => $order['shipping_code'],
             'shipping_name' => $order['shipping_name'],
@@ -628,18 +630,18 @@ class Tb extends Controller
             'out_time' => $goods['out_time'],//下架时间戳
             'trade_type' => $trade_type,
             'is_supply' => $isSupply,
-            'keywords' => $goods['keywords'],
-            'goods_remark' => $goods['goods_remark'],
-            'goods_content' => $goods['goods_content'],
-            'original_img' => $goods['original_img'],
-            'video' => $goods['video'],
             'supplier_goods_id' => $goods['supplier_goods_id'],
             'is_abroad' => $goods['is_abroad'],
             'is_free_shipping' => $isSupply
         );
         if ($isSupply == 1) {
-            // 供应链商品直接更新库存
+            // 供应链商品更新数据
+            $goods_data['video'] = $goods['video'];
             $goods_data['store_count'] = $goods['store_count'];
+            $goods_data['original_img'] = $goods['original_img'];
+            $goods_data['keywords'] = $goods['keywords'];
+            $goods_data['goods_remark'] = $goods['goods_remark'];
+            $goods_data['goods_content'] = $goods['goods_content'];
         }
         if ($goods['is_one_send'] == 0) {
             $goods_data['goods_type'] = $goods['goods_type'];//模型
@@ -706,7 +708,7 @@ class Tb extends Controller
 
         //删除旧套组
         M('goods_series')->where(array('goods_id' => $goods_id))->delete();
-        if (isset($goods['tao_arr'])) {
+        if (!empty($goods['tao_arr'])) {
             foreach ($goods['tao_arr'] as $key => $val) {
                 //获取商品id  规格id
                 $goods_sn = $val['goods_sn'];
@@ -727,7 +729,7 @@ class Tb extends Controller
         }
 
         //商品图片
-        if (isset($goods['goods_images'])) {
+        if (!empty($goods['goods_images'])) {
             M('goods_images')->where(['goods_id' => $goods_id])->delete();
             $goodsImagesData = [];
             foreach ($goods['goods_images'] as $image) {
@@ -740,7 +742,7 @@ class Tb extends Controller
         }
 
         //供应商商品规格标识
-        if (isset($goods['supplier_goods_spec'])) {
+        if (!empty($goods['supplier_goods_spec'])) {
             $supplierId = 0;
             $goodsSpecData = [];
             foreach ($goods['supplier_goods_spec'] as $spec) {
