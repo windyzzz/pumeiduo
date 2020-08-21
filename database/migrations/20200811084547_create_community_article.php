@@ -36,7 +36,7 @@ class CreateCommunityArticle extends Migrator
             ->addColumn('cate_id2', 'integer', ['comment' => '所属社区下级分类'])
             ->addColumn('goods_id', 'integer', ['default' => 0, 'comment' => '关联商品ID'])
             ->addColumn('item_id', 'integer', ['default' => 0, 'comment' => '关联商品规格ID'])
-            ->addColumn('image', 'string', ['default' => '', 'comment' => '图片'])
+            ->addColumn('image', 'text', ['comment' => '图片'])
             ->addColumn('video', 'string', ['default' => '', 'comment' => '视频'])
             ->addColumn('video_cover', 'string', ['default' => '', 'comment' => '视频封面图'])
             ->addColumn('video_axis', 'integer', ['default' => 1, 'comment' => '视频轴方向：1横向型 2竖向型'])

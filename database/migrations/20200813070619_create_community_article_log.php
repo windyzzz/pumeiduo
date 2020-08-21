@@ -28,7 +28,7 @@ class CreateCommunityArticleLog extends Migrator
      */
     public function change()
     {
-        $this->table('community_article_log', ['comment' => '社区文章审核记录'])
+        $this->table('community_article_verify_log', ['comment' => '社区文章审核记录'])
             ->addColumn('article_id', 'integer', ['comment' => '社区文章ID'])
             ->addColumn('status', 'integer', ['comment' => '审核状态：1通过 -1拒绝'])
             ->addColumn('reason', 'string', ['default' => '', 'comment' => '拒绝原因'])

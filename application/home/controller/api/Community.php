@@ -205,7 +205,9 @@ class Community extends Base
         if (!$validate->scene('article_add')->check($post)) {
             return json(['status' => 0, 'msg' => $validate->getError()]);
         }
-        // 保存更新数据
+        if (empty($post['image']) && empty($post['video'])) {
+            return json(['status' => 0, 'msg' => '请上传图片或视频']);
+        }
         $post['user_id'] = $this->user_id;
         $post['source'] = 1;
         if (!empty($post['video'])) {
@@ -215,6 +217,7 @@ class Community extends Base
             $post['video_cover'] = $videoCover['path'];
             $post['video_axis'] = $videoCover['axis'];
         }
+        // 保存更新数据
         if ($articleId) {
             $post['up_time'] = NOW_TIME;
             $post['status'] = 0;
