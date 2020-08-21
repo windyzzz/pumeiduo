@@ -1926,13 +1926,38 @@ function getVideoCoverImages($file)
             }
             $filePath = $path . $pathParts['filename'] . '_1.jpg';
             // 解析视频信息
-            include_once "vendor/getid3/getid3.php";
-            $getID3 = new getID3;
-            $fileInfo = $getID3->analyze($localFile);
-            $x = $fileInfo['video']['resolution_x'];
-            $y = $fileInfo['video']['resolution_y'];
-            if ($x < $y) {
+            $command = sprintf(\think\Env::get('FFMPEG.FUNC') . ' -i "%s" 2>&1', $localFile);
+            ob_start();
+            passthru($command);
+            $info = ob_get_contents();
+            ob_end_clean();
+            if (preg_match("/rotate/", $info, $match)) {
+                // 视频被旋转
                 $fileAxis = '2';
+            } elseif (preg_match("/Video: (.*?), (.*?), (.*?)[,\s]/", $info, $match)) {
+                $arr_resolution = explode('x', $match[3]); // 视频分辨率
+                if (count($arr_resolution) > 1) {
+                    $x = $arr_resolution[0];
+                    $y = $arr_resolution[1];
+                } else {
+                    preg_match("/Video: (.*?), (.*?), (.*?), (.*?)[,\s]/", $info, $match);
+                    $arr_resolution = explode('x', $match[4]); // 视频分辨率
+                    $x = $arr_resolution[0];
+                    $y = $arr_resolution[1];
+                }
+                if ($x < $y) {
+                    $fileAxis = '2';
+                }
+            }
+            switch ($fileAxis) {
+                case '1':
+                    $x = 1280;
+                    $y = 720;
+                    break;
+                case '2':
+                    $x = 720;
+                    $y = 1280;
+                    break;
             }
             // 取第1秒作为封面图
             $command = \think\Env::get('FFMPEG.FUNC') . " -i {$localFile} -y -f image2 -ss 1 -vframes 1 -s {$x}x{$y} {$filePath}";

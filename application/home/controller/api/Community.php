@@ -156,7 +156,6 @@ class Community extends Base
                     'exchange_price' => $exchangePrice,
                 ];
             }
-
             // 图片处理
             !empty($value['image']) && $value['image'] = explode(',', $value['image']);
             $image = [];
@@ -168,16 +167,6 @@ class Community extends Base
             // 视频处理
             $video = [];
             if (!empty($value['video'])) {
-                if (empty($value['video_cover'])) {
-                    $videoCover = getVideoCoverImages($value['video']);
-                    $path = $videoCover['path'];
-                    $axis = $videoCover['axis'];
-                    if ($path) {
-                        $value['video_cover'] = $path;
-                        $value['video_axis'] = $axis;
-                        M('community_article')->where(['id' => $value['id']])->update(['video_cover' => $path, 'video_axis' => $axis]);
-                    }
-                }
                 $video = [
                     'url' => !empty($value['video']) ? \plugins\Oss::url($value['video']) : '',
                     'cover' => getFullPath($value['video_cover']),
@@ -221,6 +210,10 @@ class Community extends Base
         $post['source'] = 1;
         if (!empty($post['video'])) {
             $post['video'] = substr($post['video'], strpos($post['video'], 'video'));
+            // 处理视频封面图
+            $videoCover = getVideoCoverImages($post['video']);
+            $post['video_cover'] = $videoCover['path'];
+            $post['video_axis'] = $videoCover['axis'];
         }
         if ($articleId) {
             $post['up_time'] = NOW_TIME;
@@ -238,7 +231,8 @@ class Community extends Base
      * 点击文章
      * @return \think\response\Json
      */
-    public function clickArticle()
+    public
+    function clickArticle()
     {
         $articleId = I('article_id', 0);
         if (!$articleId) return json(['status' => 0, 'msg' => '请传入文章ID']);
@@ -251,7 +245,8 @@ class Community extends Base
      * 分享文章
      * @return \think\response\Json
      */
-    public function shareArticle()
+    public
+    function shareArticle()
     {
         $articleId = I('article_id', 0);
         if (!$articleId) return json(['status' => 0, 'msg' => '请传入文章ID']);
