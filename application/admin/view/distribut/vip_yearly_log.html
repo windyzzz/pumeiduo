@@ -12,7 +12,7 @@
             <ul class="tab-base nc-row">
                 <foreach name="group_list" item="v" key="k">
                     <li>
-                        <a href="{:U('Distribut/distributeLog',['inc_type'=> $k])}"<if condition="$k==$inc_type">class="current"</if>>
+                        <a href="{:U('Distribut/distributeLogVip',['inc_type'=> $k])}"<if condition="$k==$inc_type">class="current"</if>>
                             <span>{$v}</span>
                         </a>
                     </li>

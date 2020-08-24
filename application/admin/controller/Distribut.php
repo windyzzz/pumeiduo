@@ -173,12 +173,35 @@ class Distribut extends Base
      * 会员VIP升级记录
      * @return mixed
      */
-    public function distributeLog()
+    public function distributeLogVip()
     {
         $group_list = [
-            'daily_log' => '日度记录',
-            'monthly_log' => '月度记录',
-            'yearly_log' => '年度记录',
+            'vip_daily_log' => '日度记录',
+            'vip_monthly_log' => '月度记录',
+            'vip_yearly_log' => '年度记录',
+        ];
+        $this->assign('group_list', $group_list);
+        $inc_type = I('get.inc_type', '');
+        if (!$inc_type) {
+            foreach ($group_list as $key => $item) {
+                $inc_type = $key;
+                break;
+            }
+        }
+        $this->assign('inc_type', $inc_type);
+        return $this->fetch($inc_type);
+    }
+
+    /**
+     * 会员VIP升级记录
+     * @return mixed
+     */
+    public function distributeLogSvip()
+    {
+        $group_list = [
+            'svip_daily_log' => '日度记录',
+            'svip_monthly_log' => '月度记录',
+            'svip_yearly_log' => '年度记录',
         ];
         $this->assign('group_list', $group_list);
         $inc_type = I('get.inc_type', '');
@@ -202,24 +225,12 @@ class Distribut extends Base
             'type' => ['IN', [1, 3]],
             'new_level' => $newLevel
         ];
-        switch ($type) {
-            case 'daily':
-                $startTime = strtotime(date('Y-m-d 00:00:00', $startTime));
-                $endTime = strtotime(date('Y-m-d 23:59:59', $endTime));
-                break;
-            case 'monthly':
-                $startTime = strtotime(date('Y-m-01 00:00:00', $startTime));
-                $endTime = strtotime(date('Y-m-t 23:59:59', $endTime));
-                break;
-            case 'yearly':
-                $startTime = strtotime(date('Y-01-01 00:00:00', $startTime));
-                $endTime = strtotime(date('Y-12-31 23:59:59', $endTime));
-                break;
-        }
         $distributeLog = M('distribut_log')->where($where)->group('user_id')->order('add_time DESC')->field('order_sn, type, add_time')->select();
         $list = [];
         switch ($type) {
             case 'daily':
+                $startTime = strtotime(date('Y-m-d 00:00:00', $startTime));
+                $endTime = strtotime(date('Y-m-d 23:59:59', $endTime));
                 $days = diffDate($startTime, $endTime)['a'];
                 for ($i = 0; $i <= $days; $i++) {
                     $key = date('Y-m-d', strtotime('-' . $i . 'day', $endTime));
@@ -247,6 +258,8 @@ class Distribut extends Base
                 }
                 break;
             case 'monthly':
+                $startTime = strtotime(date('Y-m-01 00:00:00', $startTime));
+                $endTime = strtotime(date('Y-m-t 23:59:59', $endTime));
                 $months = diffDate($startTime, $endTime)['m'];
                 for ($i = 0; $i <= $months; $i++) {
                     $key = date('Y-m', strtotime('-' . $i . 'month', strtotime(date('Y-m', $endTime))));
@@ -274,6 +287,8 @@ class Distribut extends Base
                 }
                 break;
             case 'yearly':
+                $startTime = strtotime(date('Y-01-01 00:00:00', $startTime));
+                $endTime = strtotime(date('Y-12-31 23:59:59', $endTime));
                 $years = diffDate($startTime, $endTime)['y'];
                 for ($i = 0; $i <= $years; $i++) {
                     $key = date('Y', strtotime('-' . $i . 'year', $endTime));
@@ -301,7 +316,14 @@ class Distribut extends Base
                 }
                 break;
         }
+        $this->assign('new_level', $newLevel);
         $this->assign('list', $list);
         return $this->fetch();
+    }
+
+
+    public function setting()
+    {
+
     }
 }
