@@ -11,6 +11,7 @@
 
 namespace app\admin\controller;
 
+use app\common\model\DistributeConfig;
 use think\AjaxPage;
 use think\Page;
 
@@ -321,9 +322,54 @@ class Distribut extends Base
         return $this->fetch();
     }
 
-
-    public function setting()
+    /**
+     * 升级介绍设置
+     * @return mixed
+     * @throws \Exception
+     */
+    public function config()
     {
-
+        if (IS_POST) {
+            $param = I('post.');
+            $configData = [];
+            foreach ($param as $key => $value) {
+                if ($key == 'svip_benefit') {
+                    if (count($value['name']) > 4) {
+                        $this->error('SVIP专属权益配置数量不能超过4个', U('Admin/Distribut/config'));
+                    }
+                    foreach ($value['name'] as $k => $v) {
+                        if (empty($v)) {
+                            continue;
+                        }
+                        $configData[] = [
+                            'type' => $key,
+                            'name' => $v,
+                            'url' => $value['url'][$k]
+                        ];
+                    }
+                }
+            }
+            M('distribute_config')->where('1=1')->delete();
+            $distributeConfig = new DistributeConfig();
+            $distributeConfig->saveAll($configData);
+            $this->success('操作成功', U('Admin/Distribut/config'));
+        }
+        $distributeConfig = M('distribute_config')->select();
+        $config = [];
+        foreach ($distributeConfig as $val) {
+            $config[$val['type']][] = [
+                'name' => $val['name'],
+                'url' => $val['url'],
+                'content' => $val['content']
+            ];
+        }
+        if (empty($config['svip_benefit'])) {
+            $svipKey = 0;
+        } else {
+            $svipKey = count($config['svip_benefit']);
+        }
+        $this->assign('svip_key', $svipKey);
+        $this->assign('config', $config);
+        return $this->fetch();
     }
 }

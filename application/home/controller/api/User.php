@@ -3486,7 +3486,6 @@ class User extends Base
      */
     public function checkUserLevelGoods()
     {
-        return json(['status' => 1]);
         $goodsId = I('goods_id', '');
         if (!$goodsId || $goodsId === 0) {
             return json(['status' => 0, 'msg' => '请传入正确的商品ID']);
@@ -3496,7 +3495,12 @@ class User extends Base
         // 用户分销等级
         $userDistribute = M('users')->where(['user_id' => $this->user_id])->value('distribut_level');
         if ($goodsDistribute <= $userDistribute) {
-            return json(['status' => -11, 'msg' => '你已经是VIP会员了，无法再次购买']);
+            switch ($goodsDistribute) {
+                case 2:
+                    return json(['status' => -11, 'msg' => '你已经是VIP会员了，无法再次购买']);
+                case 3:
+                    return json(['status' => -11, 'msg' => '你已经是SVIP会员了，无法再次购买']);
+            }
         }
         return json(['status' => 1]);
     }
@@ -3931,5 +3935,31 @@ class User extends Base
             ]);
         }
         return json(['status' => 1]);
+    }
+
+    /**
+     * 会员升级提示信息
+     * @return \think\response\Json
+     */
+    public function levelTipsInfo()
+    {
+        $type = I('type', 2); // 2为普卡会员 3为网点会员
+        $where = [];
+        $levelTipsInfo = [
+            'svip_benefit' => []
+        ];
+        switch ($type) {
+            case 3:
+                $where['type'] = 'svip_benefit';
+                break;
+        }
+        $distributeConfig = M('distribute_config')->where($where)->select();
+        foreach ($distributeConfig as $config) {
+            $levelTipsInfo['svip_benefit'][] = [
+                'name' => $config['name'],
+                'icon' => getFullPath($config['url'])
+            ];
+        }
+        return json(['status' => 1, 'result' => $levelTipsInfo]);
     }
 }

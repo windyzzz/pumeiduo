@@ -42,7 +42,7 @@ return [
             ['name' => '金卡资格', 'act' => 'jinka', 'op' => 'User'],
             ['name' => '会员信息修改记录', 'act' => 'usersEditLog', 'op' => 'User'],
             ['name' => 'APP登陆会员', 'act' => 'appLoginStatistics', 'op' => 'User'],
-            ['name' => '会员升级设置', 'act' => 'setting', 'op' => 'Distribut'],
+            ['name' => '会员升级设置', 'act' => 'config', 'op' => 'Distribut'],
             ['name' => 'VIP升级记录', 'act' => 'distributeLogVip', 'op' => 'Distribut'],
             ['name' => 'SVIP升级记录', 'act' => 'distributeLogSvip', 'op' => 'Distribut'],
         ]],
