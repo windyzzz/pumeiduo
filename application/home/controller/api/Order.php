@@ -1837,6 +1837,7 @@ class Order extends Base
         }
 
         // 检查下单商品
+        $canElectronic = 1;
         $res = $cartLogic->checkCartGoods($cartList['cartList']);
         $abroad = [
             'state' => 0,
@@ -1856,6 +1857,7 @@ class Order extends Base
                 $abroad['id_card_tips'] = M('abroad_config')->where(['type' => 'id_card'])->value('content');
                 // 获取韩国购产品购买须知
                 $abroad['purchase_tips'] = M('abroad_config')->where(['type' => 'purchase'])->value('content');
+                $canElectronic = 0;
                 break;
         }
 
@@ -2149,6 +2151,7 @@ class Order extends Base
             'order_pv' => $payReturn['order_pv'] != '0.00' ? $payReturn['order_pv'] : '',
             // 韩国购信息
             'abroad' => $abroad,
+            'can_electronic' => $canElectronic
         ];
         return json(['status' => 1, 'result' => $return]);
     }
