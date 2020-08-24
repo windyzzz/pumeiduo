@@ -2085,7 +2085,7 @@ class Order extends Base
                         'goods_name' => $extra['goods_name'],
                         'goods_remark' => $extra['goods_remark'] ?? '',
                         'original_img' => $extra['original_img'],
-                        'original_img_new' => getFullPath($extra['original_img']),
+                        'original_img_new' => $extra['original_img_new'] ?? getFullPath($extra['original_img']),
                         'shop_price' => $extra['goods_price'],
                         'exchange_integral' => '0',
                         'exchange_price' => $extra['goods_price'],
@@ -2213,7 +2213,7 @@ class Order extends Base
             // 参与活动促销
             $payLogic->goodsPromotion();
             // 加价购活动
-            $payLogic->activityPayBeforeNew($extraGoods, $cartLogic);
+            $payLogic->activityPayBeforeNew($cartLogic, $extraGoods);
 
             // 组合拆分订单数据
             $payLogic->setOrderSplitGoods($payLogic->getPayList());
@@ -2448,7 +2448,7 @@ class Order extends Base
             // 参与活动促销
             $payLogic->goodsPromotion();
             // 加价购活动
-            $payLogic->activityPayBeforeNew($extraGoods, $cartLogic);
+            $payLogic->activityPayBeforeNew($cartLogic, $extraGoods);
 
             // 组合拆分订单数据
             $payLogic->setOrderSplitGoods($payLogic->getPayList());

@@ -1002,7 +1002,7 @@ class Pay
     }
 
     // 加价购活动（新）
-    public function activityPayBeforeNew($buyExtraGoods = [], $cartLogic)
+    public function activityPayBeforeNew(CartLogic $cartLogic, $buyExtraGoods)
     {
         $extra_goods_list = convert_arr_key($this->extra_goods_list, 'goods_id');
         $extraGoodsList = [];
@@ -1040,7 +1040,7 @@ class Pay
             $cartLogic->setType($extra['pay_type']);
             $cartLogic->setCartType(0);
             try {
-                $buyGoods = $cartLogic->buyNow();
+                $buyGoods = $cartLogic->buyNow(true, true);
             } catch (TpshopException $tpE) {
                 $error = $tpE->getErrorArr();
                 throw new TpshopException('计算订单价格', 0, ['status' => 0, 'msg' => $error['msg']]);
