@@ -15,7 +15,7 @@ use app\common\logic\ArticleLogic;
 use think\Db;
 use think\Page;
 
-class Article
+class Article extends Base
 {
     public function index()
     {
@@ -180,6 +180,13 @@ class Article
         $articleId = I('article_id', '');
         if (!$articleId) {
             return json(['status' => 0, 'msg' => '参数错误']);
+        }
+        switch ($articleId) {
+            case 104:
+                if ($this->user['distribut_level'] >= 2) {
+                    return json(['status' => -11, 'msg' => '不需显示协议内容']);
+                }
+                break;
         }
         $article = M('article')->where(['article_id' => $articleId, 'is_open' => 1])->field('article_id, title, app_content')->find();
         $return = $article;

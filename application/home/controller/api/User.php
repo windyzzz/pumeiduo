@@ -3495,7 +3495,7 @@ class User extends Base
         // 用户分销等级
         $userDistribute = M('users')->where(['user_id' => $this->user_id])->value('distribut_level');
         if ($goodsDistribute <= $userDistribute) {
-            switch ($goodsDistribute) {
+            switch ($userDistribute) {
                 case 2:
                     return json(['status' => -11, 'msg' => '你已经是VIP会员了，无法再次购买']);
                 case 3:

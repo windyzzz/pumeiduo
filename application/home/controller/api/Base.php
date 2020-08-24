@@ -104,6 +104,8 @@ class Base extends Controller
             'c=api.User&a=findPassword',                // 找回密码（登录前忘记密码）
             'c=api.Adv&a=index',                        // 广告
             'c=api.Message&a=floatMessage',             // 浮窗消息列表
+            'c=api.Article&a=articleCateList',          // 文章分类列表
+            'c=api.Article&a=articleListNew',           // 文章列表
         ];
     }
 
@@ -118,6 +120,7 @@ class Base extends Controller
             'c=api.Message&a=announce',                 // 公告列表
             'c=api.Goods&a=goodsInfoNew',               // 商品详情
             'c=api.Adv&a=popup',                        // 活动弹窗
+            'c=api.Article&a=articleDetail',            // 文章内容
         ];
     }
 }
