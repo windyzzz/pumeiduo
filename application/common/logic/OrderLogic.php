@@ -204,6 +204,8 @@ class OrderLogic
                 }
             }
         }
+        // 取消预备升级记录
+        M('user_pre_distribute_log')->where(['order_id' => $order['order_id']])->update(['status' => -1]);
 
         // $OrderGoods = M('OrderGoods')->field('goods_id')->where('order_id',$order_id)->select();
         // foreach ($OrderGoods as $k => $v) {
