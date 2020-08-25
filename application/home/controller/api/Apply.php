@@ -23,7 +23,7 @@ class Apply extends Base
             }
             $res = $userLogic->apply_customs($this->user_id, I('post.'), $this->isApp);
             if ($res) {
-                return json(['status' => 1, 'msg' => $userLogic->getError()]);
+                return json(['status' => 1, 'msg' => $userLogic->getError(), 'result' => ['tips' => $userLogic->getError()]]);
             } else {
                 return json(['status' => 0, 'msg' => $userLogic->getError()]);
             }
@@ -51,14 +51,17 @@ class Apply extends Base
                     $apply = M('apply_customs')->where(['user_id' => $this->user_id])->find();
                     if (!$apply || (isset($apply) && $apply['status'] == 2)) {
                         // 没有申请 / 申请记录已撤销
-                        $applyStatus = 11;  // 可以申请
+                        $applyStatus = 11;
                     } elseif ($apply['status'] == 0) {
-                        $applyStatus = $apply['status'];   // 审核中
+                        // 审核中
+                        $applyStatus = $apply['status'];
                         $trueName = $apply['true_name'];
                         $idCard = $apply['id_card'];
                         $mobile = $apply['mobile'];
+                        $tips = "资料提交成功，请等待审核，审核时间为5-7个工作日有任何疑问请联系客服" . tpCache('shop_info.mobile');
                     } else {
-                        $applyStatus = $apply['status'];    // 审核完成
+                        // 审核完成
+                        $applyStatus = $apply['status'];
                     }
                 }
             }
