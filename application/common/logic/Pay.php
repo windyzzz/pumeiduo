@@ -1024,9 +1024,10 @@ class Pay
                     ->join('order o', 'o.order_sn = el.order_sn')
                     ->join('order_goods og', 'og.order_id = o.order_id')
                     ->where([
+                        'el.user_id' => $this->userId,
                         'el.extra_reward_id' => $extraGoods['extra_reward_id'],
                         'el.status' => 1,
-                        'og.goods_id' => $extraGoods['goods_id']
+                        'og.goods_id' => $extraGoods['goods_id'],
                     ])->sum('og.goods_num');
                 if ($extra['goods_num'] + $extraLogNum > $extraGoods['buy_limit']) {
                     throw new TpshopException('计算订单价格', 0, ['status' => 0, 'msg' => '超出购买加价购每人限购数量']);
