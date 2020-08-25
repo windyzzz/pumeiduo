@@ -16,7 +16,7 @@ class Community
     {
         $where = [];
         if (isset($param['status'])) {
-            if ($param['status'] != -1) {
+            if ($param['status'] != '') {
                 $where['ca.status'] = $param['status'];
             }
         } else {
