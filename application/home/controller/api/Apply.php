@@ -15,6 +15,12 @@ class Apply extends Base
     {
         $userLogic = new UsersLogic();
         if ($this->request->isPost()) {
+            // 查看用户等级预升级记录
+            $userPreLog = M('user_pre_distribute_log')->where(['user_id' => $this->user_id, 'status' => 0])->find();
+            if (empty($userPreLog)) {
+                $tips = "您尚未有资格开通金卡会员\r\n请购买SVIP升级套餐后\r\n按系统提示进行申请\r\n有任何疑问请联系客服" . tpCache('shop_info.mobile');
+                return json(['status' => 0, 'msg' => $tips]);
+            }
             $res = $userLogic->apply_customs($this->user_id, I('post.'), $this->isApp);
             if ($res) {
                 return json(['status' => 1, 'msg' => $userLogic->getError()]);

@@ -132,7 +132,7 @@ class DistributLogic
                     break;
                 case 3:
                     $referee_money = tpCache('distribut.all_svip_money'); // 直属推荐人奖励金额
-                    if ($referee_money > 0) {
+                    if ($referee_money > 0 && !empty($invite_uid_info)) {
                         $data = [];
                         $data['user_id'] = $invite_uid;
                         $data['money'] = $referee_money;

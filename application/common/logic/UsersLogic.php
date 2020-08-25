@@ -13,7 +13,7 @@ namespace app\common\logic;
 
 use app\common\logic\Token as TokenLogic;
 use app\common\model\UserAddress;
-use app\home\controller\api\User;
+use app\home\controller\Api as ApiController;
 use think\cache\driver\Redis;
 use think\Db;
 use think\Model;
@@ -102,12 +102,12 @@ class UsersLogic extends Model
             $this->error = '您尚未有资格开通金卡会员';
             return false;
         }
-        $count = M('users')->where(array('first_leader' => $user_id, 'distribut_level' => array('egt', 2)))->count();
-        $apply_check_num = tpCache('basic.apply_check_num');
-        if ($count < $apply_check_num) {
-            $this->error = '您尚未有资格开通金卡会员';
-            return false;
-        }
+//        $count = M('users')->where(array('first_leader' => $user_id, 'distribut_level' => array('egt', 2)))->count();
+//        $apply_check_num = tpCache('basic.apply_check_num');
+//        if ($count < $apply_check_num) {
+//            $this->error = '您尚未有资格开通金卡会员';
+//            return false;
+//        }
 
         $this->error = '提交';
         return true;
@@ -135,6 +135,17 @@ class UsersLogic extends Model
         if (!check_mobile($data['mobile'])) {
             Db::rollback();
             $this->error = '手机号填写错误';
+            return false;
+        }
+        // 第三方验证姓名与身份证
+        $apiController = new ApiController();
+        $query = [
+            'id_card' => $data['id_card'],
+            'real_name' => $data['true_name']
+        ];
+        $res = $apiController->checkIdCard($query, 'array');
+        if ($res['status'] != '01') {
+            $this->error = '请填写正确的身份信息\r\n（身份证号以及姓名）';
             return false;
         }
 
