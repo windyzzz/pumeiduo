@@ -1642,11 +1642,9 @@ class Order extends Base
                 switch ($val['order_type']) {
                     case 2:
                         $tradeType = '韩国购';
-                        $goodsTradeType = '韩国购';
                         break;
                     default:
                         $tradeType = trade_type($orderGoods[0]['trade_type']);
-                        $goodsTradeType = '';
                 }
                 $strTable .= '<tr>';
                 $strTable .= '<td style="text-align:center;font-size:12px;" rowspan="' . $orderGoodsNum . '">&nbsp;' . $val['order_sn'] . '</td>';
@@ -1692,8 +1690,12 @@ class Order extends Base
 
                 if ($orderGoods) {
                     foreach ($orderGoods as $goods) {
-                        if (empty($goodsTradeType)) {
-                            $goodsTradeType = trade_type($goods['trade_type']);
+                        switch ($val['order_type']) {
+                            case 2:
+                                $goodsTradeType = '韩国购';
+                                break;
+                            default:
+                                $goodsTradeType = trade_type($goods['trade_type']);
                         }
                         $strTable .= '<tr>';
                         $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['goods_sn'] . ' </td>';
@@ -1838,7 +1840,14 @@ class Order extends Base
                 $goods_num[] = $goods['goods_num'];
                 $goods_name[] = $goods['goods_name'];
                 $goods_attr[] = $goods['spec_key_name'];
-                $goods_trade[] = trade_type($goods['trade_type']);
+                switch ($order['order_type']) {
+                    case 2:
+                        $goodsTradeType = '韩国购';
+                        break;
+                    default:
+                        $goodsTradeType = trade_type($goods['trade_type']);
+                }
+                $goods_trade[] = $goodsTradeType;
             }
             $dataList[$key][] = $goods_amount;
             $dataList[$key][] = $goods_sn;
