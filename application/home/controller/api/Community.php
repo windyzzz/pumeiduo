@@ -2,6 +2,7 @@
 
 namespace app\home\controller\api;
 
+use app\common\logic\Community as CommunityLogic;
 
 class Community extends Base
 {
@@ -66,19 +67,9 @@ class Community extends Base
      */
     public function article()
     {
+        $communityLogic = new CommunityLogic();
         // 获取文章数据
-        $list = (new \app\common\logic\Community())->getArticleList(I('get.'))['list'];
-        $goodsIds = array_column($list, 'goods_id');
-        // 秒杀商品
-        $flashSale = M('flash_sale')->where(['goods_id' => ['in', $goodsIds]])
-            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->field('goods_id, price, can_integral')->select();
-        // 团购商品
-        $groupBuy = M('group_buy')->where(['goods_id' => ['in', $goodsIds]])
-            ->where(['is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])->field('goods_id, price, can_integral')->select();
-        // 促销商品
-        $promGoods = M('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
-            ->where(['gtg.goods_id' => ['in', $goodsIds], 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
-            ->field('pg.type, pg.expression, gtg.goods_id')->select();
+        $list = $communityLogic->getArticleList(I('get.'))['list'];
         // 文章列表
         $articleList = [];
         foreach ($list as $key => $value) {
@@ -92,69 +83,6 @@ class Community extends Base
                 $publishTime = '前天 ' . date('H:i', $value['publish_time']);
             } else {
                 $publishTime = date('Y-m-d H:i', $value['publish_time']);
-            }
-            // 商品处理
-            $goods = [];
-            if ($value['goods_id'] != 0) {
-                $goodsType = 'normal';
-                $shopPrice = $value['shop_price'];
-                $exchangeIntegral = $value['exchange_integral'];
-                $exchangePrice = bcsub($shopPrice, $exchangeIntegral, 2);
-                if (!empty($flashSale)) {
-                    foreach ($flashSale as $v) {
-                        if ($value['goods_id'] == $v['goods_id']) {
-                            $goodsType = 'flash_sale';
-                            if ($v['can_integral'] == 0) {
-                                $exchangeIntegral = '0';    // 不能使用积分兑换
-                            }
-                            $shopPrice = $v['price'];
-                            $exchangePrice = bcsub($shopPrice, $exchangeIntegral, 2);
-                            break;
-                        }
-                    }
-                }
-                if (!empty($groupBuy)) {
-                    foreach ($groupBuy as $v) {
-                        if ($value['goods_id'] == $v['goods_id']) {
-                            $goodsType = 'group_buy';
-                            if ($v['can_integral'] == 0) {
-                                $exchangeIntegral = '0';    // 不能使用积分兑换
-                            }
-                            $shopPrice = $v['price'];
-                            $exchangePrice = bcsub($shopPrice, $exchangeIntegral, 2);
-                            break;
-                        }
-                    }
-                }
-                if (!empty($promGoods)) {
-                    foreach ($promGoods as $v) {
-                        if ($value['goods_id'] == $v['goods_id']) {
-                            $goodsType = 'promotion';
-                            switch ($v['type']) {
-                                case 0:
-                                    // 打折
-                                    $shopPrice = bcdiv(bcmul($shopPrice, $v['expression'], 2), 100, 2);
-                                    $exchangePrice = bcdiv(bcmul($exchangePrice, $v['expression'], 2), 100, 2);
-                                    break 2;
-                                case 1:
-                                    // 减价
-                                    $shopPrice = bcsub($shopPrice, $v['expression'], 2);
-                                    $exchangePrice = bcsub($exchangePrice, $v['expression'], 2);
-                                    break 2;
-                            }
-                        }
-                    }
-                }
-                $goods = [
-                    'goods_type' => $goodsType,
-                    'goods_id' => $value['goods_id'],
-                    'item_id' => $value['item_id'],
-                    'goods_name' => $value['goods_name'],
-                    'original_img_new' => getFullPath($value['original_img']),
-                    'shop_price' => $shopPrice,
-                    'exchange_integral' => $exchangeIntegral,
-                    'exchange_price' => $exchangePrice,
-                ];
             }
             // 图片处理
             !empty($value['image']) && $value['image'] = explode(',', $value['image']);
@@ -174,7 +102,7 @@ class Community extends Base
                 ];
             }
             // 组合数据
-            $articleList[$key] = [
+            $articleList[] = [
                 'article_id' => $value['id'],
                 'content' => $value['content'],
                 'share' => $value['share'],
@@ -186,10 +114,103 @@ class Community extends Base
                     'user_name' => !empty($value['user_name']) ? $value['user_name'] : !empty($value['nickname']) ? $value['nickname'] : '',
                     'head_pic' => getFullPath($value['head_pic']),
                 ],
-                'goods' => (object)$goods,
+                'goods' => [],
+                'goods_id' => $value['goods_id'],
+                'item_id' => $value['item_id'],
+                'shop_price' => $value['shop_price'],
+                'exchange_integral' => $value['exchange_integral'],
+                'goods_name' => $value['goods_name'],
+                'original_img' => $value['original_img'],
             ];
         }
+        // 商品数据处理
+        $goodsIds = array_column($list, 'goods_id');
+        $articleList = $communityLogic->handleArticleGoodsData($articleList, $goodsIds);
         return json(['status' => 1, 'result' => ['list' => $articleList]]);
+    }
+
+    /**
+     * 用户文章列表
+     * @return \think\response\Json
+     */
+    public function articleList()
+    {
+        $communityLogic = new CommunityLogic();
+        // 获取用户文章数据
+        $param = I('get.');
+        $param['user_id'] = $this->user_id;
+        $list = $communityLogic->getArticleList($param)['list'];
+        // 社区文章分类数据
+        $category = M('community_category')->getField('id, cate_name', true);
+        // 文章列表
+        $articleList = [];
+        foreach ($list as $key => $value) {
+            // 发布时间处理
+            $publishTime = '';
+            if ($value['publish_time'] != 0) {
+                $publishTime = date('Y-m-d', $value['publish_time']);
+                if ($publishTime == date('Y-m-d', time())) {
+                    $publishTime = '今天 ' . date('H:i', $value['publish_time']);
+                } elseif ($publishTime == date('Y-m-d', time() - (86400))) {
+                    $publishTime = '昨天 ' . date('H:i', $value['publish_time']);
+                } elseif ($publishTime == date('Y-m-d', time() - (86400 * 2))) {
+                    $publishTime = '前天 ' . date('H:i', $value['publish_time']);
+                } else {
+                    $publishTime = date('Y-m-d H:i', $value['publish_time']);
+                }
+            }
+            // 图片处理
+            !empty($value['image']) && $value['image'] = explode(',', $value['image']);
+            $image = [];
+            if (!empty($value['image'])) {
+                foreach ($value['image'] as $item) {
+                    $image[] = getFullPath($item);
+                }
+            }
+            // 视频处理
+            $video = [];
+            if (!empty($value['video'])) {
+                $video = [
+                    'url' => !empty($value['video']) ? \plugins\Oss::url($value['video']) : '',
+                    'cover' => getFullPath($value['video_cover']),
+                    'axis' => $value['video_axis']
+                ];
+            }
+            // 组合数据
+            $articleList[] = [
+                'article_id' => $value['id'],
+                'content' => $value['content'],
+                'share' => $value['share'],
+                'publish_time' => $publishTime,
+                'image' => $image,
+                'video' => (object)$video,
+                'goods' => [],
+                'goods_id' => $value['goods_id'],
+                'item_id' => $value['item_id'],
+                'shop_price' => $value['shop_price'],
+                'exchange_integral' => $value['exchange_integral'],
+                'goods_name' => $value['goods_name'],
+                'original_img' => $value['original_img'],
+                'status' => $value['status'],
+                'status_desc' => $communityLogic->articleStatus($value['status']),
+                'cate_id1' => $value['cate_id1'],
+                'cate_id1_desc' => $category[$value['cate_id1']],
+                'cate_id2' => $value['cate_id2'],
+                'cate_id2_desc' => $category[$value['cate_id2']],
+            ];
+        }
+        // 商品数据处理
+        $goodsIds = array_column($list, 'goods_id');
+        $articleList = $communityLogic->handleArticleGoodsData($articleList, $goodsIds);
+        return json(['status' => 1, 'result' => ['list' => $articleList]]);
+    }
+
+
+    public function articleInfo()
+    {
+        $articleId = I('article_id', 0);
+        if (!$articleId) return json(['status' => 0, 'msg' => '请上传文章ID']);
+
     }
 
     /**
