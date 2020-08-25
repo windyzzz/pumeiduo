@@ -2623,19 +2623,25 @@ class Order extends Base
         ];
         // 用户支付后处理
         $order['action_after_pay'] = [
-            'update_jpush_tags' => []
+            'update_jpush_tags' => [],
+            'svip_tips' => [
+                'is_svip' => 0,
+                'tips' => ''
+            ]
         ];
         if ($order['pay_status'] == 1) {
             // 查看订单商品里面是否有vip升级套餐，有就显示赠送的优惠券
-            $levelUp = false;
+            $isVip = false;
+            $vipLevel = 1;
             $orderGoods = M('order_goods og')->join('goods g', 'g.goods_id = og.goods_id')->where(['og.order_id' => $orderId])->field('zone, distribut_id')->select();
             foreach ($orderGoods as $goods) {
                 if (3 == $goods['zone'] && $goods['distribut_id'] > 0) {
-                    $levelUp = true;
+                    $isVip = true;
+                    $vipLevel = $goods['distribut_id'];
                     break;
                 }
             }
-            if ($levelUp) {
+            if ($isVip) {
                 // 查看是否有赠送优惠券
                 $hasCoupon = M('coupon_list')->where(['uid' => $order['user_id'], 'get_order_id' => $order['order_id']])->value('cid');
                 if (!empty($hasCoupon)) {
@@ -2645,10 +2651,17 @@ class Order extends Base
                         'coupon_name' => '新晋VIP会员优惠券'
                     ];
                 }
-                // 变更用户push_tags
-                $order['action_after_pay'] = [
-                    'update_jpush_tags' => explode(',', $this->user['push_tag'])
-                ];
+                switch ($vipLevel) {
+                    case 2:
+                        // 变更用户push_tags
+                        $order['action_after_pay']['update_jpush_tags'] = explode(',', $this->user['push_tag']);
+                        break;
+                    case 3:
+                        // svip弹窗
+                        $order['action_after_pay']['svip_tips']['is_svip'] = 1;
+                        $order['action_after_pay']['svip_tips']['tips'] = 'SVIP升级套组购买成功，请填写个人申请信息';
+                        break;
+                }
             }
         }
         unset($order['order_status']);

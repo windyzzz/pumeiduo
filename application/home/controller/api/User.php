@@ -3494,6 +3494,9 @@ class User extends Base
         $goodsDistribute = M('goods')->where(['goods_id' => $goodsId])->value('distribut_id');
         // 用户分销等级
         $userDistribute = M('users')->where(['user_id' => $this->user_id])->value('distribut_level');
+        if ($userDistribute == 1 && $goodsDistribute == 3) {
+            return json(['status' => -11, 'msg' => '普通会员无法购买SVIP产品']);
+        }
         if ($goodsDistribute <= $userDistribute) {
             switch ($userDistribute) {
                 case 2:

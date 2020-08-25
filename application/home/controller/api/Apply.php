@@ -15,7 +15,7 @@ class Apply extends Base
     {
         $userLogic = new UsersLogic();
         if ($this->request->isPost()) {
-            $res = $userLogic->apply_customs($this->user_id, I('post.'));
+            $res = $userLogic->apply_customs($this->user_id, I('post.'), $this->isApp);
             if ($res) {
                 return json(['status' => 1, 'msg' => $userLogic->getError()]);
             } else {
