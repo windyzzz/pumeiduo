@@ -116,7 +116,13 @@
                                 <div style="text-align: center; width: 100px;">{$list.uid}</div>
                             </td>
                             <td align="left" class="">
-                                <div style="text-align: center; width: 120px;">{$list.nickname}</div>
+                                <div style="text-align: center; width: 120px;">
+                                    <if condition="!empty($list.nickname)">
+                                        {$list.nickname}
+                                    <else/>
+                                        {$list.user_name}
+                                    </if>
+                                </div>
                             </td>
                             <td align="left" class="">
                                 <div style="text-align: center; width: 120px;">{$list.send_time|date='Y-m-d H:i',###}</div>
