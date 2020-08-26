@@ -207,6 +207,8 @@ class Community
             $articleList[$key]['publish_time'] = $publishTime;
             $articleList[$key]['image'] = $image;
             $articleList[$key]['video'] = (object)$video;
+            unset($articleList[$key]['video_cover']);
+            unset($articleList[$key]['video_axis']);
             unset($articleList[$key]['goods_id']);
             unset($articleList[$key]['item_id']);
             unset($articleList[$key]['shop_price']);
