@@ -73,42 +73,14 @@ class Community extends Base
         // 文章列表
         $articleList = [];
         foreach ($list as $key => $value) {
-            // 发布时间处理
-            $publishTime = date('Y-m-d', $value['publish_time']);
-            if ($publishTime == date('Y-m-d', time())) {
-                $publishTime = '今天 ' . date('H:i', $value['publish_time']);
-            } elseif ($publishTime == date('Y-m-d', time() - (86400))) {
-                $publishTime = '昨天 ' . date('H:i', $value['publish_time']);
-            } elseif ($publishTime == date('Y-m-d', time() - (86400 * 2))) {
-                $publishTime = '前天 ' . date('H:i', $value['publish_time']);
-            } else {
-                $publishTime = date('Y-m-d H:i', $value['publish_time']);
-            }
-            // 图片处理
-            !empty($value['image']) && $value['image'] = explode(',', $value['image']);
-            $image = [];
-            if (!empty($value['image'])) {
-                foreach ($value['image'] as $item) {
-                    $image[] = getFullPath($item);
-                }
-            }
-            // 视频处理
-            $video = [];
-            if (!empty($value['video'])) {
-                $video = [
-                    'url' => !empty($value['video']) ? \plugins\Oss::url($value['video']) : '',
-                    'cover' => getFullPath($value['video_cover']),
-                    'axis' => $value['video_axis']
-                ];
-            }
             // 组合数据
             $articleList[] = [
                 'article_id' => $value['id'],
                 'content' => $value['content'],
                 'share' => $value['share'],
-                'publish_time' => $publishTime,
-                'image' => $image,
-                'video' => (object)$video,
+                'publish_time' => $value['publish_time'],
+                'image' => $value['image'],
+                'video' => $value['video'],
                 'user' => [
                     'user_id' => $value['user_id'],
                     'user_name' => !empty($value['user_name']) ? $value['user_name'] : !empty($value['nickname']) ? $value['nickname'] : '',
@@ -123,9 +95,9 @@ class Community extends Base
                 'original_img' => $value['original_img'],
             ];
         }
-        // 商品数据处理
+        // 数据处理
         $goodsIds = array_column($list, 'goods_id');
-        $articleList = $communityLogic->handleArticleGoodsData($articleList, $goodsIds);
+        $articleList = $communityLogic->handleArticleData($articleList, $goodsIds);
         return json(['status' => 1, 'result' => ['list' => $articleList]]);
     }
 
@@ -145,45 +117,14 @@ class Community extends Base
         // 文章列表
         $articleList = [];
         foreach ($list as $key => $value) {
-            // 发布时间处理
-            $publishTime = '';
-            if ($value['publish_time'] != 0) {
-                $publishTime = date('Y-m-d', $value['publish_time']);
-                if ($publishTime == date('Y-m-d', time())) {
-                    $publishTime = '今天 ' . date('H:i', $value['publish_time']);
-                } elseif ($publishTime == date('Y-m-d', time() - (86400))) {
-                    $publishTime = '昨天 ' . date('H:i', $value['publish_time']);
-                } elseif ($publishTime == date('Y-m-d', time() - (86400 * 2))) {
-                    $publishTime = '前天 ' . date('H:i', $value['publish_time']);
-                } else {
-                    $publishTime = date('Y-m-d H:i', $value['publish_time']);
-                }
-            }
-            // 图片处理
-            !empty($value['image']) && $value['image'] = explode(',', $value['image']);
-            $image = [];
-            if (!empty($value['image'])) {
-                foreach ($value['image'] as $item) {
-                    $image[] = getFullPath($item);
-                }
-            }
-            // 视频处理
-            $video = [];
-            if (!empty($value['video'])) {
-                $video = [
-                    'url' => !empty($value['video']) ? \plugins\Oss::url($value['video']) : '',
-                    'cover' => getFullPath($value['video_cover']),
-                    'axis' => $value['video_axis']
-                ];
-            }
             // 组合数据
             $articleList[] = [
                 'article_id' => $value['id'],
                 'content' => $value['content'],
                 'share' => $value['share'],
-                'publish_time' => $publishTime,
-                'image' => $image,
-                'video' => (object)$video,
+                'publish_time' => $value['publish_time'],
+                'image' => $value['image'],
+                'video' => $value['video'],
                 'goods' => [],
                 'goods_id' => $value['goods_id'],
                 'item_id' => $value['item_id'],
@@ -199,9 +140,9 @@ class Community extends Base
                 'cate_id2_desc' => $category[$value['cate_id2']],
             ];
         }
-        // 商品数据处理
+        // 数据处理
         $goodsIds = array_column($list, 'goods_id');
-        $articleList = $communityLogic->handleArticleGoodsData($articleList, $goodsIds);
+        $articleList = $communityLogic->handleArticleData($articleList, $goodsIds);
         return json(['status' => 1, 'result' => ['list' => $articleList]]);
     }
 
@@ -210,7 +151,10 @@ class Community extends Base
     {
         $articleId = I('article_id', 0);
         if (!$articleId) return json(['status' => 0, 'msg' => '请上传文章ID']);
-
+        $communityLogic = new CommunityLogic();
+        // 获取用户文章数据
+        $info = $communityLogic->getArticleInfo($articleId);
+        $articleInfo = [];
     }
 
     /**

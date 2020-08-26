@@ -15,6 +15,9 @@ class Community
     private function articleWhere($param)
     {
         $where = [];
+        if (!empty($param['article_id'])) {
+            return ['ca.id' => $param['article_id']];
+        }
         if (isset($param['status'])) {
             if ($param['status'] != '') {
                 $where['ca.status'] = $param['status'];
@@ -73,12 +76,27 @@ class Community
     }
 
     /**
-     * 处理文章商品数据
+     * 文章内容
+     * @param $articleId
+     * @return mixed
+     */
+    public function getArticleInfo($articleId)
+    {
+        $articleInfo = M('community_article ca')
+            ->join('users u', 'u.user_id = ca.user_id')
+            ->join('goods g', 'g.goods_id = ca.goods_id', 'LEFT')
+            ->field('ca.*, u.nickname, u.user_name, u.head_pic, g.goods_name, g.original_img, g.shop_price, g.exchange_integral')
+            ->where(['ca.id' => $articleId])->find();
+        return $articleInfo;
+    }
+
+    /**
+     * 处理文章数据
      * @param $articleList
      * @param $goodsIds
      * @return mixed
      */
-    public function handleArticleGoodsData($articleList, $goodsIds)
+    public function handleArticleData($articleList, $goodsIds)
     {
         // 秒杀商品
         $flashSale = M('flash_sale')->where(['goods_id' => ['in', $goodsIds]])
@@ -91,6 +109,37 @@ class Community
             ->where(['gtg.goods_id' => ['in', $goodsIds], 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
             ->field('pg.type, pg.expression, gtg.goods_id')->select();
         foreach ($articleList as $key => $value) {
+            // 发布时间处理
+            $publishTime = '';
+            if ($value['publish_time'] != 0) {
+                $publishTime = date('Y-m-d', $value['publish_time']);
+                if ($publishTime == date('Y-m-d', time())) {
+                    $publishTime = '今天 ' . date('H:i', $value['publish_time']);
+                } elseif ($publishTime == date('Y-m-d', time() - (86400))) {
+                    $publishTime = '昨天 ' . date('H:i', $value['publish_time']);
+                } elseif ($publishTime == date('Y-m-d', time() - (86400 * 2))) {
+                    $publishTime = '前天 ' . date('H:i', $value['publish_time']);
+                } else {
+                    $publishTime = date('Y-m-d H:i', $value['publish_time']);
+                }
+            }
+            // 图片处理
+            !empty($value['image']) && $value['image'] = explode(',', $value['image']);
+            $image = [];
+            if (!empty($value['image'])) {
+                foreach ($value['image'] as $item) {
+                    $image[] = getFullPath($item);
+                }
+            }
+            // 视频处理
+            $video = [];
+            if (!empty($value['video'])) {
+                $video = [
+                    'url' => !empty($value['video']) ? \plugins\Oss::url($value['video']) : '',
+                    'cover' => getFullPath($value['video_cover']),
+                    'axis' => $value['video_axis']
+                ];
+            }
             // 商品处理
             if ($value['goods_id'] != 0) {
                 $goodsType = 'normal';
@@ -155,6 +204,9 @@ class Community
             } else {
                 $articleList[$key]['goods'] = (object)[];
             }
+            $articleList[$key]['publish_time'] = $publishTime;
+            $articleList[$key]['image'] = $image;
+            $articleList[$key]['video'] = (object)$video;
             unset($articleList[$key]['goods_id']);
             unset($articleList[$key]['item_id']);
             unset($articleList[$key]['shop_price']);
