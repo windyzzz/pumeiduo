@@ -146,7 +146,10 @@ class Community extends Base
         return json(['status' => 1, 'result' => ['list' => $articleList]]);
     }
 
-
+    /**
+     * 用户文章信息
+     * @return \think\response\Json
+     */
     public function articleInfo()
     {
         $articleId = I('article_id', 0);
@@ -154,7 +157,32 @@ class Community extends Base
         $communityLogic = new CommunityLogic();
         // 获取用户文章数据
         $info = $communityLogic->getArticleInfo($articleId);
-        $articleInfo = [];
+        if (!$info) return json(['status' => 0, 'msg' => '文章内容不存在']);
+        // 社区文章分类数据
+        $category = M('community_category')->getField('id, cate_name', true);
+        $articleInfo = [
+            'article_id' => $info['id'],
+            'content' => $info['content'],
+            'share' => $info['share'],
+            'publish_time' => $info['publish_time'],
+            'image' => $info['image'],
+            'video' => $info['video'],
+            'goods' => [],
+            'goods_id' => $info['goods_id'],
+            'item_id' => $info['item_id'],
+            'shop_price' => $info['shop_price'],
+            'exchange_integral' => $info['exchange_integral'],
+            'goods_name' => $info['goods_name'],
+            'original_img' => $info['original_img'],
+            'status' => $info['status'],
+            'status_desc' => $communityLogic->articleStatus($info['status']),
+            'cate_id1' => $info['cate_id1'],
+            'cate_id1_desc' => $category[$info['cate_id1']],
+            'cate_id2' => $info['cate_id2'],
+            'cate_id2_desc' => $category[$info['cate_id2']],
+        ];
+        $articleInfo = $communityLogic->handleArticleData([$articleInfo], [$info['goods_id']]);
+        return json(['status' => 1, 'result' => ['info' => $articleInfo[0]]]);
     }
 
     /**
