@@ -1592,21 +1592,38 @@ class CartLogic extends Model
 
     /**
      * 检查下单商品
+     * @param $user
      * @param $cartList
      * @return array
      */
-    public function checkCartGoods($cartList)
+    public function checkCartGoods($user, $cartList)
     {
         $hasPmd = false;
         $hasAbroad = false;
         $hasSupply = false;
+        $vipLevel = [];
         foreach ($cartList as $cart) {
+            if ($cart['goods']['zone'] == 3 && $cart['goods']['distribut_id'] > 1) {
+                $vipLevel[] = [
+                    'goods_id' => $cart['goods']['goods_id'],
+                    'level' => $cart['goods']['distribut_id']
+                ];
+            }
             if ($cart['goods']['is_abroad'] == 1) {
                 $hasAbroad = true;
             } elseif ($cart['goods']['is_supply'] == 1) {
                 $hasSupply = true;
             } else {
                 $hasPmd = true;
+            }
+        }
+        if (!empty($vipLevel)) {
+            foreach ($vipLevel as $vip) {
+                if ($user['distribut_level'] >= $vip['level']) {
+                    // 删除购物车
+                    M('cart')->where(['user_id' => $user['user_id'], 'goods_id' => $vip['goods_id']])->delete();
+                    return ['status' => -1, 'msg' => '不能购买自己等级以下的升级套餐'];
+                }
             }
         }
         if (($hasPmd && $hasAbroad) || ($hasSupply && $hasAbroad)) {

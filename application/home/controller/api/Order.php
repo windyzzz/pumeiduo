@@ -1838,7 +1838,10 @@ class Order extends Base
 
         // 检查下单商品
         $canElectronic = 1;
-        $res = $cartLogic->checkCartGoods($cartList['cartList']);
+        $res = $cartLogic->checkCartGoods($this->user, $cartList['cartList']);
+        if ($res['status'] === -1) {
+            return json($res);
+        }
         $abroad = [
             'state' => 0,
             'id_card' => '',
@@ -2415,7 +2418,10 @@ class Order extends Base
         }
 
         // 检查下单商品
-        $res = $cartLogic->checkCartGoods($cartList['cartList']);
+        $res = $cartLogic->checkCartGoods($this->user, $cartList['cartList']);
+        if ($res['status'] === -1) {
+            return json($res);
+        }
         $orderType = 1; // 圃美多
         switch ($res['status']) {
             case 0:
