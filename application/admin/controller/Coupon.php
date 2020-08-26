@@ -284,7 +284,7 @@ class Coupon extends Base
                     $user_id = M('users')->field('user_id')->where('is_lock', 'neq', 1)->where('is_cancel', 'neq', 1)->select();
                 } else {
                     $user_id = M('users')->field('user_id')
-                        ->where('distribut_level', 'IN', $coupon['type_value']) // 会员等级
+                        ->where('distribut_level', 'IN', $coupon['type_value'])// 会员等级
                         ->where('is_lock', 'neq', 1)
                         ->select();
                 }
@@ -360,8 +360,10 @@ class Coupon extends Base
             'LEFT JOIN __PREFIX__coupon c ON c.id = l.cid ' . //联合优惠券表查询名称
             'LEFT JOIN __PREFIX__order o ON o.order_id = l.order_id ' .     //联合订单表查询订单编号
             'LEFT JOIN __PREFIX__users u ON u.user_id = l.uid WHERE l.cid = :cid' .    //联合用户表去查询用户名
+            ' ORDER BY l.send_time DESC' .
             " limit {$Page->firstRow} , {$Page->listRows}";
         $coupon_list = DB::query($sql, ['cid' => $cid]);
+        $this->assign('cid', $cid);
         $this->assign('coupon_type', C('COUPON_TYPE'));
         $this->assign('type', $check_coupon['type']);
         $this->assign('lists', $coupon_list);
@@ -369,6 +371,51 @@ class Coupon extends Base
         $this->assign('pager', $Page);
 
         return $this->fetch();
+    }
+
+    /**
+     * 导出优惠券使用详情
+     */
+    public function export_coupon_list()
+    {
+        $cid = I('get.id/d');
+        //查询该优惠券的列表
+        $sql = 'SELECT l.*,c.name,o.order_sn,u.nickname FROM __PREFIX__coupon_list  l ' .
+            'LEFT JOIN __PREFIX__coupon c ON c.id = l.cid ' . //联合优惠券表查询名称
+            'LEFT JOIN __PREFIX__order o ON o.order_id = l.order_id ' .     //联合订单表查询订单编号
+            'LEFT JOIN __PREFIX__users u ON u.user_id = l.uid WHERE l.cid = :cid' .    //联合用户表去查询用户名
+            ' ORDER BY l.send_time DESC';
+        $coupon_list = DB::query($sql, ['cid' => $cid]);
+
+        $strTable = '<table width="500" border="1">';
+        $strTable .= '<tr>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">优惠券名称</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">发放类型</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">订单号</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">所属用户ID</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">所属用户名称</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">领取（发放）时间</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">使用时间</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">优惠券码</td>';
+        if (!empty($coupon_list)) {
+            foreach ($coupon_list as $coupon) {
+                $sendTime = date('Y-m-d H:i', $coupon['send_time']);
+                $useTime = $coupon['use_time'] > 0 ? date('Y-m-d H:i', $coupon['send_time']) : '未使用';
+                $strTable .= '<tr>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $coupon['name'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . C('COUPON_TYPE')[$coupon['type']] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px; vnd.ms-excel.numberformat:@;">' . $coupon['order_sn'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $coupon['uid'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $coupon['nickname'] . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $sendTime . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $useTime . '</td>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">' . $coupon['code'] . '</td>';
+                $strTable .= '</tr>';
+            }
+        }
+        $strTable .= '</table>';
+        downloadExcel($strTable, 'coupon_list');
+        exit();
     }
 
     /*
