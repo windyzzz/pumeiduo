@@ -1313,6 +1313,8 @@ class Order extends Base
                 }
             }
         }
+        // 取消预备升级记录
+        M('user_pre_distribute_log')->where(['order_id' => $order['order_id']])->update(['status' => -1]);
     }
 
     /**

@@ -145,7 +145,7 @@ class UsersLogic extends Model
         ];
         $res = $apiController->checkIdCard($query, 'array');
         if ($res['status'] != '01') {
-            $this->error = '请填写正确的身份信息\r\n（身份证号以及姓名）';
+            $this->error = "请填写正确的身份信息\r\n（身份证号以及姓名）";
             return false;
         }
 
