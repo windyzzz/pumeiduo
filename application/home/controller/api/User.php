@@ -3903,6 +3903,7 @@ class User extends Base
         $type = I('type', 2);
         switch ($type) {
             case 2:
+            case 4:
                 /*
                  * 用户升级成为VIP弹窗
                  */
