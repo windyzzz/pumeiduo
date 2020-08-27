@@ -418,10 +418,20 @@ class UsersLogic extends Model
             if ($res['status'] == 2) {
                 $user = Db::name('users')->where('user_id', $userId)->find();
             }
-            $result = ['status' => 1, 'msg' => '登录成功', 'result' => $user];
             // 登录记录
             $this->setUserId($userId);
             $this->userLogin($source);
+            // 检查用户是否是新用户（未有消费记录）
+            if (!M('order')->where(['user_id' => $userId])->value('order_id')) {
+                // 新用户
+                // 新会员赠送优惠券
+                (new CouponLogic())->sendNewUser($userId);
+            } elseif ($user['is_new'] == 1) {
+                // 老用户
+                M('users')->where(['user_id' => $userId])->update(['is_new' => 0]);
+                $user = Db::name('users')->where('user_id', $userId)->find();
+            }
+            $result = ['status' => 1, 'msg' => '登录成功', 'result' => $user];
         }
         return $result;
     }
@@ -954,7 +964,8 @@ class UsersLogic extends Model
             'has_pay_pwd' => $user['paypwd'] ? 1 : 0,
             'is_app' => session('is_app'),
             'token' => $user['token'],
-            'jpush_tags' => [$user['push_tag']]
+            'jpush_tags' => [$user['push_tag']],
+            'new_profit' => 1
         ];
         // 登录记录
         $this->setUserId($user['user_id']);
@@ -3110,5 +3121,20 @@ class UsersLogic extends Model
             $userAddress['is_illegal'] = 1;
         }
         return $userAddress;
+    }
+
+    /**
+     * 是否展示新用户奖励
+     * @param $userId
+     * @return array
+     */
+    public function checkNewProfit($userId)
+    {
+        $userNewLog = M('user_new_log')->where(['user_id' => $userId, 'status' => ['NEQ', -1]])->find();
+        if ($userNewLog) {
+            return $userNewLog['status'] == 0 ? ['status' => 1] : ['status' => 0];
+        } else {
+            return ['status' => -1];
+        }
     }
 }

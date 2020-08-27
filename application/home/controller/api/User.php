@@ -13,6 +13,7 @@ namespace app\home\controller\api;
 
 use app\common\logic\ArticleLogic;
 use app\common\logic\CartLogic;
+use app\common\logic\CouponLogic;
 use app\common\logic\GoodsLogic;
 use app\common\logic\MessageLogic;
 use app\common\logic\PushLogic;
@@ -1408,7 +1409,7 @@ class User extends Base
                 accountLog($this->user['user_id'], 0, $pay_points, '会员注册赠送积分', 0, 0, '', 0, 6);
             }
             // 新会员赠送优惠券
-            $CouponLogic = new \app\common\logic\CouponLogic();
+            $CouponLogic = new CouponLogic();
             $CouponLogic->sendNewUser($this->user['user_id']);
 
             if ($will_invite_uid > 0) {
@@ -3931,5 +3932,97 @@ class User extends Base
             ]);
         }
         return json(['status' => 1]);
+    }
+
+    /**
+     * 显示新用户奖励弹窗
+     * @return \think\response\Json
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     */
+    public function getNewProfit()
+    {
+        $return = [
+            'state' => 0,
+            'coupon_list' => []
+        ];
+        if ($this->user['is_new'] == 1) {
+            $res = (new UsersLogic())->checkNewProfit($this->user_id);
+            if ($res['status'] != 0) {
+                if ($res['status'] == -1) {
+                    // 新会员赠送优惠券
+                    (new CouponLogic())->sendNewUser($this->user_id);
+                }
+                // 新用户奖励记录
+                $userNewLog = M('user_new_log')->where(['user_id' => $this->user_id, 'status' => ['NEQ', -1]])->order('add_time DESC')->find();
+                // 优惠券信息
+                $couponIds = explode(',', $userNewLog['coupon_id']);
+                $couponData = M('coupon')->where(['id' => ['IN', $couponIds]])->order('id desc')->select();
+                // 优惠券商品
+                $couponGoods = Db::name('goods_coupon gc')->join('goods g', 'g.goods_id = gc.goods_id')->where(['gc.coupon_id' => ['in', $couponIds]])->field('gc.coupon_id, g.goods_id, g.goods_name, g.original_img')->select();
+                // 优惠券分类
+                $couponCate = Db::name('goods_coupon gc1')->join('goods_category gc2', 'gc1.goods_category_id = gc2.id')->where(['gc1.coupon_id' => ['in', $couponIds]])->getField('gc1.coupon_id, gc2.id cate_id, gc2.name cate_name', true);
+                $couponLogic = new CouponLogic();
+                $couponList = [];
+                foreach ($couponData as $k => $coupon) {
+                    if ($coupon['use_type'] == 1) {
+                        foreach ($couponGoods as $goods) {
+                            if ($coupon['id'] == $goods['coupon_id']) {
+                                $couponList[] = [
+                                    'coupon_id' => $coupon['id'],
+                                    'use_type' => $coupon['use_type'],
+                                    'money' => floatval($coupon['money']) . '',
+                                    'use_start_time' => date('Y.m.d', $coupon['use_start_time']),
+                                    'use_end_time' => date('Y.m.d', $coupon['use_end_time']),
+                                    'cate_id' => '',
+                                    'cate_name' => '',
+                                    'goods_id' => $goods['goods_id'],
+                                    'goods_name' => $goods['goods_name'],
+                                    'original_img_new' => getFullPath($goods['original_img']),
+                                    'title' => $coupon['name'],
+                                    'desc' => '￥' . floatval($coupon['money']) . '仅限' . $goods['goods_name'] . '可用',
+                                    'content' => $coupon['content'] ?? ''
+                                ];
+                            }
+                        }
+                    } else {
+                        $couponList[$k] = [
+                            'coupon_id' => $coupon['id'],
+                            'use_type' => $coupon['use_type'],
+                            'money' => floatval($coupon['money']) . '',
+                            'use_start_time' => date('Y.m.d', $coupon['use_start_time']),
+                            'use_end_time' => date('Y.m.d', $coupon['use_end_time']),
+                            'cate_id' => isset($couponCate[$coupon['id']]) ? $couponCate[$coupon['id']]['cate_id'] : '',
+                            'cate_name' => isset($couponCate[$coupon['id']]) ? $couponCate[$coupon['id']]['cate_name'] : '',
+                            'goods_id' => '',
+                            'goods_name' => '',
+                            'original_img_new' => '',
+                            'title' => '',
+                            'desc' => '',
+                            'content' => $coupon['content'] ?? ''
+                        ];
+                        // 优惠券展示描述
+                        $res = $couponLogic->couponTitleDesc($coupon, $couponList[$k]['goods_name'], $couponList[$k]['cate_name']);
+                        if (empty($res)) {
+                            continue;
+                        }
+                        $couponList[$k]['title'] = $res['title'];
+                        $couponList[$k]['desc'] = $res['desc'];
+                    }
+                    unset($couponList[$k]['cate_id']);
+                    unset($couponList[$k]['cate_name']);
+                    unset($couponList[$k]['goods_id']);
+                    unset($couponList[$k]['goods_name']);
+                }
+                $return = [
+                    'state' => 1,
+                    'coupon_list' => $couponList
+                ];
+                // 更新奖励记录
+                M('user_new_log')->where(['id' => $userNewLog['id']])->update(['status' => 1]);
+            }
+        }
+        return json(['status' => 1, 'result' => $return]);
     }
 }
