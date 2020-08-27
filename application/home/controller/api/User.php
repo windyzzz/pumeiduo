@@ -3841,14 +3841,28 @@ class User extends Base
                             if (M('distribut_log')->where(['user_id' => $this->user_id, 'order_sn' => $log['order_sn'], 'type' => 2])->find() || (!$referee_vip_tips && !$referee_svip_tips)) {
                                 continue;
                             }
-                            $noteList[] = [
-                                'type' => 2,
-                                'is_note' => 1,
-                                'note_data' => [
-                                    'id' => $log['id'],
-                                    'title' => $log['new_level'] == 3 ? $referee_svip_tips : $referee_vip_tips
-                                ]
-                            ];
+                            switch ($log['new_level']) {
+                                case 2:
+                                    $noteList[] = [
+                                        'type' => 2,
+                                        'is_note' => 1,
+                                        'note_data' => [
+                                            'id' => $log['id'],
+                                            'title' => $referee_vip_tips
+                                        ]
+                                    ];
+                                    break;
+                                case 3:
+                                    $noteList[] = [
+                                        'type' => 4,
+                                        'is_note' => 1,
+                                        'note_data' => [
+                                            'id' => $log['id'],
+                                            'title' => $referee_svip_tips
+                                        ]
+                                    ];
+                                    break;
+                            }
                             break 2;
                         case 3:
                             // 累积消费升级
