@@ -4029,7 +4029,7 @@ class User extends Base
                     // 更新奖励记录
                     M('user_new_log')->where(['id' => $userNewLog['id']])->update(['status' => 1]);
                     // 更新用户信息
-                    M('users')->where(['user_id' => $this->user_id])->update(['is_new' => 1]);
+                    M('users')->where(['user_id' => $this->user_id])->update(['is_new' => 0]);
                     $user = Db::name('users')->where('user_id', $this->user_id)->find();
                     TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
                 }
