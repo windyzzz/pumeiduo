@@ -113,7 +113,7 @@ class UsersLogic extends Model
         return true;
     }
 
-    function apply_customs($user_id, $data, $isApp = false)
+    function apply_customs($user_id, $data, $orderId = 0, $isApp = false)
     {
         Db::startTrans();
         $check_apply_customs = $this->check_apply_customs($user_id);
@@ -171,6 +171,7 @@ class UsersLogic extends Model
             'mobile' => $data['mobile'],
             'add_time' => NOW_TIME,
             'referee_user_id' => $referee_user_id,
+            'order_id' => $orderId,
             'status' => 0,
             'success_time' => 0,
             'cancel_time' => 0,

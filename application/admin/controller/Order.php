@@ -1315,6 +1315,15 @@ class Order extends Base
         }
         // 取消预备升级记录
         M('user_pre_distribute_log')->where(['order_id' => $order['order_id']])->update(['status' => -1]);
+        $applyId = M('apply_customs')->where(['order_id' => $order['order_id']])->value('id');
+        if ($applyId) {
+            // 取消金卡申请
+            M('apply_customs')->where(['order_id' => $order['order_id']])->update(['status' => 2, 'cancel_time' => NOW_TIME]);
+            //通知仓储系统
+            include_once "plugins/Tb.php";
+            $TbLogic = new \Tb();
+            $TbLogic->add_tb(1, 8, $applyId, 0);
+        }
     }
 
     /**
