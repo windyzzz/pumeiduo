@@ -85,9 +85,7 @@
                 <dd class="opt">
                     <foreach name="$info[image]" item="vo" key="k">
                         <div style="width:100px; text-align:center; margin: 5px; display:inline-block;" class="goods_xc">
-                            <a onClick="" href="{$vo}" target="_blank">
-                                <img width="100" height="100" src="{$vo}">
-                            </a>
+                            <img width="100" height="100" src="{$vo}" id="img_i" class="fa fa-picture-o" onmouseover="layer.tips('<img src={$vo}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();">
                             <br>
                         </div>
                     </foreach>
