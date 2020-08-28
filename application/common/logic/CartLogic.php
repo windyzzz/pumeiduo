@@ -1630,7 +1630,7 @@ class CartLogic extends Model
                     }
                     // 查看是否已经购买过SVIP升级套组（已支付完成 未取消 未退款）
                     $userPreDistributeLog = M('user_pre_distribute_log pd')->join('order o', 'o.order_id = pd.order_id')
-                        ->where(['pd.new_level' => 3, 'o.order_status' => ['NOT IN', [3, 5, 6]], 'o.pay_status' => 1])->value('pd.id');
+                        ->where(['pd.user_id' => $user['user_id'], 'pd.new_level' => 3, 'o.order_status' => ['NOT IN', [3, 5, 6]], 'o.pay_status' => 1])->value('pd.id');
                     if ($userPreDistributeLog) {
                         return ['status' => -1, 'msg' => '您已经成功购买了升级套餐，无需再购买'];
                     }
