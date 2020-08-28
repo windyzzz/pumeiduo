@@ -48,7 +48,10 @@
                             <div style="text-align: center; width: 150px;" class="">订单号</div>
                         </th>
                         <th align="center" abbr="user_id" axis="col6" class="">
-                            <div style="text-align: center; width: 120px;" class="">所属用户</div>
+                            <div style="text-align: center; width: 100px;" class="">所属用户ID</div>
+                        </th>
+                        <th align="center" abbr="user_id" axis="col6" class="">
+                            <div style="text-align: center; width: 120px;" class="">所属用户名称</div>
                         </th>
                         <th align="center" abbr="send_time" axis="col6" class="">
                             <div style="text-align: center; width: 120px;" class="">领取（发放）时间</div>
@@ -80,6 +83,15 @@
                     </div>
                 </a>
             </div>
+            <div class="tDiv2">
+                <a href="{:U('Coupon/export_coupon_list', array('id'=>$cid))}">
+                    <div class="fbutton">
+                        <div title="导出记录" class="add">
+                            <span><i class="fa fa-plus"></i>导出记录</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
             <div style="clear:both"></div>
         </div>
         <div class="bDiv" style="height: auto;">
@@ -101,7 +113,16 @@
                                 <div style="text-align: center; width: 150px;">{$list.order_sn}</div>
                             </td>
                             <td align="left" class="">
-                                <div style="text-align: center; width: 120px;">{$list.nickname}</div>
+                                <div style="text-align: center; width: 100px;">{$list.uid}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">
+                                    <if condition="!empty($list.nickname)">
+                                        {$list.nickname}
+                                    <else/>
+                                        {$list.user_name}
+                                    </if>
+                                </div>
                             </td>
                             <td align="left" class="">
                                 <div style="text-align: center; width: 120px;">{$list.send_time|date='Y-m-d H:i',###}</div>

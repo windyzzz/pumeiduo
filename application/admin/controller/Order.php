@@ -1574,6 +1574,7 @@ class Order extends Base
         '' != I('pay_code') ? $condition['o.pay_code'] = I('pay_code') : false;
         '' != I('shipping_status') ? $condition['o.shipping_status'] = I('shipping_status') : false;
         '' != I('prom_type') ? $condition['o.prom_type'] = I('prom_type') : false;
+        '' != I('order_type') ? $condition['order_type'] = I('order_type') : false;
 
         // 排序
         $sort_order = I('order_by', 'DESC') . ' ' . I('sort');
@@ -1637,6 +1638,14 @@ class Order extends Base
                 $level = $val['distribut_level'] ? $levelList[$val['distribut_level']] : '普通会员';
                 // 升级VIP时间
                 $levelUpTime = $distributeLog[$val['user_id']] ? date('Y-m-d H:i:s', $distributeLog[$val['user_id']]) : '';
+                // 交易方式
+                switch ($val['order_type']) {
+                    case 2:
+                        $tradeType = '韩国购';
+                        break;
+                    default:
+                        $tradeType = trade_type($orderGoods[0]['trade_type']);
+                }
                 $strTable .= '<tr>';
                 $strTable .= '<td style="text-align:center;font-size:12px;" rowspan="' . $orderGoodsNum . '">&nbsp;' . $val['order_sn'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['add_time'] . ' </td>';
@@ -1671,23 +1680,29 @@ class Order extends Base
                     // $strTradeType = $goods['trade_type'] == 1 ? '仓库自发'  : '一件代发';
                 }
                 $strTable .= '<td style="text-align:left;font-size:12px;"    rowspan="' . $orderGoodsNum . '">' . $goods_num . ' </td>';
-
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['goods_sn'] . ' </td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['goods_num'] . ' </td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['goods_name'] . ' </td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['spec_key_name'] . ' </td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">' . trade_type($orderGoods[0]['trade_type']) . ' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $tradeType . ' </td>';
                 $strTable .= '</tr>';
                 unset($orderGoods[0]);
 
                 if ($orderGoods) {
                     foreach ($orderGoods as $goods) {
+                        switch ($val['order_type']) {
+                            case 2:
+                                $goodsTradeType = '韩国购';
+                                break;
+                            default:
+                                $goodsTradeType = trade_type($goods['trade_type']);
+                        }
                         $strTable .= '<tr>';
                         $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['goods_sn'] . ' </td>';
                         $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['goods_num'] . ' </td>';
                         $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['goods_name'] . ' </td>';
                         $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['spec_key_name'] . ' </td>';
-                        $strTable .= '<td style="text-align:left;font-size:12px;">' . trade_type($goods['trade_type']) . ' </td>';
+                        $strTable .= '<td style="text-align:left;font-size:12px;">' . $goodsTradeType . ' </td>';
                         $strTable .= '</tr>';
                     }
                 }
@@ -1825,7 +1840,14 @@ class Order extends Base
                 $goods_num[] = $goods['goods_num'];
                 $goods_name[] = $goods['goods_name'];
                 $goods_attr[] = $goods['spec_key_name'];
-                $goods_trade[] = trade_type($goods['trade_type']);
+                switch ($order['order_type']) {
+                    case 2:
+                        $goodsTradeType = '韩国购';
+                        break;
+                    default:
+                        $goodsTradeType = trade_type($goods['trade_type']);
+                }
+                $goods_trade[] = $goodsTradeType;
             }
             $dataList[$key][] = $goods_amount;
             $dataList[$key][] = $goods_sn;
