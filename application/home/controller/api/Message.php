@@ -97,7 +97,7 @@ class Message extends Base
                 $messageNotice = $articleLogic->getUserArticleNotice($this->user);
                 $message = [];
                 foreach ($messageNotice as $value) {
-                    $publishTime = date('m' . '月' . 'd' . '日' . ' H:i', $value['publish_time']);
+                    $publishTime = date('Y' . '年' . 'm' . '月' . 'd' . '日' . ' H:i', $value['publish_time']);
                     if (date('Y-m-d', $value['publish_time']) == date('Y-m-d', strtotime($nowDate))) {
                         // 今天
                         $publishTime = date('H:i', $value['publish_time']);
@@ -127,7 +127,7 @@ class Message extends Base
                 $messageNotice = $messageLogic->getUserMessageNotice($this->user);
                 $message = [];
                 foreach ($messageNotice as $value) {
-                    $publishTime = date('m' . '月' . 'd' . '日' . ' H:i', $value['send_time']);
+                    $publishTime = date('Y' . '年' . 'm' . '月' . 'd' . '日' . ' H:i', $value['send_time']);
                     if (date('Y-m-d', $value['send_time']) == date('Y-m-d', strtotime($nowDate))) {
                         // 今天
                         $publishTime = date('H:i', $value['send_time']);
@@ -247,7 +247,7 @@ class Message extends Base
                     $userName = $user['nickname'] ?? $user['user_name'];
                     $returnData[] = [
                         'head_pic' => $user['head_pic'],
-                        'title' =>  $userName. '买了' . $user['goods_num'] . '件该商品'
+                        'title' => $userName . '买了' . $user['goods_num'] . '件该商品'
                     ];
                 }
                 $return = [

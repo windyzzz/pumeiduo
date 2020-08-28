@@ -3,6 +3,7 @@
 namespace app\admin\controller;
 
 use app\admin\model\CommunityArticle;
+use app\common\logic\MessageLogic;
 use app\common\logic\OssLogic;
 use think\Page;
 
@@ -175,12 +176,18 @@ class Community extends Base
             case 'edit':
                 // 审核文章详情
                 $articleId = I('article_id', 0);
+                $articleModel = new CommunityArticle();
+                $articleInfo = $articleModel->where(['id' => $articleId])->find();
                 if (IS_POST) {
                     $status = I('status', 0);
                     $updata = ['status' => $status];
                     switch ($status) {
                         case 1:
                             $updata['publish_time'] = NOW_TIME;
+                            $content = '审核通过啦！';
+                            break;
+                        case -1:
+                            $content = '可惜，审核不通过。';
                             break;
                     }
                     M('community_article')->where(['id' => $articleId])->update($updata);
@@ -193,10 +200,11 @@ class Community extends Base
                         'add_time' => NOW_TIME
                     ];
                     M('community_article_verify_log')->add($logData);
+                    // 消息通知
+                    $messageLogic = new MessageLogic();
+                    $messageLogic->addMessage(session('admin_id'), '社区文章审核结果', $content, 0, 0, 0, $articleInfo['user_id']);
                     $this->ajaxReturn(['status' => 1, 'msg' => '处理成功']);
                 }
-                $articleModel = new CommunityArticle();
-                $articleInfo = $articleModel->where(['id' => $articleId])->find();
                 switch ($articleInfo['source']) {
                     case 1:
                         $userInfo = M('users')->where(['user_id' => $articleInfo['user_id']])->field('user_id, nickname, user_name')->find();
@@ -205,7 +213,16 @@ class Community extends Base
                         $userInfo = M('admin')->where(['admin_id' => $articleInfo['user_id']])->field('user_name')->find();
                         break;
                 }
-                $articleInfo['image'] = !empty($articleInfo['image']) ? explode(',', $articleInfo['image']) : [];
+                if (!empty($articleInfo['image'])) {
+                    $images = explode(',', $articleInfo['image']);
+                    $image = [];
+                    foreach ($images as $item) {
+                        $image[] = \plugins\Oss::url($item);
+                    }
+                    $articleInfo['image'] = $image;
+                } else {
+                    $articleInfo['image'] = [];
+                }
                 $articleInfo['video'] = !empty($articleInfo['video']) ? \plugins\Oss::url($articleInfo['video']) : '';
                 $articleInfo['cate_id1_desc'] = $tCategory[$articleInfo['cate_id1']];
                 $articleInfo['cate_id2_desc'] = $dCategory[$articleInfo['cate_id2']];

@@ -537,4 +537,37 @@ class MessageLogic extends Model
     {
         M('user_message')->where('user_id', $user_id)->save(['status' => 1]);
     }
+
+    /**
+     * 添加消息通知
+     * @param $adminId
+     * @param $title
+     * @param $content
+     * @param int $type 个体消息:0，全体消息：1
+     * @param int $level 要发送的分销用户等级id，没限制0
+     * @param int $category 系统消息：0，活动消息：1
+     * @param int $userId
+     * @return bool
+     */
+    public function addMessage($adminId, $title, $content, $type, $level, $category, $userId = 0)
+    {
+        $messageData = [
+            'admin_id' => $adminId,
+            'title' => $title,
+            'message' => $content,
+            'type' => $type,
+            'distribut_level' => $level,
+            'category' => $category,
+            'send_time' => NOW_TIME,
+            'data' => ''
+        ];
+        $messageId = M('message')->insertGetId($messageData);
+        if ($messageId && $userId) {
+            M('user_message')->add([
+                'user_id' => $userId,
+                'message_id' => $messageId
+            ]);
+        }
+        return true;
+    }
 }
