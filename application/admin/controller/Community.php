@@ -3,6 +3,7 @@
 namespace app\admin\controller;
 
 use app\admin\model\CommunityArticle;
+use app\common\logic\OssLogic;
 use think\Page;
 
 class Community extends Base
@@ -241,7 +242,22 @@ class Community extends Base
                             if (empty($postData['image'])) {
                                 $this->ajaxReturn(['status' => 0, 'msg' => '请上传图片']);
                             }
-                            $postData['image'] = implode(',', $postData['image']);
+                            $postImage = '';
+                            // 上传到OSS服务器
+                            $ossClient = new OssLogic();
+                            foreach ($postData['image'] as $image) {
+                                $filePath = PUBLIC_PATH . substr($image, strrpos($image, '/public/') + 8);
+                                $fileName = substr($image, strrpos($image, '/') + 1);
+                                $object = 'image/' . date('Y/m/d/H/') . $fileName;
+                                $return_url = $ossClient->uploadFile($filePath, $object);
+                                if (!$return_url) {
+                                    return $this->ajaxReturn(['status' => 0, 'msg' => 'ERROR：' . $ossClient->getError()]);
+                                } else {
+                                    unlink($filePath);
+                                    $postImage .= $object . ',';
+                                }
+                            }
+                            $postData['image'] = rtrim($postImage, ',');
                             $postData['video'] = '';
                             break;
                         case 2:

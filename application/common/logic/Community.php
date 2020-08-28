@@ -128,7 +128,7 @@ class Community
             $image = [];
             if (!empty($value['image'])) {
                 foreach ($value['image'] as $item) {
-                    $image[] = getFullPath($item);
+                    $image[] = \plugins\Oss::url($item);
                 }
             }
             // 视频处理

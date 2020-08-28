@@ -242,8 +242,7 @@ class Community extends Base
      * 点击文章
      * @return \think\response\Json
      */
-    public
-    function clickArticle()
+    public function clickArticle()
     {
         $articleId = I('article_id', 0);
         if (!$articleId) return json(['status' => 0, 'msg' => '请传入文章ID']);
@@ -256,8 +255,7 @@ class Community extends Base
      * 分享文章
      * @return \think\response\Json
      */
-    public
-    function shareArticle()
+    public function shareArticle()
     {
         $articleId = I('article_id', 0);
         if (!$articleId) return json(['status' => 0, 'msg' => '请传入文章ID']);
