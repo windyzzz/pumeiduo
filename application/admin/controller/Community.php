@@ -9,6 +9,38 @@ use think\Page;
 
 class Community extends Base
 {
+
+    public function config()
+    {
+        if (IS_POST) {
+            $param = I('post.');
+            foreach ($param as $k => $v) {
+                $data = [
+                    'type' => $k,
+                    'name' => isset($v['name']) ? $v['name'] : '',
+                    'url' => isset($v['url']) ? $v['url'] : '',
+                ];
+                $config = M('community_config')->where(['type' => $k])->find();
+                if (!empty($config)) {
+                    M('community_config')->where(['id' => $config['id']])->update($data);
+                } else {
+                    M('community_config')->add($data);
+                }
+            }
+            $this->success('操作成功', U('Admin/Community/config'));
+        }
+        $abroadConfig = M('community_config')->select();
+        $config = [];
+        foreach ($abroadConfig as $val) {
+            $config[$val['type']] = [
+                'name' => $val['name'],
+                'url' => $val['url']
+            ];
+        }
+        $this->assign('config', $config);
+        return $this->fetch('config');
+    }
+
     /**
      * 社区分类
      * @return mixed

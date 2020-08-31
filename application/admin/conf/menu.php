@@ -161,6 +161,7 @@ return [
         ]],
 
         ['name' => '社区', 'child' => [
+            ['name' => '配置', 'act' => 'config', 'op' => 'Community'],
             ['name' => '分类', 'act' => 'category', 'op' => 'Community'],
             ['name' => '文章', 'act' => 'article', 'op' => 'Community'],
         ]],

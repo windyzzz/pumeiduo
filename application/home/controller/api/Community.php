@@ -74,7 +74,7 @@ class Community extends Base
         $articleList = [];
         foreach ($list as $key => $value) {
             // 组合数据
-            $articleList[] = [
+            $articleList[$key] = [
                 'article_id' => $value['id'],
                 'content' => $value['content'],
                 'share' => $value['share'],
@@ -84,9 +84,9 @@ class Community extends Base
                 'video_cover' => $value['video_cover'],
                 'video_axis' => $value['video_axis'],
                 'user' => [
-                    'user_id' => $value['user_id'],
+                    'user_id' => !empty($value['user_id']) ? $value['user_id'] : '',
                     'user_name' => !empty($value['user_name']) ? $value['user_name'] : !empty($value['nickname']) ? $value['nickname'] : '',
-                    'head_pic' => getFullPath($value['head_pic']),
+                    'head_pic' => !empty($value['user_name']) ? getFullPath($value['head_pic']) : '',
                 ],
                 'goods' => [],
                 'goods_id' => $value['goods_id'],
@@ -96,6 +96,15 @@ class Community extends Base
                 'goods_name' => $value['goods_name'],
                 'original_img' => $value['original_img'],
             ];
+            // 发布者处理
+            if ($value['source'] == 2) {
+                $official = M('community_config')->where(['type' => 'official'])->find();
+                $articleList[$key]['user'] = [
+                    'user_id' => 0,
+                    'user_name' => $official ? $official['name'] : '圃美多官方',
+                    'head_pic' => $official ? getFullPath($official['url']) : getFullPath('/public/images/default_head.png')
+                ];
+            }
         }
         // 数据处理
         $goodsIds = array_column($list, 'goods_id');
@@ -189,6 +198,39 @@ class Community extends Base
         ];
         $articleInfo = $communityLogic->handleArticleData([$articleInfo], [$info['goods_id']]);
         return json(['status' => 1, 'result' => ['info' => $articleInfo[0]]]);
+    }
+
+    /**
+     * 用户文章数量统计
+     * @return \think\response\Json
+     */
+    public function articleNum()
+    {
+        $return = [
+            'WAIT' => 0,
+            'SUCCESS' => 0,
+            'FAIL' => 0,
+        ];
+        $communityLogic = new CommunityLogic();
+        // 获取用户文章数据
+        $param = I('get.');
+        $param['status'] = '';
+        $param['user_id'] = $this->user_id;
+        $list = $communityLogic->getArticleList($param)['list'];
+        foreach ($list as $value) {
+            switch ($value['status']) {
+                case 0:
+                    $return['WAIT'] += 1;
+                    break;
+                case 1:
+                    $return['SUCCESS'] += 1;
+                    break;
+                case -1:
+                    $return['FAIL'] += 1;
+                    break;
+            }
+        }
+        return json(['status' => 1, 'result' => $return]);
     }
 
     /**
