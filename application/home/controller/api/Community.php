@@ -100,7 +100,7 @@ class Community extends Base
             if ($value['source'] == 2) {
                 $official = M('community_config')->where(['type' => 'official'])->find();
                 $articleList[$key]['user'] = [
-                    'user_id' => 0,
+                    'user_id' => '0',
                     'user_name' => $official ? $official['name'] : '圃美多官方',
                     'head_pic' => $official ? getFullPath($official['url']) : getFullPath('/public/images/default_head.png')
                 ];
