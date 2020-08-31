@@ -54,7 +54,9 @@ class Community extends Base
                         ];
                     }
                 }
-                array_unshift($cateList['category'][$k]['list'], ['id' => '0', 'name' => '全部']);
+                if ($canPublish == '') {
+                    array_unshift($cateList['category'][$k]['list'], ['id' => '0', 'name' => '全部']);
+                }
             }
             $cateList['category'] = array_values($cateList['category']);
         }
