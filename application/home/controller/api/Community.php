@@ -251,6 +251,16 @@ class Community extends Base
         }
         $post['user_id'] = $this->user_id;
         $post['source'] = 1;
+        // 图片地址处理
+        if (!empty($post['image'])) {
+            $imageArr = explode(',', $post['image']);
+            $post['image'] = '';
+            foreach ($imageArr as $image) {
+                $post['image'] .= substr($image, strpos($image, 'image')) . ',';
+            }
+            $post['image'] = rtrim($post['image'], ',');
+        }
+        // 视频地址处理
         if (!empty($post['video'])) {
             $post['video'] = substr($post['video'], strpos($post['video'], 'video'));
             // 处理视频封面图
