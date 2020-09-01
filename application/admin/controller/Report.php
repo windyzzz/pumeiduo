@@ -744,16 +744,18 @@ class Report extends Base
             ->where($where)->group('og.goods_id')->count();
         $Page = new Page($count, $this->page_size);
         $res = Db::name('order_goods')->alias('og')
-            ->field('og.goods_name,og.goods_id,og.goods_sn,sum(og.goods_num) as sale_num,sum(og.goods_num*og.goods_price) as sale_amount ')
             ->join('order od', 'og.order_id=od.order_id', 'LEFT')
+            ->join('goods g', 'g.goods_id = og.goods_id')
+            ->field('og.goods_name,og.goods_id,og.goods_sn,sum(og.goods_num) as sale_num,sum(og.goods_num*og.goods_price) as sale_amount, g.is_on_sale ')
             ->where($where)->group('og.goods_id')->order('sale_num DESC')
             ->limit($Page->firstRow, $Page->listRows)->cache(true, 3600)->select();
 
         $is_export = I('is_export');
         if (1 == $is_export) {
             $res = Db::name('order_goods')->alias('og')
-                ->field('og.goods_name,og.goods_id,og.goods_sn,sum(og.goods_num) as sale_num,sum(og.goods_num*og.goods_price) as sale_amount ')
                 ->join('order od', 'og.order_id=od.order_id', 'LEFT')
+                ->join('goods g', 'g.goods_id = og.goods_id')
+                ->field('og.goods_name,og.goods_id,og.goods_sn,sum(og.goods_num) as sale_num,sum(og.goods_num*og.goods_price) as sale_amount, g.is_on_sale ')
                 ->where($where)->group('og.goods_id')->order('sale_num DESC')
                 ->cache(true, 3600)->select();
             $strTable = '<table width="500" border="1">';
@@ -764,9 +766,14 @@ class Report extends Base
             $strTable .= '<td style="text-align:center;font-size:12px;" width="*">销售量</td>';
             $strTable .= '<td style="text-align:center;font-size:12px;" width="*">销售额</td>';
             $strTable .= '<td style="text-align:center;font-size:12px;" width="*">均价</td>';
+            $strTable .= '<td style="text-align:center;font-size:12px;" width="*">上架状态</td>';
             $strTable .= '</tr>';
             if (is_array($res)) {
                 foreach ($res as $k => $val) {
+                    $isOnSale = '上架';
+                    if ($val['is_on_sale'] == 0) {
+                        $isOnSale = '下架';
+                    }
                     $pai = $k + 1 + ((I('p/d', 1) - 1) * $this->page_size);
                     $strTable .= '<tr>';
                     $strTable .= '<td style="text-align:center;font-size:12px">&nbsp;' . $pai . '</td>';
@@ -775,6 +782,7 @@ class Report extends Base
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['sale_num'] . '</td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['sale_amount'] . '</td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . round($val['sale_amount'] / $val['sale_num'], 2) . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $isOnSale . '</td>';
                     $strTable .= '</tr>';
                 }
             }
