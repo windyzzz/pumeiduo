@@ -191,15 +191,18 @@ class Community extends Base
             'exchange_integral' => $info['exchange_integral'],
             'goods_name' => $info['goods_name'],
             'original_img' => $info['original_img'],
-            'status' => $info['status'],
-            'status_desc' => $communityLogic->articleStatus($info['status']),
             'cate_id1' => $info['cate_id1'],
             'cate_id1_desc' => $category[$info['cate_id1']],
             'cate_id2' => $info['cate_id2'],
             'cate_id2_desc' => $category[$info['cate_id2']],
         ];
         $articleInfo = $communityLogic->handleArticleData([$articleInfo], [$info['goods_id']]);
-        return json(['status' => 1, 'result' => ['info' => $articleInfo[0]]]);
+        $return = [
+            'status' => $info['status'],
+            'status_desc' => $communityLogic->articleStatus($info['status']),
+            'info' => $articleInfo[0]
+        ];
+        return json(['status' => 1, 'result' => $return]);
     }
 
     /**
