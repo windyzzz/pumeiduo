@@ -6,6 +6,14 @@ use app\common\logic\STS as STSLogic;
 
 class STS extends Base
 {
+    public function __construct()
+    {
+        parent::__construct();
+        if ($this->passAuth) {
+            die(json_encode(['status' => -999, 'msg' => '请先登录']));
+        }
+    }
+
     /**
      * 获取STS凭证
      * @return \think\response\Json
