@@ -395,6 +395,7 @@ class Goods extends Base
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
+        M('Goods')->where('goods_id', $goods_id)->save(['click_count' => $goods['click_count'] + 1]); // 统计点击数
         $goods['buy_limit'] = $goods['limit_buy_num'];  // 商品最大购买数量
         $goods['buy_least'] = $goods['least_buy_num'];  // 商品最低购买数量
         $goods['nature'] = [];
@@ -787,6 +788,7 @@ class Goods extends Base
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架']);
         }
+        M('Goods')->where('goods_id', $goods_id)->save(['click_count' => $goods['click_count'] + 1]); // 统计点击数
         $originalImg = getFullPath($goods['original_img']);
         $goodsInfo = [
             'goods_type' => 'normal',

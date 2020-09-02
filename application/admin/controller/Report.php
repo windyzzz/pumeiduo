@@ -800,6 +800,67 @@ class Report extends Base
         return $this->fetch();
     }
 
+
+    public function clickTop()
+    {
+        $goods_name = I('goods_name');
+        $sort = I('sort', 'DESC');
+        $where = [];
+        if (!empty($goods_name)) {
+            $where['g.goods_name'] = ['like', "%{$goods_name}%"];
+        }
+        $count = Db::name('goods')->alias('g')->where($where)->count();
+        $Page = new Page($count, $this->page_size);
+        $res = Db::name('goods')->alias('g')
+            ->field('g.*')
+            ->where($where)->order('g.click_count ' . $sort)
+            ->limit($Page->firstRow, $Page->listRows)->cache(true, 3600)->select();
+
+        $is_export = I('is_export');
+        if (1 == $is_export) {
+            $res = Db::name('goods')->alias('g')
+                ->field('g.*')
+                ->where($where)->order('g.click_count ' . $sort)
+                ->cache(true, 3600)->select();
+            $strTable = '<table width="500" border="1">';
+            $strTable .= '<tr>';
+            $strTable .= '<td style="text-align:center;font-size:12px;" width="*">排行</td>';
+            $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品名称</td>';
+            $strTable .= '<td style="text-align:center;font-size:12px;" width="*">货号</td>';
+            $strTable .= '<td style="text-align:center;font-size:12px;" width="*">上架状态</td>';
+            $strTable .= '<td style="text-align:center;font-size:12px;" width="*">点击数</td>';
+            $strTable .= '</tr>';
+            if (is_array($res)) {
+                foreach ($res as $k => $val) {
+                    $isOnSale = '上架';
+                    if ($val['is_on_sale'] == 0) {
+                        $isOnSale = '下架';
+                    }
+                    $pai = $k + 1 + ((I('p/d', 1) - 1) * $this->page_size);
+                    $strTable .= '<tr>';
+                    $strTable .= '<td style="text-align:center;font-size:12px">&nbsp;' . $pai . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['goods_name'] . ' </td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['goods_sn'] . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $isOnSale . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['click_count'] . '</td>';
+                    $strTable .= '</tr>';
+                }
+            }
+            $strTable .= '</table>';
+            unset($res);
+            downloadExcel($strTable, 'saleTopRes');
+            exit();
+        }
+
+        $this->assign('list', $res);
+        $this->assign('page', $Page);
+        $this->assign('p', I('p/d', 1));
+        $this->assign('page_size', $this->page_size);
+        $this->assign('sort', $sort);
+
+        return $this->fetch();
+    }
+
     public function export_user_top()
     {
         $mobile = I('mobile');
