@@ -13,6 +13,7 @@ class STS extends Base
     public function getVoucher()
     {
         $type = I('type', 'video');
+        $num = I('num', 1);
         $path = $type . '/' . date('Y/m/d/H/');
         $res = (new STSLogic($this->user_id))->sts();
         if (empty($res)) {
@@ -22,6 +23,10 @@ class STS extends Base
             $res['end_point'] = C('OSS_ENDPOINT');
             $res['path'] = $path;
             $res['file_name'] = get_rand_str(32, 1, 1);
+            $res['file_name_arr'] = [];
+            for ($i = 1; $i <= $num; $i++) {
+                $res['file_name_arr'][] = get_rand_str(32, 1, 1);
+            }
             return json(['status' => 1, 'result' => $res]);
         }
     }
