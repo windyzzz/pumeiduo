@@ -3492,7 +3492,7 @@ class User extends Base
         }
         // 商品分销等级
         $goodsDistribute = M('goods')->where(['goods_id' => $goodsId])->value('distribut_id');
-        if ($goodsDistribute == 1) {
+        if (in_array($goodsDistribute, [0, 1])) {
             return json(['status' => 1]);
         }
         // 用户分销等级
