@@ -248,6 +248,7 @@ class Community extends Base
         $articleId = $post['article_id'];
         unset($post['article_id']);
         // 验证参数
+        $post['content'] = trim($post['content']);
         $validate = validate('Community');
         if (!$validate->scene('article_add')->check($post)) {
             return json(['status' => 0, 'msg' => $validate->getError()]);
