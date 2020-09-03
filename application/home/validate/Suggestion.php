@@ -13,7 +13,7 @@ class Suggestion extends Validate
         'content' => 'require',
     ];
 
-    protected $msg = [
+    protected $message = [
         'phone' => '请输入正确的手机号码',
         'cate_id' => '类型错误',
         'content' => '请输入反馈内容'

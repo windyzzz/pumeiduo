@@ -76,6 +76,9 @@
 							<div style="text-align: center; width: 100px;" class="">均价</div>
 						</th>
 						<th align="center" abbr="article_time" axis="col6" class="">
+							<div style="text-align: center; width: 100px;" class="">上架状态</div>
+						</th>
+						<th align="center" abbr="article_time" axis="col6" class="">
 							<div style="text-align: center; width: 100px;" class="">明细</div>
 						</th>
 						<th style="width:100%" axis="col7">
@@ -131,6 +134,18 @@
 							</td>
 							<td align="center" class="">
 								<div style="text-align: center; width: 100px;">{$vo['sale_amount']/$vo.sale_num|round=###,2}</div>
+							</td>
+							<td align="center" class="">
+								<div style="text-align: center; width: 100px;" class="">
+									<switch name="$vo[is_on_sale]">
+										<case value="0">
+											<p style="color: red;">下架</p>
+										</case>
+										<case value="1">
+											<p style="color: green;">上架</p>
+										</case>
+									</switch>
+								</div>
 							</td>
 							<td align="center" class="">
 								<div style="text-align: center; width: 100px;">

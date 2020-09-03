@@ -30,7 +30,7 @@ class UserAddress extends Validate
         'mobile' => ['regex' => '/^1[3|4|5|8][0-9]\d{4,8}$/'],
     ];
 
-    protected $msg = [
+    protected $message = [
         'user_id.require' => '用户id必须',
         'user_id.number' => '用户id必须为数字',
         'consignee.require' => '收货人必须填写',
