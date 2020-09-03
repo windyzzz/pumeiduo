@@ -244,8 +244,9 @@ class Community extends Base
      */
     public function saveArticle()
     {
-        $articleId = I('article_id', 0);
         $post = input('post.');
+        $articleId = $post['article_id'];
+        unset($post['article_id']);
         // 验证参数
         $validate = validate('Community');
         if (!$validate->scene('article_add')->check($post)) {
