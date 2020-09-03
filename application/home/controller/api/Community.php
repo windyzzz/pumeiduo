@@ -88,7 +88,7 @@ class Community extends Base
                 'user' => [
                     'user_id' => !empty($value['user_id']) ? $value['user_id'] : '',
                     'user_name' => !empty($value['user_name']) ? $value['user_name'] : !empty($value['nickname']) ? $value['nickname'] : '',
-                    'head_pic' => !empty($value['user_name']) ? getFullPath($value['head_pic']) : '',
+                    'head_pic' => !empty($value['head_pic']) ? getFullPath($value['head_pic']) : '',
                 ],
                 'goods' => [],
                 'goods_id' => $value['goods_id'],

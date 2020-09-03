@@ -83,12 +83,11 @@
                     <label>图片</label>
                 </dt>
                 <dd class="opt">
-                    <foreach name="$info[image]" item="vo" key="k">
-                        <div style="width:100px; text-align:center; margin: 5px; display:inline-block;" class="goods_xc">
-                            <img width="100" height="100" src="{$vo}" id="img_i" class="fa fa-picture-o" onmouseover="layer.tips('<img src={$vo}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();">
-                            <br>
-                        </div>
-                    </foreach>
+                    <div id="layer-photos-demo" class="layer-photos-demo goods_xc" style="text-align:center; display:inline-block;">
+                        <foreach name="$info[image]" item="vo" key="k">
+                            <img layer-pid="{$k}" layer-src="{$vo}" src="{$vo}" alt="" width="100" height="100" class="fa fa-picture-o" style="margin: 5px;">
+                        </foreach>
+                    </div>
                 </dd>
             </dl>
             <dl class="row">
@@ -162,6 +161,11 @@
     </form>
 </div>
 <script type="text/javascript">
+    layer.photos({
+        photos: '#layer-photos-demo'
+        ,anim: 5 //0-6的选择，指定弹出图片动画类型，默认随机（请注意，3.0之前的版本用shift参数）
+    });
+
     function verify(status) {
         layer.confirm('确认操作？', {btn: ['确定', '取消']}, function () {
             var act = $('input[name="act"]').val();
