@@ -70,6 +70,9 @@
 						<th align="center" abbr="article_show" axis="col5" class="">
 							<div style="text-align: center; width: 100px;" class="">销售总额</div>
 						</th>
+						<th align="center" abbr="article_show" axis="col5" class="">
+							<div style="text-align: center; width: 150px;" class="">韩国购销售总额（成本价）</div>
+						</th>
 						<th align="center" abbr="article_time" axis="col6" class="">
 							<div style="text-align: center; width: 100px;" class="">销售不含税价</div>
 						</th>
@@ -110,12 +113,14 @@
 									<div style="text-align: center; width: 100px;">{$vo.amount}</div>
 								</td>
 								<td align="center" class="">
+									<div style="text-align: center; width: 150px;">{$vo.abroad_amount}</div>
+								</td>
+								<td align="center" class="">
 									<div style="text-align: center; width: 100px;">{$vo.c_amount}</div>
 								</td>
 								<td align="center" class="">
 									<div style="text-align: center; width: 100px;">{$vo.sign}</div>
 								</td>
-
 								<td align="center" class="handle">
 									<div style="text-align: center; width: 170px; max-width:170px;">
 										<a href="{:U('Report/saleOrder',array('start_time'=>$vo['day'],'end_time'=>$vo['end']))}" class="btn blue"><i class="fa fa-search"></i>查看订单列表</a>
@@ -228,7 +233,7 @@
 	function exportReport()
 	{
 		var data =  $('#search-form').serialize();
-		var action = "{:U('admin/Report/exportIndex')}" + '?' +data
+		var action = "{:U('admin/Report/exportIndex')}" + '?' +data;
 
 		// $('#search-form2').submit();
 		window.location = action;

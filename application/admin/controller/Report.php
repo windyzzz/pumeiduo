@@ -87,10 +87,12 @@ class Report extends Base
             } else {
                 $brr[$val['gap']] = $val['amount'];
             }
+            $crr[$val['gap']] = $val['amount'];
         }
         for ($i = $this->begin; $i <= $this->end; $i = $i + 24 * 3600) {
             $tmp_num = empty($arr[date('Y-m-d', $i)]) ? 0 : $arr[date('Y-m-d', $i)];
             $tmp_amount = empty($brr[date('Y-m-d', $i)]) ? 0 : $brr[date('Y-m-d', $i)];
+            $tmp_abroad_amount = empty($crr[date('Y-m-d', $i)]) ? 0 : $crr[date('Y-m-d', $i)];
             $tmp_sign = empty($tmp_num) ? 0 : round($tmp_amount / $tmp_num, 2);
             $order_arr[] = $tmp_num;
             $amount_arr[] = $tmp_amount;
@@ -123,7 +125,7 @@ class Report extends Base
                     }
                 }
             }
-            $list[] = ['day' => $date, 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
+            $list[] = ['day' => $date, 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'abroad_amount' => $tmp_abroad_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
             $day[] = $date;
         }
         rsort($list);
@@ -170,10 +172,12 @@ class Report extends Base
             } else {
                 $brr[$val['gap']] = $val['amount'];
             }
+            $crr[$val['gap']] = $val['amount'];
         }
         for ($i = $this->begin; $i <= $this->end; $i = $i + 24 * 3600) {
             $tmp_num = empty($arr[date('Y-m-d', $i)]) ? 0 : $arr[date('Y-m-d', $i)];
             $tmp_amount = empty($brr[date('Y-m-d', $i)]) ? 0 : $brr[date('Y-m-d', $i)];
+            $tmp_abroad_amount = empty($crr[date('Y-m-d', $i)]) ? 0 : $crr[date('Y-m-d', $i)];
             $tmp_sign = empty($tmp_num) ? 0 : round($tmp_amount / $tmp_num, 2);
             $order_arr[] = $tmp_num;
             $amount_arr[] = $tmp_amount;
@@ -206,7 +210,7 @@ class Report extends Base
                     }
                 }
             }
-            $list[] = ['day' => $date, 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
+            $list[] = ['day' => $date, 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'abroad_amount' => $tmp_abroad_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
             $day[] = $date;
         }
         $strTable = '<table width="500" border="1">';
@@ -215,6 +219,7 @@ class Report extends Base
         $strTable .= '<td style="text-align:left;font-size:12px;" width="100">VIP订单数</td>';
         $strTable .= '<td style="text-align:left;font-size:12px;" width="100">订单数</td>';
         $strTable .= '<td style="text-align:left;font-size:12px;" width="*">销售总额</td>';
+        $strTable .= '<td style="text-align:left;font-size:12px;" width="*">韩国购销售总额（成本价）</td>';
         $strTable .= '<td style="text-align:left;font-size:12px;" width="*">销售不含税价</td>';
         $strTable .= '<td style="text-align:left;font-size:12px;" width="*">客单价</td>';
         $strTable .= '</tr>';
@@ -225,6 +230,7 @@ class Report extends Base
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['vip_order_num'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['order_num'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['amount'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['abroad_amount'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['c_amount'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['sign'] . '</td>';
                 $strTable .= '</tr>';
@@ -297,6 +303,7 @@ class Report extends Base
             } else {
                 $brr[$val['gap']] = $val['amount'];
             }
+            $crr[$val['gap']] = $val['amount'];
         }
         for ($i = $this->begin; $i <= $this->end;) {
             $year = date('Y', $i);
@@ -304,6 +311,7 @@ class Report extends Base
             $day_num = date('t', strtotime("$year-$m"));
             $tmp_num = empty($arr[date('Y-m', $i)]) ? 0 : $arr[date('Y-m', $i)];
             $tmp_amount = empty($brr[date('Y-m', $i)]) ? 0 : $brr[date('Y-m', $i)];
+            $tmp_abroad_amount = empty($crr[date('Y-m', $i)]) ? 0 : $crr[date('Y-m', $i)];
             $tmp_sign = empty($tmp_num) ? 0 : round($tmp_amount / $tmp_num, 2);
             $order_arr[] = $tmp_num;
             $amount_arr[] = $tmp_amount;
@@ -336,7 +344,7 @@ class Report extends Base
                     }
                 }
             }
-            $list[] = ['day' => $date . '-01', 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + $day_num * 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
+            $list[] = ['day' => $date . '-01', 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'abroad_amount' => $tmp_abroad_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + $day_num * 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
             $day[] = $date;
             $i = $i + $day_num * 24 * 3600;
         }
@@ -364,23 +372,10 @@ class Report extends Base
             $day_num = date('t', strtotime("$year-$m"));
             $day_num = $day_num - 1;
             $this->end = $this->end + $day_num * 24 * 3600;
-            $end = strtotime(I('end_time'));
         } else {
             $this->begin = strtotime(date('Y-m', $this->begin));
             $this->end = strtotime('+1 month');
-            $end = $this->end;
         }
-
-        $now = strtotime(date('Y-m-d'));
-        $today['today_amount'] = M('order')->where('parent_id = 0')->where("add_time>$now AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4)")->sum('total_amount'); //今日销售总额
-        $today['today_order'] = M('order')->where('parent_id = 0')->where("add_time>$now and (pay_status=1 or pay_code='cod')")->count(); //今日订单数
-        $today['cancel_order'] = M('order')->where('parent_id = 0')->where("add_time>$now AND order_status=3")->count(); //今日取消订单
-        if (0 == $today['today_order']) {
-            $today['sign'] = round(0, 2);
-        } else {
-            $today['sign'] = round($today['today_amount'] / $today['today_order'], 2);
-        }
-        $this->assign('today', $today);
 
         $res1 = Db::name('order')
             ->field(" COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-%m') as gap ")
@@ -416,14 +411,15 @@ class Report extends Base
             } else {
                 $brr[$val['gap']] = $val['amount'];
             }
+            $crr[$val['gap']] = $val['amount'];
         }
         for ($i = $this->begin; $i <= $this->end;) {
             $year = date('Y', $i);
             $m = date('m', $i);
             $day_num = date('t', strtotime("$year-$m"));
-
             $tmp_num = empty($arr[date('Y-m', $i)]) ? 0 : $arr[date('Y-m', $i)];
             $tmp_amount = empty($brr[date('Y-m', $i)]) ? 0 : $brr[date('Y-m', $i)];
+            $tmp_abroad_amount = empty($crr[date('Y-m', $i)]) ? 0 : $crr[date('Y-m', $i)];
             $tmp_sign = empty($tmp_num) ? 0 : round($tmp_amount / $tmp_num, 2);
             $order_arr[] = $tmp_num;
             $amount_arr[] = $tmp_amount;
@@ -456,7 +452,7 @@ class Report extends Base
                     }
                 }
             }
-            $list[] = ['day' => $date, 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + $day_num * 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
+            $list[] = ['day' => $date, 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'abroad_amount' => $tmp_abroad_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + $day_num * 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
             $day[] = $date;
             $i = $i + $day_num * 24 * 3600;
         }
@@ -467,6 +463,7 @@ class Report extends Base
         $strTable .= '<td style="text-align:left;font-size:12px;" width="100">VIP订单数</td>';
         $strTable .= '<td style="text-align:left;font-size:12px;" width="100">订单数</td>';
         $strTable .= '<td style="text-align:left;font-size:12px;" width="*">销售总额</td>';
+        $strTable .= '<td style="text-align:left;font-size:12px;" width="*">韩国购销售总额（成本价）</td>';
         $strTable .= '<td style="text-align:left;font-size:12px;" width="*">销售不含税价</td>';
         $strTable .= '<td style="text-align:left;font-size:12px;" width="*">客单价</td>';
         $strTable .= '</tr>';
@@ -477,6 +474,7 @@ class Report extends Base
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['vip_order_num'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['order_num'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['amount'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['abroad_amount'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['c_amount'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['sign'] . '</td>';
                 $strTable .= '</tr>';
@@ -504,6 +502,7 @@ class Report extends Base
             $this->end = strtotime(date('Y-01-01', $this->end));
             $end = $this->end;
         }
+
         $now = strtotime(date('Y-m-d'));
         $today['today_amount'] = M('order')->where('parent_id = 0')->where("add_time>$now AND (pay_status=1 or pay_code='cod') and order_status in(1,2,4)")->sum('total_amount'); //今日销售总额
         $today['today_order'] = M('order')->where('parent_id = 0')->where("add_time>$now and (pay_status=1 or pay_code='cod')")->count(); //今日订单数
@@ -549,10 +548,12 @@ class Report extends Base
             } else {
                 $brr[$val['gap']] = $val['amount'];
             }
+            $crr[$val['gap']] = $val['amount'];
         }
         for ($i = $this->begin; $i <= $this->end;) {
             $tmp_num = empty($arr[date('Y-01-01', $i)]) ? 0 : $arr[date('Y-01-01', $i)];
             $tmp_amount = empty($brr[date('Y-01-01', $i)]) ? 0 : $brr[date('Y-01-01', $i)];
+            $tmp_abroad_amount = empty($crr[date('Y-01-01', $i)]) ? 0 : $crr[date('Y-01-01', $i)];
             $tmp_sign = empty($tmp_num) ? 0 : round($tmp_amount / $tmp_num, 2);
             $order_arr[] = $tmp_num;
             $amount_arr[] = $tmp_amount;
@@ -585,7 +586,7 @@ class Report extends Base
                     }
                 }
             }
-            $list[] = ['day' => $date . '-01-01', 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + 365 * 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
+            $list[] = ['day' => $date . '-01-01', 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'abroad_amount' => $tmp_abroad_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + 365 * 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
             $day[] = $date;
 
             $i = $i + 365 * 24 * 3600;
@@ -608,7 +609,6 @@ class Report extends Base
         if (I('start_time')) {
             $this->begin = strtotime(date('Y-01-01', $this->begin));
             $this->end = $this->begin;
-            $end = strtotime(I('end_time'));
             $year = date('Y', $this->end);
             $m = 12;
             $day_num = date('t', strtotime("$year-$m"));
@@ -617,7 +617,6 @@ class Report extends Base
             $this->begin = strtotime(date('Y-01-01', $this->begin));
             $this->end = strtotime('+1 year');
             $this->end = strtotime(date('Y-01-01', $this->end));
-            $end = $this->end;
         }
 
         $res1 = Db::name('order')
@@ -654,10 +653,12 @@ class Report extends Base
             } else {
                 $brr[$val['gap']] = $val['amount'];
             }
+            $crr[$val['gap']] = $val['amount'];
         }
         for ($i = $this->begin; $i <= $this->end;) {
             $tmp_num = empty($arr[date('Y-01-01', $i)]) ? 0 : $arr[date('Y-01-01', $i)];
             $tmp_amount = empty($brr[date('Y-01-01', $i)]) ? 0 : $brr[date('Y-01-01', $i)];
+            $tmp_abroad_amount = empty($crr[date('Y-01-01', $i)]) ? 0 : $crr[date('Y-01-01', $i)];
             $tmp_sign = empty($tmp_num) ? 0 : round($tmp_amount / $tmp_num, 2);
             $order_arr[] = $tmp_num;
             $amount_arr[] = $tmp_amount;
@@ -690,7 +691,7 @@ class Report extends Base
                     }
                 }
             }
-            $list[] = ['day' => $date, 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'sign' => $tmp_sign, 'end' => date('Y', $i + 365 * 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
+            $list[] = ['day' => $date, 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'abroad_amount' => $tmp_abroad_amount, 'sign' => $tmp_sign, 'end' => date('Y', $i + 365 * 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
             $day[] = $date;
 
             $i = $i + 365 * 24 * 3600;
@@ -702,6 +703,7 @@ class Report extends Base
         $strTable .= '<td style="text-align:left;font-size:12px;" width="100">VIP订单数</td>';
         $strTable .= '<td style="text-align:left;font-size:12px;" width="100">订单数</td>';
         $strTable .= '<td style="text-align:left;font-size:12px;" width="*">销售总额</td>';
+        $strTable .= '<td style="text-align:left;font-size:12px;" width="*">韩国购销售总额（成本价）</td>';
         $strTable .= '<td style="text-align:left;font-size:12px;" width="*">销售不含税价</td>';
         $strTable .= '<td style="text-align:left;font-size:12px;" width="*">客单价</td>';
         $strTable .= '</tr>';
@@ -712,6 +714,7 @@ class Report extends Base
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['vip_order_num'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['order_num'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['amount'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['abroad_amount'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['c_amount'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['sign'] . '</td>';
                 $strTable .= '</tr>';
