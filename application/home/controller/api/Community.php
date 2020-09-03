@@ -277,10 +277,13 @@ class Community extends Base
         }
         // 保存更新数据
         if ($articleId) {
+            $articleData = M('community_article')->where(['id' => $articleId])->find();
+            if ($articleData['status'] != -1) {
+                return json(['status' => 0, 'msg' => '文章不是审核不通过的状态不能编辑']);
+            }
             $post['up_time'] = NOW_TIME;
             $post['status'] = 0;
             $post['publish_time'] = 0;
-            $articleData = M('community_article')->where(['id' => $articleId])->find();
             // 更新记录
             M('community_article_edit_log')->add([
                 'type' => 1,
