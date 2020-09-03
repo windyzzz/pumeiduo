@@ -109,6 +109,13 @@ class Community
             ->where(['gtg.goods_id' => ['in', $goodsIds], 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
             ->field('pg.type, pg.expression, gtg.goods_id')->select();
         foreach ($articleList as $key => $value) {
+            // 次数处理
+            if ($value['share'] > 999) {
+                $articleList[$key]['share'] = '999+';
+            }
+            if ($value['click'] > 999) {
+                $articleList[$key]['click'] = '999+';
+            }
             // 发布时间处理
             $publishTime = '';
             if ($value['publish_time'] != 0) {

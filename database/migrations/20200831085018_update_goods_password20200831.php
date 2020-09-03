@@ -30,6 +30,7 @@ class UpdateGoodsPassword20200831 extends Migrator
     {
         $this->table('goods_password')
             ->addColumn('source', 'integer', ['comment' => '来源：1商品详情 2社区文章'])
+            ->addColumn('creator_id', 'integer', ['comment' => '生成者ID'])
             ->update();
     }
 }

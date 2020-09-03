@@ -3209,7 +3209,8 @@ class Goods extends Base
             'user_id' => $userId,
             'add_time' => NOW_TIME,
             'dead_time' => tpCache('share.goods_pwd_day') ? strtotime('+' . tpCache('share.goods_pwd_day') . 'day') : strtotime('+1 day'),
-            'source' => $source
+            'source' => $source,
+            'creator_id' => $this->user_id
         ];
         M('goods_password')->add($pwdData);
         $return = [
