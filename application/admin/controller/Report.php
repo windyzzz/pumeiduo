@@ -1164,14 +1164,16 @@ class Report extends Base
         $strTable .= '</tr>';
         if (is_array($res)) {
             foreach ($res as $k => $val) {
-                $a = $val['goods_price'] - $val['use_integral'];
+//                $a = $val['goods_price'] - $val['use_integral'];
+                $a = $val['final_price'];
+                $b = bcadd($val['final_price'], $val['use_integral'], 2);
                 $strTable .= '<tr>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;' . $val['goods_sn'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['goods_name'] . ' </td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $a . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['ctax_price'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['inte_num'] . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['goods_price'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $b . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['stax_price'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['cash_num'] . '</td>';
 
