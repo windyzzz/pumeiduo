@@ -175,6 +175,7 @@ class Community extends Base
                 $cateId1 = I('cate_id1', 0);
                 $cateId2 = I('cate_id2', 0);
                 $status = I('status', '');
+                $userId = I('user_id', '');
                 $where = [];
                 if ($source) {
                     $where['source'] = $source;
@@ -188,11 +189,24 @@ class Community extends Base
                 if ($status !== '') {
                     $where['status'] = $status;
                 }
+                if ($userId !== '') {
+                    $where['user_id'] = $userId;
+                }
                 $count = M('community_article')->where($where)->count();
                 $page = new Page($count, 10);
                 $articleModel = new CommunityArticle();
                 $articleList = $articleModel->where($where)->limit($page->firstRow . ',' . $page->listRows)->order(['add_time DESC'])->select();
                 foreach ($articleList as &$article) {
+                    switch ($article['source']) {
+                        case 1:
+                            $userInfo = M('users')->where(['user_id' => $article['user_id']])->field('nickname, user_name')->find();
+                            $article['user_name'] = !empty($userInfo['nickname']) ? $userInfo['nickname'] : $userInfo['user_name'];
+                            break;
+                        case 2:
+                            $userInfo = M('community_config')->where(['type' => 'official'])->field('name')->find();
+                            $article['user_name'] = $userInfo['name'];
+                            break;
+                    }
                     $article['cate_id1_desc'] = $tCategory[$article['cate_id1']];
                     $article['cate_id2_desc'] = $dCategory[$article['cate_id2']];
                 }
@@ -201,6 +215,7 @@ class Community extends Base
                 $this->assign('cate_id1', $cateId1);
                 $this->assign('cate_id2', $cateId2);
                 $this->assign('status', $status);
+                $this->assign('user_id', $userId);
                 $this->assign('page', $page);
                 $this->assign('article_list', $articleList);
                 return $this->fetch('article_list');
@@ -215,6 +230,7 @@ class Community extends Base
                         $this->ajaxReturn(['status' => 0, 'msg' => '用户已删除']);
                     }
                     $status = I('status', 0);
+                    $reason = trim(I('reason'));
                     $updata = ['status' => $status];
                     switch ($status) {
                         case 1:
@@ -222,6 +238,9 @@ class Community extends Base
                             $content = '审核通过啦！';
                             break;
                         case -1:
+                            if (empty($reason)) {
+                                $this->ajaxReturn(['status' => 0, 'msg' => '请填写拒绝原因']);
+                            }
                             $content = '可惜，审核不通过。';
                             break;
                     }
@@ -230,7 +249,7 @@ class Community extends Base
                     $logData = [
                         'article_id' => $articleId,
                         'status' => $status,
-                        'reason' => I('reason'),
+                        'reason' => $reason,
                         'admin_id' => session('admin_id'),
                         'add_time' => NOW_TIME
                     ];
