@@ -211,13 +211,13 @@ class Community extends Base
                 $articleModel = new CommunityArticle();
                 $articleInfo = $articleModel->where(['id' => $articleId])->find();
                 if (IS_POST) {
+                    if ($articleInfo['status'] == -2) {
+                        $this->ajaxReturn(['status' => 0, 'msg' => '用户已删除']);
+                    }
                     $status = I('status', 0);
                     $updata = ['status' => $status];
                     switch ($status) {
                         case 1:
-                            if ($articleInfo['status'] == -2) {
-                                $this->ajaxReturn(['status' => 0, 'msg' => '用户已删除']);
-                            }
                             $updata['publish_time'] = NOW_TIME;
                             $content = '审核通过啦！';
                             break;

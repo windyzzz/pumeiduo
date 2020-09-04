@@ -134,7 +134,7 @@ class Community extends Base
             $articleList[] = [
                 'article_id' => $value['id'],
                 'content' => trim_replace($value['content'], ["\n", "\r"], [" ", " "]),
-                'publish_time' => $value['publish_time'],
+                'publish_time' => $value['status'] == 0 ? $value['add_time'] : $value['publish_time'],  // 审核中显示创建时间
                 'goods' => [],
                 'goods_id' => $value['goods_id'],
                 'item_id' => $value['item_id'],
@@ -331,5 +331,28 @@ class Community extends Base
         M('community_article')->where(['id' => $articleId])->setInc('share', 1);
         $share = M('community_article')->where(['id' => $articleId])->value('share');
         return json(['status' => 1, 'result' => ['share' => $share]]);
+    }
+
+    /**
+     * 取消/删除文章
+     * @return \think\response\Json
+     */
+    public function cancelArticle()
+    {
+        $articleId = I('article_id', 0);
+        if (!$articleId) return json(['status' => 0, 'msg' => '请传入文章ID']);
+        $articleData = M('community_article')->where(['id' => $articleId])->find();
+        if ($articleData['status'] == -2) {
+            return json(['status' => 0, 'msg' => '文章已经被删除了']);
+        }
+        if (in_array($articleData['status'], [0, 1])) {
+            return json(['status' => 0, 'msg' => '文章不能被删除']);
+        }
+        // 更新文章信息
+        M('community_article')->where(['id' => $articleId])->update([
+            'status' => -2,
+            'delete_time' => NOW_TIME
+        ]);
+        return json(['status' => 1, 'msg' => '操作成功']);
     }
 }
