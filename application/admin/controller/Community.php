@@ -313,6 +313,10 @@ class Community extends Base
                             if (empty($postData['video'])) {
                                 $this->ajaxReturn(['status' => 0, 'msg' => '请上传视频']);
                             }
+                            // 处理视频封面图
+                            $videoCover = getVideoCoverImages($postData['video']);
+                            $postData['video_cover'] = $videoCover['path'];
+                            $postData['video_axis'] = $videoCover['axis'];
                             $postData['image'] = '';
                             break;
                     }
