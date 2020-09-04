@@ -215,6 +215,9 @@ class Community extends Base
                     $updata = ['status' => $status];
                     switch ($status) {
                         case 1:
+                            if ($articleInfo['status'] == -2) {
+                                $this->ajaxReturn(['status' => 0, 'msg' => '用户已删除']);
+                            }
                             $updata['publish_time'] = NOW_TIME;
                             $content = '审核通过啦！';
                             break;

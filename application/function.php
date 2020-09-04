@@ -1788,6 +1788,18 @@ function trim_all($str)
 }
 
 /**
+ * 替换字符串
+ * @param $str
+ * @param $oldChar
+ * @param $newChar
+ * @return mixed
+ */
+function trim_replace($str, $oldChar, $newChar)
+{
+    return str_replace($oldChar, $newChar, $str);
+}
+
+/**
  * HMAC-MD5 签名算法
  * @param $app_id
  * @param array $data

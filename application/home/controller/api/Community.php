@@ -64,7 +64,7 @@ class Community extends Base
     }
 
     /**
-     * 获取文章列表
+     * 所有文章列表
      * @return \think\response\Json
      */
     public function article()
@@ -133,13 +133,8 @@ class Community extends Base
             // 组合数据
             $articleList[] = [
                 'article_id' => $value['id'],
-                'content' => $value['content'],
-                'share' => $value['share'],
+                'content' => trim_replace($value['content'], ["\n", "\r"], ["  ", "  "]),
                 'publish_time' => $value['publish_time'],
-                'image' => $value['image'],
-                'video' => $value['video'],
-                'video_cover' => $value['video_cover'],
-                'video_axis' => $value['video_axis'],
                 'goods' => [],
                 'goods_id' => $value['goods_id'],
                 'item_id' => $value['item_id'],
@@ -153,6 +148,7 @@ class Community extends Base
                 'cate_id1_desc' => $category[$value['cate_id1']],
                 'cate_id2' => $value['cate_id2'],
                 'cate_id2_desc' => $category[$value['cate_id2']],
+                'reason' => $value['status'] == -1 ? M('community_article_verify_log')->where(['article_id' => $value['id'], 'status' => -1])->order('add_time DESC')->value('reason') : ''
             ];
         }
         // 数据处理
@@ -173,6 +169,10 @@ class Community extends Base
         // 获取用户文章数据
         $info = $communityLogic->getArticleInfo($articleId);
         if (!$info) return json(['status' => 0, 'msg' => '文章内容不存在']);
+        // 用户自己查看
+        if ($this->user_id && $info['is_browse'] == 0 && $this->user_id == $info['user_id']) {
+            M('community_article')->where(['id' => $info['id']])->update(['is_browse' => 1]);
+        }
         // 社区文章分类数据
         $category = M('community_category')->getField('id, cate_name', true);
         $articleInfo = [
@@ -184,6 +184,11 @@ class Community extends Base
             'video' => $info['video'],
             'video_cover' => $info['video_cover'],
             'video_axis' => $info['video_axis'],
+            'user' => [
+                'user_id' => !empty($info['user_id']) ? $info['user_id'] : '',
+                'user_name' => !empty($info['user_name']) ? $info['user_name'] : !empty($info['nickname']) ? $info['nickname'] : '',
+                'head_pic' => !empty($info['head_pic']) ? getFullPath($info['head_pic']) : '',
+            ],
             'goods' => [],
             'goods_id' => $info['goods_id'],
             'item_id' => $info['item_id'],
@@ -221,6 +226,7 @@ class Community extends Base
         $param = I('get.');
         $param['status'] = '';
         $param['user_id'] = $this->user_id;
+        $param['is_browse'] = 0;
         $list = $communityLogic->getArticleList($param)['list'];
         foreach ($list as $value) {
             switch ($value['status']) {

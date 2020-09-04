@@ -25,6 +25,9 @@ class Community
         } else {
             $where['ca.status'] = 1;
         }
+        if (isset($param['is_browse'])) {
+            $where['ca.is_browse'] = $param['is_browse'];
+        }
         if (!empty($param['cate_id1'])) {
             $where['ca.cate_id1'] = $param['cate_id1'];
         }

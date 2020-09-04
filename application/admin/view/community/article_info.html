@@ -122,11 +122,17 @@
                 <dd class="opt">
                     <span
                         <switch name="$info[status]">
-                            <case value="1">
-                                style="color: green;"
+                            <case value="-2">
+                                style="color: red;"
                             </case>
                             <case value="-1">
                                 style="color: red;"
+                            </case>
+                            <case value="1">
+                                style="color: green;"
+                            </case>
+                            <case value="2">
+                                style="color: blue;"
                             </case>
                         </switch>
                     >{$info[status_desc]}</span>

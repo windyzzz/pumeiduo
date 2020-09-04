@@ -21,9 +21,10 @@ class CommunityArticle extends Model
     public function getStatusDescAttr($value, $data)
     {
         $parse_type = [
+            '-2' => '已删除',
+            '-1' => '拒绝通过',
             '0' => '未审核',
             '1' => '审核通过',
-            '-1' => '拒绝通过',
             '2' => '预发布状态',
         ];
 
