@@ -3209,6 +3209,7 @@ class Goods extends Base
             'item_id' => $itemId,
             'password' => $password,
             'user_id' => $userId,
+            'is_official' => $userId == 0 ? 1 : 0,
             'add_time' => NOW_TIME,
             'dead_time' => tpCache('share.goods_pwd_day') ? strtotime('+' . tpCache('share.goods_pwd_day') . 'day') : strtotime('+1 day'),
             'source' => $source,
@@ -3301,25 +3302,20 @@ class Goods extends Base
                 }
             }
             // 获取分享者数据
-            $userInfo = [
-                'user_id' => '0',
-                'user_name' => '圃美多官方',
-                'head_pic' => getFullPath('/public/images/default_head.png')
-            ];
-            if ($goodsPassword['user_id'] != 0) {
-                $user = M('users')->where(['user_id' => $goodsPassword['user_id']])->field('user_id, nickname, user_name,head_pic')->find();
-                $userInfo = [
-                    'user_id' => !empty($user['user_id']) ? $user['user_id'] : '',
-                    'user_name' => !empty($user['user_name']) ? $user['user_name'] : !empty($user['nickname']) ? $user['nickname'] : '',
-                    'head_pic' => !empty($user['user_name']) ? getFullPath($user['head_pic']) : '',
-                ];
-            } elseif ($goodsPassword['source'] == 2) {
+            if ($goodsPassword['is_official'] == 1) {
                 // 社区官方
                 $official = M('community_config')->where(['type' => 'official'])->find();
                 $userInfo = [
                     'user_id' => '0',
                     'user_name' => $official ? $official['name'] : '圃美多官方',
                     'head_pic' => $official ? getFullPath($official['url']) : getFullPath('/public/images/default_head.png')
+                ];
+            } else {
+                $user = M('users')->where(['user_id' => $goodsPassword['user_id']])->field('user_id, nickname, user_name,head_pic')->find();
+                $userInfo = [
+                    'user_id' => !empty($user['user_id']) ? $user['user_id'] : '',
+                    'user_name' => !empty($user['user_name']) ? $user['user_name'] : !empty($user['nickname']) ? $user['nickname'] : '',
+                    'head_pic' => !empty($user['user_name']) ? getFullPath($user['head_pic']) : '',
                 ];
             }
             $return = [

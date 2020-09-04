@@ -29,6 +29,7 @@ class UpdateGoodsPassword20200831 extends Migrator
     public function change()
     {
         $this->table('goods_password')
+            ->addColumn('is_official', 'integer', ['default' => 0, 'comment' => '是否是官方账号', 'after' => 'user_id'])
             ->addColumn('source', 'integer', ['comment' => '来源：1商品详情 2社区文章'])
             ->addColumn('creator_id', 'integer', ['comment' => '生成者ID'])
             ->update();
