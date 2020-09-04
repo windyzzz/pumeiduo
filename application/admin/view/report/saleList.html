@@ -29,7 +29,7 @@
 				<h5>(共{$pager->totalRows}条记录)</h5>
 			</div>
 			<div title="刷新数据" class="pReload"><i class="fa fa-refresh"></i></div>
-			<form class="navbar-form form-inline" id="search-form2" method="post" action="{:U('Report/exportSaleList')}">
+			<form class="navbar-form form-inline" id="search-form2" method="post" action="{:U('Report/exportSaleList_v2')}">
 			</form>
 			<form class="navbar-form form-inline" id="search-form" method="get" action="{:U('Report/saleList')}" onSubmit="return check_form();">
                 <input name="goods_id" value="{$Request.param.goods_id}" hidden>
