@@ -133,7 +133,7 @@ class Community extends Base
             // 组合数据
             $articleList[] = [
                 'article_id' => $value['id'],
-                'content' => trim_replace($value['content'], ["\n", "\r"], ["  ", "  "]),
+                'content' => trim_replace($value['content'], ["\n", "\r"], [" ", " "]),
                 'publish_time' => $value['publish_time'],
                 'goods' => [],
                 'goods_id' => $value['goods_id'],
@@ -200,6 +200,7 @@ class Community extends Base
             'cate_id1_desc' => $category[$info['cate_id1']],
             'cate_id2' => $info['cate_id2'],
             'cate_id2_desc' => $category[$info['cate_id2']],
+            'reason' => $info['status'] == -1 ? M('community_article_verify_log')->where(['article_id' => $info['id'], 'status' => -1])->order('add_time DESC')->value('reason') : ''
         ];
         $articleInfo = $communityLogic->handleArticleData([$articleInfo], [$info['goods_id']]);
         $return = [
@@ -221,12 +222,11 @@ class Community extends Base
             'SUCCESS' => 0,
             'FAIL' => 0,
         ];
-        $communityLogic = new CommunityLogic();
-        // 获取用户文章数据
-        $param = I('get.');
+        $param['is_browse'] = I('is_browse', 0);
         $param['status'] = '';
         $param['user_id'] = $this->user_id;
-        $param['is_browse'] = 0;
+        $communityLogic = new CommunityLogic();
+        // 获取用户文章数据
         $list = $communityLogic->getArticleList($param)['list'];
         foreach ($list as $value) {
             switch ($value['status']) {
