@@ -13,6 +13,7 @@ namespace app\home\controller\api;
 
 use app\common\logic\ArticleLogic;
 use app\common\logic\CartLogic;
+use app\common\logic\Community as CommunityLogic;
 use app\common\logic\GoodsLogic;
 use app\common\logic\MessageLogic;
 use app\common\logic\PushLogic;
@@ -3931,5 +3932,40 @@ class User extends Base
             ]);
         }
         return json(['status' => 1]);
+    }
+
+    /**
+     * 我的页面中的提示红点标识
+     * @return \think\response\Json
+     */
+    public function tipsCheck()
+    {
+        $return  = [
+            'wealth' => 0,              // 我的收益
+            'distribute' => 0,          // 我的推荐
+            'task' => 0,                // 我的任务
+            'community' => 0,           // 社区
+            'account' => 0,             // 积分
+            'coupon' => 0,              // 礼券
+            'visit' => 0,               // 足迹
+            'collect' => 0              // 收藏
+        ];
+        /*
+         * 社区
+         */
+        $param['is_browse'] = 0;
+        $param['status'] = '';
+        $param['user_id'] = $this->user_id;
+        $communityLogic = new CommunityLogic();
+        // 获取用户文章数据
+        $list = $communityLogic->getArticleList($param)['list'];
+        foreach ($list as $value) {
+            switch ($value['status']) {
+                case -1:
+                    $return['community'] += 1;
+                    break;
+            }
+        }
+        return json(['status' => 1, 'result' => $return]);
     }
 }
