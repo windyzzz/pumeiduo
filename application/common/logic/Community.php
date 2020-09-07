@@ -51,7 +51,7 @@ class Community
         if (!empty($param['sort']) && !empty($param['order'])) {
 
         }
-        $sort .= ' publish_time desc';
+        $sort .= ' publish_time DESC, add_time DESC';
         return $sort;
     }
 
