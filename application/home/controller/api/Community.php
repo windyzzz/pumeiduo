@@ -342,17 +342,24 @@ class Community extends Base
         $articleId = I('article_id', 0);
         if (!$articleId) return json(['status' => 0, 'msg' => '请传入文章ID']);
         $articleData = M('community_article')->where(['id' => $articleId])->find();
-        if ($articleData['status'] == -2) {
-            return json(['status' => 0, 'msg' => '文章已经被删除了']);
-        }
-        if (in_array($articleData['status'], [0, 1])) {
-            return json(['status' => 0, 'msg' => '文章不能被删除']);
-        }
         // 更新文章信息
-        M('community_article')->where(['id' => $articleId])->update([
-            'status' => -2,
-            'delete_time' => NOW_TIME
-        ]);
+        switch ($articleData['status']) {
+            case 0:
+                $upData = [
+                    'status' => -2,
+                    'cancel_time' => NOW_TIME
+                ];
+                break;
+            case 1:
+                $upData = [
+                    'status' => -3,
+                    'delete_time' => NOW_TIME
+                ];
+                break;
+            default:
+                return json(['status' => 0, 'msg' => '文章不能被删除']);
+        }
+        M('community_article')->where(['id' => $articleId])->update($upData);
         return json(['status' => 1, 'msg' => '操作成功']);
     }
 }

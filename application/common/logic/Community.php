@@ -237,7 +237,8 @@ class Community
     public function articleStatus($status)
     {
         $statusDesc = [
-            '-2' =>'已删除',
+            '-3' =>'已删除',
+            '-2' =>'已取消',
             '-1' => '不通过审核',
             '0' => '未审核',
             '1' => '审核通过',
