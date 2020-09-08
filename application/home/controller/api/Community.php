@@ -130,11 +130,25 @@ class Community extends Base
         // 文章列表
         $articleList = [];
         foreach ($list as $key => $value) {
+            // 时间处理
+            switch ($value['status']) {
+                case -1:
+                    $publishTime = M('community_article_verify_log')->where(['article_id' => $value['id']])->order('add_time DESC')->value('add_time');
+                    break;
+                case 0:
+                    $publishTime = $value['add_time'];
+                    break;
+                case 1:
+                    $publishTime = $value['publish_time'];
+                    break;
+                default:
+                    continue 2;
+            }
             // 组合数据
             $articleList[] = [
                 'article_id' => $value['id'],
                 'content' => trim_replace($value['content'], ["\n", "\r"], [" ", " "]),
-                'publish_time' => $value['status'] == 0 ? $value['add_time'] : $value['publish_time'],  // 审核中显示创建时间
+                'publish_time' => $publishTime,
                 'goods' => [],
                 'goods_id' => $value['goods_id'],
                 'item_id' => $value['item_id'],
