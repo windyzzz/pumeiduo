@@ -470,12 +470,15 @@ function subtext($text, $length)
  * @param $expCellName
  * @param $expTableData
  * @param string $type 类型：商品goods 订单order
+ * @param bool $showPic 是否显示图片
  * @throws PHPExcel_Exception
  * @throws PHPExcel_Reader_Exception
  * @throws PHPExcel_Writer_Exception
  */
-function exportExcel($expTitle, $expCellName, $expTableData, $type)
+function exportExcel($expTitle, $expCellName, $expTableData, $type, $showPic = false)
 {
+    set_time_limit(0);    // 防止超时
+    ini_set("memory_limit", "128M");  // 防止内存溢出
     $cellNum = count($expCellName);
     $dataNum = count($expTableData);
     /*引入phpexcel核心类文件*/
@@ -511,7 +514,7 @@ function exportExcel($expTitle, $expCellName, $expTableData, $type)
                                     default:
                                         $imgPath = 'E:/programme/pumeiduo/pumeiduo_server' . $expTableData[$i]['original_img'];
                                 }
-                                if (file_exists($imgPath)) {
+                                if (file_exists($imgPath) && $showPic) {
                                     /*设置表格宽度*/
                                     $objPHPExcel->getActiveSheet()->getColumnDimension($cellName[$j])->setWidth(20);
                                     /*设置表格高度*/
