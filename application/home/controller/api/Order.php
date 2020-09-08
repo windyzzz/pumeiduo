@@ -1933,6 +1933,14 @@ class Order extends Base
             // 参与活动促销
             $payLogic->goodsPromotion();
 
+            // 韩国购检查订单价格
+            if ($orderType == 2) {
+                $res = $payLogic->checkOrderAmount(2);
+                if ($res['status'] == 0) {
+                    return json($res);
+                }
+            }
+
             // 组合拆分订单数据
             $payLogic->setOrderSplitGoods($payLogic->getPayList());
             // 检查供应链商品地区购买限制
@@ -2460,6 +2468,14 @@ class Order extends Base
             $payLogic->goodsPromotion();
             // 加价购活动
             $payLogic->activityPayBeforeNew($cartLogic, $extraGoods);
+
+            // 韩国购检查订单价格
+            if ($orderType == 2) {
+                $res = $payLogic->checkOrderAmount(2);
+                if ($res['status'] == 0) {
+                    return json($res);
+                }
+            }
 
             // 组合拆分订单数据
             $payLogic->setOrderSplitGoods($payLogic->getPayList());

@@ -1467,6 +1467,23 @@ class Pay
     }
 
     /**
+     * 检查使用订单优惠前的订单价格
+     * @param $orderType
+     * @return array
+     */
+    public function checkOrderAmount($orderType)
+    {
+        switch ($orderType) {
+            case 2:
+                // 韩国购
+                if ($this->orderAmount > 1000) {
+                    return ['status' => 0, 'msg' => '由于海关政策影响，韩国购订单单次下单金额不能超过1000元，请分开下单。'];
+                }
+        }
+        return ['status' => 1];
+    }
+
+    /**
      * 获取实际上使用的电子币
      *
      * @return int
