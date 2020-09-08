@@ -1922,7 +1922,6 @@ function imgToBase64($img = '')
  * 获取视频封面图
  * @param $file
  * @return array
- * @throws getid3_exception
  */
 function getVideoCoverImages($file)
 {
