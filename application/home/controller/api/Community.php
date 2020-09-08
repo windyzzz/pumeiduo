@@ -276,6 +276,9 @@ class Community extends Base
         if (!$validate->scene('article_add')->check($post)) {
             return json(['status' => 0, 'msg' => $validate->getError()]);
         }
+        if (!M('goods')->where(['goods_id' => $post['goods_id'], 'is_on_sale' => 1])->value('goods_id')) {
+            return json(['status' => 0, 'msg' => '商品已下架，请重新选择']);
+        }
         if (empty($post['image']) && empty($post['video'])) {
             return json(['status' => 0, 'msg' => '请上传图片或视频']);
         }
