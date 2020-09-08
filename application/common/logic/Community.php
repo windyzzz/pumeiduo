@@ -73,7 +73,7 @@ class Community
         $articleList = M('community_article ca')
             ->join('users u', 'u.user_id = ca.user_id', 'LEFT')
             ->join('goods g', 'g.goods_id = ca.goods_id', 'LEFT')
-            ->field('ca.*, u.nickname, u.user_name, u.head_pic, g.goods_name, g.original_img, g.shop_price, g.exchange_integral')
+            ->field('ca.*, u.nickname, u.user_name, u.head_pic, g.goods_name, g.original_img, g.shop_price, g.exchange_integral, g.is_on_sale')
             ->where($where)->order($sort)->limit($page->firstRow . ',' . $page->listRows)->select();
         return ['total' => $count, 'list' => $articleList];
     }
@@ -88,7 +88,7 @@ class Community
         $articleInfo = M('community_article ca')
             ->join('users u', 'u.user_id = ca.user_id')
             ->join('goods g', 'g.goods_id = ca.goods_id', 'LEFT')
-            ->field('ca.*, u.nickname, u.user_name, u.head_pic, g.goods_name, g.original_img, g.shop_price, g.exchange_integral')
+            ->field('ca.*, u.nickname, u.user_name, u.head_pic, g.goods_name, g.original_img, g.shop_price, g.exchange_integral, g.is_on_sale')
             ->where(['ca.id' => $articleId])->find();
         return $articleInfo;
     }
@@ -202,6 +202,7 @@ class Community
                     }
                 }
                 $articleList[$key]['goods'] = [
+                    'is_on_sale' => $value['is_on_sale'],
                     'goods_type' => $goodsType,
                     'goods_id' => $value['goods_id'],
                     'item_id' => $value['item_id'],
@@ -225,6 +226,7 @@ class Community
             unset($articleList[$key]['exchange_integral']);
             unset($articleList[$key]['goods_name']);
             unset($articleList[$key]['original_img']);
+            unset($articleList[$key]['is_on_sale']);
         }
         return $articleList;
     }
@@ -237,8 +239,8 @@ class Community
     public function articleStatus($status)
     {
         $statusDesc = [
-            '-3' =>'已删除',
-            '-2' =>'已取消',
+            '-3' => '已删除',
+            '-2' => '已取消',
             '-1' => '不通过审核',
             '0' => '未审核',
             '1' => '审核通过',

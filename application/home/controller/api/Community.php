@@ -97,6 +97,7 @@ class Community extends Base
                 'exchange_integral' => $value['exchange_integral'],
                 'goods_name' => $value['goods_name'],
                 'original_img' => $value['original_img'],
+                'is_on_sale' => $value['is_on_sale']
             ];
             // 发布者处理
             if ($value['source'] == 2) {
@@ -156,6 +157,7 @@ class Community extends Base
                 'exchange_integral' => $value['exchange_integral'],
                 'goods_name' => $value['goods_name'],
                 'original_img' => $value['original_img'],
+                'is_on_sale' => $value['is_on_sale'],
                 'status' => $value['status'],
                 'status_desc' => $communityLogic->articleStatus($value['status']),
                 'cate_id1' => $value['cate_id1'],
@@ -210,6 +212,7 @@ class Community extends Base
             'exchange_integral' => $info['exchange_integral'],
             'goods_name' => $info['goods_name'],
             'original_img' => $info['original_img'],
+            'is_on_sale' => $info['is_on_sale'],
             'cate_id1' => $info['cate_id1'],
             'cate_id1_desc' => $category[$info['cate_id1']],
             'cate_id2' => $info['cate_id2'],

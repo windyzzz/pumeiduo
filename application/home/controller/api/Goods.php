@@ -3201,6 +3201,9 @@ class Goods extends Base
         $userId = I('user_id', $this->user_id ?? 0);
         $source = I('source', 1);   // 来源：1商品详情 2社区文章
         if (!$goodsId) return json(['status' => 0, 'msg' => '请传入商品ID']);
+        // 获取商品数据
+        $goodsId = M('goods')->where(['goods_id' => $goodsId, 'is_on_sale' => 1])->value('goods_id');
+        if (empty($goodsId)) return json(['status' => 0, 'msg' => '商品已下架']);
         // 生成口令
         $password = (new GoodsLogic())->createGoodsPwd();
         // 记录口令
@@ -3229,8 +3232,8 @@ class Goods extends Base
     public function checkGoodsPassword()
     {
         $password = I('password', 0);
-        if (!$password) return json(['status' => 0, 'msg' => '请传入商品口令']);
         try {
+            if (!$password) throw new \Exception('请传入商品口令');
             // 获取口令内容
             $goodsPassword = M('goods_password')->where(['password' => $password])->find();
             if (empty($goodsPassword)) throw new \Exception('口令不存在');
@@ -3323,7 +3326,8 @@ class Goods extends Base
                 'data' => [
                     'goods' => $goodsInfo,
                     'user' => $userInfo
-                ]
+                ],
+                'msg' => ''
             ];
             return json(['status' => 1, 'result' => $return]);
         } catch (\Exception $e) {
@@ -3344,7 +3348,8 @@ class Goods extends Base
                         'user_name' => '',
                         'head_pic' => ''
                     ]
-                ]
+                ],
+                'msg' => $e->getMessage()
             ]]);
         }
     }
