@@ -3237,10 +3237,10 @@ class Goods extends Base
             // 获取口令内容
             $goodsPassword = M('goods_password')->where(['password' => $password])->find();
             if (empty($goodsPassword)) throw new \Exception('口令不存在');
-            if ($goodsPassword['status'] == 0) throw new \Exception('口令已失效');
-            if ($goodsPassword['dead_time'] < NOW_TIME) throw new \Exception('口令已过期');
-            // 更新口令
-            M('goods_password')->where(['id' => $goodsPassword['id']])->update(['status' => 0]);
+            if ($goodsPassword['dead_time'] < NOW_TIME) {
+                M('goods_password')->where(['id' => $goodsPassword['id']])->update(['status' => 0]);
+                throw new \Exception('口令已过期');
+            }
             // 获取商品数据
             $goods = M('goods')->where([
                 'goods_id' => $goodsPassword['goods_id'],
@@ -3318,7 +3318,7 @@ class Goods extends Base
                 $userInfo = [
                     'user_id' => !empty($user['user_id']) ? $user['user_id'] : '',
                     'user_name' => !empty($user['user_name']) ? $user['user_name'] : !empty($user['nickname']) ? $user['nickname'] : '',
-                    'head_pic' => !empty($user['user_name']) ? getFullPath($user['head_pic']) : '',
+                    'head_pic' => !empty($user['head_pic']) ? getFullPath($user['head_pic']) : '',
                 ];
             }
             $return = [
