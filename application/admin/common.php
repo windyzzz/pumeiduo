@@ -112,11 +112,13 @@ function downloadExcel($strTable, $filename)
  * @param $expTableData
  * @param string $type 类型：商品goods 订单order
  * @param bool $showPic 是否显示图片
+ * @param string $output 输出类型
+ * @return bool
  * @throws PHPExcel_Exception
  * @throws PHPExcel_Reader_Exception
  * @throws PHPExcel_Writer_Exception
  */
-function exportExcel($expTitle, $expCellName, $expTableData, $type, $showPic = false)
+function exportExcel($expTitle, $expCellName, $expTableData, $type, $showPic = false, $output = 'download')
 {
     set_time_limit(0);    // 防止超时
     ini_set("memory_limit", "128M");  // 防止内存溢出
@@ -192,14 +194,21 @@ function exportExcel($expTitle, $expCellName, $expTableData, $type, $showPic = f
         }
     }
 
-    $xlsTitle = iconv('utf-8', 'gb2312', $expTitle);
     $fileName = $expTitle . date('_YmdHis');
-    header('pragma:public');
-    header('Content-type:application/vnd.ms-excel;charset=utf-8;name="' . $xlsTitle . '.xls"');
-    header("Content-Disposition:attachment;filename=$fileName.xls");
     $objWriter = \PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
-    $objWriter->save('php://output');
-    exit;
+    switch ($output) {
+        case 'download':
+            $xlsTitle = iconv('utf-8', 'gb2312', $expTitle);
+            header('pragma:public');
+            header('Content-type:application/vnd.ms-excel;charset=utf-8;name="' . $xlsTitle . '.xls"');
+            header("Content-Disposition:attachment;filename=$fileName.xls");
+            $objWriter->save('php://output');
+            break;
+        case 'local':
+            $objWriter->save(PUBLIC_PATH . 'download_excel/' . $fileName . '.xls');
+            break;
+    }
+    return true;
 }
 
 /**
