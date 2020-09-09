@@ -32,6 +32,7 @@ class Pay
     private $totalAmount = '0';             // 订单总价
     private $orderAmount = '0';             // 应付金额
     private $shippingPrice = '0';           // 物流费
+    private $shopPrice = '0';               // 商品总现金价
     private $goodsPrice = '0';              // 商品总价
 //    private $orderPromPrice = '0';          // 订单优惠促销商品总价
     private $cutFee = '0';                  // 共节约多少钱
@@ -185,6 +186,7 @@ class Pay
             $this->totalAmount = bcadd($this->totalAmount, bcmul($this->payList[$payCursor]['goods_num'], $this->payList[$payCursor]['goods_price'], 2), 2);
             $goods_fee = $this->payList[$payCursor]['goods_fee'] = bcmul($this->payList[$payCursor]['goods_num'], $this->payList[$payCursor]['member_goods_price'], 2);    // 小计
             $this->goodsPrice = bcadd($this->goodsPrice, $goods_fee, 2); // 商品总价
+            $this->shopPrice = bcadd($this->shopPrice, bcmul($this->payList[$payCursor]['goods_num'], $this->payList[$payCursor]['goods']['shop_price'], 2), 2);    // 商品总现金价
             if (array_key_exists('market_price', $this->payList[$payCursor])) {
                 $this->cutFee = bcadd($this->cutFee, bcmul($this->payList[$payCursor]['goods_num'], bcsub($this->payList[$payCursor]['market_price'], $this->payList[$payCursor]['member_goods_price'], 2), 2), 2); // 共节约
             }
@@ -588,6 +590,23 @@ class Pay
         $this->extraLogic->setUserId($this->userId);
         $this->extraLogic->setGoodsList($this->payList);
         $this->extra_goods_list = $this->extraLogic->getGoodsList();
+    }
+
+    /**
+     * 检查使用订单优惠前的订单价格
+     * @param $orderType
+     * @return array
+     */
+    public function checkOrderAmount($orderType)
+    {
+        switch ($orderType) {
+            case 2:
+                // 韩国购
+                if ($this->totalNum > 1 && $this->shopPrice > 1000) {
+                    return ['status' => 0, 'msg' => '由于海关政策影响，韩国购订单单次下单金额不能超过1000元，请分开下单。'];
+                }
+        }
+        return ['status' => 1];
     }
 
     public function activity($isApp = false)

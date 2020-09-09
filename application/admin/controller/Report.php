@@ -1059,12 +1059,10 @@ class Report extends Base
             $where .= " and g.brand_id=$brand_id";
             $this->assign('brand_id', $brand_id);
         }
-
         if ($goods_name) {
             $where .= "and og.goods_name='$goods_name' ";
             $this->assign('goods_name', $goods_name);
         }
-
         if ($goods_id > 0) {
             $where .= " and og.goods_id=$goods_id";
         }
@@ -1110,12 +1108,9 @@ class Report extends Base
             $where .= " and g.brand_id=$brand_id";
             $this->assign('brand_id', $brand_id);
         }
-
         if ($goods_id > 0) {
             $where .= " and og.goods_id=$goods_id";
         }
-
-
         $res = Db::name('order_goods')->alias('og')
             ->field('og.goods_id,og.goods_sn,og.goods_name,g.ctax_price,g.stax_price,og.spec_key,og.final_price,og.goods_price,og.use_integral')
             ->join('order o', 'og.order_id=o.order_id', 'right')
@@ -1174,8 +1169,113 @@ class Report extends Base
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['goods_price'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['stax_price'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['cash_num'] . '</td>';
-
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['song_num'] . '</td>';
+                $strTable .= '</tr>';
+            }
+        }
+        $strTable .= '</table>';
+        unset($orderList);
+        downloadExcel($strTable, 'sale_list');
+        exit();
+    }
+
+    /**
+     * 导出销售明细列表
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     */
+    public function exportSaleList_v2()
+    {
+        $cat_id = I('cat_id', 0);
+        $brand_id = I('brand_id', 0);
+        $goods_id = I('goods_id', 0);
+        $where = "o.add_time>$this->begin and o.add_time<$this->end and order_status in(1,2,4) AND (pay_status=1 or pay_code='cod')";  //交易成功的有效订单
+        if ($cat_id > 0) {
+            $where .= " and (g.cat_id=$cat_id or g.extend_cat_id=$cat_id)";
+            $this->assign('cat_id', $cat_id);
+        }
+        if ($brand_id > 0) {
+            $where .= " and g.brand_id=$brand_id";
+            $this->assign('brand_id', $brand_id);
+        }
+        if ($goods_id > 0) {
+            $where .= " and og.goods_id=$goods_id";
+        }
+        $orderGoods = Db::name('order_goods')->alias('og')
+            ->field('og.goods_id, og.goods_sn, og.goods_name, g.ctax_price, g.stax_price, og.spec_key, og.final_price, og.goods_price, og.use_integral')
+            ->join('order o', 'og.order_id = o.order_id', 'right')
+            ->join('goods g', 'og.goods_id = g.goods_id', 'left')
+            ->where($where)
+            ->group('og.goods_id,og.spec_key')
+            ->order('o.add_time desc')
+            ->select();
+        $goodsPriceData = [];
+        foreach ($orderGoods as $k => $v1) {
+            $order_goods = M('order_goods og')
+                ->join('order o', 'og.order_id = o.order_id', 'right')
+                ->join('goods g', 'og.goods_id = g.goods_id', 'left')
+                ->where($where)->where(['og.goods_id' => $v1['goods_id'], 'og.spec_key' => $v1['spec_key']])->group('og.member_goods_price')->field('og.member_goods_price, og.use_integral')->select();
+            foreach ($order_goods as $v2) {
+                $goodsPriceData[] = [
+                    'goods_sn' => $v1['goods_sn'],
+                    'goods_name' => $v1['goods_name'],
+                    'member_goods_price1' => $v2['member_goods_price'],
+                    'ctax_price' => $v1['ctax_price'],
+                    'inte_num' => M('order_goods og')
+                        ->join('order o', 'og.order_id = o.order_id', 'right')
+                        ->join('goods g', 'og.goods_id = g.goods_id', 'left')
+                        ->where($where)
+                        ->where(['og.goods_id' => $v1['goods_id'], 'og.spec_key' => $v1['spec_key'], 'og.member_goods_price' => $v2['member_goods_price'], 'og.use_integral' => ['GT', 0]])
+                        ->group('og.goods_id, og.spec_key')
+                        ->sum('og.goods_num'),
+                    'member_goods_price2' => bcadd($v2['member_goods_price'], $v2['use_integral'], 2),
+                    'stax_price' => $v1['stax_price'],
+                    'cash_num' => M('order_goods og')
+                        ->join('order o', 'og.order_id = o.order_id', 'right')
+                        ->join('goods g', 'og.goods_id = g.goods_id', 'left')
+                        ->where($where)
+                        ->where(['og.goods_id' => $v1['goods_id'], 'og.spec_key' => $v1['spec_key'], 'og.member_goods_price' => $v2['member_goods_price'], 'og.use_integral' => 0])
+                        ->group('og.goods_id, og.spec_key')
+                        ->sum('og.goods_num'),
+                    'gift_num' => M('order_goods og')
+                        ->join('order o', 'og.order_id = o.order_id', 'right')
+                        ->join('goods g', 'og.goods_id = g.goods_id', 'left')
+                        ->where($where)
+                        ->where(['og.goods_id' => $v1['goods_id'], 'og.spec_key' => $v1['spec_key'], 'og.member_goods_price' => 0, 'og.use_integral' => 0])
+                        ->group('og.goods_id, og.spec_key')
+                        ->sum('og.goods_num'),
+                ];
+            }
+        }
+        $strTable = '<table width="500" border="1">';
+        $strTable .= '<tr>';
+        $strTable .= '<td style="text-align:center;font-size:12px;width:120px;" rowspan="2">商品货号</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="180" rowspan="2">商品名称</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*"  colspan="2">积分价（现金部分）</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*" rowspan="2">数量</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*"  colspan="2">零售价</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*" rowspan="2">数量</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*" rowspan="2">赠送</td>';
+        $strTable .= '</tr>';
+        $strTable .= '<tr>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*" >积分价含税价</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*" >积分价不含税价</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*" >零售价含税价</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*" >零售价不含税价</td>';
+        $strTable .= '</tr>';
+        if (!empty($goodsPriceData)) {
+            foreach ($goodsPriceData as $k => $val) {
+                $strTable .= '<tr>';
+                $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;' . $val['goods_sn'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['goods_name'] . ' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['member_goods_price1'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['ctax_price'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['inte_num'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['member_goods_price2'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['stax_price'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['cash_num'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['gift_num'] . '</td>';
                 $strTable .= '</tr>';
             }
         }

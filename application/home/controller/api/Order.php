@@ -1928,6 +1928,13 @@ class Order extends Base
             $payLogic->setUserId($this->user_id);
             // 计算购物车价格
             $payLogic->payCart($cartList['cartList']);
+            // 韩国购检查订单价格
+            if ($orderType == 2) {
+                $res = $payLogic->checkOrderAmount(2);
+                if ($res['status'] == 0) {
+                    return json($res);
+                }
+            }
             // 检测支付商品购买限制
             $payLogic->check();
             // 参与活动促销
@@ -2454,6 +2461,13 @@ class Order extends Base
             $payLogic->setUserId($this->user_id);   // 设置支付用户ID
             // 计算购物车价格
             $payLogic->payCart($cartList['cartList']);
+            // 韩国购检查订单价格
+            if ($orderType == 2) {
+                $res = $payLogic->checkOrderAmount(2);
+                if ($res['status'] == 0) {
+                    return json($res);
+                }
+            }
             // 检测支付商品购买限制
             $payLogic->check();
             // 参与活动促销

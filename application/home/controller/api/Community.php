@@ -185,10 +185,13 @@ class Community extends Base
         // 获取用户文章数据
         $info = $communityLogic->getArticleInfo($articleId);
         if (!$info) return json(['status' => 0, 'msg' => '文章内容不存在']);
+        // 更新点击量
+        $upData = ['click' => $info['click'] + 1];
         // 用户自己查看
         if ($this->user_id && $info['is_browse'] == 0 && $this->user_id == $info['user_id']) {
-            M('community_article')->where(['id' => $info['id']])->update(['is_browse' => 1]);
+            $upData['is_browse'] = 1;
         }
+        M('community_article')->where(['id' => $info['id']])->update($upData);
         // 社区文章分类数据
         $category = M('community_category')->getField('id, cate_name', true);
         $articleInfo = [

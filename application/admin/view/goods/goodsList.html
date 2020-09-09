@@ -182,8 +182,15 @@
                 </div>
                 <div class="fbutton">
                     <a href="javascript:exportReport()">
-                        <div class="add" title="选定行数据导出excel文件,如果不选中行，将导出列表所有数据">
-                            <span><i class="fa fa-plus"></i>导出数据</span>
+                        <div class="add" title="选定行数据导出excel文件，如果不选中行，将导出列表所有数据，如果导出失败，请筛选商品类型做导出">
+                            <span><i class="fa fa-plus"></i>导出数据（显示缩略图）</span>
+                        </div>
+                    </a>
+                </div>
+                <div class="fbutton">
+                    <a href="javascript:exportReport2()">
+                        <div class="add" title="选定行数据导出excel文件，如果不选中行，将导出列表所有数据，如果导出失败，请筛选商品类型做导出">
+                            <span><i class="fa fa-plus"></i>导出数据（不显示缩略图）</span>
                         </div>
                     </a>
                 </div>
@@ -244,6 +251,18 @@
         if (selected_ids != '') {
             $('input[name="ids"]').val(selected_ids.substring(0, selected_ids.length - 1));
         }
+        $('#search-form').submit();
+    }
+
+    function exportReport2() {
+        var selected_ids = '';
+        $('.trSelected', '#flexigrid').each(function (i) {
+            selected_ids += $(this).data('id') + ',';
+        });
+        if (selected_ids != '') {
+            $('input[name="ids"]').val(selected_ids.substring(0, selected_ids.length - 1));
+        }
+        $('#search-form').attr('action', "/index.php/Admin/goods/export_goods_v3");
         $('#search-form').submit();
     }
 

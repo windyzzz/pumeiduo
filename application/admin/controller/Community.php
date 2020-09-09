@@ -9,7 +9,10 @@ use think\Page;
 
 class Community extends Base
 {
-
+    /**
+     * 社区配置
+     * @return mixed
+     */
     public function config()
     {
         if (IS_POST) {
@@ -231,7 +234,10 @@ class Community extends Base
                     }
                     $status = I('status', 0);
                     $reason = trim(I('reason'));
-                    $updata = ['status' => $status];
+                    $updata = [
+                        'status' => $status,
+                        'is_browse' => 0
+                    ];
                     switch ($status) {
                         case 1:
                             $updata['publish_time'] = NOW_TIME;
