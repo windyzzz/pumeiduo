@@ -107,6 +107,103 @@ function downloadExcel($strTable, $filename)
 
 /**
  * 导出Excel数据表格
+ * @param $expTitle
+ * @param $expCellName
+ * @param $expTableData
+ * @param string $type 类型：商品goods 订单order
+ * @param bool $showPic 是否显示图片
+ * @throws PHPExcel_Exception
+ * @throws PHPExcel_Reader_Exception
+ * @throws PHPExcel_Writer_Exception
+ */
+function exportExcel($expTitle, $expCellName, $expTableData, $type, $showPic = false)
+{
+    set_time_limit(0);    // 防止超时
+    ini_set("memory_limit", "128M");  // 防止内存溢出
+    $cellNum = count($expCellName);
+    $dataNum = count($expTableData);
+    /*引入phpexcel核心类文件*/
+    include_once "plugins/PHPExcel.php";
+    /*实例化excel类*/
+    $objPHPExcel = new \PHPExcel();
+    /*设置文本对齐方式*/
+//    $objPHPExcel->getDefaultStyle()->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+//    $objPHPExcel->getDefaultStyle()->getAlignment()->setVertical(PHPExcel_Style_Alignment::VERTICAL_CENTER);
+    $cellName = array('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'AA', 'AB', 'AC', 'AD', 'AE', 'AF', 'AG', 'AH', 'AI', 'AJ', 'AK', 'AL', 'AM', 'AN', 'AO', 'AP', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AV', 'AW', 'AX', 'AY', 'AZ');
+    /*设置单元格格式*/
+    for ($i = 0; $i < $cellNum; $i++) {
+        $objPHPExcel->getActiveSheet()->getColumnDimension($cellName[$i])->setWidth($expCellName[$i][2]);
+        $objPHPExcel->setActiveSheetIndex(0)->setCellValueExplicit($cellName[$i] . '1', $expCellName[$i][1], \PHPExcel_Cell_DataType::TYPE_STRING);
+    }
+    /*设置数据*/
+    for ($i = 0; $i < $dataNum; $i++) {
+        for ($j = 0; $j < $cellNum; $j++) {
+            switch ($type) {
+                case 'goods':
+                    /*商品数据导出*/
+                    switch ($j) {
+                        case 16:
+                            /*缩略图*/
+                            if (!empty($expTableData[$i]['original_img'])) {
+                                switch ($_SERVER['SERVER_ADDR']) {
+                                    case '61.238.101.139':
+                                        $imgPath = '/var/www/html/pmd' . $expTableData[$i]['original_img'];
+                                        break;
+                                    case '61.238.101.138':
+                                        $imgPath = '/var/www/html/pmd' . $expTableData[$i]['original_img'];
+                                        break;
+                                    default:
+                                        $imgPath = 'E:/programme/pumeiduo/pumeiduo_server' . $expTableData[$i]['original_img'];
+                                }
+                                if (file_exists($imgPath) && $showPic) {
+                                    /*设置表格宽度*/
+                                    $objPHPExcel->getActiveSheet()->getColumnDimension($cellName[$j])->setWidth(20);
+                                    /*设置表格高度*/
+                                    $objPHPExcel->getActiveSheet()->getRowDimension($i + 2)->setRowHeight(100);
+                                    /*实例化插入图片类*/
+                                    $objDrawing = new PHPExcel_Worksheet_Drawing();
+                                    /*设置图片路径 切记：只能是本地图片*/
+                                    $objDrawing->setPath($imgPath);
+                                    /*设置图片高度*/
+                                    $objDrawing->setHeight(100);
+                                    /*设置图片要插入的单元格*/
+                                    $objDrawing->setCoordinates($cellName[$j] . ($i + 2));
+                                    /*设置图片所在单元格的格式*/
+                                    $objDrawing->setOffsetX(20);
+                                    $objDrawing->setOffsetY(15);
+                                    $objDrawing->setRotation(0);
+                                    $objDrawing->getShadow()->setVisible(true);
+                                    $objDrawing->getShadow()->setDirection(0);
+                                    $objDrawing->setWorksheet($objPHPExcel->getActiveSheet());
+                                } else {
+                                    $objPHPExcel->getActiveSheet(0)->setCellValueExplicit($cellName[$j] . ($i + 2), 'https://mall.pumeiduo.com' . $expTableData[$i]['original_img'], ($expCellName[$j][3] == 0 ? \PHPExcel_Cell_DataType::TYPE_NUMERIC : \PHPExcel_Cell_DataType::TYPE_STRING));
+                                }
+                            } else {
+                                $objPHPExcel->getActiveSheet(0)->setCellValueExplicit($cellName[$j] . ($i + 2), $expTableData[$i]['original_img'], ($expCellName[$j][3] == 0 ? \PHPExcel_Cell_DataType::TYPE_NUMERIC : \PHPExcel_Cell_DataType::TYPE_STRING));
+                            }
+                            break;
+                        default:
+                            $objPHPExcel->getActiveSheet(0)->setCellValueExplicit($cellName[$j] . ($i + 2), $expTableData[$i][$expCellName[$j][0]], ($expCellName[$j][3] == 0 ? \PHPExcel_Cell_DataType::TYPE_NUMERIC : \PHPExcel_Cell_DataType::TYPE_STRING));
+                    }
+                    break;
+                default:
+                    $objPHPExcel->getActiveSheet(0)->setCellValueExplicit($cellName[$j] . ($i + 2), $expTableData[$i][$expCellName[$j][0]], ($expCellName[$j][3] == 0 ? \PHPExcel_Cell_DataType::TYPE_NUMERIC : \PHPExcel_Cell_DataType::TYPE_STRING));
+            }
+        }
+    }
+
+    $xlsTitle = iconv('utf-8', 'gb2312', $expTitle);
+    $fileName = $expTitle . date('_YmdHis');
+    header('pragma:public');
+    header('Content-type:application/vnd.ms-excel;charset=utf-8;name="' . $xlsTitle . '.xls"');
+    header("Content-Disposition:attachment;filename=$fileName.xls");
+    $objWriter = \PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
+    $objWriter->save('php://output');
+    exit;
+}
+
+/**
+ * 导出Excel数据表格
  * @param  array $dataList 要导出的数组格式的数据
  * @param  array $headList 导出的Excel数据第一列表头
  * @param  string $fileName 输出Excel表格文件名
@@ -462,101 +559,4 @@ function subtext($text, $length)
     }
 
     return $text;
-}
-
-/**
- * 导出Excel数据表格
- * @param $expTitle
- * @param $expCellName
- * @param $expTableData
- * @param string $type 类型：商品goods 订单order
- * @param bool $showPic 是否显示图片
- * @throws PHPExcel_Exception
- * @throws PHPExcel_Reader_Exception
- * @throws PHPExcel_Writer_Exception
- */
-function exportExcel($expTitle, $expCellName, $expTableData, $type, $showPic = false)
-{
-    set_time_limit(0);    // 防止超时
-    ini_set("memory_limit", "128M");  // 防止内存溢出
-    $cellNum = count($expCellName);
-    $dataNum = count($expTableData);
-    /*引入phpexcel核心类文件*/
-    include_once "plugins/PHPExcel.php";
-    /*实例化excel类*/
-    $objPHPExcel = new \PHPExcel();
-    /*设置文本对齐方式*/
-//    $objPHPExcel->getDefaultStyle()->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
-//    $objPHPExcel->getDefaultStyle()->getAlignment()->setVertical(PHPExcel_Style_Alignment::VERTICAL_CENTER);
-    $cellName = array('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'AA', 'AB', 'AC', 'AD', 'AE', 'AF', 'AG', 'AH', 'AI', 'AJ', 'AK', 'AL', 'AM', 'AN', 'AO', 'AP', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AV', 'AW', 'AX', 'AY', 'AZ');
-    /*设置单元格格式*/
-    for ($i = 0; $i < $cellNum; $i++) {
-        $objPHPExcel->getActiveSheet()->getColumnDimension($cellName[$i])->setWidth($expCellName[$i][2]);
-        $objPHPExcel->setActiveSheetIndex(0)->setCellValueExplicit($cellName[$i] . '1', $expCellName[$i][1], \PHPExcel_Cell_DataType::TYPE_STRING);
-    }
-    /*设置数据*/
-    for ($i = 0; $i < $dataNum; $i++) {
-        for ($j = 0; $j < $cellNum; $j++) {
-            switch ($type) {
-                case 'goods':
-                    /*商品数据导出*/
-                    switch ($j) {
-                        case 16:
-                            /*缩略图*/
-                            if (!empty($expTableData[$i]['original_img'])) {
-                                switch ($_SERVER['SERVER_ADDR']) {
-                                    case '61.238.101.139':
-                                        $imgPath = '/var/www/html/pmd' . $expTableData[$i]['original_img'];
-                                        break;
-                                    case '61.238.101.138':
-                                        $imgPath = '/var/www/html/pmd' . $expTableData[$i]['original_img'];
-                                        break;
-                                    default:
-                                        $imgPath = 'E:/programme/pumeiduo/pumeiduo_server' . $expTableData[$i]['original_img'];
-                                }
-                                if (file_exists($imgPath) && $showPic) {
-                                    /*设置表格宽度*/
-                                    $objPHPExcel->getActiveSheet()->getColumnDimension($cellName[$j])->setWidth(20);
-                                    /*设置表格高度*/
-                                    $objPHPExcel->getActiveSheet()->getRowDimension($i + 2)->setRowHeight(100);
-                                    /*实例化插入图片类*/
-                                    $objDrawing = new PHPExcel_Worksheet_Drawing();
-                                    /*设置图片路径 切记：只能是本地图片*/
-                                    $objDrawing->setPath($imgPath);
-                                    /*设置图片高度*/
-                                    $objDrawing->setHeight(100);
-                                    /*设置图片要插入的单元格*/
-                                    $objDrawing->setCoordinates($cellName[$j] . ($i + 2));
-                                    /*设置图片所在单元格的格式*/
-                                    $objDrawing->setOffsetX(20);
-                                    $objDrawing->setOffsetY(15);
-                                    $objDrawing->setRotation(0);
-                                    $objDrawing->getShadow()->setVisible(true);
-                                    $objDrawing->getShadow()->setDirection(0);
-                                    $objDrawing->setWorksheet($objPHPExcel->getActiveSheet());
-                                } else {
-                                    $objPHPExcel->getActiveSheet(0)->setCellValueExplicit($cellName[$j] . ($i + 2), 'https://mall.pumeiduo.com' . $expTableData[$i]['original_img'], ($expCellName[$j][3] == 0 ? \PHPExcel_Cell_DataType::TYPE_NUMERIC : \PHPExcel_Cell_DataType::TYPE_STRING));
-                                }
-                            } else {
-                                $objPHPExcel->getActiveSheet(0)->setCellValueExplicit($cellName[$j] . ($i + 2), $expTableData[$i]['original_img'], ($expCellName[$j][3] == 0 ? \PHPExcel_Cell_DataType::TYPE_NUMERIC : \PHPExcel_Cell_DataType::TYPE_STRING));
-                            }
-                            break;
-                        default:
-                            $objPHPExcel->getActiveSheet(0)->setCellValueExplicit($cellName[$j] . ($i + 2), $expTableData[$i][$expCellName[$j][0]], ($expCellName[$j][3] == 0 ? \PHPExcel_Cell_DataType::TYPE_NUMERIC : \PHPExcel_Cell_DataType::TYPE_STRING));
-                    }
-                    break;
-                default:
-                    $objPHPExcel->getActiveSheet(0)->setCellValueExplicit($cellName[$j] . ($i + 2), $expTableData[$i][$expCellName[$j][0]], ($expCellName[$j][3] == 0 ? \PHPExcel_Cell_DataType::TYPE_NUMERIC : \PHPExcel_Cell_DataType::TYPE_STRING));
-            }
-        }
-    }
-
-    $xlsTitle = iconv('utf-8', 'gb2312', $expTitle);
-    $fileName = $expTitle . date('_YmdHis');
-    header('pragma:public');
-    header('Content-type:application/vnd.ms-excel;charset=utf-8;name="' . $xlsTitle . '.xls"');
-    header("Content-Disposition:attachment;filename=$fileName.xls");
-    $objWriter = \PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
-    $objWriter->save('php://output');
-    exit;
 }

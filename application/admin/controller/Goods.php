@@ -493,10 +493,6 @@ class Goods extends Base
                     $goodsNature = '供应链';
                 }
                 $val['goods_nature'] = $goodsNature;
-//                $level_cat = $GoodsLogic->find_parent_cat($val['cat_id']); // 获取分类默认选中的下拉框
-//                $val['first_cat'] = M('GoodsCategory')->where('id', $level_cat[1])->getField('name') ?? '';
-//                $val['second_cat'] = M('GoodsCategory')->where('id', $level_cat[2])->getField('name') ?? '';
-//                $val['third_cat'] = M('GoodsCategory')->where('id', $level_cat[3])->getField('name') ?? '';
                 if (isset($cateInfo[$val['cat_id']])) {
                     switch ($cateInfo[$val['cat_id']]['level']) {
                         case 3:
