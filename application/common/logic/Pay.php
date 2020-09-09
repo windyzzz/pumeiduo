@@ -602,7 +602,7 @@ class Pay
         switch ($orderType) {
             case 2:
                 // 韩国购
-                if ($this->totalNum > 1 && $this->shopPrice > 1000) {
+                if ($this->totalNum > 1 && $this->shopPrice >= 1000) {
                     return ['status' => 0, 'msg' => '由于海关政策影响，韩国购订单单次下单金额不能超过1000元，请分开下单。'];
                 }
         }
