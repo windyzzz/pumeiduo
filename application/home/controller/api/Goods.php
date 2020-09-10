@@ -3329,26 +3329,19 @@ class Goods extends Base
                 ],
                 'msg' => ''
             ];
+            if ($this->user_id) {
+                // 记录
+                M('goods_password_log')->add([
+                    'password_id' => $goodsPassword['id'],
+                    'user_id' => $this->user_id,
+                    'add_time' => NOW_TIME
+                ]);
+            }
             return json(['status' => 1, 'result' => $return]);
         } catch (\Exception $e) {
             return json(['status' => 1, 'result' => [
                 'state' => 0,
-                'data' => [
-                    'goods' => [
-                        'goods_type' => '',
-                        'goods_id' => '',
-                        'item_id' => '',
-                        'goods_name' => '',
-                        'original_img_new' => '',
-                        'exchange_price' => '',
-                        'exchange_integral' => '',
-                    ],
-                    'user' => [
-                        'user_id' => '',
-                        'user_name' => '',
-                        'head_pic' => ''
-                    ]
-                ],
+                'data' => (object)[],
                 'msg' => $e->getMessage()
             ]]);
         }

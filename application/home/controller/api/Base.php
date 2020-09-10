@@ -119,6 +119,7 @@ class Base extends Controller
         return [
             'c=api.Message&a=announce',                 // 公告列表
             'c=api.Goods&a=goodsInfoNew',               // 商品详情
+            'c=api.Goods&a=checkGoodsPassword',         // 根据口令获取商品数据
             'c=api.Adv&a=popup',                        // 活动弹窗
         ];
     }
