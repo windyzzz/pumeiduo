@@ -223,7 +223,7 @@ class Community extends Base
                 $this->assign('article_list', $articleList);
                 return $this->fetch('article_list');
                 break;
-            case 'edit':
+            case 'info':
                 // 审核文章详情
                 $articleId = I('article_id', 0);
                 $articleModel = new CommunityArticle();
@@ -316,7 +316,6 @@ class Community extends Base
                     if (!$validate->scene('article_add')->check($postData)) {
                         return $this->ajaxReturn(['status' => 0, 'msg' => $validate->getError()]);
                     }
-                    unset($postData['image'][count($postData['image']) - 1]);
                     switch ($postData['upload_content']) {
                         case 1:
                             if (empty($postData['image'])) {
@@ -326,6 +325,9 @@ class Community extends Base
                             // 上传到OSS服务器
                             $ossClient = new OssLogic();
                             foreach ($postData['image'] as $image) {
+                                if (empty($image)) {
+                                    continue;
+                                }
                                 $filePath = PUBLIC_PATH . substr($image, strrpos($image, '/public/') + 8);
                                 $fileName = substr($image, strrpos($image, '/') + 1);
                                 $object = 'image/' . date('Y/m/d/H/') . $fileName;
@@ -361,6 +363,101 @@ class Community extends Base
                     $this->ajaxReturn(['status' => 1, 'msg' => '添加成功']);
                 }
                 return $this->fetch('article_add');
+                break;
+            case 'edit':
+                // 审核文章详情
+                $articleId = I('article_id', 0);
+                $articleModel = new CommunityArticle();
+                $articleInfo = $articleModel->where(['id' => $articleId])->find();
+                if (IS_POST) {
+                    if ($articleInfo['status'] == -2) {
+                        $this->ajaxReturn(['status' => 0, 'msg' => '用户已删除']);
+                    }
+                    $postData = I('post.');
+                    // 验证参数
+                    $validate = validate('Community');
+                    if (!$validate->scene('article_edit')->check($postData)) {
+                        return $this->ajaxReturn(['status' => 0, 'msg' => $validate->getError()]);
+                    }
+                    switch ($postData['upload_content']) {
+                        case 1:
+                            if (empty($postData['image'])) {
+                                $this->ajaxReturn(['status' => 0, 'msg' => '请上传图片']);
+                            }
+                            $postImage = '';
+                            // 上传到OSS服务器
+                            $ossClient = new OssLogic();
+                            foreach ($postData['image'] as $image) {
+                                if (empty($image)) {
+                                    continue;
+                                }
+                                if (strstr($image, 'aliyuncs.com')) {
+                                    // 原本的图片
+                                    $image = substr($image, strrpos($image, 'image'));
+                                    $postImage .= $image . ',';
+                                    continue;
+                                }
+                                $filePath = PUBLIC_PATH . substr($image, strrpos($image, '/public/') + 8);
+                                $fileName = substr($image, strrpos($image, '/') + 1);
+                                $object = 'image/' . date('Y/m/d/H/') . $fileName;
+                                $return_url = $ossClient->uploadFile($filePath, $object);
+                                if (!$return_url) {
+                                    return $this->ajaxReturn(['status' => 0, 'msg' => 'ERROR：' . $ossClient->getError()]);
+                                } else {
+                                    unlink($filePath);
+                                    $postImage .= $object . ',';
+                                }
+                            }
+                            $postData['image'] = rtrim($postImage, ',');
+                            $postData['video'] = '';
+                            break;
+                        case 2:
+                            if (empty($postData['video'])) {
+                                $this->ajaxReturn(['status' => 0, 'msg' => '请上传视频']);
+                            }
+                            // 处理视频封面图
+                            $videoCover = getVideoCoverImages($postData['video']);
+                            $postData['video_cover'] = $videoCover['path'];
+                            $postData['video_axis'] = $videoCover['axis'];
+                            $postData['image'] = '';
+                            break;
+                    }
+                    unset($postData['upload_content']);
+                    if ($articleInfo['status'] == 2) {
+                        $postData['publish_time'] = strtotime($postData['publish_time']);
+                    } else {
+                        $postData['publish_time'] = NOW_TIME;
+                    }
+                    $postData['up_time'] = NOW_TIME;
+                    // 更新记录
+                    M('community_article_edit_log')->add([
+                        'type' => 2,
+                        'user_id' => session('admin_id'),
+                        'data' => json_encode($articleInfo),
+                        'add_time' => NOW_TIME
+                    ]);
+                    // 更新数据
+                    M('community_article')->where(['id' => $articleId])->update($postData);
+                    $this->ajaxReturn(['status' => 1, 'msg' => '处理成功']);
+                }
+                $dCategory = M('community_category')->where(['parent_id' => $articleInfo['cate_id1']])->getField('id, cate_name');
+                if (!empty($articleInfo['image'])) {
+                    $images = explode(',', $articleInfo['image']);
+                    $image = [];
+                    foreach ($images as $item) {
+                        $image[] = \plugins\Oss::url($item);
+                    }
+                    $articleInfo['image'] = $image;
+                    $articleInfo['upload_content'] = 1;
+                } else {
+                    $articleInfo['image'] = [];
+                    $articleInfo['upload_content'] = 2;
+                }
+                $articleInfo['video'] = !empty($articleInfo['video']) ? \plugins\Oss::url($articleInfo['video']) : '';
+                $articleInfo['goods_name'] = M('goods')->where(['goods_id' => $articleInfo['goods_id']])->value('goods_name');
+                $this->assign('info', $articleInfo);
+                $this->assign('d_category', $dCategory);
+                return $this->fetch('article_edit');
                 break;
         }
     }

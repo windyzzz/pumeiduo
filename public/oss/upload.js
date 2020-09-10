@@ -143,7 +143,7 @@ var uploader = new plupload.Uploader({
         mime_types: [
             {title: "视频文件", extensions: "mp4,webm,avi,m4v,flv"},
         ],
-        max_file_size: '30mb', //最大只能上传30mb的文件
+        max_file_size: '50mb', //最大只能上传50mb的文件
         prevent_duplicates: true //不允许选取重复文件
     },
 

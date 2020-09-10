@@ -196,7 +196,10 @@
 							</td>
 							<td align="left" class="handle">
 								<div style="text-align: center; width: 150px; max-width:150px;">
-									<a class="btn blue" href="{:U('Community/article', array('act' => 'edit', 'article_id' => $vo['id']))}"><i class="fa fa-pencil-square-o"></i>详情</a>
+									<a class="btn blue" href="{:U('Community/article', array('act' => 'info', 'article_id' => $vo['id']))}"><i class="fa fa-pencil-square-o"></i>详情</a>
+									<if condition="$vo[source] == 2">
+										<a class="btn blue" href="{:U('Community/article', array('act' => 'edit', 'article_id' => $vo['id']))}"><i class="fa fa-pencil-square-o"></i>编辑</a>
+									</if>
 								</div>
 							</td>
 							<td align="" class="" style="width: 100%;">

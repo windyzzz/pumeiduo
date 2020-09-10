@@ -1,20 +1,27 @@
 <include file="public/layout"/>
 <script src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
+<style type="text/css">
+    html, body {
+        overflow: visible;
+    }
+</style>
 <body style="background-color: #FFF; overflow: auto;">
 <div id="toolTipLayer" style="position: absolute; z-index: 9999; display: none; visibility: visible; left: 95px; top: 573px;"></div>
 <div id="append_parent"></div>
 <div id="ajaxwaitid"></div>
 <div class="page">
     <div class="fixed-bar">
-        <div class="item-title"><a class="back" href="javascript:history.back();" title="返回列表"><i
-                class="fa fa-arrow-circle-o-left"></i></a>
+        <div class="item-title">
+            <a class="back" href="javascript:history.back();" title="返回列表">
+                <i class="fa fa-arrow-circle-o-left"></i>
+            </a>
             <div class="subject">
-                <h3>新增社区文章</h3>
-                <h5>社区文章索引与管理</h5>
+                <h3>社区文章编辑</h3>
+                <h5>社区文章管理</h5>
             </div>
         </div>
     </div>
-    <form class="form-horizontal" action="{:U('Community/article', array('act'=>'add'))}" id="add_post" method="post">
+    <form class="form-horizontal" action="{:U('Community/article')}" id="add_post" method="post">
         <div class="ncap-form-default">
             <dl class="row">
                 <dt class="tit">
@@ -24,7 +31,7 @@
                     <select name="cate_id1" id="cate_id1">
                         <option value="">请选择</option>
                         <foreach name="t_category" item="vo">
-                            <option value="{$key}">{$vo}</option>
+                            <option value="{$key}" <if condition="$key == $info[cate_id1]"> selected </if>>{$vo}</option>
                         </foreach>
                     </select>
                     <span class="err" id="err_cate_id1"></span>
@@ -37,17 +44,19 @@
                 <dd class="opt">
                     <select name="cate_id2" id="cate_id2">
                         <option value="">请选择</option>
+                        <foreach name="d_category" item="vo">
+                            <option value="{$key}" <if condition="$key == $info[cate_id2]"> selected </if>>{$vo}</option>
+                        </foreach>
                     </select>
                     <span class="err" id="err_cate_id2"></span>
                 </dd>
             </dl>
             <dl class="row">
                 <dt class="tit">
-                    <label><em>*</em>文章内容</label>
+                    <label>内容</label>
                 </dt>
                 <dd class="opt">
-                    <textarea name="content" class="" style="width: 80%; height: 50%; line-height: 200%" rows="10"></textarea>
-                    <span class="err" id="err_content"></span>
+                    <textarea name="content" class="" style="width: 80%; height: 50%; line-height: 200%" rows="10">{$info.content}</textarea>
                 </dd>
             </dl>
             <dl class="row">
@@ -56,28 +65,46 @@
                 </dt>
                 <dd class="opt">
                     <select name="upload_content" id="upload_content">
-                        <option value="1">图片上传</option>
-                        <option value="2">视频上传</option>
+                        <option value="1" <if condition="$key == $info[cate_id2]"> selected </if>>图片上传</option>
+                        <option value="2" <if condition="$key == $info[cate_id2]"> selected </if>>视频上传</option>
                     </select>
                 </dd>
             </dl>
-            <dl class="row" id="image">
+            <dl class="row" style="<if condition='empty($info[image])'>display: none;</if>" id="image">
                 <dt class="tit">
-                    <label>图片上传</label>
+                    <label>图片</label>
                 </dt>
                 <dd class="opt">
-                    <div class="tab-pane" id="">
+                    <div id="layer-photos-demo" class="layer-photos-demo" style="text-align:center; display:inline-block;">
                         <table class="table table-bordered">
                             <tbody>
                             <tr>
                                 <td>
-                                    <div class="goods_xc" style="width:100px; text-align:center; margin: 5px; display:inline-block;">
+                                    <foreach name="$info[image]" item="vo" key="k">
+                                        <div style="width:100px; text-align:center; margin: 5px; display:inline-block;">
+                                            <input type="hidden" value="{$vo}" name="image[]">
+                                            <img layer-pid="{$k}" layer-src="{$vo}" src="{$vo}" alt="" width="100" height="100" class="fa fa-picture-o" style="margin: 5px;">
+                                            <br>
+                                            <a href="javascript:void(0)" onClick="del_pic_div(this)">删除</a>
+                                        </div>
+                                    </foreach>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="layer-photos-demo goods_xc" style="text-align:center; display:inline-block;">
+                        <table class="table table-bordered">
+                            <tbody>
+                            <tr>
+                                <td>
+                                    <div style="width:100px; text-align:center; margin: 5px; display:inline-block;">
                                         <input type="hidden" name="image[]" value=""/>
                                         <a href="javascript:void(0);" onClick="GetUploadify(9,'','community','call_back');">
                                             <img src="/public/images/add-button.jpg" width="100" height="100"/>
+                                            <br>
+                                            <a href="javascript:void(0)" onClick="">&nbsp;&nbsp;</a>
                                         </a>
-                                        <br/>
-                                        <a href="javascript:void(0)">&nbsp;&nbsp;</a>
                                     </div>
                                 </td>
                             </tr>
@@ -86,13 +113,13 @@
                     </div>
                 </dd>
             </dl>
-            <dl class="row" id="video" style="display: none;">
+            <dl class="row" style="<if condition='empty($info[video])'>display: none;</if>" id="video">
                 <dt class="tit">
-                    <label>视频上传</label>
+                    <label>视频</label>
                 </dt>
                 <dd class="opt">
                     <input type="hidden" value="" name="video" id="video_input" />
-                    <video style="" controls="controls" width="600" height="300" id="video_tag" src=""></video>
+                    <video style="" controls="controls" width="600" height="300" id="video_tag" src="{$info[video]}"></video>
                     <div id="container">
                         <a id="selectfiles" href="javascript:void(0);" class='btn'>选择文件</a>
                         <b style="font-size: 16px; display: none;" id="percent">上传进度:0%</b>
@@ -102,12 +129,19 @@
             </dl>
             <dl class="row">
                 <dt class="tit">
-                    <label><em>*</em>选择关联商品</label>
+                    <label>关联商品</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" id="goods_name" readonly name="" value="" class="input-txt">
-                    <input type="hidden" id="goods_id" readonly name="goods_id" value="" class="input-txt">
-                    <input type="hidden" id="item_id" readonly name="item_id" value="0" class="input-txt">
+                    <div style="float: left;margin-right: 10px" class="selected-group-goods">
+                        <div class="goods-thumb">
+                            <img style="width: 162px;height: 162px" src="{$info['goods_id']|goods_thum_images=162,162}"/>
+                        </div>
+                        <div class="goods-name">
+                            <a target="_blank" href="{:U('Admin/Goods/addEditGoods',array('id'=>$info['goods_id']))}">{$info.goods_name}</a>
+                        </div>
+                    </div>
+                    <input type="hidden" id="goods_id" readonly name="goods_id" value="{$info[goods_id]}" class="input-txt">
+                    <input type="hidden" id="item_id" readonly name="item_id" value="{$info[item_id]}" class="input-txt">
                     <div style="overflow: hidden" id="selected_group_goods">
 
                     </div>
@@ -116,22 +150,26 @@
                     </p>
                 </dd>
             </dl>
-            <dl class="row">
-                <dt class="tit">
-                    <label><em>*</em>预计发布时间</label>
-                </dt>
-                <dd class="opt">
-                    <input type="text" class="input-txt" id="publish_time" name="publish_time" value="">
-                    <span class="add-on input-group-addon">
+            <if condition="$info[status] == 2">
+                <dl class="row">
+                    <dt class="tit">
+                        <label><em>*</em>预计发布时间</label>
+                    </dt>
+                    <dd class="opt">
+                        <input type="text" class="input-txt" id="publish_time" name="publish_time" value="{$info[publish_time]|date='Y-m-d H:i:s',###}">
+                        <span class="add-on input-group-addon">
                         <i class="glyphicon glyphicon-calendar fa fa-calendar"></i>
                     </span>
-                    <span class="err" id="err_publish_time"></span>
-                </dd>
-            </dl>
+                        <span class="err" id="err_publish_time"></span>
+                    </dd>
+                </dl>
+            </if>
             <div class="bot">
-                <a href="JavaScript:void(0);" class="ncap-btn-big ncap-btn-green" id="submitBtn">确认提交</a>
+                <a href="JavaScript:edit();" class="ncap-btn-big ncap-btn-green">保存</a>
             </div>
         </div>
+        <input type="hidden" name="act" value="{$act}">
+        <input type="hidden" name="article_id" value="{$info.id}">
     </form>
 </div>
 <link rel="stylesheet" type="text/css" href="/public/oss/style.css"/>
@@ -140,6 +178,11 @@
 <script type="text/javascript">
     $(function () {
         $('#publish_time').layDate();
+    });
+
+    layer.photos({
+        photos: '#layer-photos-demo'
+        ,anim: 5 //0-6的选择，指定弹出图片动画类型，默认随机（请注意，3.0之前的版本用shift参数）
     });
 
     $('select[name="cate_id1"]').change(function () {
@@ -177,6 +220,16 @@
                 break;
         }
     });
+
+    function del_pic_div(obj) {
+        layer.confirm('确认删除？', {btn: ['确定', '取消']}, function (index) {
+            layer.close(index);
+            $(obj).parent().remove();
+        }, function (index) {
+            // 取消
+            layer.close(index);
+        });
+    }
 
     // 上传商品相册回调函数
     function call_back(paths) {
@@ -225,6 +278,7 @@
     }
 
     function selGoodsCallBack(goodsItem) {
+        $('.selected-group-goods').remove();
         $('#goods_id').val(goodsItem.goods_id);
         var html = '';
         if (goodsItem.spec != null) {
@@ -248,36 +302,26 @@
         layer.closeAll('iframe');
     }
 
-    $(document).on("click", '#submitBtn', function () {
+    function edit() {
         layer.confirm('确认操作？', {btn: ['确定', '取消']}, function () {
-            verifyForm();
-        });
-    });
-
-    function verifyForm() {
-        $('span.err').hide();
-        $.ajax({
-            type: "POST",
-            url: "{:U('Community/article', array('act'=>'add'))}",
-            data: $('#add_post').serialize(),
-            dataType: "json",
-            error: function () {
-                layer.alert("服务器繁忙, 请联系管理员!");
-            },
-            success: function (data) {
-                if (data.status === 1) {
-                    layer.msg(data.msg, {icon: 1, time: 1000}, function () {
-                        location.href = "{:U('Admin/Community/article')}";
-                    });
-                } else if (data.status === 0) {
-                    layer.msg(data.msg, {icon: 2, time: 1000});
-                    $.each(data.result, function (index, item) {
-                        $('#err_' + index).text(item).show();
-                    });
-                } else {
-                    layer.msg(data.msg, {icon: 2, time: 1000});
+            $.ajax({
+                type: "POST",
+                url: "{:U('Community/article')}",
+                data: $('#add_post').serialize(),
+                dataType: "json",
+                error: function () {
+                    layer.alert("服务器繁忙, 请联系管理员!");
+                },
+                success: function (data) {
+                    if (data.status === 1) {
+                        layer.msg(data.msg, {icon: 1, time: 1000}, function () {
+                            location.href = "{:U('Admin/Community/article')}";
+                        });
+                    } else {
+                        layer.msg(data.msg, {icon: 2, time: 1000});
+                    }
                 }
-            }
+            });
         });
     }
 </script>

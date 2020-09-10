@@ -27,6 +27,7 @@ class Community extends Validate
     //验证场景
     protected $scene = [
         'article_add' => ['cate_id1', 'cate_id2', 'content', 'goods_id', 'publish_time'],
+        'article_edit' => ['cate_id1', 'cate_id2', 'content', 'goods_id'],
     ];
 
     protected function checkEmpty($value)
