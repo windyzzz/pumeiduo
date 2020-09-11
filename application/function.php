@@ -1991,7 +1991,7 @@ function getVideoCoverImages_v2($file)
     // 从OSS服务器下载视频截图
     $file = \plugins\Oss::url($file) . '?x-oss-process=video/snapshot,t_1000,m_fast';
     $fileName = get_rand_str(32, 1, 1) . '.jpg';
-    $res = download_image($file, $fileName, PUBLIC_PATH);
+    $res = download_image($file, $fileName, PUBLIC_PATH . 'upload/community/video_cover/');
     if ($res == false) {
         return false;
     }
@@ -2050,7 +2050,7 @@ function download_image($url, $fileName, $dirName, $type = 1)
             return false;
     }
     // 设置文件保存路径
-    $dirName = $dirName . 'images/download/' . date('Ymd', time());
+    $dirName = $dirName . date('Ymd', time());
     if (!file_exists($dirName)) {
         mkdir($dirName, 0777, true);
     }
