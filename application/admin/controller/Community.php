@@ -22,6 +22,7 @@ class Community extends Base
                     'type' => $k,
                     'name' => isset($v['name']) ? $v['name'] : '',
                     'url' => isset($v['url']) ? $v['url'] : '',
+                    'content' => isset($v['content']) ? $v['content'] : '',
                 ];
                 $config = M('community_config')->where(['type' => $k])->find();
                 if (!empty($config)) {
@@ -37,7 +38,8 @@ class Community extends Base
         foreach ($abroadConfig as $val) {
             $config[$val['type']] = [
                 'name' => $val['name'],
-                'url' => $val['url']
+                'url' => $val['url'],
+                'content' => $val['content']
             ];
         }
         $this->assign('config', $config);

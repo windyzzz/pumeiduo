@@ -14,7 +14,7 @@ namespace app\common\logic;
 use OSS\Core\OssException;
 use OSS\OssClient;
 
-require_once './vendor/aliyun-oss-php-sdk/autoload.php';
+require_once './vendor/aliyun-openapi-php-sdk/aliyun-oss-php-sdk/autoload.php';
 
 /**
  * Class OssLogic

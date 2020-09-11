@@ -32,6 +32,8 @@ class STS extends Base
             $res['path'] = $path;
             $res['file_name'] = get_rand_str(32, 1, 1);
             $res['file_name_arr'] = [];
+            $videoSize = M('community_config')->where(['type' => 'video_size'])->value('content');
+            $res['video_size'] = $videoSize ?? '0';
             for ($i = 1; $i <= $num; $i++) {
                 $res['file_name_arr'][] = get_rand_str(32, 1, 1);
             }

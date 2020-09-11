@@ -146,7 +146,7 @@ class Community
             if (!empty($value['video'])) {
                 $video = [
                     'url' => !empty($value['video']) ? \plugins\Oss::url($value['video']) : '',
-                    'cover' => getFullPath($value['video_cover']),
+                    'cover' => !empty($value['video']) ? \plugins\Oss::url($value['video_cover']) : '',
                     'axis' => $value['video_axis']
                 ];
             }

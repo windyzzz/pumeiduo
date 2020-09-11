@@ -38,6 +38,15 @@
                     </div>
                 </dd>
             </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>用户上传视频大小限制</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" class="input-txt" name="video_size[content]" value="{$config.video_size.content}">
+                    <p class="notic">单位MB，不限制设为0</p>
+                </dd>
+            </dl>
             <div class="bot">
                 <a href="JavaScript:void(0);" class="ncap-btn-big ncap-btn-green" onclick="document.form.submit()">确认提交</a>
             </div>

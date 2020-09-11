@@ -1925,6 +1925,7 @@ function imgToBase64($img = '')
  */
 function getVideoCoverImages($file)
 {
+    // 从OSS服务器下载视频
     $localFile = (new \app\common\logic\OssLogic())->downloadFile($file, PUBLIC_PATH . 'upload/community/video_cover/temp/');
     $filePath = '';
     $fileAxis = '1';  // 1横向型 2竖向型
@@ -1978,4 +1979,84 @@ function getVideoCoverImages($file)
         unlink($localFile);
     }
     return ['path' => $filePath, 'axis' => $fileAxis];
+}
+
+/**
+ * 获取视频封面图_V2
+ * @param $file
+ * @return array|bool
+ */
+function getVideoCoverImages_v2($file)
+{
+    // 从OSS服务器下载视频截图
+    $file = \plugins\Oss::url($file) . '?x-oss-process=video/snapshot,t_1000,m_fast';
+    $fileName = get_rand_str(32, 1, 1) . '.jpg';
+    $res = download_image($file, $fileName, PUBLIC_PATH);
+    if ($res == false) {
+        return false;
+    }
+    $filePath = $res['save_path'] . '/' . $res['file_name'];
+    $imageInfo = getimagesize($filePath);
+    if ($imageInfo[0] > $imageInfo[1]) {
+        $fileAxis = '2';    // 竖向型
+    } else {
+        $fileAxis = '1';    // 横向型
+    }
+    // 上传到OSS服务器
+    $ossClient = new \app\common\logic\OssLogic();
+    $fileName = $res['file_name'];
+    $object = 'image/' . date('Y/m/d/H/') . $fileName;
+    $return_url = $ossClient->uploadFile($filePath, $object);
+    if (!$return_url) {
+        return false;
+    } else {
+        unlink($filePath);
+    }
+    return ['path' => $object, 'axis' => $fileAxis];
+}
+
+/**
+ * 下载图片到本地服务器
+ * @param $url
+ * @param $fileName
+ * @param $dirName
+ * @param int $type
+ * @return array|bool
+ */
+function download_image($url, $fileName, $dirName, $type = 1)
+{
+    if ($url == '') {
+        return false;
+    }
+    switch ($type) {
+        case 1:
+            // 远程
+            $ch = curl_init();
+            $timeout = 30;
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
+            $file = curl_exec($ch);
+            curl_close($ch);
+            break;
+        case 2:
+            // 本地
+            ob_start();
+            readfile($url);
+            $file = ob_get_contents();
+            ob_end_clean();
+            break;
+        default:
+            return false;
+    }
+    // 设置文件保存路径
+    $dirName = $dirName . 'images/download/' . date('Ymd', time());
+    if (!file_exists($dirName)) {
+        mkdir($dirName, 0777, true);
+    }
+    // 保存文件
+    $res = fopen($dirName . '/' . $fileName, 'a');
+    fwrite($res, $file);
+    fclose($res);
+    return ['file_name' => $fileName, 'save_path' => $dirName];
 }
