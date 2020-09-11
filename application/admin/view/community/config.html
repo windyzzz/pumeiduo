@@ -43,7 +43,7 @@
                     <label>用户上传视频大小限制</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" class="input-txt" name="video_size[content]" value="{$config.video_size.content}">
+                    <input type="text" class="input-txt" name="video_size[content]" value="{$config.video_size.content}" onpaste="this.value=this.value.replace(/[^\d.]/g,'')" onkeyup="this.value=this.value.replace(/[^\d.]/g,'')">
                     <p class="notic">单位MB，不限制设为0</p>
                 </dd>
             </dl>
