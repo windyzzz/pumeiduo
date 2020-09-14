@@ -1998,9 +1998,9 @@ function getVideoCoverImages_v2($file)
     $filePath = $res['save_path'] . '/' . $res['file_name'];
     $imageInfo = getimagesize($filePath);
     if ($imageInfo[0] > $imageInfo[1]) {
-        $fileAxis = '2';    // 竖向型
-    } else {
         $fileAxis = '1';    // 横向型
+    } else {
+        $fileAxis = '2';    // 竖向型
     }
     // 上传到OSS服务器
     $ossClient = new \app\common\logic\OssLogic();
@@ -2050,7 +2050,7 @@ function download_image($url, $fileName, $dirName, $type = 1)
             return false;
     }
     // 设置文件保存路径
-    $dirName = $dirName . date('Ymd', time());
+    $dirName = $dirName . date('Y/m-d', time());
     if (!file_exists($dirName)) {
         mkdir($dirName, 0777, true);
     }
