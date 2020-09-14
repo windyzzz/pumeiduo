@@ -818,8 +818,11 @@ class Goods extends Base
             'tabs' => []
         ];
         // 处理商品内容图片
-        if (!strstr($goodsInfo['goods_content'], 'http') && !strstr($goodsInfo['goods_content'], 'https')) {
-            $goodsInfo['goods_content'] = str_replace('/public', SITE_URL . '/public', $goodsInfo['goods_content']);
+//        if (!strstr($goodsInfo['goods_content'], 'http') && !strstr($goodsInfo['goods_content'], 'https')) {
+//            $goodsInfo['goods_content'] = str_replace('/public', SITE_URL . '/public', $goodsInfo['goods_content']);
+//        }
+        if (strstr($goodsInfo['goods_content'], 'src="/public')) {
+            $goodsInfo['goods_content'] = str_replace('src="/public', 'src="' . SITE_URL . '/public', $goodsInfo['goods_content']);
         }
         if ($this->user) {
             $goodsLogic = new GoodsLogic();
