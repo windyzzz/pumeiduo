@@ -1932,7 +1932,7 @@ function getVideoCoverImages($file)
     if (!empty($localFile)) {
         if (is_file($localFile)) {
             $pathParts = pathinfo($localFile);
-            $path = str_replace('temp', '', $pathParts['dirname']) . date('Y-m/');
+            $path = str_replace('temp', '', $pathParts['dirname']) . date('Y/m-d/');
             if (!is_dir($path)) {
                 mkdir($path, 0755, true);
             }
@@ -1974,7 +1974,18 @@ function getVideoCoverImages($file)
             // 取第1秒作为封面图
             $command = \think\Env::get('FFMPEG.FUNC') . " -i {$localFile} -y -f image2 -ss 1 -vframes 1 -s {$x}x{$y} {$filePath}";
             exec($command);
-            $filePath = str_replace('\\', '/', substr($filePath, strrpos($filePath, 'public') - 1));
+            $filePath = str_replace('\\', '/', substr($filePath, strrpos($filePath, 'public') + 7));
+            // 上传到OSS服务器
+            $ossClient = new \app\common\logic\OssLogic();
+            $filePath = PUBLIC_PATH . $filePath;
+            $object = 'image/' . date('Y/m/d/H/') . $pathParts['filename'] . '_1.jpg';
+            $return_url = $ossClient->uploadFile($filePath, $object);
+            if (!$return_url) {
+                $filePath = '';
+            } else {
+                unlink($filePath);
+                $filePath = $object;
+            }
         }
         unlink($localFile);
     }

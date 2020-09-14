@@ -299,10 +299,10 @@ class Community extends Base
         // 视频地址处理
         if (!empty($post['video'])) {
             $post['video'] = substr($post['video'], strpos($post['video'], 'video'));
-            // 处理视频封面图
-            $videoCover = getVideoCoverImages_v2($post['video']);
-            $post['video_cover'] = $videoCover['path'];
-            $post['video_axis'] = $videoCover['axis'];
+//            // 处理视频封面图
+//            $videoCover = getVideoCoverImages_v2($post['video']);
+//            $post['video_cover'] = $videoCover['path'];
+//            $post['video_axis'] = $videoCover['axis'];
         }
         // 保存更新数据
         if ($articleId) {
