@@ -61,7 +61,7 @@ class Community
      * @param int $num
      * @return array
      */
-    public function getArticleList($param, $num = 20)
+    public function getArticleList($param, $num = 10)
     {
         // 搜索条件
         $where = $this->articleWhere($param);

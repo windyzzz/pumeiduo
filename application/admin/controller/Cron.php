@@ -1557,7 +1557,7 @@ AND log_id NOT IN
     public function getCommunityArticleVideoCover()
     {
         // 获取发布视频的文章
-        $article = M('community_article')->where(['status' => 0, 'video' => ['NEQ', ''], 'video_cover' => ''])->field('id, video')->select();
+        $article = M('community_article')->where(['status' => 0, 'video' => ['NEQ', ''], 'video_cover' => ''])->field('id, video')->limit(5)->select();
         foreach ($article as $value) {
             // 获取视频封面图
             $videoCover = getVideoCoverImages($value['video']);
