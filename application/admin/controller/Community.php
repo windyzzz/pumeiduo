@@ -349,7 +349,7 @@ class Community extends Base
                                 $this->ajaxReturn(['status' => 0, 'msg' => '请上传视频']);
                             }
                             // 处理视频封面图
-                            $videoCover = getVideoCoverImages_v2($postData['video']);
+                            $videoCover = getVideoCoverImages($postData['video']);
                             $postData['video_cover'] = $videoCover['path'];
                             $postData['video_axis'] = $videoCover['axis'];
                             $postData['image'] = '';
@@ -418,7 +418,7 @@ class Community extends Base
                                 $this->ajaxReturn(['status' => 0, 'msg' => '请上传视频']);
                             }
                             // 处理视频封面图
-                            $videoCover = getVideoCoverImages_v2($postData['video']);
+                            $videoCover = getVideoCoverImages($postData['video']);
                             $postData['video_cover'] = $videoCover['path'];
                             $postData['video_axis'] = $videoCover['axis'];
                             $postData['image'] = '';
