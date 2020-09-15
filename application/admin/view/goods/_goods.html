@@ -1073,19 +1073,15 @@
     var ue = UE.getEditor('goods_content', {
         serverUrl: url,
         zIndex: 999,
-        initialFrameWidth: "100%", //初化宽度
-        initialFrameHeight: 300, //初化高度
+        initialFrameWidth: "90%", //初化宽度
+        initialFrameHeight: 10000, //初化高度
         focus: false, //初始化时，是否让编辑器获得焦点true或false
-        maximumWords: 99999, removeFormatAttributes: 'class,style,lang,width,height,align,hspace,valign',//允许的最大字符数 'fullscreen',
+        maximumWords: 99999,    //允许的最大字符数
+        fullscreen: false,
+        removeFormatAttributes: 'class,style,lang,width,height,align,hspace,valign',
         pasteplain: false, //是否默认为纯文本粘贴。false为不使用纯文本粘贴，true为使用纯文本粘贴
-        autoHeightEnabled: true
+        autoHeightEnabled: true,
     });
-    <if condition="$goodsInfo[is_supply] == 1">
-        ue.ready(function () {
-            // 编辑器 禁用
-            ue.setDisabled();
-        });
-    </if>
 
     // 物流设置相 关
     function choosebox(o) {
