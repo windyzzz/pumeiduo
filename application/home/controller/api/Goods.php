@@ -3205,10 +3205,10 @@ class Goods extends Base
         $source = I('source', 1);   // 来源：1商品详情 2社区文章
         if (!$goodsId) return json(['status' => 0, 'msg' => '请传入商品ID']);
         // 获取商品数据
-        $goodsId = M('goods')->where(['goods_id' => $goodsId, 'is_on_sale' => 1])->value('goods_id');
-        if (empty($goodsId)) return json(['status' => 0, 'msg' => '商品已下架']);
+        $goodsInfo = M('goods')->where(['goods_id' => $goodsId, 'is_on_sale' => 1])->field('goods_name')->find();
+        if (empty($goodsInfo)) return json(['status' => 0, 'msg' => '商品已下架']);
         // 生成口令
-        $password = (new GoodsLogic())->createGoodsPwd();
+        $password = (new GoodsLogic())->createGoodsPwd($goodsInfo);
         // 记录口令
         $pwdData = [
             'goods_id' => $goodsId,

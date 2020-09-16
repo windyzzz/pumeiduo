@@ -31,7 +31,7 @@ class CreateGoodsPassword extends Migrator
         $this->table('goods_password', ['comment' => '商品口令表'])
             ->addColumn('goods_id', 'integer', ['comment' => '商品ID'])
             ->addColumn('item_id', 'integer', ['default' => 0, 'comment' => '规格ID'])
-            ->addColumn('password', 'string', ['limit' => 20, 'comment' => '口令'])
+            ->addColumn('password', 'string', ['comment' => '口令'])
             ->addColumn('user_id', 'integer', ['default' => 0, 'comment' => '用户ID'])
             ->addColumn('add_time', 'integer')
             ->addColumn('dead_time', 'integer', ['comment' => '失效时间'])

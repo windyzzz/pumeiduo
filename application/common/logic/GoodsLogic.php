@@ -1974,13 +1974,15 @@ class GoodsLogic extends Model
 
     /**
      * 生成商品口令
+     * @param $goodsInfo
      * @return string
      */
-    public function createGoodsPwd()
+    public function createGoodsPwd($goodsInfo)
     {
         $password = 'PMD_' . get_rand_str(12, 0, 1);
+        $password = '复制内容“' . $password . '”打开乐活优选【' . $goodsInfo['goods_name'] . '】';
         if (M('goods_password')->where(['password' => $password])->find()) {
-            return $this->createGoodsPwd();
+            return $this->createGoodsPwd($goodsInfo);
         }
         return $password;
     }
