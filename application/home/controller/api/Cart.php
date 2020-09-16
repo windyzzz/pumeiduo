@@ -1488,6 +1488,9 @@ class Cart extends Base
                 if ($buyGoods['goods']['is_abroad'] == 1) {
                     return json(['status' => -1, 'msg' => '韩国购商品请在APP进行购买', 'result' => null]);
                 }
+                if ($buyGoods['goods']['is_supply'] == 1) {
+                    return json(['status' => -1, 'msg' => '想购买更多商品请下载App', 'result' => null]);
+                }
                 $cartList[0] = $buyGoods;
                 $pay->payGoodsList($cartList);
             } else {
@@ -1496,6 +1499,9 @@ class Cart extends Base
                 foreach ($userCartList as $key => $cart) {
                     if ($cart['goods']['is_abroad'] == 1) {
                         return json(['status' => -1, 'msg' => '韩国购商品请在APP进行购买', 'result' => null]);
+                    }
+                    if ($cart['goods']['is_supply'] == 1) {
+                        return json(['status' => -1, 'msg' => '想购买更多商品请下载App', 'result' => null]);
                     }
                     if ($cart['prom_type'] == 0) {
                         if ($cart['goods']['least_buy_num'] != 0 && $cart['goods']['least_buy_num'] > $cart['goods_num']) {
