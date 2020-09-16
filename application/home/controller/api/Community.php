@@ -88,7 +88,7 @@ class Community extends Base
                 'user' => [
                     'user_id' => !empty($value['user_id']) ? $value['user_id'] : '',
                     'user_name' => !empty($value['user_name']) ? $value['user_name'] : !empty($value['nickname']) ? $value['nickname'] : '',
-                    'head_pic' => !empty($value['head_pic']) ? getFullPath($value['head_pic']) : '',
+                    'head_pic' => !empty($value['head_pic']) ? getFullPath($value['head_pic']) : getFullPath('/public/images/default_head.png'),
                 ],
                 'goods' => [],
                 'goods_id' => $value['goods_id'],
@@ -206,7 +206,7 @@ class Community extends Base
             'user' => [
                 'user_id' => !empty($info['user_id']) ? $info['user_id'] : '',
                 'user_name' => !empty($info['user_name']) ? $info['user_name'] : !empty($info['nickname']) ? $info['nickname'] : '',
-                'head_pic' => !empty($info['head_pic']) ? getFullPath($info['head_pic']) : '',
+                'head_pic' => !empty($info['head_pic']) ? getFullPath($info['head_pic']) : getFullPath('public/images/default_head.png'),
             ],
             'goods' => [],
             'goods_id' => $info['goods_id'],
