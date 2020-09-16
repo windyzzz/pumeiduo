@@ -292,9 +292,9 @@ class Community extends Base
             $imageArr = explode(',', $post['image']);
             $post['image'] = '';
             foreach ($imageArr as $image) {
-                $post['image'] .= substr($image, strpos($image, 'image')) . ',';
+                $post['image'] .= 'url:' . substr($image, strpos($image, 'image')) . ',width:300,height:300;';
             }
-            $post['image'] = rtrim($post['image'], ',');
+            $post['image'] = rtrim($post['image'], ';');
         }
         // 视频地址处理
         if (!empty($post['video'])) {
@@ -310,6 +310,7 @@ class Community extends Base
             if ($articleData['status'] != -1) {
                 return json(['status' => 0, 'msg' => '文章不是审核不通过的状态不能编辑']);
             }
+            $post['video_cover'] = '';
             $post['up_time'] = NOW_TIME;
             $post['status'] = 0;
             $post['publish_time'] = 0;

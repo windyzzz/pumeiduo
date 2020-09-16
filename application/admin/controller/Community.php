@@ -279,10 +279,11 @@ class Community extends Base
                         break;
                 }
                 if (!empty($articleInfo['image'])) {
-                    $images = explode(',', $articleInfo['image']);
+                    $images = explode(';', $articleInfo['image']);
                     $image = [];
                     foreach ($images as $item) {
-                        $image[] = \plugins\Oss::url($item);
+                        $item = explode(',', $item);
+                        $image[] = \plugins\Oss::url(substr($item[0], strrpos($item[0], 'url:') + 4));
                     }
                     $articleInfo['image'] = $image;
                 } else {
@@ -323,7 +324,7 @@ class Community extends Base
                             if (empty($postData['image'])) {
                                 $this->ajaxReturn(['status' => 0, 'msg' => '请上传图片']);
                             }
-                            $postImage = '';
+                            $postImage = [];
                             // 上传到OSS服务器
                             $ossClient = new OssLogic();
                             foreach ($postData['image'] as $image) {
@@ -337,11 +338,14 @@ class Community extends Base
                                 if (!$return_url) {
                                     return $this->ajaxReturn(['status' => 0, 'msg' => 'ERROR：' . $ossClient->getError()]);
                                 } else {
+                                    // 图片信息
+                                    $imageInfo = getimagesize($filePath);
+                                    $postImage[] = 'url:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1];
                                     unlink($filePath);
-                                    $postImage .= $object . ',';
                                 }
                             }
-                            $postData['image'] = rtrim($postImage, ',');
+                            $postData['image'] = implode(';', $postImage);
+                            $postData['get_image_info'] = 1;
                             $postData['video'] = '';
                             break;
                         case 2:
@@ -386,7 +390,19 @@ class Community extends Base
                             if (empty($postData['image'])) {
                                 $this->ajaxReturn(['status' => 0, 'msg' => '请上传图片']);
                             }
-                            $postImage = '';
+                            // 文章原本的图片信息
+                            $articleImage = [];
+                            if (!empty($articleInfo['image'])) {
+                                $articleInfo['image'] = explode(';', $articleInfo['image']);
+                                foreach ($articleInfo['image'] as $image) {
+                                    $image = explode(',', $image);
+                                    $articleImage[substr($image[0], strrpos($image[0], 'url:') + 4)] = [
+                                        'width' => substr($image[1], strrpos($image[1], 'width:') + 6),
+                                        'height' => substr($image[2], strrpos($image[2], 'height:') + 7),
+                                    ];
+                                }
+                            }
+                            $postImage = [];
                             // 上传到OSS服务器
                             $ossClient = new OssLogic();
                             foreach ($postData['image'] as $image) {
@@ -396,7 +412,7 @@ class Community extends Base
                                 if (strstr($image, 'aliyuncs.com')) {
                                     // 原本的图片
                                     $image = substr($image, strrpos($image, 'image'));
-                                    $postImage .= $image . ',';
+                                    $postImage[] = 'url:' . $image . ',width:' . $articleImage[$image]['width'] . ',height:' . $articleImage[$image]['height'];
                                     continue;
                                 }
                                 $filePath = PUBLIC_PATH . substr($image, strrpos($image, '/public/') + 8);
@@ -406,11 +422,14 @@ class Community extends Base
                                 if (!$return_url) {
                                     return $this->ajaxReturn(['status' => 0, 'msg' => 'ERROR：' . $ossClient->getError()]);
                                 } else {
+                                    // 图片信息
+                                    $imageInfo = getimagesize($filePath);
+                                    $postImage[] = 'url:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1];
                                     unlink($filePath);
-                                    $postImage .= $object . ',';
                                 }
                             }
-                            $postData['image'] = rtrim($postImage, ',');
+                            $postData['image'] = implode(';', $postImage);
+                            $postData['get_image_info'] = 1;
                             $postData['video'] = '';
                             break;
                         case 2:
@@ -444,10 +463,11 @@ class Community extends Base
                 }
                 $dCategory = M('community_category')->where(['parent_id' => $articleInfo['cate_id1']])->getField('id, cate_name');
                 if (!empty($articleInfo['image'])) {
-                    $images = explode(',', $articleInfo['image']);
+                    $images = explode(';', $articleInfo['image']);
                     $image = [];
                     foreach ($images as $item) {
-                        $image[] = \plugins\Oss::url($item);
+                        $item = explode(',', $item);
+                        $image[] = \plugins\Oss::url(substr($item[0], strrpos($item[0], 'url:') + 4));
                     }
                     $articleInfo['image'] = $image;
                     $articleInfo['upload_content'] = 1;

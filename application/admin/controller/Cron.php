@@ -1557,12 +1557,24 @@ AND log_id NOT IN
     public function getCommunityArticleVideoCover()
     {
         // 获取发布视频的文章
-        $article = M('community_article')->where(['status' => 0, 'video' => ['NEQ', ''], 'video_cover' => ''])->field('id, video')->limit(5)->select();
+        $article = M('community_article')
+            ->whereOr(['image' => ['NEQ', ''], 'image_info' => ''])
+            ->whereOr(['video' => ['NEQ', ''], 'video_cover' => ''])
+            ->field('id, image, video')->limit(5)->select();
         foreach ($article as $value) {
-            // 获取视频封面图
-            $videoCover = getVideoCoverImages($value['video']);
-            // 更新视频数据
-            M('community_article')->where(['id' => $value['id']])->update(['video_cover' => $videoCover['path'], 'video_axis' => $videoCover['axis']]);
+            $upData = [];
+            if (!empty($value['image'])) {
+
+            } elseif (!empty($value['video'])) {
+                // 获取视频封面图
+                $videoCover = getVideoCoverImages($value['video']);
+                $upData = [
+                    'video_cover' => $videoCover['path'],
+                    'video_axis' => $videoCover['axis']
+                ];
+            }
+            // 更新文章数据
+            M('community_article')->where(['id' => $value['id']])->update($upData);
         }
     }
 
