@@ -17,7 +17,7 @@ class STS
         $this->accessKeyId = C('OSS_CHILD_ACCESSKEY_ID');
         $this->accessKeySecret = C('OSS_CHILD_ACCESSKEY_SECRET');
         $this->roleArn = C('OSS_CHILD_ROLE_ARN');
-        $this->roleSessionName = $userId;
+        $this->roleSessionName = 'PMD_' . $userId;
 //        $this->type = $type;
         $this->setRoleArn();
     }
