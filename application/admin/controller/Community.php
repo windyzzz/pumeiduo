@@ -5,6 +5,7 @@ namespace app\admin\controller;
 use app\admin\model\CommunityArticle;
 use app\common\logic\MessageLogic;
 use app\common\logic\OssLogic;
+use app\common\logic\PushLogic;
 use think\Page;
 
 class Community extends Base
@@ -265,10 +266,42 @@ class Community extends Base
                         'add_time' => NOW_TIME
                     ];
                     M('community_article_verify_log')->add($logData);
-                    // 消息通知
-                    $messageLogic = new MessageLogic();
-                    $messageLogic->addMessage(session('admin_id'), '社区文章审核结果', $content, 0, 0, 0, $articleInfo['user_id']);
-                    $this->ajaxReturn(['status' => 1, 'msg' => '处理成功']);
+                    if ($articleInfo['source'] == 1) {
+                        // 消息通知
+                        $messageLogic = new MessageLogic();
+                        $messageLogic->addMessage(session('admin_id'), '社区文章审核结果', $content, 0, 0, 0, $articleInfo['user_id']);
+                        // 极光推送消息
+                        $pushLogic = new PushLogic();
+                        $contentData = [
+                            'title' => '社区文章审核结果',
+                            'desc' => $content
+                        ];
+                        $extraData = [
+                            'type' => '14',
+                            'value' => [
+                                'need_login' => 0,
+                                'message_url' => '',
+                                'goods_id' => '',
+                                'item_id' => '',
+                                'cate_id' => '',
+                                'cate_name' => '',
+                                'article_status' => $status . ''
+                            ]
+                        ];
+                        $res = $pushLogic->push($contentData, $extraData, 0, [], [], $articleInfo['user_id'] . '');
+                        if ($res['status'] !== 1) {
+                            // 错误日志记录
+                            M('push_log')->add([
+                                'push_id' => 0,
+                                'user_push_ids' => '',
+                                'user_push_tags' => '',
+                                'error_msg' => $res['msg'],
+                                'error_response' => isset($res['result']) ? serialize($res['result']) : '',
+                                'create_time' => time()
+                            ]);
+                        }
+                        $this->ajaxReturn(['status' => 1, 'msg' => '处理成功']);
+                    }
                 }
                 switch ($articleInfo['source']) {
                     case 1:
@@ -371,7 +404,7 @@ class Community extends Base
                 return $this->fetch('article_add');
                 break;
             case 'edit':
-                // 审核文章详情
+                // 审核文章编辑
                 $articleId = I('article_id', 0);
                 $articleModel = new CommunityArticle();
                 $articleInfo = $articleModel->where(['id' => $articleId])->find();
