@@ -304,4 +304,124 @@ class Distribut extends Base
         $this->assign('list', $list);
         return $this->fetch();
     }
+
+    /**
+     * 会员VIP升级记录导出
+     * @throws \Exception
+     */
+    public function exportDistributeLog()
+    {
+        $type = I('type', 'daily');
+        $startTime = strtotime(I('start_time'));
+        $endTime = strtotime(I('end_time'));
+        $newLevel = I('new_level', 2);
+        $where = [
+            'type' => ['IN', [1, 3]],
+            'new_level' => $newLevel
+        ];
+        switch ($type) {
+            case 'daily':
+                $startTime = strtotime(date('Y-m-d 00:00:00', $startTime));
+                $endTime = strtotime(date('Y-m-d 23:59:59', $endTime));
+                break;
+            case 'monthly':
+                $startTime = strtotime(date('Y-m-01 00:00:00', $startTime));
+                $endTime = strtotime(date('Y-m-t 23:59:59', $endTime));
+                break;
+            case 'yearly':
+                $startTime = strtotime(date('Y-01-01 00:00:00', $startTime));
+                $endTime = strtotime(date('Y-12-31 23:59:59', $endTime));
+                break;
+        }
+        $distributeLog = M('distribut_log')->where($where)->group('user_id')->order('add_time DESC')->field('order_sn, type, add_time')->select();
+        $list = [];
+        switch ($type) {
+            case 'daily':
+                $days = diffDate($startTime, $endTime)['a'];
+                for ($i = 0; $i <= $days; $i++) {
+                    $key = date('Y-m-d', strtotime('-' . $i . 'day', $endTime));
+                    $list[$key] = [
+                        'date' => $key,
+                        'vip_order_num' => 0,
+                        'vip_money_num' => 0,
+                    ];
+                    foreach ($distributeLog as $log) {
+                        if ($key == date('Y-m-d', $log['add_time'])) {
+                            if ($log['type'] == 1) {
+                                // VIP套组升级数
+                                // 查询订单状态
+                                if (M('order')->where(['order_sn' => $log['order_sn'], 'order_status' => ['NOT IN', [3, 5, 6]], 'pay_status' => 1])->value('order_id')) {
+                                    $list[$key]['vip_order_num'] += 1;
+                                    $list[$key]['vip_money_num'] += 0;
+                                }
+                            } else {
+                                // VIP累计升级数
+                                $list[$key]['vip_order_num'] += 0;
+                                $list[$key]['vip_money_num'] += 1;
+                            }
+                        }
+                    }
+                }
+                break;
+            case 'monthly':
+                $months = diffDate($startTime, $endTime)['m'];
+                for ($i = 0; $i <= $months; $i++) {
+                    $key = date('Y-m-01', strtotime('-' . $i . 'month', strtotime(date('Y-m', $endTime))));
+                    $list[$key] = [
+                        'date' => $key,
+                        'vip_order_num' => 0,
+                        'vip_money_num' => 0,
+                    ];
+                    foreach ($distributeLog as $log) {
+                        if ($key == date('Y-m-01', $log['add_time'])) {
+                            if ($log['type'] == 1) {
+                                // VIP套组升级数
+                                // 查询订单状态
+                                if (M('order')->where(['order_sn' => $log['order_sn'], 'order_status' => ['NOT IN', [3, 5, 6]], 'pay_status' => 1])->value('order_id')) {
+                                    $list[$key]['vip_order_num'] += 1;
+                                    $list[$key]['vip_money_num'] += 0;
+                                }
+                            } else {
+                                // VIP累计升级数
+                                $list[$key]['vip_order_num'] += 0;
+                                $list[$key]['vip_money_num'] += 1;
+                            }
+                        }
+                    }
+                }
+                break;
+            case 'yearly':
+                $years = diffDate($startTime, $endTime)['y'];
+                for ($i = 0; $i <= $years; $i++) {
+                    $key = date('Y', strtotime('-' . $i . 'year', $endTime));
+                    $list[$key] = [
+                        'date' => $key,
+                        'vip_order_num' => 0,
+                        'vip_money_num' => 0,
+                    ];
+                    foreach ($distributeLog as $log) {
+                        if ($key == date('Y', $log['add_time'])) {
+                            if ($log['type'] == 1) {
+                                // VIP套组升级数
+                                // 查询订单状态
+                                if (M('order')->where(['order_sn' => $log['order_sn'], 'order_status' => ['NOT IN', [3, 5, 6]], 'pay_status' => 1])->value('order_id')) {
+                                    $list[$key]['vip_order_num'] += 1;
+                                    $list[$key]['vip_money_num'] += 0;
+                                }
+                            } else {
+                                // VIP累计升级数
+                                $list[$key]['vip_order_num'] += 0;
+                                $list[$key]['vip_money_num'] += 1;
+                            }
+                        }
+                    }
+                }
+                break;
+        }
+        // 表头
+        $headList = [
+            '时间', 'VIP套组升级数', 'VIP累计升级数'
+        ];
+        toCsvExcel(array_values($list), $headList, 'distribute_log');
+    }
 }
