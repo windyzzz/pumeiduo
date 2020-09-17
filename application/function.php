@@ -2027,6 +2027,26 @@ function getVideoCoverImages_v2($file)
 }
 
 /**
+ * 获取远程图片信息
+ * @param $url
+ * @return array|bool
+ */
+function getImageInfo($url)
+{
+    // 从OSS服务器下载图片
+    $file = \plugins\Oss::url($url);
+    $fileName = get_rand_str(32, 1, 1) . '.jpg';
+    $res = download_image($file, $fileName, PUBLIC_PATH . 'upload/community/image/');
+    if ($res == false) {
+        return false;
+    }
+    $filePath = $res['save_path'] . '/' . $res['file_name'];
+    $imageInfo = getimagesize($filePath);
+    unlink($filePath);
+    return $imageInfo;
+}
+
+/**
  * 下载图片到本地服务器
  * @param $url
  * @param $fileName

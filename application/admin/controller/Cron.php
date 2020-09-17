@@ -1558,13 +1558,22 @@ AND log_id NOT IN
     {
         // 获取发布视频的文章
         $article = M('community_article')
-            ->whereOr(['image' => ['NEQ', ''], 'image_info' => ''])
+            ->whereOr(['image' => ['NEQ', ''], 'get_image_info' => 0])
             ->whereOr(['video' => ['NEQ', ''], 'video_cover' => ''])
             ->field('id, image, video')->limit(5)->select();
         foreach ($article as $value) {
             $upData = [];
             if (!empty($value['image'])) {
-
+                // 获取图片信息
+                $value['image'] = explode(';', $value['image']);
+                foreach ($value['image'] as $item) {
+                    $item = explode(',', $item);
+                    $image = substr($item[0], strrpos($item[0], 'url:') + 4);
+                    $imageInfo = getImageInfo($image);
+                    $upData['image'] .= $item[0] . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ';';
+                }
+                $upData['image'] = rtrim($upData['image'], ';');
+                $upData['get_image_info'] = 1;
             } elseif (!empty($value['video'])) {
                 // 获取视频封面图
                 $videoCover = getVideoCoverImages($value['video']);
