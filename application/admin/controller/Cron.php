@@ -1552,9 +1552,9 @@ AND log_id NOT IN
     }
 
     /**
-     * 更新社区文章视频封面图
+     * 更新社区文章信息
      */
-    public function getCommunityArticleVideoCover()
+    public function updateCommunityArticleInfo()
     {
         // 获取发布视频的文章
         $article = M('community_article')
