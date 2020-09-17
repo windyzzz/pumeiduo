@@ -84,6 +84,19 @@
                     </div>
                 </dd>
             </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>广告链接是否需要登录检测</label>
+                </dt>
+                <dd class="opt">
+                    <div class="onoff">
+                        <label for="need_login_1" class="cb-enable  <if condition="$info['need_login'] eq 1">selected</if>">需要</label>
+                        <label for="need_login_0" class="cb-disable <if condition="$info['need_login'] eq 0">selected</if>">不需要</label>
+                        <input type="radio" id="need_login_1"  name="need_login" value="1" <if condition="$info['need_login'] eq 1">checked="checked"</if>>
+                        <input type="radio" id="need_login_0" name="need_login" value="0" <if condition="$info['need_login'] eq 0">checked="checked"</if> >
+                    </div>
+                </dd>
+            </dl>
             <if condition='$Request.param.is_app_ad eq 1'>
                 <input name="pid" type="hidden" value="{$info.pid}">
             <else/>

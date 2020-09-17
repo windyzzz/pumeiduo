@@ -19,6 +19,16 @@
             <div title="刷新数据" class="pReload"><i class="fa fa-refresh"></i></div>
         </div>
         <div class="hDiv">
+            <div class="fbutton">
+                <a href="javascript:exportData()">
+                    <div class="add" title="">
+                        <span><i class="fa fa-plus"></i>导出数据</span>
+                    </div>
+                </a>
+                <form id="data-form" action="{:U('Admin/user/exportAppLoginLog')}" method="post">
+                    <input type="hidden" name="date" value="{$date}">
+                </form>
+            </div>
             <div class="hDivBox">
                 <table cellspacing="0" cellpadding="0">
                     <thead>
@@ -98,6 +108,10 @@
             location.href = location.href;
         });
     });
+
+    function exportData() {
+        $('#data-form').submit();
+    }
 </script>
 </body>
 </html>

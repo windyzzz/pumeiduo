@@ -1837,6 +1837,7 @@ class Order extends Base
         }
 
         // 检查下单商品
+        $orderType = 1; // 圃美多
         $canElectronic = 1;
         $res = $cartLogic->checkCartGoods($this->user, $cartList['cartList']);
         if ($res['status'] === -1) {
@@ -1853,6 +1854,8 @@ class Order extends Base
             case 0:
                 return json($res);
             case 2:
+                $orderType = 2; // 韩国购
+                $canElectronic = 0;
                 $abroad['state'] = 1;
                 // 获取身份证信息
                 $abroad['id_card'] = $this->user['id_cart'] ?? '';
@@ -1860,7 +1863,6 @@ class Order extends Base
                 $abroad['id_card_tips'] = M('abroad_config')->where(['type' => 'id_card'])->value('content');
                 // 获取韩国购产品购买须知
                 $abroad['purchase_tips'] = M('abroad_config')->where(['type' => 'purchase'])->value('content');
-                $canElectronic = 0;
                 break;
         }
 
@@ -1929,6 +1931,13 @@ class Order extends Base
             $payLogic->setUserId($this->user_id);
             // 计算购物车价格
             $payLogic->payCart($cartList['cartList']);
+            // 韩国购检查订单价格
+            if ($orderType == 2) {
+                $res = $payLogic->checkOrderAmount(2);
+                if ($res['status'] == 0) {
+                    return json($res);
+                }
+            }
             // 检测支付商品购买限制
             $payLogic->check();
             // 参与活动促销
@@ -2083,7 +2092,7 @@ class Order extends Base
                 }
             }
             $extraGoods = []; // 加价购列表
-            if (!empty($payReturn['extra_goods_list'])) {
+            if ($orderType != 2 && !empty($payReturn['extra_goods_list'])) {
                 foreach ($payReturn['extra_goods_list'] as $key => $extra) {
                     $extraGoods[$key] = [
                         'goods_id' => $extra['goods_id'],
@@ -2428,6 +2437,9 @@ class Order extends Base
                 return json($res);
             case 2:
                 $orderType = 2; // 韩国购
+                if (!empty($extraGoods)) {
+                    return json(['status' => 0, 'msg' => '海外购产品无法购买加价购商品']);
+                }
                 if ($userElectronic > 0) {
                     return json(['status' => 0, 'msg' => '海外购产品无法使用电子币购买']);
                 }
@@ -2455,6 +2467,13 @@ class Order extends Base
             $payLogic->setUserId($this->user_id);   // 设置支付用户ID
             // 计算购物车价格
             $payLogic->payCart($cartList['cartList']);
+            // 韩国购检查订单价格
+            if ($orderType == 2) {
+                $res = $payLogic->checkOrderAmount(2);
+                if ($res['status'] == 0) {
+                    return json($res);
+                }
+            }
             // 检测支付商品购买限制
             $payLogic->check();
             // 参与活动促销

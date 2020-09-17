@@ -19,9 +19,9 @@
 			<span title="收起提示" id="explanationZoom" style="display: block;"></span>
 		</div>
 		<ul>
-				<li>可根据时间查询某个时间段的销售统计.</li>
-				<li>每日销售金额、销售商品数.</li>
-			</ul>
+			<li>可根据时间查询某个时间段的销售统计.</li>
+			<li>每日销售金额、销售商品数.</li>
+		</ul>
 	</div>
 	<div class="flexigrid">
 		<div class="mDiv">
@@ -70,6 +70,9 @@
 						<th align="center" abbr="article_show" axis="col5" class="">
 							<div style="text-align: center; width: 100px;" class="">销售总额</div>
 						</th>
+						<th align="center" abbr="article_show" axis="col5" class="">
+							<div style="text-align: center; width: 150px;" class="">韩国购销售总额（成本价）</div>
+						</th>
 						<th align="center" abbr="article_time" axis="col6" class="">
 							<div style="text-align: center; width: 100px;" class="">销售不含税价</div>
 						</th>
@@ -108,6 +111,9 @@
 								</td>
 								<td align="center" class="">
 									<div style="text-align: center; width: 100px;">{$vo.amount}</div>
+								</td>
+								<td align="center" class="">
+									<div style="text-align: center; width: 150px;">{$vo.abroad_amount}</div>
 								</td>
 								<td align="center" class="">
 									<div style="text-align: center; width: 100px;">{$vo.c_amount}</div>
@@ -260,7 +266,7 @@
 	function exportReport()
 	{
 		var data =  $('#search-form').serialize();
-		var action = "{:U('admin/Report/exportIndexMonth')}" + '?' +data
+		var action = "{:U('admin/Report/exportIndexMonth')}" + '?' +data;
 
 		// $('#search-form2').submit();
 		window.location = action;

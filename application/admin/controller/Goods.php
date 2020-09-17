@@ -16,6 +16,7 @@ use app\admin\logic\SearchWordLogic;
 use app\admin\model\Goods as GoodsModel;
 use think\AjaxPage;
 use think\Db;
+use think\Exception;
 use think\Loader;
 use think\Page;
 
@@ -309,7 +310,12 @@ class Goods extends Base
         exit();
     }
 
-
+    /**
+     * 订单导出（显示缩略图）
+     * @throws \PHPExcel_Exception
+     * @throws \PHPExcel_Reader_Exception
+     * @throws \PHPExcel_Writer_Exception
+     */
     public function export_goods_v2()
     {
         $where = ' 1 = 1 '; // 搜索条件
@@ -359,6 +365,10 @@ class Goods extends Base
         $goodsList = M('Goods')->where($where)->where($map)->select();
         if (is_array($goodsList)) {
             $GoodsLogic = new GoodsLogic();
+            // 分类信息
+            $cateInfo = $GoodsLogic->get_parent_cate();
+            // 供应商信息
+            $suppliers = M('suppliers')->getField('suppliers_id, suppliers_name');
             foreach ($goodsList as $k => &$val) {
                 $goodsNature = '圃美多';
                 if ($val['is_abroad'] == 1) {
@@ -367,13 +377,149 @@ class Goods extends Base
                     $goodsNature = '供应链';
                 }
                 $val['goods_nature'] = $goodsNature;
-                $level_cat = $GoodsLogic->find_parent_cat($val['cat_id']); // 获取分类默认选中的下拉框
-                $val['first_cat'] = M('GoodsCategory')->where('id', $level_cat[1])->getField('name') ?? '';
-                $val['second_cat'] = M('GoodsCategory')->where('id', $level_cat[2])->getField('name') ?? '';
-                $val['third_cat'] = M('GoodsCategory')->where('id', $level_cat[3])->getField('name') ?? '';
+                if (isset($cateInfo[$val['cat_id']])) {
+                    switch ($cateInfo[$val['cat_id']]['level']) {
+                        case 3:
+                            $val['first_cat'] = $cateInfo[$val['cat_id']]['level_1']['name'];
+                            $val['second_cat'] = $cateInfo[$val['cat_id']]['level_2']['name'];
+                            $val['third_cat'] = $cateInfo[$val['cat_id']]['name'];
+                            break;
+                        case 2:
+                            $val['first_cat'] = $cateInfo[$val['cat_id']]['level_1']['name'];
+                            $val['second_cat'] = $cateInfo[$val['cat_id']]['name'];
+                            $val['third_cat'] = '';
+                            break;
+                        case 1:
+                            $val['first_cat'] = $cateInfo[$val['cat_id']]['name'];
+                            $val['second_cat'] = '';
+                            $val['third_cat'] = '';
+                            break;
+                    }
+                } else {
+                    $val['first_cat'] = '';
+                    $val['second_cat'] = '';
+                    $val['third_cat'] = '';
+                }
                 $val['exchange_price'] = $val['shop_price'] - $val['exchange_integral'];
                 $val['trade_type'] = trade_type($val['trade_type']);
-                $val['supplier'] = M('Suppliers')->where('suppliers_id', $val['suppliers_id'])->getField('suppliers_name') ?? '';
+                $val['supplier'] = $suppliers[$val['suppliers_id']] ?? '';
+            }
+        }
+        $expCellName = [
+            ['goods_sn', '货号', 20, 1],
+            ['first_cat', '商品分类1', 20, 1],
+            ['second_cat', '商品分类2', 20, 1],
+            ['third_cat', '商品分类3', 20, 1],
+            ['goods_name', '商品名称', 50, 1],
+            ['goods_nature', '商品种类', 20, 1],
+            ['cost_price', '成本价', 20, 0],
+            ['shop_price', '本店售价', 20, 0],
+            ['stax_price', '商品不含税价', 20, 0],
+            ['exchange_price', '现金金额', 20, 0],
+            ['ctax_price', '现金不含税价', 20, 0],
+            ['exchange_integral', '积分兑换', 20, 0],
+            ['retail_pv', '零售价pv', 20, 0],
+            ['integral_pv', '积分价pv', 20, 0],
+            ['trade_type', '交易条件选择', 20, 1],
+            ['supplier', '供应商', 50, 1],
+            ['original_img', '缩略图', 20, 1],
+        ];
+        exportExcel('产品列表', $expCellName, $goodsList, 'goods', true);
+    }
+
+    /**
+     * 订单导出（不显示缩略图）
+     * @throws \PHPExcel_Exception
+     * @throws \PHPExcel_Reader_Exception
+     * @throws \PHPExcel_Writer_Exception
+     */
+    public function export_goods_v3()
+    {
+        $where = ' 1 = 1 '; // 搜索条件
+        I('intro') && $where = "$where and " . I('intro') . ' = 1';
+        I('brand_id') && $where = "$where and brand_id = " . I('brand_id');
+        ('' !== I('is_on_sale')) && $where = "$where and is_on_sale = " . I('is_on_sale');
+
+        $cat_id = I('cat_id');
+        // 关键词搜索
+        $key_word = I('key_word') ? trim(I('key_word')) : '';
+        if ($key_word) {
+            $where = "$where and (goods_name like '%$key_word%' or goods_sn like '%$key_word%')";
+        }
+        $sale_type = I('sale_type');
+        if ($sale_type) {
+            $where = "$where and sale_type = " . I('sale_type');
+        }
+        $goods_nature = I('goods_nature');
+        if ($goods_nature) {
+            switch ($goods_nature) {
+                case 1:
+                    $where = "$where and is_abroad = 0 and is_supply = 0";
+                    break;
+                case 2:
+                    $where = "$where and is_abroad = 1 and is_supply = 0";
+                    break;
+                case 3:
+                    $where = "$where and is_abroad = 0 and is_supply = 1";
+                    break;
+            }
+        }
+
+        $is_area_show = I('is_area_show');
+        if ($is_area_show == 1) {
+            $where .= ' and is_area_show = 1';
+        }
+
+        if ($cat_id > 0) {
+            $grandson_ids = getCatGrandson($cat_id);
+            $where .= ' and cat_id in(' . implode(',', $grandson_ids) . ') '; // 初始化搜索条件
+        }
+        $ids = I('ids');
+        $map = [];
+        if ($ids) {
+            $map['goods_id'] = ['in', $ids];
+        }
+        $goodsList = M('Goods')->where($where)->where($map)->select();
+        if (is_array($goodsList)) {
+            $GoodsLogic = new GoodsLogic();
+            // 分类信息
+            $cateInfo = $GoodsLogic->get_parent_cate();
+            // 供应商信息
+            $suppliers = M('suppliers')->getField('suppliers_id, suppliers_name');
+            foreach ($goodsList as $k => &$val) {
+                $goodsNature = '圃美多';
+                if ($val['is_abroad'] == 1) {
+                    $goodsNature = '韩国购';
+                } elseif ($val['is_supply'] == 1) {
+                    $goodsNature = '供应链';
+                }
+                $val['goods_nature'] = $goodsNature;
+                if (isset($cateInfo[$val['cat_id']])) {
+                    switch ($cateInfo[$val['cat_id']]['level']) {
+                        case 3:
+                            $val['first_cat'] = $cateInfo[$val['cat_id']]['level_1']['name'];
+                            $val['second_cat'] = $cateInfo[$val['cat_id']]['level_2']['name'];
+                            $val['third_cat'] = $cateInfo[$val['cat_id']]['name'];
+                            break;
+                        case 2:
+                            $val['first_cat'] = $cateInfo[$val['cat_id']]['level_1']['name'];
+                            $val['second_cat'] = $cateInfo[$val['cat_id']]['name'];
+                            $val['third_cat'] = '';
+                            break;
+                        case 1:
+                            $val['first_cat'] = $cateInfo[$val['cat_id']]['name'];
+                            $val['second_cat'] = '';
+                            $val['third_cat'] = '';
+                            break;
+                    }
+                } else {
+                    $val['first_cat'] = '';
+                    $val['second_cat'] = '';
+                    $val['third_cat'] = '';
+                }
+                $val['exchange_price'] = $val['shop_price'] - $val['exchange_integral'];
+                $val['trade_type'] = trade_type($val['trade_type']);
+                $val['supplier'] = $suppliers[$val['suppliers_id']] ?? '';
             }
         }
         $expCellName = [
@@ -1316,5 +1462,76 @@ class Goods extends Base
         }
         $category = M('goods_category')->where($where)->field('id, name title')->select();
         $this->ajaxReturn(['status' => 1, 'result' => $category]);
+    }
+
+    /**
+     * 更新商品信息（excel文件导入）
+     * @throws \PHPExcel_Exception
+     * @throws \PHPExcel_Reader_Exception
+     */
+    public function editGoodsFile()
+    {
+        $file = request()->file('addFile');
+        if (empty($file)) {
+            $this->error('请先上传文件');
+        }
+        //上传成功 获取上传文件信息
+        $file = $file->getPathName();
+        $file = iconv("utf-8", "gb2312", $file);   //转码
+        include_once "plugins/PHPExcel.php";
+        $objRead = new \PHPExcel_Reader_Excel2007();   //建立reader对象
+        if (!$objRead->canRead($file)) {
+            $objRead = new \PHPExcel_Reader_Excel5();
+            if (!$objRead->canRead($file)) {
+                die('No Excel!');
+            }
+        }
+
+        $cellName = array('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'AA', 'AB', 'AC', 'AD', 'AE', 'AF', 'AG', 'AH', 'AI', 'AJ', 'AK', 'AL', 'AM', 'AN', 'AO', 'AP', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AV', 'AW', 'AX', 'AY', 'AZ');
+        $obj = $objRead->load($file);  //建立excel对象
+        $currSheet = $obj->getSheet(0);   //获取指定的sheet表
+        $columnH = $currSheet->getHighestColumn();   //取得最大的列号
+        $columnCnt = array_search($columnH, $cellName);
+        $rowCnt = $currSheet->getHighestRow();   //获取总行数
+
+        $data = array();
+        for ($_row = 1; $_row <= $rowCnt; $_row++) {  //读取内容
+            for ($_column = 0; $_column <= $columnCnt; $_column++) {
+                $cellId = $cellName[$_column] . $_row;
+                $cellValue = $currSheet->getCell($cellId)->getValue();
+                //$cellValue = $currSheet->getCell($cellId)->getCalculatedValue();  #获取公式计算的值
+                if ($cellValue instanceof \PHPExcel_RichText) {   //富文本转换字符串
+                    $cellValue = $cellValue->__toString();
+                }
+                $data[$_row][$cellName[$_column]] = $cellValue;
+            }
+        }
+        try {
+            Db::startTrans();
+            foreach ($data as $k => $v) {
+                if ($k == 1) {
+                    continue;
+                }
+                // 更新商品信息
+                $upData = [
+                    'commission' => $v['B'],
+                    'exchange_integral' => round($v['C'], 2),
+                    'shop_price' => round($v['D'], 2),
+                    'stax_price' => round($v['E'], 2),
+                    'ctax_price' => round($v['F'], 2),
+                    'give_integral' => round($v['G'], 2),
+                    'integral_pv' => round($v['H'], 2),
+                ];
+                $res = M('goods')->where(['goods_sn' => $v['A']])->update($upData);
+                if (!$res) {
+                    throw new Exception($v['A'] . ' 不存在');
+                }
+            }
+            Db::commit();
+            $this->success('处理成功');
+        } catch (Exception $e) {
+            Db::rollback();
+            $this->error('处理失败，原因：' . $e->getMessage());
+        }
     }
 }

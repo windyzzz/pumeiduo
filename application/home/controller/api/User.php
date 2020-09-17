@@ -1402,11 +1402,12 @@ class User extends Base
             }
             cache($this->user_id . 'changeType', 1, 5);
 
-            $pay_points = tpCache('basic.reg_integral'); // 会员注册赠送积分
+            // 会员注册赠送积分
+            $pay_points = tpCache('basic.reg_integral');
             if ($pay_points > 0) {
-                accountLog($this->user['user_id'], 0, $pay_points, '会员注册赠送积分', 0, 0, '', 0, 6); // 记录日志流水
+                accountLog($this->user['user_id'], 0, $pay_points, '会员注册赠送积分', 0, 0, '', 0, 6);
             }
-
+            // 新会员赠送优惠券
             $CouponLogic = new \app\common\logic\CouponLogic();
             $CouponLogic->sendNewUser($this->user['user_id']);
 

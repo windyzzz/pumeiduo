@@ -191,7 +191,7 @@ class Goods extends Base
 //        $Goods = new \app\common\model\Goods();
         $goods = Db::name('goods')->where('goods_id', $goods_id)->field('goods_id, cat_id, extend_cat_id, goods_sn, goods_name, goods_type, goods_remark, goods_content, 
             brand_id, store_count, comment_count, market_price, shop_price, cost_price, give_integral, exchange_integral, original_img, limit_buy_num, least_buy_num,
-            is_on_sale, is_free_shipping, is_recommend, is_new, is_hot, is_virtual, virtual_indate, click_count, zone, prom_type, prom_id, commission, integral_pv')->find();
+            is_on_sale, is_free_shipping, is_recommend, is_new, is_hot, is_virtual, virtual_indate, click_count, zone, prom_type, prom_id, commission, integral_pv, is_supply')->find();
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
@@ -395,6 +395,7 @@ class Goods extends Base
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
+        M('Goods')->where('goods_id', $goods_id)->save(['click_count' => $goods['click_count'] + 1]); // 统计点击数
         $goods['buy_limit'] = $goods['limit_buy_num'];  // 商品最大购买数量
         $goods['buy_least'] = $goods['least_buy_num'];  // 商品最低购买数量
         $goods['nature'] = [];
@@ -787,6 +788,7 @@ class Goods extends Base
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架']);
         }
+        M('Goods')->where('goods_id', $goods_id)->save(['click_count' => $goods['click_count'] + 1]); // 统计点击数
         $originalImg = getFullPath($goods['original_img']);
         $goodsInfo = [
             'goods_type' => 'normal',
@@ -816,8 +818,11 @@ class Goods extends Base
             'tabs' => []
         ];
         // 处理商品内容图片
-        if (!strstr($goodsInfo['goods_content'], 'http') && !strstr($goodsInfo['goods_content'], 'https')) {
-            $goodsInfo['goods_content'] = str_replace('/public', SITE_URL . '/public', $goodsInfo['goods_content']);
+//        if (!strstr($goodsInfo['goods_content'], 'http') && !strstr($goodsInfo['goods_content'], 'https')) {
+//            $goodsInfo['goods_content'] = str_replace('/public', SITE_URL . '/public', $goodsInfo['goods_content']);
+//        }
+        if (strstr($goodsInfo['goods_content'], 'src="/public')) {
+            $goodsInfo['goods_content'] = str_replace('src="/public', 'src="' . SITE_URL . '/public', $goodsInfo['goods_content']);
         }
         if ($this->user) {
             $goodsLogic = new GoodsLogic();

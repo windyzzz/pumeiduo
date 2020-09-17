@@ -532,7 +532,7 @@ class ActivityLogic extends Model
             'is_end' => 0
         ];
         // 活动列表
-        $activityList = Db::name('cate_activity')->where($where)->field('id, title, slogan, banner')->select();
+        $activityList = Db::name('cate_activity')->where($where)->field('id, title, slogan, banner')->order('sort DESC')->select();
         if (empty($activityList)) {
             return [];
         }

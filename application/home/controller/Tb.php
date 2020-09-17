@@ -621,7 +621,6 @@ class Tb extends Controller
 
     function save_goods($goods)
     {
-        $area3 = $goods['area3'];
         if ($goods['is_supply'] == 1) {
             $trade_type = 3;
         } elseif ($goods['is_one_send'] == 1) {
@@ -648,26 +647,20 @@ class Tb extends Controller
             'is_abroad' => $goods['is_abroad'],
             'is_free_shipping' => $isSupply
         );
-        if ($isSupply == 1) {
-            // 供应链商品更新数据
-            $goods_data['video'] = $goods['video'];
-            $goods_data['store_count'] = $goods['store_count'];
-            $goods_data['original_img'] = $goods['original_img'];
-            $goods_data['keywords'] = $goods['keywords'];
-            $goods_data['goods_remark'] = $goods['goods_remark'];
-            $goods_data['goods_content'] = $goods['goods_content'];
-        }
+        $goods_data['is_area_show'] = $goods['area3'] == 1 ? 1 : 0; //是否可以显示在本区
         if ($goods['is_one_send'] == 0) {
             $goods_data['goods_type'] = $goods['goods_type'];//模型
+        }
+        if ($isSupply == 1) {
+            // 供应链商品数据
+            $goods_data['store_count'] = $goods['store_count'];
         }
 
         //检查该商品为新商品
         $agoods = M('goods')->where(array('goods_sn' => $goods_data['goods_sn']))->field('goods_id')->find();
-
-        $goods_data['is_area_show'] = $area3 == 1 ? 1 : 0; //是否可以显示在本区
         if ($agoods) {
             //存在于重销区
-            if ($area3 == 0) {
+            if ($goods['area3'] == 0) {
                 //不显示本区 直接下架
                 $goods_data['is_on_sale'] = 0;
             }
@@ -678,6 +671,14 @@ class Tb extends Controller
             //不存在于重销区 可以显示在重销区 则新增
             if ($goods_data['is_area_show'] == 0) {  //之前没有、现在也不在本区  则不导入
                 return true;
+            }
+            if ($isSupply == 1) {
+                // 供应链商品数据
+                $goods_data['video'] = $goods['video'];
+                $goods_data['original_img'] = $goods['original_img'];
+                $goods_data['keywords'] = $goods['keywords'];
+                $goods_data['goods_remark'] = $goods['goods_remark'];
+                $goods_data['goods_content'] = $goods['goods_content'];
             }
             $goods_data['commission'] = tpCache('distribut.default_rate');//新增商品  默认分成
             $goods_data['is_on_sale'] = 0;//新增商品  默认下架
@@ -744,7 +745,7 @@ class Tb extends Controller
 
         //商品图片
         if (!empty($goods['goods_images'])) {
-            M('goods_images')->where(['goods_id' => $goods_id])->delete();
+//            M('goods_images')->where(['goods_id' => $goods_id])->delete();
             $goodsImagesData = [];
             foreach ($goods['goods_images'] as $image) {
                 $goodsImagesData[] = [

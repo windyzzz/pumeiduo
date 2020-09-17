@@ -23,10 +23,10 @@ class GoodsLogic extends Model
     /**
      * 获得指定分类下的子分类的数组.
      *
-     * @param int  $cat_id   分类的ID
-     * @param int  $selected 当前选中分类的ID
-     * @param bool $re_type  返回的类型: 值为真时返回下拉列表,否则返回数组
-     * @param int  $level    限定返回的级数。为0时返回所有级数
+     * @param int $cat_id 分类的ID
+     * @param int $selected 当前选中分类的ID
+     * @param bool $re_type 返回的类型: 值为真时返回下拉列表,否则返回数组
+     * @param int $level 限定返回的级数。为0时返回所有级数
      *
      * @return mix
      */
@@ -114,7 +114,7 @@ class GoodsLogic extends Model
             $parent_cat = $GoodsCategory->where("id = {$cat['parent_id']}")->find(); // 找出他老爸的parent_id_path
         }
         $replace_level = $cat['level'] - ($parent_cat['level'] + 1); // 看看他 相比原来的等级 升级了多少  ($parent_cat['level'] + 1) 他老爸等级加一 就是他现在要改的等级
-        $replace_str = $parent_cat['parent_id_path'].'_'.$id;
+        $replace_str = $parent_cat['parent_id_path'] . '_' . $id;
         Db::execute("UPDATE `__PREFIX__goods_category` SET parent_id_path = REPLACE(parent_id_path,'{$cat['parent_id_path']}','$replace_str'), level = (level - $replace_level) WHERE  parent_id_path LIKE '{$cat['parent_id_path']}%'");
     }
 
@@ -122,7 +122,7 @@ class GoodsLogic extends Model
      * 动态获取商品属性输入框 根据不同的数据返回不同的输入框类型.
      *
      * @param int $goods_id 商品id
-     * @param int $type_id  商品属性类型id
+     * @param int $type_id 商品属性类型id
      */
     public function getAttrInput($goods_id, $type_id)
     {
@@ -155,7 +155,7 @@ class GoodsLogic extends Model
 
                 // 手工录入
                 if (0 == $val['attr_input_type']) {
-                    $str .= "<input type='text' size='40' value='".($goods_id ? $v['attr_value'] : $val['attr_values'])."' name='attr_{$val['attr_id']}[]' />";
+                    $str .= "<input type='text' size='40' value='" . ($goods_id ? $v['attr_value'] : $val['attr_values']) . "' name='attr_{$val['attr_id']}[]' />";
                 }
                 // 从下面的列表中选择（一行代表一个可选值）
                 if (1 == $val['attr_input_type']) {
@@ -175,7 +175,7 @@ class GoodsLogic extends Model
                 }
                 // 多行文本框
                 if (2 == $val['attr_input_type']) {
-                    $str .= "<textarea cols='40' rows='3' name='attr_{$val['attr_id']}[]'>".($goods_id ? $v['attr_value'] : $val['attr_values']).'</textarea>';
+                    $str .= "<textarea cols='40' rows='3' name='attr_{$val['attr_id']}[]'>" . ($goods_id ? $v['attr_value'] : $val['attr_values']) . '</textarea>';
                     //$str .= "属性价格<input type='text' maxlength='10' size='5' value='{$v['attr_price']}' name='attr_price_{$val['attr_id']}[]'>";
                 }
                 $str .= '</td></tr>';
@@ -183,15 +183,15 @@ class GoodsLogic extends Model
             }
         }
 
-        return  $str;
+        return $str;
     }
 
     /**
      * 获取 tp_goods_attr 表中指定 goods_id  指定 attr_id  或者 指定 goods_attr_id 的值 可是字符串 可是数组.
      *
      * @param int $goods_attr_id tp_goods_attr表id
-     * @param int $goods_id      商品id
-     * @param int $attr_id       商品属性id
+     * @param int $goods_id 商品id
+     * @param int $attr_id 商品属性id
      *
      * @return array 返回数组
      */
@@ -229,7 +229,7 @@ class GoodsLogic extends Model
     /**
      *  给指定商品添加属性 或修改属性 更新到 tp_goods_attr.
      *
-     * @param int $goods_id   商品id
+     * @param int $goods_id 商品id
      * @param int $goods_type 商品类型id
      */
     public function saveGoodsAttr($goods_id, $goods_type)
@@ -239,16 +239,16 @@ class GoodsLogic extends Model
 
         // 属性类型被更改了 就先删除以前的属性类型 或者没有属性 则删除
         if (0 == $goods_type) {
-            $GoodsAttr->where('goods_id = '.$goods_id)->delete();
+            $GoodsAttr->where('goods_id = ' . $goods_id)->delete();
 
             return;
         }
 
-        $GoodsAttrList = $GoodsAttr->where('goods_id = '.$goods_id)->select();
+        $GoodsAttrList = $GoodsAttr->where('goods_id = ' . $goods_id)->select();
 
         $old_goods_attr = []; // 数据库中的的属性  以 attr_id _ 和值的 组合为键名
         foreach ($GoodsAttrList as $k => $v) {
-            $old_goods_attr[$v['attr_id'].'_'.$v['attr_value']] = $v;
+            $old_goods_attr[$v['attr_id'] . '_' . $v['attr_value']] = $v;
         }
 
         // post 提交的属性  以 attr_id _ 和值的 组合为键名
@@ -261,22 +261,22 @@ class GoodsLogic extends Model
             }
             foreach ($v as $k2 => $v2) {
                 $v2 = str_replace('_', '', $v2); // 替换特殊字符
-                   $v2 = str_replace('@', '', $v2); // 替换特殊字符
-                   $v2 = trim($v2);
+                $v2 = str_replace('@', '', $v2); // 替换特殊字符
+                $v2 = trim($v2);
 
                 if (empty($v2)) {
                     continue;
                 }
 
-                $tmp_key = $attr_id.'_'.$v2;
+                $tmp_key = $attr_id . '_' . $v2;
                 $post_attr_price = I("post.attr_price_{$attr_id}");
                 $attr_price = $post_attr_price[$k2];
                 $attr_price = $attr_price ? $attr_price : 0;
                 if (array_key_exists($tmp_key, $old_goods_attr)) { // 如果这个属性 原来就存在
-                       if ($old_goods_attr[$tmp_key]['attr_price'] != $attr_price) { // 并且价格不一样 就做更新处理
-                            $goods_attr_id = $old_goods_attr[$tmp_key]['goods_attr_id'];
-                           $GoodsAttr->where("goods_attr_id = $goods_attr_id")->save(['attr_price' => $attr_price]);
-                       }
+                    if ($old_goods_attr[$tmp_key]['attr_price'] != $attr_price) { // 并且价格不一样 就做更新处理
+                        $goods_attr_id = $old_goods_attr[$tmp_key]['goods_attr_id'];
+                        $GoodsAttr->where("goods_attr_id = $goods_attr_id")->save(['attr_price' => $attr_price]);
+                    }
                 } else { // 否则这个属性 数据库中不存在 说明要做删除操作
                     $GoodsAttr->add(['goods_id' => $goods_id, 'attr_id' => $attr_id, 'attr_value' => $v2, 'attr_price' => $attr_price]);
                 }
@@ -285,7 +285,7 @@ class GoodsLogic extends Model
         }
         // 没有被 unset($old_goods_attr[$tmp_key]); 掉是 说明 数据库中存在 表单中没有提交过来则要删除操作
         foreach ($old_goods_attr as $k => $v) {
-            $GoodsAttr->where('goods_attr_id = '.$v['goods_attr_id'])->delete();
+            $GoodsAttr->where('goods_attr_id = ' . $v['goods_attr_id'])->delete();
         }
     }
 
@@ -322,7 +322,7 @@ class GoodsLogic extends Model
             1 => array('3','4'),
 
         );  */
-        $trade_type = M('goods')->where(array('goods_id'=>$goods_id))->getField('trade_type');
+        $trade_type = M('goods')->where(array('goods_id' => $goods_id))->getField('trade_type');
         // 排序
         foreach ($spec_arr as $k => $v) {
             $spec_arr_sort[$k] = count($v);
@@ -336,10 +336,10 @@ class GoodsLogic extends Model
         $spec_arr2 = combineDika($spec_arr2); //  获取 规格的 笛卡尔积
 
         $spec = M('Spec')->getField('id,name'); // 规格表
-         $specItem = M('SpecItem')->getField('id,item,spec_id'); //规格项
-         $keySpecGoodsPrice = M('SpecGoodsPrice')->where('goods_id = '.$goods_id)->getField('key,key_name,price,store_count,bar_code,sku,item_sn'); //规格项
+        $specItem = M('SpecItem')->getField('id,item,spec_id'); //规格项
+        $keySpecGoodsPrice = M('SpecGoodsPrice')->where('goods_id = ' . $goods_id)->getField('key,key_name,price,store_count,bar_code,sku,item_sn'); //规格项
 
-       $str = "<table class='table table-bordered' id='spec_input_tab'>";
+        $str = "<table class='table table-bordered' id='spec_input_tab'>";
         $str .= '<tr>';
         // 显示第一行的数据
         foreach ($clo_name as $k => $v) {
@@ -357,12 +357,12 @@ class GoodsLogic extends Model
             $item_key_name = [];
             foreach ($v as $k2 => $v2) {
                 $str .= "<td>{$specItem[$v2][item]}</td>";
-                $item_key_name[$v2] = $spec[$specItem[$v2]['spec_id']].':'.$specItem[$v2]['item'];
+                $item_key_name[$v2] = $spec[$specItem[$v2]['spec_id']] . ':' . $specItem[$v2]['item'];
             }
             ksort($item_key_name);
             $item_key = implode('_', array_keys($item_key_name));
             $item_name = implode(' ', $item_key_name);
-            if(isset($keySpecGoodsPrice[$item_key]) || $trade_type==2) {
+            if (isset($keySpecGoodsPrice[$item_key]) || $trade_type == 2) {
                 $keySpecGoodsPrice[$item_key][price] ? false : $keySpecGoodsPrice[$item_key][price] = 0; // 价格默认为0
                 $keySpecGoodsPrice[$item_key][store_count] ? false : $keySpecGoodsPrice[$item_key][store_count] = 0; //库存默认为0
                 $str .= "<td><input name='item[$item_key][price]' value='{$keySpecGoodsPrice[$item_key][price]}' onkeyup='this.value=this.value.replace(/[^\d.]/g,\"\")' onpaste='this.value=this.value.replace(/[^\d.]/g,\"\")' /></td>";
@@ -392,9 +392,9 @@ class GoodsLogic extends Model
 
         foreach ($list as $key => $val) {
             if (in_array($val['id'], $checked)) {
-                $str .= $val['name'].":<input type='checkbox' name='spec_id[]' value='{$val['id']}' checked='checked'/>&nbsp;&nbsp";
+                $str .= $val['name'] . ":<input type='checkbox' name='spec_id[]' value='{$val['id']}' checked='checked'/>&nbsp;&nbsp";
             } else {
-                $str .= $val['name'].":<input type='checkbox' name='spec_id[]' value='{$val['id']}' />&nbsp;&nbsp";
+                $str .= $val['name'] . ":<input type='checkbox' name='spec_id[]' value='{$val['id']}' />&nbsp;&nbsp";
             }
         }
 
@@ -414,9 +414,9 @@ class GoodsLogic extends Model
 
         foreach ($list as $key => $val) {
             if (in_array($val['attr_id'], $checked)) {
-                $str .= $val['attr_name'].":<input type='checkbox' name='attr_id[]' value='{$val['attr_id']}' checked='checked'/>&nbsp;&nbsp";
+                $str .= $val['attr_name'] . ":<input type='checkbox' name='attr_id[]' value='{$val['attr_id']}' checked='checked'/>&nbsp;&nbsp";
             } else {
-                $str .= $val['attr_name'].":<input type='checkbox' name='attr_id[]' value='{$val['attr_id']}' />&nbsp;&nbsp";
+                $str .= $val['attr_name'] . ":<input type='checkbox' name='attr_id[]' value='{$val['attr_id']}' />&nbsp;&nbsp";
             }
         }
 
@@ -459,6 +459,51 @@ class GoodsLogic extends Model
     }
 
     /**
+     * 获取分类上级信息
+     * @return array
+     */
+    public function get_parent_cate()
+    {
+        $return = [];
+        // 所有分类
+        $cateList = M('goods_category')->getField('id, parent_id, level, name');
+        foreach ($cateList as $cate) {
+            switch ($cate['level']) {
+                case 3:
+                    $return[$cate['id']] = [
+                        'level' => 3,
+                        'name' => $cate['name'],
+                        'level_2' => [
+                            'id' => $cateList[$cate['parent_id']]['id'],
+                            'name' => $cateList[$cate['parent_id']]['name'],
+                        ],
+                        'level_1' => [
+                            'id' => $cateList[$cateList[$cate['parent_id']]['parent_id']]['id'],
+                            'name' => $cateList[$cateList[$cate['parent_id']]['parent_id']]['name'],
+                        ]
+                    ];
+                    break;
+                case 2:
+                    $return[$cate['id']] = [
+                        'level' => 1,
+                        'name' => $cate['name'],
+                        'level_1' => [
+                            'id' => $cateList[$cate['parent_id']]['id'],
+                            'name' => $cateList[$cate['parent_id']]['name'],
+                        ],
+                    ];
+                    break;
+                case 1:
+                    $return[$cate['id']] = [
+                        'level' => 1,
+                        'name' => $cate['name'],
+                    ];
+            }
+        }
+        return $return;
+    }
+
+    /**
      * 获取排好序的品牌列表.
      *
      * @param int $cat_id
@@ -476,13 +521,13 @@ class GoodsLogic extends Model
             $brand_where['cat_id|parent_cat_id'] = $cat_id;  //查找分类下的品牌，没值就查找全部
         }
         $brandList = M('Brand')->cache(true)->where($brand_where)->select();
-        $brandIdArr = M('Brand')->cache(true)->where($brand_where)->where('name in (select `name` from `'.C('database.prefix').'brand` group by name having COUNT(id) > 1)')->getField('id,cat_id');
+        $brandIdArr = M('Brand')->cache(true)->where($brand_where)->where('name in (select `name` from `' . C('database.prefix') . 'brand` group by name having COUNT(id) > 1)')->getField('id,cat_id');
         $goodsCategoryArr = M('goodsCategory')->cache(true)->where('level = 1')->getField('id,name');
         $nameList = [];
         foreach ($brandList as $k => $v) {
-            $name = getFirstCharter($v['name']).'  --   '.$v['name']; // 前面加上拼音首字母
+            $name = getFirstCharter($v['name']) . '  --   ' . $v['name']; // 前面加上拼音首字母
             if (array_key_exists($v[id], $brandIdArr) && $v[cat_id]) { // 如果有双重品牌的 则加上分类名称
-                    $name .= ' ( '.$goodsCategoryArr[$v[cat_id]].' ) ';
+                $name .= ' ( ' . $goodsCategoryArr[$v[cat_id]] . ' ) ';
             }
 
             $nameList[] = $v['name'] = $name;
@@ -533,7 +578,7 @@ class GoodsLogic extends Model
         $categoryList = M('GoodsCategory')->cache(true)->getField('id,name,parent_id,level');
         $nameList = [];
         foreach ($categoryList as $k => $v) {
-            $name = getFirstCharter($v['name']).' '.$v['name']; // 前面加上拼音首字母
+            $name = getFirstCharter($v['name']) . ' ' . $v['name']; // 前面加上拼音首字母
             $nameList[] = $v['name'] = $name;
             $categoryList[$k] = $v;
         }
@@ -568,7 +613,7 @@ class GoodsLogic extends Model
      * * 将树形结构数组输出.
      *
      * @param $items    要输出的数组
-     * @param int $deep    顶级父节点id
+     * @param int $deep 顶级父节点id
      * @param int $type_id 已选中项
      *
      * @return string
@@ -576,12 +621,12 @@ class GoodsLogic extends Model
     public function exportTree($items, $deep = 0, $type_id = 0)
     {
         foreach ($items as $item) {
-            $select .= '<option value="'.$item['id'].'" ';
+            $select .= '<option value="' . $item['id'] . '" ';
             $select .= ($type_id == $item['id']) ? 'selected="selected">' : '>';
             if ($deep > 0) {
                 $select .= str_repeat('&nbsp;', $deep * 4);
             }
-            $select .= '&nbsp;&nbsp;'.htmlspecialchars(addslashes($item['name'])).'</option>';
+            $select .= '&nbsp;&nbsp;' . htmlspecialchars(addslashes($item['name'])) . '</option>';
             if (!empty($item['son'])) {
                 $select .= $this->exportTree($item['son'], $deep + 1, $type_id);
             }
@@ -701,7 +746,7 @@ class GoodsLogic extends Model
             $goods_save_data['prom_type'] = 4; //预售商品类型
             M('goods')->where(['goods_id' => $data['goods_id']])->save($goods_save_data);
             $r = M('goods_activity')->add($add_data);
-            adminLog('管理员添加商品预售活动 '.$data['goods_name']);
+            adminLog('管理员添加商品预售活动 ' . $data['goods_name']);
             if (false !== $r) {
                 return ['msg' => '添加预售商品活动成功', 'status' => 1, 'url' => U('Promotion/pre_sell_list')];
             }
@@ -709,14 +754,14 @@ class GoodsLogic extends Model
             return ['msg' => '添加预售商品活动失败', 'status' => 0, 'url' => U('Promotion/pre_sell_list')];
         }
         $save_data = [
-                'act_name' => $data['goods_name'],
-                'goods_id' => $data['goods_id'],
-                'goods_name' => $data['goods_name'],
-                'start_time' => $data['start_time'],
-                'end_time' => $data['end_time'],
-                'ext_info' => serialize($ext_info),
-                'act_desc' => $data['act_desc'],
-            ];
+            'act_name' => $data['goods_name'],
+            'goods_id' => $data['goods_id'],
+            'goods_name' => $data['goods_name'],
+            'start_time' => $data['start_time'],
+            'end_time' => $data['end_time'],
+            'ext_info' => serialize($ext_info),
+            'act_desc' => $data['act_desc'],
+        ];
         $goods_save_data['prom_type'] = 4; //预售商品类型
         M('goods')->where(['goods_id' => $data['goods_id']])->save($goods_save_data);
         $r = M('goods_activity')->where(['act_id' => $data['id'], 'act_type' => 1])->save($save_data);

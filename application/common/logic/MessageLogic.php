@@ -135,7 +135,7 @@ class MessageLogic extends Model
                 ->field($field)
                 ->join('__MESSAGE__ m', 'um.message_id = m.message_id', 'LEFT')
                 ->where($user_system_message_no_read_where)
-                ->where($where)
+//                ->where($where)
                 ->limit($Page->firstRow . ',' . $Page->listRows)
                 ->order('send_time desc')
                 ->select();

@@ -59,6 +59,9 @@
                         <th align="center" abbr="article_time" axis="col6" class="">
                             <div style="text-align: center; width: 120px;" class="">活动状态</div>
                         </th>
+                        <th align="center" abbr="article_time" axis="col6" class="">
+                            <div style="text-align: center; width: 50px;" class="">排序</div>
+                        </th>
                         <th align="left" axis="col1" class="handle">
                             <div style="text-align: center; width: 150px;">操作</div>
                         </th>
@@ -121,6 +124,14 @@
                             </td>
                             <td align="left" class="">
                                 <div style="text-align: center; width: 120px;">{$vo.status_desc}</div>
+                            </td>
+                            <td align="center" axis="col0">
+                                <div style="text-align: center; width: 50px;">
+                                    <input type="text" onKeyUp="this.value=this.value.replace(/[^\d]/g,'')"
+                                           onpaste="this.value=this.value.replace(/[^\d]/g,'')"
+                                           onblur="changeTableVal('cate_activity','id','{$vo.id}','sort',this)" size="4"
+                                           value="{$vo.sort}"/>
+                                </div>
                             </td>
                             <td align="left" class="handle">
                                 <div style="text-align: left; width: 170px; max-width:170px;">

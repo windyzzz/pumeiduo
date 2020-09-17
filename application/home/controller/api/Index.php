@@ -40,7 +40,7 @@ class Index
         $ad = array();
         foreach ($position_id_arr as $k => $position_id) {
             $ad[$position_id] = M('ad')
-                ->field('ad_code,ad_link,ad_name')
+                ->field('ad_code,ad_link,ad_name,need_login')
                 ->where('pid', $position_id)
                 ->where('enabled', 1)
                 ->where('start_time', 'elt', NOW_TIME)

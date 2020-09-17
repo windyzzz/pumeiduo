@@ -289,7 +289,7 @@
         //是否保持toolbar的位置不动,默认true
         //,autoFloatEnabled:true
         //浮动时工具栏距离浏览器顶部的高度，用于某些具有固定头部的页面
-        //,topOffset:30
+        ,topOffset:50
         //编辑器底部距离工具栏高度(如果参数大于等于编辑器高度，则设置无效)
         //,toolbarTopOffset:400
 
@@ -325,7 +325,6 @@
         //,tableDragable: true
 
 
-
         //sourceEditor
         //源码的查看方式,codemirror 是代码高亮，textarea是文本框,默认是codemirror
         //注意默认codemirror只能在ie8+和非ie中使用
@@ -351,10 +350,12 @@
         //, webAppKey: ""
 
         //默认过滤规则相关配置项目
-        //,disabledTableInTable:true  //禁止表格嵌套
-        //,allowDivTransToP:true      //允许进入编辑器的div标签自动变成p标签
+        // ,disabledTableInTable:true  //禁止表格嵌套
+        ,allowDivTransToP:false      //允许进入编辑器的div标签自动变成p标签
         //,rgb2Hex:true               //默认产出的数据中的color自动从rgb格式变成16进制格式
 
+		//填写过滤规则
+		,filterRules: {}
 		// xss 过滤是否开启,inserthtml等操作
 		,xssFilterRules: true
 		//input xss过滤
@@ -425,7 +426,8 @@
 			tt:     [],
 			u:      [],
 			ul:     ['class', 'style'],
-			video:  ['autoplay', 'controls', 'loop', 'preload', 'src', 'height', 'width', 'class', 'style']
+			video:  ['autoplay', 'controls', 'loop', 'preload', 'src', 'height', 'width', 'class', 'style'],
+			link:   ['rel', 'type', 'href', 'media'],
 		}
     };
 

@@ -214,6 +214,7 @@ return [
             ['name' => '系统日度计算', 'act' => 'index', 'op' => 'Report'],
             ['name' => '系统月度计算', 'act' => 'indexMonth', 'op' => 'Report'],
             ['name' => '系统年度计算', 'act' => 'indexYear', 'op' => 'Report'],
+            ['name' => '点击排序', 'act' => 'clickTop', 'op' => 'Report'],
             ['name' => '销售排行', 'act' => 'saleTop', 'op' => 'Report'],
             ['name' => '会员排行', 'act' => 'userTop', 'op' => 'Report'],
             ['name' => '销售明细', 'act' => 'saleList', 'op' => 'Report'],

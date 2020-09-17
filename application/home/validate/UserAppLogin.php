@@ -25,7 +25,7 @@ class UserAppLogin extends Validate
         'oauth' => 'require',
     ];
 
-    protected $msg = [
+    protected $message = [
         'openid.require' => 'openid必须',
         'unionid.require' => 'unionid必须',
         'oauth.require' => '来源必须',
