@@ -16,11 +16,11 @@ class Message extends Base
     public function messageNum()
     {
         $messageNum = 0;
-        // 获取用户信息的数量
+        // 获取系统消息的数量
         $messageLogic = new MessageLogic();
         $user_message_count = $messageLogic->getUserMessageCount($this->user_id);
         $messageNum += $user_message_count;
-        // 获取用户活动信息的数量
+        // 获取活动消息的数量
         $articleLogic = new ArticleLogic();
         $user_article_count = $articleLogic->getUserArticleCount($this->user_id);
         $messageNum += $user_article_count;
@@ -45,39 +45,39 @@ class Message extends Base
      */
     public function center()
     {
+        $return = [];
         // 活动消息
         $articleLogic = new ArticleLogic();
-        $messageNotice = $articleLogic->getUserArticleNotice($this->user);
-        $activity = [
+        $messageNotice = $articleLogic->getUserArticleNotice($this->user, 0);
+        $return[] = [
             'id' => 1,
             'title' => '活动消息',
-            'message' => !empty($messageNotice[0]) ? $messageNotice[0]['title'] : ''
+            'message' => !empty($messageNotice[0]) ? $messageNotice[0]['title'] : '',
+            'num' => $articleLogic->getUserArticleCount($this->user_id) . ''
         ];
         // 系统消息
         $messageLogic = new MessageLogic();
         $messageNotice = $messageLogic->getUserMessageNotice($this->user);
-        $system = [
+        $return[] = [
             'id' => 2,
             'title' => '系统消息',
-            'message' => !empty($messageNotice[0]) ? $messageNotice[0]['message'] : ''
+            'message' => !empty($messageNotice[0]) ? $messageNotice[0]['message'] : '',
+            'num' => $messageLogic->getUserMessageCount($this->user_id) . ''
         ];
         // 常见问题
-        $question = [
+        $return[] = [
             'id' => 3,
             'title' => '常见问题',
-            'message' => '这里或许可以寻找到你所需要的答案'
+            'message' => '这里或许可以寻找到你所需要的答案',
+            'num' => '0'
         ];
         // 在线客服
-//        $service = [
+//        $return[] = [
 //            'id' => 4,
 //            'title' => '在线客服',
-//            'message' => '客服服务时间为：周一到周五9:00—18:00'
+//            'message' => '客服服务时间为：周一到周五9:00—18:00',
+//            'num' => '0'
 //        ];
-        $return = [
-            $activity,
-            $question,
-            $system
-        ];
         return json(['status' => 1, 'result' => $return]);
     }
 
@@ -93,6 +93,7 @@ class Message extends Base
         switch ($type) {
             case 1:
                 // 活动消息
+                $userLogic = new UsersLogic();
                 $articleLogic = new ArticleLogic();
                 $messageNotice = $articleLogic->getUserArticleNotice($this->user);
                 $message = [];
@@ -118,6 +119,8 @@ class Message extends Base
                         'cover_pic' => $value['thumb'],
                         'message_url' => SITE_URL . '/#/news/app_news_particulars?article_id=' . $value['article_id']
                     ];
+                    // 设置已读
+                    $userLogic->setArticleForRead($value['article_id'], $this->user);
                 }
                 break;
             case 2:

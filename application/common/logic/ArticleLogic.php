@@ -102,7 +102,7 @@ class ArticleLogic extends Model
      *
      * @return array
      */
-    public function getUserArticleNotice($user_info = [])
+    public function getUserArticleNotice($user_info = [], $status = '')
     {
         $this->checkPublicArticle($user_info);
         if (empty($user_info)) {
@@ -110,11 +110,16 @@ class ArticleLogic extends Model
         }
         $user_system_article_no_read_where = [
             'user_id' => $user_info['user_id'],
-            'status' => ['in', [0, 1]],
+//            'status' => ['in', [0, 1]],
             'm.is_open' => 1,
             'm.title' => ['neq', ''],
 //            'm.publish_time' => ['BETWEEN', [strtotime("-3 month"), time()]]  // 三个月内
         ];
+        if (!empty($status) || $status === 0) {
+            $user_system_article_no_read_where['status'] = $status;
+        } else {
+            $user_system_article_no_read_where['status'] = ['in', [0, 1]];
+        }
         $count = Db::name('user_article')
             ->alias('um')
             ->join('__ARTICLE__ m', 'um.article_id = m.article_id', 'LEFT')
