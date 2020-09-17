@@ -1486,10 +1486,16 @@ class Cart extends Base
                     $buyGoods = $cartLogic->calcGoodsPv([$buyGoods])[0];
                 }
                 if ($buyGoods['goods']['is_abroad'] == 1) {
-                    return json(['status' => -1, 'msg' => '韩国购商品请在APP进行购买', 'result' => null]);
+                    return json(['status' => -11, 'msg' => '韩国购商品请在APP进行购买', 'result' => [
+                        'ios_link' => "https://apps.apple.com/cn/app/%E4%B9%90%E6%B4%BB%E4%BC%98%E9%80%89/id1495165198",
+                        'android_link' => "https://a.app.qq.com/o/simple.jsp?pkgname=io.dcloud.W2Atest.pumeiduo.com"
+                    ]]);
                 }
                 if ($buyGoods['goods']['is_supply'] == 1) {
-                    return json(['status' => -1, 'msg' => '想购买更多商品请下载App', 'result' => null]);
+                    return json(['status' => -11, 'msg' => '想购买更多商品请下载App', 'result' => [
+                        'ios_link' => "https://apps.apple.com/cn/app/%E4%B9%90%E6%B4%BB%E4%BC%98%E9%80%89/id1495165198",
+                        'android_link' => "https://a.app.qq.com/o/simple.jsp?pkgname=io.dcloud.W2Atest.pumeiduo.com"
+                    ]]);
                 }
                 $cartList[0] = $buyGoods;
                 $pay->payGoodsList($cartList);
@@ -1498,10 +1504,16 @@ class Cart extends Base
                 $vipGoods = [];
                 foreach ($userCartList as $key => $cart) {
                     if ($cart['goods']['is_abroad'] == 1) {
-                        return json(['status' => -1, 'msg' => '韩国购商品请在APP进行购买', 'result' => null]);
+                        return json(['status' => -11, 'msg' => '韩国购商品请在APP进行购买', 'result' => [
+                            'ios_link' => "https://apps.apple.com/cn/app/%E4%B9%90%E6%B4%BB%E4%BC%98%E9%80%89/id1495165198",
+                            'android_link' => "https://a.app.qq.com/o/simple.jsp?pkgname=io.dcloud.W2Atest.pumeiduo.com"
+                        ]]);
                     }
                     if ($cart['goods']['is_supply'] == 1) {
-                        return json(['status' => -1, 'msg' => '想购买更多商品请下载App', 'result' => null]);
+                        return json(['status' => -11, 'msg' => '想购买更多商品请下载App', 'result' => [
+                            'ios_link' => "https://apps.apple.com/cn/app/%E4%B9%90%E6%B4%BB%E4%BC%98%E9%80%89/id1495165198",
+                            'android_link' => "https://a.app.qq.com/o/simple.jsp?pkgname=io.dcloud.W2Atest.pumeiduo.com"
+                        ]]);
                     }
                     if ($cart['prom_type'] == 0) {
                         if ($cart['goods']['least_buy_num'] != 0 && $cart['goods']['least_buy_num'] > $cart['goods_num']) {
