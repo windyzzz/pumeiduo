@@ -134,11 +134,17 @@ class Community
                 }
             }
             // 图片处理
-            !empty($value['image']) && $value['image'] = explode(',', $value['image']);
+            !empty($value['image']) && $value['image'] = explode(';', $value['image']);
             $image = [];
+            $imageSize = [];
             if (!empty($value['image'])) {
                 foreach ($value['image'] as $item) {
-                    $image[] = \plugins\Oss::url($item);
+                    $item = explode(',', $item);
+                    $image[] = \plugins\Oss::url(substr($item[0], strrpos($item[0], 'url:') + 4));
+                    $imageSize[] = [
+                        'width' => substr($item[1], strrpos($item[1], 'width:') + 6),
+                        'height' => substr($item[2], strrpos($item[2], 'height:') + 7),
+                    ];
                 }
             }
             // 视频处理
@@ -217,6 +223,7 @@ class Community
             }
             $articleList[$key]['publish_time'] = $publishTime;
             $articleList[$key]['image'] = $image;
+            $articleList[$key]['image_size'] = $imageSize;
             $articleList[$key]['video'] = (object)$video;
             unset($articleList[$key]['video_cover']);
             unset($articleList[$key]['video_axis']);
