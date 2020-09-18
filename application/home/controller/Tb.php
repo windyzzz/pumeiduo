@@ -730,7 +730,7 @@ class Tb extends Controller
         }
 
         //商品图片
-        if (!empty($goods['goods_images'])) {
+        if (empty($agoods) && !empty($goods['goods_images'])) {
             M('goods_images')->where(['goods_id' => $goods_id, 'self_upload' => 0])->delete();
             $goodsImagesData = [];
             foreach ($goods['goods_images'] as $image) {

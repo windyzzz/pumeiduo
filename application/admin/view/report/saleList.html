@@ -42,6 +42,14 @@
 						<input type="text" size="30" name="end_time" id="end_time" value="{$end_time}" placeholder="截止时间" class="qsbox">
 						<input type="button" class="btn" value="截止时间">
 					</div>
+					<div class="sDiv2">
+						<select name="cat_id" id="cat_id" class="select">
+							<option value="">所有分类</option>
+							<foreach name="categoryList" item="v" key="k">
+								<option value="{$v['id']}" <if condition="$cat_id == $v[id]">selected</if>>{$v['name']}</option>
+							</foreach>
+						</select>
+					</div>
 					<div class="sDiv2" style="margin-right: 10px;">
 						<input type="text" size="30" name="goods_name" id="goods_name" value="{$goods_name}" placeholder="搜索商品名称" class="qsbox">
 					</div>
