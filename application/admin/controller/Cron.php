@@ -1564,6 +1564,7 @@ AND log_id NOT IN
         foreach ($article as $value) {
             $upData = [];
             if (!empty($value['image'])) {
+                $upData['image'] = '';
                 // 获取图片信息
                 $value['image'] = explode(';', $value['image']);
                 foreach ($value['image'] as $item) {
