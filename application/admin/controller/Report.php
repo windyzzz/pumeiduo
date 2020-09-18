@@ -733,17 +733,21 @@ class Report extends Base
      */
     public function saleTop()
     {
+        $cat_id = I('cat_id', 0);
         $goods_name = I('goods_name');
-        $where = [
-            'od.pay_time' => ['Between', "$this->begin,$this->end"],
-            'og.is_send' => 1,
-        ];
+        $where = 'od.pay_time BETWEEN ' . $this->begin . ' AND ' . $this->end;
+        $where .= ' AND og.is_send = 1';
         if (!empty($goods_name)) {
-            $where['og.goods_name'] = ['like', "%{$goods_name}%"];
+            $where .= " AND og.goods_name LIKE '%" . $goods_name . "%'";
+        }
+        if ($cat_id > 0) {
+            $where .= " AND (g.cat_id=$cat_id OR g.extend_cat_id=$cat_id)";
+            $this->assign('cat_id', $cat_id);
         }
         $count = Db::name('order_goods')->alias('og')
             ->field('sum(og.goods_num) as sale_num,sum(og.goods_num*og.goods_price) as sale_amount ')
             ->join('order od', 'og.order_id=od.order_id', 'LEFT')
+            ->join('goods g', 'g.goods_id = og.goods_id')
             ->where($where)->group('og.goods_id')->count();
         $Page = new Page($count, $this->page_size);
         $res = Db::name('order_goods')->alias('og')
@@ -758,13 +762,16 @@ class Report extends Base
             $res = Db::name('order_goods')->alias('og')
                 ->join('order od', 'og.order_id=od.order_id', 'LEFT')
                 ->join('goods g', 'g.goods_id = og.goods_id')
-                ->field('og.goods_name,og.goods_id,og.goods_sn,sum(og.goods_num) as sale_num,sum(og.goods_num*og.goods_price) as sale_amount, g.is_on_sale ')
+                ->field('og.goods_name,og.goods_id,og.goods_sn,sum(og.goods_num) as sale_num,sum(og.goods_num*og.goods_price) as sale_amount, g.is_on_sale, g.cat_id ')
                 ->where($where)->group('og.goods_id')->order('sale_num DESC')
                 ->cache(true, 3600)->select();
             $strTable = '<table width="500" border="1">';
             $strTable .= '<tr>';
             $strTable .= '<td style="text-align:center;font-size:12px;" width="*">排行</td>';
             $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品名称</td>';
+            $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品分类1</td>';
+            $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品分类2</td>';
+            $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品分类3</td>';
             $strTable .= '<td style="text-align:center;font-size:12px;" width="*">货号</td>';
             $strTable .= '<td style="text-align:center;font-size:12px;" width="*">销售量</td>';
             $strTable .= '<td style="text-align:center;font-size:12px;" width="*">销售额</td>';
@@ -772,7 +779,33 @@ class Report extends Base
             $strTable .= '<td style="text-align:center;font-size:12px;" width="*">上架状态</td>';
             $strTable .= '</tr>';
             if (is_array($res)) {
+                // 分类数据
+                $GoodsLogic = new GoodsLogic();
+                $cateInfo = $GoodsLogic->get_parent_cate();
                 foreach ($res as $k => $val) {
+                    if (isset($cateInfo[$val['cat_id']])) {
+                        switch ($cateInfo[$val['cat_id']]['level']) {
+                            case 3:
+                                $val['first_cat'] = $cateInfo[$val['cat_id']]['level_1']['name'];
+                                $val['second_cat'] = $cateInfo[$val['cat_id']]['level_2']['name'];
+                                $val['third_cat'] = $cateInfo[$val['cat_id']]['name'];
+                                break;
+                            case 2:
+                                $val['first_cat'] = $cateInfo[$val['cat_id']]['level_1']['name'];
+                                $val['second_cat'] = $cateInfo[$val['cat_id']]['name'];
+                                $val['third_cat'] = '';
+                                break;
+                            case 1:
+                                $val['first_cat'] = $cateInfo[$val['cat_id']]['name'];
+                                $val['second_cat'] = '';
+                                $val['third_cat'] = '';
+                                break;
+                        }
+                    } else {
+                        $val['first_cat'] = '';
+                        $val['second_cat'] = '';
+                        $val['third_cat'] = '';
+                    }
                     $isOnSale = '上架';
                     if ($val['is_on_sale'] == 0) {
                         $isOnSale = '下架';
@@ -781,6 +814,9 @@ class Report extends Base
                     $strTable .= '<tr>';
                     $strTable .= '<td style="text-align:center;font-size:12px">&nbsp;' . $pai . '</td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['goods_name'] . ' </td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['first_cat'] . ' </td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['second_cat'] . ' </td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['third_cat'] . ' </td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['goods_sn'] . '</td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['sale_num'] . '</td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['sale_amount'] . '</td>';
@@ -795,6 +831,9 @@ class Report extends Base
             exit();
         }
 
+        $GoodsLogic = new GoodsLogic();
+        $categoryList = $GoodsLogic->getSortCategory(); //获取排好序的分类列表
+        $this->assign('categoryList', $categoryList);
         $this->assign('list', $res);
         $this->assign('page', $Page);
         $this->assign('p', I('p/d', 1));
@@ -1083,10 +1122,10 @@ class Report extends Base
         $this->assign('page', $show);
 
         $GoodsLogic = new GoodsLogic();
-        $brandList = $GoodsLogic->getSortBrands();  //获取排好序的品牌列表
+//        $brandList = $GoodsLogic->getSortBrands();  //获取排好序的品牌列表
         $categoryList = $GoodsLogic->getSortCategory(); //获取排好序的分类列表
         $this->assign('categoryList', $categoryList);
-        $this->assign('brandList', $brandList);
+//        $this->assign('brandList', $brandList);
 
         return $this->fetch();
     }
@@ -1203,7 +1242,7 @@ class Report extends Base
             $where .= " and og.goods_id=$goods_id";
         }
         $orderGoods = Db::name('order_goods')->alias('og')
-            ->field('og.goods_id, og.goods_sn, og.goods_name, g.ctax_price, g.stax_price, og.spec_key, og.final_price, og.goods_price, og.use_integral')
+            ->field('g.cat_id, g.ctax_price, g.stax_price, og.goods_id, og.goods_sn, og.goods_name, og.spec_key, og.final_price, og.goods_price, og.use_integral')
             ->join('order o', 'og.order_id = o.order_id', 'right')
             ->join('goods g', 'og.goods_id = g.goods_id', 'left')
             ->where($where)
@@ -1218,6 +1257,7 @@ class Report extends Base
                 ->where($where)->where(['og.goods_id' => $v1['goods_id'], 'og.spec_key' => $v1['spec_key']])->group('og.member_goods_price')->field('og.member_goods_price, og.use_integral')->select();
             foreach ($order_goods as $v2) {
                 $goodsPriceData[] = [
+                    'cat_id' => $v1['cat_id'],
                     'goods_sn' => $v1['goods_sn'],
                     'goods_name' => $v1['goods_name'],
                     'member_goods_price1' => $v2['member_goods_price'],
@@ -1252,6 +1292,9 @@ class Report extends Base
         $strTable .= '<tr>';
         $strTable .= '<td style="text-align:center;font-size:12px;width:120px;" rowspan="2">商品货号</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="180" rowspan="2">商品名称</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="180" rowspan="2">商品分类1</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="180" rowspan="2">商品分类2</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="180" rowspan="2">商品分类3</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*"  colspan="2">积分价（现金部分）</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*" rowspan="2">数量</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*"  colspan="2">零售价</td>';
@@ -1265,10 +1308,39 @@ class Report extends Base
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*" >零售价不含税价</td>';
         $strTable .= '</tr>';
         if (!empty($goodsPriceData)) {
+            // 分类数据
+            $GoodsLogic = new GoodsLogic();
+            $cateInfo = $GoodsLogic->get_parent_cate();
             foreach ($goodsPriceData as $k => $val) {
+                if (isset($cateInfo[$val['cat_id']])) {
+                    switch ($cateInfo[$val['cat_id']]['level']) {
+                        case 3:
+                            $val['first_cat'] = $cateInfo[$val['cat_id']]['level_1']['name'];
+                            $val['second_cat'] = $cateInfo[$val['cat_id']]['level_2']['name'];
+                            $val['third_cat'] = $cateInfo[$val['cat_id']]['name'];
+                            break;
+                        case 2:
+                            $val['first_cat'] = $cateInfo[$val['cat_id']]['level_1']['name'];
+                            $val['second_cat'] = $cateInfo[$val['cat_id']]['name'];
+                            $val['third_cat'] = '';
+                            break;
+                        case 1:
+                            $val['first_cat'] = $cateInfo[$val['cat_id']]['name'];
+                            $val['second_cat'] = '';
+                            $val['third_cat'] = '';
+                            break;
+                    }
+                } else {
+                    $val['first_cat'] = '';
+                    $val['second_cat'] = '';
+                    $val['third_cat'] = '';
+                }
                 $strTable .= '<tr>';
                 $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;' . $val['goods_sn'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['goods_name'] . ' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['first_cat'] . ' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['second_cat'] . ' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['third_cat'] . ' </td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['member_goods_price1'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['ctax_price'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['inte_num'] . '</td>';
