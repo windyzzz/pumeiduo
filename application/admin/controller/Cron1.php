@@ -8748,4 +8748,12 @@ class Cron1 extends Controller
         Db::commit();
         var_dump('ok');
     }
+
+    public function updateSupplierGoodsImages()
+    {
+        $imageIds = M('goods_images gi')->join('goods g', 'g.goods_id = gi.goods_id')
+            ->where(['g.is_supply' => 1, 'image_url' => ['NOT LIKE', '/public/upload/goods' . '%']])
+            ->getField('img_id', true);
+        M('goods_images')->where(['img_id' => ['IN', $imageIds]])->update(['self_upload' => 0]);
+    }
 }

@@ -22,7 +22,7 @@
     </div>
     <div class="flexigrid">
         <div class="mDiv">
-            <form class="navbar-form form-inline" method="post" action="" name="search-form" id="search-form">
+            <form class="navbar-form form-inline" method="post" action="{:U('Admin/distribut/exportDistributeLog')}" name="search-form" id="search-form">
                 <input type="hidden" name="type" value="daily">
                 <div class="sDiv">
                     <div class="sDiv2">
@@ -41,6 +41,13 @@
             </form>
         </div>
         <div class="hDiv">
+            <div class="fbutton">
+                <a href="javascript:exportData()">
+                    <div class="add" title="">
+                        <span><i class="fa fa-plus"></i>导出数据</span>
+                    </div>
+                </a>
+            </div>
             <div class="hDivBox">
                 <table cellspacing="0" cellpadding="0">
                     <thead>
@@ -87,6 +94,7 @@
         // ajax 抓取页面
         ajax_get_table('search-form', 1);
     });
+
     function ajax_get_table(tab, page) {
         $.ajax({
             type: "POST",
@@ -101,6 +109,10 @@
                 });
             }
         });
+    }
+
+    function exportData() {
+        $('#search-form').submit();
     }
 </script>
 </body>

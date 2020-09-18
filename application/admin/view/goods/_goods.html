@@ -738,6 +738,7 @@
                                     <div style="width:100px; text-align:center; margin: 5px; display:inline-block;"
                                          class="goods_xc">
                                         <input type="hidden" value="{$vo['image_url']}" name="goods_images[]">
+                                        <input type="hidden" value="{$vo['self_upload']}" name="self_upload[]">
                                         <a onClick="" href="{$vo['image_url']}" target="_blank">
                                             <img width="100" height="100" src="{$vo['image_url']}">
                                         </a>
@@ -747,6 +748,7 @@
                                 </foreach>
                                 <div class="goods_xc" style="width:100px; text-align:center; margin: 5px; display:inline-block;">
                                     <input type="hidden" name="goods_images[]" value=""/>
+                                    <input type="hidden" name="self_upload[]" value=""/>
                                     <a href="javascript:void(0);" onClick="GetUploadify(10,'','goods','call_back2');">
                                         <img src="/public/images/add-button.jpg" width="100" height="100"/>
                                     </a>
@@ -1082,7 +1084,7 @@
         serverUrl: url,
         zIndex: 999,
         initialFrameWidth: "90%", //初化宽度
-        initialFrameHeight: 10000, //初化高度
+        initialFrameHeight: 1000, //初化高度
         focus: false, //初始化时，是否让编辑器获得焦点true或false
         maximumWords: 99999,    //允许的最大字符数
         fullscreen: false,
@@ -1118,7 +1120,8 @@
             $(".goods_xc:eq(0)").find('a:eq(0)').attr('href', paths[i]).attr('onclick', '').attr('target', "_blank");// 修改他的链接地址
             $(".goods_xc:eq(0)").find('img').attr('src', paths[i]);// 修改他的图片路径
             $(".goods_xc:eq(0)").find('a:eq(1)').attr('onclick', "ClearPicArr2(this,'" + paths[i] + "')").text('删除');
-            $(".goods_xc:eq(0)").find('input').val(paths[i]); // 设置隐藏域 要提交的值
+            $(".goods_xc:eq(0)").find('input[name="goods_images[]"]').val(paths[i]); // 设置隐藏域 要提交的值
+            $(".goods_xc:eq(0)").find('input[name="self_upload[]"]').val(1); // 设置隐藏域 要提交的值
         }
     }
 

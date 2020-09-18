@@ -1588,6 +1588,26 @@ class User extends Base
     }
 
     /**
+     * APP首次登陆统计导出
+     */
+    public function exportAppLoginStatistics()
+    {
+        $loginDate = M('user_login_log')->order('login_date desc')->group('login_date')->getField('login_date', true);
+        $logList = [];
+        foreach ($loginDate as $date) {
+            $logList[] = [
+                'date' => $date,
+                'count' => M('user_login_log')->where(['login_date' => $date, 'is_app_first' => 1])->group('user_id')->count('id')
+            ];
+        }
+        // 表头
+        $headList = [
+            '日期', '数量'
+        ];
+        toCsvExcel($logList, $headList, 'app_login_statistics');
+    }
+
+    /**
      * APP首次登陆详情
      * @return mixed
      */
@@ -1609,5 +1629,37 @@ class User extends Base
         $this->assign('page', $page);
         $this->assign('list', $loginList);
         return $this->fetch('app_login_log');
+    }
+
+    /**
+     * APP首次登陆详情导出
+     */
+    public function exportAppLoginLog()
+    {
+        $date = I('date');
+        $where = [
+            'login_date' => $date,
+            'is_app_first' => 1
+        ];
+        $loginList = M('user_login_log ull')
+            ->join('users u', 'u.user_id = ull.user_id')
+            ->where($where)->field('ull.*, u.user_name, u.nickname')
+            ->order('login_time desc')->select();
+        // 表头
+        $headList = [
+            '会员号', '用户名', '会员昵称', 'ip', '登陆时间'
+        ];
+        // 表数据
+        $dataList = [];
+        foreach ($loginList as $log) {
+            $dataList[] = [
+                $log['user_id'],
+                $log['user_name'],
+                $log['nickname'],
+                $log['login_ip'],
+                date('Y-m-d H:i', $log['login_time']),
+            ];
+        }
+        toCsvExcel($dataList, $headList, 'app_login_log');
     }
 }
