@@ -404,6 +404,10 @@
                             <dd>-{$order.user_electronic}</dd>
                             <dt>优惠券抵扣：</dt>
                             <dd>-{$order.coupon_price}</dd>
+                            <dt>优惠券信息：</dt>
+                            <dd>
+                                <a href="{:U('Coupon/coupon_info',array('id'=>$order['coupon_id']))}">{$order.coupon_id}</a>
+                            </dd>
                             <dt>价格调整：</dt>
                             <dd>-{$order.discount}</dd>
                         </dl>
