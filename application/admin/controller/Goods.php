@@ -403,6 +403,8 @@ class Goods extends Base
                 $val['exchange_price'] = $val['shop_price'] - $val['exchange_integral'];
                 $val['trade_type'] = trade_type($val['trade_type']);
                 $val['supplier'] = $suppliers[$val['suppliers_id']] ?? '';
+                $val['is_on_sale2'] = $val['is_on_sale2'] == 1 ? '上架' : '下架';
+                $val['is_on_sale'] = $val['is_on_sale'] == 1 ? '上架' : '下架';
             }
         }
         $expCellName = [
@@ -423,6 +425,8 @@ class Goods extends Base
             ['trade_type', '交易条件选择', 20, 1],
             ['supplier', '供应商', 50, 1],
             ['original_img', '缩略图', 20, 1],
+            ['is_on_sale2', '子系统上架状态', 20, 1],
+            ['is_on_sale', '真正上架状态', 20, 1],
         ];
         exportExcel('产品列表', $expCellName, $goodsList, 'goods', true);
     }
@@ -520,6 +524,8 @@ class Goods extends Base
                 $val['exchange_price'] = $val['shop_price'] - $val['exchange_integral'];
                 $val['trade_type'] = trade_type($val['trade_type']);
                 $val['supplier'] = $suppliers[$val['suppliers_id']] ?? '';
+                $val['is_on_sale2'] = $val['is_on_sale2'] == 1 ? '上架' : '下架';
+                $val['is_on_sale'] = $val['is_on_sale'] == 1 ? '上架' : '下架';
             }
         }
         $expCellName = [
@@ -540,6 +546,8 @@ class Goods extends Base
             ['trade_type', '交易条件选择', 20, 1],
             ['supplier', '供应商', 50, 1],
             ['original_img', '缩略图', 20, 1],
+            ['is_on_sale2', '子系统上架状态', 20, 1],
+            ['is_on_sale', '真正上架状态', 20, 1],
         ];
         exportExcel('产品列表', $expCellName, $goodsList, 'goods');
     }
