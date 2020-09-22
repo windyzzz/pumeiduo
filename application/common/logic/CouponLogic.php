@@ -157,6 +157,7 @@ class CouponLogic extends Model
     {
         $coupon_list = M('Coupon')->where('type_value', 'LIKE', '%4%')->select();
         if (!empty($coupon_list)) {
+            $couponIds = [];
             foreach ($coupon_list as $v) {
                 if ($v['type_value']) {
                     $type_value = explode(',', $v['type_value']);
@@ -166,10 +167,20 @@ class CouponLogic extends Model
                             $result = $activityLogic->get_coupon($v['id'], $user_id);
                             if (1 != $result['status']) {
                                 Log::record('新用户：' . $user_id . ' 获取新人优惠券：' . $v['id'] . '失败。原因：' . $result['msg'] . '优惠券ID：' . $v['id']);
+                            } else {
+                                $couponIds[] = $v['id'];
                             }
                         }
                     }
                 }
+            }
+            if (!empty($couponIds)) {
+                // 新用户奖励记录
+                M('user_new_log')->add([
+                    'user_id' => $user_id,
+                    'coupon_id' => implode(',', $couponIds),
+                    'add_time' => NOW_TIME
+                ]);
             }
         }
     }

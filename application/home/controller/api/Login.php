@@ -121,8 +121,13 @@ class Login extends Base
                 'has_pay_pwd' => $user['paypwd'] ? 1 : 0,
                 'is_app' => TokenLogic::getValue('is_app', $user['token']) ? 1 : 0,
                 'token' => $user['token'],
-                'jpush_tags' => [$user['push_tag']]
+                'jpush_tags' => [$user['push_tag']],
+                'new_profit' => 0
             ];
+            // 是否展示新用户奖励弹窗
+            if ($user['is_new'] == 1 && $logic->checkNewProfit($user['user_id'])['status'] !== 0) {
+                $res['result']['new_profit'] = 1;
+            }
         }
 
         return json($res);
