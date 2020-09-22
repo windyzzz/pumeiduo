@@ -1550,4 +1550,64 @@ AND log_id NOT IN
             $orderLogic->supplierOrderSend($orderId, NOW_TIME);
         }
     }
+
+    /**
+     * 更新社区文章图片
+     */
+    public function updateCommunityArticleImage()
+    {
+        $article = M('community_article')
+            ->where(['image' => ['NEQ', ''], 'get_image_info' => 0])
+            ->field('id, image')->limit(5)->select();
+        foreach ($article as $value) {
+            $upData['image'] = '';
+            // 获取图片信息
+            $value['image'] = explode(';', $value['image']);
+            foreach ($value['image'] as $item) {
+                $item = explode(',', $item);
+                $image = substr($item[0], strrpos($item[0], 'url:') + 4);
+                $imageInfo = getImageInfo($image);
+                $upData['image'] .= $item[0] . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ';';
+            }
+            $upData['image'] = rtrim($upData['image'], ';');
+            $upData['get_image_info'] = 1;
+            // 更新文章数据
+            M('community_article')->where(['id' => $value['id']])->update($upData);
+        }
+    }
+
+    /**
+     * 更新社区文章视频
+     */
+    public function updateCommunityArticleVideo()
+    {
+        $article = M('community_article')
+            ->where(['video' => ['NEQ', ''], 'video_cover' => ''])
+            ->field('id, video')->limit(5)->select();
+        foreach ($article as $value) {
+            // 获取视频封面图
+            $videoCover = getVideoCoverImages($value['video']);
+            $upData = [
+                'video_cover' => $videoCover['path'],
+                'video_axis' => $videoCover['axis']
+            ];
+            // 更新文章数据
+            M('community_article')->where(['id' => $value['id']])->update($upData);
+        }
+    }
+
+    /**
+     * 发布社区文章
+     */
+    public function communityArticlePublish()
+    {
+        $where = [
+            'status' => 2,
+            'publish_time' => ['ELT', NOW_TIME]
+        ];
+        $articleIds = M('community_article')->where($where)->getField('id', true);
+        if (!empty($articleIds)) {
+            M('community_article')->where(['id' => ['IN', $articleIds]])->update(['status' => 1, 'publish_time' => NOW_TIME]);
+        }
+    }
 }

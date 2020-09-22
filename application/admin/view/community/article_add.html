@@ -1,0 +1,285 @@
+<include file="public/layout"/>
+<script src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
+<body style="background-color: #FFF; overflow: auto;">
+<div id="toolTipLayer" style="position: absolute; z-index: 9999; display: none; visibility: visible; left: 95px; top: 573px;"></div>
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title"><a class="back" href="javascript:history.back();" title="返回列表"><i
+                class="fa fa-arrow-circle-o-left"></i></a>
+            <div class="subject">
+                <h3>新增社区文章</h3>
+                <h5>社区文章索引与管理</h5>
+            </div>
+        </div>
+    </div>
+    <form class="form-horizontal" action="{:U('Community/article', array('act'=>'add'))}" id="add_post" method="post">
+        <div class="ncap-form-default">
+            <dl class="row">
+                <dt class="tit">
+                    <label for="cate_id1"><em>*</em>一级分类</label>
+                </dt>
+                <dd class="opt">
+                    <select name="cate_id1" id="cate_id1">
+                        <option value="">请选择</option>
+                        <foreach name="t_category" item="vo">
+                            <option value="{$key}">{$vo}</option>
+                        </foreach>
+                    </select>
+                    <span class="err" id="err_cate_id1"></span>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label for="cate_id2"><em>*</em>二级分类</label>
+                </dt>
+                <dd class="opt">
+                    <select name="cate_id2" id="cate_id2">
+                        <option value="">请选择</option>
+                    </select>
+                    <span class="err" id="err_cate_id2"></span>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>文章内容</label>
+                </dt>
+                <dd class="opt">
+                    <textarea name="content" class="" style="width: 80%; height: 50%; line-height: 200%" rows="10"></textarea>
+                    <span class="err" id="err_content"></span>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>选择上传的内容</label>
+                </dt>
+                <dd class="opt">
+                    <select name="upload_content" id="upload_content">
+                        <option value="1">图片上传</option>
+                        <option value="2">视频上传</option>
+                    </select>
+                </dd>
+            </dl>
+            <dl class="row" id="image">
+                <dt class="tit">
+                    <label>图片上传</label>
+                </dt>
+                <dd class="opt">
+                    <div class="tab-pane" id="">
+                        <table class="table table-bordered">
+                            <tbody>
+                            <tr>
+                                <td>
+                                    <div class="goods_xc" style="width:100px; text-align:center; margin: 5px; display:inline-block;">
+                                        <input type="hidden" name="image[]" value=""/>
+                                        <a href="javascript:void(0);" onClick="GetUploadify(9,'','community','call_back');">
+                                            <img src="/public/images/add-button.jpg" width="100" height="100"/>
+                                        </a>
+                                        <br/>
+                                        <a href="javascript:void(0)">&nbsp;&nbsp;</a>
+                                    </div>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </dd>
+            </dl>
+            <dl class="row" id="video" style="display: none;">
+                <dt class="tit">
+                    <label>视频上传</label>
+                </dt>
+                <dd class="opt">
+                    <input type="hidden" value="" name="video" id="video_input" />
+                    <video style="" controls="controls" width="600" height="300" id="video_tag" src=""></video>
+                    <div id="container">
+                        <a id="selectfiles" href="javascript:void(0);" class='btn'>选择文件</a>
+                        <b style="font-size: 16px; display: none;" id="percent">上传进度:0%</b>
+                    </div>
+                    <p class="notic">上传视频大小不要超过200M</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>选择关联商品</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" id="goods_name" readonly name="" value="" class="input-txt">
+                    <input type="hidden" id="goods_id" readonly name="goods_id" value="" class="input-txt">
+                    <input type="hidden" id="item_id" readonly name="item_id" value="0" class="input-txt">
+                    <div style="overflow: hidden" id="selected_group_goods">
+
+                    </div>
+                    <p class="notic">
+                        <a onclick="selectGoods()" class="ncap-btn" id="select_goods_button"><i class="fa fa-search"></i>选择商品</a>
+                    </p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>预计发布时间</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" class="input-txt" id="publish_time" name="publish_time" value="">
+                    <span class="add-on input-group-addon">
+                        <i class="glyphicon glyphicon-calendar fa fa-calendar"></i>
+                    </span>
+                    <span class="err" id="err_publish_time"></span>
+                </dd>
+            </dl>
+            <div class="bot">
+                <a href="JavaScript:void(0);" class="ncap-btn-big ncap-btn-green" id="submitBtn">确认提交</a>
+            </div>
+        </div>
+    </form>
+</div>
+<link rel="stylesheet" type="text/css" href="/public/oss/style.css"/>
+<script type="text/javascript" src="/public/oss/lib/plupload-2.1.2/js/plupload.full.min.js"></script>
+<script type="text/javascript" src="/public/oss/upload.js"></script>
+<script type="text/javascript">
+    $(function () {
+        $('#publish_time').layDate();
+    });
+
+    $('select[name="cate_id1"]').change(function () {
+        if ($(this).val() == '') {
+            $('select[name="cate_id2"]').html('<option value="0">请选择</option>');
+            return;
+        }
+        $.ajax({
+            url:"{:U('Community/category')}",
+            data:{act: 'low_level', cate_id: $(this).val()},
+            dataType: 'json',
+            success: function (data) {
+                if (data.status == 1) {
+                    html = '<option value="">请选择</option>';
+                    $.each(data.result.list, function (i, n) {
+                        html += '<option value="' + n.id +'">' + n.cate_name + '</option>';
+                    });
+                    $('select[name="cate_id2"]').html(html);
+                } else {
+                    layer.msg(data.msg, {icon: 2})
+                }
+            }
+        })
+    });
+
+    $('#upload_content').change(function () {
+        switch ($(this).val()) {
+            case '1':
+                $('#image').show();
+                $('#video').hide();
+                break;
+            case '2':
+                $('#image').hide();
+                $('#video').show();
+                break;
+        }
+    });
+
+    // 上传商品相册回调函数
+    function call_back(paths) {
+        var last_div = $(".goods_xc:last").prop("outerHTML");
+        for (var i = 0; i < paths.length; i++) {
+            $(".goods_xc:eq(0)").before(last_div);	// 插入一个 新图片
+            $(".goods_xc:eq(0)").find('a:eq(0)').attr('href', paths[i]).attr('onclick', '').attr('target', "_blank");// 修改他的链接地址
+            $(".goods_xc:eq(0)").find('img').attr('src', paths[i]);// 修改他的图片路径
+            $(".goods_xc:eq(0)").find('a:eq(1)').attr('onclick', "ClearPicArr(this,'" + paths[i] + "')").text('删除');
+            $(".goods_xc:eq(0)").find('input').val(paths[i]); // 设置隐藏域 要提交的值
+        }
+    }
+
+    /*
+     * 上传之后删除组图input
+     * @access   public
+     * @val      string  删除的图片input
+     */
+    function ClearPicArr(obj, path) {
+        layer.confirm('确认删除？', {btn: ['确定', '取消']}, function (index) {
+            layer.close(index);
+            $.ajax({
+                type: 'GET',
+                url: "{:U('Admin/Uploadify/delupload')}",
+                data: {action: "del", filename: path},
+                success: function () {
+                    $(obj).parent().remove(); // 删除完服务器的, 再删除 html上的图片
+                }
+            });
+        }, function (index) {
+            // 取消
+            layer.close(index);
+        });
+    }
+
+    function selectGoods() {
+        var url = "{:U('Goods/search_goods',array('tpl'=>'select_goods'))}";
+        layer.open({
+            type: 2,
+            title: '选择商品',
+            shadeClose: true,
+            shade: 0.2,
+            area: ['75%', '75%'],
+            content: url,
+        });
+    }
+
+    function selGoodsCallBack(goodsItem) {
+        $('#goods_id').val(goodsItem.goods_id);
+        var html = '';
+        if (goodsItem.spec != null) {
+            //有规格
+            html = '<div style="float: left;margin: 10px auto;" class="selected-group-goods"><div class="goods-thumb">' +
+                '<img style="width: 162px;height: 162px" src="' + goodsItem.spec.spec_img + '"/></div> <div class="goods-name"> ' +
+                '<a target="_blank">' + goodsItem.goods_name + goodsItem.spec.key_name + '</a> </div>' +
+                ' <div class="goods-price">商城价：￥' + goodsItem.spec.price + '库存:' + goodsItem.spec.store_count + '</div> </div>';
+            $('#item_id').val(goodsItem.spec.item_id)
+            $('#goods_name').val(goodsItem.goods_name + goodsItem.spec.key_name);
+        } else {
+            html = '<div style="float: left;margin: 10px auto;" class="selected-group-goods"><div class="goods-thumb">' +
+                '<img style="width: 162px;height: 162px" src="' + goodsItem.goods_image + '"/></div> <div class="goods-name"> ' +
+                '<a target="_blank">' + goodsItem.goods_name + '</a> </div>' +
+                ' <div class="goods-price">商城价：￥' + goodsItem.goods_price + '库存:' + goodsItem.store_count + '</div> </div>';
+            $('#goods_name').val(goodsItem.goods_name);
+        }
+        $('#select_goods_button').attr('data-goods-id', goodsItem.goods_id);
+        $('#selected_group_goods').empty().html(html);
+        $('.selected-group-goods').show();
+        layer.closeAll('iframe');
+    }
+
+    $(document).on("click", '#submitBtn', function () {
+        layer.confirm('确认操作？', {btn: ['确定', '取消']}, function () {
+            verifyForm();
+        });
+    });
+
+    function verifyForm() {
+        $('span.err').hide();
+        $.ajax({
+            type: "POST",
+            url: "{:U('Community/article', array('act'=>'add'))}",
+            data: $('#add_post').serialize(),
+            dataType: "json",
+            error: function () {
+                layer.alert("服务器繁忙, 请联系管理员!");
+            },
+            success: function (data) {
+                if (data.status === 1) {
+                    layer.msg(data.msg, {icon: 1, time: 1000}, function () {
+                        location.href = "{:U('Admin/Community/article')}";
+                    });
+                } else if (data.status === 0) {
+                    layer.msg(data.msg, {icon: 2, time: 1000});
+                    $.each(data.result, function (index, item) {
+                        $('#err_' + index).text(item).show();
+                    });
+                } else {
+                    layer.msg(data.msg, {icon: 2, time: 1000});
+                }
+            }
+        });
+    }
+</script>
+</body>
+</html>

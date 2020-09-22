@@ -1,0 +1,282 @@
+<include file="public/layout" />
+<body style="background-color: rgb(255, 255, 255); overflow: auto; cursor: default; -moz-user-select: inherit;">
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+	<div class="fixed-bar">
+		<div class="item-title">
+			<div class="subject">
+				<h3>社区文章列表</h3>
+				<h5>社区文章审核与管理</h5>
+			</div>
+		</div>
+	</div>
+	<div class="flexigrid">
+		<div class="mDiv">
+			<div class="ftitle">
+				<h5>(共{$page->totalRows}条记录)</h5>
+			</div>
+			<div title="刷新数据" class="pReload"><i class="fa fa-refresh"></i></div>
+		</div>
+		<form class="navbar-form form-inline" action="{:U('Admin/Community/article')}" method="post">
+			<div class="sDiv">
+				<div class="sDiv2">
+					<select name="source" class="select">
+						<option value="">选择来源</option>
+						<option value="1" <if condition="$source eq 1">selected</if>>会员用户</option>
+						<option value="2" <if condition="$source eq 2">selected</if>>管理后台</option>
+					</select>
+				</div>
+				<div class="sDiv2">
+					<select  name="cate_id1" class="select">
+						<option value="0">选择一级分类</option>
+						<foreach name="t_category" item="vo">
+							<option value="{$key}" <if condition="$key eq $cate_id1">selected</if>>{$vo}</option>
+						</foreach>
+					</select>
+				</div>
+				<div class="sDiv2">
+					<select  name="cate_id2" class="select">
+						<option value="">选择二级分类</option>
+					</select>
+				</div>
+				<div class="sDiv2">
+					<select name="status" class="select">
+						<option value="">审核状态</option>
+						<option value="0" <if condition="$status !== '' && $status eq 0">selected</if>>未审核</option>
+						<option value="1" <if condition="$status eq 1">selected</if>>审核通过</option>
+						<option value="-1" <if condition="$status eq -1">selected</if>>拒绝通过</option>
+					</select>
+				</div>
+				<div class="sDiv2">
+					<input type="text" size="30" name="user_id" value="{$user_id}" class="qsbox" placeholder="用户ID">
+				</div>
+				<div class="sDiv2">
+					<input type="submit" class="btn" value="搜索">
+				</div>
+			</div>
+		</form>
+		<div class="hDiv">
+			<div class="hDivBox">
+				<table cellspacing="0" cellpadding="0">
+					<thead>
+					<tr>
+						<th class="sign" axis="col0">
+							<div style="width: 24px;"><i class="ico-check"></i></div>
+						</th>
+                        <th align="left" abbr="article_title" axis="col3" class="">
+                            <div style="text-align: center; width: 50px;" class="">文章ID</div>
+                        </th>
+						<th align="left" abbr="article_title" axis="col3" class="">
+							<div style="text-align: center; width: 100px;" class="">来源</div>
+						</th>
+						<th align="left" abbr="article_title" axis="col3" class="">
+							<div style="text-align: center; width: 100px;" class="">用户</div>
+						</th>
+						<th align="left" abbr="article_title" axis="col3" class="">
+							<div style="text-align: center; width: 100px;" class="">一级分类</div>
+						</th>
+						<th align="left" abbr="article_title" axis="col3" class="">
+							<div style="text-align: center; width: 100px;" class="">二级分类</div>
+						</th>
+						<th align="left" abbr="ac_id" axis="col4" class="">
+							<div style="text-align: center; width: 500px;" class="">内容</div>
+						</th>
+						<th align="center" abbr="article_time" axis="col6" class="">
+							<div style="text-align: center; width: 150px;" class="">审核状态</div>
+						</th>
+						<th align="center" abbr="article_time" axis="col6" class="">
+							<div style="text-align: center; width: 150px;" class="">创建时间</div>
+						</th>
+						<th align="center" abbr="article_time" axis="col6" class="">
+							<div style="text-align: center; width: 150px;" class="">更新时间</div>
+						</th>
+						<th align="center" abbr="article_time" axis="col6" class="">
+							<div style="text-align: center; width: 150px;" class="">发布时间</div>
+						</th>
+						<th align="left" axis="col1" class="handle">
+							<div style="text-align: center; width: 150px;">操作</div>
+						</th>
+						<th style="width:100%" axis="col7">
+							<div></div>
+						</th>
+					</tr>
+					</thead>
+				</table>
+			</div>
+			<div class="hDivBox">
+				<div class="fbutton">
+					<a href="{:U('Admin/Community/article', array('act'=>'add'))}">
+						<div class="add" title="添加文章">
+							<span><i class="fa fa-plus"></i>添加文章</span>
+						</div>
+					</a>
+				</div>
+			</div>
+		</div>
+		<div class="bDiv" style="height: auto;">
+			<div id="flexigrid" cellpadding="0" cellspacing="0" border="0">
+				<table>
+					<tbody>
+					<foreach name="article_list" item="vo" key="k" >
+						<tr>
+							<td class="sign">
+								<div style="width: 24px;"><i class="ico-check"></i></div>
+							</td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 50px;">{$vo.id}</div>
+                            </td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 100px;">{$vo.source_desc}</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 100px;">
+									<switch name="$vo[source]">
+										<case value="1">
+											<a target="_blank" href="{:U('User/detail', array('id'=>$vo[user_id]))}">
+												{$vo.user_name}
+											</a>
+										</case>
+										<case value="2">
+											{$vo.user_name}
+										</case>
+									</switch>
+								</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 100px;">{$vo.cate_id1_desc}</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 100px;">{$vo.cate_id2_desc}</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 500px;">
+									<textarea style="width: 80%; height: 100%; line-height: 200%;" rows="3" disabled>{$vo.content}</textarea>
+								</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 150px;">
+									<span
+										<switch name="$vo[status]">
+											<case value="-3">
+												style="color: red;"
+											</case>
+											<case value="-2">
+												style="color: red;"
+											</case>
+											<case value="-1">
+												style="color: red;"
+											</case>
+											<case value="1">
+												style="color: green;"
+											</case>
+											<case value="2">
+												style="color: blue;"
+											</case>
+										</switch>
+									>{$vo.status_desc}</span>
+								</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 150px;">{$vo.add_time|date='Y-m-d H:i:s', ###}</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 150px;">
+									<if condition="$vo[up_time] != 0">
+										{$vo.up_time|date='Y-m-d H:i:s', ###}
+									</if>
+								</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 150px;">
+									<if condition="$vo[publish_time] != 0">
+										{$vo.publish_time|date='Y-m-d H:i:s', ###}
+									</if>
+								</div>
+							</td>
+							<td align="left" class="handle">
+								<div style="text-align: center; width: 150px; max-width:150px;">
+									<a class="btn blue" href="{:U('Community/article', array('act' => 'info', 'article_id' => $vo['id']))}"><i class="fa fa-pencil-square-o"></i>详情</a>
+									<if condition="$vo[source] == 2">
+										<a class="btn blue" href="{:U('Community/article', array('act' => 'edit', 'article_id' => $vo['id']))}"><i class="fa fa-pencil-square-o"></i>编辑</a>
+									</if>
+								</div>
+							</td>
+							<td align="" class="" style="width: 100%;">
+								<div>&nbsp;</div>
+							</td>
+						</tr>
+					</foreach>
+					</tbody>
+				</table>
+			</div>
+			<div class="iDiv" style="display: none;"></div>
+		</div>
+		<!--分页位置-->
+		{$page->show()} </div>
+</div>
+<script>
+	$(document).ready(function() {
+		// 表格行点击选中切换
+		$('#flexigrid > table>tbody >tr').click(function() {
+			$(this).toggleClass('trSelected');
+		});
+
+		// 点击刷新数据
+		$('.fa-refresh').click(function() {
+
+			location.href = location.href;
+		});
+
+		// 分类选择
+		var cate_id1 = {$cate_id1};
+		var cate_id2 = {$cate_id2};
+		if (cate_id1 != 0) {
+			$.ajax({
+				url:"{:U('Community/category')}",
+				data:{act: 'low_level', cate_id: cate_id1},
+				dataType: 'json',
+				success: function (data) {
+					if (data.status == 1) {
+						html = '<option value="">选择二级分类</option>';
+						$.each(data.result.list, function (i, n) {
+							if (cate_id2 != 0 && cate_id2 == n.id) {
+								html += '<option value="' + n.id +'" selected>' + n.cate_name + '</option>';
+							} else {
+								html += '<option value="' + n.id +'">' + n.cate_name + '</option>';
+							}
+						});
+						$('select[name="cate_id2"]').html(html);
+					} else {
+						layer.msg(data.msg, {icon: 2})
+					}
+				}
+			})
+		}
+	});
+
+	$('select[name="cate_id1"]').change(function () {
+		if ($(this).val() == '0') {
+			$('select[name="cate_id2"]').html('<option value="0">选择二级分类</option>');
+			return;
+		}
+		$.ajax({
+			url:"{:U('Community/category')}",
+			data:{act: 'low_level', cate_id: $(this).val()},
+			dataType: 'json',
+			success: function (data) {
+				if (data.status == 1) {
+					html = '<option value="">选择二级分类</option>';
+					$.each(data.result.list, function (i, n) {
+						html += '<option value="' + n.id +'">' + n.cate_name + '</option>';
+					});
+					$('select[name="cate_id2"]').html(html);
+				} else {
+					layer.msg(data.msg, {icon: 2})
+				}
+			}
+		})
+	});
+</script>
+</body>
+</html>

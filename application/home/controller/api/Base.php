@@ -104,6 +104,8 @@ class Base extends Controller
             'c=api.User&a=findPassword',                // 找回密码（登录前忘记密码）
             'c=api.Adv&a=index',                        // 广告
             'c=api.Message&a=floatMessage',             // 浮窗消息列表
+            'c=api.Community&a=allCategory',            // 社区所有分类
+            'c=api.Community&a=article',                // 社区文章列表
         ];
     }
 
@@ -117,6 +119,8 @@ class Base extends Controller
         return [
             'c=api.Message&a=announce',                 // 公告列表
             'c=api.Goods&a=goodsInfoNew',               // 商品详情
+            'c=api.Goods&a=getGoodsPassword',           // 获取商品口令
+            'c=api.Goods&a=checkGoodsPassword',         // 根据口令获取商品数据
             'c=api.Adv&a=popup',                        // 活动弹窗
         ];
     }

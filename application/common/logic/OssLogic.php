@@ -14,7 +14,7 @@ namespace app\common\logic;
 use OSS\Core\OssException;
 use OSS\OssClient;
 
-require_once './vendor/aliyun-oss-php-sdk/autoload.php';
+require_once './vendor/aliyun-openapi-php-sdk/aliyun-oss-php-sdk/autoload.php';
 
 /**
  * Class OssLogic
@@ -64,17 +64,10 @@ class OssLogic
         if (self::$initConfigFlag) {
             return;
         }
-
-        $c = [];
-        $configItems = 'oss_key_id,oss_key_secret,oss_endpoint,oss_bucket';
-        $config = M('config')->field('name,value')->where('name', 'IN', $configItems)->select();
-        foreach ($config as $v) {
-            $c[$v['name']] = $v['value'];
-        }
-        self::$accessKeyId = $c['oss_key_id'] ?: '';
-        self::$accessKeySecret = $c['oss_key_secret'] ?: '';
-        self::$endpoint = $c['oss_endpoint'] ?: '';
-        self::$bucket = $c['oss_bucket'] ?: '';
+        self::$accessKeyId = C('OSS_ACCESSKEY_ID');
+        self::$accessKeySecret = C('OSS_ACCESSKEY_SECRET');
+        self::$endpoint = C('OSS_ENDPOINT');
+        self::$bucket = C('OSS_BUCKET');
         self::$initConfigFlag = true;
     }
 
@@ -85,7 +78,7 @@ class OssLogic
             try {
                 self::$ossClient = new OssClient(self::$accessKeyId, self::$accessKeySecret, self::$endpoint, false);
             } catch (OssException $e) {
-                self::$errorMsg = '创建oss对象失败，'.$e->getMessage();
+                self::$errorMsg = '创建oss对象失败，' . $e->getMessage();
 
                 return null;
             }
@@ -96,7 +89,7 @@ class OssLogic
 
     public function getSiteUrl()
     {
-        return 'http://'.self::$bucket.'.'.self::$endpoint;
+        return 'http://' . self::$bucket . '.' . self::$endpoint;
     }
 
     public function uploadFile($filePath, $object = null)
@@ -113,12 +106,12 @@ class OssLogic
         try {
             $ossClient->uploadFile(self::$bucket, $object, $filePath);
         } catch (OssException $e) {
-            self::$errorMsg = 'oss上传文件失败，'.$e->getMessage();
+            self::$errorMsg = 'oss上传文件失败，' . $e->getMessage();
 
             return false;
         }
 
-        return $this->getSiteUrl().'/'.$object;
+        return $this->getSiteUrl() . '/' . $object;
     }
 
     /**
@@ -138,7 +131,7 @@ class OssLogic
         }
 
         // 图片缩放（等比缩放）
-        $url = $originalImg."?x-oss-process=image/resize,m_pad,h_$height,w_$width";
+        $url = $originalImg . "?x-oss-process=image/resize,m_pad,h_$height,w_$width";
 
         $water = tpCache('water');
         if ($water['is_mark']) {
@@ -173,7 +166,7 @@ class OssLogic
         }
 
         // 图片缩放（等比缩放）
-        $url = $originalImg."?x-oss-process=image/resize,m_pad,h_$height,w_$width";
+        $url = $originalImg . "?x-oss-process=image/resize,m_pad,h_$height,w_$width";
 
         return $url;
     }
@@ -182,9 +175,9 @@ class OssLogic
      * 链接加上文本水印参数（文字水印(方针黑体，黑色)）.
      *
      * @param string $url
-     * @param type   $text
-     * @param type   $size
-     * @param type   $posSel
+     * @param type $text
+     * @param type $size
+     * @param type $posSel
      *
      * @return string
      */
@@ -196,7 +189,7 @@ class OssLogic
         }
         $color = ltrim($color, '#');
         $text_encode = urlsafe_b64encode($text);
-        $url .= ",image/watermark,text_{$text_encode},type_ZmFuZ3poZW5naGVpdGk,color_{$color},size_{$size},t_{$transparency},g_".self::$waterPos[$posSel];
+        $url .= ",image/watermark,text_{$text_encode},type_ZmFuZ3poZW5naGVpdGk,color_{$color},size_{$size},t_{$transparency},g_" . self::$waterPos[$posSel];
 
         return $url;
     }
@@ -205,9 +198,9 @@ class OssLogic
      * 链接加上图片水印参数.
      *
      * @param string $url
-     * @param type   $image
-     * @param type   $transparency
-     * @param type   $posSel
+     * @param type $image
+     * @param type $transparency
+     * @param type $posSel
      *
      * @return string
      */
@@ -215,7 +208,7 @@ class OssLogic
     {
         $image = ltrim(parse_url($image, PHP_URL_PATH), '/');
         $image_encode = urlsafe_b64encode($image);
-        $url .= ",image/watermark,image_{$image_encode},t_{$transparency},g_".self::$waterPos[$posSel];
+        $url .= ",image/watermark,image_{$image_encode},t_{$transparency},g_" . self::$waterPos[$posSel];
 
         return $url;
     }
@@ -234,5 +227,33 @@ class OssLogic
         }
 
         return false;
+    }
+
+    /**
+     * 下载文件
+     * @param $filePath
+     * @param $path
+     * @return bool|string
+     */
+    public function downloadFile($filePath, $path)
+    {
+        $ossClient = self::getOssClient();
+        if (!$ossClient) {
+            return false;
+        }
+        $object = $filePath;
+        $localFile = $path . substr($filePath, strrpos($filePath, '/') + 1);
+        if (!is_dir($path)) {
+            mkdir($path, 0755, true);
+        }
+        $options = [
+            OssClient::OSS_FILE_DOWNLOAD => $localFile
+        ];
+        try {
+            $ossClient->getObject(self::$bucket, $object, $options);
+        } catch (OssException $e) {
+            return false;
+        }
+        return $localFile;
     }
 }

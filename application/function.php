@@ -1788,6 +1788,18 @@ function trim_all($str)
 }
 
 /**
+ * 替换字符串
+ * @param $str
+ * @param $oldChar
+ * @param $newChar
+ * @return mixed
+ */
+function trim_replace($str, $oldChar, $newChar)
+{
+    return str_replace($oldChar, $newChar, $str);
+}
+
+/**
  * HMAC-MD5 签名算法
  * @param $app_id
  * @param array $data
@@ -1904,4 +1916,178 @@ function imgToBase64($img = '')
     $imageInfo = getimagesize($img);
     $base64 = chunk_split(base64_encode(file_get_contents($img)));
     return 'data:' . $imageInfo['mime'] . ';base64,' . chunk_split($base64);
+}
+
+/**
+ * 获取视频封面图
+ * @param $file
+ * @return array
+ */
+function getVideoCoverImages($file)
+{
+    // 从OSS服务器下载视频
+    $localFile = (new \app\common\logic\OssLogic())->downloadFile($file, PUBLIC_PATH . 'upload/community/video_cover/temp/');
+    $filePath = '';
+    $fileAxis = '1';  // 1横向型 2竖向型
+    if (!empty($localFile)) {
+        if (is_file($localFile)) {
+            $pathParts = pathinfo($localFile);
+            $path = str_replace('temp', '', $pathParts['dirname']) . date('Y/m-d/');
+            if (!is_dir($path)) {
+                mkdir($path, 0755, true);
+            }
+            $filePath = $path . $pathParts['filename'] . '_1.jpg';
+            // 解析视频信息
+            $command = sprintf(\think\Env::get('FFMPEG.FUNC') . ' -i "%s" 2>&1', $localFile);
+            ob_start();
+            passthru($command);
+            $info = ob_get_contents();
+            ob_end_clean();
+            if (preg_match("/rotate/", $info, $match)) {
+                // 视频被旋转
+                $fileAxis = '2';
+            } elseif (preg_match("/Video: (.*?), (.*?), (.*?)[,\s]/", $info, $match)) {
+                $arr_resolution = explode('x', $match[3]); // 视频分辨率
+                if (count($arr_resolution) > 1) {
+                    $x = $arr_resolution[0];
+                    $y = $arr_resolution[1];
+                } else {
+                    preg_match("/Video: (.*?), (.*?), (.*?), (.*?)[,\s]/", $info, $match);
+                    $arr_resolution = explode('x', $match[4]); // 视频分辨率
+                    $x = $arr_resolution[0];
+                    $y = $arr_resolution[1];
+                }
+                if ($x < $y) {
+                    $fileAxis = '2';
+                }
+            }
+            switch ($fileAxis) {
+                case '1':
+                    $x = 1280;
+                    $y = 720;
+                    break;
+                case '2':
+                    $x = 720;
+                    $y = 1280;
+                    break;
+            }
+            // 取第1秒作为封面图
+            $command = \think\Env::get('FFMPEG.FUNC') . " -i {$localFile} -y -f image2 -ss 1 -vframes 1 -s {$x}x{$y} {$filePath}";
+            exec($command);
+            $filePath = str_replace('\\', '/', substr($filePath, strrpos($filePath, 'public') + 7));
+            // 上传到OSS服务器
+            $ossClient = new \app\common\logic\OssLogic();
+            $filePath = PUBLIC_PATH . $filePath;
+            $object = 'image/' . date('Y/m/d/H/') . $pathParts['filename'] . '_1.jpg';
+            $return_url = $ossClient->uploadFile($filePath, $object);
+            if (!$return_url) {
+                $filePath = '';
+            } else {
+                unlink($filePath);
+                $filePath = $object;
+            }
+        }
+        unlink($localFile);
+    }
+    return ['path' => $filePath, 'axis' => $fileAxis];
+}
+
+/**
+ * 获取视频封面图_V2
+ * @param $file
+ * @return array|bool
+ */
+function getVideoCoverImages_v2($file)
+{
+    // 从OSS服务器下载视频截图
+    $file = \plugins\Oss::url($file) . '?x-oss-process=video/snapshot,t_1000,m_fast';
+    $fileName = get_rand_str(32, 1, 1) . '.jpg';
+    $res = download_image($file, $fileName, PUBLIC_PATH . 'upload/community/video_cover/');
+    if ($res == false) {
+        return false;
+    }
+    $filePath = $res['save_path'] . '/' . $res['file_name'];
+    $imageInfo = getimagesize($filePath);
+    if ($imageInfo[0] > $imageInfo[1]) {
+        $fileAxis = '1';    // 横向型
+    } else {
+        $fileAxis = '2';    // 竖向型
+    }
+    // 上传到OSS服务器
+    $ossClient = new \app\common\logic\OssLogic();
+    $fileName = $res['file_name'];
+    $object = 'image/' . date('Y/m/d/H/') . $fileName;
+    $return_url = $ossClient->uploadFile($filePath, $object);
+    if (!$return_url) {
+        return false;
+    } else {
+        unlink($filePath);
+    }
+    return ['path' => $object, 'axis' => $fileAxis];
+}
+
+/**
+ * 获取远程图片信息
+ * @param $url
+ * @return array|bool
+ */
+function getImageInfo($url)
+{
+    // 从OSS服务器下载图片
+    $file = \plugins\Oss::url($url);
+    $fileName = get_rand_str(32, 1, 1) . '.jpg';
+    $res = download_image($file, $fileName, PUBLIC_PATH . 'upload/community/image/');
+    if ($res == false) {
+        return false;
+    }
+    $filePath = $res['save_path'] . '/' . $res['file_name'];
+    $imageInfo = getimagesize($filePath);
+    unlink($filePath);
+    return $imageInfo;
+}
+
+/**
+ * 下载图片到本地服务器
+ * @param $url
+ * @param $fileName
+ * @param $dirName
+ * @param int $type
+ * @return array|bool
+ */
+function download_image($url, $fileName, $dirName, $type = 1)
+{
+    if ($url == '') {
+        return false;
+    }
+    switch ($type) {
+        case 1:
+            // 远程
+            $ch = curl_init();
+            $timeout = 30;
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
+            $file = curl_exec($ch);
+            curl_close($ch);
+            break;
+        case 2:
+            // 本地
+            ob_start();
+            readfile($url);
+            $file = ob_get_contents();
+            ob_end_clean();
+            break;
+        default:
+            return false;
+    }
+    // 设置文件保存路径
+    $dirName = $dirName . date('Y/m-d', time());
+    if (!file_exists($dirName)) {
+        mkdir($dirName, 0777, true);
+    }
+    // 保存文件
+    $res = fopen($dirName . '/' . $fileName, 'a');
+    fwrite($res, $file);
+    fclose($res);
+    return ['file_name' => $fileName, 'save_path' => $dirName];
 }

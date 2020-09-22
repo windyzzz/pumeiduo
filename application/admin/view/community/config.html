@@ -1,0 +1,67 @@
+<include file="public/layout" />
+<style>
+    .system_img_location{text-align: center; width: 120px;position:absolute;top:15px; margin-left:265px;}
+</style>
+<body style="background-color: #FFF; overflow: auto;">
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title">
+            <div class="subject">
+                <h3>社区设置</h3>
+            </div>
+        </div>
+    </div>
+    <form method="post" id="handlepost" action="{:U('Community/config')}" enctype="multipart/form-data" name="form">
+        <div class="ncap-form-default">
+            <dl class="row">
+                <dt class="tit">
+                    <label>官方账号</label>
+                </dt>
+                <dd class="opt">
+                    <p class="notic">用户名</p>
+                    <input type="text" class="input-txt" name="official[name]" value="{$config.official.name}">
+                    <br/>
+                    <p class="notic">头像</p>
+                    <div class="input-file-show">
+                        <span class="show">
+                            <a id="freight_process_a" target="_blank" class="nyroModal" rel="gal" href="{$config.official.url}">
+                                <i id="official_img_i" class="fa fa-picture-o" onmouseover="layer.tips('<img src={$config.official.url}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();"></i>
+                            </a>
+                        </span>
+                        <span class="type-file-box">
+                            <input type="text" id="official_img" name="official[url]" value="{$config.official.url}" class="type-file-text">
+                            <input type="button" name="button" id="button1" value="选择上传..." class="type-file-button">
+                            <input class="type-file-file" onClick="GetUploadify(1,'official_img','community','img_call_back')" size="30" hidefocus="true" nc_type="change_site_logo" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">
+                        </span>
+                    </div>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>文章排序</label>
+                </dt>
+                <dd class="opt">
+                    <input type="radio" name="article_sort[content]" value="share" <if condition="$config.article_sort.content eq share"> checked </if> > 分享数
+                    <input type="radio" name="article_sort[content]" value="publish_time" <if condition="$config.article_sort.content eq publish_time"> checked </if> > 发布时间
+                    <p class="notic">文章优先级排序（由大到小）</p>
+                </dd>
+            </dl>
+            <div class="bot">
+                <a href="JavaScript:void(0);" class="ncap-btn-big ncap-btn-green" onclick="document.form.submit()">确认提交</a>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="goTop"> <a href="JavaScript:void(0);" id="btntop"><i class="fa fa-angle-up"></i></a><a href="JavaScript:void(0);" id="btnbottom"><i class="fa fa-angle-down"></i></a></div>
+</body>
+<script type="text/javascript">
+    function img_call_back(fileurl_tmp , elementid)
+    {
+        $("#"+elementid).val(fileurl_tmp);
+        $("#"+elementid+'_a').attr('href', fileurl_tmp);
+        $("#"+elementid+'_i').attr('onmouseover', "layer.tips('<img src="+fileurl_tmp+">',this,{tips: [1, '#fff']});");
+    }
+</script>
+</html>

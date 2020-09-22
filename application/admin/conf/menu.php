@@ -160,6 +160,12 @@ return [
             ['name' => '设置', 'act' => 'config', 'op' => 'Abroad'],
         ]],
 
+        ['name' => '社区', 'child' => [
+            ['name' => '配置', 'act' => 'config', 'op' => 'Community'],
+            ['name' => '分类', 'act' => 'category', 'op' => 'Community'],
+            ['name' => '文章', 'act' => 'article', 'op' => 'Community'],
+        ]],
+
         // array('name' => '统计','child' => array(
         // 		array('name' => '销售概况', 'act'=>'index', 'op'=>'Report'),
         // 		array('name' => '销售排行', 'act'=>'saleTop', 'op'=>'Report'),

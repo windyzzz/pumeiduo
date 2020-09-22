@@ -1735,7 +1735,7 @@ class Goods extends Base
         if ($count > 0) {
             // 获取商品数据
             $goodsLogic = new GoodsLogic();
-            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user_id, $this->isApp);
+            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user, $this->isApp);
         }
         $return['goods_list'] = isset($goodsData) ? $goodsData['goods_list'] : [];
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
@@ -3191,5 +3191,162 @@ class Goods extends Base
             ];
         }
         return json(['status' => 1, 'result' => $return]);
+    }
+
+    /**
+     * 获取商品口令
+     * @return \think\response\Json
+     */
+    public function getGoodsPassword()
+    {
+        $goodsId = I('goods_id', 0);
+        $itemId = I('item_id', 0);
+        $userId = I('user_id', $this->user_id ?? 0);
+        $source = I('source', 1);   // 来源：1商品详情 2社区文章
+        if (!$goodsId) return json(['status' => 0, 'msg' => '请传入商品ID']);
+        // 获取商品数据
+        $goodsInfo = M('goods')->where(['goods_id' => $goodsId, 'is_on_sale' => 1])->field('goods_name')->find();
+        if (empty($goodsInfo)) return json(['status' => 0, 'msg' => '商品已下架']);
+        // 生成口令
+        $password = (new GoodsLogic())->createGoodsPwd($goodsInfo);
+        // 记录口令
+        $pwdData = [
+            'goods_id' => $goodsId,
+            'item_id' => $itemId,
+            'password' => $password,
+            'user_id' => $userId,
+            'is_official' => $userId == 0 ? 1 : 0,
+            'add_time' => NOW_TIME,
+            'dead_time' => tpCache('share.goods_pwd_day') ? strtotime('+' . tpCache('share.goods_pwd_day') . 'day') : strtotime('+1 day'),
+            'source' => $source,
+            'creator_id' => $this->user_id
+        ];
+        M('goods_password')->add($pwdData);
+        $return = [
+            'password' => $password
+        ];
+        return json(['status' => 1, 'result' => $return]);
+    }
+
+    /**
+     * 根据口令获取商品数据
+     * @return \think\response\Json
+     */
+    public function checkGoodsPassword()
+    {
+        $password = I('password', 0);
+        try {
+            if (!$password) throw new \Exception('请传入商品口令');
+            // 获取口令内容
+            $goodsPassword = M('goods_password')->where(['password' => $password])->find();
+            if (empty($goodsPassword)) throw new \Exception('口令不存在');
+            if ($goodsPassword['dead_time'] < NOW_TIME) {
+                M('goods_password')->where(['id' => $goodsPassword['id']])->update(['status' => 0]);
+                throw new \Exception('口令已过期');
+            }
+            // 获取商品数据
+            $goods = M('goods')->where([
+                'goods_id' => $goodsPassword['goods_id'],
+                'is_on_sale' => 1
+            ])->field('goods_name, original_img, shop_price, exchange_integral')->find();
+            if (empty($goods)) throw new \Exception('商品已下架');
+            $goodsInfo = [
+                'goods_type' => 'normal',
+                'goods_id' => $goodsPassword['goods_id'],
+                'item_id' => $goodsPassword['item_id'],
+                'goods_name' => $goods['goods_name'],
+                'original_img_new' => getFullPath($goods['original_img']),
+                'exchange_price' => bcsub($goods['shop_price'], $goods['exchange_integral'], 2),
+                'exchange_integral' => $goods['exchange_integral'],
+            ];
+            // 判断商品性质
+            $flashSale = Db::name('flash_sale fs')
+                ->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
+                ->where(['fs.goods_id' => $goodsPassword['goods_id'], 'fs.item_id' => $goodsPassword['item_id'], 'fs.start_time' => ['<=', time()], 'fs.end_time' => ['>=', time()], 'fs.is_end' => 0])
+                ->where(['fs.source' => ['LIKE', $this->isApp ? '%' . 3 . '%' : '%' . 1 . '%']])
+                ->field('fs.goods_id, sgp.key spec_key, fs.price, fs.goods_num, fs.buy_limit, fs.start_time, fs.end_time, fs.can_integral')->select();
+            if (!empty($flashSale)) {
+                $flashSale = $flashSale[0];
+                // 秒杀商品
+                $goodsInfo['goods_type'] = 'flash_sale';
+                $goodsInfo['exchange_integral'] = $flashSale['can_integral'] == 0 ? '0' : $goods['exchange_integral'];
+                $goodsInfo['exchange_price'] = bcsub($flashSale['price'], $goodsInfo['exchange_integral'], 2);
+            } else {
+                $groupBuy = Db::name('group_buy gb')
+                    ->join('spec_goods_price sgp', 'sgp.item_id = gb.item_id', 'LEFT')
+                    ->where(['gb.goods_id' => $goodsPassword['goods_id'], 'gb.item_id' => $goodsPassword['item_id'], 'gb.start_time' => ['<=', time()], 'gb.end_time' => ['>=', time()], 'gb.is_end' => 0])
+                    ->field('gb.goods_id, gb.price, sgp.key spec_key, gb.price, gb.group_goods_num, gb.goods_num, gb.buy_limit, gb.start_time, gb.end_time, gb.can_integral')->select();
+                if (!empty($groupBuy)) {
+                    $groupBuy = $groupBuy[0];
+                    // 团购商品
+                    $goodsInfo['goods_type'] = 'group_buy';
+                    $goodsInfo['exchange_integral'] = $groupBuy['can_integral'] == 0 ? '0' : $goods['exchange_integral'];
+                    $goodsInfo['exchange_price'] = bcsub($groupBuy['price'], $goodsInfo['exchange_integral'], 2);
+                }
+            }
+            // 促销
+            $promotion = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
+                ->where(['gtg.goods_id' => $goodsPassword['goods_id'], 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
+                ->field('pg.id prom_id, pg.title, pg.type, pg.expression')->order('expression desc');
+            if ($this->user_id) {
+                $promotion = $promotion->where(['pg.group' => ['LIKE', '%' . $this->user['distribut_level'] . '%']]);
+            }
+            $promotion = $promotion->select();
+            // 再处理显示金额：优惠促销
+            if (!empty($promotion)) {
+                foreach ($promotion as $value) {
+                    switch ($value['type']) {
+                        case 0:
+                            // 打折
+                            $goodsInfo['exchange_price'] = bcdiv(bcmul($goodsInfo['exchange_price'], $value['expression'], 2), 100, 2);
+                            break;
+                        case 1:
+                            // 减价
+                            $goodsInfo['exchange_price'] = bcsub($goodsInfo['exchange_price'], $value['expression'], 2);
+                            break;
+                    }
+                }
+            }
+            // 获取分享者数据
+            if ($goodsPassword['is_official'] == 1) {
+                // 社区官方
+                $official = M('community_config')->where(['type' => 'official'])->find();
+                $userInfo = [
+                    'user_id' => '0',
+                    'user_name' => $official ? $official['name'] : '圃美多官方',
+                    'head_pic' => $official ? getFullPath($official['url']) : getFullPath('/public/images/default_head.png')
+                ];
+            } else {
+                $user = M('users')->where(['user_id' => $goodsPassword['user_id']])->field('user_id, nickname, user_name,head_pic')->find();
+                $userInfo = [
+                    'user_id' => !empty($user['user_id']) ? $user['user_id'] : '',
+                    'user_name' => !empty($user['user_name']) ? $user['user_name'] : !empty($user['nickname']) ? $user['nickname'] : '',
+                    'head_pic' => !empty($user['head_pic']) ? getFullPath($user['head_pic']) : '',
+                ];
+            }
+            $return = [
+                'state' => 1,
+                'data' => [
+                    'goods' => $goodsInfo,
+                    'user' => $userInfo
+                ],
+                'msg' => ''
+            ];
+            if ($this->user_id) {
+                // 记录
+                M('goods_password_log')->add([
+                    'password_id' => $goodsPassword['id'],
+                    'user_id' => $this->user_id,
+                    'add_time' => NOW_TIME
+                ]);
+            }
+            return json(['status' => 1, 'result' => $return]);
+        } catch (\Exception $e) {
+            return json(['status' => 1, 'result' => [
+                'state' => 0,
+                'data' => (object)[],
+                'msg' => $e->getMessage()
+            ]]);
+        }
     }
 }

@@ -2,8 +2,6 @@
 
 namespace app\common\logic;
 
-use app\common\logic\Token as TokenLogic;
-
 require_once './vendor/jpush/jpush/autoload.php';
 
 class PushLogic
