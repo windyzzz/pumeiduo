@@ -10,6 +10,14 @@ use think\Page;
 
 class Community extends Base
 {
+    private $ossClient = null;
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->ossClient = new OssLogic();
+    }
+
     /**
      * 社区配置
      * @return mixed
@@ -316,13 +324,13 @@ class Community extends Base
                     $image = [];
                     foreach ($images as $item) {
                         $item = explode(',', $item);
-                        $image[] = \plugins\Oss::url(substr($item[0], strrpos($item[0], 'url:') + 4));
+                        $image[] = $this->ossClient::url(substr($item[0], strrpos($item[0], 'url:') + 4));
                     }
                     $articleInfo['image'] = $image;
                 } else {
                     $articleInfo['image'] = [];
                 }
-                $articleInfo['video'] = !empty($articleInfo['video']) ? \plugins\Oss::url($articleInfo['video']) : '';
+                $articleInfo['video'] = !empty($articleInfo['video']) ? $this->ossClient::url($articleInfo['video']) : '';
                 $articleInfo['cate_id1_desc'] = $tCategory[$articleInfo['cate_id1']];
                 $articleInfo['cate_id2_desc'] = $dCategory[$articleInfo['cate_id2']];
                 $articleInfo['goods_name'] = M('goods')->where(['goods_id' => $articleInfo['goods_id']])->value('goods_name');
@@ -359,7 +367,6 @@ class Community extends Base
                             }
                             $postImage = [];
                             // 上传到OSS服务器
-                            $ossClient = new OssLogic();
                             foreach ($postData['image'] as $image) {
                                 if (empty($image)) {
                                     continue;
@@ -367,9 +374,9 @@ class Community extends Base
                                 $filePath = PUBLIC_PATH . substr($image, strrpos($image, '/public/') + 8);
                                 $fileName = substr($image, strrpos($image, '/') + 1);
                                 $object = 'image/' . date('Y/m/d/H/') . $fileName;
-                                $return_url = $ossClient->uploadFile($filePath, $object);
+                                $return_url = $this->ossClient->uploadFile($filePath, $object);
                                 if (!$return_url) {
-                                    return $this->ajaxReturn(['status' => 0, 'msg' => 'ERROR：' . $ossClient->getError()]);
+                                    return $this->ajaxReturn(['status' => 0, 'msg' => 'ERROR：' . $this->ossClient->getError()]);
                                 } else {
                                     // 图片信息
                                     $imageInfo = getimagesize($filePath);
@@ -437,7 +444,6 @@ class Community extends Base
                             }
                             $postImage = [];
                             // 上传到OSS服务器
-                            $ossClient = new OssLogic();
                             foreach ($postData['image'] as $image) {
                                 if (empty($image)) {
                                     continue;
@@ -451,9 +457,9 @@ class Community extends Base
                                 $filePath = PUBLIC_PATH . substr($image, strrpos($image, '/public/') + 8);
                                 $fileName = substr($image, strrpos($image, '/') + 1);
                                 $object = 'image/' . date('Y/m/d/H/') . $fileName;
-                                $return_url = $ossClient->uploadFile($filePath, $object);
+                                $return_url = $this->ossClient->uploadFile($filePath, $object);
                                 if (!$return_url) {
-                                    return $this->ajaxReturn(['status' => 0, 'msg' => 'ERROR：' . $ossClient->getError()]);
+                                    return $this->ajaxReturn(['status' => 0, 'msg' => 'ERROR：' . $this->ossClient->getError()]);
                                 } else {
                                     // 图片信息
                                     $imageInfo = getimagesize($filePath);
@@ -500,7 +506,7 @@ class Community extends Base
                     $image = [];
                     foreach ($images as $item) {
                         $item = explode(',', $item);
-                        $image[] = \plugins\Oss::url(substr($item[0], strrpos($item[0], 'url:') + 4));
+                        $image[] = $this->ossClient::url(substr($item[0], strrpos($item[0], 'url:') + 4));
                     }
                     $articleInfo['image'] = $image;
                     $articleInfo['upload_content'] = 1;
@@ -508,7 +514,7 @@ class Community extends Base
                     $articleInfo['image'] = [];
                     $articleInfo['upload_content'] = 2;
                 }
-                $articleInfo['video'] = !empty($articleInfo['video']) ? \plugins\Oss::url($articleInfo['video']) : '';
+                $articleInfo['video'] = !empty($articleInfo['video']) ? $this->ossClient::url($articleInfo['video']) : '';
                 $articleInfo['goods_name'] = M('goods')->where(['goods_id' => $articleInfo['goods_id']])->value('goods_name');
                 $this->assign('info', $articleInfo);
                 $this->assign('d_category', $dCategory);

@@ -1,14 +1,14 @@
-accessid = ''
-accesskey = ''
-host = ''
-policyBase64 = ''
-signature = ''
-callbackbody = ''
-filename = ''
-key = ''
-expire = 0
-g_object_name = ''
-g_object_name_type = 'random_name'
+accessid = '';
+accesskey = '';
+host = '';
+policyBase64 = '';
+signature = '';
+callbackbody = '';
+filename = '';
+key = '';
+expire = 0;
+g_object_name = '';
+g_object_name_type = 'random_name';
 now = timestamp = Date.parse(new Date()) / 1000;
 
 
@@ -21,14 +21,14 @@ function send_request() {
     }
 
     if (xmlhttp != null) {
-        serverUrl = '/admin/oss/sign'
+        serverUrl = '/admin/oss/sign';
         xmlhttp.open("GET", serverUrl, false);
         xmlhttp.send(null);
         return xmlhttp.responseText
     } else {
         alert("Your browser does not support XMLHTTP.");
     }
-};
+}
 
 function check_object_radio() {
     return;
@@ -71,8 +71,8 @@ function random_string(len) {
 }
 
 function get_suffix(filename) {
-    pos = filename.lastIndexOf('.')
-    suffix = ''
+    pos = filename.lastIndexOf('.');
+    suffix = '';
     if (pos != -1) {
         suffix = filename.substring(pos)
     }
@@ -156,7 +156,7 @@ var uploader = new plupload.Uploader({
             var fr = new mOxie.FileReader();
             fr.onload = function () {
                 $("#video_tag").attr('src', fr.result);
-            }
+            };
 
             for (var i = 0; i < files.length; i++) {
                 if (i != files.length - 1) {
@@ -195,8 +195,8 @@ var uploader = new plupload.Uploader({
          */
         FileUploaded: function (up, file, info) {
             if (info.status == 200) {
-                var res = JSON.parse(info.response)
-                console.log(res)
+                var res = JSON.parse(info.response);
+                console.log(res);
                 $('#video_input').val(res.filename)
             } else if (info.status == 203) {
                 alert('上传到OSS成功，但是oss访问用户设置的上传回调服务器失败');

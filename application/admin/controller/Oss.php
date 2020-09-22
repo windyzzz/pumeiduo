@@ -24,7 +24,7 @@ class Oss extends Base
         $id = C('OSS_ACCESSKEY_ID');          // 请填写您的AccessKeyId。
         $key = C('OSS_ACCESSKEY_SECRET');     // 请填写您的AccessKeySecret。
         // $host的格式为 bucketname.endpoint，请替换为您的真实信息。
-        $host = 'http://' . C('OSS_BUCKET') . '.' . C('OSS_ENDPOINT');
+        $host = 'https://' . C('OSS_BUCKET') . '.' . C('OSS_ENDPOINT');
         // $callbackUrl为上传回调服务器的URL，请将下面的IP和Port配置为您自己的真实URL信息。
         $callbackUrl = C('OSS_CALLBACK_URL');
         $dir = 'video/' . date('Y/m/d/H/');          // 用户上传文件时指定的前缀。

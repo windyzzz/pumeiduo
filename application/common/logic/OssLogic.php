@@ -71,6 +71,11 @@ class OssLogic
         self::$initConfigFlag = true;
     }
 
+    public static function url($path)
+    {
+        return 'http://' . self::$bucket .'.'. self::$endpoint . '/' . $path;
+    }
+
     private static function getOssClient()
     {
         if (!self::$ossClient) {

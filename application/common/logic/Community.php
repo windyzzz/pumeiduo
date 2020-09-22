@@ -7,6 +7,12 @@ use think\Page;
 
 class Community
 {
+    private $ossClient = null;
+    public function __construct()
+    {
+        $this->ossClient = new OssLogic();
+    }
+
     /**
      * 文章搜索条件
      * @param $param
@@ -149,7 +155,7 @@ class Community
             if (!empty($value['image'])) {
                 foreach ($value['image'] as $item) {
                     $item = explode(',', $item);
-                    $image[] = \plugins\Oss::url(substr($item[0], strrpos($item[0], 'url:') + 4));
+                    $image[] = $this->ossClient::url(substr($item[0], strrpos($item[0], 'url:') + 4));
                     $imageSize[] = [
                         'width' => substr($item[1], strrpos($item[1], 'width:') + 6),
                         'height' => substr($item[2], strrpos($item[2], 'height:') + 7),
@@ -160,8 +166,8 @@ class Community
             $video = [];
             if (!empty($value['video'])) {
                 $video = [
-                    'url' => !empty($value['video']) ? \plugins\Oss::url($value['video']) : '',
-                    'cover' => !empty($value['video']) ? \plugins\Oss::url($value['video_cover']) : '',
+                    'url' => !empty($value['video']) ? $this->ossClient::url($value['video']) : '',
+                    'cover' => !empty($value['video']) ? $this->ossClient::url($value['video_cover']) : '',
                     'axis' => $value['video_axis']
                 ];
             }
