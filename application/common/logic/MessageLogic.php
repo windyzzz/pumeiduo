@@ -101,7 +101,7 @@ class MessageLogic extends Model
      *
      * @return array
      */
-    public function getUserMessageNotice($user_info = [], $isIndex = false)
+    public function getUserMessageNotice($user_info = [], $status = '', $isIndex = false)
     {
         $this->checkPublicMessage($user_info);
         if (empty($user_info)) {
@@ -110,9 +110,13 @@ class MessageLogic extends Model
         if (!empty($user_info)) {
             $user_system_message_no_read_where = [
                 'user_id' => $user_info['user_id'],
-                'status' => ['in', [0, 1]],
                 'm.category' => 0,
             ];
+            if (!empty($status) || $status === 0) {
+                $user_system_message_no_read_where['status'] = $status;
+            } else {
+                $user_system_message_no_read_where['status'] = ['in', [0, 1]];
+            }
             $where['m.title'] = ['neq', ''];
             if ($isIndex) {
                 $num = 3;
