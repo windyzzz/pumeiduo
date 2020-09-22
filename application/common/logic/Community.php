@@ -51,7 +51,16 @@ class Community
         if (!empty($param['sort']) && !empty($param['order'])) {
 
         }
-        $sort .= ' share DESC, publish_time DESC, add_time DESC';
+        $articleSort = M('community_config')->where(['type' => 'article_sort'])->value('content');
+        switch ($articleSort) {
+            case 'publish_time':
+                $sort .= $articleSort . ' DESC, share DESC,';
+                break;
+            case 'share':
+                $sort .= $articleSort . ' DESC, publish_time DESC,';
+                break;
+        }
+        $sort .= ' add_time DESC';
         return $sort;
     }
 

@@ -38,6 +38,16 @@
                     </div>
                 </dd>
             </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>文章排序</label>
+                </dt>
+                <dd class="opt">
+                    <input type="radio" name="article_sort[content]" value="share" <if condition="$config.article_sort.content eq share"> checked </if> > 分享数
+                    <input type="radio" name="article_sort[content]" value="publish_time" <if condition="$config.article_sort.content eq publish_time"> checked </if> > 发布时间
+                    <p class="notic">文章优先级排序（由大到小）</p>
+                </dd>
+            </dl>
             <div class="bot">
                 <a href="JavaScript:void(0);" class="ncap-btn-big ncap-btn-green" onclick="document.form.submit()">确认提交</a>
             </div>
