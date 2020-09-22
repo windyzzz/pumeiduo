@@ -3489,17 +3489,27 @@ class User extends Base
      */
     public function checkUserLevelGoods()
     {
-        return json(['status' => 1]);
         $goodsId = I('goods_id', '');
         if (!$goodsId || $goodsId === 0) {
             return json(['status' => 0, 'msg' => '请传入正确的商品ID']);
         }
         // 商品分销等级
         $goodsDistribute = M('goods')->where(['goods_id' => $goodsId])->value('distribut_id');
+        if (in_array($goodsDistribute, [0, 1])) {
+            return json(['status' => 1]);
+        }
         // 用户分销等级
         $userDistribute = M('users')->where(['user_id' => $this->user_id])->value('distribut_level');
+        if ($userDistribute == 1 && $goodsDistribute == 3) {
+            return json(['status' => -11, 'msg' => '普通会员无法购买SVIP产品']);
+        }
         if ($goodsDistribute <= $userDistribute) {
-            return json(['status' => -11, 'msg' => '你已经是VIP会员了，无法再次购买']);
+            switch ($userDistribute) {
+                case 2:
+                    return json(['status' => -11, 'msg' => '你已经是VIP会员了，无法再次购买']);
+                case 3:
+                    return json(['status' => -11, 'msg' => '你已经是SVIP会员了，无法再次购买']);
+            }
         }
         return json(['status' => 1]);
     }
@@ -3826,24 +3836,39 @@ class User extends Base
          */
         $vip_buy_tips = trim(tpCache('distribut.vip_buy_tips'));
         $referee_vip_tips = trim(tpCache('distribut.referee_vip_tips'));
-        if ($vip_buy_tips || $referee_vip_tips) {
+        $referee_svip_tips = trim(tpCache('distribut.referee_svip_tips'));
+        if ($vip_buy_tips || $referee_vip_tips || $referee_svip_tips) {
             $distributeLog = M('distribut_log')->where(['user_id' => $this->user_id, 'type' => ['IN', [1, 3]], 'note_status' => 0])->select();
             if (!empty($distributeLog)) {
                 foreach ($distributeLog as $log) {
                     switch ($log['type']) {
                         case 1:
-                            // 购买VIP套组升级
-                            if (M('distribut_log')->where(['user_id' => $this->user_id, 'order_sn' => $log['order_sn'], 'type' => 2])->find() || !$referee_vip_tips) {
+                            // 购买VIP/SVIP套组升级
+                            if (M('distribut_log')->where(['user_id' => $this->user_id, 'order_sn' => $log['order_sn'], 'type' => 2])->find() || (!$referee_vip_tips && !$referee_svip_tips)) {
                                 continue;
                             }
-                            $noteList[] = [
-                                'type' => 2,
-                                'is_note' => 1,
-                                'note_data' => [
-                                    'id' => $log['id'],
-                                    'title' => $referee_vip_tips
-                                ]
-                            ];
+                            switch ($log['new_level']) {
+                                case 2:
+                                    $noteList[] = [
+                                        'type' => 2,
+                                        'is_note' => 1,
+                                        'note_data' => [
+                                            'id' => $log['id'],
+                                            'title' => $referee_vip_tips
+                                        ]
+                                    ];
+                                    break;
+                                case 3:
+                                    $noteList[] = [
+                                        'type' => 4,
+                                        'is_note' => 1,
+                                        'note_data' => [
+                                            'id' => $log['id'],
+                                            'title' => $referee_svip_tips
+                                        ]
+                                    ];
+                                    break;
+                            }
                             break 2;
                         case 3:
                             // 累积消费升级
@@ -3884,6 +3909,7 @@ class User extends Base
         $type = I('type', 2);
         switch ($type) {
             case 2:
+            case 4:
                 /*
                  * 用户升级成为VIP弹窗
                  */
@@ -3969,8 +3995,7 @@ class User extends Base
         }
         return json(['status' => 1, 'result' => $return]);
     }
-
-
+    
     /**
      * 显示新用户奖励弹窗
      * @return \think\response\Json
@@ -4073,5 +4098,31 @@ class User extends Base
             }
         }
         return json(['status' => 1, 'result' => $return]);
+    }
+
+    /**
+     * 会员升级提示信息
+     * @return \think\response\Json
+     */
+    public function levelTipsInfo()
+    {
+        $type = I('type', 2); // 2为普卡会员 3为网点会员
+        $where = [];
+        $levelTipsInfo = [
+            'svip_benefit' => []
+        ];
+        switch ($type) {
+            case 3:
+                $where['type'] = 'svip_benefit';
+                break;
+        }
+        $distributeConfig = M('distribute_config')->where($where)->select();
+        foreach ($distributeConfig as $config) {
+            $levelTipsInfo['svip_benefit'][] = [
+                'name' => $config['name'],
+                'icon' => getFullPath($config['url'])
+            ];
+        }
+        return json(['status' => 1, 'result' => $levelTipsInfo]);
     }
 }

@@ -1592,21 +1592,49 @@ class CartLogic extends Model
 
     /**
      * 检查下单商品
+     * @param $user
      * @param $cartList
      * @return array
      */
-    public function checkCartGoods($cartList)
+    public function checkCartGoods($user, $cartList)
     {
         $hasPmd = false;
         $hasAbroad = false;
         $hasSupply = false;
+        $vipLevel = [];
         foreach ($cartList as $cart) {
+            if ($cart['goods']['zone'] == 3 && $cart['goods']['distribut_id'] > 1) {
+                $vipLevel[] = [
+                    'goods_id' => $cart['goods']['goods_id'],
+                    'level' => $cart['goods']['distribut_id']
+                ];
+            }
             if ($cart['goods']['is_abroad'] == 1) {
                 $hasAbroad = true;
             } elseif ($cart['goods']['is_supply'] == 1) {
                 $hasSupply = true;
             } else {
                 $hasPmd = true;
+            }
+        }
+        if (!empty($vipLevel)) {
+            foreach ($vipLevel as $vip) {
+                if ($user['distribut_level'] >= $vip['level']) {
+                    // 删除购物车
+                    M('cart')->where(['user_id' => $user['user_id'], 'goods_id' => $vip['goods_id']])->delete();
+                    return ['status' => -1, 'msg' => '不能购买自己等级或以下的升级套餐'];
+                } elseif ($vip['level'] == 3) {
+                    // 查看是否有申请金卡记录
+                    if (M('apply_customs')->where(['user_id' => $user['user_id'], 'status' => ['NEQ', 2]])->find()) {
+                        return ['status' => -1, 'msg' => '您正在申请成为SVIP，不能再购买升级套餐'];
+                    }
+                    // 查看是否已经购买过SVIP升级套组（已支付完成 未取消 未退款）
+                    $userPreDistributeLog = M('user_pre_distribute_log pd')->join('order o', 'o.order_id = pd.order_id')
+                        ->where(['pd.user_id' => $user['user_id'], 'pd.new_level' => 3, 'o.order_status' => ['NOT IN', [3, 5, 6]], 'o.pay_status' => 1])->value('pd.id');
+                    if ($userPreDistributeLog) {
+                        return ['status' => -1, 'msg' => '您已经成功购买了升级套餐，无需再购买'];
+                    }
+                }
             }
         }
         if (($hasPmd && $hasAbroad) || ($hasSupply && $hasAbroad)) {

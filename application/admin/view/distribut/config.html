@@ -1,0 +1,100 @@
+<include file="public/layout" />
+<style>
+    .system_img_location{text-align: center; width: 120px;position:absolute;top:15px; margin-left:265px;}
+</style>
+<body style="background-color: #FFF; overflow: auto;">
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title">
+            <div class="subject">
+                <h3>升级介绍设置</h3>
+            </div>
+        </div>
+    </div>
+    <form method="post" id="handlepost" action="{:U('Distribut/config')}" enctype="multipart/form-data" name="form">
+        <div class="ncap-form-default">
+            <dl class="row" id="svip_benefit">
+                <dt class="tit">
+                    <label>SVIP专属权益</label>
+                </dt>
+                <volist name="config.svip_benefit" id="benefit">
+                    <dd class="opt" id="svip_benefit_{$key}">
+                        <p class="notic">权益描述</p>
+                        <input type="text" class="input-txt" name="svip_benefit[name][{$key}]" value="{$benefit.name}">
+                        <br/>
+                        <div class="input-file-show">
+                            <span class="show">
+                                <a id="svip_benefit_url_{$key}_a" target="_blank" class="nyroModal" rel="gal" href="{$benefit.url}">
+                                    <i id="svip_benefit_url_{$key}_i" class="fa fa-picture-o" onmouseover="layer.tips('<img src={$benefit.url}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();"></i>
+                                </a>
+                            </span>
+                            <span class="type-file-box">
+                                <input type="text" id="svip_benefit_url_{$key}" name="svip_benefit[url][{$key}]" value="{$benefit.url}" class="type-file-text">
+                                <input type="button" name="button" value="选择上传..." class="type-file-button">
+                                <input class="type-file-file" onClick="GetUploadify(1,'svip_benefit_url_{$key}','distribute','img_call_back')" size="30" hidefocus="true" nc_type="change_site_logo" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">
+                            </span>
+                        </div>
+                        <p class="notic">长41px，宽41px</p>
+                        <a href="javascript:void(0);" onClick="delSvipBenefit({$key})">删除</a>
+                        <br/>
+                        <br/>
+                    </dd>
+                    <dt class="tit"></dt>
+                </volist>
+                <if condition="count($config.svip_benefit) < 4">
+                    <dd class="opt" id="svip_benefit_add">
+                        <a href="javascript:void(0);" onClick="addSvipBenefit()">
+                            <img src="/public/images/add-button.jpg" width="100" height="100"/>
+                        </a>
+                    </dd>
+                </if>
+            </dl>
+            <div class="bot">
+                <a href="JavaScript:void(0);" class="ncap-btn-big ncap-btn-green" onclick="document.form.submit()">确认提交</a>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="goTop"> <a href="JavaScript:void(0);" id="btntop"><i class="fa fa-angle-up"></i></a><a href="JavaScript:void(0);" id="btnbottom"><i class="fa fa-angle-down"></i></a></div>
+</body>
+<script type="text/javascript">
+    $(document).ready(function () {
+        svip_key = {$svip_key};
+    });
+
+    function img_call_back(fileurl_tmp, elementid) {
+        $("#" + elementid).val(fileurl_tmp);
+        $("#" + elementid + '_a').attr('href', fileurl_tmp);
+        $("#" + elementid + '_i').attr('onmouseover', "layer.tips('<img src=" + fileurl_tmp + ">',this,{tips: [1, '#fff']});");
+    }
+
+    function delSvipBenefit(k) {
+        $("#svip_benefit_" + k).next().remove();
+        $("#svip_benefit_" + k).remove();
+        if ($("#svip_benefit_add").length == 0) {
+            var html = '<dd class="opt" id="svip_benefit_add"><a href="javascript:void(0);" onClick="addSvipBenefit()">' +
+                '<img src="/public/images/add-button.jpg" width="100" height="100"/></a></dd>';
+            $("#svip_benefit").append(html);
+        }
+    }
+
+    function addSvipBenefit() {
+        if (svip_key == undefined) {
+            svip_key = 0;
+        }
+        var html = '<dd class="opt" id="svip_benefit_' + svip_key + '"><p class="notic">权益描述</p>' +
+            '<input type="text" class="input-txt" name="svip_benefit[name][' + svip_key + ']" value=""><br/>' +
+            '<div class="input-file-show"><span class="show"><a id="svip_benefit_url_' + svip_key + '_a" target="_blank" class="nyroModal" rel="gal" href="">' +
+            '<i id="svip_benefit_url_' + svip_key + '_i" class="fa fa-picture-o" onmouseover="layer.tips(\'<img src=>\',this,{tips: [1, \'#fff\']});" onmouseout="layer.closeAll();"></i>' +
+            '</a></span><span class="type-file-box"><input type="text" id="svip_benefit_url_' + svip_key + '" name="svip_benefit[url][' + svip_key + ']" value="" class="type-file-text">' +
+            '<input type="button" name="button" value="选择上传..." class="type-file-button">' +
+            '<input class="type-file-file" onClick="GetUploadify(1,\'svip_benefit_url_' + svip_key + '\',\'distribute\',\'img_call_back\')" size="30" hidefocus="true" nc_type="change_site_logo" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">' +
+            '</span></div><p class="notic">长41px，宽41px</p><a href="javascript:void(0);" onClick="delSvipBenefit(' + svip_key + ')">删除</a>' +
+            '<br/><br/></dd><dt class="tit"></dt>';
+        $("#svip_benefit_add").before(html);
+        svip_key += 1;
+    }
+</script>
+</html>

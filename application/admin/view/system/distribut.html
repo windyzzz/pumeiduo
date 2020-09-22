@@ -237,6 +237,15 @@
             </dl>
             <dl class="row">
                 <dt class="tit">
+                    <label>推荐人SVIP套组奖励金额（所有人推荐SVIP）</label>
+                </dt>
+                <dd class="opt">
+                    <input name="all_svip_money" id="distribut_all_svip_money" value="{$config.all_svip_money}" onpaste="this.value=this.value.replace(/[^\d]/g,'')" onkeyup="this.value=this.value.replace(/[^\d]/g,'')" class="input-txt" type="text">
+                    <p class="notic">元</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
                     <label>累积升级VIP弹窗提示</label>
                 </dt>
                 <dd class="opt">
@@ -251,6 +260,15 @@
                 <dd class="opt">
                     <textarea name="referee_vip_tips" id="distribut_referee_vip_tips" rows="6" class="tarea">{$config.referee_vip_tips}</textarea>
                     <p class="notic">点击跳转位置：个人邀请码</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>购买SVIP套组升级SVIP弹窗提示</label>
+                </dt>
+                <dd class="opt">
+                    <textarea name="referee_svip_tips" id="distribut_referee_svip_tips" rows="6" class="tarea">{$config.referee_svip_tips}</textarea>
+                    <p class="notic">点击跳转位置：未确定</p>
                 </dd>
             </dl>
             <dl class="row">

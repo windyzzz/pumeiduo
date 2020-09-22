@@ -305,14 +305,28 @@ class Tb extends Controller
             'status' => 1,
             'success_time' => $apply_data['success_time']
         );
-
-        $user_info = get_user_info($apply_data['user_id'], 0, '');
-
         $apply_customs = M('apply_customs')->where(array('user_id' => $apply_data['user_id'], 'status' => array('neq', 1)))->data($save_data)->save();
         $busers = M('users')->where(array('user_id' => $apply_data['user_id'], 'distribut_level' => array('neq', 3)))->data(array('distribut_level' => 3, 'user_name' => $apply_data['bind_user_name'], 'bind_uid' => $apply_data['user_id'], 'bind_time' => NOW_TIME))->save();
 
-        //级别记录
+        $user_info = get_user_info($apply_data['user_id'], 0, '');
+        // 级别记录
         $logDistribut = logDistribut('', $apply_data['user_id'], 3, $user_info['distribut_level'], 1);
+        // 预升级记录
+        $userPreLog = M('user_pre_distribute_log')->where(['user_id' => $apply_data['user_id'], 'new_level' => 3])->find();
+        if (!empty($userPreLog)) {
+            M('user_pre_distribute_log')->where(['id' => $userPreLog['id']])->update(['status' => 1]);
+            // 直属推荐人奖励金额
+            if (tpCache('distribut.all_svip_money') > 0) {
+                accountLog($user_info['first_leader'], tpCache('distribut.all_svip_money'), 0, '推广1500套组奖励金额', 0, $userPreLog['order_id'], '', 0, 14, false);
+            }
+            // 更新订单已分成
+            M('order')->where(['order_id' => $userPreLog['order_id']])->update(['is_distribut' => 1]);
+            // 更新分成记录
+            M('rebate_log')->where(['buy_user_id' => $apply_data['user_id'], 'order_id' => $userPreLog['order_id']])->update([
+                'status' => 3,
+                'confirm_time' => NOW_TIME
+            ]);
+        }
 
         if ($apply_customs && $busers && $logDistribut) {
             Db::commit();

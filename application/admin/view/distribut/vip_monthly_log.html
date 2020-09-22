@@ -12,7 +12,7 @@
             <ul class="tab-base nc-row">
                 <foreach name="group_list" item="v" key="k">
                     <li>
-                        <a href="{:U('Distribut/distributeLog',['inc_type'=> $k])}"<if condition="$k==$inc_type">class="current"</if>>
+                        <a href="{:U('Distribut/distributeLogVip',['inc_type'=> $k])}"<if condition="$k==$inc_type">class="current"</if>>
                             <span>{$v}</span>
                         </a>
                     </li>
@@ -23,7 +23,7 @@
     <div class="flexigrid">
         <div class="mDiv">
             <form class="navbar-form form-inline" method="post" action="{:U('Admin/distribut/exportDistributeLog')}" name="search-form" id="search-form">
-                <input type="hidden" name="type" value="yearly">
+                <input type="hidden" name="type" value="monthly">
                 <div class="sDiv">
                     <div class="sDiv2">
                         <input type="text" size="30" id="start_time" name="start_time" value="{$start_time}"

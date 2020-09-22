@@ -1211,7 +1211,6 @@ AND log_id NOT IN
     public function autoCustomsInfo()
     {
         $list = Db::connect(config('database.other_db'))->table('g_butt')->where(['status' => 0])->limit(1000)->select();
-
         if ($list) {
             foreach ($list as $k => $v) {
                 if (M('butt')->where(['id' => $v['id']])->find()) {

@@ -13,7 +13,7 @@ namespace app\common\logic;
 
 use app\common\logic\Token as TokenLogic;
 use app\common\model\UserAddress;
-use app\home\controller\api\User;
+use app\home\controller\Api as ApiController;
 use think\cache\driver\Redis;
 use think\Db;
 use think\Model;
@@ -102,18 +102,18 @@ class UsersLogic extends Model
             $this->error = '您尚未有资格开通金卡会员';
             return false;
         }
-        $count = M('users')->where(array('first_leader' => $user_id, 'distribut_level' => array('egt', 2)))->count();
-        $apply_check_num = tpCache('basic.apply_check_num');
-        if ($count < $apply_check_num) {
-            $this->error = '您尚未有资格开通金卡会员';
-            return false;
-        }
+//        $count = M('users')->where(array('first_leader' => $user_id, 'distribut_level' => array('egt', 2)))->count();
+//        $apply_check_num = tpCache('basic.apply_check_num');
+//        if ($count < $apply_check_num) {
+//            $this->error = '您尚未有资格开通金卡会员';
+//            return false;
+//        }
 
         $this->error = '提交';
         return true;
     }
 
-    function apply_customs($user_id, $data)
+    function apply_customs($user_id, $data, $orderId = 0, $isApp = false)
     {
         Db::startTrans();
         $check_apply_customs = $this->check_apply_customs($user_id);
@@ -137,12 +137,30 @@ class UsersLogic extends Model
             $this->error = '手机号填写错误';
             return false;
         }
+        // 第三方验证姓名与身份证
+        $apiController = new ApiController();
+        $query = [
+            'id_card' => $data['id_card'],
+            'real_name' => $data['true_name']
+        ];
+        $res = $apiController->checkIdCard($query, 'array');
+        if ($res['status'] != '01') {
+            $this->error = "请填写正确的身份信息\r\n（身份证号以及姓名）";
+            return false;
+        }
 
         $invite_uid = M('Users')->where('user_id', $user_id)->getField('invite_uid');
         $referee_user_id = $this->nk($invite_uid, 3);
-        if (!empty($data['referee_user_id']) && $data['referee_user_id'] !== $referee_user_id) {
-            $this->error = '推荐人信息有误';
-            return false;
+        if ($isApp) {
+            if (!$referee_user_id) {
+                $this->error = '推荐人信息有误';
+                return false;
+            }
+        } else {
+            if (!empty($data['referee_user_id']) && $data['referee_user_id'] !== $referee_user_id) {
+                $this->error = '推荐人信息有误';
+                return false;
+            }
         }
 
         $apply_customs = M('apply_customs')->where(array('user_id' => $user_id))->find();
@@ -153,6 +171,7 @@ class UsersLogic extends Model
             'mobile' => $data['mobile'],
             'add_time' => NOW_TIME,
             'referee_user_id' => $referee_user_id,
+            'order_id' => $orderId,
             'status' => 0,
             'success_time' => 0,
             'cancel_time' => 0,
@@ -172,7 +191,7 @@ class UsersLogic extends Model
 
         if ($bapply_customs && $badd_tb_zx) {
             Db::commit();
-            $this->error = '提交成功，等待审核';
+            $this->error = "资料提交成功，请等待审核，审核时间为5-7个工作日有任何疑问请联系客服" . tpCache('shop_info.mobile');
             return true;
         } else {
             Db::rollback();

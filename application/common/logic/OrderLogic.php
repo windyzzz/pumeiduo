@@ -49,28 +49,24 @@ class OrderLogic
         if (3 == $order['order_status']) {
             return ['status' => 0, 'msg' => '该订单已取消', 'result' => ''];
         }
-
         if (1 == $order['shipping_status']) {
             return ['status' => 0, 'msg' => '该订单已发货，不能取消', 'result' => ''];
         }
-
         if ($order['order_status'] == 1 && $is_admin == false) {
             return ['status' => 0, 'msg' => '该订单已确认，不能取消订单', 'result' => ''];
         }
-
-        if ($order['pay_status'] == 1 && $is_admin == false) {//已支付 检查是否是vip升级单
+        if ($order['pay_status'] == 1 && $is_admin == false) {
             $has_vip_order = M('order')
                 ->alias('o')
                 ->field('o.order_id')
                 ->join('order_goods og', 'o.order_id = og.order_id')
-                ->join('goods g', 'g.goods_id = og.goods_id and g.zone=3')
-                ->where(array('o.order_id' => $order_id))
+                ->join('goods g', 'g.goods_id = og.goods_id')
+                ->where(array('o.order_id' => $order_id, 'g.zone' => 3))
                 ->find();
             if ($has_vip_order) {
-                return ['status' => 0, 'msg' => 'VIP升级套装，不能取消订单', 'result' => ''];
+                return ['status' => 0, 'msg' => '会员升级套装，不能取消订单', 'result' => ''];
             }
         }
-
         //检查是否未支付的订单
         if (($order['pay_status'] > 0 || $order['order_status'] > 0) && $order['order_amount'] > 0) {
 //            if ($_SERVER['SERVER_ADDR'] != '61.238.101.138') {
@@ -147,7 +143,6 @@ class OrderLogic
                 $msg = isset($msg) ? $msg : '支付平台退款错误';
                 return ['status' => 0, 'msg' => '退款失败,' . $msg, 'result' => '错误原因:' . $msg];
             }
-
             // 如果有微信公众号 则推送一条消息到微信
             $user = Db::name('OauthUsers')->where(['user_id' => $order['user_id'], 'oauth' => 'weixin', 'oauth_child' => 'mp'])->find();
             if ($user) {
@@ -203,6 +198,17 @@ class OrderLogic
                     }
                 }
             }
+        }
+        // 取消预备升级记录
+        M('user_pre_distribute_log')->where(['order_id' => $order['order_id']])->update(['status' => -1]);
+        $applyId = M('apply_customs')->where(['order_id' => $order['order_id']])->value('id');
+        if ($applyId) {
+            // 取消金卡申请
+            M('apply_customs')->where(['order_id' => $order['order_id']])->update(['status' => 2, 'cancel_time' => NOW_TIME]);
+            //通知仓储系统
+            include_once "plugins/Tb.php";
+            $TbLogic = new \Tb();
+            $TbLogic->add_tb(1, 8, $applyId, 0);
         }
 
         // $OrderGoods = M('OrderGoods')->field('goods_id')->where('order_id',$order_id)->select();

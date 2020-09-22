@@ -1731,10 +1731,11 @@ class GoodsLogic extends Model
      * @param $payType
      * @param $cartIds
      * @param $isApp
+     * @param $userId
      * @param $passAuth
      * @return array
      */
-    public function getOrderGoodsData(CartLogic $cartLogic, $goodsId, $itemId, $goodsNum, $payType, $cartIds, $isApp, $passAuth = false)
+    public function getOrderGoodsData(CartLogic $cartLogic, $goodsId, $itemId, $goodsNum, $payType, $cartIds, $isApp, $userId, $passAuth = false)
     {
         if (!empty($goodsId) && empty(trim($cartIds))) {
             /*
@@ -1786,8 +1787,11 @@ class GoodsLogic extends Model
                     $cartList[$key]['member_goods_price'] = bcsub($cart['goods_price'], $cart['use_integral'], 2);
                 }
             }
+            if (count($vipGoods) > 0 && M('user_pre_distribute_log')->where(['user_id' => $userId, 'status' => 0])->find()) {
+                return ['status' => 0, 'msg' => '你已经购买过升级套餐，请耐心等待审核结果'];
+            }
             if (count($vipGoods) > 1) {
-                return ['status' => 0, 'msg' => '不能一次购买两种或以上VIP升级套餐'];
+                return ['status' => 0, 'msg' => '不能一次购买两种或以上升级套餐'];
             }
             return ['status' => 1, 'result' => $cartList];
         } else {
@@ -1898,7 +1902,7 @@ class GoodsLogic extends Model
                 $cartLogic = new CartLogic();
                 $cartLogic->setUserId($user['user_id']);
                 // 获取订单商品数据
-                $res = $this->getOrderGoodsData($cartLogic, $goodsId, $itemId, 1, 1, '', 1, true);
+                $res = $this->getOrderGoodsData($cartLogic, $goodsId, $itemId, 1, 1, '', 1, $user['user_id'], true);
                 if ($res['status'] != 1) {
                     throw new TpshopException('地址商品信息', 0, ['status' => 0, 'msg' => $res['msg']]);
                 } else {
