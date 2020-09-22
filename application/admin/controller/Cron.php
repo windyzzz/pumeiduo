@@ -1552,37 +1552,45 @@ AND log_id NOT IN
     }
 
     /**
-     * 更新社区文章信息
+     * 更新社区文章图片
      */
-    public function updateCommunityArticleInfo()
+    public function updateCommunityArticleImage()
     {
-        // 获取发布视频的文章
         $article = M('community_article')
-            ->whereOr(['image' => ['NEQ', ''], 'get_image_info' => 0])
-            ->whereOr(['video' => ['NEQ', ''], 'video_cover' => ''])
-            ->field('id, image, video')->limit(5)->select();
+            ->where(['image' => ['NEQ', ''], 'get_image_info' => 0])
+            ->field('id, image')->limit(5)->select();
         foreach ($article as $value) {
-            $upData = [];
-            if (!empty($value['image'])) {
-                $upData['image'] = '';
-                // 获取图片信息
-                $value['image'] = explode(';', $value['image']);
-                foreach ($value['image'] as $item) {
-                    $item = explode(',', $item);
-                    $image = substr($item[0], strrpos($item[0], 'url:') + 4);
-                    $imageInfo = getImageInfo($image);
-                    $upData['image'] .= $item[0] . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ';';
-                }
-                $upData['image'] = rtrim($upData['image'], ';');
-                $upData['get_image_info'] = 1;
-            } elseif (!empty($value['video'])) {
-                // 获取视频封面图
-                $videoCover = getVideoCoverImages($value['video']);
-                $upData = [
-                    'video_cover' => $videoCover['path'],
-                    'video_axis' => $videoCover['axis']
-                ];
+            $upData['image'] = '';
+            // 获取图片信息
+            $value['image'] = explode(';', $value['image']);
+            foreach ($value['image'] as $item) {
+                $item = explode(',', $item);
+                $image = substr($item[0], strrpos($item[0], 'url:') + 4);
+                $imageInfo = getImageInfo($image);
+                $upData['image'] .= $item[0] . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ';';
             }
+            $upData['image'] = rtrim($upData['image'], ';');
+            $upData['get_image_info'] = 1;
+            // 更新文章数据
+            M('community_article')->where(['id' => $value['id']])->update($upData);
+        }
+    }
+
+    /**
+     * 更新社区文章视频
+     */
+    public function updateCommunityArticleVideo()
+    {
+        $article = M('community_article')
+            ->where(['video' => ['NEQ', ''], 'video_cover' => ''])
+            ->field('id, video')->limit(5)->select();
+        foreach ($article as $value) {
+            // 获取视频封面图
+            $videoCover = getVideoCoverImages($value['video']);
+            $upData = [
+                'video_cover' => $videoCover['path'],
+                'video_axis' => $videoCover['axis']
+            ];
             // 更新文章数据
             M('community_article')->where(['id' => $value['id']])->update($upData);
         }
