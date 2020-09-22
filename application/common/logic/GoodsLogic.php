@@ -1980,7 +1980,7 @@ class GoodsLogic extends Model
     public function createGoodsPwd($goodsInfo)
     {
         $password = 'PMD_' . get_rand_str(12, 0, 1);
-        $password = '复制内容“' . $password . '”打开乐活优选【' . $goodsInfo['goods_name'] . '】';
+        $password = '复制内容“' . $password . '”打开乐活优选APP【' . $goodsInfo['goods_name'] . '】';
         if (M('goods_password')->where(['password' => $password])->find()) {
             return $this->createGoodsPwd($goodsInfo);
         }
