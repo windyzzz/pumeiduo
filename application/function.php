@@ -1999,8 +1999,9 @@ function getVideoCoverImages($file)
  */
 function getVideoCoverImages_v2($file)
 {
+    $ossClient = new \app\common\logic\OssLogic();
     // 从OSS服务器下载视频截图
-    $file = \plugins\Oss::url($file) . '?x-oss-process=video/snapshot,t_1000,m_fast';
+    $file = $ossClient::url($file) . '?x-oss-process=video/snapshot,t_1000,m_fast';
     $fileName = get_rand_str(32, 1, 1) . '.jpg';
     $res = download_image($file, $fileName, PUBLIC_PATH . 'upload/community/video_cover/');
     if ($res == false) {
@@ -2033,8 +2034,9 @@ function getVideoCoverImages_v2($file)
  */
 function getImageInfo($url)
 {
+    $ossClient = new \app\common\logic\OssLogic();
     // 从OSS服务器下载图片
-    $file = \plugins\Oss::url($url);
+    $file = $ossClient::url($url);
     $fileName = get_rand_str(32, 1, 1) . '.jpg';
     $res = download_image($file, $fileName, PUBLIC_PATH . 'upload/community/image/');
     if ($res == false) {
