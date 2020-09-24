@@ -34,7 +34,7 @@ class CreateCommunityCategory extends Migrator
             ->addColumn('level', 'integer', ['default' => 0, 'comment' => '等级'])
             ->addColumn('sort', 'integer', ['default' => 0, 'comment' => '排序'])
             ->addColumn('status', 'integer', ['default' => 1, 'comment' => '显示状态：1显示 0不显示'])
-            ->addColumn('can_publish', 'integer', ['default' => 0, 'comment' => '分类下能否直接发布文章：0不能 1能够'])
+            ->addColumn('user_can_publish', 'integer', ['default' => 0, 'comment' => '分类下能否直接发布文章：0不能 1能够'])
             ->create();
     }
 }
