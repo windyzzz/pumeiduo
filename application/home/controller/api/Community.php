@@ -279,7 +279,7 @@ class Community extends Base
         if (!$validate->scene('article_add')->check($post)) {
             return json(['status' => 0, 'msg' => $validate->getError()]);
         }
-        if (!M('goods')->where(['goods_id' => $post['goods_id'], 'is_on_sale' => 1])->value('goods_id')) {
+        if ($post['goods_id'] && !M('goods')->where(['goods_id' => $post['goods_id'], 'is_on_sale' => 1])->value('goods_id')) {
             return json(['status' => 0, 'msg' => '商品已下架，请重新选择']);
         }
         if (empty($post['image']) && empty($post['video'])) {
@@ -351,9 +351,14 @@ class Community extends Base
     {
         $articleId = I('article_id', 0);
         if (!$articleId) return json(['status' => 0, 'msg' => '请传入文章ID']);
-        // 分享数+1
-        M('community_article')->where(['id' => $articleId])->setInc('share', 1);
-        $share = M('community_article')->where(['id' => $articleId])->value('share');
+        $article = M('community_article')->where(['id' => $articleId])->field('user_id, share')->find();
+        if ($article['user_id'] == $this->user_id) {
+            $share = $article['share'];
+        } else {
+            // 分享数+1
+            M('community_article')->where(['id' => $articleId])->setInc('share', 1);
+            $share = M('community_article')->where(['id' => $articleId])->value('share');
+        }
         return json(['status' => 1, 'result' => ['share' => $share]]);
     }
 

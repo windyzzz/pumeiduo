@@ -43,7 +43,6 @@ class CreateCommunityArticle extends Migrator
             ->addColumn('share', 'integer', ['default' => 0, 'comment' => '分享次数'])
             ->addColumn('click', 'integer', ['default' => 0, 'comment' => '点击次数'])
             ->addColumn('status', 'integer', ['default' => 0, 'comment' => '状态：0未审核 1通过发布 -1审核失败 2预发布'])
-            ->addColumn('reason', 'string', ['default' => '', 'comment' => '审核失败原因'])
             ->addColumn('add_time', 'integer')
             ->addColumn('up_time', 'integer', ['default' => 0, 'comment' => '更新时间'])
             ->addColumn('publish_time', 'integer', ['default' => 0, 'comment' => '审核发布时间'])

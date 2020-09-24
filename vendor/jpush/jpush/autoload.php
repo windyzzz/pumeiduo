@@ -1,5 +1,5 @@
 <?php
-function classLoader($class)
+function classLoaderJpush($class)
 {
     $path = str_replace('\\', DIRECTORY_SEPARATOR, $class);
     $file = __DIR__ . '/src/' . $path . '.php';
@@ -7,4 +7,4 @@ function classLoader($class)
         require_once $file;
     }
 }
-spl_autoload_register('classLoader');
+spl_autoload_register('classLoaderJpush');
