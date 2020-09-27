@@ -493,6 +493,7 @@ class Community extends Base
                     M('community_article_edit_log')->add([
                         'type' => 2,
                         'user_id' => session('admin_id'),
+                        'article_id' => $articleId,
                         'data' => json_encode($articleInfo),
                         'add_time' => NOW_TIME
                     ]);
@@ -519,6 +520,23 @@ class Community extends Base
                 $this->assign('info', $articleInfo);
                 $this->assign('d_category', $dCategory);
                 return $this->fetch('article_edit');
+                break;
+            case 'share':
+                // 文章分享记录
+                $articleId = I('article_id', 0);
+                $where = [
+                    'asl.article_id' => $articleId
+                ];
+                $count = M('community_article_share_log asl')->where($where)->count();
+                $page = new Page($count, 10);
+                $shareLog = M('community_article_share_log asl')->join('users u', 'u.user_id = asl.user_id')
+                    ->where($where)
+                    ->field('asl.*, u.nickname, u.user_name')
+                    ->limit($page->firstRow . ',' . $page->listRows)->order(['add_time DESC'])->select();
+                $this->assign('article_id', $articleId);
+                $this->assign('share_log', $shareLog);
+                $this->assign('page', $page);
+                return $this->fetch('article_share_log');
                 break;
         }
     }

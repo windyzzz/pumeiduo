@@ -318,6 +318,7 @@ class Community extends Base
             M('community_article_edit_log')->add([
                 'type' => 1,
                 'user_id' => $this->user_id,
+                'article_id' => $articleId,
                 'data' => json_encode($articleData),
                 'add_time' => NOW_TIME
             ]);
@@ -355,9 +356,19 @@ class Community extends Base
         if ($article['user_id'] == $this->user_id) {
             $share = $article['share'];
         } else {
-            // 分享数+1
-            M('community_article')->where(['id' => $articleId])->setInc('share', 1);
-            $share = M('community_article')->where(['id' => $articleId])->value('share');
+            if (!M('community_article_share_log')->where(['article_id' => $articleId, 'user_id' => $this->user_id])->find()) {
+                // 分享数+1
+                M('community_article')->where(['id' => $articleId])->setInc('share', 1);
+                $share = M('community_article')->where(['id' => $articleId])->value('share');
+            } else {
+                $share = $article['share'];
+            }
+            // 分享记录
+            M('community_article_share_log')->add([
+                'article_id' => $articleId,
+                'user_id' => $this->user_id,
+                'add_time' => NOW_TIME
+            ]);
         }
         return json(['status' => 1, 'result' => ['share' => $share]]);
     }

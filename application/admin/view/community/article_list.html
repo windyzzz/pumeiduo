@@ -95,7 +95,7 @@
 							<div style="text-align: center; width: 150px;" class="">发布时间</div>
 						</th>
 						<th align="left" axis="col1" class="handle">
-							<div style="text-align: center; width: 150px;">操作</div>
+							<div style="text-align: center; width: 200px;">操作</div>
 						</th>
 						<th style="width:100%" axis="col7">
 							<div></div>
@@ -138,7 +138,7 @@
 											</a>
 										</case>
 										<case value="2">
-											{$vo.user_name}
+											<span style="color: green;">{$vo.user_name}</span>
 										</case>
 									</switch>
 								</div>
@@ -195,11 +195,12 @@
 								</div>
 							</td>
 							<td align="left" class="handle">
-								<div style="text-align: center; width: 150px; max-width:150px;">
+								<div style="text-align: center; width: 200px;">
 									<a class="btn blue" href="{:U('Community/article', array('act' => 'info', 'article_id' => $vo['id']))}"><i class="fa fa-pencil-square-o"></i>详情</a>
 									<if condition="$vo[source] == 2">
 										<a class="btn blue" href="{:U('Community/article', array('act' => 'edit', 'article_id' => $vo['id']))}"><i class="fa fa-pencil-square-o"></i>编辑</a>
 									</if>
+									<a class="btn blue" href="{:U('Community/article', array('act' => 'share', 'article_id' => $vo['id']))}"><i class="fa fa-pencil-square-o"></i>分享记录</a>
 								</div>
 							</td>
 							<td align="" class="" style="width: 100%;">

@@ -3,7 +3,7 @@
 use think\migration\Migrator;
 use think\migration\db\Column;
 
-class CreateCommunityArticleEditLog extends Migrator
+class CreateCommunityArticleShareLog extends Migrator
 {
     /**
      * Change Method.
@@ -28,11 +28,9 @@ class CreateCommunityArticleEditLog extends Migrator
      */
     public function change()
     {
-        $this->table('community_article_edit_log', ['comment' => '社区文章修改记录表'])
-            ->addColumn('type', 'integer', ['default' => 1, 'comment' => '修改对象：1用户 2管理员'])
-            ->addColumn('user_id', 'integer', ['comment' => '用户/管理员ID'])
+        $this->table('community_article_share_log')
             ->addColumn('article_id', 'integer', ['comment' => '文章ID'])
-            ->addColumn('data', 'text', ['comment' => '记录数据'])
+            ->addColumn('user_id', 'integer', ['comment' => '用户ID'])
             ->addColumn('add_time', 'integer')
             ->create();
     }
