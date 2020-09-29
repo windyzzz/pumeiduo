@@ -548,7 +548,7 @@ class Article extends Base
         $count = M('push')->count();
         $page = new Page($count, 10);
         $pushModel = new PushModel();
-        $pushList = $pushModel->limit($page->firstRow . ',' . $page->listRows)->order('create_time DESC')->select();
+        $pushList = $pushModel->limit($page->firstRow . ',' . $page->listRows)->order('push_time DESC')->select();
         foreach ($pushList as $k => $item) {
             switch ($item['type']) {
                 case 1:
