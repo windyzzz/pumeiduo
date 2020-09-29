@@ -1632,6 +1632,7 @@ class Order extends Base
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品数量</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品名称</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品规格</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品单价</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">交易条件</td>';
         $strTable .= '</tr>';
         // 表体数据
@@ -1695,6 +1696,7 @@ class Order extends Base
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['goods_num'] . ' </td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['goods_name'] . ' </td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['spec_key_name'] . ' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['goods_price'] . ' </td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $tradeType . ' </td>';
                 $strTable .= '</tr>';
                 unset($orderGoods[0]);
@@ -1713,6 +1715,7 @@ class Order extends Base
                         $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['goods_num'] . ' </td>';
                         $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['goods_name'] . ' </td>';
                         $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['spec_key_name'] . ' </td>';
+                        $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['goods_price'] . ' </td>';
                         $strTable .= '<td style="text-align:left;font-size:12px;">' . $goodsTradeType . ' </td>';
                         $strTable .= '</tr>';
                     }
@@ -1799,7 +1802,7 @@ class Order extends Base
             '订单编号', '下单日期', '支付日期', '父级ID', '会员ID', '注册时间', '会员等级', '升级VIP时间', '收货人', '收货地址', '电话',
             '应付金额', '商品金额', '优惠券折扣', '积分折扣', '现金折扣', '运费', '总pv值',
             '订单状态', '支付状态', '发货状态', '订单来源', '支付方式',
-            '商品总数', '商品编号', '商品数量', '商品名称', '商品规格', '交易条件'
+            '商品总数', '商品编号', '商品数量', '商品名称', '商品规格', '商品单价', '交易条件'
         ];
         // 表数据
         $dataList = [];
@@ -1844,6 +1847,7 @@ class Order extends Base
             $goods_num = [];
             $goods_name = [];
             $goods_attr = [];
+            $goods_price = [];
             $goods_trade = [];
             foreach ($orderGoods as $goods) {
                 $goods_amount += $goods['goods_num'];
@@ -1851,6 +1855,7 @@ class Order extends Base
                 $goods_num[] = $goods['goods_num'];
                 $goods_name[] = $goods['goods_name'];
                 $goods_attr[] = $goods['spec_key_name'];
+                $goods_price[] = $goods['goods_price'];
                 switch ($order['order_type']) {
                     case 2:
                         $goodsTradeType = '韩国购';
@@ -1865,6 +1870,7 @@ class Order extends Base
             $dataList[$key][] = $goods_num;
             $dataList[$key][] = $goods_name;
             $dataList[$key][] = $goods_attr;
+            $dataList[$key][] = $goods_price;
             $dataList[$key][] = $goods_trade;
         }
         toCsvExcel($dataList, $headList, 'order');
