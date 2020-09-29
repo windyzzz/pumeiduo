@@ -717,7 +717,7 @@
         <!--通用信息-->
         <!--商品相册-->
 		<div class="ncap-form-default tab_div_2" style="display:none;">
-            <dl class="row">
+            <dl class="row" style="display: none;">
                 <input type="hidden" value="{$goodsInfo['video']}" name="video_path" id="video_input" />
                 <video style="" controls="controls" width="600" height="300" id="video_tag" src="{$video_url}"></video>
                 <div id="container">
@@ -730,6 +730,20 @@
             </dl>
             <dl class="row">
                 <div class="tab-pane" id="tab_goods_images">
+                    <div class="flexigrid">
+                        <div class="tDiv">
+                            <div class="tDiv2">
+                                <div class="fbutton">
+                                    <a href="javascript:void(0);" onClick="delGoodsImages()">
+                                        <input type="hidden" name="goods_images_select" value="">
+                                        <div class="add" title="初始化商品搜索关键词">
+                                            <span><i class="fa fa-remove"></i>批量删除</span>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <table class="table table-bordered">
                         <tbody>
                         <tr>
@@ -739,10 +753,12 @@
                                          class="goods_xc">
                                         <input type="hidden" value="{$vo['image_url']}" name="goods_images[]">
                                         <input type="hidden" value="{$vo['self_upload']}" name="self_upload[]">
+                                        <input type="checkbox" value="{$vo['image_url']}" onchange="selectGoodsImages(this)">选择
+                                        <br/>
                                         <a onClick="" href="{$vo['image_url']}" target="_blank">
                                             <img width="100" height="100" src="{$vo['image_url']}">
                                         </a>
-                                        <br>
+                                        <br/>
                                         <a href="javascript:void(0)" onClick="ClearPicArr2(this,'{$vo[image_url]}')">删除</a>
                                     </div>
                                 </foreach>
@@ -1037,30 +1053,30 @@
         $(document).on("click", '.close', function () {
             $(this).parent().parent().remove();
         })
-    })
+    });
 
     //选择分类
     $(function () {
         $(document).on("change", '#cat_id', function () {
             get_category($(this).val(), 'cat_id_2', '0');
             $('#cat_id_3').empty().html("<option value='0'>请选择商品分类</option>");
-        })
+        });
         $(document).on("click", '#cat_id', function () {
             get_category($(this).val(), 'cat_id_2', '0');
             $('#cat_id_3').empty().html("<option value='0'>请选择商品分类</option>");
         })
-    })
+    });
     $(function () {
         $(document).on("change", '#extend_cat_id', function () {
             get_category($(this).val(), 'extend_cat_id_2', '0');
             $('#extend_cat_id_3').empty().html("<option value='0'>请选择商品分类</option>");
         })
-    })
+    });
     $(function () {
         $(document).on("click", '.is_virtual', function () {
             initIsVirtual();
         })
-    })
+    });
     // 物流设置相 关
     $(document).ready(function () {
         $(":checkbox[cka]").click(function () {
@@ -1101,6 +1117,56 @@
         } else {
             $('input[type=checkbox]').removeAttr('checked');
         }
+    }
+
+    function selectGoodsImages(ojb)
+    {
+        var goods_images_select = $('input[name="goods_images_select"]');
+        var value = goods_images_select.val();
+        switch (ojb.checked) {
+            case true:
+                value = value + ',' + ojb.value + ',';
+                value = value.replace(/^,+/, "").replace(/,+$/, "");
+                goods_images_select.val(value);
+                break;
+            case false:
+                var goods_images_select_arr = value.split(',');
+                for (j = 0, len = goods_images_select_arr.length; j < len; j++) {
+                    if (goods_images_select_arr[j] == ojb.value) {
+                        goods_images_select_arr.splice(j, 1);
+                    }
+                }
+                value = goods_images_select_arr.join(',');
+                goods_images_select.val(value);
+                break;
+        }
+    }
+
+    function delGoodsImages() {
+        layer.confirm('确认删除？', {
+            btn: ['确定', '取消'] //按钮
+        }, function () {
+            var goods_id = '{$goodsInfo.goods_id}';
+            var goods_images_select = $('input[name="goods_images_select"]').val();
+            $.ajax({
+                type: 'POST',
+                url: "{:U('Admin/Goods/delGoodsImages')}",
+                data: {image_url: goods_images_select},
+                dataType: 'json',
+                success: function (data) {
+                    layer.close();
+                    if (data.status == 1) {
+                        window.location.href = "{:U('Admin/Goods/addEditGoods')}/id/" + goods_id;
+                    } else {
+                        layer.msg(data.msg, {icon: 2, time: 1000});
+                    }
+                },
+                error: function () {
+                    layer.alert("服务器繁忙, 请联系管理员!");
+                },
+            });
+        });
+
     }
 
     /*
@@ -1295,7 +1361,7 @@
                 initFreight();
             // }
         })
-    })
+    });
 
     function initFreight() {
         var is_free_shipping = $("input[name='is_free_shipping']:checked").val();
@@ -1345,10 +1411,10 @@
     }
 
     $(function () {
-        $('#distribut').show()
-        $('#exchange_integral').show()
-        $('#exchange_integral').show()
-        $('#commission').show()
+        $('#distribut').show();
+        $('#exchange_integral').show();
+        $('#exchange_integral').show();
+        $('#commission').show();
         if ($('select[name="zone"]').val() != 3) {
             $('#distribut').hide()
         }
@@ -1360,7 +1426,7 @@
             $('#commission').hide()
         }
 
-    })
+    });
 
     function test(obj) {
         if (obj.value == 3) {

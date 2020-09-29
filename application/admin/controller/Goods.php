@@ -1548,4 +1548,17 @@ class Goods extends Base
             $this->error('处理失败，原因：' . $e->getMessage());
         }
     }
+
+    /**
+     * 批量删除商品图片
+     */
+    public function delGoodsImages()
+    {
+        $imageUrl = I('image_url', '');
+        if (!$imageUrl) $this->ajaxReturn(['status' => 0, 'msg' => '删除失败']);
+        Db::startTrans();
+        M('goods_images')->where(['image_url' => ['IN', $imageUrl]])->delete();
+        Db::commit();
+        $this->ajaxReturn(['status' => 1, 'msg' => '删除成功']);
+    }
 }
