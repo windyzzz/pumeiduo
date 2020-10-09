@@ -209,7 +209,7 @@ class Community extends Base
                 $count = M('community_article')->where($where)->count();
                 $page = new Page($count, 10);
                 $articleModel = new CommunityArticle();
-                $articleList = $articleModel->where($where)->limit($page->firstRow . ',' . $page->listRows)->order(['add_time DESC'])->select();
+                $articleList = $articleModel->where($where)->limit($page->firstRow . ',' . $page->listRows)->order(['publish_time DESC'])->select();
                 foreach ($articleList as &$article) {
                     switch ($article['source']) {
                         case 1:
