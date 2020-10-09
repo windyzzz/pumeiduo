@@ -65,8 +65,8 @@
                 </dt>
                 <dd class="opt">
                     <select name="upload_content" id="upload_content">
-                        <option value="1" <if condition="$key == $info[cate_id2]"> selected </if>>图片上传</option>
-                        <option value="2" <if condition="$key == $info[cate_id2]"> selected </if>>视频上传</option>
+                        <option value="1" <if condition="!empty($info[image])"> selected </if>>图片上传</option>
+                        <option value="2" <if condition="!empty($info[video])"> selected </if>>视频上传</option>
                     </select>
                 </dd>
             </dl>
