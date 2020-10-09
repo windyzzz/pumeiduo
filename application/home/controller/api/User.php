@@ -67,16 +67,24 @@ class User extends Base
         if ($Users['distribut_level'] >= 3) {//直接显示 用户名
             return json(['status' => 1, 'msg' => 'success', 'result' => ['show_status' => 2, 'show_detail' => $Users['user_name']]]);//已经是金卡
         }
-
-        $count = M('users')->where(array('first_leader' => $this->user_id, 'distribut_level' => array('egt', 2)))->count();
-        $apply_check_num = tpCache('basic.apply_check_num');
-        if ($Users['distribut_level'] < 2) {
-            $error = '您尚未有资格开通金卡会员';
-            return json(['status' => 1, 'msg' => 'success', 'result' => ['show_status' => 0, 'show_detail' => $error]]);//已经是金卡
-        } else if ($count < $apply_check_num) {
-            $error = '您尚未有资格开通金卡会员';
-            return json(['status' => 1, 'msg' => 'success', 'result' => ['show_status' => 0, 'show_detail' => $error]]);//已经是金卡
+        // 查看用户等级预升级记录
+        $userPreLog = M('user_pre_distribute_log')->where(['user_id' => $this->user_id, 'status' => 0])->order('id DESC')->find();
+        if (empty($userPreLog)) {
+            $tips = "您尚未有资格开通金卡会员\r\n请购买SVIP升级套餐后\r\n按系统提示进行申请\r\n有任何疑问请联系客服" . tpCache('shop_info.mobile');
+            return json(['status' => 1, 'msg' => 'success', 'result' => ['show_status' => 0, 'show_detail' => $tips]]);
+        } else {
+            // 更新预升级记录
+            M('user_pre_distribute_log')->where(['user_id' => $this->user_id, 'id' => ['NEQ', $userPreLog['id']]])->update(['status' => -1]);
         }
+//        $count = M('users')->where(array('first_leader' => $this->user_id, 'distribut_level' => array('egt', 2)))->count();
+//        $apply_check_num = tpCache('basic.apply_check_num');
+//        if ($Users['distribut_level'] < 2) {
+//            $error = '您尚未有资格开通金卡会员';
+//            return json(['status' => 1, 'msg' => 'success', 'result' => ['show_status' => 0, 'show_detail' => $error]]);//已经是金卡
+//        } else if ($count < $apply_check_num) {
+//            $error = '您尚未有资格开通金卡会员';
+//            return json(['status' => 1, 'msg' => 'success', 'result' => ['show_status' => 0, 'show_detail' => $error]]);//已经是金卡
+//        }
         return json(['status' => 1, 'msg' => 'success', 'result' => ['show_status' => 1, 'show_detail' => '可以申请']]);//已经是金卡
     }
 

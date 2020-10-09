@@ -78,12 +78,20 @@ class UsersLogic extends Model
             $this->error = '撤销失败';
             return true;
         }
-
-
     }
 
     function check_apply_customs($user_id)
     {
+        // 查看用户等级预升级记录
+        $userPreLog = M('user_pre_distribute_log')->where(['user_id' => $user_id, 'status' => 0])->order('id DESC')->find();
+        if (empty($userPreLog)) {
+            $this->error = "您尚未有资格开通金卡会员\r\n请购买SVIP升级套餐后\r\n按系统提示进行申请\r\n有任何疑问请联系客服" . tpCache('shop_info.mobile');
+            return false;
+        } else {
+            // 更新预升级记录
+            M('user_pre_distribute_log')->where(['user_id' => $user_id, 'id' => ['NEQ', $userPreLog['id']]])->update(['status' => -1]);
+        }
+
         $apply_customs = M('apply_customs')->where(array('user_id' => $user_id))->find();
         if ($apply_customs && $apply_customs['status'] == 0) {
             $this->error = '您的申请在审核中，请等待';
