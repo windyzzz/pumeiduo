@@ -544,6 +544,51 @@ class GoodsLogic extends Model
     }
 
     /**
+     * 猜你喜欢
+     * @param $filterGoods
+     * @param $userId
+     * @return mixed
+     */
+    public function get_look_see_v2($filterGoods, $userId = null)
+    {
+        $goodsList = M('goods g')->field('g.goods_id, g.cat_id, g.goods_name, g.goods_remark, g.original_img, g.shop_price, g.exchange_integral, g.sale_type');
+        $where = [];
+        if (!empty($filterGoods)) {
+            $where = [
+                'g.goods_id' => ['NEQ', $filterGoods['goods_id']],
+                'g.cat_id' => $filterGoods['cat_id']
+            ];
+        }
+        if ($userId) {
+            $goodsList = $goodsList->join('goods_visit gv', 'gv.goods_id = g.goods_id', 'LEFT')->group('g.goods_id');
+        }
+        $count = $goodsList->where($where)->count();
+        if ($count == 0) {
+            $count = $goodsList->count();
+            $offset = rand(0, $count);
+            $goodsList = $goodsList->limit($offset, 4)->select();
+        } else {
+            if ($count < 4) {
+                $offset = 0;
+            } else {
+                $offset = rand(0, $count - 4);
+            }
+            $goodsList = $goodsList->where($where)->limit($offset, 4)->select();
+        }
+        foreach ($goodsList as $k => $v) {
+            // 缩略图
+            $goodsList[$k]['original_img_new'] = getFullPath($v['original_img']);
+            // 处理显示金额
+            if ($v['exchange_integral'] != 0) {
+                $goodsList[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);
+            } else {
+                $goodsList[$k]['exchange_price'] = $v['shop_price'];
+            }
+        }
+        return $goodsList;
+    }
+
+    /**
      * 筛选的价格期间.
      *
      * @param $goods_id_arr |帅选的分类id

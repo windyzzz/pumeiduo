@@ -2744,7 +2744,8 @@ class Goods extends Base
      */
     public function look_see()
     {
-        $lookSee = (new GoodsLogic())->get_look_see([], $this->user_id);
+        $goods = M('goods')->where(['goods_id' => I('goods_id', 0)])->find();
+        $lookSee = (new GoodsLogic())->get_look_see_v2($goods, $this->user_id);
         $filterGoodsIds = [];
         foreach ($lookSee as $item) {
             $filterGoodsIds[] = $item['goods_id'];

@@ -98,7 +98,6 @@ class Base extends Controller
             'c=api.Goods&a=getRecommendGoodsList',      // 促销商品
             'c=api.Goods&a=getHotGoodsList',            // 热销商品
             'c=api.Goods&a=getFlashSalesGoodsList',     // 秒杀商品
-            'c=api.Goods&a=look_see',                   // 猜你喜欢
             'c=api.Goods&a=indexGoods',                 // 主页展示不同类型商品
             'c=api.Goods&a=abroadCate',                 // 韩国购商品分类
             'c=api.User&a=findPassword',                // 找回密码（登录前忘记密码）
@@ -121,6 +120,7 @@ class Base extends Controller
         return [
             'c=api.Message&a=announce',                 // 公告列表
             'c=api.Goods&a=goodsInfoNew',               // 商品详情
+            'c=api.Goods&a=look_see',                   // 猜你喜欢
             'c=api.Goods&a=getGoodsPassword',           // 获取商品口令
             'c=api.Goods&a=checkGoodsPassword',         // 根据口令获取商品数据
             'c=api.Adv&a=popup',                        // 活动弹窗
