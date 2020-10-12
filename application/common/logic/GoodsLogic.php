@@ -552,29 +552,31 @@ class GoodsLogic extends Model
     public function get_look_see_v2($filterGoods, $userId = null)
     {
         $goodsList = M('goods g')->field('g.goods_id, g.cat_id, g.goods_name, g.goods_remark, g.original_img, g.shop_price, g.exchange_integral, g.sale_type');
-        $where = [];
+        $where = [
+            'g.is_on_sale' => 1,
+            'g.zone' => 1
+        ];
         if (!empty($filterGoods)) {
-            $where = [
-                'g.goods_id' => ['NEQ', $filterGoods['goods_id']],
-                'g.cat_id' => $filterGoods['cat_id']
-            ];
+            $where['g.goods_id'] = ['NEQ', $filterGoods['goods_id']];
+            $where['g.cat_id'] = $filterGoods['cat_id'];
         }
         if ($userId) {
             $goodsList = $goodsList->join('goods_visit gv', 'gv.goods_id = g.goods_id', 'LEFT')->group('g.goods_id');
         }
         $count = $goodsList->where($where)->count();
         if ($count == 0) {
-            $count = $goodsList->count();
+            unset($where['g.goods_id']);
+            unset($where['g.cat_id']);
+            $count = $goodsList->where($where)->count();
             $offset = rand(0, $count);
-            $goodsList = $goodsList->limit($offset, 4)->select();
         } else {
             if ($count < 4) {
                 $offset = 0;
             } else {
                 $offset = rand(0, $count - 4);
             }
-            $goodsList = $goodsList->where($where)->limit($offset, 4)->select();
         }
+        $goodsList = $goodsList->where($where)->limit($offset, 4)->select();
         foreach ($goodsList as $k => $v) {
             // 缩略图
             $goodsList[$k]['original_img_new'] = getFullPath($v['original_img']);
