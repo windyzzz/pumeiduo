@@ -577,6 +577,7 @@ class GoodsLogic extends Model
             }
         }
         $goodsList = $goodsList->where($where)->limit($offset, 4)->select();
+        shuffle($goodsList);
         foreach ($goodsList as $k => $v) {
             // 缩略图
             $goodsList[$k]['original_img_new'] = getFullPath($v['original_img']);
