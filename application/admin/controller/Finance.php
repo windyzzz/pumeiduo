@@ -430,6 +430,58 @@ class Finance extends Base
     }
 
     /**
+     * 导出供应链账户记录(xls)
+     * @throws \PHPExcel_Exception
+     * @throws \PHPExcel_Reader_Exception
+     * @throws \PHPExcel_Writer_Exception
+     */
+    public function exportSupplierAccountLog_xls()
+    {
+        $type = I('type', 1);
+        // 供应链账户记录
+        $res = (new AccountService())->rechargeLog($type, 1, 1000);
+        if ($res['status'] == 0) {
+            $this->error('导出失败', U('Admin/Finance/supplierAccount', ['inc_type' => 'supplier_consume_log']));
+        } else {
+            // 表头
+            $expCellName = [
+                ['payment_no', '流水号', 20, 1],
+                ['pay_type', '扣除方式', 20, 1],
+                ['freight_price', '总运费', 20, 1],
+                ['consume_price', '扣除预存金额', 20, 1],
+                ['creat_time', '创建时间', 20, 1],
+                ['order_info', '订单信息', 500, 1],
+            ];
+            // 表数据
+            $dataList = [];
+            foreach ($res['data']['list'] as $k1 => $list) {
+                $dataList[] = [
+                    'payment_no' => "\t" . $list['payment_no'],
+                    'pay_type' => $list['pay_type'],
+                    'freight_price' => $list['freight_price'],
+                    'consume_price' => $list['consume_price'],
+                    'creat_time' => $list['creat_time'],
+                ];
+                if (empty($list['order'])) {
+                    $dataList[$k1]['order_info'] = '';
+                } else {
+                    $orderInfo = '';
+                    foreach ($list['order'] as $k2 => $order) {
+                        $orderSn = M('order o1')->join('order o2', 'o1.parent_id = o2.order_id')->where(['o1.order_sn' => $list['order'][0]['pt_order_sn']])->value('o2.order_sn');
+                        $orderInfo .= '主订单号：' . $orderSn . '；供应链订单号：' . $list['order'][0]['pt_order_sn'] . '；收件人：' . $list['order'][0]['consignee'] . "\n";
+                        foreach ($list['order'][0]['pay_goods'] as $goods) {
+                            $orderInfo .= '——商品：' . $goods['goods_name'] . '；数量：' . $goods['goods_num'] . '；成本价：' . $goods['s_price'] . '；服务费：' . $goods['service_price'] . "\n";
+                        }
+                        $orderInfo .= "\n";
+                    }
+                    $dataList[$k1]['order_info'] = $orderInfo;
+                }
+            }
+            exportExcel('供应链账户记录', $expCellName, $dataList, 'supplier_account_log');
+        }
+    }
+
+    /**
      * 导出供应链账户记录(csv)
      */
     public function exportSupplierAccountLog_csv()
