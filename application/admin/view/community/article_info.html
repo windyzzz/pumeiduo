@@ -101,16 +101,18 @@
                 <dt class="tit">
                     <label>关联商品</label>
                 </dt>
-                <dd class="opt">
-                    <div style="float: left;margin-right: 10px" class="selected-group-goods">
-                        <div class="goods-thumb">
-                            <img style="width: 162px;height: 162px" src="{$info['goods_id']|goods_thum_images=162,162}"/>
+                <if condition="!empty($info[goods_id])">
+                    <dd class="opt">
+                        <div style="float: left;margin-right: 10px" class="selected-group-goods">
+                            <div class="goods-thumb">
+                                <img style="width: 162px;height: 162px" src="{$info['goods_id']|goods_thum_images=162,162}"/>
+                            </div>
+                            <div class="goods-name">
+                                <a target="_blank" href="{:U('Admin/Goods/addEditGoods',array('id'=>$info['goods_id']))}">{$info.goods_name}</a>
+                            </div>
                         </div>
-                        <div class="goods-name">
-                            <a target="_blank" href="{:U('Admin/Goods/addEditGoods',array('id'=>$info['goods_id']))}">{$info.goods_name}</a>
-                        </div>
-                    </div>
-                </dd>
+                    </dd>
+                </if>
             </dl>
             <dl class="row">
                 <dt class="tit">
