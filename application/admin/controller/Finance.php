@@ -385,7 +385,7 @@ class Finance extends Base
     public function supplierAccountLog()
     {
         $type = I('type', 1);
-        $page = I('page', 1);
+        $page = I('p', 1);
         // 供应链账户记录
         $res = (new AccountService())->rechargeLog($type, $page);
 //        $res = '{"status":1,"data":{"count":1,"list":[{"payment_no":"202007231557298218","pay_type":"\u786e\u8ba4\u8ba2\u5355\u6263\u6b3e","freight_price":"0.00","consume_price":"41.73","creat_time":"2020-07-23 15:57:29","order":[{"order_id":"10119","order_sn":"221510119082185","pt_order_sn":"C202007231556082185","consignee":"\u738b\u5cf0","pay_goods":[{"order_id":"10119","goods_id":"233591","goods_name":"\u683c\u6717(GL)\u5a74\u513f\u65e5\u5e38\u62a4\u74067\u4ef6\u5957\u793c\u76d2\u88c5","goods_num":"1","s_price":"41.73","service_price":"0.00","is_pay":"1"}]},{"order_id":"10119","order_sn":"221510119082185","pt_order_sn":"C202007231556082185","consignee":"\u738b\u5cf0","pay_goods":[{"order_id":"10119","goods_id":"233591","goods_name":"\u683c\u6717(GL)\u5a74\u513f\u65e5\u5e38\u62a4\u74067\u4ef6\u5957\u793c\u76d2\u88c5","goods_num":"1","s_price":"41.73","service_price":"0.00","is_pay":"1"},{"order_id":"10119","goods_id":"233591","goods_name":"\u683c\u6717(GL)\u5a74\u513f\u65e5\u5e38\u62a4\u74067\u4ef6\u5957\u793c\u76d2\u88c5","goods_num":"1","s_price":"41.73","service_price":"0.00","is_pay":"1"}]}]}]}}';
@@ -421,11 +421,55 @@ class Finance extends Base
                 }
             }
         }
-        $page = new AjaxPage($count, 2);
+        $page = new AjaxPage($count, 20);
         $show = $page->show();
         $this->assign('page', $show);
         $this->assign('type', $type);
         $this->assign('log_list', $logList);
-        return $this->fetch();
+        return $this->fetch('supplier_account_log');
+    }
+
+    /**
+     * 导出供应链账户记录(csv)
+     */
+    public function exportSupplierAccountLog_csv()
+    {
+        $type = I('type', 1);
+        // 供应链账户记录
+        $res = (new AccountService())->rechargeLog($type, 1, 1000);
+        if ($res['status'] == 0) {
+            $this->error('导出失败', U('Admin/Finance/supplierAccount', ['inc_type' => 'supplier_consume_log']));
+        } else {
+            // 表头
+            $headList = [
+                '流水号', '扣除方式', '总运费', '扣除预存金额', '创建时间', '订单信息'
+            ];
+            // 表数据
+            $dataList = [];
+            foreach ($res['data']['list'] as $k1 => $list) {
+                $dataList[$k1] = [
+                    "\t" . $list['payment_no'],
+                    $list['pay_type'],
+                    $list['freight_price'],
+                    $list['consume_price'],
+                    $list['creat_time'],
+                ];
+                if (empty($list['order'])) {
+                    $dataList[$k1][] = '';
+                } else {
+                    $orderInfo = [];
+                    foreach ($list['order'] as $k2 => $order) {
+                        $orderSn = M('order o1')->join('order o2', 'o1.parent_id = o2.order_id')->where(['o1.order_sn' => $list['order'][0]['pt_order_sn']])->value('o2.order_sn');
+                        $orderInfo[] = '主订单号：' . $orderSn . '；供应链订单号：' . $list['order'][0]['pt_order_sn'] . '；收件人：' . $list['order'][0]['consignee'];
+                        foreach ($list['order'][0]['pay_goods'] as $goods) {
+                            $orderInfo[] = '——商品：' . $goods['goods_name'] . '；数量：' . $goods['goods_num'] . '；成本价：' . $goods['s_price'] . '；服务费：' . $goods['service_price'];
+                        }
+                        $orderInfo[] = '';
+                    }
+                    $dataList[$k1][] = $orderInfo;
+                }
+            }
+            toCsvExcel($dataList, $headList, 'supplier_account_log');
+        }
     }
 }
