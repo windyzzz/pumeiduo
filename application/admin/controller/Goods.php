@@ -1554,10 +1554,11 @@ class Goods extends Base
      */
     public function delGoodsImages()
     {
-        $imageUrl = I('image_url', '');
-        if (!$imageUrl) $this->ajaxReturn(['status' => 0, 'msg' => '删除失败']);
+        $imageIds = I('img_ids', '');
+        if (!$imageIds) $this->ajaxReturn(['status' => 0, 'msg' => '删除失败']);
         Db::startTrans();
-        M('goods_images')->where(['image_url' => ['IN', $imageUrl]])->delete();
+        $imageIds = explode(',', $imageIds);
+        M('goods_images')->where(['img_id' => ['IN', $imageIds]])->delete();
         Db::commit();
         $this->ajaxReturn(['status' => 1, 'msg' => '删除成功']);
     }
