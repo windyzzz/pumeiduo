@@ -799,6 +799,7 @@ class Goods extends Base
             'store_count' => $goods['store_count'],
             'goods_remark' => $goods['goods_remark'],
             'goods_content' => htmlspecialchars_decode($goods['goods_content']),
+            'content_url' => SITE_URL . '/index.php?m=Home&c=api.Goods&a=goodsContent&goods_id=' . $goods['goods_id'], // 内容url请求链接
             'original_img_new' => $originalImg,
             'goods_images_list' => [],
             'shop_price' => $goods['shop_price'],
@@ -815,7 +816,7 @@ class Goods extends Base
             'now_time' => NOW_TIME,
             'share_goods_image' => !empty($originalImg) ? $originalImg : '',    // 商品分享图
             'share_qr_code' => '',    // 分享二维码
-            'tabs' => []
+            'tabs' => [],
         ];
         // 处理商品内容图片
 //        if (!strstr($goodsInfo['goods_content'], 'http') && !strstr($goodsInfo['goods_content'], 'https')) {
@@ -3349,5 +3350,17 @@ class Goods extends Base
                 'msg' => $e->getMessage()
             ]]);
         }
+    }
+
+    /**
+     * 获取商品内容显示页面
+     * @return mixed
+     */
+    public function goodsContent()
+    {
+        $goodsId = I('goods_id');
+        $goodsContent = M('goods')->where(['goods_id' => $goodsId])->value('goods_content');
+        $this->assign('content', htmlspecialchars_decode($goodsContent));
+        return $this->fetch('content');
     }
 }
