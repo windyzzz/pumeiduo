@@ -2930,25 +2930,25 @@ class Goods extends Base
     public function abroadGoods()
     {
         $cateId = I('cate_id', 0);
-        $sort = I('sort', 'goods_id');
-        $sortAsc = I('sort_asc', 'desc');
+//        $sort = I('sort', 'goods_id');
+//        $sortAsc = I('sort_asc', 'desc');
         $sortArr = [];
-        switch ($sort) {
-            case 'sales_sum':
-                // 销量
-                $sortArr = [$sort => $sortAsc];
-                break;
-            case 'shop_price':
-                // 价格
-                $sortArr = ['shop_price - exchange_integral' => $sortAsc];
-                break;
-            case 'goods_id':
-                // 新品
-                $sortArr = [
-                    'is_new' => $sortAsc,
-                ];
-                break;
-        }
+//        switch ($sort) {
+//            case 'sales_sum':
+//                // 销量
+//                $sortArr = [$sort => $sortAsc];
+//                break;
+//            case 'shop_price':
+//                // 价格
+//                $sortArr = ['shop_price - exchange_integral' => $sortAsc];
+//                break;
+//            case 'goods_id':
+//                // 新品
+//                $sortArr = [
+//                    'is_new' => $sortAsc,
+//                ];
+//                break;
+//        }
         $where = [
             'is_on_sale' => 1,
             'is_abroad' => 1

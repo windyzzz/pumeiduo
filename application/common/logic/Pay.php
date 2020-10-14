@@ -17,6 +17,7 @@ use app\common\logic\order\Gift2Logic;
 use app\common\logic\supplier\GoodsService;
 use app\common\model\CouponList;
 use app\common\util\TpshopException;
+use app\home\controller\api\supplier\Goods;
 use think\Db;
 
 /**
@@ -298,22 +299,30 @@ class Pay
             }
             foreach ($res['data'] as $v) {
                 if ($v['goods_count'] <= 0 || $v['goods_count'] < $supplierGoodsData[$v['goods_id']]['goods_num']) {
+                    // 通知仓储系统
+                    (new Goods())->goodsErrorHandle(1, $v['goods_id']);
                     throw new TpshopException('获取供应链商品地区购买限制失败', 0, ['status' => 0, 'msg' => $v['goods_name'] . ' 库存不足']);
+                }
+                if (isset($v['isNoStock']) && $v['isNoStock'] == true) {
+                    // 通知仓储系统
+                    (new Goods())->goodsErrorHandle(1, $v['goods_id']);
+                    throw new TpshopException('获取供应链商品地区购买限制失败', 0, ['status' => 0, 'msg' => $v['goods_name'] . ' 当前地区无库存']);
+                }
+                if (isset($v['isNoGoods']) && $v['isNoGoods'] == true) {
+                    // 通知仓储系统
+                    (new Goods())->goodsErrorHandle(2, $v['goods_id']);
+                    throw new TpshopException('获取供应链商品地区购买限制失败', 0, ['status' => 0, 'msg' => $v['goods_name'] . ' 商品已失效']);
+                }
+                if (isset($v['isNoSale']) && $v['isNoSale'] == true) {
+                    // 通知仓储系统
+                    (new Goods())->goodsErrorHandle(3, $v['goods_id']);
+                    throw new TpshopException('获取供应链商品地区购买限制失败', 0, ['status' => 0, 'msg' => $v['goods_name'] . ' 商品已下架']);
                 }
                 if ($v['buy_num'] > $supplierGoodsData[$v['goods_id']]['goods_num']) {
                     throw new TpshopException('获取供应链商品地区购买限制失败', 0, ['status' => 0, 'msg' => $v['goods_name'] . ' 最低购买数量为' . $v['buy_num']]);
                 }
                 if (isset($v['isAreaRestrict']) && $v['isAreaRestrict'] == true) {
                     throw new TpshopException('获取供应链商品地区购买限制失败', 0, ['status' => 0, 'msg' => $v['goods_name'] . ' 当前地址不可购买']);
-                }
-                if (isset($v['isNoStock']) && $v['isNoStock'] == true) {
-                    throw new TpshopException('获取供应链商品地区购买限制失败', 0, ['status' => 0, 'msg' => $v['goods_name'] . ' 当前地区无库存']);
-                }
-                if (isset($v['isNoGoods']) && $v['isNoGoods'] == true) {
-                    throw new TpshopException('获取供应链商品地区购买限制失败', 0, ['status' => 0, 'msg' => $v['goods_name'] . ' 商品已失效']);
-                }
-                if (isset($v['IsOnSale']) && $v['IsOnSale'] == true) {
-                    throw new TpshopException('获取供应链商品地区购买限制失败', 0, ['status' => 0, 'msg' => $v['goods_name'] . ' 商品已下架']);
                 }
             }
         }

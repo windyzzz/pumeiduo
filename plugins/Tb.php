@@ -37,7 +37,7 @@ Class Tb
         $test_url_arr = array(
             1 => 'http://bestputest.lohas211.com/index.php/Tb/get_system',
             2 => '',
-            3 => 'http://pmderp.qpgame666.com/index.php/Tb/get_system'
+            3 => 'http://pmderp.meetlan.com/index.php/Tb/get_system'
         );
         // 正式链接
         $online_ip = '61.238.101.138';
