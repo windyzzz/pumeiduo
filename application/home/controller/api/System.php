@@ -65,25 +65,63 @@ class System
         }
         // 当前配置
         $config = M('config')->where(['inc_type' => $type])->group('name')->order('id desc')->getField('name, value', true);
-        $version = explode('.', $config['app_version']);    // 当前版本
-        $version_ = '';
-        foreach ($version as $item) {
-            $version_ .= $item * 10;
-        }
-        if ($appVersion == $version_ || $appVersion > $version_) {
-            $result['state'] = 0;   // 无需更新
+        // 是否提示更新
+        if (!empty($config['show_version'])) {
+            $config['show_version'] = explode(';', $config['show_version']);
+            foreach ($config['show_version'] as $k1 => $showVersion) {
+                $showVersion = explode('.', $showVersion);
+                $version_ = '';
+                foreach ($showVersion as $item) {
+                    $version_ .= $item * 10;
+                }
+                $config['show_version'][$k1] = $version_;
+            }
+            if (in_array($appVersion, $config['show_version'])) {
+                $result['state'] = 1;
+            } else {
+                $result['state'] = 0;   // 无需更新
+            }
         } else {
-            $result['state'] = $config['is_update'] ? (int)$config['is_update'] : 0;    // 是否需要更新
+            $result['state'] = 0;   // 无需更新
         }
-        $result['is_force'] = $config['is_force'] ? (int)$config['is_force'] : 0;  // 是否强制更新
+        // 是否强制更新
+        if (!empty($config['update_version'])) {
+            $config['update_version'] = explode(';', $config['update_version']);
+            foreach ($config['update_version'] as $k1 => $showVersion) {
+                $showVersion = explode('.', $showVersion);
+                $version_ = '';
+                foreach ($showVersion as $item) {
+                    $version_ .= $item * 10;
+                }
+                $config['update_version'][$k1] = $version_;
+            }
+            if (in_array($appVersion, $config['update_version'])) {
+                $result['is_force'] = 1;
+            } else {
+                $result['is_force'] = 0;   // 不强制更新
+            }
+        } else {
+            $result['is_force'] = 0;   // 不强制更新
+        }
+//        $version = explode('.', $config['app_version']);    // 当前版本
+//        $version_ = '';
+//        foreach ($version as $item) {
+//            $version_ .= $item * 10;
+//        }
+//        if ($appVersion == $version_ || $appVersion > $version_) {
+//            $result['state'] = 0;   // 无需更新
+//        } else {
+//            $result['state'] = $config['is_update'] ? (int)$config['is_update'] : 0;    // 是否需要更新
+//        }
+//        $result['is_force'] = $config['is_force'] ? (int)$config['is_force'] : 0;  // 是否强制更新
         $result['app_url'] = htmlspecialchars_decode($config['app_path']);
         $result['target_version'] = $config['app_version'];
         $result['version_log'] = $config['app_log'];
         // 是否展示第三方登录方法
-        if (empty($config['not_show_version'])) {
+        if (empty($config['not_show_login_version'])) {
             $result['show_login_method'] = 1;
         } else {
-            $notShowVersion = explode('.', $config['not_show_version']);
+            $notShowVersion = explode('.', $config['not_show_login_version']);
             $notShowVersion_ = '';
             foreach ($notShowVersion as $item) {
                 $notShowVersion_ .= $item * 10;

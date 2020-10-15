@@ -19,9 +19,27 @@ class MobileApp extends Base
     {
         $inc_type = 'android';
         $config = M('config')->where(['inc_type' => $inc_type])->group('name')->order('id desc')->getField('name, value', true);
+        if (!empty($config['show_version'])) {
+            $config['show_version'] = explode(';', $config['show_version']);
+        } else {
+            $config['show_version'] = [];
+        }
+        if (!empty($config['update_version'])) {
+            $config['update_version'] = explode(';', $config['update_version']);
+        } else {
+            $config['update_version'] = [];
+        }
+        $versionList = M('app_log')->where(['type' => 'android'])->order('app_version ASC')->getField('app_version', true);
+        foreach ($versionList as $k => $version) {
+            if ($version == $config['app_version']) {
+                // 不显示当前版本
+                unset($versionList[$k]);
+            }
+        }
 
         $this->assign('inc_type', $inc_type);
-        $this->assign('config', $config);   // 当前配置项
+        $this->assign('config', $config);    // 当前配置项
+        $this->assign('version_list', $versionList);
         return $this->fetch();
     }
 
@@ -29,9 +47,27 @@ class MobileApp extends Base
     {
         $inc_type = 'ios';
         $config = M('config')->where(['inc_type' => $inc_type])->group('name')->order('id desc')->getField('name, value', true);
+        if (!empty($config['show_version'])) {
+            $config['show_version'] = explode(';', $config['show_version']);
+        } else {
+            $config['show_version'] = [];
+        }
+        if (!empty($config['update_version'])) {
+            $config['update_version'] = explode(';', $config['update_version']);
+        } else {
+            $config['update_version'] = [];
+        }
+        $versionList = M('app_log')->where(['type' => 'ios'])->order('app_version ASC')->getField('app_version', true);
+        foreach ($versionList as $k => $version) {
+            if ($version == $config['app_version']) {
+                // 不显示当前版本
+                unset($versionList[$k]);
+            }
+        }
 
         $this->assign('inc_type', $inc_type);
         $this->assign('config', $config);    // 当前配置项
+        $this->assign('version_list', $versionList);
         return $this->fetch();
     }
 
@@ -45,6 +81,14 @@ class MobileApp extends Base
         // 配置信息
         $config = M('config')->where(['inc_type' => $inc_type])->getField('name, value', true);
         unset($param['inc_type']);
+        unset($param['show_version_all']);
+        unset($param['update_version_all']);
+        if (isset($param['show_version'])) {
+            $param['show_version'] = implode(';', $param['show_version']);
+        }
+        if (isset($param['update_version'])) {
+            $param['update_version'] = implode(';', $param['update_version']);
+        }
         foreach ($param as $k => $v) {
             if (isset($config[$k])) {
                 M('config')->where(['inc_type' => $inc_type, 'name' => $k])->update(['value' => $v]);
@@ -108,6 +152,10 @@ class MobileApp extends Base
         $count = M('app_log')->where(['type' => $type])->count();
         $page = new Page($count, 10);
         $appLog = M('app_log')->where(['type' => $type])->order('app_version desc')->limit($page->firstRow . ',' . $page->listRows)->select();
+        foreach ($appLog as &$log) {
+            $log['show_version'] = explode(';', $log['show_version']);
+            $log['update_version'] = explode(';', $log['update_version']);
+        }
 
         $this->assign('type', $type);
         $this->assign('page', $page);
