@@ -251,6 +251,23 @@ class Goods extends Base
         if ($ids) {
             $map['goods_id'] = ['in', $ids];
         }
+
+        $onTimeBegin = I('on_time_begin');
+        $onTimeEnd = I('on_time_end');
+        if ($onTimeBegin && $onTimeEnd) {
+            $onTimeBegin = strtotime($onTimeBegin);
+            $onTimeEnd = strtotime($onTimeEnd);
+            $where .= ' and on_time BETWEEN ' . $onTimeBegin . ' and ' . $onTimeEnd;
+        }
+
+        $outTimeBegin = I('out_time_begin');
+        $outTimeEnd = I('out_time_end');
+        if ($outTimeBegin && $outTimeEnd) {
+            $outTimeBegin = strtotime($outTimeBegin);
+            $outTimeEnd = strtotime($outTimeEnd);
+            $where .= ' and out_time BETWEEN ' . $outTimeBegin . ' and ' . $outTimeEnd;
+        }
+
         $goodsList = M('Goods')->where($where)->where($map)->select();
 
         $GoodsLogic = new GoodsLogic();
@@ -366,6 +383,23 @@ class Goods extends Base
         if ($ids) {
             $map['goods_id'] = ['in', $ids];
         }
+
+        $onTimeBegin = I('on_time_begin');
+        $onTimeEnd = I('on_time_end');
+        if ($onTimeBegin && $onTimeEnd) {
+            $onTimeBegin = strtotime($onTimeBegin);
+            $onTimeEnd = strtotime($onTimeEnd);
+            $where .= ' and on_time BETWEEN ' . $onTimeBegin . ' and ' . $onTimeEnd;
+        }
+
+        $outTimeBegin = I('out_time_begin');
+        $outTimeEnd = I('out_time_end');
+        if ($outTimeBegin && $outTimeEnd) {
+            $outTimeBegin = strtotime($outTimeBegin);
+            $outTimeEnd = strtotime($outTimeEnd);
+            $where .= ' and out_time BETWEEN ' . $outTimeBegin . ' and ' . $outTimeEnd;
+        }
+
         $goodsList = M('Goods')->where($where)->where($map)->select();
         if (is_array($goodsList)) {
             $GoodsLogic = new GoodsLogic();
@@ -487,6 +521,23 @@ class Goods extends Base
         if ($ids) {
             $map['goods_id'] = ['in', $ids];
         }
+
+        $onTimeBegin = I('on_time_begin');
+        $onTimeEnd = I('on_time_end');
+        if ($onTimeBegin && $onTimeEnd) {
+            $onTimeBegin = strtotime($onTimeBegin);
+            $onTimeEnd = strtotime($onTimeEnd);
+            $where .= ' and on_time BETWEEN ' . $onTimeBegin . ' and ' . $onTimeEnd;
+        }
+
+        $outTimeBegin = I('out_time_begin');
+        $outTimeEnd = I('out_time_end');
+        if ($outTimeBegin && $outTimeEnd) {
+            $outTimeBegin = strtotime($outTimeBegin);
+            $outTimeEnd = strtotime($outTimeEnd);
+            $where .= ' and out_time BETWEEN ' . $outTimeBegin . ' and ' . $outTimeEnd;
+        }
+        
         $goodsList = M('Goods')->where($where)->where($map)->select();
         if (is_array($goodsList)) {
             $GoodsLogic = new GoodsLogic();
@@ -609,6 +660,22 @@ class Goods extends Base
             case 2:
                 $where .= ' and is_abroad = 1';
                 break;
+        }
+
+        $onTimeBegin = I('on_time_begin');
+        $onTimeEnd = I('on_time_end');
+        if ($onTimeBegin && $onTimeEnd) {
+            $onTimeBegin = strtotime($onTimeBegin);
+            $onTimeEnd = strtotime($onTimeEnd);
+            $where .= ' and on_time BETWEEN ' . $onTimeBegin . ' and ' . $onTimeEnd;
+        }
+
+        $outTimeBegin = I('out_time_begin');
+        $outTimeEnd = I('out_time_end');
+        if ($outTimeBegin && $outTimeEnd) {
+            $outTimeBegin = strtotime($outTimeBegin);
+            $outTimeEnd = strtotime($outTimeEnd);
+            $where .= ' and out_time BETWEEN ' . $outTimeBegin . ' and ' . $outTimeEnd;
         }
 
         $count = M('Goods')->where($where)->count();

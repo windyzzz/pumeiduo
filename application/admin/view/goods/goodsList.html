@@ -1,4 +1,5 @@
 <include file="public/layout"/>
+<script type="text/javascript" src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
 <style>
     span.type-virtual {
         background-color: #3598DC;
@@ -90,7 +91,23 @@
                         <!--排序规则-->
                         <input type="hidden" name="orderby1" value="goods_id"/>
                         <input type="hidden" name="orderby2" value="desc"/>
-                        <input type="text" size="30" name="key_word" class="qsbox" placeholder="搜索词">
+                        <div class="sDiv2">
+                            <input type="text" size="30" id="on_time_begin" name="on_time_begin" value="{$on_time_begin}"
+                                   class="qsbox" placeholder="上架时间开始" style="text-align: center;">
+                        </div>
+                        <div class="sDiv2">
+                            <input type="text" size="30" id="on_time_end" name="on_time_end" value="{$on_time_end}"
+                                   class="qsbox" placeholder="上架时间结束" style="text-align: center;">
+                        </div>
+                        <div class="sDiv2">
+                            <input type="text" size="30" id="out_time_begin" name="out_time_begin" value="{$out_time_begin}"
+                                   class="qsbox" placeholder="下架时间开始" style="text-align: center;">
+                        </div>
+                        <div class="sDiv2">
+                            <input type="text" size="30" id="out_time_end" name="out_time_end" value="{$out_time_end}"
+                                   class="qsbox" placeholder="下架时间结束" style="text-align: center;">
+                        </div>
+                        <input type="text" size="30" name="key_word" class="qsbox" placeholder="关键字（编号/名称）" style="text-align: center;">
                         <input type="button" onClick="ajax_get_table('search-form', 1)" class="btn" value="搜索">
                     </div>
                 </div>
@@ -217,6 +234,12 @@
 </div>
 <script>
     $(document).ready(function () {
+
+        $('#on_time_begin').layDate();
+        $('#on_time_end').layDate();
+        $('#out_time_begin').layDate();
+        $('#out_time_end').layDate();
+
         // 刷选条件 鼠标 移动进去 移出 样式
         $(".hDivBox > table > thead > tr > th").mousemove(function () {
             $(this).addClass('thOver');
