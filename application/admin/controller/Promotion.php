@@ -853,6 +853,7 @@ class Promotion extends Base
                     $this->ajaxReturn(['status' => 1, 'msg' => '编辑抢购活动成功', 'result' => '']);
                     break;
                 case 3:
+                    $data['start_time'] = strtotime($data['start_time']);
                     $data['end_time'] = strtotime($data['end_time']);
                     if ($data['end_time'] > time()) {
                         $data['is_end'] = 0;
