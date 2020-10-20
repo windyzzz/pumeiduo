@@ -168,6 +168,13 @@ return [
             ['name' => '文章', 'act' => 'article', 'op' => 'Community'],
         ]],
 
+        ['name' => '活动', 'child' => [
+            ['name' => '配置', 'act' => 'config', 'op' => 'Activity'],
+            ['name' => '板块1', 'act' => 'module1', 'op' => 'Activity'],
+            ['name' => '板块2', 'act' => 'module2', 'op' => 'Activity'],
+            ['name' => '板块3', 'act' => 'module3', 'op' => 'Activity'],
+        ]],
+
         // array('name' => '统计','child' => array(
         // 		array('name' => '销售概况', 'act'=>'index', 'op'=>'Report'),
         // 		array('name' => '销售排行', 'act'=>'saleTop', 'op'=>'Report'),
