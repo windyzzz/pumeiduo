@@ -107,6 +107,9 @@ class Base extends Controller
             'c=api.Article&a=articleListNew',           // 文章列表
             'c=api.Community&a=allCategory',            // 社区所有分类
             'c=api.Community&a=article',                // 社区文章列表
+            'c=api.Activity&a=cateActList',             // 分类主题活动列表
+            'c=api.Activity&a=cateActGoodsList',        // 分类主题活动商品列表
+            'c=api.Activity&a=promActivity',            // 促销活动板块配置
         ];
     }
 

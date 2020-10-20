@@ -19,7 +19,7 @@ use app\common\model\GroupBuy;
 use think\Db;
 use think\Page;
 
-class Activity
+class Activity extends Base
 {
     /**
      * 团购活动列表.
@@ -263,5 +263,47 @@ class Activity
             return json(['status' => 0, 'msg' => '活动已取消']);
         }
         return json(['status' => 1, 'msg' => 'success', 'result' => $res]);
+    }
+
+    /**
+     * 促销活动板块配置
+     * @return \think\response\Json
+     */
+    public function promActivity()
+    {
+        $config = [
+            'is_open' => 0,
+            'index_banner' => [
+                'img' => '',
+                'width' => 0,
+                'height' => 0,
+                'type' => ''
+            ],
+            'inside_header' => '',
+            'inside_banner' => [
+                'img' => '',
+                'width' => 0,
+                'height' => 0,
+                'type' => ''
+            ],
+            'inside_bgcolor' => ''
+        ];
+        $activityConfig = M('prom_activity_config')->find();
+        if (!empty($activityConfig)) {
+            $config['is_open'] = $activityConfig['is_open'];
+            $config['inside_header'] = $activityConfig['inside_header'];
+            $config['inside_bgcolor'] = $activityConfig['inside_bgcolor'];
+            if (!empty($activityConfig['index_banner'])) {
+                $activityConfig['index_banner'] = json_decode($activityConfig['index_banner'], true);
+                $activityConfig['index_banner']['img'] = getFullPath($activityConfig['index_banner']['img']);
+                $config['index_banner'] = $activityConfig['index_banner'];
+            }
+            if (!empty($activityConfig['inside_banner'])) {
+                $activityConfig['inside_banner'] = json_decode($activityConfig['inside_banner'], true);
+                $activityConfig['inside_banner']['img'] = getFullPath($activityConfig['inside_banner']['img']);
+                $config['inside_banner'] = $activityConfig['inside_banner'];
+            }
+        }
+        return json(['status' => 1, 'msg' => '', 'result' => $config]);
     }
 }
