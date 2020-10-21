@@ -30,6 +30,7 @@ class CouponLogic extends Model
      */
     public function couponTitleDesc($coupon, $goodsName = '', $cateName = '')
     {
+        $useTypeDesc = '';
         $title = '';
         $desc = '';
         $goodsName = !empty($goodsName) ? $goodsName : !empty($coupon['goods_name']) ? $coupon['goods_name'] : '';
@@ -37,26 +38,31 @@ class CouponLogic extends Model
         switch ($coupon['use_type']) {
             case 0:
                 // 全店通用
+                $useTypeDesc = '全店通用';
                 $title = $coupon['name'];
                 $desc = '全场商品满' . floatval($coupon['condition']) . '减' . floatval($coupon['money']);
                 break;
             case 1:
                 // 指定商品
+                $useTypeDesc = '指定商品';
                 $title = $coupon['name'];
                 $desc = '仅限' . $goodsName . '可用';
                 break;
             case 2:
                 // 指定分类可用
+                $useTypeDesc = '指定分类';
                 $title = $coupon['name'];
                 $desc = $cateName . '满' . floatval($coupon['condition']) . '可用';
                 break;
             case 4:
                 // 指定商品折扣券
+                $useTypeDesc = '指定商品';
                 $title = $coupon['name'];
                 $desc = '指定商品满' . floatval($coupon['condition']) . '享受' . floatval($coupon['money']) . '折';
                 break;
             case 5:
                 // 兑换商品券
+                $useTypeDesc = '兑换商品';
                 $title = $coupon['name'];
                 $desc = '购买任意商品可用';
                 break;
@@ -64,7 +70,7 @@ class CouponLogic extends Model
         if (!$title || !$desc) {
             return [];
         } else {
-            return ['title' => $title, 'desc' => $desc];
+            return ['use_type_desc' => $useTypeDesc, 'title' => $title, 'desc' => $desc];
         }
     }
 

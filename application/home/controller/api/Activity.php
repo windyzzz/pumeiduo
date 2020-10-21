@@ -12,6 +12,7 @@
 namespace app\home\controller\api;
 
 use app\common\logic\ActivityLogic;
+use app\common\logic\CouponLogic;
 use app\common\logic\GoodsActivityLogic;
 use app\common\logic\GoodsLogic;
 use app\common\model\FlashSale;
@@ -305,5 +306,76 @@ class Activity extends Base
             }
         }
         return json(['status' => 1, 'msg' => '', 'result' => $config]);
+    }
+
+    /**
+     * 促销活动板块1
+     * @return \think\response\Json
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     */
+    public function promActivityModule1()
+    {
+        $activity = [
+            'is_open' => 0,
+            'title' => '',
+            'is_received' => 0,
+            'list' => []
+        ];
+        $promActivity = M('prom_activity')->where(['module_type' => 1, 'is_open' => 1])->find();
+        if (!empty($promActivity)) {
+            $activity['is_open'] = $promActivity['is_open'];
+            $activity['title'] = $promActivity['title'];
+            // 优惠券信息
+            $couponData = M('prom_activity_item pai')->join('coupon c', 'c.id = pai.coupon_id')
+                ->where(['pai.activity_id' => $promActivity['id']])->field('c.*')->select();
+            $couponIds = [];
+            foreach ($couponData as $coupon) {
+                $couponIds[] = $coupon['id'];
+            }
+            // 检查是否已经领取
+            $receivedCids = M('coupon_list')->where(['cid' => ['IN', $couponIds], 'uid' => $this->user_id])->getField('cid', true);
+            $differCids = array_diff($couponIds, $receivedCids);
+            if (empty($differCids)) {
+                $activity['is_received'] = 1;
+            }
+            // 优惠券商品
+            $couponGoods = Db::name('goods_coupon gc')->join('goods g', 'g.goods_id = gc.goods_id')->where(['gc.coupon_id' => ['in', $couponIds]])->field('gc.coupon_id, g.goods_id, g.goods_name, g.original_img')->select();
+            // 优惠券分类
+            $couponCate = Db::name('goods_coupon gc1')->join('goods_category gc2', 'gc1.goods_category_id = gc2.id')->where(['gc1.coupon_id' => ['in', $couponIds]])->getField('gc1.coupon_id, gc2.id cate_id, gc2.name cate_name', true);
+            // 组合数据
+            $couponList = [];
+            $couponLogic = new CouponLogic();
+            foreach ($couponData as $k => $coupon) {
+                if ($coupon['use_type'] == 1) {
+                    // 指定商品可用
+                    foreach ($couponGoods as $goods) {
+                        if ($coupon['id'] == $goods['coupon_id']) {
+                            $couponList[] = [
+                                'coupon_id' => $coupon['id'],
+                                'use_type_desc' => '指定商品',
+                                'money' => floatval($coupon['money']) . '',
+                                'desc' => '￥' . floatval($coupon['money']) . '仅限' . $goods['goods_name'] . '可用',
+                            ];
+                        }
+                    }
+                } else {
+                    // 优惠券展示描述
+                    $res = $couponLogic->couponTitleDesc($coupon, '', isset($couponCate[$coupon['id']]) ? $couponCate[$coupon['id']]['cate_name'] : '');
+                    if (empty($res)) {
+                        continue;
+                    }
+                    $couponList[] = [
+                        'coupon_id' => $coupon['id'],
+                        'use_type_desc' => $res['use_type_desc'],
+                        'money' => floatval($coupon['money']) . '',
+                        'desc' => $res['desc'],
+                    ];
+                }
+            }
+            $activity['list'] = $couponList;
+        }
+        return json(['status' => 1, 'msg' => '', 'result' => $activity]);
     }
 }
