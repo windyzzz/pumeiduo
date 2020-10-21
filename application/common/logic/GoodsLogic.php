@@ -1252,7 +1252,7 @@ class GoodsLogic extends Model
             if (!empty($groupBuy)) {
                 foreach ($groupBuy as $value) {
                     if ($v['goods_id'] == $value['goods_id']) {
-                        $goodsList[$k]['goods_nature'] = 'group_buy';
+                        $goodsList[$k]['goods_type'] = 'group_buy';
                         if ($value['can_integral'] == 0) {
                             $goodsList[$k]['exchange_integral'] = '0';    // 不能使用积分兑换
                         }
@@ -1266,7 +1266,7 @@ class GoodsLogic extends Model
             if (!empty($flashSale)) {
                 foreach ($flashSale as $value) {
                     if ($v['goods_id'] == $value['goods_id']) {
-                        $goodsList[$k]['goods_nature'] = 'flash_sale';
+                        $goodsList[$k]['goods_type'] = 'flash_sale';
                         if ($value['can_integral'] == 0) {
                             $goodsList[$k]['exchange_integral'] = '0';    // 不能使用积分兑换
                         }
@@ -1281,7 +1281,7 @@ class GoodsLogic extends Model
             if (!empty($promGoods)) {
                 foreach ($promGoods as $value) {
                     if ($v['goods_id'] == $value['goods_id']) {
-                        $goodsList[$k]['goods_nature'] = 'promotion';
+                        $goodsList[$k]['goods_type'] = 'promotion';
                         switch ($value['type']) {
                             case 0:
                                 // 打折
