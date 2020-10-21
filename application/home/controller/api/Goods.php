@@ -1638,7 +1638,7 @@ class Goods extends Base
         if ($count > 0) {
             // 获取商品数据
             $goodsLogic = new GoodsLogic();
-            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user_id, $this->isApp);
+            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user, $this->isApp);
         }
 
 //        $goods_category = M('goods_category')->where('is_show=1')->cache(true)->getField('id,name,parent_id,level'); // 键值分类数组
@@ -1790,7 +1790,7 @@ class Goods extends Base
         if ($count > 0) {
             // 获取商品数据
             $goodsLogic = new GoodsLogic();
-            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user_id, $this->isApp);
+            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user, $this->isApp);
         }
 
         $navigate_cat = navigate_goods($id); // 面包屑导航
@@ -2243,7 +2243,7 @@ class Goods extends Base
         if ($count > 0) {
             // 获取商品数据
             $goodsLogic = new GoodsLogic();
-            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user_id, $this->isApp);
+            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user, $this->isApp);
         }
 
         $navigate_cat = navigate_goods($id); // 面包屑导航
@@ -2305,7 +2305,7 @@ class Goods extends Base
         if ($count > 0) {
             // 获取商品数据
             $goodsLogic = new GoodsLogic();
-            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user_id, $this->isApp);
+            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user, $this->isApp);
         }
         $return['goods_list'] = isset($goodsData) ? $goodsData['goods_list'] : [];
         $return['page'] = $page; // 赋值分页输出
@@ -2349,7 +2349,7 @@ class Goods extends Base
         if ($count > 0) {
             // 获取商品数据
             $goodsLogic = new GoodsLogic();
-            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user_id, $this->isApp);
+            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user, $this->isApp);
         }
         $return['goods_list'] = isset($goodsData) ? $goodsData['goods_list'] : [];
         $return['page'] = $page; // 赋值分页输出
@@ -2496,7 +2496,7 @@ class Goods extends Base
         if ($count > 0) {
             // 获取商品数据
             $goodsLogic = new GoodsLogic();
-            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user_id, $this->isApp);
+            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user, $this->isApp);
         }
 
         $return['goods_list'] = isset($goodsData) ? $goodsData['goods_list'] : [];
