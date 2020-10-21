@@ -329,7 +329,14 @@ class Activity extends Base
             $activity['title'] = $promActivity['title'];
             // 优惠券信息
             $couponData = M('prom_activity_item pai')->join('coupon c', 'c.id = pai.coupon_id')
-                ->where(['pai.activity_id' => $promActivity['id']])->field('c.*')->select();
+                ->where([
+                    'pai.activity_id' => $promActivity['id'],
+                    'c.send_start_time' => ['elt', NOW_TIME],
+                    'c.send_end_time' => ['egt', NOW_TIME],
+                    'c.use_end_time' => ['egt', NOW_TIME],
+                    'c.status' => 1,
+                ])
+                ->field('c.*')->select();
             $couponIds = [];
             foreach ($couponData as $coupon) {
                 $couponIds[] = $coupon['id'];
@@ -356,7 +363,7 @@ class Activity extends Base
                                 'coupon_id' => $coupon['id'],
                                 'use_type_desc' => '指定商品',
                                 'money' => floatval($coupon['money']) . '',
-                                'desc' => '￥' . floatval($coupon['money']) . '仅限' . $goods['goods_name'] . '可用',
+                                'desc' => '满' . $coupon['condition'] . '可用',
                             ];
                         }
                     }
@@ -370,11 +377,75 @@ class Activity extends Base
                         'coupon_id' => $coupon['id'],
                         'use_type_desc' => $res['use_type_desc'],
                         'money' => floatval($coupon['money']) . '',
-                        'desc' => $res['desc'],
+                        'desc' => '满' . $coupon['condition'] . '可用',
                     ];
                 }
             }
             $activity['list'] = $couponList;
+        }
+        return json(['status' => 1, 'msg' => '', 'result' => $activity]);
+    }
+
+    /**
+     * 促销活动板块2
+     * @return \think\response\Json
+     */
+    public function promActivityModule2()
+    {
+        $activity = [
+            'is_open' => 0,
+            'title' => '',
+            'list' => []
+        ];
+        $promActivity = M('prom_activity')->where(['module_type' => 2, 'is_open' => 1])->find();
+        if (!empty($promActivity)) {
+            $activity['is_open'] = $promActivity['is_open'];
+            $activity['title'] = $promActivity['title'];
+            // 商品列表
+            $goodsIds = M('prom_activity_item')->where(['activity_id' => $promActivity['id']])->getField('goods_id', true);
+            $count = count($goodsIds);
+            $page = new Page($count, 100);
+            $sortArr = ['sort' => 'desc'];
+            $goodsList = [];
+            if ($count > 0) {
+                // 获取商品数据
+                $goodsLogic = new GoodsLogic();
+                $goodsData = $goodsLogic->getGoodsList($goodsIds, $sortArr, $page, null, $this->isApp);
+                $goodsList = $goodsData['goods_list'];
+            }
+            $activity['list'] = $goodsList;
+        }
+        return json(['status' => 1, 'msg' => '', 'result' => $activity]);
+    }
+
+    /**
+     * 促销活动板块3
+     * @return \think\response\Json
+     */
+    public function promActivityModule3()
+    {
+        $activity = [
+            'is_open' => 0,
+            'title' => '',
+            'list' => []
+        ];
+        $promActivity = M('prom_activity')->where(['module_type' => 3, 'is_open' => 1])->find();
+        if (!empty($promActivity)) {
+            $activity['is_open'] = $promActivity['is_open'];
+            $activity['title'] = $promActivity['title'];
+            // 商品列表
+            $goodsIds = M('prom_activity_item')->where(['activity_id' => $promActivity['id']])->getField('goods_id', true);
+            $count = count($goodsIds);
+            $page = new Page($count, 10);
+            $sortArr = ['sort' => 'desc'];
+            $goodsList = [];
+            if ($count > 0) {
+                // 获取商品数据
+                $goodsLogic = new GoodsLogic();
+                $goodsData = $goodsLogic->getGoodsList($goodsIds, $sortArr, $page, null, $this->isApp);
+                $goodsList = $goodsData['goods_list'];
+            }
+            $activity['list'] = $goodsList;
         }
         return json(['status' => 1, 'msg' => '', 'result' => $activity]);
     }
