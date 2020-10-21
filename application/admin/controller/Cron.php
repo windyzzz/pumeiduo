@@ -1518,19 +1518,84 @@ AND log_id NOT IN
     }
 
     /**
-     * 更新促销活动状态
+     * 更新促销活动
      */
     public function updatePromGoods()
     {
-        $promGoods = M('prom_goods')->where(['is_open' => 1])->field('id, end_time')->select();
-        $promIds = [];
-        foreach ($promGoods as $prom) {
-            if ($prom['end_time'] > NOW_TIME) {
-                $promIds[] = $prom['id'];
-            }
-        }
+        /*
+         * 进行中的活动
+         */
+        $promIds = M('prom_goods')->where([
+            'is_open' => 1,
+            'end_time' => ['>', NOW_TIME]
+        ])->getField('id', true);
         if (!empty($promIds)) {
             M('prom_goods')->where(['id' => ['IN', $promIds]])->update(['is_end' => 0]);
+        }
+        /*
+         * 已经结束的活动
+         */
+        $promIds = M('prom_goods')->where([
+            'end_time' => ['<=', NOW_TIME]
+        ])->getField('id', true);
+        if (!empty($promIds)) {
+            M('prom_goods')->where(['id' => ['IN', $promIds]])->update(['is_end' => 1]);
+            M('goods')->where(['prom_type' => 3, 'prom_id' => ['IN', $promIds]])->update(['prom_type' => 0, 'prom_id' => 0]);
+            M('spec_goods_price')->where(['prom_type' => 3, 'prom_id' => ['IN', $promIds]])->update(['prom_type' => 0, 'prom_id' => 0]);
+        }
+    }
+
+    /**
+     * 更新秒杀活动
+     */
+    public function updateFlashSale()
+    {
+        /*
+         * 进行中的活动
+         */
+        $promIds = M('flash_sale')->where([
+            'end_time' => ['>', NOW_TIME]
+        ])->getField('id', true);
+        if (!empty($promIds)) {
+            M('flash_sale')->where(['id' => ['IN', $promIds]])->update(['is_end' => 0]);
+        }
+        /*
+         * 已经结束的活动
+         */
+        $promIds = M('flash_sale')->where([
+            'end_time' => ['<=', NOW_TIME]
+        ])->getField('id', true);
+        if (!empty($promIds)) {
+            M('prom_goods')->where(['id' => ['IN', $promIds]])->update(['is_end' => 1]);
+            M('goods')->where(['prom_type' => 1, 'prom_id' => ['IN', $promIds]])->update(['prom_type' => 0, 'prom_id' => 0]);
+            M('spec_goods_price')->where(['prom_type' => 1, 'prom_id' => ['IN', $promIds]])->update(['prom_type' => 0, 'prom_id' => 0]);
+        }
+    }
+
+    /**
+     * 更新团购活动
+     */
+    public function updateGroupBuy()
+    {
+        /*
+         * 进行中的活动
+         */
+        $promIds = M('flash_sale')->where([
+            'end_time' => ['>', NOW_TIME]
+        ])->getField('id', true);
+        if (!empty($promIds)) {
+            M('flash_sale')->where(['id' => ['IN', $promIds]])->update(['is_end' => 0]);
+        }
+        /*
+         * 已经结束的活动
+         */
+        $promIds = M('flash_sale')->where([
+            'end_time' => ['<=', NOW_TIME]
+        ])->getField('id', true);
+        if (!empty($promIds)) {
+            M('prom_goods')->where(['id' => ['IN', $promIds]])->update(['is_end' => 1]);
+            M('goods')->where(['prom_type' => 1, 'prom_id' => ['IN', $promIds]])->update(['prom_type' => 0, 'prom_id' => 0]);
+            M('spec_goods_price')->where(['prom_type' => 1, 'prom_id' => ['IN', $promIds]])->update(['prom_type' => 0, 'prom_id' => 0]);
         }
     }
 
