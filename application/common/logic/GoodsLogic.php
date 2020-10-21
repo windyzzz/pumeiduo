@@ -1198,7 +1198,6 @@ class GoodsLogic extends Model
                     $goodsImages = M('goods_images')->where(['goods_id' => $v['goods_id']])->select();
                     foreach ($goodsImages as $image) {
                         if (file_exists(ltrim($image['image_url'], '/'))) {
-                            $v['original_img'] = $image['image_url'];
                             $goodsList[$k]['original_img'] = $image['image_url'];
                             M('goods')->where(['goods_id' => $v['goods_id']])->update(['original_img' => $image['image_url']]);
                             $logData = [
@@ -1206,6 +1205,7 @@ class GoodsLogic extends Model
                                 'new_original_img' => $image['image_url'],
                             ];
                             $this->goodsErrorLog($v['goods_id'], '缩略图文件丢失', $logData);
+                            $v['original_img'] = $image['image_url'];
                             break;
                         }
                     }
