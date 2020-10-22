@@ -206,6 +206,7 @@ class Community extends Base
             'share' => $info['share'],
             'publish_time' => $info['publish_time'],
             'image' => $info['image'],
+            'image_size' => '',
             'video' => $info['video'],
             'video_cover' => $info['video_cover'],
             'video_axis' => $info['video_axis'],
