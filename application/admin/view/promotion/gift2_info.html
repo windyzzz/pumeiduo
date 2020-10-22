@@ -85,7 +85,7 @@
                                     <div class="selected-group-goods">
                                         <div class="goods-thumb"><img style="width: 162px;height: 162px" src="{$goods['goods_id']|goods_thum_images=162,162}"/></div>
                                         <div class="goods-name">
-                                            <a target="_blank" href="{:U('Home/Goods/goodsInfo',array('id'=>$goods['goods_id']))}">{$goods.goods_name}</a>
+                                            <a target="_blank" href="{:U('Admin/Goods/addEditGoods',array('id'=>$goods['goods_id']))}">{$goods.goods_name}</a>
                                         </div>
                                         <div class="goods-price">商城价：￥{$goods.shop_price}库存:{$goods.store_count}</div>
                                         数量：<input type="text" name="goods2[{$goods.goods_id}_0][stock]" value="{$goods.stock}" style="width:80px;" />
@@ -99,7 +99,7 @@
                                         <div class="goods-thumb"><img style="width: 162px;height: 162px" src="{$goods[SpecGoodsPrice][spec_img]}"/></div>
                                         <div class="goods-name">
                                             <a target="_blank"
-                                               href="{:U('Home/Goods/goodsInfo',array('id'=>$goods['goods_id'],'item_id'=>$goods[SpecGoodsPrice]['item_id']))}">{$goods.goods_name}{$goods[SpecGoodsPrice]['key_name']}</a>
+                                               href="{:U('Admin/Goods/addEditGoods',array('id'=>$goods['goods_id'],'item_id'=>$goods[SpecGoodsPrice]['item_id']))}">{$goods.goods_name}{$goods[SpecGoodsPrice]['key_name']}</a>
                                         </div>
                                         <div class="goods-price">商城价：￥{$goods[SpecGoodsPrice]['price']}库存:{$goods[SpecGoodsPrice]['store_count']}</div>
                                         数量：<input type="text" name="goods2[{$goods.goods_id}_{$goods[SpecGoodsPrice]['item_id']}]" value="{$goods.stock}" style="width:80px;" />
@@ -147,7 +147,7 @@
                                     <div class="selected-group-goods">
                                         <div class="goods-thumb"><img style="width: 162px;height: 162px" src="{$goods['goods_id']|goods_thum_images=162,162}"/></div>
                                         <div class="goods-name">
-                                            <a target="_blank" href="{:U('Home/Goods/goodsInfo',array('id'=>$goods['goods_id']))}">{$goods.goods_name}</a>
+                                            <a target="_blank" href="{:U('Admin/Goods/addEditGoods',array('id'=>$goods['goods_id']))}">{$goods.goods_name}</a>
                                         </div>
                                         <div class="goods-price">商城价：￥{$goods.shop_price}库存:{$goods.store_count}</div>
                                         数量：<input type="text" name="goods[{$goods.goods_id}_0][stock]" value="{$goods.stock}" style="width:80px;" />
@@ -161,7 +161,7 @@
                                         <div class="goods-thumb"><img style="width: 162px;height: 162px" src="{$goods[SpecGoodsPrice][spec_img]}"/></div>
                                         <div class="goods-name">
                                             <a target="_blank"
-                                               href="{:U('Home/Goods/goodsInfo',array('id'=>$goods['goods_id'],'item_id'=>$goods[SpecGoodsPrice]['item_id']))}">{$goods.goods_name}{$goods[SpecGoodsPrice]['key_name']}</a>
+                                               href="{:U('Admin/Goods/addEditGoods',array('id'=>$goods['goods_id'],'item_id'=>$goods[SpecGoodsPrice]['item_id']))}">{$goods.goods_name}{$goods[SpecGoodsPrice]['key_name']}</a>
                                         </div>
                                         <div class="goods-price">商城价：￥{$goods[SpecGoodsPrice]['price']}库存:{$goods[SpecGoodsPrice]['store_count']}</div>
                                         数量：<input type="text" name="goods[{$goods.goods_id}_{$goods[SpecGoodsPrice]['item_id']}][stock]" value="{$goods.stock}" style="width:80px;" />
@@ -239,7 +239,7 @@
                             '<input type="hidden" name="goods[' + item.goods_id + '_'+ o.item_id+'][goods_id]" value="' + item.goods_id + '"/>' +
                             '<div class="selected-group-goods"><div class="goods-thumb">' +
                             '<img style="width: 162px;height: 162px" src="' + item.spec_img + '"/></div> <div class="goods-name"> ' +
-                            '<a target="_blank" href="/index.php?m=Home&c=Goods&a=goodsInfo&id=' + item.goods_id + '">' + item.goods_name + o.key_name + '</a> </div>' +
+                            '<a target="_blank" href="/index.php/Admin/Goods/addEditGoods/id/' + item.goods_id + '">' + item.goods_name + o.key_name + '</a> </div>' +
                             ' <div class="goods-price">商城价：￥' + o.price + '库存:' + o.store_count + '</div> </div>数量：<input type="text" name="goods[' + item.goods_id + '_'+ o.item_id+'][stock]" value="1" style="width:80px;" /></div>';
                     });
                 } else {
@@ -247,7 +247,7 @@
                         '<input type="hidden" name="goods[' + item.goods_id + '_0'+'][goods_id]" value="' + item.goods_id + '"/>' +
                         '<div class="selected-group-goods"><div class="goods-thumb">' +
                         '<img style="width: 162px;height: 162px" src="' + item.goods_image + '"/></div> <div class="goods-name"> ' +
-                        '<a target="_blank" href="/index.php?m=Home&c=Goods&a=goodsInfo&id=' + item.goods_id + '">' + item.goods_name + '</a> </div>' +
+                        '<a target="_blank" href="/index.php/Admin/Goods/addEditGoods/id/' + item.goods_id + '">' + item.goods_name + '</a> </div>' +
                         ' <div class="goods-price">商城价：￥' + item.goods_price + '库存:' + item.store_count + '</div> 数量：<input type="text" name="goods[' + item.goods_id  + '_0'+'][stock]" value="1" style="width:80px;" /></div></div>';
                 }
             }

@@ -221,14 +221,14 @@
             //有规格
             html = '<div style="float: left;margin: 10px auto;" class="selected-group-goods"><div class="goods-thumb">' +
                     '<img style="width: 162px;height: 162px" src="'+goodsItem.spec.spec_img+'"/></div> <div class="goods-name"> ' +
-                    '<a target="_blank" href="/index.php?m=Home&c=Goods&a=goodsInfo&id='+goodsItem.goods_id+'">'+goodsItem.goods_name+goodsItem.spec.key_name+'</a> </div>' +
+                    '<a target="_blank" href="/index.php/Admin/Goods/addEditGoods/id/'+goodsItem.goods_id+'">'+goodsItem.goods_name+goodsItem.spec.key_name+'</a> </div>' +
                     ' <div class="goods-price">商城价：￥'+goodsItem.spec.price+'库存:'+goodsItem.spec.store_count+'</div> </div>';
             $('input[name=item_id]').val(goodsItem.spec.item_id);
             $('input[name=goods_name]').val(goodsItem.goods_name + goodsItem.spec.key_name);
         }else{
             html = '<div style="float: left;margin: 10px auto;" class="selected-group-goods"><div class="goods-thumb">' +
                     '<img style="width: 162px;height: 162px" src="'+goodsItem.goods_image+'"/></div> <div class="goods-name"> ' +
-                    '<a target="_blank" href="/index.php?m=Home&c=Goods&a=goodsInfo&id='+goodsItem.goods_id+'">'+goodsItem.goods_name+'</a> </div>' +
+                    '<a target="_blank" href="/index.php/Admin/Goods/addEditGoods/id/'+goodsItem.goods_id+'">'+goodsItem.goods_name+'</a> </div>' +
                     ' <div class="goods-price">商城价：￥'+goodsItem.goods_price+'库存:'+goodsItem.store_count+'</div> </div>';
             $('input[name=goods_name]').val(goodsItem.goods_name);
             $('input[name=item_id]').val(0);

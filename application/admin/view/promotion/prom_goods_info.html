@@ -281,7 +281,7 @@
                             '<input type="hidden" name="goods[' + item.goods_id + '][item_id][' + i + ']" value="' + o.item_id + '"/>' +
                             '<div class="selected-group-goods"><div class="goods-thumb">' +
                             '<img style="width: 162px;height: 162px" src="' + o.spec_img + '"/></div> <div class="goods-name"> ' +
-                            '<a target="_blank" href="/index.php?m=Home&c=Goods&a=goodsInfo&id=' + item.goods_id + '">' + item.goods_name + o.key_name + '</a> </div>' +
+                            '<a target="_blank" href="/index.php/Admin/Goods/addEditGoods/id/' + item.goods_id + '">' + item.goods_name + o.key_name + '</a> </div>' +
                             '<input type="hidden" name="store_count[]" value="'+o.store_count+'"/>' +
                             ' <div class="goods-price">商城价：￥' + o.price + '库存:' + o.store_count + '</div> </div></div>';
                     });
@@ -290,7 +290,7 @@
                         '<input type="hidden" name="goods[' + item.goods_id + '][goods_id]" value="' + item.goods_id + '"/>' +
                         '<div class="selected-group-goods"><div class="goods-thumb">' +
                         '<img style="width: 162px;height: 162px" src="' + item.goods_image + '"/></div> <div class="goods-name"> ' +
-                        '<a target="_blank" href="/index.php?m=Home&c=Goods&a=goodsInfo&id=' + item.goods_id + '">' + item.goods_name + '</a> </div>' +
+                        '<a target="_blank" href="/index.php/Admin/Goods/addEditGoods/id/' + item.goods_id + '">' + item.goods_name + '</a> </div>' +
                         '<input type="hidden" name="store_count[]" value="'+item.store_count+'"/>' +
                         ' <div class="goods-price">商城价：￥' + item.goods_price + '库存:' + item.store_count + '</div> </div></div>';
                 }
