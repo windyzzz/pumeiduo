@@ -82,6 +82,7 @@ class Community extends Base
                 'share' => $value['share'],
                 'publish_time' => $value['publish_time'],
                 'image' => $value['image'],
+                'image_size' => '',
                 'video' => $value['video'],
                 'video_cover' => $value['video_cover'],
                 'video_axis' => $value['video_axis'],
@@ -150,6 +151,11 @@ class Community extends Base
                 'article_id' => $value['id'],
                 'content' => trim_replace($value['content'], ["\n", "\r"], [" ", " "]),
                 'publish_time' => $publishTime,
+                'image' => $value['image'],
+                'image_size' => '',
+                'video' => $value['video'],
+                'video_cover' => $value['video_cover'],
+                'video_axis' => $value['video_axis'],
                 'goods' => [],
                 'goods_id' => $value['goods_id'],
                 'item_id' => $value['item_id'],
@@ -164,7 +170,7 @@ class Community extends Base
                 'cate_id1_desc' => $category[$value['cate_id1']],
                 'cate_id2' => $value['cate_id2'],
                 'cate_id2_desc' => $category[$value['cate_id2']],
-                'reason' => $value['status'] == -1 ? M('community_article_verify_log')->where(['article_id' => $value['id'], 'status' => -1])->order('add_time DESC')->value('reason') : ''
+                'reason' => $value['status'] == -1 ? M('community_article_verify_log')->where(['article_id' => $value['id'], 'status' => -1])->order('add_time DESC')->value('reason') : '',
             ];
         }
         // 数据处理

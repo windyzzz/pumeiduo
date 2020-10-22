@@ -8,6 +8,7 @@ use think\Page;
 class Community
 {
     private $ossClient = null;
+
     public function __construct()
     {
         $this->ossClient = new OssLogic();
@@ -240,6 +241,8 @@ class Community
             $articleList[$key]['image'] = $image;
             $articleList[$key]['image_size'] = $imageSize;
             $articleList[$key]['video'] = (object)$video;
+            // 当没有商品的时候，作为显示封面图
+            $articleList[$key]['show_cover'] = !empty($image) ? $image[0] : (!empty($video) ? $video['cover'] : '');
             unset($articleList[$key]['video_cover']);
             unset($articleList[$key]['video_axis']);
             unset($articleList[$key]['goods_id']);
