@@ -265,7 +265,7 @@
                     </dt>
                     <dd class="opt">
                         <a class="ncap-btn ncap-btn-green submitBtn" subimtid="return_money"  data-href="{:U('Admin/Order/refund_back',array('id'=>$return_goods[id]))}">支付原路退回</a>
-                        <a class="ncap-btn ncap-btn-green submitBtn" subimtid="return_money"  data-href="{:U('Admin/Order/refund_balance')}">退款到电子币账户</a>
+                        <a class="ncap-btn ncap-btn-green submitBtn" subimtid="return_money"  data-href="{:U('Admin/Order/refund_balance',array('id'=>$return_goods[id]))}">退款到电子币账户</a>
                         <if condition="$return_goods['type'] eq 1">
                         <p style="color: red;">请确保用户发货，且收到之后，才确认退款</p>
                         </if>
