@@ -173,7 +173,9 @@ class Community
                 ];
             }
             // 商品处理
+            $showCover = '';    // 封面显示图
             if ($value['goods_id'] != 0) {
+                $showCover = getFullPath($value['original_img']);
                 $goodsType = 'normal';
                 $shopPrice = $value['shop_price'];
                 $exchangeIntegral = $value['exchange_integral'];
@@ -236,13 +238,17 @@ class Community
                 ];
             } else {
                 $articleList[$key]['goods'] = (object)[];
+                if (!empty($image)) {
+                    $showCover = $image[0];
+                } elseif (!empty($video)) {
+                    $showCover = $video['cover'];
+                }
             }
             $articleList[$key]['publish_time'] = $publishTime;
             $articleList[$key]['image'] = $image;
             $articleList[$key]['image_size'] = $imageSize;
             $articleList[$key]['video'] = (object)$video;
-            // 当没有商品的时候，作为显示封面图
-            $articleList[$key]['show_cover'] = !empty($image) ? $image[0] : (!empty($video) ? $video['cover'] : '');
+            $articleList[$key]['show_cover'] = $showCover;
             unset($articleList[$key]['video_cover']);
             unset($articleList[$key]['video_axis']);
             unset($articleList[$key]['goods_id']);
