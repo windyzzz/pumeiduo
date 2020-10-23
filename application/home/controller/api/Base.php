@@ -15,7 +15,8 @@ class Base extends Controller
     protected $userToken;
     protected $redis;
     protected $passAuth = false;
-    protected $isApp = false;
+    protected $isApp = false;       // APP请求
+    protected $isApplet = false;    // 小程序请求
 
     /**
      * 初始化token验证
@@ -26,7 +27,8 @@ class Base extends Controller
         parent::__construct();
         $this->redis = new Redis();
         $this->isApp = Request::instance()->header('is-app', null);
-        if ($this->isApp == 1) {
+        $this->isApplet = Request::instance()->header('is-applet', null);
+        if ($this->isApp == 1 || $this->isApplet) {
             // APP请求
             session_start();
             session_destroy();

@@ -825,6 +825,25 @@ class Goods extends Base
                 }
             }
 
+            // 代理商商品
+            if ($data['is_agent'] == 1) {
+                if ($data['applet_on_time'] == 0 || $data['applet_out_time'] == 0) {
+                    $return_arr = [
+                        'msg' => '请设置小程序上下架时间',
+                        'status' => 0
+                    ];
+                    $this->ajaxReturn($return_arr);
+                }
+                $data['applet_on_time'] = strtotime($data['applet_on_time']);
+                $data['applet_out_time'] = strtotime($data['applet_out_time']);
+            } else {
+                $data['buying_price'] = 0;
+                $data['buying_pv'] = 0;
+                $data['applet_on_sale'] = 0;
+                $data['applet_on_time'] = 0;
+                $data['applet_out_time'] = 0;
+            }
+
             $Goods->data($data, true); // 收集数据
 //            $Goods->on_time = time(); // 上架时间
 
@@ -921,7 +940,6 @@ class Goods extends Base
         }
 
         //积分类型输出 BY J
-
         if ($goodsInfo && 0 == $goodsInfo['exchange_integral']) {
             $goodsInfoData['exchange_integral_type'] = 0;
         } elseif (empty($goodsInfo) || ($goodsInfo['shop_price'] * tpCache('shopping.point_use_percent') / 100 == $goodsInfo['exchange_integral'])) {
@@ -957,6 +975,12 @@ class Goods extends Base
                 $tabsList[$k]['status'] = $goodsTabList[$v['id']]['status'];
                 $tabsList[$k]['title'] = $goodsTabList[$v['id']]['title'];
             }
+        }
+
+        // 代理商商品
+        if ($goodsInfo['is_agent'] == 1) {
+            $goodsInfo['applet_on_time'] = date('Y-m-d H:i:s', $goodsInfo['applet_on_time']);
+            $goodsInfo['applet_out_time'] = date('Y-m-d H:i:s', $goodsInfo['applet_out_time']);
         }
 
         $distributList = Db::name('distribut_level')->select();
@@ -1628,5 +1652,27 @@ class Goods extends Base
         M('goods_images')->where(['img_id' => ['IN', $imageIds]])->delete();
         Db::commit();
         $this->ajaxReturn(['status' => 1, 'msg' => '删除成功']);
+    }
+
+
+    public function appletOnSale()
+    {
+        $goodsId = I('goods_id');
+        $onSale = I('on_sale');
+        $data = [
+            'applet_on_sale' => $onSale
+        ];
+        switch ($onSale) {
+            case 0:
+                $data['applet_out_time'] = NOW_TIME;
+                break;
+            case 1:
+                $data['is_agent'] = 1;
+                $data['applet_on_time'] = NOW_TIME;
+                $data['applet_out_time'] = strtotime('+1 month');
+                break;
+        }
+        M('goods')->where(['goods_id' => $goodsId])->update($data);
+        $this->ajaxReturn(['status' => 1, 'msg' => '处理成功']);
     }
 }

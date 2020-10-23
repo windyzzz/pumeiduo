@@ -171,6 +171,20 @@
         <div class="ncap-form-default tab_div_1">
             <dl class="row">
                 <dt class="tit">
+                    <label>是否属于供应链商品</label>
+                </dt>
+                <dd class="opt">
+                    <div class="onoff">
+                        <label for="is_agent1" class="cb-enable <if condition=" $goodsInfo[is_agent] eq 1">selected</if>">是</label>
+                        <label for="is_agent0" class="cb-disable <if condition=" $goodsInfo[is_agent] eq 0">selected</if>">否</label>
+                        <input id="is_agent1" name="is_agent" value="1" type="radio" <if condition="$goodsInfo[is_agent] eq 1"> checked="checked"</if>>
+                        <input id="is_agent0" name="is_agent" value="0" type="radio" <if condition="$goodsInfo[is_agent] eq 0"> checked="checked"</if>>
+                    </div>
+                    <p class="notic"></p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
                     <label for="record_no">商品名称</label>
                 </dt>
                 <dd class="opt">
@@ -592,48 +606,6 @@
                     <p class="notic"> 务必设置商品体积, 用于计算物流费.以立方米为单位</p>
                 </dd>
             </dl>
-            <dl class="row goods_shipping">
-                <dt class="tit">
-                    <label>是否包邮</label>
-                </dt>
-                <dd class="opt">
-                    <div class="onoff">
-                        <label id="is_free_shipping_label_1" for="is_free_shipping1" class="cb-enable <if condition='$goodsInfo[is_free_shipping] eq 1'>selected</if>">是</label>
-                        <label id="is_free_shipping_label_0" for="is_free_shipping0" class="cb-disable <if condition='$goodsInfo[is_free_shipping] eq 0'>selected</if>">否</label>
-                        <input id="is_free_shipping1" class="is_free_shipping" name="is_free_shipping" value="1" type="radio" <if condition="$goodsInfo[is_free_shipping] eq 1"> checked="checked"</if>>
-                        <input id="is_free_shipping0" class="is_free_shipping" name="is_free_shipping" value="0" type="radio" <if condition="$goodsInfo[is_free_shipping] eq 0"> checked="checked"</if>>
-                        <div class="freight_template" style="display: none;">
-                            <span>运费模板</span>
-                            <select name="template_id">
-                                <option value="0">请选择运费模板</option>
-                                <volist name="freight_template" id="template">
-                                    <option value="{$template.template_id}"
-                                    <if condition="$template['template_id'] eq $goodsInfo['template_id'] ">
-                                        selected="selected"
-                                    </if>
-                                    >{$template.template_name}</option>
-                                </volist>
-                            </select>
-                            <empty name="freight_template"><span style="color: red;">没有可选的运费模板，请前去<a href="{:U('Freight/index')}" target="_blank">添加</a></span></empty>
-                        </div>
-                    </div>
-                    <p class="notic"></p>
-                </dd>
-            </dl>
-            <dl class="row">
-                <dt class="tit">
-                    <label>是否上架（子系统）</label>
-                </dt>
-                <dd class="opt">
-                    <div class="onoff">
-                        <label for="is_on_sale21" class="cb-enable <if condition=" $goodsInfo[is_on_sale2] eq 1">selected</if>">是</label>
-                        <label for="is_on_sale20" class="cb-disable <if condition=" $goodsInfo[is_on_sale2] eq 0">selected</if>">否</label>
-                        <input id="is_on_sale21" name="is_on_sale2" value="1" type="radio" <if condition="$goodsInfo[is_on_sale2] eq 1"> checked="checked"</if>>
-                        <input id="is_on_sale20" name="is_on_sale2" value="0" type="radio" <if condition="$goodsInfo[is_on_sale2] eq 0"> checked="checked"</if>>
-                    </div>
-                    <p class="notic"></p>
-                </dd>
-            </dl>
             <dl class="row">
                 <dt class="tit">
                     <label for="record_no">总库存</label>
@@ -704,6 +676,92 @@
                     <p class="notic">请填写1~10之间的数字，虚拟商品最高购买数量不能超过10个。</p>
                 </dd>
             </dl>
+            <dl class="row goods_shipping">
+                <dt class="tit">
+                    <label>是否包邮</label>
+                </dt>
+                <dd class="opt">
+                    <div class="onoff">
+                        <label id="is_free_shipping_label_1" for="is_free_shipping1" class="cb-enable <if condition='$goodsInfo[is_free_shipping] eq 1'>selected</if>">是</label>
+                        <label id="is_free_shipping_label_0" for="is_free_shipping0" class="cb-disable <if condition='$goodsInfo[is_free_shipping] eq 0'>selected</if>">否</label>
+                        <input id="is_free_shipping1" class="is_free_shipping" name="is_free_shipping" value="1" type="radio" <if condition="$goodsInfo[is_free_shipping] eq 1"> checked="checked"</if>>
+                        <input id="is_free_shipping0" class="is_free_shipping" name="is_free_shipping" value="0" type="radio" <if condition="$goodsInfo[is_free_shipping] eq 0"> checked="checked"</if>>
+                        <div class="freight_template" style="display: none;">
+                            <span>运费模板</span>
+                            <select name="template_id">
+                                <option value="0">请选择运费模板</option>
+                                <volist name="freight_template" id="template">
+                                    <option value="{$template.template_id}"
+                                    <if condition="$template['template_id'] eq $goodsInfo['template_id'] ">
+                                        selected="selected"
+                                    </if>
+                                    >{$template.template_name}</option>
+                                </volist>
+                            </select>
+                            <empty name="freight_template"><span style="color: red;">没有可选的运费模板，请前去<a href="{:U('Freight/index')}" target="_blank">添加</a></span></empty>
+                        </div>
+                    </div>
+                    <p class="notic"></p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>是否上架（子系统）</label>
+                </dt>
+                <dd class="opt">
+                    <div class="onoff">
+                        <label for="is_on_sale21" class="cb-enable <if condition=" $goodsInfo[is_on_sale2] eq 1">selected</if>">是</label>
+                        <label for="is_on_sale20" class="cb-disable <if condition=" $goodsInfo[is_on_sale2] eq 0">selected</if>">否</label>
+                        <input id="is_on_sale21" name="is_on_sale2" value="1" type="radio" <if condition="$goodsInfo[is_on_sale2] eq 1"> checked="checked"</if>>
+                        <input id="is_on_sale20" name="is_on_sale2" value="0" type="radio" <if condition="$goodsInfo[is_on_sale2] eq 0"> checked="checked"</if>>
+                    </div>
+                    <p class="notic"></p>
+                </dd>
+            </dl>
+            <div id="agent_attr" style="<if condition='$goodsInfo[is_agent] == 0'>display: none;</if>">
+                <dl class="row">
+                    <dt class="tit">
+                        <label for="record_no">进货价</label>
+                    </dt>
+                    <dd class="opt">
+                        <input type="text" value="{$goodsInfo.buying_price}" name="buying_price" class="t_mane"
+                               onKeyUp="this.value=this.value.replace(/[^\d.]/g,'')"
+                               onpaste="this.value=this.value.replace(/[^\d.]/g,'')"/>
+                        <span class="err" id="err_buying_price" style="color:#F00; display:none;"></span>
+                    </dd>
+                </dl>
+                <dl class="row">
+                    <dt class="tit">
+                        <label for="record_no">进货价pv</label>
+                    </dt>
+                    <dd class="opt">
+                        <input type="text" value="{$goodsInfo.buying_pv}" name="buying_pv" class="t_mane"
+                               onKeyUp="this.value=this.value.replace(/[^\d.]/g,'')"
+                               onpaste="this.value=this.value.replace(/[^\d.]/g,'')"/>
+                        <span class="err" id="err_buying_pv" style="color:#F00; display:none;"></span>
+                    </dd>
+                </dl>
+                <dl class="row">
+                    <dt class="tit">
+                        <label for="record_no">小程序上架时间</label>
+                    </dt>
+                    <dd class="opt">
+                        <input type="text" size="30" id="applet_on_time" name="applet_on_time" value="{$goodsInfo.applet_on_time}"
+                               class="qsbox" placeholder="小程序上架时间">
+                        <span class="err" id="err_applet_on_time" style="color:#F00; display:none;"></span>
+                    </dd>
+                </dl>
+                <dl class="row">
+                    <dt class="tit">
+                        <label for="record_no">小程序下架时间</label>
+                    </dt>
+                    <dd class="opt">
+                        <input type="text" size="30" id="applet_out_time" name="applet_out_time" value="{$goodsInfo.applet_out_time}"
+                               class="qsbox" placeholder="小程序下架时间">
+                        <span class="err" id="err_applet_out_time" style="color:#F00; display:none;"></span>
+                    </dd>
+                </dl>
+            </div>
             <dl class="row">
                 <dt class="tit">
                     <label for="record_no">商品详情描述</label>
@@ -997,6 +1055,9 @@
 </div>
 
 <script>
+    $('#applet_on_time').layDate();
+    $('#applet_out_time').layDate();
+
     var index = $("#seriesNum").html();
 
     function selectGoods() {
@@ -1451,6 +1512,17 @@
             $('#commission').hide()
         }
     }
+
+    $('input[name="is_agent"]').change(function () {
+        switch (this.value) {
+            case '1':
+                $('#agent_attr').show();
+                break;
+            case '0':
+                $('#agent_attr').hide();
+                break;
+        }
+    });
 </script>
 
 <!-- oss直传  start-->
