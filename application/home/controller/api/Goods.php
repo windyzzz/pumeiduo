@@ -1600,6 +1600,12 @@ class Goods extends Base
             $goods_where['is_abroad'] = 0;
             $goods_where['is_supply'] = 0;
         }
+        if ($this->isApplet) {
+            $goods_where['is_agent'] = 1;
+            $goods_where['applet_on_sale'] = 1;
+        } else {
+            $goods_where['is_agent'] = 0;
+        }
         if ($couponId != 0) {
             $filter_goods_id = Db::name('goods_coupon')->where(['coupon_id' => $couponId])->getField('goods_id', true);
         } else {
@@ -1698,6 +1704,12 @@ class Goods extends Base
             $SearchWordLogic = new SearchWordLogic();
             $where = $SearchWordLogic->getSearchWordWhere($search);
             $where['is_on_sale'] = 1;
+            if ($this->isApplet) {
+                $where['is_agent'] = 1;
+                $where['applet_on_sale'] = 1;
+            } else {
+                $where['is_agent'] = 0;
+            }
             // 搜索词被搜索数量+1
             Db::name('search_word')->where('keywords', $search)->setInc('search_num');
             // 搜索的商品数量
@@ -1727,6 +1739,12 @@ class Goods extends Base
             // 筛选
             $cat_id_arr = getCatGrandson($id);
             $goods_where = ['is_on_sale' => 1, 'cat_id|extend_cat_id' => ['in', $cat_id_arr]];
+            if ($this->isApplet) {
+                $goods_where['is_agent'] = 1;
+                $goods_where['applet_on_sale'] = 1;
+            } else {
+                $goods_where['is_agent'] = 0;
+            }
             if ($couponId != 0) {
                 $filter_goods_id = Db::name('goods_coupon')->where(['coupon_id' => $couponId])->getField('goods_id', true);
             } else {
