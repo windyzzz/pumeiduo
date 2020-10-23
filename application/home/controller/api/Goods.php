@@ -1596,6 +1596,10 @@ class Goods extends Base
         // 筛选 品牌 规格 属性 价格
         $cat_id_arr = getCatGrandson($id);
         $goods_where = ['is_on_sale' => 1, 'cat_id|extend_cat_id' => ['in', $cat_id_arr]];
+        if (!$this->isApp) {
+            $goods_where['is_abroad'] = 0;
+            $goods_where['is_supply'] = 0;
+        }
         if ($couponId != 0) {
             $filter_goods_id = Db::name('goods_coupon')->where(['coupon_id' => $couponId])->getField('goods_id', true);
         } else {
@@ -1783,6 +1787,10 @@ class Goods extends Base
         // 筛选 品牌 规格 属性 价格
         $cat_id_arr = getCatGrandson($id);
         $goods_where = ['is_on_sale' => 1, 'sale_type' => 2, 'cat_id' => ['in', $cat_id_arr], 'zone' => ['neq', 3], 'distribut_id' => 0];
+        if (!$this->isApp) {
+            $goods_where['is_abroad'] = 0;
+            $goods_where['is_supply'] = 0;
+        }
         $filter_goods_id = Db::name('goods')->where($goods_where)->cache(true)->getField('goods_id', true);
 
         $count = count($filter_goods_id);
@@ -2206,6 +2214,10 @@ class Goods extends Base
                 'g.is_on_sale' => 1,
 //                'g.cat_id' => ['in', $cat_id_arr]
             ];
+            if (!$this->isApp) {
+                $where['g.is_abroad'] = 0;
+                $where['g.is_supply'] = 0;
+            }
             $filter_goods_id = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
                 ->join('goods g', 'g.goods_id = gtg.goods_id')
                 ->where($where)->getField('gtg.goods_id', true);
@@ -2234,6 +2246,10 @@ class Goods extends Base
                     'zone' => ['neq', 3],
                     'distribut_id' => 0
                 ];
+                if (!$this->isApp) {
+                    $where['is_abroad'] = 0;
+                    $where['is_supply'] = 0;
+                }
                 $filter_goods_id = Db::name('goods')->where($where)->getField('goods_id', true);
                 $filter_goods_id = array_unique($filter_goods_id);
             }
@@ -2298,7 +2314,12 @@ class Goods extends Base
                 break;
         }
         $sortArr = [$sort => $sort_asc];
-        $filter_goods_id = M('goods')->where('is_new', 1)->where('is_on_sale', 1)->getField('goods_id', true);
+        $where = ['is_on_sale' => 1, 'is_new' => 1];
+        if (!$this->isApp) {
+            $where['is_abroad'] = 0;
+            $where['is_supply'] = 0;
+        }
+        $filter_goods_id = M('goods')->where($where)->getField('goods_id', true);
         $filter_goods_id = array_unique($filter_goods_id);
         $count = count($filter_goods_id);
         $page = new Page($count, $num);
@@ -2342,7 +2363,12 @@ class Goods extends Base
                 break;
         }
         $sortArr = [$sort => $sort_asc];
-        $filter_goods_id = M('goods')->where('is_hot', 1)->where('is_on_sale', 1)->getField('goods_id', true);
+        $where = ['is_hot' => 1, 'is_on_sale' => 1];
+        if (!$this->isApp) {
+            $where['is_abroad'] = 0;
+            $where['is_supply'] = 0;
+        }
+        $filter_goods_id = M('goods')->where($where)->getField('goods_id', true);
         $filter_goods_id = array_unique($filter_goods_id);
         $count = count($filter_goods_id);
         $page = new Page($count, $num);
@@ -2446,6 +2472,10 @@ class Goods extends Base
         $SearchWordLogic = new SearchWordLogic();
         $where = $SearchWordLogic->getSearchWordWhere($q);
         $where['is_on_sale'] = 1;
+        if (!$this->isApp) {
+            $where['is_abroad'] = 0;
+            $where['is_supply'] = 0;
+        }
         // $where['exchange_integral'] = 0;//不检索积分商品
         // 搜索词被搜索数量+1
         Db::name('search_word')->where('keywords', $q)->setInc('search_num');
@@ -2962,7 +2992,7 @@ class Goods extends Base
                     $where['cat_id'] = $cateId;
             }
         } else {
-            $where['abroad_recommend'] = 1; //TODO 临时处理
+            $where['abroad_recommend'] = 1;
         }
         $goodsIds = M('goods')->where($where)->getField('goods_id', true);
         $count = count($goodsIds);
