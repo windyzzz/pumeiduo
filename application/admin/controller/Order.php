@@ -2384,7 +2384,8 @@ class Order extends Base
      */
     public function cancelSupplierReturn()
     {
-        $returnId = I('return_id');
+        $returnId = I('return_id', 0);
+        if (!$returnId) $returnId = I('id', 0);
         $return = M('return_goods rg')->join('order_goods og', 'og.rec_id = rg.rec_id')
             ->join('order o', 'o.order_id = og.order_id2')
             ->where(['rg.id' => $returnId])
@@ -2407,7 +2408,7 @@ class Order extends Base
         if ($res['status'] == 0) {
             $this->ajaxReturn(['status' => 0, 'msg' => $res['msg']]);
         }
-        M('return_goods')->where(['id' => $returnId])->update(['supplier_sale_status' => -2]);
-        $this->ajaxReturn(['status' => 1, 'msg' => '供应链取消成功']);
+        M('return_goods')->where(['id' => $returnId])->update(['status' => -2, 'supplier_sale_status' => -2]);
+        $this->ajaxReturn(['status' => 1, 'msg' => '供应链取消成功', 'url' => '']);
     }
 }
