@@ -333,7 +333,8 @@ class CouponLogic extends Model
         $CouponList = new CouponList();
         $Coupon = new Coupon();
         $userCouponArr = [];
-        $userCouponList = $CouponList->where('uid', $user_id)->where('status', 0)->select(); //用户优惠券
+        $userCouponList = $CouponList->alias('cl')->join('coupon c', 'c.id = cl.cid')
+            ->where('cl.uid', $user_id)->where('cl.status', 0)->where('c.status', 1)->order('c.money DESC')->select(); //用户优惠券
         if (!$userCouponList) {
             return $userCouponArr;
         }
