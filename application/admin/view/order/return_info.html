@@ -20,6 +20,7 @@
     </div>
     <if condition="$return_goods['status'] eq 0">
         <form class="form-horizontal" method="post" id="return_form"  name="return_form">
+            <input type="hidden" name="id" value="{$id}">
             <div class="ncap-form-default">
                 <dl class="row">
                     <dt class="tit">
@@ -123,7 +124,7 @@
                 </if>
                 <if condition="$order[order_type] == 3">
                     <if condition="$return_goods[is_supply] == 1">
-                        <if condition="$return_goods['status'] eq 0 && $return_goods[supplier_sale_status] NEQ 0">
+                        <if condition="$return_goods[supplier_sale_status] NEQ 0">
                             <dl class="row">
                                 <dt class="tit">
                                     <label>审核意见</label>
@@ -133,6 +134,11 @@
                                     <label><input type="radio" name="status" value="-1">拒绝通过</label>
                                 </dd>
                             </dl>
+                        <else/>
+                            <div class="bot">
+                                <input type="hidden" name="return_id" value="{$id}">
+                                <a href="JavaScript:;" subimtid="return_form" data-href="{:U('Admin/Order/cancelSupplierReturn')}" class="ncap-btn-big ncap-btn-green submitBtn" >取消供应链售后</a>
+                            </div>
                         </if>
                     <else/>
                         <dl class="row">
@@ -195,7 +201,6 @@
                         </dd>
                     </dl>
                 </if>
-                <input type="hidden" name="id" value="{$id}">
                 <if condition="$return_goods[is_supply] == 1 && $return_goods[supplier_sale_status] == 0">
                     <if condition="empty($return_goods[supplier_sale_sn])">
                         <div class="bot"><a href="JavaScript:;" subimtid="return_form" data-href="{:U('Admin/Order/sendSupplierReturn')}" class="ncap-btn-big ncap-btn-green submitBtn">发送到供应链系统</a></div>
