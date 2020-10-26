@@ -33,7 +33,6 @@ class UpdateGoods20201022 extends Migrator
             ->addColumn('buying_price', 'decimal', ['default' => '0', 'comment' => '进货价（代理商商品）', 'precision' => 10, 'scale' => 2])
             ->addColumn('retail_price', 'decimal', ['default' => '0', 'comment' => '零售价（代理商商品）', 'precision' => 10, 'scale' => 2])
             ->addColumn('buying_price_pv', 'decimal', ['default' => '0', 'comment' => '进货价pv（代理商商品）', 'precision' => 10, 'scale' => 2])
-            ->addColumn('retail_price_pv', 'decimal', ['default' => '0', 'comment' => '零售价pv（代理商商品）', 'precision' => 10, 'scale' => 2])
             ->addColumn('applet_on_sale', 'integer', ['default' => 0, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'comment' =>'小程序上架状态'])
             ->addColumn('applet_on_time', 'integer', ['default' => 0, 'comment' => '小程序上架时间'])
             ->addColumn('applet_out_time', 'integer', ['default' => 0, 'comment' => '小程序下架时间'])
