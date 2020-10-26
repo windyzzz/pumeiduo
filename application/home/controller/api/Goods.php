@@ -189,10 +189,11 @@ class Goods extends Base
         $goods_id = I('goods_id/d');
 
 //        $Goods = new \app\common\model\Goods();
-        $goods = Db::name('goods')->where('goods_id', $goods_id)->field('goods_id, cat_id, extend_cat_id, goods_sn, goods_name, goods_type, goods_remark, goods_content, 
-            brand_id, store_count, comment_count, market_price, shop_price, cost_price, give_integral, exchange_integral, original_img, limit_buy_num, least_buy_num,
-            is_on_sale, is_free_shipping, is_recommend, is_new, is_hot, is_virtual, virtual_indate, click_count, zone, prom_type, prom_id, commission, integral_pv, is_supply')->find();
+        $goods = Db::name('goods')->where('goods_id', $goods_id)->find();
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
+            return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
+        }
+        if ($this->isApplet && $goods['is_agent'] == 0) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
         if (cookie('user_id')) {
@@ -389,10 +390,11 @@ class Goods extends Base
         if (!$goods_id) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
-        $goods = Db::name('goods')->where('goods_id', $goods_id)->field('goods_id, cat_id, extend_cat_id, goods_sn, goods_name, goods_type, goods_remark, goods_content, 
-            brand_id, store_count, comment_count, market_price, shop_price, cost_price, give_integral, exchange_integral, original_img, limit_buy_num, least_buy_num,
-            is_on_sale, is_free_shipping, is_recommend, is_new, is_hot, is_virtual, virtual_indate, click_count, zone, commission, integral_pv, is_abroad')->find();
+        $goods = Db::name('goods')->where('goods_id', $goods_id)->find();
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
+            return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
+        }
+        if ($this->isApplet && $goods['is_agent'] == 0) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
         M('Goods')->where('goods_id', $goods_id)->save(['click_count' => $goods['click_count'] + 1]); // 统计点击数
@@ -787,6 +789,9 @@ class Goods extends Base
         $goods = Db::name('goods')->where('goods_id', $goods_id)->find();
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架']);
+        }
+        if ($this->isApplet && $goods['is_agent'] == 0) {
+            return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
         M('Goods')->where('goods_id', $goods_id)->save(['click_count' => $goods['click_count'] + 1]); // 统计点击数
         $originalImg = getFullPath($goods['original_img']);
