@@ -122,16 +122,18 @@
                     </dl>
                 </if>
                 <if condition="$order[order_type] == 3">
-                    <if condition="$return_goods[is_supply] == 1 && $return_goods['status'] eq 0 && $return_goods[supplier_sale_status] NEQ 0">
-                        <dl class="row">
-                            <dt class="tit">
-                                <label>审核意见</label>
-                            </dt>
-                            <dd class="opt">
-                                <label><input type="radio" name="status" checked value="1">审核通过</label>
-                                <label><input type="radio" name="status" value="-1">拒绝通过</label>
-                            </dd>
-                        </dl>
+                    <if condition="$return_goods[is_supply] == 1">
+                        <if condition="$return_goods['status'] eq 0 && $return_goods[supplier_sale_status] NEQ 0">
+                            <dl class="row">
+                                <dt class="tit">
+                                    <label>审核意见</label>
+                                </dt>
+                                <dd class="opt">
+                                    <label><input type="radio" name="status" checked value="1">审核通过</label>
+                                    <label><input type="radio" name="status" value="-1">拒绝通过</label>
+                                </dd>
+                            </dl>
+                        </if>
                     <else/>
                         <dl class="row">
                             <dt class="tit">
