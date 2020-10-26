@@ -436,7 +436,7 @@ class Activity extends Base
             // 商品列表
             $goodsIds = M('prom_activity_item')->where(['activity_id' => $promActivity['id']])->getField('goods_id', true);
             $count = count($goodsIds);
-            $page = new Page($count, 10);
+            $page = new Page($count, 12);
             $sortArr = ['sort' => 'desc'];
             $goodsList = [];
             if ($count > 0) {
