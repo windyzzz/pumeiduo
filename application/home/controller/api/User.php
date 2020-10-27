@@ -2051,6 +2051,9 @@ class User extends Base
         if ($current_user['user_id'] == $bind_user['user_id']) {
             return json(['status' => -1, 'msg' => '不能绑定自己']);
         }
+        if ($current_user['first_leader'] == $bind_user['user_id']) {
+            return json(['status' => 0, 'msg' => '不能绑定和自己有关系的普通会员']);
+        }
         if ($this->_hasRelationship($bind_user['user_id'])) {
             return json(['status' => 0, 'msg' => '不能绑定和自己有关系的普通会员']);
         }
