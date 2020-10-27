@@ -1239,9 +1239,9 @@ class UsersLogic extends Model
      */
     public function oauthRegApplet($unionid, $openid, $username, $password)
     {
-        $oauthUser = M('oauth_users')->where(['unionid' => $unionid, 'openid' => $openid])->order('tu_id desc')->find();
+        $oauthUser = M('oauth_users')->where(['unionid' => $unionid])->order('tu_id desc')->find();
         if (!$oauthUser) {
-            return ['status' => 0, 'msg' => 'unionid/openid错误'];
+            return ['status' => 0, 'msg' => 'unionid错误'];
         }
         $oauthData = unserialize($oauthUser['oauth_data']);
         $isReg = false;
