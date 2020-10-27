@@ -16,6 +16,7 @@ use app\common\logic\supplier\GoodsService;
 use app\common\model\Goods;
 use app\common\util\TpshopException;
 use think\Db;
+use think\Exception;
 use think\Model;
 
 /**
@@ -2037,5 +2038,31 @@ class GoodsLogic extends Model
             return $this->createGoodsPwd($goodsInfo);
         }
         return $password;
+    }
+
+    /**
+     * 获取商品小程序分享码
+     * @param $goodsId
+     * @param $userId
+     * @return string
+     */
+    public function createGoodsAppletCode($goodsId, $userId)
+    {
+        // 获取配置
+        $data = M('Plugin')->where('code', 'wechatApplet')->where('type', 'login')->find();
+        $config = unserialize($data['config_value']);
+        include_once "plugins/login/wechatApplet/wechatApplet.class.php";
+        $class = '\\wechatApplet';
+        $classObj = new $class($config);
+        try {
+            $param = [
+                'goods_id' => $goodsId,
+                'user_id' => $userId
+            ];
+            $qrCode = $classObj->getQrCode($param);
+            return $qrCode;
+        } catch (Exception $e) {
+            return '';
+        }
     }
 }

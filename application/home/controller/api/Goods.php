@@ -1022,8 +1022,8 @@ class Goods extends Base
                 /*
                  * 小程序
                  */
-                // 小程序二维码
-
+                // 小程序分享二维码
+                $goodsInfo['applet_qr_code'] = $goodsLogic->createGoodsAppletCode($goods_id, $this->user_id);
                 // 商品pv、佣金
                 switch ($this->user['distribut_level']) {
                     case 1:
