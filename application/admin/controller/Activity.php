@@ -303,23 +303,27 @@ class Activity extends Base
         switch ($moduleType) {
             case 1:
                 $itemData = [];
-                foreach ($data['item']['coupon_id'] as $item) {
-                    $itemData[] = [
-                        'activity_id' => $activityId,
-                        'coupon_id' => $item
-                    ];
+                if (isset($data['item']['coupon_id'])) {
+                    foreach ($data['item']['coupon_id'] as $item) {
+                        $itemData[] = [
+                            'activity_id' => $activityId,
+                            'coupon_id' => $item
+                        ];
+                    }
                 }
                 (new PromActivityItem())->saveAll($itemData);
                 break;
             case 2:
             case 3:
                 $itemData = [];
-                foreach ($data['item'] as $item) {
-                    $itemData[] = [
-                        'activity_id' => $activityId,
-                        'goods_id' => $item['goods_id'],
-                        'item_id' => $item['item_id'] ?? 0
-                    ];
+                if (isset($data['item'])) {
+                    foreach ($data['item'] as $item) {
+                        $itemData[] = [
+                            'activity_id' => $activityId,
+                            'goods_id' => $item['goods_id'],
+                            'item_id' => $item['item_id'] ?? 0
+                        ];
+                    }
                 }
                 (new PromActivityItem())->saveAll($itemData);
                 break;
