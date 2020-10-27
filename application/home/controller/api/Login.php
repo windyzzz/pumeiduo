@@ -80,6 +80,7 @@ class Login extends Base
         //     }
         // }
         $source = $this->isApp == 1 ? 3 : 1;    // 1微信 3APP
+        $source = $this->isApplet == 1 ? 4 : $source;   // 4小程序
         $logic = new UsersLogic();
         $res = $logic->login($username, $password, $source);
         if (1 == $res['status']) {
@@ -242,6 +243,7 @@ class Login extends Base
 //            $invite = get_user_info($invite); //根据user_id查找邀请人
 //        }
         $source = $this->isApp == 1 ? 3 : 1;    // 1微信 3APP
+        $source = $this->isApplet == 1 ? 4 : $source;   // 4小程序
         $data = $logic->reg($username, $password, $password2, 0, $invite, '', '', $this->userToken, $source);
         if (1 != $data['status']) {
             return json($data);

@@ -33,6 +33,7 @@ class CartLogic extends Model
     protected $session_id; //session_id
     protected $user_token; //用户token
     protected $user_id = 0; //user_id
+    protected $user = null; //user
     protected $userGoodsTypeCount = 0; //用户购物车的全部商品种类
     protected $userCouponNumArr; //用户符合购物车店铺可用优惠券数量
     protected $cart_id; // 购物车记录id
@@ -132,6 +133,16 @@ class CartLogic extends Model
     }
 
     /**
+     * 设置用户信息
+     *
+     * @param $user
+     */
+    public function setUser($user)
+    {
+        $this->user = $user;
+    }
+
+    /**
      * 设置购买的商品数量.
      *
      * @param $goodsBuyNum
@@ -180,6 +191,19 @@ class CartLogic extends Model
             'item_id' => empty($this->specGoodsPrice) ? 0 : $this->specGoodsPrice->item_id,
             'zone' => $this->goods['zone']
         ];
+        if ($this->goods['is_agent'] == 1) {
+            if (isset($this->user)) {
+                switch ($this->user['distribut_level']) {
+                    case 3:
+                        $buyGoods['member_goods_price'] = $this->goods['buying_price'];
+                        break;
+                    default:
+                        $buyGoods['member_goods_price'] = $this->goods['retail_price'];
+                }
+            } else {
+                $buyGoods['member_goods_price'] = $this->goods['retail_price'];
+            }
+        }
 //        // 订单优惠促销（查看是否有赠送商品）
 //        $orderProm = Db::name('order_prom_goods opg')->join('order_prom op', 'op.id = opg.order_prom_id')
 //            ->where(['opg.type' => 1, 'goods_id' => $this->goods['goods_id'], 'item_id' => $buyGoods['item_id']])
@@ -1601,6 +1625,7 @@ class CartLogic extends Model
         $hasPmd = false;
         $hasAbroad = false;
         $hasSupply = false;
+        $hasAgent = false;
         $vipLevel = [];
         foreach ($cartList as $cart) {
             if ($cart['goods']['zone'] == 3 && $cart['goods']['distribut_id'] > 1) {
@@ -1613,8 +1638,8 @@ class CartLogic extends Model
                 $hasAbroad = true;
             } elseif ($cart['goods']['is_supply'] == 1) {
                 $hasSupply = true;
-            } else {
-                $hasPmd = true;
+            } elseif ($cart['goods']['is_agent'] == 1) {
+                $hasAgent = true;
             }
         }
         if (!empty($vipLevel)) {
@@ -1645,6 +1670,9 @@ class CartLogic extends Model
         }
         if ($hasSupply) {
             return ['status' => 3];
+        }
+        if ($hasAgent) {
+            return ['status' => 4];
         }
         return ['status' => 1];
     }

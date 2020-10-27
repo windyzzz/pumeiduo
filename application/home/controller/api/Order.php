@@ -1827,6 +1827,7 @@ class Order extends Base
 
         $cartLogic = new CartLogic();
         $cartLogic->setUserId($this->user_id);
+        $cartLogic->setUser($this->user);
         // 获取订单商品数据
         $goodsLogic = new GoodsLogic();
         $res = $goodsLogic->getOrderGoodsData($cartLogic, $goodsId, $itemId, $goodsNum, $payType, $cartIds, $this->isApp, $this->user_id);
@@ -2199,6 +2200,7 @@ class Order extends Base
         }
         $cartLogic = new CartLogic();
         $cartLogic->setUserId($this->user_id);
+        $cartLogic->setUser($this->user);
         // 获取订单商品数据
         $goodsLogic = new GoodsLogic();
         $res = $goodsLogic->getOrderGoodsData($cartLogic, $goodsId, $itemId, $goodsNum, $payType, $cartIds, $this->isApp, $this->user_id);
@@ -2417,6 +2419,7 @@ class Order extends Base
 
         $cartLogic = new CartLogic();
         $cartLogic->setUserId($this->user_id);
+        $cartLogic->setUser($this->user);
         // 获取订单商品数据
         $goodsLogic = new GoodsLogic();
         $res = $goodsLogic->getOrderGoodsData($cartLogic, $goodsId, $itemId, $goodsNum, $payType, $cartIds, $this->isApp, $this->user_id);
@@ -2450,6 +2453,9 @@ class Order extends Base
                 break;
             case 3:
                 $orderType = 3; // 供应链
+                break;
+            case 4:
+                $orderType = 4; // 代理商
                 break;
         }
 
