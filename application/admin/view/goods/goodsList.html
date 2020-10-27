@@ -87,6 +87,7 @@
                         <select name="is_area_show" class="select">
                             <option value="1">本区商品</option>
                             <option value="2">全部商品</option>
+                            <option value="3">代理商区</option>
                         </select>
                         <!--排序规则-->
                         <input type="hidden" name="orderby1" value="goods_id"/>
@@ -161,13 +162,13 @@
                             <div style="text-align: center; width: 300px;" class="" onClick="sort('is_on_sale');">上/下架</div>
                         </th>
                         <th align="center" abbr="article_time" axis="col6" class="">
+                            <div style="text-align: center; width: 100px;" class="" onClick="sort('applet_on_sale');">小程序上架</div>
+                        </th>
+                        <th align="center" abbr="article_time" axis="col6" class="">
                             <div style="text-align: center; width: 50px;" class="" onClick="sort('store_count');">库存</div>
                         </th>
                         <th align="center" abbr="article_time" axis="col6" class="">
                             <div style="text-align: center; width: 50px;" class="" onClick="sort('sort');">排序</div>
-                        </th>
-                        <th align="center" abbr="article_time" axis="col6" class="">
-                            <div style="text-align: center; width: 100px;" class="" onClick="sort('applet_on_sale');">小程序上架</div>
                         </th>
                         <th style="width:100%" axis="col7">
                             <div></div>

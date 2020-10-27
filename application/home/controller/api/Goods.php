@@ -790,6 +790,9 @@ class Goods extends Base
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架']);
         }
+        if (!$this->isApplet && $goods['is_agent'] == 1) {
+            return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
+        }
         if ($this->isApplet && $goods['is_agent'] == 0) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
@@ -820,42 +823,24 @@ class Goods extends Base
             'now_time' => NOW_TIME,
             'share_goods_image' => !empty($originalImg) ? $originalImg : '',    // 商品分享图
             'share_qr_code' => '',    // 分享二维码
-            'tabs' => []
+            'applet_qr_code' => '',    // 小程序分享二维码
+            'tabs' => [],
+            'original_price' => $goods['shop_price'],   // 原价（小程序）
+            'present_price' => $goods['retail_price']   // 现价（小程序）
         ];
+        if ($this->isApplet && $this->user) {
+            switch ($this->user['distribut_level']) {
+                case 3:
+                    $goodsInfo['present_price'] = $goods['buying_price'];
+                    break;
+            }
+        }
         // 处理商品内容图片
 //        if (!strstr($goodsInfo['goods_content'], 'http') && !strstr($goodsInfo['goods_content'], 'https')) {
 //            $goodsInfo['goods_content'] = str_replace('/public', SITE_URL . '/public', $goodsInfo['goods_content']);
 //        }
         if (strstr($goodsInfo['goods_content'], 'src="/public')) {
             $goodsInfo['goods_content'] = str_replace('src="/public', 'src="' . SITE_URL . '/public', $goodsInfo['goods_content']);
-        }
-        if ($this->user) {
-            $goodsLogic = new GoodsLogic();
-            // 用户浏览记录
-            $goodsLogic->add_visit_log($this->user_id, $goods);
-            // 用户收藏
-            $goodsCollect = $goodsLogic->getCollectGoods($this->user_id);
-            if (!empty($goodsCollect)) {
-                foreach ($goodsCollect as $value) {
-                    if ($goods_id == $value['goods_id']) {
-                        $isEnshrine = 1;
-                        break;
-                    }
-                }
-            }
-            // 分享二维码
-            $filename = '/public/images/qrcode/goods/goods_' . $this->user_id . '_' . $goods_id . '.png';
-            if (!file_exists(SITE_URL . $filename)) {
-                $logo = 'public/images/qrcode/qr_logo.png';
-                if (!file_exists($logo)) {
-                    $logo = '';
-                }
-                $this->scerweima($this->user_id, $goods['goods_id'], $logo);
-            }
-            $goodsInfo['share_qr_code'] = SITE_URL . $filename;
-        } else {
-            $goodsInfo['integral_pv'] = '';
-            $goodsInfo['commission'] = '';
         }
         // 商品标签
         $goodsTab = Db::name('goods_tab')->where(['goods_id' => $goods_id, 'status' => 1])->limit(0, 3)->field('tab_id, title')->select();
@@ -885,6 +870,7 @@ class Goods extends Base
             $goodsInfo['limit_num'] = $flashSale['goods_num'];
             $goodsInfo['start_time'] = $flashSale['start_time'];
             $goodsInfo['end_time'] = $flashSale['end_time'];
+            $goodsInfo['present_price'] = $flashSale['price'];
         } else {
             $groupBuy = Db::name('group_buy gb')
                 ->join('spec_goods_price sgp', 'sgp.item_id = gb.item_id', 'LEFT')
@@ -901,6 +887,7 @@ class Goods extends Base
                 $goodsInfo['group_goods_num'] = $groupBuy['group_goods_num'];
                 $goodsInfo['start_time'] = $groupBuy['start_time'];
                 $goodsInfo['end_time'] = $groupBuy['end_time'];
+                $goodsInfo['present_price'] = $groupBuy['price'];
             }
         }
         if (in_array($goodsInfo['goods_type'], ['group_buy', 'flash_sale'])) {
@@ -908,23 +895,6 @@ class Goods extends Base
             $goodsInfo['buy_least'] = '0';
             $goodsInfo['integral_pv'] = '';
             $goodsInfo['commission'] = '';
-        } elseif ($this->user) {
-            // 商品pv
-            if ($this->user['distribut_level'] < 3) {
-                $goodsInfo['integral_pv'] = '';
-            } elseif ($goods['integral_pv'] == 0) {
-                $goodsInfo['integral_pv'] = '';
-            } else {
-                $goodsInfo['integral_pv'] = $goods['integral_pv'];
-            }
-            // 商品佣金
-            if ($this->user['distribut_level'] < 2) {
-                $goodsInfo['commission'] = '';
-            } elseif ($goods['commission'] == 0) {
-                $goodsInfo['commission'] = '';
-            } else {
-                $goodsInfo['commission'] = bcdiv(bcmul(bcsub($goods['shop_price'], $goods['exchange_integral'], 2), $goods['commission'], 2), 100, 2);
-            }
         }
         // 商品促销、优惠券
         $promotion = [];
@@ -1013,11 +983,100 @@ class Goods extends Base
                         // 打折
                         $goodsInfo['shop_price'] = bcdiv(bcmul($goodsInfo['shop_price'], $value['expression'], 2), 100, 2);
                         $goodsInfo['exchange_price'] = bcdiv(bcmul($goodsInfo['exchange_price'], $value['expression'], 2), 100, 2);
+                        $goodsInfo['present_price'] = bcdiv(bcmul($goodsInfo['original_price'], $value['expression'], 2), 100, 2);
                         break;
                     case 1:
                         // 减价
                         $goodsInfo['shop_price'] = bcsub($goodsInfo['shop_price'], $value['expression'], 2);
                         $goodsInfo['exchange_price'] = bcsub($goodsInfo['exchange_price'], $value['expression'], 2);
+                        $goodsInfo['present_price'] = bcsub($goodsInfo['original_price'], $value['expression'], 2);
+                        break;
+                }
+            }
+        }
+        if ($this->user) {
+            $goodsLogic = new GoodsLogic();
+            // 用户浏览记录
+            $goodsLogic->add_visit_log($this->user_id, $goods);
+            // 用户收藏
+            $goodsCollect = $goodsLogic->getCollectGoods($this->user_id);
+            if (!empty($goodsCollect)) {
+                foreach ($goodsCollect as $value) {
+                    if ($goods_id == $value['goods_id']) {
+                        $isEnshrine = 1;
+                        break;
+                    }
+                }
+            }
+            // 分享二维码
+            $filename = '/public/images/qrcode/goods/goods_' . $this->user_id . '_' . $goods_id . '.png';
+            if (!file_exists(SITE_URL . $filename)) {
+                $logo = 'public/images/qrcode/qr_logo.png';
+                if (!file_exists($logo)) {
+                    $logo = '';
+                }
+                $this->scerweima($this->user_id, $goods['goods_id'], $logo);
+            }
+            $goodsInfo['share_qr_code'] = SITE_URL . $filename;
+            if ($this->isApplet) {
+                /*
+                 * 小程序
+                 */
+                // 小程序二维码
+
+                // 商品pv、佣金
+                switch ($this->user['distribut_level']) {
+                    case 1:
+                        $goodsInfo['integral_pv'] = '';
+                        $goodsInfo['commission'] = '';
+                        break;
+                    case 2:
+                        $goodsInfo['integral_pv'] = '';
+                        if ($goods['commission'] == 0) {
+                            $goodsInfo['commission'] = '';
+                        } else {
+                            $goodsInfo['commission'] = bcdiv(bcmul($goods['retail_price'], $goods['commission'], 2), 100, 2);   // 零售价佣金
+                        }
+                        break;
+                    case 3:
+                        if ($goods['buying_price_pv'] == 0) {
+                            $goodsInfo['integral_pv'] = '';
+                        } else {
+                            $goodsInfo['integral_pv'] = $goods['buying_price_pv'];  // 进货价pv
+                        }
+                        if ($goods['commission'] == 0) {
+                            $goodsInfo['commission'] = '';
+                        } else {
+                            $goodsInfo['commission'] = bcdiv(bcmul($goods['buying_price'], $goods['commission'], 2), 100, 2);   // 进货价佣金
+                        }
+                        break;
+                }
+            } else {
+                // 商品pv、佣金
+                switch ($this->user['distribut_level']) {
+                    case 1:
+                        $goodsInfo['integral_pv'] = '';
+                        $goodsInfo['commission'] = '';
+                        break;
+                    case 2:
+                        $goodsInfo['integral_pv'] = '';
+                        if ($goods['commission'] == 0) {
+                            $goodsInfo['commission'] = '';
+                        } else {
+                            $goodsInfo['commission'] = bcdiv(bcmul(bcsub($goods['shop_price'], $goods['exchange_integral'], 2), $goods['commission'], 2), 100, 2);
+                        }
+                        break;
+                    case 3:
+                        if ($goods['integral_pv'] == 0) {
+                            $goodsInfo['integral_pv'] = '';
+                        } else {
+                            $goodsInfo['integral_pv'] = $goods['integral_pv'];
+                        }
+                        if ($goods['commission'] == 0) {
+                            $goodsInfo['commission'] = '';
+                        } else {
+                            $goodsInfo['commission'] = bcdiv(bcmul(bcsub($goods['shop_price'], $goods['exchange_integral'], 2), $goods['commission'], 2), 100, 2);
+                        }
                         break;
                 }
             }

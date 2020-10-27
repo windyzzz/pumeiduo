@@ -181,13 +181,13 @@ class Article extends Base
         if (!$articleId) {
             return json(['status' => 0, 'msg' => '参数错误']);
         }
-        switch ($articleId) {
-            case 104:
-                if ($this->user['distribut_level'] >= 2) {
-                    return json(['status' => -11, 'msg' => '不需显示协议内容']);
-                }
-                break;
-        }
+//        switch ($articleId) {
+//            case 104:
+//                if ($this->user['distribut_level'] >= 2) {
+//                    return json(['status' => -11, 'msg' => '不需显示协议内容']);
+//                }
+//                break;
+//        }
         $article = M('article')->where(['article_id' => $articleId, 'is_open' => 1])->field('article_id, title, app_content')->find();
         $return = $article;
         return json(['status' => 1, 'result' => $return]);

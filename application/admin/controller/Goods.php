@@ -238,8 +238,13 @@ class Goods extends Base
         }
 
         $is_area_show = I('is_area_show');
-        if ($is_area_show == 1) {
-            $where .= ' and is_area_show = 1';
+        switch ($is_area_show) {
+            case 1:
+                $where .= ' and is_area_show = 1';
+                break;
+            case 3:
+                $where .= ' and is_agent = 1';
+                break;
         }
 
         if ($cat_id > 0) {
@@ -370,8 +375,13 @@ class Goods extends Base
         }
 
         $is_area_show = I('is_area_show');
-        if ($is_area_show == 1) {
-            $where .= ' and is_area_show = 1';
+        switch ($is_area_show) {
+            case 1:
+                $where .= ' and is_area_show = 1';
+                break;
+            case 3:
+                $where .= ' and is_agent = 1';
+                break;
         }
 
         if ($cat_id > 0) {
@@ -508,8 +518,13 @@ class Goods extends Base
         }
 
         $is_area_show = I('is_area_show');
-        if ($is_area_show == 1) {
-            $where .= ' and is_area_show = 1';
+        switch ($is_area_show) {
+            case 1:
+                $where .= ' and is_area_show = 1';
+                break;
+            case 3:
+                $where .= ' and is_agent = 1';
+                break;
         }
 
         if ($cat_id > 0) {
@@ -648,8 +663,13 @@ class Goods extends Base
         }
 
         $is_area_show = I('is_area_show');
-        if ($is_area_show == 1) {
-            $where .= ' and is_area_show = 1';
+        switch ($is_area_show) {
+            case 1:
+                $where .= ' and is_area_show = 1';
+                break;
+            case 3:
+                $where .= ' and is_agent = 1';
+                break;
         }
 
         $goodsType = I('goods_type');
