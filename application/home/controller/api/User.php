@@ -1196,7 +1196,7 @@ class User extends Base
 
                 return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
             } elseif (2 == $step) {
-                if ($this->isApp) {
+                if ($this->isApp || $this->isApplet) {
                     $old_mobile = $mobile;
                     $res = $logic->check_validate_code($code, $old_mobile, 'phone', $session_id, $scene);
                     if (!$res || 1 != $res['status']) {
@@ -2366,7 +2366,7 @@ class User extends Base
             }
             return json(['status' => 1, 'msg' => '验证成功', 'result' => null]);
         } elseif ($step > 1) {
-            if ($this->isApp) {
+            if ($this->isApp || $this->isApplet) {
                 $res = $logic->check_validate_code($code, $this->user['mobile'], 'phone', $session_id, $scene);
                 if (!$res || 1 != $res['status']) {
                     return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
@@ -3330,7 +3330,7 @@ class User extends Base
             I('post.real_name') ? $post['real_name'] = I('post.real_name') : false;  // 真实姓名
             I('post.id_cart') ? $post['id_cart'] = I('post.id_cart') : false;  // 身份证
             I('post.birthday') ? $post['birthday'] = I('post.birthday') : false;  // 生日
-            if (!check_id_card($post['id_cart'])) {
+            if (isset($post['id_cart']) && !check_id_card($post['id_cart'])) {
                 return json(['status' => 0, 'msg' => '身份证填写错误']);
             }
             $userLogic = new UsersLogic();
