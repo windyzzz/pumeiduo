@@ -1069,7 +1069,7 @@ class UsersLogic extends Model
             'level_name' => M('DistributLevel')->where('level_id', $user['distribut_level'])->getField('level_name') ?? '普通会员',
             'is_not_show_jk' => $user['is_not_show_jk'],  // 是否提示加入金卡弹窗
             'has_pay_pwd' => $user['paypwd'] ? 1 : 0,
-            'is_app' => session('is_app'),
+            'is_app' => session('is_app') ?? 0,
             'token' => $user['token'],
             'jpush_tags' => [$user['push_tag']],
             'new_profit' => 1

@@ -28,7 +28,7 @@ class Base extends Controller
         $this->redis = new Redis();
         $this->isApp = Request::instance()->header('is-app', null);
         $this->isApplet = Request::instance()->header('is-applet', null);
-        if ($this->isApp == 1 || $this->isApplet) {
+        if ($this->isApp == 1 || $this->isApplet == 1) {
             // APP请求
             session_start();
             session_destroy();
@@ -86,7 +86,6 @@ class Base extends Controller
     {
         return [
             'c=api.Login&a=checkLogin',                 // 检查登录（旧版）
-            'c=api.Login&a=reg',                        // 用户注册
             'c=api.Login&a=reg',                        // 用户注册
             'c=api.Login&a=do_login',                   // 用户登录
             'c=api.Index&a=indexNew',                   // 主页
