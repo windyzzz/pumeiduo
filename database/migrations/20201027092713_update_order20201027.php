@@ -31,6 +31,8 @@ class UpdateOrder20201027 extends Migrator
         $this->table('order')
             ->changeColumn('order_type', 'integer', ['default' => 1, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
                 'comment' => '订单类型：1圃美多 2韩国购 3供应链 4小程序', 'after' => 'order_sn'])
+            ->changeColumn('source', 'integer', ['default' => 1, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
+                'comment' => '订单来源：1微信 2PC 3APP 4小程序 5管理后台', 'after' => 'delivery_type'])
             ->update();
     }
 }

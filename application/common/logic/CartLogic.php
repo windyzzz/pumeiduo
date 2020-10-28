@@ -1399,15 +1399,19 @@ class CartLogic extends Model
     public function calcGoodsPv($cartList)
     {
         foreach ($cartList as $k => $cartItem) {
-            switch ($cartItem['type']) {
-                case 1:
-                    // 现金+积分
-                    $cartList[$k]['goods_pv'] = $cartItem['goods']['integral_pv'];
-                    break;
-                case 2:
-                    // 现金
-                    $cartList[$k]['goods_pv'] = $cartItem['goods']['retail_pv'];
-                    break;
+            if ($cartItem['goods']['is_agent'] == 1) {
+                $cartList[$k]['goods_pv'] = $cartItem['goods']['buying_price_pv'];
+            } else {
+                switch ($cartItem['type']) {
+                    case 1:
+                        // 现金+积分
+                        $cartList[$k]['goods_pv'] = $cartItem['goods']['integral_pv'];
+                        break;
+                    case 2:
+                        // 现金
+                        $cartList[$k]['goods_pv'] = $cartItem['goods']['retail_pv'];
+                        break;
+                }
             }
         }
         return $cartList;

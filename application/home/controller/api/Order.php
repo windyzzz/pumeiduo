@@ -2540,11 +2540,12 @@ class Order extends Base
             $placeOrder->setUserNote($userNote);
             $placeOrder->setUserIdCard($idCard);
             $placeOrder->setOrderType($orderType);
+            $source = $this->isApplet ? 4 : 3;
             Db::startTrans();
             if (2 == $prom_type) {
-                $placeOrder->addGroupBuyOrder($prom_id, 3);    // 团购订单
+                $placeOrder->addGroupBuyOrder($prom_id, $source);    // 团购订单
             } else {
-                $placeOrder->addNormalOrder(3);     // 普通订单
+                $placeOrder->addNormalOrder($source);     // 普通订单
             }
             if (empty($goodsId) && !empty($cartIds)) {
                 // 清除选中的购物车

@@ -131,6 +131,9 @@ class Order extends Base
                     $orderList[$k]['source'] = 'APP';
                     break;
                 case 4:
+                    $orderList[$k]['source'] = '小程序';
+                    break;
+                case 5:
                     $orderList[$k]['source'] = '管理后台';
                     break;
             }
