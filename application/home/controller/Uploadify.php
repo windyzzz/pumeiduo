@@ -598,6 +598,7 @@ class Uploadify extends Base
         $return_data['state'] = $state;
         $return_data['path'] = $path;
         $return_data['status'] = 1;
+        $return_data['domain'] = SITE_URL;
         $this->ajaxReturn($return_data, 'json');
     }
 
