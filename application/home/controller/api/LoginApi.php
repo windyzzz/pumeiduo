@@ -29,14 +29,16 @@ class LoginApi
     {
         session('?user');
         $this->oauth = I('get.oauth', '');
-        $this->code = I('get.code', '');
-        //获取配置
-        $data = M('Plugin')->where('code', $this->oauth)->where('type', 'login')->find();
-        $this->config = unserialize($data['config_value']); // 配置反序列化
-        include_once "plugins/login/{$this->oauth}/{$this->oauth}.class.php";
-        $class = '\\' . $this->oauth;
-        $this->config['code'] = $this->code;
-        $this->class_obj = new $class($this->config); //实例化对应的登陆插件
+        if ($this->oauth) {
+            $this->code = I('get.code', '');
+            //获取配置
+            $data = M('Plugin')->where('code', $this->oauth)->where('type', 'login')->find();
+            $this->config = unserialize($data['config_value']); // 配置反序列化
+            include_once "plugins/login/{$this->oauth}/{$this->oauth}.class.php";
+            $class = '\\' . $this->oauth;
+            $this->config['code'] = $this->code;
+            $this->class_obj = new $class($this->config); //实例化对应的登陆插件
+        }
     }
 
     public function login()
