@@ -1202,6 +1202,7 @@ class Cart extends Base
         $cartLogic = new CartLogic();
         $cartLogic->setCartId($cart_id);
         $cartLogic->setUserId($this->user_id);
+        $cartLogic->setUser($this->user);
         $cartLogic->setGoodsModel($goods_id);
         $cartLogic->setType($type);
         $cartLogic->setCartType($cartType);

@@ -793,7 +793,7 @@ class Goods extends Base
         if (!$this->isApplet && $goods['is_agent'] == 1) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
-        if ($this->isApplet && $goods['is_agent'] == 0) {
+        if ($this->isApplet && ($goods['is_agent'] == 0 || $goods['applet_on_sale'] == 0)) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
         M('Goods')->where('goods_id', $goods_id)->save(['click_count' => $goods['click_count'] + 1]); // 统计点击数
@@ -983,13 +983,13 @@ class Goods extends Base
                         // 打折
                         $goodsInfo['shop_price'] = bcdiv(bcmul($goodsInfo['shop_price'], $value['expression'], 2), 100, 2);
                         $goodsInfo['exchange_price'] = bcdiv(bcmul($goodsInfo['exchange_price'], $value['expression'], 2), 100, 2);
-                        $goodsInfo['present_price'] = bcdiv(bcmul($goodsInfo['original_price'], $value['expression'], 2), 100, 2);
+                        $goodsInfo['present_price'] = bcdiv(bcmul($goodsInfo['present_price'], $value['expression'], 2), 100, 2);
                         break;
                     case 1:
                         // 减价
                         $goodsInfo['shop_price'] = bcsub($goodsInfo['shop_price'], $value['expression'], 2);
                         $goodsInfo['exchange_price'] = bcsub($goodsInfo['exchange_price'], $value['expression'], 2);
-                        $goodsInfo['present_price'] = bcsub($goodsInfo['original_price'], $value['expression'], 2);
+                        $goodsInfo['present_price'] = bcsub($goodsInfo['present_price'], $value['expression'], 2);
                         break;
                 }
             }

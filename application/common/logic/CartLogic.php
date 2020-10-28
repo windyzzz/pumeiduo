@@ -427,13 +427,28 @@ class CartLogic extends Model
      */
     private function addNormalCart()
     {
-        if (empty($this->specGoodsPrice)) {
-            $price = $this->goods['shop_price'];
+        if ($this->goods['is_agent'] == 1) {
+            if (isset($this->user)) {
+                switch ($this->user['distribut_level']) {
+                    case 3:
+                        $price = $this->goods['buying_price'];
+                        break;
+                    default:
+                        $price = $this->goods['retail_price'];
+                }
+            } else {
+                $price = $this->goods['retail_price'];
+            }
             $store_count = $this->goods['store_count'];
         } else {
-            //如果有规格价格，就使用规格价格，否则使用本店价。
-            $price = $this->specGoodsPrice['price'];
-            $store_count = $this->specGoodsPrice['store_count'];
+            if (empty($this->specGoodsPrice)) {
+                $price = $this->goods['shop_price'];
+                $store_count = $this->goods['store_count'];
+            } else {
+                //如果有规格价格，就使用规格价格，否则使用本店价。
+                $price = $this->specGoodsPrice['price'];
+                $store_count = $this->specGoodsPrice['store_count'];
+            }
         }
         // 查询购物车是否已经存在这商品
         if (!$this->user_id) {
@@ -737,12 +752,27 @@ class CartLogic extends Model
         }
 
         //如果有规格价格，就使用规格价格，否则使用本店价。
-        if ($this->specGoodsPrice) {
-            $priceBefore1 = $this->specGoodsPrice['price'];
-            $storeCount = $this->specGoodsPrice['store_count'];
-        } else {
-            $priceBefore1 = $this->goods['shop_price'];
+        if ($this->goods['is_agent'] == 1) {
+            if (isset($this->user)) {
+                switch ($this->user['distribut_level']) {
+                    case 3:
+                        $priceBefore1 = $this->goods['buying_price'];
+                        break;
+                    default:
+                        $priceBefore1 = $this->goods['retail_price'];
+                }
+            } else {
+                $priceBefore1 = $this->goods['retail_price'];
+            }
             $storeCount = $this->goods['store_count'];
+        } else {
+            if ($this->specGoodsPrice) {
+                $priceBefore1 = $this->specGoodsPrice['price'];
+                $storeCount = $this->specGoodsPrice['store_count'];
+            } else {
+                $priceBefore1 = $this->goods['shop_price'];
+                $storeCount = $this->goods['store_count'];
+            }
         }
 
         // 查询购物车是否已经存在这商品

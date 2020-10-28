@@ -1235,9 +1235,10 @@ class UsersLogic extends Model
      * @param $openid
      * @param $username
      * @param $password
+     * @param $invite
      * @return array
      */
-    public function oauthRegApplet($unionid, $openid, $username, $password)
+    public function oauthRegApplet($unionid, $openid, $username, $password, $invite = 0)
     {
         $oauthUser = M('oauth_users')->where(['unionid' => $unionid])->order('tu_id desc')->find();
         if (!$oauthUser) {
@@ -1297,6 +1298,7 @@ class UsersLogic extends Model
                             'token' => TokenLogic::setToken(),
                             'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
                         ];
+                        if ($invite > 0) $data['will_invite_uid'] = $invite;
                         $userId = M('users')->add($data);
                     } elseif ($userInfo['is_lock'] == 1) {
                         return ['status' => 0, 'msg' => '微信绑定的账号已被冻结'];
@@ -1320,6 +1322,7 @@ class UsersLogic extends Model
                         'token' => TokenLogic::setToken(),
                         'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
                     ];
+                    if ($invite > 0) $data['will_invite_uid'] = $invite;
                     $userId = M('users')->add($data);
                 }
             }
