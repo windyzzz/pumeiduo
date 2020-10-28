@@ -1254,23 +1254,23 @@ class UsersLogic extends Model
                 if (M('oauth_users')->where(['user_id' => $userId])->find()) {
                     return ['status' => 0, 'msg' => '该手机号已绑定了微信号'];
                 }
-                if ($oauthUser['user_id'] != 0 && $oauthUser['user_id'] != $userId) {
-                    // 账号信息合并
-                    $level = M('users')->where(['user_id' => $userId])->field('distribut_level, is_zhixiao')->find();
-                    if ($level['distribut_level'] < 3 && $level['is_zhixiao'] == 0) {
-                        // 手机账号是普通账号
-                        // 查看手机账号与微信账号是否有推荐人
-                        $phoneUserInvite = M('users')->where(['user_id' => $userId])->value('invite_uid');
-                        $wechatUserInvite = M('users')->where(['user_id' => $oauthUser['user_id']])->value('invite_uid');
-                        if ($phoneUserInvite != 0 && $wechatUserInvite != 0) {
-                            return ['status' => 0, 'msg' => '手机绑定的账号与微信绑定的账号都已有推荐人，请联系后台管理员进行账号合并'];
-                        }
-                    }
-                    $res = $this->bindUser($oauthUser['user_id'], 3, ['user_id' => $userId]);
-                    if ($res['status'] !== 1) {
-                        return $res;
-                    }
-                }
+//                if ($oauthUser['user_id'] != 0 && $oauthUser['user_id'] != $userId) {
+//                    // 账号信息合并
+//                    $level = M('users')->where(['user_id' => $userId])->field('distribut_level, is_zhixiao')->find();
+//                    if ($level['distribut_level'] < 3 && $level['is_zhixiao'] == 0) {
+//                        // 手机账号是普通账号
+//                        // 查看手机账号与微信账号是否有推荐人
+//                        $phoneUserInvite = M('users')->where(['user_id' => $userId])->value('invite_uid');
+//                        $wechatUserInvite = M('users')->where(['user_id' => $oauthUser['user_id']])->value('invite_uid');
+//                        if ($phoneUserInvite != 0 && $wechatUserInvite != 0) {
+//                            return ['status' => 0, 'msg' => '手机绑定的账号与微信绑定的账号都已有推荐人，请联系后台管理员进行账号合并'];
+//                        }
+//                    }
+//                    $res = $this->bindUser($oauthUser['user_id'], 3, ['user_id' => $userId]);
+//                    if ($res['status'] !== 1) {
+//                        return $res;
+//                    }
+//                }
             } else {
                 //--- 手机没有账号
                 $password = htmlspecialchars($password, ENT_NOQUOTES, 'UTF-8', false);
