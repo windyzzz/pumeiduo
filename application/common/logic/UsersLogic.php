@@ -437,7 +437,7 @@ class UsersLogic extends Model
             // 更新数据
             Db::name('oauth_users')->where(['tu_id' => $oauthUser['tu_id']])->update($updateData);
             if ($oauthUser['user_id'] == 0) {
-                $result = ['status' => 2, 'result' => ['openid' => $data['openId']]]; // 需要绑定手机号
+                $result = ['status' => 2, 'result' => ['unionid' => $data['unionId'], 'openid' => $data['openId']]]; // 需要绑定手机号
             } else {
                 $user = Db::name('users')->where(['user_id' => $oauthUser['user_id']])->field('mobile, is_lock, is_cancel')->find();
                 if (empty($user['mobile'])) {

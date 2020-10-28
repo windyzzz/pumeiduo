@@ -1782,6 +1782,7 @@ class Order extends Base
         '' != I('pay_code') ? $condition['o.pay_code'] = I('pay_code') : false;
         '' != I('shipping_status') ? $condition['o.shipping_status'] = I('shipping_status') : false;
         '' != I('prom_type') ? $condition['o.prom_type'] = I('prom_type') : false;
+        '' != I('order_type') ? $condition['order_type'] = I('order_type') : false;
 
         // 排序
         $sort_order = I('order_by', 'DESC') . ' ' . I('sort');

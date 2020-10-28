@@ -159,6 +159,9 @@ class Order extends Base
             $where .= C(strtoupper(I('get.type')));
         }
         $where .= ' AND prom_type < 5 '; // 虚拟拼团订单不列出来
+        if ($this->isApplet) {
+            $where .= ' AND order_type = 4';
+        }
         // 搜索订单 根据商品名称 或者 订单编号
         $search_key = trim(I('search_key'));
         $bind = [];
@@ -3217,6 +3220,9 @@ class Order extends Base
         ];
         // 订单数据
         $where = 'parent_id = 0 AND user_id = ' . $this->user_id . ' AND deleted != 1 AND prom_type < 5'; // 虚拟拼团订单不列出来
+        if ($this->isApplet) {
+            $where .= ' AND order_type = 4';
+        }
         $orderData = M('order')->where($where)->field('order_id, pay_status, order_status, shipping_status, pay_code')->select();
         foreach ($orderData as $order) {
             if ($order['pay_status'] == 0 && $order['order_status'] == 0 && $order['pay_code'] != 'cod') {
