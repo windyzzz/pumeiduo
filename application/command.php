@@ -11,4 +11,5 @@
 
 return [
     'app\home\command\supplier\Region',     // 匹配保存供应链地区数据
+    'app\home\command\supplier\Goods',      // 供应链商品更新价格属性
 ];
