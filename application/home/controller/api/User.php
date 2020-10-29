@@ -1994,8 +1994,11 @@ class User extends Base
             if (!$password) {
                 return json(['status' => -1, 'msg' => '密码不能为空', 'result' => null]);
             }
+            $whereOr = ['user_id' => $username, 'user_name' => $username];
             $bind_user = M('Users')
-                ->whereOr(['user_id' => $username, 'user_name' => $username])
+                ->where(function ($query) use ($whereOr) {
+                    $query->whereOr($whereOr);
+                })
                 ->where('password', systemEncrypt($password))
                 // ->where('is_zhixiao',1)
                 ->find();
@@ -4006,7 +4009,7 @@ class User extends Base
         }
         return json(['status' => 1, 'result' => $return]);
     }
-    
+
     /**
      * 显示新用户奖励弹窗
      * @return \think\response\Json
