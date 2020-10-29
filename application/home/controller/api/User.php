@@ -1373,7 +1373,8 @@ class User extends Base
             return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
         }
         // 重置密码
-        $data = $userLogic->resetPassword($user['user_id'], I('post.password'), null, $this->isApp, $this->isApplet);
+        $passAuth = $this->isApp ? true : $this->isApplet ? true : false;
+        $data = $userLogic->resetPassword($user['user_id'], I('post.password'), null, $passAuth);
         if (-1 == $data['status']) {
             return json(['status' => 0, 'msg' => $data['msg'], 'result' => $data['result']]);
         }
