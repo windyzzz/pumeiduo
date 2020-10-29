@@ -2383,16 +2383,17 @@ class UsersLogic extends Model
      * @param $new_password
      * @param $confirm_password
      * @param $isApp
+     * @param $isApplet
      *
      * @return array
      */
-    public function resetPassword($user_id, $new_password, $confirm_password, $isApp = false)
+    public function resetPassword($user_id, $new_password, $confirm_password, $isApp = false, $isApplet = false)
     {
         $new_password = htmlspecialchars($new_password, ENT_NOQUOTES, 'UTF-8', false);
         if (!check_password($new_password)) {
             return ['status' => -1, 'msg' => '密码格式为6-20位字母数字组合', 'result' => ''];
         }
-        if (!$isApp && $new_password != $confirm_password) {
+        if ((!$isApp || !$isApplet) && $new_password != $confirm_password) {
             return ['status' => -1, 'msg' => '两次密码输入不一致', 'result' => ''];
         }
         $old_password = M('users')->where('user_id', $user_id)->getField('password');
