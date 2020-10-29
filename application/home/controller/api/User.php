@@ -1994,8 +1994,11 @@ class User extends Base
             if (!$password) {
                 return json(['status' => -1, 'msg' => '密码不能为空', 'result' => null]);
             }
+            $whereOr = ['user_id' => $username, 'user_name' => $username];
             $bind_user = M('Users')
-                ->whereOr(['user_id' => $username, 'user_name' => $username])
+                ->where(function ($query) use ($whereOr) {
+                    $query->whereOr($whereOr);
+                })
                 ->where('password', systemEncrypt($password))
                 // ->where('is_zhixiao',1)
                 ->find();
@@ -2050,6 +2053,9 @@ class User extends Base
         }
         if ($current_user['user_id'] == $bind_user['user_id']) {
             return json(['status' => -1, 'msg' => '不能绑定自己']);
+        }
+        if ($current_user['first_leader'] == $bind_user['user_id']) {
+            return json(['status' => 0, 'msg' => '不能绑定和自己有关系的普通会员']);
         }
         if ($this->_hasRelationship($bind_user['user_id'])) {
             return json(['status' => 0, 'msg' => '不能绑定和自己有关系的普通会员']);
@@ -4003,7 +4009,7 @@ class User extends Base
         }
         return json(['status' => 1, 'result' => $return]);
     }
-    
+
     /**
      * 显示新用户奖励弹窗
      * @return \think\response\Json

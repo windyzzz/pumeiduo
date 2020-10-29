@@ -1,0 +1,102 @@
+<include file="public/layout" />
+<body style="background-color: #FFF; overflow: auto;">
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title">
+            <div class="subject">
+                <h3>促销活动配置</h3>
+                <h5>促销活动配置信息</h5>
+            </div>
+        </div>
+    </div>
+    <form method="post" id="handlepost" action="{:U('Activity/config')}" enctype="multipart/form-data" name="form">
+        <div class="ncap-form-default">
+            <dl class="row">
+                <dt class="tit">是否开启</dt>
+                <dd class="opt">
+                    <div class="onoff">
+                        <label for="is_open1" class="cb-enable <if condition='$config[is_open] eq 1'>selected</if>">是</label>
+                        <label for="is_open0" class="cb-disable <if condition='$config[is_open] eq 0'>selected</if>">否</label>
+                        <input id="is_open1" name="is_open" <if condition='$config[is_open] eq 1'>checked</if> value="1" type="radio">
+                        <input id="is_open0" name="is_open" <if condition='$config[is_open] eq 0'>checked</if> value="0" type="radio">
+                    </div>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>首页banner</label>
+                </dt>
+                <dd class="opt">
+                    <div class="input-file-show">
+                        <span class="show">
+                            <a id="index_banner_a" target="_blank" class="nyroModal" rel="gal" href="{$config.index_banner.img}">
+                                <i id="index_banner_i" class="fa fa-picture-o" onmouseover="layer.tips('<img src={$config.index_banner.img}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();"></i>
+                            </a>
+                        </span>
+           	            <span class="type-file-box">
+                            <input type="text" id="index_banner" name="index_banner[img]" value="{$config.index_banner.img}" class="type-file-text">
+                            <input type="button" name="button" value="选择上传..." class="type-file-button">
+                            <input class="type-file-file" onClick="GetUploadify(1,'index_banner','activity','img_call_back')" size="30" hidefocus="true" nc_type="change_site_logo" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">
+                        </span>
+                    </div>
+                    <p class="notic">长375px，宽141px</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>内页页头</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" class="input-txt" name="inside_header" value="{$config.inside_header}">
+                    <p class="notic">内页页头显示标题</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>内页banner</label>
+                </dt>
+                <dd class="opt">
+                    <div class="input-file-show">
+                        <span class="show">
+                            <a id="inside_banner_a" target="_blank" class="nyroModal" rel="gal" href="{$config.inside_banner.img}">
+                                <i id="inside_banner_i" class="fa fa-picture-o" onmouseover="layer.tips('<img src={$config.inside_banner.img}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();"></i>
+                            </a>
+                        </span>
+                        <span class="type-file-box">
+                            <input type="text" id="inside_banner" name="inside_banner[img]" value="{$config.inside_banner.img}" class="type-file-text">
+                            <input type="button" name="button" value="选择上传..." class="type-file-button">
+                            <input class="type-file-file" onClick="GetUploadify(1,'inside_banner','activity','img_call_back')" size="30" hidefocus="true" nc_type="change_site_logo" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">
+                        </span>
+                    </div>
+                    <p class="notic">长375px，宽284px</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>内页背景颜色</label>
+                </dt>
+                <dd class="opt">
+                    <input type="color" placeholder="背景颜色：" class="input-txt" name="inside_bgcolor" value="{$config.inside_bgcolor}"/>
+                    <span class="err" id="err_bgcolor" style="color:#F00; display:none;"></span>
+                    <p class="notic"></p>
+                </dd>
+            </dl>
+            <div class="bot">
+                <a href="JavaScript:void(0);" class="ncap-btn-big ncap-btn-green" onclick="document.form.submit()">确认提交</a>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="goTop"> <a href="JavaScript:void(0);" id="btntop"><i class="fa fa-angle-up"></i></a><a href="JavaScript:void(0);" id="btnbottom"><i class="fa fa-angle-down"></i></a></div>
+</body>
+<script type="text/javascript">
+    function img_call_back(fileurl_tmp , elementid)
+    {
+        $("#"+elementid).val(fileurl_tmp);
+        $("#"+elementid+'_a').attr('href', fileurl_tmp);
+        $("#"+elementid+'_i').attr('onmouseover', "layer.tips('<img src="+fileurl_tmp+">',this,{tips: [1, '#fff']});");
+    }
+</script>
+</html>

@@ -4,6 +4,7 @@ namespace app\admin\controller;
 
 use app\admin\logic\GoodsLogic;
 use app\admin\model\Goods as GoodsModel;
+use app\admin\model\PromActivityItem;
 use app\common\model\CateActivity;
 use app\common\model\CateActivityGoods;
 use think\Db;
@@ -173,5 +174,160 @@ class Activity extends Base
         $this->assign('goodsList', $goodsList);
 
         return $this->fetch($tpl);
+    }
+
+    /**
+     * 促销活动配置
+     * @return mixed
+     */
+    public function config()
+    {
+        if (IS_POST) {
+            $data = I('post.');
+            if (!empty($data['index_banner']['img'])) {
+                $imgInfo = getimagesize(PUBLIC_PATH . substr($data['index_banner']['img'], strrpos($data['index_banner']['img'], 'public') + 7));
+                if (empty($imgInfo)) {
+                    $this->error('上传首页banner发生错误');
+                }
+                $data['index_banner'] = json_encode([
+                    'img' => $data['index_banner']['img'],
+                    'width' => $imgInfo[0],
+                    'height' => $imgInfo[1],
+                    'type' => substr($imgInfo['mime'], strrpos($imgInfo['mime'], '/') + 1),
+                ]);
+            }
+            if (!empty($data['inside_banner']['img'])) {
+                $imgInfo = getimagesize(PUBLIC_PATH . substr($data['inside_banner']['img'], strrpos($data['inside_banner']['img'], 'public') + 7));
+                if (empty($imgInfo)) {
+                    $this->error('上传内页banner发生错误');
+                }
+                $data['inside_banner'] = json_encode([
+                    'img' => $data['inside_banner']['img'],
+                    'width' => $imgInfo[0],
+                    'height' => $imgInfo[1],
+                    'type' => substr($imgInfo['mime'], strrpos($imgInfo['mime'], '/') + 1),
+                ]);
+            }
+            M('prom_activity_config')->where('1=1')->delete();
+            M('prom_activity_config')->add($data);
+            $this->success('配置成功');
+        }
+        $config = M('prom_activity_config')->find();
+        if (!empty($config['index_banner'])) {
+            $config['index_banner'] = json_decode($config['index_banner'], true);
+        }
+        if (!empty($config['inside_banner'])) {
+            $config['inside_banner'] = json_decode($config['inside_banner'], true);
+        }
+        $this->assign('config', $config);
+        return $this->fetch();
+    }
+
+    /**
+     * 板块1
+     * @return mixed
+     */
+    public function module1()
+    {
+        $res = $this->getModule(1);
+        $this->assign('module_type', 1);
+        $this->assign('activity', $res['activity']);
+        $this->assign('activity_item', $res['activity_item']);
+        return $this->fetch('module');
+    }
+
+    /**
+     * 板块2
+     * @return mixed
+     */
+    public function module2()
+    {
+        $res = $this->getModule(2);
+        $activityItem = [];
+        foreach ($res['activity_item'] as $k => $v) {
+            $activityItem[$k] = M('Goods')->where('goods_id=' . $v['goods_id'])->find();
+            if ($v['item_id']) {
+                $activityItem[$k]['SpecGoodsPrice'] = M('SpecGoodsPrice')->where(['item_id' => $v['item_id']])->find();
+            }
+        }
+        $this->assign('module_type', 2);
+        $this->assign('activity', $res['activity']);
+        $this->assign('activity_item', $activityItem);
+        return $this->fetch('module');
+    }
+
+    /**
+     * 板块3
+     * @return mixed
+     */
+    public function module3()
+    {
+        $res = $this->getModule(3);
+        $activityItem = [];
+        foreach ($res['activity_item'] as $k => $v) {
+            $activityItem[$k] = M('Goods')->where('goods_id=' . $v['goods_id'])->find();
+            if ($v['item_id']) {
+                $activityItem[$k]['SpecGoodsPrice'] = M('SpecGoodsPrice')->where(['item_id' => $v['item_id']])->find();
+            }
+        }
+        $this->assign('module_type', 3);
+        $this->assign('activity', $res['activity']);
+        $this->assign('activity_item', $activityItem);
+        return $this->fetch('module');
+    }
+
+    private function getModule($type)
+    {
+        $promActivity = M('prom_activity')->where(['module_type' => $type])->find();
+        if (empty($promActivity)) return ['activity' => [], 'activity_item' => []];
+        $activityItem = M('prom_activity_item')->where(['activity_id' => $promActivity['id']])->select();
+        return ['activity' => $promActivity, 'activity_item' => $activityItem];
+    }
+
+    public function saveModule()
+    {
+        $data = I('post.');
+        $moduleType = $data['module_type'];
+        $activityId = $data['activity_id'];
+        $actData = [
+            'module_type' => $moduleType,
+            'title' => $data['title'],
+            'is_open' => $data['is_open']
+        ];
+        if ($activityId) {
+            M('prom_activity')->where(['id' => $activityId])->update($actData);
+        } else {
+            $activityId = M('prom_activity')->add($actData);
+        }
+        M('prom_activity_item')->where(['activity_id' => $activityId])->delete();
+        switch ($moduleType) {
+            case 1:
+                $itemData = [];
+                if (isset($data['item']['coupon_id'])) {
+                    foreach ($data['item']['coupon_id'] as $item) {
+                        $itemData[] = [
+                            'activity_id' => $activityId,
+                            'coupon_id' => $item
+                        ];
+                    }
+                }
+                (new PromActivityItem())->saveAll($itemData);
+                break;
+            case 2:
+            case 3:
+                $itemData = [];
+                if (isset($data['item'])) {
+                    foreach ($data['item'] as $item) {
+                        $itemData[] = [
+                            'activity_id' => $activityId,
+                            'goods_id' => $item['goods_id'],
+                            'item_id' => $item['item_id'] ?? 0
+                        ];
+                    }
+                }
+                (new PromActivityItem())->saveAll($itemData);
+                break;
+        }
+        $this->success('设置成功', U('Admin/Activity/module' . $moduleType));
     }
 }

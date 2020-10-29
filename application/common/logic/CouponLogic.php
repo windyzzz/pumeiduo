@@ -14,6 +14,7 @@ namespace app\common\logic;
 use app\common\model\Coupon;
 use app\common\model\CouponList;
 use think\Db;
+use think\Exception;
 use think\Log;
 use think\Model;
 
@@ -30,6 +31,7 @@ class CouponLogic extends Model
      */
     public function couponTitleDesc($coupon, $goodsName = '', $cateName = '')
     {
+        $useTypeDesc = '';
         $title = '';
         $desc = '';
         $goodsName = !empty($goodsName) ? $goodsName : !empty($coupon['goods_name']) ? $coupon['goods_name'] : '';
@@ -37,26 +39,31 @@ class CouponLogic extends Model
         switch ($coupon['use_type']) {
             case 0:
                 // 全店通用
+                $useTypeDesc = '全店通用';
                 $title = $coupon['name'];
                 $desc = '全场商品满' . floatval($coupon['condition']) . '减' . floatval($coupon['money']);
                 break;
             case 1:
                 // 指定商品
+                $useTypeDesc = '指定商品';
                 $title = $coupon['name'];
                 $desc = '仅限' . $goodsName . '可用';
                 break;
             case 2:
                 // 指定分类可用
+                $useTypeDesc = '指定分类';
                 $title = $coupon['name'];
                 $desc = $cateName . '满' . floatval($coupon['condition']) . '可用';
                 break;
             case 4:
                 // 指定商品折扣券
+                $useTypeDesc = '指定商品';
                 $title = $coupon['name'];
                 $desc = '指定商品满' . floatval($coupon['condition']) . '享受' . floatval($coupon['money']) . '折';
                 break;
             case 5:
                 // 兑换商品券
+                $useTypeDesc = '兑换商品';
                 $title = $coupon['name'];
                 $desc = '购买任意商品可用';
                 break;
@@ -64,7 +71,7 @@ class CouponLogic extends Model
         if (!$title || !$desc) {
             return [];
         } else {
-            return ['title' => $title, 'desc' => $desc];
+            return ['use_type_desc' => $useTypeDesc, 'title' => $title, 'desc' => $desc];
         }
     }
 
@@ -474,11 +481,9 @@ class CouponLogic extends Model
 
     /**
      * 优惠券兑换.
-     *
-     * @param type $user_id
-     * @param type $coupon_code
-     *
-     * @return json
+     * @param $user_id
+     * @param $coupon_code
+     * @return array
      */
     public function exchangeCoupon($user_id, $coupon_code)
     {
@@ -664,6 +669,67 @@ class CouponLogic extends Model
             ]);
             // 兑换券使用数+1
             M('coupon')->where(['id' => $value['re_id']])->setInc('use_num', 1);
+        }
+    }
+
+    /**
+     * 领取优惠券
+     * @param $couponId
+     * @param $userId
+     * @return array
+     */
+    public function receive($couponId, $userId)
+    {
+        if (!$couponId) {
+            return ['status' => 0, 'msg' => '操作有误'];
+        }
+        $couponIds = explode(',', $couponId);
+        try {
+            Db::startTrans();
+            foreach ($couponIds as $couponId) {
+                if (empty($couponId)) {
+                    continue;
+                }
+                $where = array(
+                    'send_start_time' => array('elt', NOW_TIME),
+                    'send_end_time' => array('egt', NOW_TIME),
+                    'id' => $couponId
+                );
+                $coupon = M('coupon')->where($where)->find();
+                if (!$coupon) {
+                    throw new Exception('该券不可领取');
+                }
+                if ($coupon['createnum'] > 0) {
+                    if ($coupon['send_num'] >= $coupon['createnum']) {
+                        throw new Exception('该券已领完');
+                    }
+                }
+                if (in_array($coupon['nature'], [1, 3])) {
+                    // 检查用户是否已经领取
+                    $is_has_coupon = M('coupon_list')->where(array('cid' => $couponId, 'uid' => $userId))->field('id')->find();
+                    if ($is_has_coupon) {
+                        throw new Exception('您已经领取过了');
+                    }
+                }
+                do {
+                    $code = get_rand_str(8, 0, 1);  // 获取随机8位字符串
+                    $check_exist = M('coupon_list')->where(['code' => $code])->value('id');
+                } while ($check_exist);
+                $add = [
+                    'cid' => $coupon['id'],
+                    'type' => $coupon['type'],
+                    'uid' => $userId,
+                    'send_time' => NOW_TIME,
+                    'code' => $code
+                ];
+                M('coupon_list')->add($add);
+                M('coupon')->where(array('id' => $couponId))->setInc('send_num', 1);
+            }
+            Db::commit();
+            return ['status' => 1, 'msg' => '领取成功'];
+        } catch (Exception $e) {
+            Db::rollback();
+            return ['status' => 0, 'msg' => $e->getMessage()];
         }
     }
 }

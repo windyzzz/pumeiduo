@@ -108,6 +108,9 @@ class Base extends Controller
             'c=api.Article&a=articleListNew',           // 文章列表
             'c=api.Community&a=allCategory',            // 社区所有分类
             'c=api.Community&a=article',                // 社区文章列表
+            'c=api.Activity&a=cateActList',             // 分类主题活动列表
+            'c=api.Activity&a=cateActGoodsList',        // 分类主题活动商品列表
+            'c=api.Activity&a=promActivity',            // 促销活动板块配置
         ];
     }
 
@@ -126,6 +129,9 @@ class Base extends Controller
             'c=api.Goods&a=checkGoodsPassword',         // 根据口令获取商品数据
             'c=api.Adv&a=popup',                        // 活动弹窗
             'c=api.Article&a=articleDetail',            // 文章内容
+            'c=api.Activity&a=promActivityModule1',     // 促销活动板块1
+            'c=api.Activity&a=promActivityModule2',     // 促销活动板块2
+            'c=api.Activity&a=promActivityModule3',     // 促销活动板块3
         ];
     }
 }

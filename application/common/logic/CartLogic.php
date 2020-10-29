@@ -27,7 +27,7 @@ class CartLogic extends Model
 {
     protected $goods; //商品模型
     protected $specGoodsPrice; //商品规格模型
-    protected $goodsBuyNum; //购买的商品数量
+    protected $goodsBuyNum = 1; //购买的商品数量
     protected $type = 1; //结算类型
     protected $cartType = 1; //加入购物车类型
     protected $session_id; //session_id
@@ -338,11 +338,15 @@ class CartLogic extends Model
     }
 
     /**
-     * modify ：addCart.
-     *
+     * 添加商品到购物车
+     * @param bool $isApp
+     * @param int $mode 模式：1普通加入 2不传数量加入
      * @return array
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
      */
-    public function addGoodsToCart($isApp = false)
+    public function addGoodsToCart($isApp = false, $mode = 1)
     {
         if (empty($this->goods)) {
             return ['status' => -3, 'msg' => '购买商品不存在', 'result' => ''];
@@ -370,22 +374,16 @@ class CartLogic extends Model
                     'source' => ['LIKE', $isApp ? '%' . 3 . '%' : '%' . 1 . '%']
                 ])->value('id');
                 if (!empty($flashSale)) {
-                    $result = $this->addFlashSaleCart();
+                    $result = $this->addFlashSaleCart($mode);
                 } else {
-                    if ($this->goods['least_buy_num'] != 0 && $this->goods['least_buy_num'] > $this->goodsBuyNum) {
-                        return ['status' => 0, 'msg' => '至少购买' . $this->goods['least_buy_num'] . '件', 'result' => ''];
-                    }
-                    $result = $this->addNormalCart();
+                    $result = $this->addNormalCart($mode);
                 }
             } elseif (2 == $this->specGoodsPrice['prom_type']) {
-                $result = $this->addGroupBuyCart();
+                $result = $this->addGroupBuyCart($mode);
             } elseif (3 == $this->specGoodsPrice['prom_type']) {
-                $result = $this->addPromGoodsCart();
+                $result = $this->addPromGoodsCart($mode);
             } else {
-                if ($this->goods['least_buy_num'] != 0 && $this->goods['least_buy_num'] > $this->goodsBuyNum) {
-                    return ['status' => 0, 'msg' => '至少购买' . $this->goods['least_buy_num'] . '件', 'result' => ''];
-                }
-                $result = $this->addNormalCart();
+                $result = $this->addNormalCart($mode);
             }
         } else {
             if (1 == $this->goods['prom_type']) {
@@ -396,22 +394,16 @@ class CartLogic extends Model
                     'source' => ['LIKE', $isApp ? '%' . 3 . '%' : '%' . 1 . '%']
                 ])->value('id');
                 if (!empty($flashSale)) {
-                    $result = $this->addFlashSaleCart();
+                    $result = $this->addFlashSaleCart($mode);
                 } else {
-                    if ($this->goods['least_buy_num'] != 0 && $this->goods['least_buy_num'] > $this->goodsBuyNum) {
-                        return ['status' => 0, 'msg' => '至少购买' . $this->goods['least_buy_num'] . '件', 'result' => ''];
-                    }
-                    $result = $this->addNormalCart();
+                    $result = $this->addNormalCart($mode);
                 }
             } elseif (2 == $this->goods['prom_type']) {
-                $result = $this->addGroupBuyCart();
+                $result = $this->addGroupBuyCart($mode);
             } elseif (3 == $this->goods['prom_type']) {
-                $result = $this->addPromGoodsCart();
+                $result = $this->addPromGoodsCart($mode);
             } else {
-                if ($this->goods['least_buy_num'] != 0 && $this->goods['least_buy_num'] > $this->goodsBuyNum) {
-                    return ['status' => 0, 'msg' => '至少购买' . $this->goods['least_buy_num'] . '件', 'result' => ''];
-                }
-                $result = $this->addNormalCart();
+                $result = $this->addNormalCart($mode);
             }
         }
         $result['result'] = ['cart_num' => $UserCartGoodsNum = $this->getUserCartGoodsNum()]; // 查找购物车数量
@@ -422,10 +414,11 @@ class CartLogic extends Model
 
     /**
      * 购物车添加普通商品
-     *
+     * @param int $mode 模式：1普通加入 2不传数量加入
      * @return array
+     * @throws \think\exception\DbException
      */
-    private function addNormalCart()
+    private function addNormalCart($mode = 1)
     {
         if ($this->goods['is_agent'] == 1) {
             if (isset($this->user)) {
@@ -456,9 +449,23 @@ class CartLogic extends Model
         } else {
             $userCartGoods = Cart::get(['user_id' => $this->user_id, 'goods_id' => $this->goods['goods_id'], 'spec_key' => ($this->specGoodsPrice['key'] ?: '')]);
         }
-        // 如果该商品已经存在购物车
         if ($userCartGoods) {
+            // 如果该商品已经存在购物车
             $userWantGoodsNum = $this->goodsBuyNum + $userCartGoods['goods_num']; //本次要购买的数量加上购物车的本身存在的数量
+            if ($this->goods['limit_buy_num'] != 0 && $this->goods['limit_buy_num'] < $userWantGoodsNum) {
+                if ($mode == 2) {
+                    $userWantGoodsNum = $this->goods['limit_buy_num'];
+                } else {
+                    return ['status' => 0, 'msg' => '不能购买超过' . $this->goods['limit_buy_num'] . '件', 'result' => ''];
+                }
+            }
+            if ($this->goods['least_buy_num'] != 0 && $this->goods['least_buy_num'] > $userWantGoodsNum) {
+                if ($mode == 2) {
+                    $userWantGoodsNum = $this->goods['least_buy_num'];
+                } else {
+                    return ['status' => 0, 'msg' => '至少购买' . $this->goods['least_buy_num'] . '件', 'result' => ''];
+                }
+            }
             //如果有阶梯价格,就是用阶梯价格
             if (!empty($this->goods['price_ladder'])) {
                 $goodsLogic = new GoodsLogic();
@@ -492,6 +499,20 @@ class CartLogic extends Model
             ]);
         } else {
             //如果该商品没有存在购物车
+            if ($this->goods['limit_buy_num'] != 0 && $this->goods['limit_buy_num'] < $this->goodsBuyNum) {
+                if ($mode == 2) {
+                    $this->goodsBuyNum = $this->goods['limit_buy_num'];
+                } else {
+                    return ['status' => 0, 'msg' => '不能购买超过' . $this->goods['limit_buy_num'] . '件', 'result' => ''];
+                }
+            }
+            if ($this->goods['least_buy_num'] != 0 && $this->goods['least_buy_num'] > $this->goodsBuyNum) {
+                if ($mode == 2) {
+                    $this->goodsBuyNum = $this->goods['least_buy_num'];
+                } else {
+                    return ['status' => 0, 'msg' => '至少购买' . $this->goods['least_buy_num'] . '件', 'result' => ''];
+                }
+            }
             if ($this->goodsBuyNum > $store_count) {
                 return ['status' => -4, 'msg' => $this->goods['goods_name'] . '，商品库存不足，剩余' . $store_count, 'result' => ''];
             }
@@ -550,10 +571,11 @@ class CartLogic extends Model
 
     /**
      * 购物车添加秒杀商品
-     *
+     * @param int $mode 模式：1普通加入 2不传数量加入
      * @return array
+     * @throws \think\exception\DbException
      */
-    private function addFlashSaleCart()
+    private function addFlashSaleCart($mode = 1)
     {
         $flashSaleLogic = new FlashSaleLogic($this->goods, $this->specGoodsPrice);
         $flashSale = $flashSaleLogic->getPromModel();
@@ -583,9 +605,19 @@ class CartLogic extends Model
         $flashSalePurchase = $flashSale['goods_num'] - $flashSale['buy_num']; //抢购剩余库存
         $userBuyGoodsNum = $this->goodsBuyNum + $userFlashOrderGoodsNum + $userCartGoodsNum;
         if ($flashSale['buy_limit'] != 0 && $userBuyGoodsNum > $flashSale['buy_limit']) {
-            return ['status' => -4, 'msg' => '每人限购' . $flashSale['buy_limit'] . '件，您已下单' . $userFlashOrderGoodsNum . '件，购物车已有' . $userCartGoodsNum . '件', 'result' => ''];
+            if ($mode == 2) {
+                $rest = $flashSale['buy_limit'] - $userFlashOrderGoodsNum - $userCartGoodsNum;
+                if ($rest == 0) {
+                    return ['status' => -4, 'msg' => '每人限购' . $flashSale['buy_limit'] . '件，您已下单' . $userFlashOrderGoodsNum . '件，购物车已有' . $userCartGoodsNum . '件', 'result' => ''];
+                } else {
+                    $userWantGoodsNum = $userCartGoodsNum;
+                }
+            } else {
+                return ['status' => -4, 'msg' => '每人限购' . $flashSale['buy_limit'] . '件，您已下单' . $userFlashOrderGoodsNum . '件，购物车已有' . $userCartGoodsNum . '件', 'result' => ''];
+            }
+        } else {
+            $userWantGoodsNum = $userCartGoodsNum + $this->goodsBuyNum; //本次要购买的数量加上购物车的本身存在的数量
         }
-        $userWantGoodsNum = $userCartGoodsNum + $this->goodsBuyNum; //本次要购买的数量加上购物车的本身存在的数量
         if ($userWantGoodsNum > 200) {
             $userWantGoodsNum = 200;
         }
@@ -642,11 +674,12 @@ class CartLogic extends Model
     }
 
     /**
-     *  购物车添加团购商品
-     *
+     * 购物车添加团购商品
+     * @param int $mode 模式：1普通加入 2不传数量加入
      * @return array
+     * @throws \think\exception\DbException
      */
-    private function addGroupBuyCart()
+    private function addGroupBuyCart($mode = 1)
     {
         $groupBuyLogic = new GroupBuyLogic($this->goods, $this->specGoodsPrice);
         $groupBuy = $groupBuyLogic->getPromModel();
@@ -670,9 +703,21 @@ class CartLogic extends Model
             $userCartGoods = Cart::get(['user_id' => $this->user_id, 'goods_id' => $this->goods['goods_id'], 'spec_key' => ($this->specGoodsPrice['key'] ?: '')]);
         }
         $userCartGoodsNum = empty($userCartGoods['goods_num']) ? 0 : $userCartGoods['goods_num']; ///获取用户购物车的团购商品数量
-        $userWantGoodsNum = $userCartGoodsNum + $this->goodsBuyNum; //购物车加上要加入购物车的商品数量
-        if ($groupBuy['buy_limit'] != 0 && $userWantGoodsNum > $groupBuy['buy_limit']) {
-            return ['status' => -4, 'msg' => '每人限购' . $groupBuy['buy_limit'] . '件，您已下单' . $this->goodsBuyNum . '件，' . '购物车已有' . $userCartGoodsNum . '件', 'result' => ''];
+        $userGroupBuyOrderGoodsNum = $groupBuyLogic->getUserGroupBuyOrderGoodsNum($this->user_id); //获取用户团购已购商品数量
+        $userBuyGoodsNum = $userCartGoodsNum + $userGroupBuyOrderGoodsNum + $this->goodsBuyNum; //购物车加上要加入购物车的商品数量
+        if ($groupBuy['buy_limit'] != 0 && $userBuyGoodsNum > $groupBuy['buy_limit']) {
+            if ($mode == 2) {
+                $rest = $groupBuy['buy_limit'] - $userGroupBuyOrderGoodsNum - $userCartGoodsNum;
+                if ($rest == 0) {
+                    return ['status' => -4, 'msg' => '每人限购' . $groupBuy['buy_limit'] . '件，您已下单' . $userGroupBuyOrderGoodsNum . '件，购物车已有' . $userCartGoodsNum . '件', 'result' => ''];
+                } else {
+                    $userWantGoodsNum = $userCartGoodsNum;
+                }
+            } else {
+                return ['status' => -4, 'msg' => '每人限购' . $groupBuy['buy_limit'] . '件，您已下单' . $userGroupBuyOrderGoodsNum . '件，' . '购物车已有' . $userCartGoodsNum . '件', 'result' => ''];
+            }
+        } else {
+            $userWantGoodsNum = $userCartGoodsNum + $this->goodsBuyNum; //本次要购买的数量加上购物车的本身存在的数量
         }
         $groupBuyPurchase = $groupBuy['goods_num'] - $groupBuy['buy_num']; //团购剩余库存
         if ($userWantGoodsNum > 200) {
@@ -732,11 +777,12 @@ class CartLogic extends Model
     }
 
     /**
-     *  购物车添加优惠促销商品
-     *
+     * 购物车添加优惠促销商品
+     * @param int $mode 模式：1普通加入 2不传数量加入
      * @return array
+     * @throws \think\exception\DbException
      */
-    private function addPromGoodsCart()
+    private function addPromGoodsCart($mode = 1)
     {
         $promGoodsLogic = new PromGoodsLogic($this->goods, $this->specGoodsPrice);
         $promGoods = $promGoodsLogic->getPromModel();
@@ -787,9 +833,19 @@ class CartLogic extends Model
         $UserPromOrderGoodsNum = $promGoodsLogic->getUserPromOrderGoodsNum($this->user_id); //获取用户促销已购商品数量
         $userBuyGoodsNum = $userWantGoodsNum + $UserPromOrderGoodsNum; //本次要购买的数量+购物车本身数量+已经买
         if ($promGoods['buy_limit'] != 0 && $userBuyGoodsNum > $promGoods['buy_limit']) {
-            return ['status' => -4, 'msg' => '每人限购' . $promGoods['buy_limit'] . '件，您已下单' . $UserPromOrderGoodsNum . '件，' . '购物车已有' . $userCartGoodsNum . '件', 'result' => ''];
+            if ($mode == 2) {
+                $rest = $promGoods['buy_limit'] - $UserPromOrderGoodsNum - $userCartGoodsNum;
+                if ($rest == 0) {
+                    return ['status' => -4, 'msg' => '每人限购' . $promGoods['buy_limit'] . '件，您已下单' . $UserPromOrderGoodsNum . '件，购物车已有' . $userCartGoodsNum . '件', 'result' => ''];
+                } else {
+                    $userWantGoodsNum = $userCartGoodsNum;
+                }
+            } else {
+                return ['status' => -4, 'msg' => '每人限购' . $promGoods['buy_limit'] . '件，您已下单' . $UserPromOrderGoodsNum . '件，' . '购物车已有' . $userCartGoodsNum . '件', 'result' => ''];
+            }
+        } else {
+            $userWantGoodsNum = $this->goodsBuyNum + $userCartGoodsNum; //本次要购买的数量加上购物车的本身存在的数量
         }
-        $userWantGoodsNum = $this->goodsBuyNum + $userCartGoodsNum; //本次要购买的数量加上购物车的本身存在的数量
         if ($userWantGoodsNum > 200) {
             $userWantGoodsNum = 200;
         }

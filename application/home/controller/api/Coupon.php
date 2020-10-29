@@ -278,6 +278,9 @@ class Coupon extends Base
     public function couponReceive()
     {
         $couponId = I('coupon_id', 0);
+        $res = (new CouponLogic())->receive($couponId, $this->user_id);
+        return json($res);
+
         if (!$couponId) {
             return json(['status' => 0, 'msg' => '操作有误']);
         }

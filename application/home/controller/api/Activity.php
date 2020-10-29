@@ -12,6 +12,7 @@
 namespace app\home\controller\api;
 
 use app\common\logic\ActivityLogic;
+use app\common\logic\CouponLogic;
 use app\common\logic\GoodsActivityLogic;
 use app\common\logic\GoodsLogic;
 use app\common\model\FlashSale;
@@ -19,7 +20,7 @@ use app\common\model\GroupBuy;
 use think\Db;
 use think\Page;
 
-class Activity
+class Activity extends Base
 {
     /**
      * 团购活动列表.
@@ -263,5 +264,189 @@ class Activity
             return json(['status' => 0, 'msg' => '活动已取消']);
         }
         return json(['status' => 1, 'msg' => 'success', 'result' => $res]);
+    }
+
+    /**
+     * 促销活动板块配置
+     * @return \think\response\Json
+     */
+    public function promActivity()
+    {
+        $config = [
+            'is_open' => 0,
+            'index_banner' => [
+                'img' => '',
+                'width' => 0,
+                'height' => 0,
+                'type' => ''
+            ],
+            'inside_header' => '',
+            'inside_banner' => [
+                'img' => '',
+                'width' => 0,
+                'height' => 0,
+                'type' => ''
+            ],
+            'inside_bgcolor' => ''
+        ];
+        $activityConfig = M('prom_activity_config')->find();
+        if (!empty($activityConfig)) {
+            $config['is_open'] = $activityConfig['is_open'];
+            $config['inside_header'] = $activityConfig['inside_header'];
+            $config['inside_bgcolor'] = $activityConfig['inside_bgcolor'];
+            if (!empty($activityConfig['index_banner'])) {
+                $activityConfig['index_banner'] = json_decode($activityConfig['index_banner'], true);
+                $activityConfig['index_banner']['img'] = getFullPath($activityConfig['index_banner']['img']);
+                $config['index_banner'] = $activityConfig['index_banner'];
+            }
+            if (!empty($activityConfig['inside_banner'])) {
+                $activityConfig['inside_banner'] = json_decode($activityConfig['inside_banner'], true);
+                $activityConfig['inside_banner']['img'] = getFullPath($activityConfig['inside_banner']['img']);
+                $config['inside_banner'] = $activityConfig['inside_banner'];
+            }
+        }
+        return json(['status' => 1, 'msg' => '', 'result' => $config]);
+    }
+
+    /**
+     * 促销活动板块1
+     * @return \think\response\Json
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     */
+    public function promActivityModule1()
+    {
+        $activity = [
+            'is_open' => 0,
+            'title' => '',
+            'is_received' => 0,
+            'list' => []
+        ];
+        $promActivity = M('prom_activity')->where(['module_type' => 1, 'is_open' => 1])->find();
+        if (!empty($promActivity)) {
+            $activity['is_open'] = $promActivity['is_open'];
+            $activity['title'] = $promActivity['title'];
+            // 优惠券信息
+            $couponData = M('prom_activity_item pai')->join('coupon c', 'c.id = pai.coupon_id')
+                ->where([
+                    'pai.activity_id' => $promActivity['id'],
+                    'c.send_start_time' => ['elt', NOW_TIME],
+                    'c.send_end_time' => ['egt', NOW_TIME],
+                    'c.use_end_time' => ['egt', NOW_TIME],
+                    'c.status' => 1,
+                ])
+                ->field('c.*')->select();
+            $couponIds = [];
+            foreach ($couponData as $coupon) {
+                $couponIds[] = $coupon['id'];
+            }
+            // 检查是否已经领取
+            $receivedCids = M('coupon_list')->where(['cid' => ['IN', $couponIds], 'uid' => $this->user_id])->getField('cid', true);
+            $differCids = array_diff($couponIds, $receivedCids);
+            if (empty($differCids)) {
+                $activity['is_received'] = 1;
+            }
+            // 优惠券商品
+            $couponGoods = Db::name('goods_coupon gc')->join('goods g', 'g.goods_id = gc.goods_id')->where(['gc.coupon_id' => ['in', $couponIds]])->field('gc.coupon_id, g.goods_id, g.goods_name, g.original_img')->select();
+            // 优惠券分类
+            $couponCate = Db::name('goods_coupon gc1')->join('goods_category gc2', 'gc1.goods_category_id = gc2.id')->where(['gc1.coupon_id' => ['in', $couponIds]])->getField('gc1.coupon_id, gc2.id cate_id, gc2.name cate_name', true);
+            // 组合数据
+            $couponList = [];
+            $couponLogic = new CouponLogic();
+            foreach ($couponData as $k => $coupon) {
+                if ($coupon['use_type'] == 1) {
+                    // 指定商品可用
+                    foreach ($couponGoods as $goods) {
+                        if ($coupon['id'] == $goods['coupon_id']) {
+                            $couponList[] = [
+                                'coupon_id' => $coupon['id'],
+                                'use_type_desc' => '指定商品',
+                                'money' => floatval($coupon['money']) . '',
+                                'desc' => '满' . $coupon['condition'] . '可用',
+                            ];
+                        }
+                    }
+                } else {
+                    // 优惠券展示描述
+                    $res = $couponLogic->couponTitleDesc($coupon, '', isset($couponCate[$coupon['id']]) ? $couponCate[$coupon['id']]['cate_name'] : '');
+                    if (empty($res)) {
+                        continue;
+                    }
+                    $couponList[] = [
+                        'coupon_id' => $coupon['id'],
+                        'use_type_desc' => $res['use_type_desc'],
+                        'money' => floatval($coupon['money']) . '',
+                        'desc' => '满' . $coupon['condition'] . '可用',
+                    ];
+                }
+            }
+            $activity['list'] = $couponList;
+        }
+        return json(['status' => 1, 'msg' => '', 'result' => $activity]);
+    }
+
+    /**
+     * 促销活动板块2
+     * @return \think\response\Json
+     */
+    public function promActivityModule2()
+    {
+        $activity = [
+            'is_open' => 0,
+            'title' => '',
+            'list' => []
+        ];
+        $promActivity = M('prom_activity')->where(['module_type' => 2, 'is_open' => 1])->find();
+        if (!empty($promActivity)) {
+            $activity['is_open'] = $promActivity['is_open'];
+            $activity['title'] = $promActivity['title'];
+            // 商品列表
+            $goodsIds = M('prom_activity_item')->where(['activity_id' => $promActivity['id']])->getField('goods_id', true);
+            $count = count($goodsIds);
+            $page = new Page($count, 100);
+            $sortArr = ['sort' => 'desc'];
+            $goodsList = [];
+            if ($count > 0) {
+                // 获取商品数据
+                $goodsLogic = new GoodsLogic();
+                $goodsData = $goodsLogic->getGoodsList($goodsIds, $sortArr, $page, null, $this->isApp);
+                $goodsList = $goodsData['goods_list'];
+            }
+            $activity['list'] = $goodsList;
+        }
+        return json(['status' => 1, 'msg' => '', 'result' => $activity]);
+    }
+
+    /**
+     * 促销活动板块3
+     * @return \think\response\Json
+     */
+    public function promActivityModule3()
+    {
+        $activity = [
+            'is_open' => 0,
+            'title' => '',
+            'list' => []
+        ];
+        $promActivity = M('prom_activity')->where(['module_type' => 3, 'is_open' => 1])->find();
+        if (!empty($promActivity)) {
+            $activity['is_open'] = $promActivity['is_open'];
+            $activity['title'] = $promActivity['title'];
+            // 商品列表
+            $goodsIds = M('prom_activity_item')->where(['activity_id' => $promActivity['id']])->getField('goods_id', true);
+            $count = count($goodsIds);
+            $page = new Page($count, 12);
+            $sortArr = ['sort' => 'desc'];
+            $goodsList = [];
+            if ($count > 0) {
+                // 获取商品数据
+                $goodsLogic = new GoodsLogic();
+                $goodsData = $goodsLogic->getGoodsList($goodsIds, $sortArr, $page, null, $this->isApp);
+                $goodsList = $goodsData['goods_list'];
+            }
+            $activity['list'] = $goodsList;
+        }
+        return json(['status' => 1, 'msg' => '', 'result' => $activity]);
     }
 }

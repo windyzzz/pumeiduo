@@ -1180,7 +1180,11 @@ class Cart extends Base
     }
 
     /**
-     * ajax 将商品加入购物车.
+     * 将商品加入购物车
+     * @return \think\response\Json
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
      */
     public function ajaxAddCart()
     {
@@ -1190,27 +1194,34 @@ class Cart extends Base
         $type = I('type/d', 1); // 结算类型
         $cartType = I('cart_type/d', 0); // 加入购物车类型
         $cart_id = I('cart_id/d', 0); // 购物车中的ID
+        $mode = I('mode', 1);
         if (empty($goods_id)) {
             return json(['status' => 0, 'msg' => '请选择要购买的商品', 'result' => '']);
         }
-        if (empty($goods_num)) {
-            return json(['status' => 0, 'msg' => '购买商品数量不能为0', 'result' => '']);
-        }
-        if ($goods_num > 200) {
-            return json(['status' => 0, 'msg' => '购买商品数量大于200', 'result' => '']);
-        }
         $cartLogic = new CartLogic();
-        $cartLogic->setCartId($cart_id);
         $cartLogic->setUserId($this->user_id);
         $cartLogic->setUser($this->user);
         $cartLogic->setGoodsModel($goods_id);
-        $cartLogic->setType($type);
-        $cartLogic->setCartType($cartType);
-        if ($item_id) {
-            $cartLogic->setSpecGoodsPriceModel($item_id);
+        switch ($mode) {
+            case 1:
+                if (empty($goods_num)) {
+                    return json(['status' => 0, 'msg' => '购买商品数量不能为0', 'result' => '']);
+                }
+                if ($goods_num > 200) {
+                    return json(['status' => 0, 'msg' => '购买商品数量大于200', 'result' => '']);
+                }
+                $cartLogic->setCartId($cart_id);
+                $cartLogic->setType($type);
+                $cartLogic->setCartType($cartType);
+                if ($item_id) {
+                    $cartLogic->setSpecGoodsPriceModel($item_id);
+                }
+                $cartLogic->setGoodsBuyNum($goods_num);
+                break;
+            case 2:
+                break;
         }
-        $cartLogic->setGoodsBuyNum($goods_num);
-        $result = $cartLogic->addGoodsToCart($this->isApp);
+        $result = $cartLogic->addGoodsToCart($this->isApp, $mode);
         return json($result);
     }
 

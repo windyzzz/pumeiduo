@@ -72,6 +72,9 @@
                         <th abbr="article_show" axis="col5" class="" align="center">
                             <div style="text-align: center; width: 80px;" class="">库存</div>
                         </th>
+                        <th abbr="article_show" axis="col5" class="" align="center">
+                            <div style="text-align: center; width: 80px;" class="">上架状态</div>
+                        </th>
                         <th axis="col1" class=""  align="center">
                             <div style="text-align: center; width: 80px;">操作</div>
                         </th>
@@ -106,6 +109,13 @@
                             </td>
                             <td class="" align="left">
                                 <div style="text-align: center; width: 80px;">{$list.store_count}</div>
+                            </td>
+                            <td class="" align="left">
+                                <div style="text-align: center; width: 80px;">
+                                    <if condition="$list['is_on_sale'] eq 1">上架
+                                        <else/>
+                                        <span style="color:#D91222;">下架</span></if>
+                                </div>
                             </td>
                             <td class="" align="center">
                                 <div style="text-align: center; width: 80px; ">
@@ -259,7 +269,7 @@
             return false;
         }
 
-        window.parent.call_back(goodsArr);
+        window.parent.selGoodsCallBack(goodsArr);
     }
 </script>
 </body>

@@ -3253,6 +3253,9 @@ class UsersLogic extends Model
         if ($currentUser['user_id'] == $bindUser['user_id']) {
             return ['status' => -1, 'msg' => '不能绑定自己'];
         }
+        if ($currentUser['first_leader'] == $bindUser['user_id']) {
+            return ['status' => 0, 'msg' => '不能绑定和自己有关系的普通会员'];
+        }
         if ($this->_hasRelationship($bindUser['user_id'], $currentUser['user_id'])) {
             return ['status' => 0, 'msg' => '不能绑定有关系的普通会员'];
         }
