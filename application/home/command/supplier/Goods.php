@@ -36,15 +36,9 @@ class Goods extends Command
      */
     public function updateGoods(Output $output)
     {
-        $file = \think\Env::get('COMMAND.PUBLIC') . "download_excel/商品价格导入_20200924.xlsx";
+        $file = \think\Env::get('COMMAND.PUBLIC') . "download_excel/商品价格导入_20201029.xlsx";
         include_once "plugins/PHPExcel.php";
         $objRead = new \PHPExcel_Reader_Excel2007();   //建立reader对象
-        if (!$objRead->canRead($file)) {
-            $objRead = new \PHPExcel_Reader_Excel5();
-            if (!$objRead->canRead($file)) {
-                $output->writeln('文件不存在');
-            }
-        }
 
         $cellName = array('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'AA', 'AB', 'AC', 'AD', 'AE', 'AF', 'AG', 'AH', 'AI', 'AJ', 'AK', 'AL', 'AM', 'AN', 'AO', 'AP', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AV', 'AW', 'AX', 'AY', 'AZ');
         $obj = $objRead->load($file);  //建立excel对象
@@ -79,15 +73,22 @@ class Goods extends Command
                     continue;
                 }
                 $goodsSn = $res['result']['goods']['goods_sn'];
+                // 获取第三级分类ID
+                $cateId = M('goods_category')->where(['name' => $v['E'], 'level' => 3])->value('id');
                 // 更新商品信息
                 $upData = [
-                    'commission' => $v['C'],
-                    'exchange_integral' => round($v['D'], 2),
-                    'shop_price' => round($v['E'], 2),
-                    'stax_price' => round($v['F'], 2),
-                    'ctax_price' => round($v['G'], 2),
-                    'give_integral' => round($v['H'], 2),
-                    'integral_pv' => round($v['I'], 2),
+                    'cat_id' => $cateId,
+                    'commission' => $v['F'],
+                    'exchange_integral' => round($v['G'], 2),
+                    'shop_price' => round($v['H'], 2),
+                    'stax_price' => round($v['I'], 2),
+                    'ctax_price' => round($v['J'], 2),
+                    'give_integral' => round($v['K'], 2),
+                    'integral_pv' => round($v['L'], 2),
+                    'is_free_shipping' => 0,
+                    'template_id' => 2,
+                    'is_area_show' => 1,
+                    'is_on_sale2' => 1
                 ];
                 $res = M('goods')->where(['goods_sn' => $goodsSn])->update($upData);
                 if (!$res) {
@@ -141,7 +142,7 @@ class Goods extends Command
         $local_url_arr = array(
             3 => 'http://pumeiduo.erp/index.php/supplier.Sync/getSyncData'
         );
-        switch ($_SERVER['SERVER_ADDR']) {
+        switch (\think\Env::get('COMMAND.IP')) {
             case $test_ip:
                 return $test_url_arr[$to_system];
             case $online_ip:
