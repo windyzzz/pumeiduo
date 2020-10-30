@@ -382,6 +382,9 @@ class Activity extends Base
                 }
             }
             $activity['list'] = $couponList;
+            if (empty($activity['list'])) {
+                $activity['is_open'] = 0;
+            }
         }
         return json(['status' => 1, 'msg' => '', 'result' => $activity]);
     }
@@ -414,6 +417,9 @@ class Activity extends Base
                 $goodsList = $goodsData['goods_list'];
             }
             $activity['list'] = $goodsList;
+            if (empty($activity['list'])) {
+                $activity['is_open'] = 0;
+            }
         }
         return json(['status' => 1, 'msg' => '', 'result' => $activity]);
     }
@@ -446,6 +452,9 @@ class Activity extends Base
                 $goodsList = $goodsData['goods_list'];
             }
             $activity['list'] = $goodsList;
+            if (empty($activity['list'])) {
+                $activity['is_open'] = 0;
+            }
         }
         return json(['status' => 1, 'msg' => '', 'result' => $activity]);
     }
