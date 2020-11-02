@@ -1989,8 +1989,10 @@ class Order extends Base
                         if ($payLogic->getOrderPromAmount() > 0 || in_array($prom_type, [1, 2])) {
                             $canCoupon = false;
                         }
+                    } elseif (in_array($prom_type, [1, 2])) {
+                        $canCoupon = false;
                     }
-                    if (!$canCoupon || $coupon['condition'] > $payLogic->getGoodsPrice()) {
+                    if (!$canCoupon || $coupon['condition'] > bcsub($payLogic->getGoodsPrice(), $payLogic->getOrderPromAmount(), 2)) {
                         unset($couponList[$key]);
                         continue;
                     }
