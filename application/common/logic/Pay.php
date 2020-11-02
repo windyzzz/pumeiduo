@@ -1154,14 +1154,16 @@ class Pay
                 $coupon = Db::name('coupon')->where(['id' => $userCoupon['cid'], 'status' => 1])->find(); // 获取有效优惠券类型表
                 if ($coupon) {
                     $canCoupon = true;
+                    list($prom_type, $prom_id) = $this->getPromInfo();
                     if ($coupon['is_usual'] == '0') {
-                        list($prom_type, $prom_id) = $this->getPromInfo();
                         // 不可以叠加优惠
                         if ($this->orderPromAmount > 0 || in_array($prom_type, [1, 2])) {
                             $canCoupon = false;
                         }
+                    } elseif (in_array($prom_type, [1, 2])) {
+                        $canCoupon = false;
                     }
-                    if ($canCoupon && $coupon['condition'] <= $this->orderAmount) {
+                    if ($canCoupon && $coupon['condition'] <= bcsub($this->goodsPrice, $this->orderPromAmount, 2)) {
                         $this->couponId = $coupon_id;
                         switch ($coupon['use_type']) {
                             case 0:

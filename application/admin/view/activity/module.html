@@ -161,18 +161,6 @@
         $('#coupon_ids').append(tr);
     }
 
-    function selectGoods2() {
-        var url = "{:U('Promotion/search_goods',array('prom_type'=>3,'prom_id'=>$info[id]))}";
-        layer.open({
-            type: 2,
-            title: '选择商品',
-            shadeClose: true,
-            shade: 0.3,
-            area: ['70%', '80%'],
-            content: url,
-        });
-    }
-
     function selectGoods() {
         var url = "{:U('Goods/search_goods',array('tpl'=>'search_goods'))}";
         layer.open({
