@@ -102,7 +102,8 @@ class Base extends Controller
         $this->assign('username', $user['nickname']);
 
         //PC端首页"手机端、APP二维码"
-        $store_logo = tpCache('shop_info.shop_info_store_logo');
+//        $store_logo = tpCache('shop_info.shop_info_store_logo');
+        $store_logo = '';
         $store_logo ? $head_pic = $store_logo : $head_pic = '/public/static/images/logo/pc_home_logo_default.png';
         $mobile_url = "http://{$_SERVER['HTTP_HOST']}".U('Mobile/index/app_down');
         $this->assign('head_pic', "http://{$_SERVER['HTTP_HOST']}/".$head_pic);

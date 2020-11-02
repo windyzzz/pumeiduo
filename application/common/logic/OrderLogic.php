@@ -876,7 +876,7 @@ class OrderLogic
             $result = $this->cancel_order($this->user_id, $value);
         }
 
-        return $result;
+        return true;
     }
 
     /**

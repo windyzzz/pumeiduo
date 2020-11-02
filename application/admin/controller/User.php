@@ -740,7 +740,16 @@ class User extends Base
                     $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['user_id'] . '</td>';
                     $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['user_name'] . '</td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['nickname'] . ' </td>';
-                    $sex = $val['sex'] == 1 ? '男' : $val['sex'] == '2' ? '女' : '保密';
+                    switch ($val['sex']) {
+                        case 1:
+                            $sex = '男';
+                            break;
+                        case 2:
+                            $sex = '女';
+                            break;
+                        default:
+                            $sex = '保密';
+                    }
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $sex. ' </td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['birthday']. ' </td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $level_list[$val['distribut_level']] . '</td>';

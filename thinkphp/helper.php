@@ -626,7 +626,7 @@ if (!function_exists('D')) {
         }elseif(is_file(APP_PATH."/seller/model/$name.php")){
             $class = '\app\seller\model\\'.$name;
         }
-        if($class)
+        if(isset($class))
         {
             return new $class();
         }            
