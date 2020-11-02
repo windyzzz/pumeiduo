@@ -72,7 +72,12 @@ class Base extends Controller
     {
         $url = $this->request->url();
         $urlArr = explode('&', $url);
-        return $urlArr[1] . '&' . $urlArr[2];
+        if (isset($urlArr[1])) {
+            return $urlArr[1] . '&' . $urlArr[2];
+        } else {
+            $urlArr = explode('/', $url);
+            return 'c=' . $urlArr[3] . '&a=' . $urlArr[4];
+        }
     }
 
     /**
