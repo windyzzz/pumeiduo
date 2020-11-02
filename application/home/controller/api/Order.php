@@ -1984,7 +1984,7 @@ class Order extends Base
             $payLogic->activity3();         // 订单优惠促销
 
             if (!empty($couponList)) {
-                list($prom_type, $prom_id) = $payLogic->getPromInfo();
+                list($prom_type, $prom_id, $flashSale, $groupBuy, $prom, $usual) = $payLogic->getPromInfo();
                 // 筛选优惠券
                 foreach ($couponList as $key => $coupon) {
                     $canCoupon = true;
@@ -1993,8 +1993,11 @@ class Order extends Base
                         if ($payLogic->getOrderPromAmount() > 0 || in_array($prom_type, [1, 2])) {
                             $canCoupon = false;
                         }
-                    } elseif (in_array($prom_type, [1, 2])) {
-                        $canCoupon = false;
+                    } else {
+                        // 可以叠加优惠
+                        if ($flashSale == '1' && $prom != '3' && $usual == '0') {
+                            $canCoupon = false;
+                        }
                     }
                     if (!$canCoupon || $coupon['condition'] > bcsub($payLogic->getGoodsPrice(), $payLogic->getOrderPromAmount(), 2)) {
                         unset($couponList[$key]);

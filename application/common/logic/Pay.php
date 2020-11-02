@@ -165,15 +165,31 @@ class Pay
     {
         $prom_type = '0';
         $prom_id = '0';
+        $flashSale = '0';   // 秒杀
+        $groupBuy = '0';    // 团购
+        $prom = '0';        // 促销优惠
+        $usual = '0';       // 一般产品
         foreach ($this->payList as $v) {
             if ($v['prom_type'] > 0) {
                 $prom_type = $v['prom_type'];
                 $prom_id = $v['prom_id'];
-                break;
+                switch ($v['prom_type']) {
+                    case 1:
+                        $flashSale = '1';
+                        break;
+                    case 2:
+                        $groupBuy = '2';
+                        break;
+                    case 3:
+                        $prom = '3';
+                        break;
+                }
+            } else {
+                $usual = $v['goods_id'];
             }
         }
 
-        return [$prom_type, $prom_id];
+        return [$prom_type, $prom_id, $flashSale, $groupBuy, $prom, $usual];
     }
 
     /**
@@ -1154,14 +1170,17 @@ class Pay
                 $coupon = Db::name('coupon')->where(['id' => $userCoupon['cid'], 'status' => 1])->find(); // 获取有效优惠券类型表
                 if ($coupon) {
                     $canCoupon = true;
-                    list($prom_type, $prom_id) = $this->getPromInfo();
+                    list($prom_type, $prom_id, $flashSale, $groupBuy, $prom, $usual) = $this->getPromInfo();
                     if ($coupon['is_usual'] == '0') {
                         // 不可以叠加优惠
                         if ($this->orderPromAmount > 0 || in_array($prom_type, [1, 2])) {
                             $canCoupon = false;
                         }
-                    } elseif (in_array($prom_type, [1, 2])) {
-                        $canCoupon = false;
+                    } else {
+                        // 可以叠加优惠
+                        if ($flashSale == '1' && $prom != '3' && $usual == '0') {
+                            $canCoupon = false;
+                        }
                     }
                     if ($canCoupon && $coupon['condition'] <= bcsub($this->goodsPrice, $this->orderPromAmount, 2)) {
                         $this->couponId = $coupon_id;

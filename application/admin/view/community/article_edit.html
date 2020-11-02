@@ -131,24 +131,38 @@
                 <dt class="tit">
                     <label>关联商品</label>
                 </dt>
-                <dd class="opt">
-                    <div style="float: left;margin-right: 10px" class="selected-group-goods">
-                        <div class="goods-thumb">
-                            <img style="width: 162px;height: 162px" src="{$info['goods_id']|goods_thum_images=162,162}"/>
+                <if condition="!empty($info[goods_id])">
+                    <dd class="opt">
+                        <div style="float: left;margin-right: 10px" class="selected-group-goods">
+                            <div class="goods-thumb">
+                                <img style="width: 162px;height: 162px" src="{$info['goods_id']|goods_thum_images=162,162}"/>
+                            </div>
+                            <div class="goods-name">
+                                <a target="_blank" href="{:U('Admin/Goods/addEditGoods',array('id'=>$info['goods_id']))}">{$info.goods_name}</a>
+                            </div>
                         </div>
-                        <div class="goods-name">
-                            <a target="_blank" href="{:U('Admin/Goods/addEditGoods',array('id'=>$info['goods_id']))}">{$info.goods_name}</a>
-                        </div>
-                    </div>
-                    <input type="hidden" id="goods_id" readonly name="goods_id" value="{$info[goods_id]}" class="input-txt">
-                    <input type="hidden" id="item_id" readonly name="item_id" value="{$info[item_id]}" class="input-txt">
-                    <div style="overflow: hidden" id="selected_group_goods">
+                        <input type="hidden" id="goods_id" readonly name="goods_id" value="{$info[goods_id]}" class="input-txt">
+                        <input type="hidden" id="item_id" readonly name="item_id" value="{$info[item_id]}" class="input-txt">
+                        <div style="overflow: hidden" id="selected_group_goods">
 
-                    </div>
-                    <p class="notic">
-                        <a onclick="selectGoods()" class="ncap-btn" id="select_goods_button"><i class="fa fa-search"></i>选择商品</a>
-                    </p>
-                </dd>
+                        </div>
+                        <p class="notic">
+                            <a onclick="selectGoods()" class="ncap-btn" id="select_goods_button"><i class="fa fa-search"></i>选择商品</a>
+                        </p>
+                    </dd>
+                <else/>
+                    <dd class="opt">
+                        <input type="text" id="goods_name" readonly name="" value="" class="input-txt">
+                        <input type="hidden" id="goods_id" readonly name="goods_id" value="" class="input-txt">
+                        <input type="hidden" id="item_id" readonly name="item_id" value="0" class="input-txt">
+                        <div style="overflow: hidden" id="selected_group_goods">
+
+                        </div>
+                        <p class="notic">
+                            <a onclick="selectGoods()" class="ncap-btn" id="select_goods_button"><i class="fa fa-search"></i>选择商品</a>
+                        </p>
+                    </dd>
+                </if>
             </dl>
             <if condition="$info[status] == 2">
                 <dl class="row">
