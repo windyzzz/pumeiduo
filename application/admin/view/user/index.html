@@ -57,13 +57,13 @@
                         <input type="text" id="value1" name="value1" style="width:150px;" class="qsbox"
                                placeholder="用户id">
                     </div>
-                    <div class="sDiv2" style="margin-right: 10px;">
+                    <div class="sDiv2">
                         <select name="field2">
                             <option value="reg_time">注册时间</option>
                             <option value="bind_time">绑定时间</option>
                         </select>
                     </div>
-                    <div class="sDiv2" style="margin-right: 10px;">
+                    <div class="sDiv2">
                         <input type="text" size="30" id="from_time" name="from_time" value="{$from_time}"
                                placeholder="起始时间" class="qsbox">
                     </div>
@@ -80,18 +80,32 @@
                         </select>
                         <input type="text" id="value3" name="value3" style="width:150px;" class="qsbox" placeholder="">
                     </div>
-                    <div class="sDiv2">
-                        <input type="submit" class="btn" onclick="ajax_get_table('search-form2',1)" value="搜索">
-                    </div>
-                </div>
-                <div class="sDiv">
-                    <div class="sDiv2" style="margin-right: 10px; margin-top: 10px;">
+                    <div class="sDiv2" style="margin-right: 10px;">
                         <input type="button" class="btn" value="状态">
                         <select name="user_status" class="select">
                             <option value="0">用户状态</option>
                             <option value="1">已冻结</option>
                             <option value="2">已注销</option>
                         </select>
+                    </div>
+                    <div class="sDiv2" style="margin-right: 10px;">
+                        <select name="reg_source" class="select">
+                            <option value="0">注册来源</option>
+                            <option value="1">微信</option>
+                            <option value="2">PC</option>
+                            <option value="3">APP</option>
+                            <option value="4">小程序</option>
+                        </select>
+                        <select name="last_login_source" class="select">
+                            <option value="0">最后一次登录来源</option>
+                            <option value="1">微信</option>
+                            <option value="2">PC</option>
+                            <option value="3">APP</option>
+                            <option value="4">小程序</option>
+                        </select>
+                    </div>
+                    <div class="sDiv2">
+                        <input type="submit" class="btn" onclick="ajax_get_table('search-form2',1)" value="搜索">
                     </div>
                 </div>
             </form>
