@@ -702,6 +702,8 @@ class User extends Base
         $strTable .= '<td style="text-align:center;font-size:12px;width:120px;">会员ID</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;width:120px;">用户名</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="100">会员昵称</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">性别</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">生日</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">会员等级</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">累计消费</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;width:120px;">父级ID</td>';
@@ -730,7 +732,7 @@ class User extends Base
         for ($i = 0; $i < $p; ++$i) {
             $start = $i * 5000;
             $userList = M('users')->where($condition)
-                ->field('user_id, first_leader, user_name, nickname, distribut_level, mobile, reg_time, reg_source, last_login, last_login_source, user_money, pay_points, user_electronic')
+                ->field('user_id, sex, birthday, first_leader, user_name, nickname, distribut_level, mobile, reg_time, reg_source, last_login, last_login_source, user_money, pay_points, user_electronic')
                 ->order('user_id')->limit($start, 5000)->select();
             if (is_array($userList)) {
                 foreach ($userList as $k => $val) {
@@ -738,6 +740,9 @@ class User extends Base
                     $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['user_id'] . '</td>';
                     $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['user_name'] . '</td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['nickname'] . ' </td>';
+                    $sex = $val['sex'] == 1 ? '男' : $val['sex'] == '2' ? '女' : '保密';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $sex. ' </td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['birthday']. ' </td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $level_list[$val['distribut_level']] . '</td>';
                     $totalAmount = isset($user_total_amount[$val['user_id']]) ? $user_total_amount[$val['user_id']] : "0.00";
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $totalAmount . ' </td>';
