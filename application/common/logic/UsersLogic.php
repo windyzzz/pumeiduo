@@ -2251,6 +2251,9 @@ class UsersLogic extends Model
         if ('' == $post['consignee']) {
             return ['status' => -1, 'msg' => '收货人不能为空', 'result' => ''];
         }
+        if (strlen($post['consignee']) > 18) {
+            return ['status' => -1, 'msg' => '收货人不能太长', 'result' => ''];
+        }
         if (!($post['province'] > 0) || !($post['city'] > 0) || !($post['district'] > 0)) {
             return ['status' => -1, 'msg' => '所在地区不能为空', 'result' => ''];
         }

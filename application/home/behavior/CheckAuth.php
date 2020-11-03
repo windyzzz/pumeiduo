@@ -125,7 +125,7 @@ class CheckAuth
             //     cookie('is_mobile','0',3600);
 
             //微信浏览器
-            if ('weixin' == $params['web']) {
+            if (isset($params['web']) &&  $params['web'] == 'weixin') {
                 $this->weixin_config = M('wx_user')->find(); //取微获信配置
                 // $this->assign('wechat_config', $this->weixin_config);
                 $user_temp = session('user');
