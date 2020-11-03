@@ -351,6 +351,10 @@ class CartLogic extends Model
     {
         if (empty($this->goods)) {
             return ['status' => -3, 'msg' => '购买商品不存在', 'result' => ''];
+        } elseif ($this->goods['is_on_sale'] == 0) {
+            return ['status' => -3, 'msg' => '商品已下架', 'result' => ''];
+        } elseif ($this->goods['is_agent'] == 1 && $this->goods['applet_on_sale'] == 0) {
+            return ['status' => -3, 'msg' => '商品已下架', 'result' => ''];
         }
         // if($this->goods['exchange_integral'] > 0){
         //     return ['status'=>0,'msg'=>'积分商品跳转','result'=>['url'=>U('Goods/goodsInfo',['id'=>$this->goods['goods_id'],'item_id'=>$this->specGoodsPrice['item_id']],'',true)]];
@@ -1008,6 +1012,10 @@ class CartLogic extends Model
             //商品不存在或者已经下架
             if (!$noSale) {
                 if (empty($cart['goods']) || 1 != $cart['goods']['is_on_sale'] || 0 == $cart['goods_num']) {
+                    $cart->delete();
+                    unset($cartList[$cartKey]);
+                    continue;
+                } elseif ($cart['goods']['is_agent'] == 1 && $cart['goods']['applet_on_sale'] == 0) {
                     $cart->delete();
                     unset($cartList[$cartKey]);
                     continue;

@@ -1904,13 +1904,14 @@ class UsersLogic extends Model
      */
     public function get_goods_collect($user_id)
     {
+        $user = M('users')->where(['user_id' => $user_id])->find();
         $count = Db::name('goods_collect')->where('user_id', $user_id)->count();
         $page = new Page($count, 10);
         $show = $page->show();
         //获取我的收藏列表
         $result = M('goods_collect')->alias('c')
             ->field('c.collect_id,c.add_time,g.goods_id,g.goods_name, g.goods_remark, g.shop_price,g.is_on_sale,g.store_count,g.cat_id,g.is_virtual,g.original_img,
-                 c.goods_price - g.shop_price as low_price, g.exchange_integral')
+                 c.goods_price - g.shop_price as low_price, g.exchange_integral, g.is_agent, g.buying_price, g.retail_price')
             ->join('goods g', 'g.goods_id = c.goods_id', 'INNER')
             ->where("c.user_id = $user_id")
             ->limit($page->firstRow, $page->listRows)
@@ -1926,11 +1927,25 @@ class UsersLogic extends Model
 //                $result[$k]['type'] = 2;    // 升价
 //            }
             // 处理显示金额
-            if ($v['exchange_integral'] != 0) {
-                $result[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);
+            if ($v['is_agent'] == 1) {
+                $result[$k]['exchange_integral'] = '0';
+                switch ($user['distribut_level']) {
+                    case 3:
+                        $result[$k]['exchange_price'] = $v['buying_price'];
+                        break;
+                    default:
+                        $result[$k]['exchange_price'] = $v['retail_price'];
+                }
             } else {
-                $result[$k]['exchange_price'] = $v['shop_price'];
+                if ($v['exchange_integral'] != 0) {
+                    $result[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);
+                } else {
+                    $result[$k]['exchange_price'] = $v['shop_price'];
+                }
             }
+            unset($result[$k]['is_agent']);
+            unset($result[$k]['buying_price']);
+            unset($result[$k]['retail_price']);
         }
 
         $return['status'] = 1;
