@@ -192,6 +192,7 @@ class CartLogic extends Model
             'zone' => $this->goods['zone']
         ];
         if ($this->goods['is_agent'] == 1) {
+            $isApp = true;
             if (isset($this->user)) {
                 switch ($this->user['distribut_level']) {
                     case 3:
