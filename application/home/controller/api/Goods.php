@@ -826,14 +826,19 @@ class Goods extends Base
             'share_qr_code' => '',    // 分享二维码
             'applet_qr_code' => '',    // 小程序分享二维码
             'tabs' => [],
-            'original_price' => $goods['shop_price'],   // 原价（小程序）
-            'present_price' => $goods['retail_price']   // 现价（小程序）
         ];
-        if ($this->isApplet && $this->user) {
-            switch ($this->user['distribut_level']) {
-                case 3:
-                    $goodsInfo['present_price'] = $goods['buying_price'];
-                    break;
+        if ($this->isApplet) {
+            // 小程序基础价格设置
+            $goodsInfo['exchange_integral'] = '0';
+            $goodsInfo['exchange_price'] = $goods['retail_price'];  // 零售价
+            if ($this->user) {
+                switch ($this->user['distribut_level']) {
+                    case 3:
+                        $goodsInfo['exchange_price'] = $goods['buying_price'];  // 进货价
+                        break;
+                    default:
+                        $goodsInfo['exchange_price'] = $goods['retail_price'];  // 零售价
+                }
             }
         }
         // 处理商品内容图片
@@ -865,13 +870,12 @@ class Goods extends Base
             $flashSale = $flashSale[0];
             // 秒杀商品
             $goodsInfo['goods_type'] = 'flash_sale';
-            $goodsInfo['exchange_integral'] = $flashSale['can_integral'] == 0 ? '0' : $goods['exchange_integral'];
+            $goodsInfo['exchange_integral'] = $flashSale['can_integral'] == 0 ? '0' : $goodsInfo['exchange_integral'];
             $goodsInfo['exchange_price'] = bcsub($flashSale['price'], $goodsInfo['exchange_integral'], 2);
             $goodsInfo['buy_limit'] = $flashSale['buy_limit'];
             $goodsInfo['limit_num'] = $flashSale['goods_num'];
             $goodsInfo['start_time'] = $flashSale['start_time'];
             $goodsInfo['end_time'] = $flashSale['end_time'];
-            $goodsInfo['present_price'] = $flashSale['price'];
         } else {
             $groupBuy = Db::name('group_buy gb')
                 ->join('spec_goods_price sgp', 'sgp.item_id = gb.item_id', 'LEFT')
@@ -881,14 +885,13 @@ class Goods extends Base
                 $groupBuy = $groupBuy[0];
                 // 团购商品
                 $goodsInfo['goods_type'] = 'group_buy';
-                $goodsInfo['exchange_integral'] = $groupBuy['can_integral'] == 0 ? '0' : $goods['exchange_integral'];
+                $goodsInfo['exchange_integral'] = $groupBuy['can_integral'] == 0 ? '0' : $goodsInfo['exchange_integral'];
                 $goodsInfo['exchange_price'] = bcsub($groupBuy['price'], $goodsInfo['exchange_integral'], 2);
                 $goodsInfo['buy_limit'] = $groupBuy['buy_limit'];
                 $goodsInfo['limit_num'] = bcdiv($groupBuy['goods_num'], $groupBuy['group_goods_num'], 2);
                 $goodsInfo['group_goods_num'] = $groupBuy['group_goods_num'];
                 $goodsInfo['start_time'] = $groupBuy['start_time'];
                 $goodsInfo['end_time'] = $groupBuy['end_time'];
-                $goodsInfo['present_price'] = $groupBuy['price'];
             }
         }
         if (in_array($goodsInfo['goods_type'], ['group_buy', 'flash_sale'])) {
@@ -984,13 +987,11 @@ class Goods extends Base
                         // 打折
                         $goodsInfo['shop_price'] = bcdiv(bcmul($goodsInfo['shop_price'], $value['expression'], 2), 100, 2);
                         $goodsInfo['exchange_price'] = bcdiv(bcmul($goodsInfo['exchange_price'], $value['expression'], 2), 100, 2);
-                        $goodsInfo['present_price'] = bcdiv(bcmul($goodsInfo['present_price'], $value['expression'], 2), 100, 2);
                         break;
                     case 1:
                         // 减价
                         $goodsInfo['shop_price'] = bcsub($goodsInfo['shop_price'], $value['expression'], 2);
                         $goodsInfo['exchange_price'] = bcsub($goodsInfo['exchange_price'], $value['expression'], 2);
-                        $goodsInfo['present_price'] = bcsub($goodsInfo['present_price'], $value['expression'], 2);
                         break;
                 }
             }
@@ -1122,11 +1123,34 @@ class Goods extends Base
         $addressId = I('address_id', '');
         if (!$goodsId) return json(['status' => 0, 'msg' => '请传入正确的商品ID']);
         // 商品价格属性
-        $goodsInfo = M('goods')->where(['goods_id' => $goodsId])->field('original_img, shop_price, exchange_integral, store_count, limit_buy_num buy_limit, least_buy_num buy_least, is_supply')->find();
-        if (!$goodsInfo) return json(['status' => 0, 'msg' => '请传入正确的商品ID']);
-        $goodsInfo['goods_type'] = 'normal';
-        $goodsInfo['original_img_new'] = getFullPath($goodsInfo['original_img']);
-        $goodsInfo['exchange_price'] = bcsub($goodsInfo['shop_price'], $goodsInfo['exchange_integral'], 2);
+        $goods = M('goods')->where(['goods_id' => $goodsId])->find();
+        if (!$goods) return json(['status' => 0, 'msg' => '请传入正确的商品ID']);
+        $goodsInfo = [
+            'goods_type' => 'normal',
+            'original_img' => $goods['original_img'],
+            'original_img_new' => getFullPath($goods['original_img']),
+            'shop_price' => $goods['shop_price'],
+            'exchange_integral' => $goods['exchange_integral'],
+            'exchange_price' => bcsub($goods['shop_price'], $goods['exchange_integral'], 2),
+            'store_count' => $goods['store_count'],
+            'buy_limit' => $goods['limit_buy_num'],
+            'buy_least' => $goods['least_buy_num'],
+            'is_supply' => $goods['is_supply'],
+        ];
+        if ($this->isApplet) {
+            // 小程序基础价格设置
+            $goodsInfo['exchange_integral'] = '0';
+            $goodsInfo['exchange_price'] = $goods['retail_price'];  // 零售价
+            if ($this->user) {
+                switch ($this->user['distribut_level']) {
+                    case 3:
+                        $goodsInfo['exchange_price'] = $goods['buying_price'];  // 进货价
+                        break;
+                    default:
+                        $goodsInfo['exchange_price'] = $goods['retail_price'];  // 零售价
+                }
+            }
+        }
         // 商品活动属性
         $flashSale = Db::name('flash_sale fs')
             ->join('goods g', 'g.goods_id = fs.goods_id')
@@ -1242,7 +1266,7 @@ class Goods extends Base
             // 没有地址，不显示库存
             $goodsInfo['store_count'] = '-1';
         } elseif (($goodsInfo['store_count'] != 0 && $addressGoodsData['user_address']['out_range'] == 1) || $addressGoodsData['user_address']['is_illegal'] == 1) {
-            // 有地址，超出配送范围，不显示库存
+            // 有地址，超出配送范围，或者地址不符合规则，不显示库存
             $goodsInfo['store_count'] = '-1';
         }
         $returnData = [
