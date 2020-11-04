@@ -946,14 +946,16 @@ class CartLogic extends Model
     }
 
     /**
-     * @param int $selected |是否被用户勾选中的 0 为全部 1为选中  一般没有查询不选中的商品情况
-     *                                                  获取用户的购物车列表
+     * @param int $selected |是否被用户勾选中的 0 为全部 1为选中  一般没有查询不选中的商品情况获取用户的购物车列表
      * @param bool $noSale 是否显示失效的商品，true显示 false不显示
      * @param bool $returnNum 是否输出购物车全部商品数量（包括赠品）
-     *
+     * @param int $source 来源
      * @return array
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
      */
-    public function getCartList($selected = 0, $noSale = false, $returnNum = false)
+    public function getCartList($selected = 0, $noSale = false, $returnNum = false, $source = 3)
     {
         $cart = new Cart();
         // 如果用户已经登录则按照用户id查询
@@ -984,7 +986,7 @@ class CartLogic extends Model
         //     }
         // }
 
-        $cartCheckAfterList = $this->checkCartList($cartList, $noSale);
+        $cartCheckAfterList = $this->checkCartList($cartList, $noSale, $source);
 //        $cartCheckAfterList = $cartList;
 //        $cartGoodsTotalNum = array_sum(array_map(function ($val) {
 //            return $val['goods_num'];
@@ -1001,14 +1003,29 @@ class CartLogic extends Model
 
     /**
      * 过滤掉无效的购物车商品
-     *
      * @param $cartList
-     * @param bool $noSale 是否显示失效的商品，true显示 false不显示
+     * @param bool $noSale
+     * @param int $source 来源
+     * @return mixed
+     * @throws \think\exception\DbException
      */
-    public function checkCartList($cartList, $noSale = false)
+    public function checkCartList($cartList, $noSale = false, $source = 3)
     {
         $goodsPromFactory = new GoodsPromFactory();
         foreach ($cartList as $cartKey => $cart) {
+            switch ($source) {
+                case 4:
+                    if ($cart['goods']['is_agent'] == 0) {
+                        unset($cartList[$cartKey]);
+                        continue;
+                    }
+                    break;
+                default:
+                    if ($cart['goods']['is_agent'] == 1) {
+                        unset($cartList[$cartKey]);
+                        continue;
+                    }
+            }
             //商品不存在或者已经下架
             if (!$noSale) {
                 if (empty($cart['goods']) || 1 != $cart['goods']['is_on_sale'] || 0 == $cart['goods_num']) {

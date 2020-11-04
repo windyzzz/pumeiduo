@@ -395,7 +395,7 @@ class Goods extends Base
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
         if ($this->isApplet && $goods['is_agent'] == 0) {
-            return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
+            return json(['status' => 0, 'msg' => '请使用小程序查看商品', 'result' => null]);
         }
         M('Goods')->where('goods_id', $goods_id)->save(['click_count' => $goods['click_count'] + 1]); // 统计点击数
         $goods['buy_limit'] = $goods['limit_buy_num'];  // 商品最大购买数量

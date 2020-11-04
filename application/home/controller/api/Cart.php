@@ -409,7 +409,8 @@ class Cart extends Base
 
         $cartLogic = new CartLogic();
         $cartLogic->setUserId($this->user_id);
-        $cartData = $cartLogic->getCartList(0, true, true); // 用户购物车
+        $source = $this->isApp ? 3 : ($this->isApplet ? 4 : 1);
+        $cartData = $cartLogic->getCartList(0, true, true, $source); // 用户购物车
         $cartNum = $cartData['cart_num'];   // 获取用户购物车总数
         $cartData = $cartData['cart_list'];
         // 圃美多商品
