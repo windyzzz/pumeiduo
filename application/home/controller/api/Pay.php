@@ -23,15 +23,15 @@ class Pay extends Base
         $orderType = I('order_type', 1);
         if ($orderId) {
             $this->order = Db::name('Order')->where(['order_id' => $orderId])->find();
-//            if (empty($this->order) || $this->order['order_status'] > 1) {
-//                die(json_encode(['status' => 0, 'msg' => '非法操作！']));
-//            }
-//            if (time() - $this->order['add_time'] > 3600) {
-//                die(json_encode(['status' => 0, 'msg' => '此订单在一个小时内不支付已作废，不能支付，请重新下单!']));
-//            }
-//            if ($this->order['pay_status'] == 1) {
-//                die(json_encode(['status' => 0, 'msg' => '此订单，已完成支付!']));
-//            }
+            if (empty($this->order) || $this->order['order_status'] > 1) {
+                die(json_encode(['status' => 0, 'msg' => '非法操作！']));
+            }
+            if (time() - $this->order['add_time'] > 3600) {
+                die(json_encode(['status' => 0, 'msg' => '此订单在一个小时内不支付已作废，不能支付，请重新下单!']));
+            }
+            if ($this->order['pay_status'] == 1) {
+                die(json_encode(['status' => 0, 'msg' => '此订单，已完成支付!']));
+            }
         }
         if ((!empty($this->order) && $this->order['order_type'] == 2) || $orderType == 2) {
             // 韩国购订单
@@ -99,6 +99,14 @@ class Pay extends Base
                 if ($res['status'] == 0) {
                     return json(['status' => 0, 'msg' => $res['msg']]);
                 }
+                $res = $res['result'];
+                $signCode['appid'] = $res['appid'];
+                $signCode['noncestr'] = $res['noncestr'];
+                $signCode['package'] = $res['package'];
+                $signCode['partnerid'] = $res['partnerid'];
+                $signCode['prepayid'] = $res['prepayid'];
+                $signCode['timestamp'] = $res['timestamp'];
+                $signCode['paySign'] = $res['paySign'];
                 break;
             default:
                 return json(['status' => 0, 'msg' => '请求失败！']);
