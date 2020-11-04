@@ -167,8 +167,8 @@ class LoginApi
     public function getSessionKey()
     {
         try {
-            $sessionKey = $this->class_obj->getSessionKey();
-            return json(['status' => 1, 'result' => ['session_key' => $sessionKey]]);
+            $res = $this->class_obj->getCodeInfo();
+            return json(['status' => 1, 'result' => ['session_key' => $res['session_key']]]);
         } catch (Exception $e) {
             return json(['status' => 0, 'msg' => $e->getMessage()]);
         }

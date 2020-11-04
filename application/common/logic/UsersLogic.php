@@ -482,7 +482,7 @@ class UsersLogic extends Model
     /*
      * 登陆
      */
-    public function login($username, $password, $source = 1)
+    public function login($username, $password, $openId = '', $source = 1)
     {
         if (!$username || !$password) {
             return ['status' => 0, 'msg' => '请填写账号或密码'];
@@ -518,6 +518,10 @@ class UsersLogic extends Model
                 'token' => TokenLogic::setToken(),
                 'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
             ];
+            if ($openId) {
+                $save['oauth'] = 'weixin';
+                $save['openid'] = $openId;
+            }
             Db::name('users')->where('user_id', $userId)->update($save);
             $user = Db::name('users')->where('user_id', $userId)->find();
             // 更新用户推送tags
@@ -936,7 +940,7 @@ class UsersLogic extends Model
      *
      * @return array
      */
-    public function reg($username, $password, $password2, $push_id = 0, $invite = 0, $nickname = '', $head_pic = '', $userToken = null, $source = 1)
+    public function reg($username, $password, $password2, $push_id = 0, $invite = 0, $nickname = '', $head_pic = '', $openId = '', $userToken = null, $source = 1)
     {
         $is_validated = 0;
 //        if (check_email($username)) {
@@ -1034,6 +1038,10 @@ class UsersLogic extends Model
         $map['time_out'] = strtotime('+' . config('REDIS_DAY') . ' days');
         $map['last_login'] = time();
         $map['last_login_source'] = $source;
+        if ($openId) {
+            $map['oauth'] = 'weixin';
+            $map['openid'] = $openId;
+        }
         // $user_level =Db::name('user_level')->where('amount = 0')->find(); //折扣
         // $map['discount'] = !empty($user_level) ? $user_level['discount']/100 : 1;  //新注册的会员都不打折
         $user_id = M('users')->insertGetId($map);

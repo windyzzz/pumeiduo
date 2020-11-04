@@ -17,6 +17,7 @@ use app\common\logic\Token as TokenLogic;
 use app\common\logic\UsersLogic;
 use app\common\logic\wechat\WechatUtil;
 use app\home\validate\UserAppLogin;
+use think\Exception;
 use think\Loader;
 use think\Hook;
 use think\Request;
@@ -70,6 +71,24 @@ class Login extends Base
     {
         $username = trim(I('post.username'));
         $password = trim(I('post.password'));
+        $oauth = I('oauth', '');
+        $oauthCode = I('oauth_code', '');
+        $openId = '';
+        if ($oauth && $oauthCode) {
+            // 获取授权处理信息
+            $data = M('Plugin')->where('code', $oauth)->where('type', 'login')->find();
+            $config = unserialize($data['config_value']);
+            $config['code'] = $oauthCode;
+            include_once "plugins/login/wechatApplet/wechatApplet.class.php";
+            $class = '\\wechatApplet';
+            $classObj = new $class($config);
+            try {
+                $res = $classObj->getCodeInfo();
+                $openId = $res['openid'];
+            } catch (Exception $e) {
+                return json(['status' => 0, 'msg' => 'openid获取失败']);
+            }
+        }
         //验证码验证
         // if (isset($_POST['verify_code'])) {
         //     $verify_code = I('post.verify_code');
@@ -82,7 +101,7 @@ class Login extends Base
         $source = $this->isApp == 1 ? 3 : 1;    // 1微信 3APP
         $source = $this->isApplet == 1 ? 4 : $source;   // 4小程序
         $logic = new UsersLogic();
-        $res = $logic->login($username, $password, $source);
+        $res = $logic->login($username, $password, $openId, $source);
         if (1 == $res['status']) {
             $res['url'] = htmlspecialchars_decode(I('post.referurl'));
             session('user', $res['result']);
@@ -189,7 +208,6 @@ class Login extends Base
         if ($this->user_id > 0) {
             return json(['status' => 0, 'msg' => '你已经登录过了', 'result' => null]);
         }
-
         if (!$request->isPost()) {
             return json(['status' => 0, 'msg' => '请求方式出错', 'result' => null]);
         }
@@ -209,7 +227,7 @@ class Login extends Base
             // 手机/邮箱验证码检查，如果没以上两种功能默认是图片验证码检查
             if (check_mobile($username)) {
                 $reg_sms_enable = tpCache('sms.regis_sms_enable');
-//        $reg_smtp_enable = tpCache('smtp.regis_smtp_enable');
+//                $reg_smtp_enable = tpCache('smtp.regis_smtp_enable');
                 if ($reg_sms_enable) {   //是否开启注册验证码机制
                     //手机功能没关闭
                     $check_code = $logic->check_validate_code($code, $username, 'phone', $session_id, $scene);
@@ -223,6 +241,25 @@ class Login extends Base
                 }
             } else {
                 return json(['status' => -1, 'msg' => '手机号码不合格式']);
+            }
+        }
+
+        $oauth = I('oauth', '');
+        $oauthCode = I('oauth_code', '');
+        $openId = '';
+        if ($oauth && $oauthCode) {
+            // 获取授权处理信息
+            $data = M('Plugin')->where('code', $oauth)->where('type', 'login')->find();
+            $config = unserialize($data['config_value']);
+            $config['code'] = $oauthCode;
+            include_once "plugins/login/wechatApplet/wechatApplet.class.php";
+            $class = '\\wechatApplet';
+            $classObj = new $class($config);
+            try {
+                $res = $classObj->getCodeInfo();
+                $openId = $res['openid'];
+            } catch (Exception $e) {
+                return json(['status' => 0, 'msg' => 'openid获取失败']);
             }
         }
 
@@ -246,7 +283,7 @@ class Login extends Base
 //        }
         $source = $this->isApp == 1 ? 3 : 1;    // 1微信 3APP
         $source = $this->isApplet == 1 ? 4 : $source;   // 4小程序
-        $data = $logic->reg($username, $password, $password2, 0, $invite, '', '', $this->userToken, $source);
+        $data = $logic->reg($username, $password, $password2, 0, $invite, '', '', $openId, $this->userToken, $source);
         if (1 != $data['status']) {
             return json($data);
         }
