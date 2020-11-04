@@ -2409,7 +2409,7 @@ class Order extends Base
         $idCard = I('id_card', 0);
 
         if (!$this->user['paypwd']) {
-            return json(['status' => 0, 'msg' => '请先设置支付密码']);
+            return json(['status' => -6, 'msg' => '请先设置支付密码']);
         }
         if (!$addressId) {
             return json(['status' => 0, 'msg' => '请先填写收货人信息']);
