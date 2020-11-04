@@ -23,15 +23,15 @@ class Pay extends Base
         $orderType = I('order_type', 1);
         if ($orderId) {
             $this->order = Db::name('Order')->where(['order_id' => $orderId])->find();
-            if (empty($this->order) || $this->order['order_status'] > 1) {
-                die(json_encode(['status' => 0, 'msg' => '非法操作！']));
-            }
-            if (time() - $this->order['add_time'] > 3600) {
-                die(json_encode(['status' => 0, 'msg' => '此订单在一个小时内不支付已作废，不能支付，请重新下单!']));
-            }
-            if ($this->order['pay_status'] == 1) {
-                die(json_encode(['status' => 0, 'msg' => '此订单，已完成支付!']));
-            }
+//            if (empty($this->order) || $this->order['order_status'] > 1) {
+//                die(json_encode(['status' => 0, 'msg' => '非法操作！']));
+//            }
+//            if (time() - $this->order['add_time'] > 3600) {
+//                die(json_encode(['status' => 0, 'msg' => '此订单在一个小时内不支付已作废，不能支付，请重新下单!']));
+//            }
+//            if ($this->order['pay_status'] == 1) {
+//                die(json_encode(['status' => 0, 'msg' => '此订单，已完成支付!']));
+//            }
         }
         if ((!empty($this->order) && $this->order['order_type'] == 2) || $orderType == 2) {
             // 韩国购订单
@@ -66,7 +66,7 @@ class Pay extends Base
         ];
         switch ($this->pay_code) {
             case 'alipayApp':
-                // 支付宝
+                // 支付宝APP
                 $res = $this->payment->get_code($this->order);
                 if ($res['status'] == 0) {
                     return json(['status' => 0, 'msg' => $res['msg']]);
@@ -75,7 +75,7 @@ class Pay extends Base
                 $signCode['payCode'] = $res;
                 break;
             case 'weixinApp':
-                // 微信
+                // 微信APP
                 $res = $this->payment->get_code($this->order);
                 if ($res['status'] == 0) {
                     return json(['status' => 0, 'msg' => $res['msg']]);
@@ -88,6 +88,17 @@ class Pay extends Base
                 $signCode['prepayid'] = $res['prepayid'];
                 $signCode['timestamp'] = $res['timestamp'];
                 $signCode['paySign'] = $res['paySign'];
+                break;
+            case 'weixinApplet':
+                // 微信小程序
+                $openId = M('users')->where(['user_id' => $this->order['user_id']])->value('openid');
+                if (empty($openId)) {
+                    return json(['status' => 0, 'msg' => '用户openid获取失败']);
+                }
+                $res = $this->payment->get_code($this->order, $openId);
+                if ($res['status'] == 0) {
+                    return json(['status' => 0, 'msg' => $res['msg']]);
+                }
                 break;
             default:
                 return json(['status' => 0, 'msg' => '请求失败！']);
