@@ -1549,9 +1549,9 @@ class Goods extends Base
             return json($res);
         }
         // 移除购物车
-        $cartLogic = new CartLogic();
-        $cartLogic->setUserId($this->user_id);
-        $cartLogic->deleteByGoodsId($goodsIds);
+//        $cartLogic = new CartLogic();
+//        $cartLogic->setUserId($this->user_id);
+//        $cartLogic->deleteByGoodsId($goodsIds);
 
         return json($res);
     }
