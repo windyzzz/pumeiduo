@@ -239,8 +239,10 @@ class CartLogic extends Model
             $buyGoods['goods']['spec_key'] = $this->specGoodsPrice['key'];
             $buyGoods['goods']['spec_key_name'] = $this->specGoodsPrice['key_name'];
             $buyGoods['goods']['shop_price'] = $this->specGoodsPrice['price'];  // 商品现金价
-            $buyGoods['member_goods_price'] = $this->specGoodsPrice['price'];
-            $buyGoods['goods_price'] = $this->specGoodsPrice['price'];
+            if ($this->goods['is_agent'] == 0) {
+                $buyGoods['member_goods_price'] = $this->specGoodsPrice['price'];
+                $buyGoods['goods_price'] = $this->specGoodsPrice['price'];
+            }
             $buyGoods['spec_key'] = $this->specGoodsPrice['key'];
             $buyGoods['spec_key_name'] = $this->specGoodsPrice['key_name']; // 规格 key_name
             $buyGoods['sku'] = $this->specGoodsPrice['sku']; //商品条形码
@@ -993,7 +995,6 @@ class CartLogic extends Model
 //        }, $cartCheckAfterList)); //购物车购买的商品总数
         $cartGoodsTotalNum = count($cartCheckAfterList);
         setcookie('cn', $cartGoodsTotalNum, null, '/');
-
         if ($returnNum) {
             return ['cart_list' => $cartCheckAfterList, 'cart_num' => $cartGoodsTotalNum];
         } else {
@@ -1017,13 +1018,13 @@ class CartLogic extends Model
                 case 4:
                     if ($cart['goods']['is_agent'] == 0) {
                         unset($cartList[$cartKey]);
-                        continue;
+                        continue 2;
                     }
                     break;
                 default:
                     if ($cart['goods']['is_agent'] == 1) {
                         unset($cartList[$cartKey]);
-                        continue;
+                        continue 2;
                     }
             }
             //商品不存在或者已经下架

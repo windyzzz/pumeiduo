@@ -1235,7 +1235,8 @@ class User extends Base
     public function goods_collect()
     {
         $userLogic = new UsersLogic();
-        $data = $userLogic->get_goods_collect($this->user_id);
+        $source = $this->isApp ? 3 : ($this->isApplet ? 4 : 1);
+        $data = $userLogic->get_goods_collect($this->user_id, $source);
         $return = [];
         $return['page'] = $data['show']; // 赋值分页输出
         $return['lists'] = $data['result'];

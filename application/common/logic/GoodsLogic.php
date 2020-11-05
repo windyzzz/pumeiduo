@@ -1780,11 +1780,12 @@ class GoodsLogic extends Model
      * @param $payType
      * @param $cartIds
      * @param $isApp
+     * @param $isApplet
      * @param $userId
      * @param $passAuth
      * @return array
      */
-    public function getOrderGoodsData(CartLogic $cartLogic, $goodsId, $itemId, $goodsNum, $payType, $cartIds, $isApp, $userId, $passAuth = false)
+    public function getOrderGoodsData(CartLogic $cartLogic, $goodsId, $itemId, $goodsNum, $payType, $cartIds, $isApp, $isApplet, $userId, $passAuth = false)
     {
         if (!empty($goodsId) && empty(trim($cartIds))) {
             /*
@@ -1820,7 +1821,8 @@ class GoodsLogic extends Model
             if (0 == $cartLogic->getUserCartOrderCount()) {
                 return ['status' => 0, 'msg' => '你的购物车没有选中商品'];
             }
-            $cartList = $cartLogic->getCartList(1); // 获取用户选中的购物车商品
+            $source = $isApp ? 3 : ($isApplet ? 4 : 1);
+            $cartList = $cartLogic->getCartList(1, false, false, $source); // 获取用户选中的购物车商品
             $vipGoods = [];
             foreach ($cartList as $key => $cart) {
                 if ($cart['prom_type'] == 0) {
@@ -1951,7 +1953,7 @@ class GoodsLogic extends Model
                 $cartLogic = new CartLogic();
                 $cartLogic->setUserId($user['user_id']);
                 // 获取订单商品数据
-                $res = $this->getOrderGoodsData($cartLogic, $goodsId, $itemId, 1, 1, '', 1, $user['user_id'], true);
+                $res = $this->getOrderGoodsData($cartLogic, $goodsId, $itemId, 1, 1, '', 1, 1, $user['user_id'], true);
                 if ($res['status'] != 1) {
                     throw new TpshopException('地址商品信息', 0, ['status' => 0, 'msg' => $res['msg']]);
                 } else {

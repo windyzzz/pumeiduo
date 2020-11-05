@@ -1199,7 +1199,7 @@ class Goods extends Base
             $goodsSpecPrice = $goodsLogic->get_spec_price($goodsId);
             $goodsSpecPrice = array_combine(array_column($goodsSpecPrice, 'key'), array_values($goodsSpecPrice));
             // 根据商品活动属性计算商品价格
-            if (empty($extendGoodsSpec) && !empty($goodsSpecPrice)) {
+            if (empty($extendGoodsSpec) && !empty($goodsSpecPrice) && !$this->isApplet) {
                 $goodsInfo['original_img_new'] = !empty($goodsSpecPrice[$defaultKey]['spec_img']) ? getFullPath($goodsSpecPrice[$defaultKey]['spec_img']) : $goodsInfo['original_img_new'];
                 $goodsInfo['shop_price'] = $goodsSpecPrice[$defaultKey]['price'];
                 $goodsInfo['store_count'] = $goodsInfo['is_supply'] == 0 ? $goodsSpecPrice[$defaultKey]['store_count'] : $goodsInfo['store_count'];
@@ -3224,7 +3224,7 @@ class Goods extends Base
             $cartLogic->setUserId($this->user_id);
             // 获取订单商品数据
             $goodsLogic = new GoodsLogic();
-            $res = $goodsLogic->getOrderGoodsData($cartLogic, $goodsId, $itemId, 1, 1, '', $this->isApp, $this->user_id, true);
+            $res = $goodsLogic->getOrderGoodsData($cartLogic, $goodsId, $itemId, 1, 1, '', $this->isApp, $this->isApplet, $this->user_id, true);
             if ($res['status'] != 1) {
                 return json($res);
             } else {

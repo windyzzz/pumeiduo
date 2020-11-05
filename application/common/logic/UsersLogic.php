@@ -1907,13 +1907,25 @@ class UsersLogic extends Model
      * 获取商品收藏列表.
      *
      * @param $user_id
+     * @param $source
      *
      * @return mixed
      */
-    public function get_goods_collect($user_id)
+    public function get_goods_collect($user_id, $source)
     {
-        $user = M('users')->where(['user_id' => $user_id])->find();
-        $count = Db::name('goods_collect')->where('user_id', $user_id)->count();
+        $user = M('users u')->where(['user_id' => $user_id])->find();
+        $where = ['c.user_id' => $user_id];
+        switch ($source) {
+            case 1:
+            case 2:
+            case 3:
+                $where['g.is_agent'] = 0;
+                break;
+            case 4:
+                $where['g.is_agent'] = 1;
+                break;
+        }
+        $count = Db::name('goods_collect c')->join('goods g', 'g.goods_id = c.goods_id')->where($where)->count();
         $page = new Page($count, 10);
         $show = $page->show();
         //获取我的收藏列表
@@ -1921,11 +1933,10 @@ class UsersLogic extends Model
             ->field('c.collect_id,c.add_time,g.goods_id,g.goods_name, g.goods_remark, g.shop_price,g.is_on_sale,g.store_count,g.cat_id,g.is_virtual,g.original_img,
                  c.goods_price - g.shop_price as low_price, g.exchange_integral, g.is_agent, g.buying_price, g.retail_price')
             ->join('goods g', 'g.goods_id = c.goods_id', 'INNER')
-            ->where("c.user_id = $user_id")
+            ->where($where)
             ->limit($page->firstRow, $page->listRows)
             ->order('collect_id desc')
             ->select();
-
         foreach ($result as $k => $v) {
             $result[$k]['original_img_new'] = getFullPath($v['original_img']);
 //            // 比起原价的升降关系
