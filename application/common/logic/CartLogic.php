@@ -343,13 +343,14 @@ class CartLogic extends Model
     /**
      * 添加商品到购物车
      * @param bool $isApp
+     * @param bool $isApplet
      * @param int $mode 模式：1普通加入 2不传数量加入
      * @return array
      * @throws \think\db\exception\DataNotFoundException
      * @throws \think\db\exception\ModelNotFoundException
      * @throws \think\exception\DbException
      */
-    public function addGoodsToCart($isApp = false, $mode = 1)
+    public function addGoodsToCart($isApp = false, $isApplet = false, $mode = 1)
     {
         if (empty($this->goods)) {
             return ['status' => -3, 'msg' => '购买商品不存在', 'result' => ''];
@@ -413,7 +414,8 @@ class CartLogic extends Model
                 $result = $this->addNormalCart($mode);
             }
         }
-        $result['result'] = ['cart_num' => $UserCartGoodsNum = $this->getUserCartGoodsNum()]; // 查找购物车数量
+        $source = $isApp ? 3 : ($isApplet ? 4 : 1);
+        $result['result'] = ['cart_num' => $UserCartGoodsNum = $this->getUserCartGoodsNum($source)]; // 查找购物车数量
         setcookie('cn', $UserCartGoodsNum, null, '/');
 
         return $result;
@@ -920,12 +922,25 @@ class CartLogic extends Model
      *
      * @return float|int
      */
-    public function getUserCartGoodsNum()
+    public function getUserCartGoodsNum($source = 1)
     {
+        $where = [
+            'c.goods_num' => ['NEQ', 0]
+        ];
+        switch ($source) {
+            case 1:
+            case 2:
+            case 3:
+                $where['g.is_agent'] = 0;
+                break;
+            case 4:
+                $where['g.is_agent'] = 1;
+                break;
+        }
         if ($this->user_id) {
-            $goods_num = Db::name('cart')->where(['user_id' => $this->user_id])->count('id');
+            $goods_num = Db::name('cart c')->join('goods g', 'g.goods_id = c.goods_id')->where(['c.user_id' => $this->user_id])->where($where)->count('id');
         } else {
-            $goods_num = Db::name('cart')->where(['session_id' => $this->session_id])->count('id');
+            $goods_num = Db::name('cart c')->join('goods g', 'g.goods_id = c.goods_id')->where(['c.session_id' => $this->session_id])->where($where)->count('id');
         }
 
         return empty($goods_num) ? 0 : $goods_num;

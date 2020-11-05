@@ -1222,7 +1222,7 @@ class Cart extends Base
             case 2:
                 break;
         }
-        $result = $cartLogic->addGoodsToCart($this->isApp, $mode);
+        $result = $cartLogic->addGoodsToCart($this->isApp, $this->isApplet, $mode);
         return json($result);
     }
 

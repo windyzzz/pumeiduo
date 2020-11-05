@@ -100,12 +100,12 @@ class Pay extends Base
                     return json(['status' => 0, 'msg' => $res['msg']]);
                 }
                 $res = $res['result'];
-                $signCode['appid'] = $res['appid'];
-                $signCode['noncestr'] = $res['noncestr'];
+                $signCode['appid'] = $res['appId'];
+                $signCode['noncestr'] = $res['nonceStr'];
                 $signCode['package'] = $res['package'];
-                $signCode['partnerid'] = $res['partnerid'];
-                $signCode['prepayid'] = $res['prepayid'];
-                $signCode['timestamp'] = $res['timestamp'];
+                $signCode['partnerid'] = '';
+                $signCode['prepayid'] = '';
+                $signCode['timestamp'] = $res['timeStamp'];
                 $signCode['paySign'] = $res['paySign'];
                 break;
             default:
