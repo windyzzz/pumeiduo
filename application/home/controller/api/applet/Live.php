@@ -13,7 +13,7 @@ class Live extends Base
     {
         $url = 'https://api.weixin.qq.com/wxa/business/getliveinfo?access_token=' . $this->accessToken;
         $fields = [
-            'start' => 4,   // 前5个测试用
+            'start' => 9,   // 前10个测试用
             'limit' => 10
         ];
         $response = $this->get_contents($url, 'POST', $fields);
