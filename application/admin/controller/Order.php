@@ -1642,7 +1642,7 @@ class Order extends Base
                 // 订单商品
                 $orderGoods = D('order_goods og')->join('goods g', 'g.goods_id = og.goods_id')
                     ->where('og.order_id=' . $val['order_id'])
-                    ->field('og.trade_type, og.goods_num, og.spec_key_name, g.goods_sn, g.goods_name, g.shop_price, g.exchange_integral')->select();
+                    ->field('og.trade_type, og.goods_num, og.spec_key_name, og.member_goods_price, og.use_integral, g.goods_sn, g.goods_name')->select();
                 $orderGoodsNum = count($orderGoods);
                 // 支付时间
                 $val['pay_time_show'] = $val['pay_time'] ? date('Y-m-d H:i:s', $val['pay_time']) : '';
@@ -1698,7 +1698,7 @@ class Order extends Base
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['goods_num'] . ' </td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['goods_name'] . ' </td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['spec_key_name'] . ' </td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">' . bcsub($orderGoods[0]['shop_price'], $orderGoods[0]['exchange_integral'], 2) . ' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['member_goods_price'] . ' </td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $tradeType . ' </td>';
                 $strTable .= '</tr>';
                 unset($orderGoods[0]);
@@ -1717,7 +1717,7 @@ class Order extends Base
                         $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['goods_num'] . ' </td>';
                         $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['goods_name'] . ' </td>';
                         $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['spec_key_name'] . ' </td>';
-                        $strTable .= '<td style="text-align:left;font-size:12px;">' . bcsub($goods['shop_price'], $goods['exchange_integral'], 2) . ' </td>';
+                        $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['member_goods_price'] . ' </td>';
                         $strTable .= '<td style="text-align:left;font-size:12px;">' . $goodsTradeType . ' </td>';
                         $strTable .= '</tr>';
                     }
@@ -1845,7 +1845,7 @@ class Order extends Base
             // 订单商品
             $orderGoods = D('order_goods og')->join('goods g', 'g.goods_id = og.goods_id')
                 ->where('og.order_id=' . $order['order_id'])
-                ->field('og.trade_type, og.goods_num, og.spec_key_name, g.goods_sn, g.goods_name, g.shop_price, g.exchange_integral')->select();
+                ->field('og.trade_type, og.goods_num, og.spec_key_name, og.member_goods_price, g.goods_sn, g.goods_name')->select();
             $goods_amount = 0;
             $goods_sn = [];
             $goods_num = [];
@@ -1859,7 +1859,7 @@ class Order extends Base
                 $goods_num[] = $goods['goods_num'];
                 $goods_name[] = $goods['goods_name'];
                 $goods_attr[] = $goods['spec_key_name'];
-                $goods_price[] = bcsub($goods['shop_price'], $goods['exchange_integral'], 2);
+                $goods_price[] = $goods['member_goods_price'];
                 switch ($order['order_type']) {
                     case 2:
                         $goodsTradeType = '韩国购';
