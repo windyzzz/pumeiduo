@@ -3218,6 +3218,7 @@ class Order extends Base
     public function getOrderNum()
     {
         $return = [
+            'ALL' => 0,
             'WAITPAY' => 0,
             'WAITSEND' => 0,
             'WAITRECEIVE' => 0,
@@ -3231,6 +3232,7 @@ class Order extends Base
         }
         $orderData = M('order')->where($where)->field('order_id, pay_status, order_status, shipping_status, pay_code')->select();
         foreach ($orderData as $order) {
+            $return['ALL'] += 1;
             if ($order['pay_status'] == 0 && $order['order_status'] == 0 && $order['pay_code'] != 'cod') {
                 $return['WAITPAY'] += 1;
             } elseif (($order['pay_status'] == 1 || $order['pay_code'] == 'cod') && $order['shipping_status'] != 1 && in_array($order['order_status'], [0, 1])) {
