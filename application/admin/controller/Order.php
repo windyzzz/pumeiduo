@@ -1253,8 +1253,29 @@ class Order extends Base
                     $this->ajaxReturn(['status' => 0, 'msg' => $msg, 'url' => '']);
                 }
             } elseif ('weixinApp' == $order['pay_code']) {
-                include_once PLUGIN_PATH . 'payment/weixinApp/weixinApp.class.php';
-                $payment_obj = new \weixinApp();
+                switch ($order['order_type']) {
+                    case 2:
+                        // 韩国购订单
+                        include_once PLUGIN_PATH . 'payment/weixinApp_2/weixinApp.class.php';
+                        $payment_obj = new \weixinApp();
+                        break;
+                    default:
+                        include_once PLUGIN_PATH . 'payment/weixinApp/weixinApp.class.php';
+                        $payment_obj = new \weixinApp();
+                }
+                $result = $payment_obj->refund($order, $data['refund_money']);
+                if ($result['return_code'] == 'FAIL') {
+                    $this->ajaxReturn(['status' => 0, 'msg' => $result['return_msg'], 'url' => '']);
+                } elseif ($result['result_code'] == 'FAIL') {
+                    $this->ajaxReturn(['status' => 0, 'msg' => $result['err_code_des'], 'url' => '']);
+                } else {
+                    $refundLogic = new RefundLogic();
+                    $refundLogic->updateRefundGoods($return_goods['rec_id']); //订单商品售后退款
+                    $this->ajaxReturn(['status' => 1, 'msg' => '退款成功', 'url' => '']);
+                }
+            } elseif ('weixinApplet' == $order['pay_code']) {
+                include_once PLUGIN_PATH . 'payment/weixinApplet/weixinApplet.class.php';
+                $payment_obj = new \weixinApplet();
                 $result = $payment_obj->refund($order, $data['refund_money']);
                 if ($result['return_code'] == 'FAIL') {
                     $this->ajaxReturn(['status' => 0, 'msg' => $result['return_msg'], 'url' => '']);

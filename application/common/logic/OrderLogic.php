@@ -134,6 +134,17 @@ class OrderLogic
                 } else {
                     $res = true;
                 }
+            } elseif ('weixinApplet' == $order['pay_code']) {
+                include_once PLUGIN_PATH . 'payment/weixinApplet/weixinApplet.class.php';
+                $payment_obj = new \weixinApplet();
+                $result = $payment_obj->refund($order, $order['order_amount']);
+                if ($result['return_code'] == 'FAIL') {
+                    $msg = $result['return_msg'];
+                } elseif ($result['result_code'] == 'FAIL') {
+                    $msg = $result['err_code_des'];
+                } else {
+                    $res = true;
+                }
             } elseif ('' == $order['pay_code']) {
                 $res = true;
             } else {
