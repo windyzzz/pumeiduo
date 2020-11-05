@@ -1217,6 +1217,14 @@ class User extends Base
         $bank_card && $where['w.bank_card'] = ['like', '%' . $bank_card . '%'];
         $export = I('export');
         if (1 == $export) {
+            $logStatus = [
+                '-2' => '删除作废',
+                '-1' => '审核失败',
+                '0' => '申请中',
+                '1' => '审核通过',
+                '2' => '付款成功',
+                '3' => '付款失败',
+            ];
             if ($ids) {
                 $ids = explode(',', $ids);
                 $where['w.id'] = ['in', $ids];
@@ -1231,6 +1239,9 @@ class User extends Base
             $strTable .= '<td style="text-align:center;font-size:12px;" width="*">开户人姓名</td>';
             $strTable .= '<td style="text-align:center;font-size:12px;" width="*">申请时间</td>';
             $strTable .= '<td style="text-align:center;font-size:12px;" width="*">提现备注</td>';
+            $strTable .= '<td style="text-align:center;font-size:12px;" width="*">状态</td>';
+            $strTable .= '<td style="text-align:center;font-size:12px;" width="*">审核时间</td>';
+            $strTable .= '<td style="text-align:center;font-size:12px;" width="*">记录生成时间</td>';
             $strTable .= '</tr>';
             $remittanceList = Db::name('withdrawals')->alias('w')->field('w.*,u.nickname')->join('__USERS__ u', 'u.user_id = w.user_id', 'INNER')->where($where)->order('w.id desc')->select();
             if (is_array($remittanceList)) {
@@ -1244,12 +1255,23 @@ class User extends Base
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['realname'] . '</td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . date('Y-m-d H:i:s', $val['create_time']) . '</td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['remark'] . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $logStatus[$val['status']] . '</td>';
+                    $checkTime = '';
+                    if ($val['check_time'] > 0) {
+                        $checkTime = date('Y-m-d H:i:s', $val['check_time']);
+                    }
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $checkTime . '</td>';
+                    $payTime = '';
+                    if ($val['pay_time'] > 0) {
+                        $payTime = date('Y-m-d H:i:s', $val['pay_time']);
+                    }
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $payTime . '</td>';
                     $strTable .= '</tr>';
                 }
             }
             $strTable .= '</table>';
             unset($remittanceList);
-            downloadExcel($strTable, 'remittance');
+            downloadExcel($strTable, '提现申请记录');
             exit();
         }
         $count = Db::name('withdrawals')->alias('w')->join('__USERS__ u', 'u.user_id = w.user_id', 'INNER')->where($where)->count();
