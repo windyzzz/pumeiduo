@@ -397,6 +397,9 @@ class Goods extends Base
         if ($this->isApplet && $goods['is_agent'] == 0) {
             return json(['status' => 0, 'msg' => '请使用小程序查看商品', 'result' => null]);
         }
+        if ($this->isApplet && $goods['is_agent'] == 1 && $goods['applet_on_sale'] == 0) {
+            return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
+        }
         M('Goods')->where('goods_id', $goods_id)->save(['click_count' => $goods['click_count'] + 1]); // 统计点击数
         $goods['buy_limit'] = $goods['limit_buy_num'];  // 商品最大购买数量
         $goods['buy_least'] = $goods['least_buy_num'];  // 商品最低购买数量
@@ -790,10 +793,10 @@ class Goods extends Base
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架']);
         }
-        if (!$this->isApplet && $goods['is_agent'] == 1) {
-            return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
+        if ($this->isApplet && $goods['is_agent'] == 0) {
+            return json(['status' => 0, 'msg' => '请使用小程序查看商品', 'result' => null]);
         }
-        if ($this->isApplet && ($goods['is_agent'] == 0 || $goods['applet_on_sale'] == 0)) {
+        if ($this->isApplet && $goods['is_agent'] == 1 && $goods['applet_on_sale'] == 0) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
         M('Goods')->where('goods_id', $goods_id)->save(['click_count' => $goods['click_count'] + 1]); // 统计点击数
@@ -2882,7 +2885,8 @@ class Goods extends Base
     public function look_see()
     {
         $goods = M('goods')->where(['goods_id' => I('goods_id', 0)])->find();
-        $lookSee = (new GoodsLogic())->get_look_see_v2($goods, $this->user_id);
+        $source = $this->isApp ? 3 : ($this->isApplet ? 4 : 1);
+        $lookSee = (new GoodsLogic())->get_look_see_v2($goods, $this->user, $source);
         $filterGoodsIds = [];
         foreach ($lookSee as $item) {
             $filterGoodsIds[] = $item['goods_id'];

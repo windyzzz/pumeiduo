@@ -547,21 +547,33 @@ class GoodsLogic extends Model
     /**
      * 猜你喜欢
      * @param $filterGoods
-     * @param $userId
+     * @param $user
+     * @param $source
      * @return mixed
      */
-    public function get_look_see_v2($filterGoods, $userId = null)
+    public function get_look_see_v2($filterGoods, $user = null, $source = 3)
     {
-        $goodsList = M('goods g')->field('g.goods_id, g.cat_id, g.goods_name, g.goods_remark, g.original_img, g.shop_price, g.exchange_integral, g.sale_type');
+        $goodsList = M('goods g')->field('g.*');
         $where = [
             'g.is_on_sale' => 1,
             'g.zone' => 1
         ];
+        switch ($source) {
+            case 1:
+            case 2:
+            case 3:
+                $where['g.is_agent'] = 0;
+                break;
+            case 4:
+                $where['g.is_agent'] = 1;
+                $where['g.applet_on_sale'] = 1;
+                break;
+        }
         if (!empty($filterGoods)) {
             $where['g.goods_id'] = ['NEQ', $filterGoods['goods_id']];
             $where['g.cat_id'] = $filterGoods['cat_id'];
         }
-        if ($userId) {
+        if ($user) {
             $goodsList = $goodsList->join('goods_visit gv', 'gv.goods_id = g.goods_id', 'LEFT')->group('g.goods_id');
         }
         $count = $goodsList->where($where)->count();
@@ -579,17 +591,41 @@ class GoodsLogic extends Model
         }
         $goodsList = $goodsList->where($where)->limit($offset, 4)->select();
         shuffle($goodsList);
+        $lookSee = [];
         foreach ($goodsList as $k => $v) {
+            $lookSee[$k] = [
+                'goods_id' => $v['goods_id'],
+                'cat_id' => $v['cat_id'],
+                'goods_name' => $v['goods_name'],
+                'goods_remark' => $v['goods_remark'],
+                'shop_price' => $v['shop_price'],
+                'exchange_integral' => $v['exchange_integral'],
+                'sale_type' => $v['sale_type'],
+            ];
             // 缩略图
-            $goodsList[$k]['original_img_new'] = getFullPath($v['original_img']);
+            $lookSee[$k]['original_img_new'] = getFullPath($v['original_img']);
             // 处理显示金额
-            if ($v['exchange_integral'] != 0) {
-                $goodsList[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);
+            if ($v['is_agent'] == 1) {
+                $lookSee[$k]['exchange_integral'] = '0';
+                $lookSee[$k]['exchange_price'] = $v['retail_price'];  // 零售价
+                if ($user) {
+                    switch ($user['distribut_level']) {
+                        case 3:
+                            $lookSee[$k]['exchange_price'] = $v['buying_price'];  // 进货价
+                            break;
+                        default:
+                            $lookSee[$k]['exchange_price'] = $v['retail_price'];  // 零售价
+                    }
+                }
             } else {
-                $goodsList[$k]['exchange_price'] = $v['shop_price'];
+                if ($v['exchange_integral'] != 0) {
+                    $lookSee[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);
+                } else {
+                    $lookSee[$k]['exchange_price'] = $v['shop_price'];
+                }
             }
         }
-        return $goodsList;
+        return $lookSee;
     }
 
     /**

@@ -2770,6 +2770,7 @@ class Order extends Base
                         ->where($where)->order('id desc')->find();
                     switch ($order['order_type']) {
                         case 1:
+                        case 4:
                             // 圃美多
                             $apiController = new ApiController();
                             $express = $apiController->queryExpress(['shipping_code' => $delivery['shipping_code'], 'queryNo' => $delivery['invoice_no']], 'array');
@@ -2913,6 +2914,7 @@ class Order extends Base
                         ->where($where)->select();
                     switch ($order['order_type']) {
                         case 1:
+                        case 4:
                             // 圃美多
                             $apiController = new ApiController();
                             foreach ($delivery as $item) {
@@ -3083,6 +3085,7 @@ class Order extends Base
                 ->where($where)->order('id desc')->find();
             switch ($order['order_type']) {
                 case 1:
+                case 4:
                     // 圃美多
                     $apiController = new ApiController();
                     $express = $apiController->queryExpress(['shipping_code' => $delivery['shipping_code'], 'queryNo' => $delivery['invoice_no']], 'array');
