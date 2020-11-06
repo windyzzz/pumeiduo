@@ -2098,7 +2098,19 @@ class GoodsLogic extends Model
                 'user_id' => $userId
             ];
             $qrCode = $classObj->getQrCode($param);
-            return $qrCode;
+            // 将微信返回的图片数据流写入文件保存本地
+            $baseUrl = PUBLIC_PATH . 'images/qrcode/applet/goods/';
+            if (!file_exists($baseUrl)) {
+                // 检查是否有该文件夹，如果没有就创建，并给予最高权限
+                mkdir($baseUrl, 0755, true);
+            }
+            $picName = 'goods_' . $goodsId . '_' . $userId . '.png';
+            $picUrl = $baseUrl . $picName;
+            $res = file_put_contents($picUrl, $qrCode);
+            if ($res == false) {
+                throw new Exception('写入错误');
+            }
+            return SITE_URL . '/public/images/qrcode/applet/goods/' . $picName;
         } catch (Exception $e) {
             return '';
         }

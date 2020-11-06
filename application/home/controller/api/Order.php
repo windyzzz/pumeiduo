@@ -608,9 +608,9 @@ class Order extends Base
 
     public function del_refund_goods()
     {
-        $order_id = I('id/d', 0);
+        $id = I('id/d', 0);
 
-        M('return_goods')->where('id', $order_id)->update(['status' => 6]);
+        M('return_goods')->where('id', $id)->update(['status' => 6]);
 
         return json(['status' => 1, 'msg' => '删除成功', 'result' => null]);
     }
@@ -832,7 +832,7 @@ class Order extends Base
     public function return_goods(Request $request)
     {
         $rec_id = I('rec_id', 0);
-        $return_goods = M('return_goods')->where(['rec_id' => $rec_id, 'status' => ['NEQ', -2]])->find();
+        $return_goods = M('return_goods')->where(['rec_id' => $rec_id, 'status' => ['NOT IN', [-2, 6]]])->find();
         if (!empty($return_goods)) {
             return json(['status' => 0, 'msg' => '已经提交过退货申请!', 'result' => null]);
         }
@@ -893,7 +893,7 @@ class Order extends Base
     {
         $type = I('type', -1);
         $recId = I('rec_id', '');
-        if (Db::name('return_goods')->where(['rec_id' => $recId, 'user_id' => $this->user_id, 'status' => ['NEQ', -2]])->find()) {
+        if (Db::name('return_goods')->where(['rec_id' => $recId, 'user_id' => $this->user_id, 'status' => ['NOT IN', [-2, 6]]])->find()) {
             return json(['status' => 0, 'msg' => '该商品已申请了售后']);
         }
         // 订单商品信息
@@ -919,6 +919,9 @@ class Order extends Base
                 break;
         }
         if ($this->request->isPost()) {
+            if ($type == -1) {
+                return json(['status' => 0, 'msg' => '退货类型错误']);
+            }
             // 申请售后
             $orderLogic = new OrderLogic();
             $res = $orderLogic->addReturnGoodsNew($recId, $type, $order, $orderGoods, I('post.'), $cOrder);
@@ -1072,7 +1075,15 @@ class Order extends Base
                 'return_type' => $returnGoods['type'],
                 'return_status' => $returnGoods['status']
             ];
-            $return[$k]['return_status'] = !empty($returnGoods['delivery']) ? 7 : $returnGoods['status'];
+            $return[$k]['return_status'] = $returnGoods['status'];
+            if (in_array($returnGoods['type'], [1, 2])) {
+                if ($returnGoods['status'] == 1) {
+                    if (!empty($returnGoods['delivery'])) {
+                        $return[$k]['status'] = 7;  // 等待买家退货
+                    }
+                }
+            }
+//            $return[$k]['return_status'] = !empty($returnGoods['delivery']) ? 7 : $returnGoods['status'];
         }
         return json(['status' => 1, 'result' => $return]);
     }
@@ -1236,10 +1247,14 @@ class Order extends Base
         $return['return_electronic'] = $returnGoods['refund_electronic'];
         $return['return_integral'] = $returnGoods['refund_integral'];
         $return['voucher'] = $returnGoods['imgs'] ? explode(',', $returnGoods['imgs']) : [];
+        $return['voucher_new'] = [];
+        foreach ($return['voucher'] as $img) {
+            $return['voucher_new'][] = getFullPath($img);
+        }
         $return['can_delivery'] = !empty($returnGoods['delivery']) ? 0 : 1;
         if (in_array($returnGoods['type'], [1, 2])) {
             if ($returnGoods['status'] == 1) {
-                if (empty($returnGoods['delivery'])) {
+                if (!empty($returnGoods['delivery'])) {
                     $return['status'] = 7;  // 等待买家退货
                 }
             }
@@ -1406,7 +1421,7 @@ class Order extends Base
 
         // 如果订单没有售后的商品，订单状态变回已确认
         $order_id = M('return_goods')->where(['id' => $id, 'user_id' => $this->user_id])->getField('order_id');
-        if (!M('return_goods')->where('order_id', $order_id)->where('status', 'neq', -2)->find()) {
+        if (!M('return_goods')->where('order_id', $order_id)->where('status', 'not in', [-2, 6])->find()) {
             M('order')->where('order_id', $order_id)->update(['order_status' => 2]);
         }
         $return_info = M('return_goods')->where(['id' => $id, 'user_id' => $this->user_id])->find();
@@ -2741,7 +2756,7 @@ class Order extends Base
                 case 1:
                     //--- 统一发货
                     // 订单商品
-                    $orderGoods = M('order_goods og')->join('goods g', 'g.goods_id = og.goods_id')->where(['og.order_id' => $orderId])->field('g.goods_id, g.original_img')->find();
+                    $orderGoods = M('order_goods og')->join('goods g', 'g.goods_id = og.goods_id')->where(['og.order_id' => $orderId])->field('og.*, g.goods_id, g.original_img')->find();
                     switch ($order['shipping_status']) {
                         case 0:
                         case 3:
@@ -2753,6 +2768,9 @@ class Order extends Base
                                 'shipping_name' => '',
                                 'invoice_no' => '',
                                 'goods_id' => $orderGoods['goods_id'],
+                                'goods_name' => $orderGoods['goods_name'],
+                                'goods_num' => $orderGoods['goods_num'],
+                                'exchange_price' => $orderGoods['member_goods_price'],
                                 'original_img' => SITE_URL . $orderGoods['original_img'],
                                 'original_img_new' => getFullPath($orderGoods['original_img']),
                                 'service_phone' => tpCache('shop_info.mobile'),
@@ -2872,6 +2890,9 @@ class Order extends Base
                         'shipping_name' => $delivery['shipping_name'],
                         'invoice_no' => $delivery['invoice_no'],
                         'goods_id' => $orderGoods['goods_id'],
+                        'goods_name' => $orderGoods['goods_name'],
+                        'goods_num' => $orderGoods['goods_num'],
+                        'exchange_price' => $orderGoods['member_goods_price'],
                         'original_img' => SITE_URL . $orderGoods['original_img'],
                         'original_img_new' => getFullPath($orderGoods['original_img']),
                         'service_phone' => $express['result']['expPhone'],
@@ -2893,7 +2914,7 @@ class Order extends Base
                         case 0:
                         case 3:
                             // 订单商品
-                            $orderGoods = M('order_goods og')->join('goods g', 'g.goods_id = og.goods_id')->where(['og.order_id' => $orderId])->field('g.goods_id, g.original_img')->find();
+                            $orderGoods = M('order_goods og')->join('goods g', 'g.goods_id = og.goods_id')->where(['og.order_id' => $orderId])->field('og.*, g.goods_id, g.original_img')->find();
                             $return['delivery'][] = [
                                 'rec_id' => '',
                                 'doc_id' => '',
@@ -2903,6 +2924,9 @@ class Order extends Base
                                 'invoice_no' => '',
                                 'express' => [],
                                 'goods_id' => $orderGoods['goods_id'],
+                                'goods_name' => $orderGoods['goods_name'],
+                                'goods_num' => $orderGoods['goods_num'],
+                                'exchange_price' => $orderGoods['member_goods_price'],
                                 'original_img' => SITE_URL . $orderGoods['original_img'],
                                 'original_img_new' => getFullPath($orderGoods['original_img']),
                             ];
@@ -2910,7 +2934,7 @@ class Order extends Base
                     }
                     $delivery = M('delivery_doc dd')->join('order_goods og', 'og.rec_id = dd.rec_id')
                         ->join('goods g', 'g.goods_id = og.goods_id')
-                        ->field('dd.*, dd.id doc_id, g.goods_id, g.original_img, g.supplier_goods_id, og.order_id2')
+                        ->field('dd.*, dd.id doc_id, og.*, g.goods_id, g.original_img, g.supplier_goods_id, og.order_id2')
                         ->where($where)->select();
                     switch ($order['order_type']) {
                         case 1:
@@ -2936,6 +2960,9 @@ class Order extends Base
                                     'invoice_no' => $item['invoice_no'],
                                     'express' => $express['result']['list'][0],
                                     'goods_id' => $item['goods_id'],
+                                    'goods_name' => $item['goods_name'],
+                                    'goods_num' => $item['goods_num'],
+                                    'exchange_price' => $item['member_goods_price'],
                                     'original_img' => SITE_URL . $item['original_img'],
                                     'original_img_new' => getFullPath($item['original_img']),
                                 ];
@@ -2995,6 +3022,9 @@ class Order extends Base
                                     'invoice_no' => $item['invoice_no'],
                                     'express' => $express['result']['list'][0],
                                     'goods_id' => $item['goods_id'],
+                                    'goods_name' => $item['goods_name'],
+                                    'goods_num' => $item['goods_num'],
+                                    'exchange_price' => $item['member_goods_price'],
                                     'original_img' => SITE_URL . $item['original_img'],
                                     'original_img_new' => getFullPath($item['original_img']),
                                 ];
@@ -3043,6 +3073,9 @@ class Order extends Base
                                     'invoice_no' => $item['invoice_no'],
                                     'express' => $express['result']['list'][0],
                                     'goods_id' => $item['goods_id'],
+                                    'goods_name' => $item['goods_name'],
+                                    'goods_num' => $item['goods_num'],
+                                    'exchange_price' => $item['member_goods_price'],
                                     'original_img' => SITE_URL . $item['original_img'],
                                     'original_img_new' => getFullPath($item['original_img']),
                                 ];
@@ -3057,7 +3090,7 @@ class Order extends Base
             //--- 订单商品单独物流信息
             // 订单商品
             $orderGoods = M('delivery_doc dd')->join('order_goods og', 'og.rec_id = dd.rec_id')->join('goods g', 'g.goods_id = og.goods_id')
-                ->where($where)->field('g.goods_id, g.original_img, g.supplier_goods_id')->find();
+                ->where($where)->field('og.*, g.goods_id, g.original_img, g.supplier_goods_id')->find();
             switch ($order['shipping_status']) {
                 case 0:
                 case 3:
@@ -3069,6 +3102,9 @@ class Order extends Base
                         'shipping_name' => '',
                         'invoice_no' => '',
                         'goods_id' => $orderGoods['goods_id'],
+                        'goods_name' => $orderGoods['goods_name'],
+                        'goods_num' => $orderGoods['goods_num'],
+                        'exchange_price' => $orderGoods['member_goods_price'],
                         'original_img' => SITE_URL . $orderGoods['original_img'],
                         'original_img_new' => getFullPath($orderGoods['original_img']),
                         'service_phone' => tpCache('shop_info.mobile'),
@@ -3201,6 +3237,9 @@ class Order extends Base
                 'shipping_name' => $delivery['shipping_name'],
                 'invoice_no' => $delivery['invoice_no'],
                 'goods_id' => $orderGoods['goods_id'],
+                'goods_name' => $orderGoods['goods_name'],
+                'goods_num' => $orderGoods['goods_num'],
+                'exchange_price' => $orderGoods['member_goods_price'],
                 'original_img' => SITE_URL . $orderGoods['original_img'],
                 'original_img_new' => getFullPath($orderGoods['original_img']),
                 'service_phone' => $express['result']['expPhone'] ?? tpCache('shop_info.mobile'),
@@ -3210,6 +3249,8 @@ class Order extends Base
                 'address' => $delivery['address'],
                 'express' => $express['result']['list']
             ];
+        } else {
+            $return = [];
         }
         return json(['status' => 1, 'result' => $return]);
     }
@@ -3250,5 +3291,15 @@ class Order extends Base
         $where = 'user_id = ' . $this->user_id . ' AND status != 6 AND status != -2';
         $return['RETURN'] = M('return_goods')->where($where)->count('id');
         return json(['status' => 1, 'result' => $return]);
+    }
+
+    /**
+     * 物流公司列表
+     * @return \think\response\Json
+     */
+    public function shippingList()
+    {
+        $shippingList = M('shipping')->where(['is_open' => 1, 'shipping_code' => ['NEQ', '00000']])->field('shipping_name, shipping_code')->select();
+        return json(['status' => 1, 'result' => ['list' => $shippingList]]);
     }
 }

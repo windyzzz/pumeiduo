@@ -1901,7 +1901,11 @@ function getFullPath($path)
         return '';
     }
     if (!strstr($path, 'http') && !strstr($path, 'https')) {
-        return SITE_URL . $path;
+        if (strpos($path, '/') == 0) {
+            return SITE_URL . $path;
+        } else {
+            return SITE_URL . '/' . $path;
+        }
     }
     return $path;
 }

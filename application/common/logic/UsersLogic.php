@@ -1496,7 +1496,7 @@ class UsersLogic extends Model
         if ($goods_list) {
             foreach ($goods_list as $k => $v) {
                 $goods_list[$k]['original_img_new'] = getFullPath($v['original_img']);
-                $goods_list[$k]['is_return'] = M('ReturnGoods')->where(['rec_id' => $v['rec_id'], 'status' => ['NEQ', -2]])->find() ? 1 : 0;
+                $goods_list[$k]['is_return'] = M('ReturnGoods')->where(['rec_id' => $v['rec_id'], 'status' => ['NOT IN', [-2, 6]]])->find() ? 1 : 0;
                 $goods_list[$k]['status_desc'] = isset($v['status']) ? C('REFUND_STATUS')[$v['status']] : '';
             }
         }
