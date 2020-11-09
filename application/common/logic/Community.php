@@ -50,25 +50,40 @@ class Community
     /**
      * 文章搜索排序
      * @param $param
-     * @return string
+     * @return array
      */
     private function articleSort($param)
     {
         $sort = '';
+        $sortSet = [];
         if (!empty($param['sort']) && !empty($param['order'])) {
-
+            $paramSort = explode(',', $param['sort']);
+            $paramOrder = explode(',', $param['order']);
+            if (count($paramSort) == count($paramOrder)) {
+                foreach ($paramSort as $k => $v) {
+                    $sort .= $v . ' ' . $paramOrder[$k] . ',';
+                    $sortSet[$v] = $paramOrder[$k];
+                }
+            }
+        } else {
+            $articleSort = M('community_config')->where(['type' => 'article_sort'])->value('content');
+            switch ($articleSort) {
+                case 'publish_time':
+                    $sort .= $articleSort . ' DESC, share DESC,';
+                    break;
+                case 'share':
+                    $sort .= $articleSort . ' DESC, publish_time DESC,';
+                    break;
+            }
         }
-        $articleSort = M('community_config')->where(['type' => 'article_sort'])->value('content');
-        switch ($articleSort) {
-            case 'publish_time':
-                $sort .= $articleSort . ' DESC, share DESC,';
-                break;
-            case 'share':
-                $sort .= $articleSort . ' DESC, publish_time DESC,';
-                break;
+        if (empty($sortSet)) {
+            $sortSet = [
+                'publish_time' => 'DESC',
+                'share' => 'DESC'
+            ];
         }
         $sort .= ' add_time DESC';
-        return $sort;
+        return ['sort' => $sort, 'sort_set' => $sortSet];
     }
 
     /**
@@ -82,7 +97,9 @@ class Community
         // 搜索条件
         $where = $this->articleWhere($param);
         // 排序
-        $sort = $this->articleSort($param);
+        $sortParam = $this->articleSort($param);
+        $sort = $sortParam['sort'];
+        $sortSet = $sortParam['sort_set'];
         // 查询数据
         $count = M('community_article ca')->where($where)->count();
         $page = new Page($count, $num);
@@ -91,7 +108,7 @@ class Community
             ->join('goods g', 'g.goods_id = ca.goods_id', 'LEFT')
             ->field('ca.*, u.nickname, u.user_name, u.head_pic, g.goods_name, g.original_img, g.shop_price, g.exchange_integral, g.is_on_sale')
             ->where($where)->order($sort)->limit($page->firstRow . ',' . $page->listRows)->select();
-        return ['total' => $count, 'list' => $articleList];
+        return ['total' => $count, 'list' => $articleList, 'sort_set' => $sortSet];
     }
 
     /**
