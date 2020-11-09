@@ -16,15 +16,19 @@ class Live extends Base
             'limit' => 10
         ];
         if ($page == 1) {
-            $fields['start'] = 9;   // 前10个测试用
+            $fields['start'] = 0;   // 前5个测试用
         } else {
-            $fields['start'] = ($page - 1) * 10 + 9;
+            $fields['start'] = ($page - 1) * 10 + 0;
         }
         $url = 'https://api.weixin.qq.com/wxa/business/getliveinfo?access_token=' . $this->accessToken;
         $response = $this->get_contents($url, 'POST', $fields);
         $res = json_decode($response, true);
         if (isset($res['errcode']) && $res['errcode'] != 0) {
-            return json(['status' => 0, 'msg' => $res['errmsg']]);
+            if ($res['errcode'] == '9410000') {
+                // 直播列表为空
+                return json(['status' => 1, 'result' => ['list' => []]]);
+            }
+            return json(['status' => $res['errcode'], 'msg' => $res['errmsg']]);
         }
         $return = [
             'list' => $res['room_info']

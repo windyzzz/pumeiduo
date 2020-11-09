@@ -395,7 +395,7 @@ class Goods extends Base
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
         if ($this->isApplet && $goods['is_agent'] == 0) {
-            return json(['status' => 0, 'msg' => '请使用小程序查看商品', 'result' => null]);
+            return json(['status' => 0, 'msg' => '请使用APP查看商品', 'result' => null]);
         }
         if ($this->isApplet && $goods['is_agent'] == 1 && $goods['applet_on_sale'] == 0) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
@@ -794,7 +794,7 @@ class Goods extends Base
             return json(['status' => 0, 'msg' => '该商品已经下架']);
         }
         if ($this->isApplet && $goods['is_agent'] == 0) {
-            return json(['status' => 0, 'msg' => '请使用小程序查看商品', 'result' => null]);
+            return json(['status' => 0, 'msg' => '请使用APP查看商品', 'result' => null]);
         }
         if ($this->isApplet && $goods['is_agent'] == 1 && $goods['applet_on_sale'] == 0) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
