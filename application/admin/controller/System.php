@@ -569,7 +569,8 @@ class System extends Base
         if (IS_POST) {
 
         }
-        $indexIcon = M('app_icon')->where(['type' => 'index'])->getField('code, name, img, status', true);
+        $indexIcon = M('app_icon')->where(['type' => 'index'])->select();
+        $this->assign('index_icon_count', count($indexIcon));
         $this->assign('index_icon', $indexIcon);
         return $this->fetch('app_index');
     }
