@@ -563,6 +563,17 @@ class System extends Base
         return view('bank_list');
     }
 
+
+    public function appIndex()
+    {
+        if (IS_POST) {
+
+        }
+        $indexIcon = M('app_icon')->where(['type' => 'index'])->getField('code, name, img, status', true);
+        $this->assign('index_icon', $indexIcon);
+        return $this->fetch('app_index');
+    }
+
     public function shop_info()
     {
     }

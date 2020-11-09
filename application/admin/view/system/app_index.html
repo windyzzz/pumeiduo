@@ -1,0 +1,44 @@
+<include file="public/layout" />
+<body style="background-color: #FFF; overflow: auto;">
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title">
+            <div class="subject">
+                <h3>首页设置</h3>
+                <h5>APP首页设置</h5>
+            </div>
+        </div>
+    </div>
+    <form method="post" id="handlepost" action="{:U('Activity/config')}" enctype="multipart/form-data" name="form">
+        <div class="ncap-form-default">
+            <dl class="row">
+                <dt class="tit">金刚区icon</dt>
+                <dd class="opt">
+                    <div style="float: left;margin-right: 20px">
+                        <div class="selected-group-goods">
+                            <div class="goods-thumb">
+                                <img style="width: 162px;height: 162px" src="{$index_icon[icon1][img]}"/>
+                            </div>
+                        </div>
+                    </div>
+                </dd>
+            </dl>
+            <div class="bot">
+                <a href="JavaScript:void(0);" class="ncap-btn-big ncap-btn-green" onclick="document.form.submit()">确认提交</a>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="goTop"> <a href="JavaScript:void(0);" id="btntop"><i class="fa fa-angle-up"></i></a><a href="JavaScript:void(0);" id="btnbottom"><i class="fa fa-angle-down"></i></a></div>
+</body>
+<script type="text/javascript">
+    function img_call_back(fileurl_tmp , elementid)
+    {
+        $("#"+elementid).val(fileurl_tmp);
+        $("#"+elementid+'_a').attr('href', fileurl_tmp);
+        $("#"+elementid+'_i').attr('onmouseover', "layer.tips('<img src="+fileurl_tmp+">',this,{tips: [1, '#fff']});");
+    }
+</script>
+</html>
