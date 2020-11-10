@@ -265,10 +265,12 @@ class Index
         $appIcon = M('app_icon')->where(['type' => 'index', 'is_open' => 1])->order('sort DESC')->select();
         $iconList = [];
         foreach ($appIcon as $icon) {
+            $imgInfo = json_decode($icon['img'], true);
+            $imgInfo['img'] = getFullPath($imgInfo['img']);
             $iconList[] = [
                 'code' => $icon['code'],
                 'name' => $icon['name'],
-                'img' => json_decode($icon['img'], true)
+                'img' => $imgInfo
             ];
         }
         $return = [
