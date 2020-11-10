@@ -41,6 +41,12 @@
             <dl class="row">
                 <dt class="tit">金刚区icon</dt>
                 <dd class="opt" id="index_icon">
+                    <div style="margin-bottom: 10px;">
+                        <span>一行icon的个数：</span>
+                        <input type="text" name="index_icon_config[index][row_num]" value="{$index_icon_config[row_num]}" style="text-align: center; width: 100px;"
+                               onKeyUp="this.value=this.value.replace(/[^\d]/g,'')"
+                               onpaste="this.value=this.value.replace(/[^\d]/g,'')"/>
+                    </div>
                     <volist name="index_icon" id="item" key="k">
                         <div style="float: left; margin-right: 20px;">
                             <div class="selected-group-goods">
@@ -48,17 +54,27 @@
                                     <img class="index_icon{$k}" style="width: 162px;height: 162px" src="{$item[img]}"/>
                                 </div>
                                 <div style="margin-bottom: 10px;">
-                                    <input type="text" id="index_icon{$k}" name="index_icon[icon{$k}][img]" value="{$item[img]}" class="type-file-text">
+                                    <input type="hidden" id="index_icon{$k}" name="index_icon[icon{$k}][img]" value="{$item[img]}" class="type-file-text">
                                     <input style="cursor: pointer;" type="button" name="button" value="选择上传..." class="type-file-button" onClick="GetUploadify(1,'index_icon{$k}','index','img_call_back')">
                                     <div style="clear: both;"></div>
                                 </div>
-                                <input type="text" name="index_icon[icon{$k}][name]" value="{$item[name]}" style="text-align: center;">
+                                <div>
+                                    <span>名字</span>
+                                    <input type="text" name="index_icon[icon{$k}][name]" value="{$item[name]}" style="text-align: center;">
+                                </div>
+                                <div style="margin-top: 10px;">
+                                    <span>排序</span>
+                                    <input type="text" name="index_icon[icon{$k}][sort]" value="{$item[sort]}" style="text-align: center;"
+                                           onKeyUp="this.value=this.value.replace(/[^\d]/g,'')"
+                                           onpaste="this.value=this.value.replace(/[^\d]/g,'')"/>
+                                </div>
                                 <div class="onoff" style="margin-top: 10px;">
                                     <label for="index_icon[icon{$k}]_is_open1" class="cb-enable <if condition='$item[is_open] eq 1'>selected</if>">开启</label>
                                     <label for="index_icon[icon{$k}]_is_open0" class="cb-disable <if condition='$item[is_open] eq 0'>selected</if>">关闭</label>
                                     <input id="index_icon[icon{$k}]_is_open1" name="index_icon[icon{$k}][is_open]" <if condition='$item[is_open] eq 1'>checked</if> value="1" type="radio">
                                     <input id="index_icon[icon{$k}]_is_open0" name="index_icon[icon{$k}][is_open]" <if condition='$item[is_open] eq 0'>checked</if> value="0" type="radio">
                                 </div>
+                                <input type="hidden" name="index_icon[icon{$k}][type]" value="index">
                             </div>
                         </div>
                         <if condition="$k % 4 == 0">
@@ -100,17 +116,24 @@
             '                   <img class="index_icon' + index_icon_count + '" style="width: 162px;height: 162px" src=""/>' +
             '               </div>' +
             '               <div style="margin-bottom: 10px;">' +
-            '                   <input type="text" id="index_icon' + index_icon_count + '" name="index_icon[icon' + index_icon_count + '][img]" value="" class="type-file-text">' +
+            '                   <input type="hidden" id="index_icon' + index_icon_count + '" name="index_icon[icon' + index_icon_count + '][img]" value="" class="type-file-text">' +
             '                   <input style="cursor: pointer;" type="button" name="button" value="选择上传..." class="type-file-button" onClick="GetUploadify(1,\'index_icon' + index_icon_count + '\',\'index\',\'img_call_back\')">' +
             '                   <div style="clear: both;"></div>' +
             '               </div>' +
-            '               <input type="text" name="index_icon[icon' + index_icon_count + '][name]" value="" style="text-align: center;">' +
+            '               <div><span>名字</span><input type="text" name="index_icon[icon' + index_icon_count + '][name]" value="" style="text-align: center;"></div>' +
+            '               <div style="margin-top: 10px;">' +
+            '                   <span>排序</span>' +
+            '                   <input type="text" name="index_icon[icon' + index_icon_count + '][sort]" value="{$item[sort]}" style="text-align: center;"' +
+            '                          onKeyUp="this.value=this.value.replace(/[^\\d]/g,\'\')"' +
+            '                          onpaste="this.value=this.value.replace(/[^\\d]/g,\'\')"/>' +
+            '               </div>' +
             '               <div class="onoff" style="margin-top: 10px;">' +
             '                   <label for="index_icon[icon' + index_icon_count + ']_is_open1" class="cb-enable selected">开启</label>' +
             '                   <label for="index_icon[icon' + index_icon_count + ']_is_open0" class="cb-disable">关闭</label>' +
             '                   <input id="index_icon[icon' + index_icon_count + ']_is_open1" name="index_icon[icon' + index_icon_count + '][is_open]" value="1" type="radio" checked>' +
             '                   <input id="index_icon[icon' + index_icon_count + ']_is_open0" name="index_icon[icon' + index_icon_count + '][is_open]" value="0" type="radio">' +
             '               </div>' +
+            '               <input type="hidden" name="index_icon[icon' + index_icon_count + '][type]" value="index">' +
             '            </div>' +
             '      </div>';
         if (index_icon_count % 4 == 0) {

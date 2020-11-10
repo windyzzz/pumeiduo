@@ -3,7 +3,7 @@
 use think\migration\Migrator;
 use think\migration\db\Column;
 
-class CreateAppIcon extends Migrator
+class CreateAppIconConfig extends Migrator
 {
     /**
      * Change Method.
@@ -28,13 +28,9 @@ class CreateAppIcon extends Migrator
      */
     public function change()
     {
-        $this->table('app_icon')
-            ->addColumn('code', 'string', ['limit' => 20, 'comment' => '标识'])
-            ->addColumn('name', 'string', ['limit' => 20, 'comment' => '名字'])
-            ->addColumn('img', 'string', ['comment' => '图标路径'])
-            ->addColumn('status', 'integer', ['default' => 1, 'comment' => '开启状态'])
+        $this->table('app_icon_config')
             ->addColumn('type', 'string', ['comment' => '所属地方'])
-            ->addColumn('sort', 'integer', ['default' => 0, 'comment' => '排序'])
+            ->addColumn('row_num', 'integer', ['comment' => '一行个数'])
             ->create();
     }
 }

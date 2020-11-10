@@ -12,6 +12,8 @@
 namespace app\admin\controller;
 
 use app\admin\logic\GoodsLogic;
+use app\admin\model\AppIcon;
+use app\admin\model\AppIconConfig;
 use app\common\logic\ModuleLogic;
 use think\Cache;
 use think\db;
@@ -563,13 +565,56 @@ class System extends Base
         return view('bank_list');
     }
 
-
+    /**
+     * app首页设置
+     * @return mixed
+     * @throws \Exception
+     */
     public function appIndex()
     {
         if (IS_POST) {
-
+            $post = I('post.');
+            $indexIconConfig = $post['index_icon_config'];
+            $indexIcon = $post['index_icon'];
+            Db::startTrans();
+            // 清除数据
+            M('app_icon_config')->where('1=1')->delete();
+            // 添加数据
+            $appIconConfig = [];
+            foreach ($indexIconConfig as $key => $config) {
+                $appIconConfig[] = [
+                    'type' => $key,
+                    'row_num' => $config['row_num']
+                ];
+            }
+            if (!empty($appIconConfig)) {
+                $appIconConfigModel = new AppIconConfig();
+                $appIconConfigModel->saveAll($appIconConfig);
+            }
+            // 清除数据
+            M('app_icon')->where('1=1')->delete();
+            // 添加数据
+            $appIcon = [];
+            foreach ($indexIcon as $key => $icon) {
+                $appIcon[] = [
+                    'code' => $key,
+                    'name' => $icon['name'],
+                    'img' => $icon['img'],
+                    'is_open' => $icon['is_open'],
+                    'sort' => $icon['sort'],
+                    'type' => $icon['type'],
+                ];
+            }
+            if (!empty($appIcon)) {
+                $appIconModel = new AppIcon();
+                $appIconModel->saveAll($appIcon);
+            }
+            Db::commit();
+            $this->success('操作成功', U('System/appIndex'));
         }
-        $indexIcon = M('app_icon')->where(['type' => 'index'])->select();
+        $indexIconConfig = M('app_icon_config')->where(['type' => 'index'])->find();
+        $indexIcon = M('app_icon')->where(['type' => 'index'])->order('sort DESC')->select();
+        $this->assign('index_icon_config', $indexIconConfig);
         $this->assign('index_icon_count', count($indexIcon));
         $this->assign('index_icon', $indexIcon);
         return $this->fetch('app_index');
