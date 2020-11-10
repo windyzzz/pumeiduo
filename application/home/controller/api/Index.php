@@ -252,4 +252,31 @@ class Index
         ];
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
     }
+
+    /**
+     * 金刚区icon列表
+     * @return \think\response\Json
+     */
+    public function icon()
+    {
+        // 一行icon个数
+        $iconRowNum = M('app_icon_config')->where(['type' => 'index'])->value('row_num');
+        // icon列表
+        $appIcon = M('app_icon')->where(['type' => 'index', 'is_open' => 1])->order('sort DESC')->select();
+        $iconList = [];
+        foreach ($appIcon as $icon) {
+            $iconList[] = [
+                'code' => $icon['code'],
+                'name' => $icon['name'],
+                'img' => json_decode($icon['img'], true)
+            ];
+        }
+        $return = [
+            'config' => [
+                'row_num' => $iconRowNum ?? 4
+            ],
+            'list' => $iconList
+        ];
+        return json(['status' => 1, 'result' => $return]);
+    }
 }

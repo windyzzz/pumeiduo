@@ -596,10 +596,19 @@ class System extends Base
             // 添加数据
             $appIcon = [];
             foreach ($indexIcon as $key => $icon) {
+                $imgInfo = getimagesize(PUBLIC_PATH . substr($icon['img'], strrpos($icon['img'], 'public') + 7));
+                if (empty($imgInfo)) {
+                    $this->error('图片上传错误');
+                }
                 $appIcon[] = [
                     'code' => $key,
                     'name' => $icon['name'],
-                    'img' => $icon['img'],
+                    'img' => json_encode([
+                        'img' => $icon['img'],
+                        'width' => $imgInfo[0],
+                        'height' => $imgInfo[1],
+                        'type' => substr($imgInfo['mime'], strrpos($imgInfo['mime'], '/') + 1),
+                    ]),
                     'is_open' => $icon['is_open'],
                     'sort' => $icon['sort'],
                     'type' => $icon['type'],
@@ -614,6 +623,10 @@ class System extends Base
         }
         $indexIconConfig = M('app_icon_config')->where(['type' => 'index'])->find();
         $indexIcon = M('app_icon')->where(['type' => 'index'])->order('sort DESC')->select();
+        foreach ($indexIcon as &$icon) {
+            $iconImg = json_decode($icon['img'], true);
+            $icon['img'] = $iconImg['img'];
+        }
         $this->assign('index_icon_config', $indexIconConfig);
         $this->assign('index_icon_count', count($indexIcon));
         $this->assign('index_icon', $indexIcon);
