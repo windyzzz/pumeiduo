@@ -264,14 +264,24 @@ class Index
         // icon列表
         $appIcon = M('app_icon')->where(['type' => 'index', 'is_open' => 1])->order('sort DESC')->select();
         $iconList = [];
-        foreach ($appIcon as $icon) {
+        foreach ($appIcon as $key => $icon) {
             $imgInfo = json_decode($icon['img'], true);
             $imgInfo['img'] = getFullPath($imgInfo['img']);
-            $iconList[] = [
+            $iconList[$key] = [
                 'code' => $icon['code'],
                 'name' => $icon['name'],
-                'img' => $imgInfo
+                'img' => $imgInfo,
+                'need_login' => 0,
+                'target_param' => []
             ];
+            switch ($icon['code']) {
+                case 'icon8':
+                    $iconList[$key]['need_login'] = 1;
+                    break;
+            }
+            if (empty($iconList[$key]['target_param'])) {
+                $iconList[$key]['target_param'] = (object)$iconList[$key]['target_param'];
+            }
         }
         $return = [
             'config' => [
