@@ -32,7 +32,7 @@ class CreateAppIcon extends Migrator
             ->addColumn('code', 'string', ['limit' => 20, 'comment' => '标识'])
             ->addColumn('name', 'string', ['limit' => 20, 'comment' => '名字'])
             ->addColumn('img', 'string', ['comment' => '图标路径'])
-            ->addColumn('status', 'integer', ['default' => 1, 'comment' => '开启状态'])
+            ->addColumn('is_open', 'integer', ['default' => 1, 'comment' => '是否开启'])
             ->addColumn('type', 'string', ['comment' => '所属地方'])
             ->addColumn('sort', 'integer', ['default' => 0, 'comment' => '排序'])
             ->create();
