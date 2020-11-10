@@ -159,12 +159,15 @@ class CartLogic extends Model
      *
      * @throws TpshopException
      */
-    public function buyNow($isApp = false, $passAuth = false)
+    public function buyNow($isApp = false, $isApplet = false, $passAuth = false)
     {
         if (empty($this->goods) && !$passAuth) {
             throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '购买商品不存在', 'result' => '']);
         }
         if ($this->goods['is_on_sale'] == 0 && !$passAuth) {
+            throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '商品已下架', 'result' => '']);
+        }
+        if ($isApplet && $this->goods['applet_on_sale'] == 0 && !$passAuth) {
             throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '商品已下架', 'result' => '']);
         }
         if (empty($this->goodsBuyNum) && !$passAuth) {
@@ -933,9 +936,6 @@ class CartLogic extends Model
             case 3:
                 $where['g.is_agent'] = 0;
                 break;
-            case 4:
-                $where['g.is_agent'] = 1;
-                break;
         }
         if ($this->user_id) {
             $goods_num = Db::name('cart c')->join('goods g', 'g.goods_id = c.goods_id')->where(['c.user_id' => $this->user_id])->where($where)->count('id');
@@ -1030,13 +1030,9 @@ class CartLogic extends Model
         $goodsPromFactory = new GoodsPromFactory();
         foreach ($cartList as $cartKey => $cart) {
             switch ($source) {
-                case 4:
-                    if ($cart['goods']['is_agent'] == 0) {
-                        unset($cartList[$cartKey]);
-                        continue 2;
-                    }
-                    break;
-                default:
+                case 1:
+                case 2:
+                case 3:
                     if ($cart['goods']['is_agent'] == 1) {
                         unset($cartList[$cartKey]);
                         continue 2;
@@ -1768,11 +1764,16 @@ class CartLogic extends Model
             }
             if ($cart['goods']['is_abroad'] == 1) {
                 $hasAbroad = true;
-            } elseif ($cart['goods']['is_supply'] == 1) {
+            }
+            if ($cart['goods']['is_supply'] == 1) {
                 $hasSupply = true;
-            } elseif ($cart['goods']['is_agent'] == 1) {
+            }
+            if ($cart['goods']['is_agent'] == 1) {
                 $hasAgent = true;
             }
+        }
+        if ($hasAgent) {
+            return ['status' => 4];
         }
         if (!empty($vipLevel)) {
             foreach ($vipLevel as $vip) {
@@ -1802,9 +1803,6 @@ class CartLogic extends Model
         }
         if ($hasSupply) {
             return ['status' => 3];
-        }
-        if ($hasAgent) {
-            return ['status' => 4];
         }
         return ['status' => 1];
     }

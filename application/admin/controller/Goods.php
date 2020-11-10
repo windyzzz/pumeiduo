@@ -552,7 +552,7 @@ class Goods extends Base
             $outTimeEnd = strtotime($outTimeEnd);
             $where .= ' and out_time BETWEEN ' . $outTimeBegin . ' and ' . $outTimeEnd;
         }
-        
+
         $goodsList = M('Goods')->where($where)->where($map)->select();
         if (is_array($goodsList)) {
             $GoodsLogic = new GoodsLogic();
@@ -845,8 +845,7 @@ class Goods extends Base
                 }
             }
 
-            // 代理商商品
-            if ($data['is_agent'] == 1) {
+            if ($data['applet_on_sale2'] == 1) {
                 if ($data['applet_on_time'] == 0 || $data['applet_out_time'] == 0) {
                     $return_arr = [
                         'msg' => '请设置小程序上下架时间',
@@ -857,9 +856,6 @@ class Goods extends Base
                 $data['applet_on_time'] = strtotime($data['applet_on_time']);
                 $data['applet_out_time'] = strtotime($data['applet_out_time']);
             } else {
-                $data['buying_price'] = 0;
-                $data['buying_pv'] = 0;
-                $data['applet_on_sale'] = 0;
                 $data['applet_on_time'] = 0;
                 $data['applet_out_time'] = 0;
             }
@@ -1603,20 +1599,22 @@ class Goods extends Base
         $this->ajaxReturn(['status' => 1, 'msg' => '删除成功']);
     }
 
-
+    /**
+     * 小程序上架处理
+     */
     public function appletOnSale()
     {
         $goodsId = I('goods_id');
         $onSale = I('on_sale');
         $data = [
-            'applet_on_sale' => $onSale
+            'applet_on_sale' => $onSale,
+            'applet_on_sale2' => $onSale,
         ];
         switch ($onSale) {
             case 0:
                 $data['applet_out_time'] = NOW_TIME;
                 break;
             case 1:
-                $data['is_agent'] = 1;
                 $data['applet_on_time'] = NOW_TIME;
                 $data['applet_out_time'] = strtotime('+1 month');
                 break;

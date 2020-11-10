@@ -394,10 +394,10 @@ class Goods extends Base
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
-        if ($this->isApplet && $goods['is_agent'] == 0) {
-            return json(['status' => 0, 'msg' => '请使用APP查看商品', 'result' => null]);
+        if (!$this->isApplet && $goods['is_agent'] == 0) {
+            return json(['status' => 0, 'msg' => '请在小程序浏览商品', 'result' => null]);
         }
-        if ($this->isApplet && $goods['is_agent'] == 1 && $goods['applet_on_sale'] == 0) {
+        if ($this->isApplet && $goods['applet_on_sale'] == 0) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
         M('Goods')->where('goods_id', $goods_id)->save(['click_count' => $goods['click_count'] + 1]); // 统计点击数
@@ -793,10 +793,10 @@ class Goods extends Base
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架']);
         }
-        if ($this->isApplet && $goods['is_agent'] == 0) {
-            return json(['status' => 0, 'msg' => '请使用APP查看商品', 'result' => null]);
+        if (!$this->isApplet && $goods['is_agent'] == 0) {
+            return json(['status' => 0, 'msg' => '请在小程序浏览商品', 'result' => null]);
         }
-        if ($this->isApplet && $goods['is_agent'] == 1 && $goods['applet_on_sale'] == 0) {
+        if ($this->isApplet && $goods['applet_on_sale'] == 0) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
         M('Goods')->where('goods_id', $goods_id)->save(['click_count' => $goods['click_count'] + 1]); // 统计点击数
@@ -830,8 +830,8 @@ class Goods extends Base
             'applet_qr_code' => '',    // 小程序分享二维码
             'tabs' => [],
         ];
-        if ($this->isApplet) {
-            // 小程序基础价格设置
+        if ($goods['is_agent'] == 1) {
+            // 代理商商品基础价格设置
             $goodsInfo['exchange_integral'] = '0';
             $goodsInfo['exchange_price'] = $goods['retail_price'];  // 零售价
             if ($this->user) {
@@ -1024,11 +1024,13 @@ class Goods extends Base
             }
             $goodsInfo['share_qr_code'] = SITE_URL . $filename;
             if ($this->isApplet) {
-                /*
-                 * 小程序
-                 */
                 // 小程序分享二维码
                 $goodsInfo['applet_qr_code'] = $goodsLogic->createGoodsAppletCode(I('goods_id/d', null), $this->user_id);
+            }
+            if ($goods['is_agent'] == 1) {
+                /*
+                 * 代理商商品
+                 */
                 // 商品pv、佣金
                 switch ($this->user['distribut_level']) {
                     case 1:
@@ -1140,8 +1142,8 @@ class Goods extends Base
             'buy_least' => $goods['least_buy_num'],
             'is_supply' => $goods['is_supply'],
         ];
-        if ($this->isApplet) {
-            // 小程序基础价格设置
+        if ($goods['is_agent'] == 1) {
+            // 代理商商品基础价格设置
             $goodsInfo['exchange_integral'] = '0';
             $goodsInfo['exchange_price'] = $goods['retail_price'];  // 零售价
             if ($this->user) {
@@ -1202,7 +1204,7 @@ class Goods extends Base
             $goodsSpecPrice = $goodsLogic->get_spec_price($goodsId);
             $goodsSpecPrice = array_combine(array_column($goodsSpecPrice, 'key'), array_values($goodsSpecPrice));
             // 根据商品活动属性计算商品价格
-            if (empty($extendGoodsSpec) && !empty($goodsSpecPrice) && !$this->isApplet) {
+            if (empty($extendGoodsSpec) && !empty($goodsSpecPrice) && $goods['is_agent'] == 0) {
                 $goodsInfo['original_img_new'] = !empty($goodsSpecPrice[$defaultKey]['spec_img']) ? getFullPath($goodsSpecPrice[$defaultKey]['spec_img']) : $goodsInfo['original_img_new'];
                 $goodsInfo['shop_price'] = $goodsSpecPrice[$defaultKey]['price'];
                 $goodsInfo['store_count'] = $goodsInfo['is_supply'] == 0 ? $goodsSpecPrice[$defaultKey]['store_count'] : $goodsInfo['store_count'];
@@ -1693,7 +1695,6 @@ class Goods extends Base
             $goods_where['is_supply'] = 0;
         }
         if ($this->isApplet) {
-            $goods_where['is_agent'] = 1;
             $goods_where['applet_on_sale'] = 1;
         } else {
             $goods_where['is_agent'] = 0;
@@ -1797,7 +1798,6 @@ class Goods extends Base
             $where = $SearchWordLogic->getSearchWordWhere($search);
             $where['is_on_sale'] = 1;
             if ($this->isApplet) {
-                $where['is_agent'] = 1;
                 $where['applet_on_sale'] = 1;
             } else {
                 $where['is_agent'] = 0;
@@ -1832,7 +1832,6 @@ class Goods extends Base
             $cat_id_arr = getCatGrandson($id);
             $goods_where = ['is_on_sale' => 1, 'cat_id|extend_cat_id' => ['in', $cat_id_arr]];
             if ($this->isApplet) {
-                $goods_where['is_agent'] = 1;
                 $goods_where['applet_on_sale'] = 1;
             } else {
                 $goods_where['is_agent'] = 0;

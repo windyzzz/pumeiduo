@@ -482,7 +482,7 @@ class Cart extends Base
                     $storeCount = $v['goods']['store_count'];
                 }
                 $key = $v['goods_id'] . '_' . $v['spec_key'];
-                if ((empty($v['goods']) || 1 != $v['goods']['is_on_sale']) || ($v['goods']['is_agent'] == 1 && $v['goods']['applet_on_sale'] == 0)) {
+                if ((empty($v['goods']) || 1 != $v['goods']['is_on_sale']) || ($this->isApplet && $v['goods']['applet_on_sale'] == 0)) {
                     // 已失效商品
                     $cartNum -= 1;
                     $invalidList['cart_num'] += 1;

@@ -565,7 +565,6 @@ class GoodsLogic extends Model
                 $where['g.is_agent'] = 0;
                 break;
             case 4:
-                $where['g.is_agent'] = 1;
                 $where['g.applet_on_sale'] = 1;
                 break;
         }
@@ -1833,7 +1832,7 @@ class GoodsLogic extends Model
             $cartLogic->setType($payType);
             $cartLogic->setCartType(0);
             try {
-                $buyGoods = $cartLogic->buyNow($isApp, $passAuth);
+                $buyGoods = $cartLogic->buyNow($isApp, $isApplet, $passAuth);
             } catch (TpshopException $tpE) {
                 $error = $tpE->getErrorArr();
                 return ['status' => 0, 'msg' => $error['msg']];

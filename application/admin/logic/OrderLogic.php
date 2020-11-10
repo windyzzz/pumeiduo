@@ -186,7 +186,7 @@ class OrderLogic
                 return true;
             case 'confirm': //确认订单
                 $updata['order_status'] = 1;
-                $order = Db::name('order')->where(['order_id' => $order_id])->field('order_id, order_type, order_sn, user_id, add_time')->find();
+                $order = Db::name('order')->where(['order_id' => $order_id])->find();
                 // 推荐任务
                 $task1 = new \app\common\logic\TaskLogic(2);
                 $task1->setOrder($order);
@@ -198,6 +198,15 @@ class OrderLogic
                 // 更新子订单状态
                 if ($order['order_type'] == 3) {
                     M('order')->where(['parent_id' => $order_id])->update($updata);
+                }
+                // 含有代理商商品的订单发送订单pv到代理商系统记录
+                if ($order['is_agent'] == 1 && $order['pay_status'] == 1 && $order['order_pv'] > 0 && $order['pv_tb'] == 0 && $order['pv_send'] == 0) {
+                    // 通知代理商系统记录
+                    include_once "plugins/Tb.php";
+                    $TbLogic = new \Tb();
+                    $TbLogic->add_tb(1, 11, $order_id, 0);
+                    // 更新记录状态
+                    M('order')->where(['order_id' => $order_id])->update(['pv_tb' => 1]);
                 }
                 break;
             case 'cancel': //取消确认

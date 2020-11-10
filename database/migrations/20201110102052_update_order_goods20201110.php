@@ -3,7 +3,7 @@
 use think\migration\Migrator;
 use think\migration\db\Column;
 
-class UpdateOrder20201027 extends Migrator
+class UpdateOrderGoods20201110 extends Migrator
 {
     /**
      * Change Method.
@@ -28,13 +28,9 @@ class UpdateOrder20201027 extends Migrator
      */
     public function change()
     {
-        $this->table('order')
-            ->changeColumn('order_type', 'integer', ['default' => 1, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
-                'comment' => '订单类型：1圃美多 2韩国购 3供应链 4直播', 'after' => 'order_sn'])
-            ->changeColumn('source', 'integer', ['default' => 1, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
-                'comment' => '订单来源：1微信 2PC 3APP 4小程序 5管理后台', 'after' => 'delivery_type'])
+        $this->table('order_goods')
             ->addColumn('is_agent', 'integer', ['default' => 0, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
-                'comment' => '是否拥有代理商商品'])
+                'comment' => '是否是代理商商品'])
             ->update();
     }
 }

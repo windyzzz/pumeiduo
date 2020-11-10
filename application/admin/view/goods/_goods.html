@@ -752,6 +752,22 @@
                         <span class="err" id="err_buying_price_pv" style="color:#F00; display:none;"></span>
                     </dd>
                 </dl>
+            </div>
+            <dl class="row">
+                <dt class="tit">
+                    <label>是否上架小程序</label>
+                </dt>
+                <dd class="opt">
+                    <div class="onoff">
+                        <label for="applet_on_sale21" class="cb-enable <if condition=" $goodsInfo[applet_on_sale2] eq 1">selected</if>">是</label>
+                        <label for="applet_on_sale20" class="cb-disable <if condition=" $goodsInfo[applet_on_sale2] eq 0">selected</if>">否</label>
+                        <input id="applet_on_sale21" name="applet_on_sale2" value="1" type="radio" <if condition="$goodsInfo[applet_on_sale2] eq 1"> checked="checked"</if>>
+                        <input id="applet_on_sale20" name="applet_on_sale2" value="0" type="radio" <if condition="$goodsInfo[applet_on_sale2] eq 0"> checked="checked"</if>>
+                    </div>
+                    <p class="notic"></p>
+                </dd>
+            </dl>
+            <div id="applet_sale" style="<if condition='$goodsInfo[applet_on_sale] == 0'>display: none;</if>">
                 <dl class="row">
                     <dt class="tit">
                         <label for="record_no">小程序上架时间</label>
@@ -1531,6 +1547,17 @@
                 break;
             case '0':
                 $('#agent_attr').hide();
+                break;
+        }
+    });
+
+    $('input[name="applet_on_sale2"]').change(function () {
+        switch (this.value) {
+            case '1':
+                $('#applet_sale').show();
+                break;
+            case '0':
+                $('#applet_sale').hide();
                 break;
         }
     });

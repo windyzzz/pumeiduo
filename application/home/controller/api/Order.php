@@ -395,6 +395,12 @@ class Order extends Base
                 if (M('order')->where(['parent_id' => $orderId, 'order_type' => 1])->find()) {
                     $deliveryType = '2';
                 }
+                break;
+            case 4:
+                if ($orderInfo['is_agent'] == 1) {
+                    $orderTypeTips = '含有代理商商品的订单不能售后，请联系总部客服进行处理';
+                }
+                break;
         }
         $orderInfo = set_btn_order_status($orderInfo);  // 添加属性  包括按钮显示属性 和 订单状态显示属性
         // 获取订单商品
@@ -844,9 +850,6 @@ class Order extends Base
         if (empty($order)) {
             return json(['status' => 0, 'msg' => '非法操作', 'result' => null]);
         }
-        if ($order['order_type'] == 2) {
-            return json(['status' => 0, 'msg' => '韩国购商品收货后如有质量或破损问题申请退换货时，请联系总部客服进行处理']);
-        }
         $confirm_time_config = tpCache('shopping.auto_service_date'); //后台设置多少天内可申请售后
         $confirm_time = $confirm_time_config * 24 * 60 * 60;
         if ((time() - $order['confirm_time']) > $confirm_time && !empty($order['confirm_time'])) {
@@ -861,6 +864,11 @@ class Order extends Base
                 // 供应链订单
                 $cOrder = M('order')->where(['order_id' => $order_goods['order_id2']])->find();
                 break;
+            case 4:
+                // 直播订单
+                if ($order['is_agent'] == 1) {
+                    return json(['status' => 0, 'msg' => '含有代理商商品的订单不能售后，请联系总部客服进行处理']);
+                }
         }
         if ($request->isPost()) {
             $model = new OrderLogic();
@@ -917,6 +925,11 @@ class Order extends Base
                 // 供应链订单
                 $cOrder = M('order')->where(['order_id' => $orderGoods['order_id2']])->find();
                 break;
+            case 4:
+                // 直播订单
+                if ($order['is_agent'] == 1) {
+                    return json(['status' => 0, 'msg' => '含有代理商商品的订单不能售后，请联系总部客服进行处理']);
+                }
         }
         if ($this->request->isPost()) {
             if ($type == -1) {
@@ -2457,6 +2470,7 @@ class Order extends Base
         if ($res['status'] === -1) {
             return json($res);
         }
+        $hasAgent = 0;  // 是否拥有代理商商品
         $orderType = 1; // 圃美多
         switch ($res['status']) {
             case 0:
@@ -2478,8 +2492,13 @@ class Order extends Base
                 $orderType = 3; // 供应链
                 break;
             case 4:
-                $orderType = 4; // 代理商
+                $orderType = 4; // 直播
+                $hasAgent = 1;
                 break;
+        }
+        if ($this->isApplet) {
+            // 直播订单
+            $orderType = 4;
         }
 
         // 初始化数据 商品总额/节约金额/商品总共数量/商品使用积分
@@ -2560,6 +2579,7 @@ class Order extends Base
             $placeOrder->setUserNote($userNote);
             $placeOrder->setUserIdCard($idCard);
             $placeOrder->setOrderType($orderType);
+            $placeOrder->setHasAgent($hasAgent);
             $source = $this->isApplet ? 4 : 3;
             Db::startTrans();
             if (2 == $prom_type) {
