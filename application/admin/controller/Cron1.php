@@ -8756,4 +8756,156 @@ class Cron1 extends Controller
             ->getField('img_id', true);
         M('goods_images')->where(['img_id' => ['IN', $imageIds]])->update(['self_upload' => 0]);
     }
+
+    public function getUserAccountLog()
+    {
+        $userId = I('user_id', 0);
+        $return = [];
+        /*
+         * 1月
+         */
+        $time1 = '1577808000';
+        $time2 = '1580486399';
+        // 期初金额
+        $return['1月']['first_money'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['<', $time1], 'type' => ['NEQ', 0]])->sum('user_money');
+        // 奖金充值
+        $return['1月']['recharge_money'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['BETWEEN', "$time1, $time2"], 'user_money' => ['>', 0]])->sum('user_money');
+        // 提现
+        $return['1月']['withdrawal'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['BETWEEN', "$time1, $time2"], 'user_money' => ['<', 0], 'type' => 20])->sum('user_money');
+        // 期末金额
+        $return['1月']['end_money'] = $return['1月']['first_money'] + $return['1月']['recharge_money'] + $return['1月']['withdrawal'];
+        /*
+         * 2月
+         */
+        $time1 = '1580486400';
+        $time2 = '1582991999';
+        // 期初金额
+        $return['2月']['first_money'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['<', $time1], 'type' => ['NEQ', 0]])->sum('user_money');
+        // 奖金充值
+        $return['2月']['recharge_money'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['BETWEEN', "$time1, $time2"], 'user_money' => ['>', 0]])->sum('user_money');
+        // 提现
+        $return['2月']['withdrawal'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['BETWEEN', "$time1, $time2"], 'user_money' => ['<', 0], 'type' => 20])->sum('user_money');
+        // 期末金额
+        $return['2月']['end_money'] = $return['2月']['first_money'] + $return['2月']['recharge_money'] + $return['2月']['withdrawal'];
+        /*
+         * 3月
+         */
+        $time1 = '1582992000';
+        $time2 = '1585670399';
+        // 期初金额
+        $return['3月']['first_money'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['<', $time1], 'type' => ['NEQ', 0]])->sum('user_money');
+        // 奖金充值
+        $return['3月']['recharge_money'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['BETWEEN', "$time1, $time2"], 'user_money' => ['>', 0]])->sum('user_money');
+        // 提现
+        $return['3月']['withdrawal'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['BETWEEN', "$time1, $time2"], 'user_money' => ['<', 0], 'type' => 20])->sum('user_money');
+        // 期末金额
+        $return['3月']['end_money'] = $return['3月']['first_money'] + $return['3月']['recharge_money'] + $return['3月']['withdrawal'];
+        /*
+         * 4月
+         */
+        $time1 = '1585670400';
+        $time2 = '1588262399';
+        // 期初金额
+        $return['4月']['first_money'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['<', $time1], 'type' => ['NEQ', 0]])->sum('user_money');
+        // 奖金充值
+        $return['4月']['recharge_money'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['BETWEEN', "$time1, $time2"], 'user_money' => ['>', 0]])->sum('user_money');
+        // 提现
+        $return['4月']['withdrawal'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['BETWEEN', "$time1, $time2"], 'user_money' => ['<', 0], 'type' => 20])->sum('user_money');
+        // 期末金额
+        $return['4月']['end_money'] = $return['4月']['first_money'] + $return['4月']['recharge_money'] + $return['4月']['withdrawal'];
+        /*
+         * 5月
+         */
+        $time1 = '1588262400';
+        $time2 = '1590940799';
+        // 期初金额
+        $return['5月']['first_money'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['<', $time1], 'type' => ['NEQ', 0]])->sum('user_money');
+        // 奖金充值
+        $return['5月']['recharge_money'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['BETWEEN', "$time1, $time2"], 'user_money' => ['>', 0]])->sum('user_money');
+        // 提现
+        $return['5月']['withdrawal'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['BETWEEN', "$time1, $time2"], 'user_money' => ['<', 0], 'type' => 20])->sum('user_money');
+        // 期末金额
+        $return['5月']['end_money'] = $return['5月']['first_money'] + $return['5月']['recharge_money'] + $return['5月']['withdrawal'];
+        /*
+         * 6月
+         */
+        $time1 = '1590940800';
+        $time2 = '1593532799';
+        // 期初金额
+        $return['6月']['first_money'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['<', $time1], 'type' => ['NEQ', 0]])->sum('user_money');
+        // 奖金充值
+        $return['6月']['recharge_money'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['BETWEEN', "$time1, $time2"], 'user_money' => ['>', 0]])->sum('user_money');
+        // 提现
+        $return['6月']['withdrawal'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['BETWEEN', "$time1, $time2"], 'user_money' => ['<', 0], 'type' => 20])->sum('user_money');
+        // 期末金额
+        $return['6月']['end_money'] = $return['6月']['first_money'] + $return['6月']['recharge_money'] + $return['6月']['withdrawal'];
+        /*
+         * 7月
+         */
+        $time1 = '1593532800';
+        $time2 = '1596211199';
+        // 期初金额
+        $return['7月']['first_money'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['<', $time1], 'type' => ['NEQ', 0]])->sum('user_money');
+        // 奖金充值
+        $return['7月']['recharge_money'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['BETWEEN', "$time1, $time2"], 'user_money' => ['>', 0]])->sum('user_money');
+        // 提现
+        $return['7月']['withdrawal'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['BETWEEN', "$time1, $time2"], 'user_money' => ['<', 0], 'type' => 20])->sum('user_money');
+        // 期末金额
+        $return['7月']['end_money'] = $return['7月']['first_money'] + $return['7月']['recharge_money'] + $return['7月']['withdrawal'];
+        /*
+         * 8月
+         */
+        $time1 = '1596211200';
+        $time2 = '1598889599';
+        // 期初金额
+        $return['8月']['first_money'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['<', $time1], 'type' => ['NEQ', 0]])->sum('user_money');
+        // 奖金充值
+        $return['8月']['recharge_money'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['BETWEEN', "$time1, $time2"], 'user_money' => ['>', 0]])->sum('user_money');
+        // 提现
+        $return['8月']['withdrawal'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['BETWEEN', "$time1, $time2"], 'user_money' => ['<', 0], 'type' => 20])->sum('user_money');
+        // 期末金额
+        $return['8月']['end_money'] = $return['8月']['first_money'] + $return['8月']['recharge_money'] + $return['8月']['withdrawal'];
+        /*
+         * 9月
+         */
+        $time1 = '1598889600';
+        $time2 = '1601481599';
+        // 期初金额
+        $return['9月']['first_money'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['<', $time1], 'type' => ['NEQ', 0]])->sum('user_money');
+        // 奖金充值
+        $return['9月']['recharge_money'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['BETWEEN', "$time1, $time2"], 'user_money' => ['>', 0]])->sum('user_money');
+        // 提现
+        $return['9月']['withdrawal'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['BETWEEN', "$time1, $time2"], 'user_money' => ['<', 0], 'type' => 20])->sum('user_money');
+        // 期末金额
+        $return['9月']['end_money'] = $return['9月']['first_money'] + $return['9月']['recharge_money'] + $return['9月']['withdrawal'];
+        /*
+         * 10月
+         */
+        $time1 = '1601481600';
+        $time2 = '1604159999';
+        // 期初金额
+        $return['10月']['first_money'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['<', $time1], 'type' => ['NEQ', 0]])->sum('user_money');
+        // 奖金充值
+        $return['10月']['recharge_money'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['BETWEEN', "$time1, $time2"], 'user_money' => ['>', 0]])->sum('user_money');
+        // 提现
+        $return['10月']['withdrawal'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['BETWEEN', "$time1, $time2"], 'user_money' => ['<', 0], 'type' => 20])->sum('user_money');
+        // 期末金额
+        $return['10月']['end_money'] = $return['10月']['first_money'] + $return['10月']['recharge_money'] + $return['10月']['withdrawal'];
+        /*
+         * 11月
+         */
+        $time1 = '1604160000';
+        $time2 = '1606751999';
+        // 期初金额
+        $return['11月']['first_money'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['<', $time1], 'type' => ['NEQ', 0]])->sum('user_money');
+        // 奖金充值
+        $return['11月']['recharge_money'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['BETWEEN', "$time1, $time2"], 'user_money' => ['>', 0]])->sum('user_money');
+        // 提现
+        $return['11月']['withdrawal'] = M('account_log')->where(['user_id' => $userId, 'change_time' => ['BETWEEN', "$time1, $time2"], 'user_money' => ['<', 0], 'type' => 20])->sum('user_money');
+        // 期末金额
+        $return['11月']['end_money'] = $return['11月']['first_money'] + $return['11月']['recharge_money'] + $return['11月']['withdrawal'];
+
+        print_r($return);
+        exit();
+    }
 }
