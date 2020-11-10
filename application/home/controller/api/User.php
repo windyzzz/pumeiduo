@@ -2592,7 +2592,7 @@ class User extends Base
             if ($amount > $user['user_money']) {
                 return json(['status' => 0, 'msg' => '用户余额不足']);
             }
-            if (M('withdrawals')->where('user_id', $this->user_id)->where('status', 0)->find()) {
+            if (M('withdrawals')->where('user_id', $this->user_id)->where('status', 'IN', [0, 1])->find()) {
                 return json(['status' => 0, 'msg' => '你还有一个提现在审核中，请勿重复提交申请']);
             }
             $data = [
