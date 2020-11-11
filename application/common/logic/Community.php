@@ -44,6 +44,9 @@ class Community
         if (!empty($param['user_id'])) {
             $where['ca.user_id'] = $param['user_id'];
         }
+        if (!empty($param['search'])) {
+            $where['ca.content'] = ['LIKE', '%' . $param['search'] . '%'];
+        }
         return $where;
     }
 
