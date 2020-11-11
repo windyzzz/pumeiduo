@@ -44,10 +44,22 @@ class Community
         if (!empty($param['user_id'])) {
             $where['ca.user_id'] = $param['user_id'];
         }
-        if (!empty($param['search'])) {
-            $where['ca.content'] = ['LIKE', '%' . $param['search'] . '%'];
-        }
         return $where;
+    }
+
+    /**
+     * 文章搜索条件2
+     * @param $param
+     * @return array
+     */
+    private function articleWhereOr($param)
+    {
+        $whereOr = [];
+        if (!empty($param['search'])) {
+            $whereOr['ca.content'] = ['LIKE', '%' . $param['search'] . '%'];
+            $whereOr['g.goods_name'] = ['LIKE', '%' . $param['search'] . '%'];
+        }
+        return $whereOr;
     }
 
     /**
@@ -99,18 +111,32 @@ class Community
     {
         // 搜索条件
         $where = $this->articleWhere($param);
+        $whereOr = $this->articleWhereOr($param);
         // 排序
         $sortParam = $this->articleSort($param);
         $sort = $sortParam['sort'];
         $sortSet = $sortParam['sort_set'];
+        // 数据数量
+        $count = M('community_article ca')->where($where);
+        if (!empty($whereOr)) {
+            $count = $count->join('goods g', 'g.goods_id = ca.goods_id', 'LEFT')->where(function ($query) use ($whereOr) {
+                $query->whereOr($whereOr);
+            });
+        }
+        $count = $count->count();
         // 查询数据
-        $count = M('community_article ca')->where($where)->count();
         $page = new Page($count, $num);
         $articleList = M('community_article ca')
             ->join('users u', 'u.user_id = ca.user_id', 'LEFT')
             ->join('goods g', 'g.goods_id = ca.goods_id', 'LEFT')
             ->field('ca.*, u.nickname, u.user_name, u.head_pic, g.goods_name, g.original_img, g.shop_price, g.exchange_integral, g.is_on_sale')
-            ->where($where)->order($sort)->limit($page->firstRow . ',' . $page->listRows)->select();
+            ->where($where);
+        if (!empty($whereOr)) {
+            $articleList = $articleList->where(function ($query) use ($whereOr) {
+                $query->whereOr($whereOr);
+            });
+        }
+        $articleList = $articleList->order($sort)->limit($page->firstRow . ',' . $page->listRows)->select();
         return ['total' => $count, 'list' => $articleList, 'sort_set' => $sortSet];
     }
 
