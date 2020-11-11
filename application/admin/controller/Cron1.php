@@ -8908,4 +8908,35 @@ class Cron1 extends Controller
         print_r($return);
         exit();
     }
+
+    public function loginProfitRollback()
+    {
+        $time1 = '1605024000';  // 2020.11.11 00:00:00
+        $time2 = '1605110399';  // 2020.11.11 23:59:59
+        $time3 = '1604160000';  // 2020.01.01 00:00:00
+        $logInfo = M('account_log')->where(['change_time' => ['BETWEEN', [$time1, $time2]], 'type' => 18, 'user_electronic' => ['<', 0]])->field('log_id, user_id, user_electronic')->select();
+        $logIds = [];
+        $userInfo = [];
+        foreach ($logInfo as $log) {
+            $logIds[] = $log['log_id'];
+            $userInfo[] = [
+                'user_id' => $log['user_id'],
+                'user_electronic' => abs($log['user_electronic'])
+            ];
+        }
+        Db::startTrans();
+        // 删除记录
+        M('account_log')->where(['log_id' => ['IN', $logIds]])->delete();
+        foreach ($userInfo as $user) {
+            // 用户资金增加
+            M('users')->where(['user_id' => $user['user_id']])->setInc('user_electronic', $user['user_electronic']);
+            // 用户任务记录更新
+            M('task_log')->where(['task_id' => 4, 'user_id' => $user['user_id'], 'created_at' => ['BETWEEN', [$time3, $time2]], 'finished_at' => 0])->update(['status' => 1]);
+        }
+        // 更新用户任务记录
+        M('task_log')->where(['task_id' => 4, 'created_at' => ['BETWEEN', [$time3, $time2]], 'finished_at' => ['NEQ', 0]])->update(['status' => 1]);
+        Db::commit();
+        var_dump(1);
+        exit();
+    }
 }
