@@ -463,7 +463,7 @@ class Order extends Base
         if ($orderData['delivery']['city_name'] == '直辖区') {
             $orderData['delivery']['city_name'] = '';
         }
-        if ($orderInfo['order_status_code'] == 'AFTER-SALES' || $orderInfo['order_status_code'] == 'WAITCCOMMENT' || $orderInfo['order_status_code'] == 'FINFISH') {
+        if ($orderInfo['order_status_code'] == 'AFTER-SALES' || $orderInfo['order_status_code'] == 'WAITCCOMMENT' || $orderInfo['order_status_code'] == 'FINISH') {
             $canReturn = $orderInfo['end_sale_time'] > time() ? true : false;   // 能否退货
         } else {
             $canReturn = false;
