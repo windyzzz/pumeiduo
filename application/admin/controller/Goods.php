@@ -234,6 +234,9 @@ class Goods extends Base
                 case 3:
                     $where = "$where and is_abroad = 0 and is_supply = 1";
                     break;
+                case 4:
+                    $where = "$where and is_agent = 1";
+                    break;
             }
         }
 
@@ -243,7 +246,7 @@ class Goods extends Base
                 $where .= ' and is_area_show = 1';
                 break;
             case 3:
-                $where .= ' and is_agent = 1';
+                $where .= ' and applet_on_sale = 1';
                 break;
         }
 
@@ -371,6 +374,9 @@ class Goods extends Base
                 case 3:
                     $where = "$where and is_abroad = 0 and is_supply = 1";
                     break;
+                case 4:
+                    $where = "$where and is_agent = 1";
+                    break;
             }
         }
 
@@ -380,7 +386,7 @@ class Goods extends Base
                 $where .= ' and is_area_show = 1';
                 break;
             case 3:
-                $where .= ' and is_agent = 1';
+                $where .= ' and applet_on_sale = 1';
                 break;
         }
 
@@ -514,6 +520,9 @@ class Goods extends Base
                 case 3:
                     $where = "$where and is_abroad = 0 and is_supply = 1";
                     break;
+                case 4:
+                    $where = "$where and is_agent = 1";
+                    break;
             }
         }
 
@@ -523,7 +532,7 @@ class Goods extends Base
                 $where .= ' and is_area_show = 1';
                 break;
             case 3:
-                $where .= ' and is_agent = 1';
+                $where .= ' and applet_on_sale = 1';
                 break;
         }
 
@@ -654,6 +663,9 @@ class Goods extends Base
                 case 3:
                     $where = "$where and is_abroad = 0 and is_supply = 1";
                     break;
+                case 4:
+                    $where = "$where and is_agent = 1";
+                    break;
             }
         }
 
@@ -668,7 +680,7 @@ class Goods extends Base
                 $where .= ' and is_area_show = 1';
                 break;
             case 3:
-                $where .= ' and is_agent = 1';
+                $where .= ' and applet_on_sale = 1';
                 break;
         }
 

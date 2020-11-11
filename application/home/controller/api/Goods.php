@@ -394,7 +394,7 @@ class Goods extends Base
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
-        if (!$this->isApplet && $goods['is_agent'] == 0) {
+        if (!$this->isApplet && $goods['is_agent'] == 1) {
             return json(['status' => 0, 'msg' => '请在小程序浏览商品', 'result' => null]);
         }
         if ($this->isApplet && $goods['applet_on_sale'] == 0) {
@@ -793,7 +793,7 @@ class Goods extends Base
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架']);
         }
-        if (!$this->isApplet && $goods['is_agent'] == 0) {
+        if (!$this->isApplet && $goods['is_agent'] == 1) {
             return json(['status' => 0, 'msg' => '请在小程序浏览商品', 'result' => null]);
         }
         if ($this->isApplet && $goods['applet_on_sale'] == 0) {
