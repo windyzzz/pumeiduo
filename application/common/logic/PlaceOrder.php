@@ -405,6 +405,7 @@ class PlaceOrder
                         'pay_type' => 0,
                         'order_id2' => 0,
                         'supplier_goods_id' => 0,
+                        'is_agent' => 0
                     ];
                     if (!empty($v['spec_key'])) {
                         $orderGoodsData['spec_key'] = $v['spec_key'];           // 商品规格
@@ -443,6 +444,7 @@ class PlaceOrder
                         'pay_type' => 0,
                         'order_id2' => 0,
                         'supplier_goods_id' => 0,
+                        'is_agent' => 0
                     ];
                     if (!empty($v['spec_key'])) {
                         $orderGoodsData['spec_key'] = $v['spec_key']; // 商品规格
@@ -501,6 +503,7 @@ class PlaceOrder
                         'pay_type' => 0,
                         'order_id2' => 0,
                         'supplier_goods_id' => 0,
+                        'is_agent' => 0
                     ];
                     array_push($orderGoodsAllData, $orderGoodsData);
                 }
@@ -538,6 +541,7 @@ class PlaceOrder
                     'pay_type' => 0,
                     'order_id2' => 0,
                     'supplier_goods_id' => 0,
+                    'is_agent' => 0
                 ];
                 array_push($orderGoodsAllData, $orderGoodsData);
             }

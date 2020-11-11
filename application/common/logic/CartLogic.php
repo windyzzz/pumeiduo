@@ -359,7 +359,7 @@ class CartLogic extends Model
             return ['status' => -3, 'msg' => '购买商品不存在', 'result' => ''];
         } elseif ($this->goods['is_on_sale'] == 0) {
             return ['status' => -3, 'msg' => '商品已下架', 'result' => ''];
-        } elseif ($this->goods['is_agent'] == 1 && $this->goods['applet_on_sale'] == 0) {
+        } elseif ($isApplet && $this->goods['applet_on_sale'] == 0) {
             return ['status' => -3, 'msg' => '商品已下架', 'result' => ''];
         }
         // if($this->goods['exchange_integral'] > 0){

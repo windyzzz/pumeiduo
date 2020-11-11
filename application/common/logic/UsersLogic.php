@@ -1921,9 +1921,6 @@ class UsersLogic extends Model
             case 3:
                 $where['g.is_agent'] = 0;
                 break;
-            case 4:
-                $where['g.is_agent'] = 1;
-                break;
         }
         $count = Db::name('goods_collect c')->join('goods g', 'g.goods_id = c.goods_id')->where($where)->count();
         $page = new Page($count, 10);
