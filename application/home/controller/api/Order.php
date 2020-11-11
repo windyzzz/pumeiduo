@@ -187,8 +187,8 @@ class Order extends Base
             if ($payDeadTime < 0) {
                 $payDeadTime = "0";
             }
-            $orderList[$k] = set_btn_order_status($list);  // 添加属性  包括按钮显示属性 和 订单状态显示属性
-            $deliveryType = $list['delivery_type'];    // 1统一发货 2分开发货
+            $orderList[$k] = set_btn_order_status($list);   // 添加属性  包括按钮显示属性 和 订单状态显示属性
+            $deliveryType = $list['delivery_type'];         // 1统一发货 2分开发货
             switch ($list['order_type']) {
                 case 3:
                     if (M('order')->where(['parent_id' => $list['order_id'], 'order_type' => 1])->find()) {
@@ -204,7 +204,7 @@ class Order extends Base
                     'order_status' => $list['order_status'],
                     'pay_status' => $list['order_status'],
                     'shipping_status' => $list['order_status'],
-                    'order_status_code' => $orderList[$k]['order_status_code'] == 'AFTER-SALES' || $orderList[$k]['order_status_code'] == 'WAITCCOMMENT' ? 'FINISH' : $orderList[$k]['order_status_code'],
+                    'order_status_code' => $orderList[$k]['order_status_code'],
                     'order_status_desc' => $orderList[$k]['order_status_desc'],
                     'order_amount' => $list['order_amount'],
                     'shipping_price' => $list['shipping_price'],
