@@ -6,6 +6,7 @@ use app\admin\model\CommunityArticle;
 use app\common\logic\MessageLogic;
 use app\common\logic\OssLogic;
 use app\common\logic\PushLogic;
+use think\Db;
 use think\Page;
 
 class Community extends Base
@@ -26,6 +27,10 @@ class Community extends Base
     {
         if (IS_POST) {
             $param = I('post.');
+            $keyword = $param['keyword'];
+            unset($param['keyword']);
+            Db::startTrans();
+            // 配置
             foreach ($param as $k => $v) {
                 $data = [
                     'type' => $k,
@@ -40,8 +45,19 @@ class Community extends Base
                     M('community_config')->add($data);
                 }
             }
+            // 关键词
+            foreach ($keyword as $key) {
+                $keywordId = M('community_article_keyword')->where(['name' => $key['name']])->value('id');
+                if ($keywordId) {
+                    M('community_article_keyword')->where(['id' => $keywordId])->update($key);
+                } else {
+                    M('community_article_keyword')->add($key);
+                }
+            }
+            Db::commit();
             $this->success('操作成功', U('Admin/Community/config'));
         }
+        // 配置
         $abroadConfig = M('community_config')->select();
         $config = [];
         foreach ($abroadConfig as $val) {
@@ -51,8 +67,22 @@ class Community extends Base
                 'content' => $val['content']
             ];
         }
+        // 热门词
+        $keyword = M('community_article_keyword')->select();
         $this->assign('config', $config);
+        $this->assign('keyword', $keyword);
+        $this->assign('keyword_count', count($keyword));
         return $this->fetch('config');
+    }
+
+    /**
+     * 删除热门词
+     */
+    public function delKeyword()
+    {
+        $id = I('id');
+        M('community_article_keyword')->where(['id' => $id])->delete();
+        $this->ajaxReturn(['status' => 1]);
     }
 
     /**

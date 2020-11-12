@@ -20,6 +20,16 @@ class Community extends Base
     }
 
     /**
+     * 社区文章搜索热词
+     * @return \think\response\Json
+     */
+    public function articleKeyword()
+    {
+        $keyword = M('community_article_keyword')->where(['is_open' => 1])->order('sort DESC')->field('name, is_hot')->select();
+        return json(['status' => 1, 'result' => ['list' => $keyword]]);
+    }
+
+    /**
      * 获取全部分类
      * @return \think\response\Json
      */
