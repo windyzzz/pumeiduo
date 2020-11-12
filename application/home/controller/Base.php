@@ -23,7 +23,8 @@ class Base extends Controller
     protected $user;
     protected $user_id;
     protected $userToken;
-    protected $isApp = false;
+    protected $isApp = false;       // APP请求
+    protected $isApplet = false;    // 小程序请求
 
     /*
      * 初始化操作
@@ -46,7 +47,8 @@ class Base extends Controller
         $this->public_assign();
 
         $this->isApp = Request::instance()->header('is-app', null);
-        if ($this->isApp == 1) {
+        $this->isApplet = Request::instance()->header('is-applet', null);
+        if ($this->isApp == 1 || $this->isApplet == 1) {
             // APP请求
             session_start();
             session_destroy();
