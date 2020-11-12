@@ -359,7 +359,7 @@ class UsersLogic extends Model
             if ($oauthUser['user_id'] == 0) {
                 $result = ['status' => 2, 'result' => ['openid' => $data['openid']]]; // 需要绑定手机号
             } else {
-                $user = Db::name('users')->where(['user_id' => $oauthUser['user_id']])->field('mobile, is_lock, is_cancel')->find();
+                $user = Db::name('users')->where(['user_id' => $oauthUser['user_id']])->field('head_pic, nickname, mobile, is_lock, is_cancel')->find();
                 if (empty($user['mobile'])) {
                     $result = ['status' => 2, 'result' => ['openid' => $data['openid']]]; // 需要绑定手机号
                 } elseif ($user['is_lock'] == 1) {
@@ -372,12 +372,16 @@ class UsersLogic extends Model
                     $updateData = [
                         'openid' => $data['openid'],
                         'unionid' => $data['unionid'],
-                        'nickname' => $data['nickname'],
-                        'head_pic' => !empty($data['headimgurl']) ? $data['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png',
                         'sex' => $data['sex'] ?? 0,
                         'token' => $userToken,
                         'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
                     ];
+                    if (empty($user['head_pic'])) {
+                        $updateData['head_pic'] = !empty($data['headimgurl']) ? $data['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png';
+                    }
+                    if (empty($user['nickname'])) {
+                        $updateData['nickname'] = !empty($data['nickname']) ? $data['nickname'] : $user['mobile'];
+                    }
                     Db::name('users')->where(['user_id' => $oauthUser['user_id']])->update($updateData);
                     $user = Db::name('users')->where(['user_id' => $oauthUser['user_id']])->find();
                     // 更新用户推送tags
@@ -439,7 +443,7 @@ class UsersLogic extends Model
             if ($oauthUser['user_id'] == 0) {
                 $result = ['status' => 2, 'result' => ['unionid' => $data['unionId'], 'openid' => $data['openId']]]; // 需要绑定手机号
             } else {
-                $user = Db::name('users')->where(['user_id' => $oauthUser['user_id']])->field('mobile, is_lock, is_cancel')->find();
+                $user = Db::name('users')->where(['user_id' => $oauthUser['user_id']])->field('head_pic, nickname, mobile, is_lock, is_cancel')->find();
                 if (empty($user['mobile'])) {
                     $result = ['status' => 2, 'result' => ['unionid' => $data['unionId'], 'openid' => $data['openId']]]; // 需要绑定手机号
                 } elseif ($user['is_lock'] == 1) {
@@ -450,14 +454,18 @@ class UsersLogic extends Model
                     // 更新用户信息
                     $userToken = TokenLogic::setToken();
                     $updateData = [
-                        'openid' => $data['openId'],
-                        'unionid' => $data['unionId'],
-                        'nickname' => $data['nickName'],
-                        'head_pic' => !empty($data['avatarUrl']) ? $data['avatarUrl'] : url('/', '', '', true) . '/public/images/default_head.png',
-                        'sex' => $data['gender'] ?? 0,
+                        'openid' => $oauthData['openid'],
+                        'unionid' => $oauthData['unionid'],
+                        'sex' => $oauthData['sex'] ?? 0,
                         'token' => $userToken,
                         'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
                     ];
+                    if (empty($user['head_pic'])) {
+                        $updateData['head_pic'] = !empty($oauthData['headimgurl']) ? $oauthData['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png';
+                    }
+                    if (empty($user['nickname'])) {
+                        $updateData['nickname'] = !empty($data['nickname']) ? $data['nickname'] : $user['mobile'];
+                    }
                     Db::name('users')->where(['user_id' => $oauthUser['user_id']])->update($updateData);
                     $user = Db::name('users')->where(['user_id' => $oauthUser['user_id']])->find();
                     // 更新用户推送tags
@@ -1187,6 +1195,7 @@ class UsersLogic extends Model
         // 更新oauth记录
         M('oauth_users')->where(['tu_id' => $oauthUser['tu_id']])->update(['user_id' => $userId]);
         if (!$isReg) {
+            $user = M('users')->where(['user_id' => $userId])->field('head_pic, nickname, mobile')->find();
             // 更新用户信息
             $updateData = [
                 'mobile' => $username,
@@ -1194,12 +1203,16 @@ class UsersLogic extends Model
                 'openid' => $oauthData['openid'],
                 'unionid' => $oauthData['unionid'],
                 'oauth' => $oauthUser['oauth'],
-                'nickname' => $oauthData['nickname'],
-                'head_pic' => !empty($oauthData['headimgurl']) ? $oauthData['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png',
                 'last_login' => time(),
                 'token' => TokenLogic::setToken(),
                 'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
             ];
+            if (empty($user['head_pic'])) {
+                $updateData['head_pic'] = !empty($data['headimgurl']) ? $data['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png';
+            }
+            if (empty($user['nickname'])) {
+                $updateData['nickname'] = !empty($data['nickname']) ? $data['nickname'] : $user['mobile'];
+            }
             M('users')->where(['user_id' => $userId])->update($updateData);
         }
         $user = M('users')->where(['user_id' => $userId])->find();
@@ -1340,6 +1353,7 @@ class UsersLogic extends Model
         // 更新oauth记录
         M('oauth_users')->where(['tu_id' => $oauthUser['tu_id']])->update(['user_id' => $userId]);
         if (!$isReg) {
+            $user = M('users')->where(['user_id' => $userId])->field('head_pic, nickname, mobile')->find();
             // 更新用户信息
             $updateData = [
                 'mobile' => $username,
@@ -1347,13 +1361,17 @@ class UsersLogic extends Model
                 'openid' => $oauthData['openid'],
                 'unionid' => $oauthData['unionid'],
                 'oauth' => $oauthUser['oauth'],
-                'nickname' => $oauthData['nickname'],
-                'head_pic' => !empty($oauthData['headimgurl']) ? $oauthData['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png',
                 'sex' => $oauthData['sex'] ?? 0,
                 'last_login' => time(),
                 'token' => TokenLogic::setToken(),
                 'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
             ];
+            if (empty($user['head_pic'])) {
+                $updateData['head_pic'] = !empty($oauthData['headimgurl']) ? $oauthData['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png';
+            }
+            if (empty($user['nickname'])) {
+                $updateData['nickname'] = !empty($data['nickname']) ? $data['nickname'] : $user['mobile'];
+            }
             M('users')->where(['user_id' => $userId])->update($updateData);
         }
         $user = M('users')->where(['user_id' => $userId])->find();
