@@ -316,12 +316,12 @@ class Pay
             foreach ($res['data'] as $v) {
                 if ($v['goods_count'] <= 0 || $v['goods_count'] < $supplierGoodsData[$v['goods_id']]['goods_num']) {
                     // 通知仓储系统
-                    (new Goods())->goodsErrorHandle(1, $v['goods_id']);
-                    throw new TpshopException('获取供应链商品地区购买限制失败', 0, ['status' => 0, 'msg' => $v['goods_name'] . ' 库存不足']);
+//                    (new Goods())->goodsErrorHandle(1, $v['goods_id']);
+                    throw new TpshopException('获取供应链商品地区购买限制失败', 0, ['status' => 0, 'msg' => $v['goods_name'] . ' 当前地区库存不足']);
                 }
                 if (isset($v['isNoStock']) && $v['isNoStock'] == true) {
                     // 通知仓储系统
-                    (new Goods())->goodsErrorHandle(1, $v['goods_id']);
+//                    (new Goods())->goodsErrorHandle(1, $v['goods_id']);
                     throw new TpshopException('获取供应链商品地区购买限制失败', 0, ['status' => 0, 'msg' => $v['goods_name'] . ' 当前地区无库存']);
                 }
                 if (isset($v['isNoGoods']) && $v['isNoGoods'] == true) {
