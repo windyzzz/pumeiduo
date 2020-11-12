@@ -47,6 +47,10 @@
                                onKeyUp="this.value=this.value.replace(/[^\d]/g,'')"
                                onpaste="this.value=this.value.replace(/[^\d]/g,'')"/>
                     </div>
+                    <div style="margin-bottom: 10px;">
+                        <span>不允许访问时候的提示：</span>
+                        <input type="text" name="index_icon_config[index][not_allow_tips]" value="{$index_icon_config[not_allow_tips]}" style="text-align: center; width: 300px;"/>
+                    </div>
                     <volist name="index_icon" id="item" key="k">
                         <div style="float: left; margin-right: 20px;">
                             <div class="selected-group-goods">
@@ -70,9 +74,15 @@
                                 </div>
                                 <div class="onoff" style="margin-top: 10px;">
                                     <label for="index_icon[icon{$k}]_is_open1" class="cb-enable <if condition='$item[is_open] eq 1'>selected</if>">开启</label>
-                                    <label for="index_icon[icon{$k}]_is_open0" class="cb-disable <if condition='$item[is_open] eq 0'>selected</if>">关闭</label>
+                                    <label for="index_icon[icon{$k}]_is_open0" class="cb-disable <if condition='$item[is_open] eq 0'>selected</if>">隐藏</label>
                                     <input id="index_icon[icon{$k}]_is_open1" name="index_icon[icon{$k}][is_open]" <if condition='$item[is_open] eq 1'>checked</if> value="1" type="radio">
                                     <input id="index_icon[icon{$k}]_is_open0" name="index_icon[icon{$k}][is_open]" <if condition='$item[is_open] eq 0'>checked</if> value="0" type="radio">
+                                </div>
+                                <div class="onoff" style="margin-top: 10px;">
+                                    <label for="index_icon[icon{$k}]_is_allow1" class="cb-enable <if condition='$item[is_allow] eq 1'>selected</if>">允许访问</label>
+                                    <label for="index_icon[icon{$k}]_is_allow0" class="cb-disable <if condition='$item[is_allow] eq 0'>selected</if>">不允许</label>
+                                    <input id="index_icon[icon{$k}]_is_allow1" name="index_icon[icon{$k}][is_allow]" <if condition='$item[is_allow] eq 1'>checked</if> value="1" type="radio">
+                                    <input id="index_icon[icon{$k}]_is_allow0" name="index_icon[icon{$k}][is_allow]" <if condition='$item[is_allow] eq 0'>checked</if> value="0" type="radio">
                                 </div>
                                 <input type="hidden" name="index_icon[icon{$k}][type]" value="index">
                             </div>
@@ -129,9 +139,15 @@
             '               </div>' +
             '               <div class="onoff" style="margin-top: 10px;">' +
             '                   <label for="index_icon[icon' + index_icon_count + ']_is_open1" class="cb-enable selected">开启</label>' +
-            '                   <label for="index_icon[icon' + index_icon_count + ']_is_open0" class="cb-disable">关闭</label>' +
+            '                   <label for="index_icon[icon' + index_icon_count + ']_is_open0" class="cb-disable">隐藏</label>' +
             '                   <input id="index_icon[icon' + index_icon_count + ']_is_open1" name="index_icon[icon' + index_icon_count + '][is_open]" value="1" type="radio" checked>' +
             '                   <input id="index_icon[icon' + index_icon_count + ']_is_open0" name="index_icon[icon' + index_icon_count + '][is_open]" value="0" type="radio">' +
+            '               </div>' +
+            '               <div class="onoff" style="margin-top: 10px;">' +
+            '                   <label for="index_icon[icon' + index_icon_count + ']_is_allow1" class="cb-enable selected">允许访问</label>' +
+            '                   <label for="index_icon[icon' + index_icon_count + ']_is_allow0" class="cb-disable">不允许</label>' +
+            '                   <input id="index_icon[icon' + index_icon_count + ']_is_allow1" name="index_icon[icon' + index_icon_count + '][is_allow]" value="1" type="radio" checked>' +
+            '                   <input id="index_icon[icon' + index_icon_count + ']_is_allow0" name="index_icon[icon' + index_icon_count + '][is_allow]" value="0" type="radio">' +
             '               </div>' +
             '               <input type="hidden" name="index_icon[icon' + index_icon_count + '][type]" value="index">' +
             '            </div>' +

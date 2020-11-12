@@ -31,6 +31,7 @@ class CreateAppIconConfig extends Migrator
         $this->table('app_icon_config')
             ->addColumn('type', 'string', ['comment' => '所属地方'])
             ->addColumn('row_num', 'integer', ['comment' => '一行个数'])
+            ->addColumn('not_allow_tips', 'string', ['default' => '', 'comment' => '不允许访问时候的提示'])
             ->create();
     }
 }

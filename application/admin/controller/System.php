@@ -584,7 +584,8 @@ class System extends Base
             foreach ($indexIconConfig as $key => $config) {
                 $appIconConfig[] = [
                     'type' => $key,
-                    'row_num' => $config['row_num']
+                    'row_num' => $config['row_num'],
+                    'not_allow_tips' => $config['not_allow_tips']
                 ];
             }
             if (!empty($appIconConfig)) {
@@ -610,6 +611,7 @@ class System extends Base
                         'type' => substr($imgInfo['mime'], strrpos($imgInfo['mime'], '/') + 1),
                     ]),
                     'is_open' => $icon['is_open'],
+                    'is_allow' => $icon['is_allow'],
                     'sort' => $icon['sort'],
                     'type' => $icon['type'],
                 ];

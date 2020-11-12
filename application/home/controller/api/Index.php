@@ -260,7 +260,7 @@ class Index
     public function icon()
     {
         // 一行icon个数
-        $iconRowNum = M('app_icon_config')->where(['type' => 'index'])->value('row_num');
+        $iconConfig = M('app_icon_config')->where(['type' => 'index'])->field('row_num, not_allow_tips')->find();
         // icon列表
         $appIcon = M('app_icon')->where(['type' => 'index', 'is_open' => 1])->order('sort DESC')->select();
         $iconList = [];
@@ -271,21 +271,35 @@ class Index
                 'code' => $icon['code'],
                 'name' => $icon['name'],
                 'img' => $imgInfo,
+                'is_allow' => (int)$icon['is_allow'],
+                'tips' => $iconConfig['not_allow_tips'] ?? '功能尚未开放',
                 'need_login' => 0,
-                'target_param' => []
+                'target_param' => [
+                    'applet_type' => '',
+                    'applet_id' => '',
+                    'applet_path' => '',
+                ]
             ];
             switch ($icon['code']) {
+                case 'icon5':
+                    // 韩国购
+                    $iconList[$key]['is_allow'] = tpCache('basic.abroad_open') == 1 ? 1 : 0;
+                    break;
                 case 'icon8':
+                    // SVIP专享
                     $iconList[$key]['need_login'] = 1;
                     break;
-            }
-            if (empty($iconList[$key]['target_param'])) {
-                $iconList[$key]['target_param'] = (object)$iconList[$key]['target_param'];
+                case 'icon9':
+                    // 小程序
+                    $iconList[$key]['target_param']['applet_type'] = '';
+                    $iconList[$key]['target_param']['applet_id'] = '';
+                    $iconList[$key]['target_param']['applet_path'] = '';
+                    break;
             }
         }
         $return = [
             'config' => [
-                'row_num' => $iconRowNum ?? 4
+                'row_num' => $iconConfig['row_num'] ?? 4
             ],
             'list' => $iconList
         ];
