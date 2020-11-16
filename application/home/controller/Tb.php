@@ -684,6 +684,8 @@ class Tb extends Controller
             $goods_data['is_on_sale'] = 0;//新增商品  默认下架
             $goods_data['sort'] = M('goods')->max('sort') + 1;  // 新增商品的排序
             $goods_id = M('goods')->data($goods_data)->add();
+            // 初始化商品点击记录
+            M('goods_click')->add(['goods_id' => $goods_id, 'user_id' => 0, 'add_time' => NOW_TIME, 'is_first' => 1]);
         }
 
         //规格

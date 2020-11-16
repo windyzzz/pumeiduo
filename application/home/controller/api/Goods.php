@@ -216,6 +216,7 @@ class Goods extends Base
         $freight_free = tpCache('shopping.freight_free'); // 全场满多少免运费
         $spec_goods_price = M('spec_goods_price')->where('goods_id', $goods_id)->getField('key,item_id,price,store_count'); // 规格 对应 价格 库存表
         M('Goods')->where('goods_id', $goods_id)->save(['click_count' => $goods['click_count'] + 1]); //统计点击数
+        M('goods_click')->add(['goods_id' => $goods['goods_id'], 'user_id' => $this->user_id ?? 0, 'add_time' => NOW_TIME]); // 点击记录
         $commentStatistics = $goodsLogic->commentStatistics($goods_id); // 获取某个商品的评论统计
         $point_rate = tpCache('shopping.point_rate');
 
@@ -396,6 +397,7 @@ class Goods extends Base
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
         M('Goods')->where('goods_id', $goods_id)->save(['click_count' => $goods['click_count'] + 1]); // 统计点击数
+        M('goods_click')->add(['goods_id' => $goods['goods_id'], 'user_id' => $this->user_id ?? 0, 'add_time' => NOW_TIME]); // 点击记录
         $goods['buy_limit'] = $goods['limit_buy_num'];  // 商品最大购买数量
         $goods['buy_least'] = $goods['least_buy_num'];  // 商品最低购买数量
         $goods['nature'] = [];
@@ -619,7 +621,7 @@ class Goods extends Base
         if ($zone != 3) {
             // 促销
             $goods['promotion'] = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
-                ->where(['gtg.goods_id' => $goods_id, 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
+                ->where(['gtg.goods_id' => $goods_id, 'gtg.item_id' => $itemId, 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
                 ->field('pg.id prom_id, pg.type, pg.title, pg.expression');
             if ($this->user_id) {
                 $goods['promotion'] = $goods['promotion']->where(['pg.group' => ['LIKE', '%' . $this->user['distribut_level'] . '%']]);
@@ -789,6 +791,7 @@ class Goods extends Base
             return json(['status' => 0, 'msg' => '该商品已经下架']);
         }
         M('Goods')->where('goods_id', $goods_id)->save(['click_count' => $goods['click_count'] + 1]); // 统计点击数
+        M('goods_click')->add(['goods_id' => $goods['goods_id'], 'user_id' => $this->user_id ?? 0, 'add_time' => NOW_TIME]); // 点击记录
         $originalImg = getFullPath($goods['original_img']);
         $goodsInfo = [
             'goods_type' => 'normal',
@@ -928,7 +931,7 @@ class Goods extends Base
         if ($goods['zone'] != 3) {
             // 促销
             $promotion = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
-                ->where(['gtg.goods_id' => $goods_id, 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
+                ->where(['gtg.goods_id' => $goods_id, 'gtg.item_id' => $itemId, 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
                 ->field('pg.id prom_id, pg.title, pg.type, pg.expression')->order('expression desc');
             if ($this->user_id) {
                 $promotion = $promotion->where(['pg.group' => ['LIKE', '%' . $this->user['distribut_level'] . '%']]);
@@ -1136,7 +1139,7 @@ class Goods extends Base
             }
             // 促销
             $promotion = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
-                ->where(['gtg.goods_id' => $goodsId, 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
+                ->where(['gtg.goods_id' => $goodsId, 'gtg.item_id' => $itemId, 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
                 ->field('pg.id prom_id, pg.title, pg.type, pg.expression')->order('expression desc');
             if ($this->user_id) {
                 $promotion = $promotion->where(['pg.group' => ['LIKE', '%' . $this->user['distribut_level'] . '%']]);
