@@ -842,28 +842,30 @@ class Report extends Base
         return $this->fetch();
     }
 
-
     public function clickTop()
     {
         $goods_name = I('goods_name');
         $sort = I('sort', 'DESC');
+        $fromTime = I('from_time', '');
+        $toTime = I('to_time', '');
         $where = [];
         if (!empty($goods_name)) {
             $where['g.goods_name'] = ['like', "%{$goods_name}%"];
         }
-        $count = Db::name('goods')->alias('g')->where($where)->count();
-        $Page = new Page($count, $this->page_size);
-        $res = Db::name('goods')->alias('g')
-            ->field('g.*')
-            ->where($where)->order('g.click_count ' . $sort)
-            ->limit($Page->firstRow, $Page->listRows)->cache(true, 3600)->select();
-
-        $is_export = I('is_export');
-        if (1 == $is_export) {
-            $res = Db::name('goods')->alias('g')
-                ->field('g.*')
-                ->where($where)->order('g.click_count ' . $sort)
-                ->cache(true, 3600)->select();
+        if (I('is_export')) {
+            if (!empty($fromTime) && !empty($toTime)) {
+                // 点击统计
+                $res = M('goods_click gc')->join('goods g', 'g.goods_id = gc.goods_id')
+                    ->where($where)
+                    ->where(['gc.add_time' => ['BETWEEN', [strtotime($fromTime), strtotime($toTime)]], 'gc.is_first' => 0])
+                    ->group('gc.goods_id')->order('click_count ' . $sort)
+                    ->field('gc.goods_id, count(gc.id) click_count, g.goods_name, g.goods_sn, g.is_on_sale')->select();
+            } else {
+                $res = Db::name('goods')->alias('g')
+                    ->field('g.*')
+                    ->where($where)->order('g.click_count ' . $sort)
+                    ->select();
+            }
             $strTable = '<table width="500" border="1">';
             $strTable .= '<tr>';
             $strTable .= '<td style="text-align:center;font-size:12px;" width="*">排行</td>';
@@ -892,15 +894,41 @@ class Report extends Base
             unset($res);
             downloadExcel($strTable, 'saleTopRes');
             exit();
+        } else {
+            if (!empty($fromTime) && !empty($toTime)) {
+                $fromTime = str_replace('+', ' ', $fromTime);
+                $toTime = str_replace('+', ' ', $toTime);
+                $count = M('goods_click gc')->join('goods g', 'g.goods_id = gc.goods_id')
+                    ->where($where)
+                    ->where(['gc.add_time' => ['BETWEEN', [strtotime($fromTime), strtotime($toTime)]], 'gc.is_first' => 0])
+                    ->group('gc.goods_id')
+                    ->count();
+                $Page = new Page($count, $this->page_size);
+                // 点击统计
+                $res = M('goods_click gc')->join('goods g', 'g.goods_id = gc.goods_id')
+                    ->where($where)
+                    ->where(['gc.add_time' => ['BETWEEN', [strtotime($fromTime), strtotime($toTime)]], 'gc.is_first' => 0])
+                    ->group('gc.goods_id')->order('click_count ' . $sort)
+                    ->limit($Page->firstRow, $Page->listRows)
+                    ->field('gc.goods_id, count(gc.id) click_count, g.goods_name, g.goods_sn, g.is_on_sale')->select();
+            } else {
+                $count = Db::name('goods')->alias('g')->where($where)->count();
+                $Page = new Page($count, $this->page_size);
+                $res = Db::name('goods')->alias('g')
+                    ->field('g.*')
+                    ->where($where)->order('g.click_count ' . $sort)
+                    ->limit($Page->firstRow, $Page->listRows)->select();
+            }
+            $this->assign('list', $res);
+            $this->assign('page', $Page);
+            $this->assign('p', I('p/d', 1));
+            $this->assign('page_size', $this->page_size);
+            $this->assign('sort', $sort);
+            $this->assign('from_time', $fromTime);
+            $this->assign('to_time', $toTime);
+
+            return $this->fetch();
         }
-
-        $this->assign('list', $res);
-        $this->assign('page', $Page);
-        $this->assign('p', I('p/d', 1));
-        $this->assign('page_size', $this->page_size);
-        $this->assign('sort', $sort);
-
-        return $this->fetch();
     }
 
     public function export_user_top()

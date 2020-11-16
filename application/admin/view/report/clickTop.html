@@ -30,17 +30,26 @@
 			</div>
 			<div title="刷新数据" class="pReload"><i class="fa fa-refresh"></i></div>
 			<form class="navbar-form form-inline" id="search-form" method="post" action="{:U('Report/clickTop')}" onSubmit="return check_form();">
-				<input type="hidden" name="is_export" id="is_export" value="0">
+				<input type="hidden" name="change_sort" id="change_sort" value="1">
+				<input type="hidden" name="is_export" value="0">
 				<input type="hidden" name="sort" id="sort" value="{$sort}">
 				<div class="sDiv">
+					<div class="sDiv2" style="margin-right: 10px;">
+						<input type="text" size="30" name="from_time" id="from_time" value="{$from_time}" placeholder="起始时间" class="qsbox">
+						<input type="button" class="btn" value="起始时间">
+					</div>
+					<div class="sDiv2" style="margin-right: 10px;">
+						<input type="text" size="30" name="to_time" id="to_time" value="{$to_time}" placeholder="截止时间" class="qsbox">
+						<input type="button" class="btn" value="截止时间">
+					</div>
 					<div class="sDiv2" style="margin-right: 10px;">
 						<input type="text" size="30" name="goods_name" id="goods_name" value="{$_POST[goods_name]}" placeholder="商品名称" class="qsbox">
 					</div>
 					<div class="sDiv2">
-						<input class="btn" onclick="javascript:document.getElementById('is_export').value = 0" value="搜索" type="submit">
+						<input class="btn" onclick="javascript:document.getElementById('change_sort').value = 0" value="搜索" type="submit">
 					</div>
 					<div class="sDiv2">
-						<input class="btn" onclick="javascript:document.getElementById('is_export').value = 0"
+						<input class="btn" onclick="javascript:document.getElementById('change_sort').value = 1"
 							<switch name="$sort">
 								<case value="ASC">
 									value="由多到少"
@@ -154,13 +163,13 @@
 		$('.fa-refresh').click(function () {
 			location.href = location.href;
 		});
-		$('#start_time').layDate();
-		$('#end_time').layDate();
+		$('#from_time').layDate();
+		$('#to_time').layDate();
 	});
 	
 	function check_form() {
-		var is_export = $('input[name="is_export"]').val();
-		if (is_export == 0) {
+		var change_sort = $('input[name="change_sort"]').val();
+		if (change_sort == 1) {
 			var sort = $('input[name="sort"]').val();
 			switch (sort) {
 				case 'DESC':
@@ -175,13 +184,6 @@
 	}
 
 	function exportReport() {
-		var selected_ids = '';
-		$('.trSelected', '#flexigrid').each(function (i) {
-			selected_ids += $(this).data('id') + ',';
-		});
-		if (selected_ids != '') {
-			$('input[name="ids"]').val(selected_ids.substring(0, selected_ids.length - 1));
-		}
 		$('input[name="is_export"]').val(1);
 		$('#search-form').submit();
 	}
