@@ -316,12 +316,12 @@ class Pay
             foreach ($res['data'] as $v) {
                 if ($v['goods_count'] <= 0 || $v['goods_count'] < $supplierGoodsData[$v['goods_id']]['goods_num']) {
                     // 通知仓储系统
-                    (new Goods())->goodsErrorHandle(1, $v['goods_id']);
-                    throw new TpshopException('获取供应链商品地区购买限制失败', 0, ['status' => 0, 'msg' => $v['goods_name'] . ' 库存不足']);
+//                    (new Goods())->goodsErrorHandle(1, $v['goods_id']);
+                    throw new TpshopException('获取供应链商品地区购买限制失败', 0, ['status' => 0, 'msg' => $v['goods_name'] . ' 当前地区库存不足']);
                 }
                 if (isset($v['isNoStock']) && $v['isNoStock'] == true) {
                     // 通知仓储系统
-                    (new Goods())->goodsErrorHandle(1, $v['goods_id']);
+//                    (new Goods())->goodsErrorHandle(1, $v['goods_id']);
                     throw new TpshopException('获取供应链商品地区购买限制失败', 0, ['status' => 0, 'msg' => $v['goods_name'] . ' 当前地区无库存']);
                 }
                 if (isset($v['isNoGoods']) && $v['isNoGoods'] == true) {
@@ -1366,9 +1366,14 @@ class Pay
             $goods_tao_grade = M('goods_tao_grade')
                 ->alias('g')
                 ->join('prom_goods pg', "g.promo_id = pg.id and pg.group like '%" . $user_info['distribut_level'] . "%' and pg.start_time <= " . NOW_TIME . " and pg.end_time >= " . NOW_TIME . " and pg.is_end = '0' and pg.is_open = 1 and pg.min_num <= " . $v["goods_num"])
-                ->where(array('g.goods_id' => $v['goods_id']))
-                ->field('pg.id, pg.title, pg.type, pg.goods_num, pg.goods_price, pg.buy_limit, pg.expression')
-                ->select();
+                ->where(array('g.goods_id' => $v['goods_id']));
+            if (isset($v['item_id']) && $v['item_id'] > 0) {
+                $goods_tao_grade = $goods_tao_grade->where(['g.item_id' => $v['item_id']]);
+            } elseif (isset($v['spec_key']) && $v['spec_key'] > 0) {
+                $itemId = M('spec_goods_price')->where(['key' => $v['spec_key']])->value('item_id');
+                $goods_tao_grade = $goods_tao_grade->where(['g.item_id' => $itemId]);
+            }
+            $goods_tao_grade = $goods_tao_grade->field('pg.id, pg.title, pg.type, pg.goods_num, pg.goods_price, pg.buy_limit, pg.expression')->select();
             $is_can_buy = true;
             if ($goods_tao_grade) {
                 foreach ($goods_tao_grade as $key => $group_activity) {

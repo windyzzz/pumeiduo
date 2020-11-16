@@ -1325,12 +1325,13 @@ function orderBtn($order_id = 0, $order = [])
 function set_btn_order_status($order)
 {
     $order_status_arr = C('ORDER_STATUS_DESC');
-    $order['order_status_code'] = $order_status_code = orderStatusDesc(0, $order); // 订单状态显示给用户看的
+    $order['order_status_code'] = orderStatusDesc(0, $order); // 订单状态显示给用户看的
+    $order['order_status_code'] == 'AFTER-SALES' || $order['order_status_code'] == 'WAITCCOMMENT' ? $order['order_status_code'] = 'FINISH' : $order['order_status_code'];
 
-    if ($order_status_code == 'WAITSEND' && $order['order_status'] == 1) {
+    if ($order['order_status_code'] == 'WAITSEND' && $order['order_status'] == 1) {
         $order['order_status_desc'] = '商家已确认，等待发货';
     } else {
-        $order['order_status_desc'] = $order_status_arr[$order_status_code];
+        $order['order_status_desc'] = $order_status_arr[$order['order_status_code']];
     }
 
     $orderBtnArr = orderBtn(0, $order);

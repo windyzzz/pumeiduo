@@ -325,7 +325,7 @@ class Activity extends Base
         ];
         $promActivity = M('prom_activity')->where(['module_type' => 1, 'is_open' => 1])->find();
         if (!empty($promActivity)) {
-            $activity['is_open'] = $promActivity['is_open'];
+            $activity['is_open'] = (int)$promActivity['is_open'];
             $activity['title'] = $promActivity['title'];
             // 优惠券信息
             $couponData = M('prom_activity_item pai')->join('coupon c', 'c.id = pai.coupon_id')
@@ -402,7 +402,7 @@ class Activity extends Base
         ];
         $promActivity = M('prom_activity')->where(['module_type' => 2, 'is_open' => 1])->find();
         if (!empty($promActivity)) {
-            $activity['is_open'] = $promActivity['is_open'];
+            $activity['is_open'] = (int)$promActivity['is_open'];
             $activity['title'] = $promActivity['title'];
             // 商品列表
             $goodsIds = M('prom_activity_item')->where(['activity_id' => $promActivity['id']])->getField('goods_id', true);
@@ -437,7 +437,7 @@ class Activity extends Base
         ];
         $promActivity = M('prom_activity')->where(['module_type' => 3, 'is_open' => 1])->find();
         if (!empty($promActivity)) {
-            $activity['is_open'] = $promActivity['is_open'];
+            $activity['is_open'] = (int)$promActivity['is_open'];
             $activity['title'] = $promActivity['title'];
             // 商品列表
             $goodsIds = M('prom_activity_item')->where(['activity_id' => $promActivity['id']])->getField('goods_id', true);

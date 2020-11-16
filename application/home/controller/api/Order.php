@@ -187,8 +187,8 @@ class Order extends Base
             if ($payDeadTime < 0) {
                 $payDeadTime = "0";
             }
-            $orderList[$k] = set_btn_order_status($list);  // 添加属性  包括按钮显示属性 和 订单状态显示属性
-            $deliveryType = $list['delivery_type'];    // 1统一发货 2分开发货
+            $orderList[$k] = set_btn_order_status($list);   // 添加属性  包括按钮显示属性 和 订单状态显示属性
+            $deliveryType = $list['delivery_type'];         // 1统一发货 2分开发货
             switch ($list['order_type']) {
                 case 3:
                     if (M('order')->where(['parent_id' => $list['order_id'], 'order_type' => 1])->find()) {
@@ -202,9 +202,9 @@ class Order extends Base
                     'order_id' => $list['order_id'],
                     'order_sn' => $list['order_sn'],
                     'order_status' => $list['order_status'],
-                    'pay_status' => $list['order_status'],
-                    'shipping_status' => $list['order_status'],
-                    'order_status_code' => $orderList[$k]['order_status_code'] == 'AFTER-SALES' || $orderList[$k]['order_status_code'] == 'WAITCCOMMENT' ? 'FINISH' : $orderList[$k]['order_status_code'],
+                    'pay_status' => $list['pay_status'],
+                    'shipping_status' => $list['shipping_status'],
+                    'order_status_code' => $orderList[$k]['order_status_code'],
                     'order_status_desc' => $orderList[$k]['order_status_desc'],
                     'order_amount' => $list['order_amount'],
                     'shipping_price' => $list['shipping_price'],
@@ -416,8 +416,8 @@ class Order extends Base
             'order_sn' => $orderInfo['order_sn'],
             'transaction_id' => $orderInfo['transaction_id'] ?? '',
             'order_status' => $orderInfo['order_status'],
-            'pay_status' => $orderInfo['order_status'],
-            'shipping_status' => $orderInfo['order_status'],
+            'pay_status' => $orderInfo['pay_status'],
+            'shipping_status' => $orderInfo['shipping_status'],
             'order_status_code' => $orderInfo['order_status_code'] == 'AFTER-SALES' || $orderInfo['order_status_code'] == 'WAITCCOMMENT' ? 'FINISH' : $orderInfo['order_status_code'],
             'order_status_desc' => $orderInfo['order_status_desc'],
             'pay_code' => $orderInfo['pay_code'],
@@ -463,7 +463,7 @@ class Order extends Base
         if ($orderData['delivery']['city_name'] == '直辖区') {
             $orderData['delivery']['city_name'] = '';
         }
-        if ($orderInfo['order_status_code'] == 'AFTER-SALES' || $orderInfo['order_status_code'] == 'WAITCCOMMENT' || $orderInfo['order_status_code'] == 'FINFISH') {
+        if ($orderInfo['order_status_code'] == 'AFTER-SALES' || $orderInfo['order_status_code'] == 'WAITCCOMMENT' || $orderInfo['order_status_code'] == 'FINISH') {
             $canReturn = $orderInfo['end_sale_time'] > time() ? true : false;   // 能否退货
         } else {
             $canReturn = false;
