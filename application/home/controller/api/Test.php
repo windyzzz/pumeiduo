@@ -8,82 +8,79 @@ use think\Loader;
 class Test
 {
 
-    public function combinePic()
+    public function combinePic($pic1_path, $head_pic_path, $nickname)
     {
         /*
          * 上部分图
          */
-//        $pic1_path = 'public/upload/share/goods/pic1.png';
-//        $ext1 = pathinfo($pic1_path);
-//        $pic1 = imagecreatefromstring(file_get_contents($pic1_path));
-//        $pic1_width = imagesx($pic1);
-//        $pic1_height = imagesy($pic1);
-//        // 用户头像
-//        $head_pic_path = 'public/upload/share/goods/12.jpg';
-////        $head_pic_path = $this->img_YJ($head_pic_path);     // 圆角处理
-//        $head_pic = imagecreatefromstring(file_get_contents($head_pic_path));
-//        $head_width = imagesx($head_pic);       // 头像原本宽
-//        $head_height = imagesy($head_pic);      // 头像原本高
-//        $head_pic1_width = 112;                  // 嵌入头像的宽
-//        $head_pic1_height = 112;                 // 嵌入头像的高
-//        $from_x = ($pic1_width - $head_pic1_width) / 2;   // 组合之后头像左上角所在坐标点x
-//        $from_y = 40;                                     // 组合之后头像左上角所在坐标点y
-//        imagecopyresampled($pic1, $head_pic, $from_x, $from_y, 0, 0, $head_pic1_width, $head_pic1_height, $head_width, $head_height);
-//        // 用户昵称
-//        $font = "public/upload/share/goods/simhei.ttf";
-//        $nickname = '会员 今晚打老虎';
-//        $color = imagecolorallocate($pic1, 255, 255, 255);
-//        $fontPos = imagettfbbox(14, 0, $font, $nickname);       // 字体四角位置信息
-//        $font_x = ($pic1_width - $fontPos[2]) / 2;              // 嵌入字体x轴的位置
-//        $font_y = 190;                                          // 嵌入字体y轴的位置
-//        imagettftext($pic1, 14, 0, $font_x, $font_y, $color, $font, $nickname);
-//        // 输出图片
-//        switch ($ext1['extension']) {
-//            case 'jpg':
-//                imagejpeg($pic1, $pic1_path);
-//                break;
-//            case 'png':
-//                imagepng($pic1, $pic1_path);
-//                break;
-//        }
-//        imagedestroy($pic1);
-//        $pic1 = imagecreatefromstring(file_get_contents($pic1_path));
-//        // 背景图
-//        $bg_width = 540;    // 背景图片宽度
-//        $bg_height = 770;   // 背景图片高度
-//        $background = imagecreatetruecolor($bg_width, $bg_height);  // 背景图片
-//        $color = imagecolorallocate($background, 202, 201, 201);    // 为真彩色画布创建白色背景，再设置为透明
-//        imagefill($background, 0, 0, $color);
+        $ext1 = pathinfo($pic1_path);
+        $pic1 = imagecreatefromstring(file_get_contents($pic1_path));
+        $pic1_width = imagesx($pic1);
+        $pic1_height = imagesy($pic1);
+        // 用户头像
+//        $head_pic_path = $this->img_YJ($head_pic_path);     // 圆角处理
+        $head_pic = imagecreatefromstring(file_get_contents($head_pic_path));
+        $head_width = imagesx($head_pic);       // 头像原本宽
+        $head_height = imagesy($head_pic);      // 头像原本高
+        $head_pic1_width = 150;                  // 嵌入头像的宽
+        $head_pic1_height = 150;                 // 嵌入头像的高
+        $from_x = ($pic1_width - $head_pic1_width) / 2;   // 组合之后头像左上角所在坐标点x
+        $from_y = 60;                                     // 组合之后头像左上角所在坐标点y
+        imagecopyresampled($pic1, $head_pic, $from_x, $from_y, 0, 0, $head_pic1_width, $head_pic1_height, $head_width, $head_height);
+        // 用户昵称
+        $font = "public/upload/share/goods/simhei.ttf";
+        $nickname = '会员 ' . $nickname;
+        $color = imagecolorallocate($pic1, 255, 255, 255);
+        $fontPos = imagettfbbox(21, 0, $font, $nickname);       // 字体四角位置信息
+        $font_x = ($pic1_width - $fontPos[2]) / 2;              // 嵌入字体x轴的位置
+        $font_y = 260;                                          // 嵌入字体y轴的位置
+        imagettftext($pic1, 21, 0, $font_x, $font_y, $color, $font, $nickname);
+        // 输出图片
+        switch ($ext1['extension']) {
+            case 'jpg':
+                imagejpeg($pic1, $pic1_path);
+                break;
+            case 'png':
+                imagepng($pic1, $pic1_path);
+                break;
+        }
+        imagedestroy($pic1);
+        $pic1 = imagecreatefromstring(file_get_contents($pic1_path));
+        // 背景图
+        $bg_width = 810;    // 背景图片宽度
+        $bg_height = 1302;   // 背景图片高度
+        $background = imagecreatetruecolor($bg_width, $bg_height);  // 背景图片
+        $color = imagecolorallocate($background, 255, 255, 255);
+        imagefill($background, 0, 0, $color);
 //        imageColorTransparent($background, $color);
-//        imagecopyresampled($background, $pic1, 0, 0, 0, 0, $pic1_width, $pic1_height, $pic1_width, $pic1_height);
-//        // 输出图片
-//        switch ($ext1['extension']) {
-//            case 'jpg':
-//                imagejpeg($background, $pic1_path);
-//                break;
-//            case 'png':
-//                imagepng($background, $pic1_path);
-//                break;
-//        }
-//        imagedestroy($background);
-//        imagedestroy($pic1);
+        imagecopyresampled($background, $pic1, 0, 0, 0, 0, $pic1_width, $pic1_height, $pic1_width, $pic1_height);
+        // 输出图片
+        switch ($ext1['extension']) {
+            case 'jpg':
+                imagejpeg($background, $pic1_path);
+                break;
+            case 'png':
+                imagepng($background, $pic1_path);
+                break;
+        }
+        imagedestroy($background);
         /*
          * 下部分图
          */
         $pic2_path = 'public/upload/share/goods/pic2.png';
         $ext2 = pathinfo($pic2_path);
         $pic2 = imagecreatefromstring(file_get_contents($pic2_path));
-        $pic2_width = imagesx($pic2);
-        $pic2_height = imagesy($pic2);
+//        $pic2_width = imagesx($pic2);
+//        $pic2_height = imagesy($pic2);
         // 二维码
         $qr_path = 'public/upload/share/goods/goods_1_166.png';
         $qr = imagecreatefromstring(file_get_contents($qr_path));
         $qr_width = imagesx($qr);       // 二维码原本宽
         $qr_height = imagesy($qr);      // 二维码原本高
-        $qr_pic2_width = 112;                  // 嵌入二维码的宽
-        $qr_pic2_height = 112;                 // 嵌入二维码的高
-        $from_x = 24;                   // 组合之后二维码左上角所在坐标点x
-        $from_y = 10;                   // 组合之后二维码左上角所在坐标点y
+        $qr_pic2_width = 168;                  // 嵌入二维码的宽
+        $qr_pic2_height = 168;                 // 嵌入二维码的高
+        $from_x = 72;                   // 组合之后二维码左上角所在坐标点x
+        $from_y = 30;                   // 组合之后二维码左上角所在坐标点y
         imagecopyresampled($pic2, $qr, $from_x, $from_y, 0, 0, $qr_pic2_width, $qr_pic2_height, $qr_width, $qr_height);
         // 输出图片
         switch ($ext2['extension']) {
@@ -94,8 +91,51 @@ class Test
                 imagepng($pic2, $pic2_path);
                 break;
         }
-        imagedestroy($pic2);
         imagedestroy($qr);
+        // logo
+        $logo_path = 'public/upload/share/goods/logo.png';
+        $logo = imagecreatefromstring(file_get_contents($logo_path));
+        $logo_width = imagesx($logo);       // logo原本宽
+        $logo_height = imagesy($logo);      // logo原本高
+        $logo_pic2_width = 420;                  // 嵌入logo的宽
+        $logo_pic2_height = 90;                 // 嵌入logo的高
+        $from_x = 339;                   // 组合之后logo左上角所在坐标点x
+        $from_y = 96;                   // 组合之后logo左上角所在坐标点y
+        imagecopyresampled($pic2, $logo, $from_x, $from_y, 0, 0, $logo_pic2_width, $logo_pic2_height, $logo_width, $logo_height);
+        // 输出图片
+        switch ($ext2['extension']) {
+            case 'jpg':
+                imagejpeg($pic2, $pic2_path);
+                break;
+            case 'png':
+                imagepng($pic2, $pic2_path);
+                break;
+        }
+        imagedestroy($logo);
+        /*
+         * 上下图组合
+         */
+        $ext1 = pathinfo($pic1_path);
+        $pic1 = imagecreatefromstring(file_get_contents($pic1_path));
+//        $pic1_width = imagesx($pic1);
+        $pic1_height = imagesy($pic1);
+        $pic2 = imagecreatefromstring(file_get_contents($pic2_path));
+        $pic2_width = imagesx($pic2);
+        $pic2_height = imagesy($pic2);
+        $from_x = 0;                                    // 组合的下图左上角所在坐标点x
+        $from_y = ($pic1_height - $pic2_height);        // 组合的下图左上角所在坐标点y
+        imagecopyresampled($pic1, $pic2, $from_x, $from_y, 0, 0, $pic2_width, $pic2_height, $pic2_width, $pic2_height);
+        // 输出图片
+        switch ($ext1['extension']) {
+            case 'jpg':
+                imagejpeg($pic1, $pic1_path);
+                break;
+            case 'png':
+                imagepng($pic1, $pic1_path);
+                break;
+        }
+        imagedestroy($pic1);
+        imagedestroy($pic2);
         exit();
     }
 

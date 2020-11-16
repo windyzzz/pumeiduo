@@ -1,11 +1,36 @@
 <include file="public/layout"/>
 <style>
-    .system_img_location {
+    .ys-btn-close {
+        position: relative;
+        top: -12px;
+        left: -16px;
+        width: 18px;
+        height: 18px;
+        border: 1px solid #ccc;
+        line-height: 18px;
         text-align: center;
-        width: 120px;
+        display: inline-block;
+        border-radius: 50%;
+        z-index: 1;
+        background-color: #fff;
+        cursor: pointer;
+    }
+    .selected-group-goods {
+        background-color: #FFF;
+        width: 405px;
+        padding: 9px;
+        margin-bottom: 10px;
+        border: solid 1px #E6E6E6;
+        box-shadow: 2px 2px 0 rgba(153,153,153,0.1);
+    }
+    .type-file-file2 {
+        width: 100px;
+        height: 26px;
         position: absolute;
-        top: 15px;
-        margin-left: 265px;
+        top: 0px;
+        right: 0px;
+        opacity: 0;
+        cursor: pointer;
     }
 </style>
 <body style="background-color: #FFF; overflow: auto;">
@@ -73,6 +98,58 @@
                     <p class="notic">天数</p>
                 </dd>
             </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>商品分享码背景图</label>
+                </dt>
+                <dd class="opt">
+                    <div class="input-file-show" style="padding-left: 0px;">
+                            <input type="button" name="button" value="选择上传..." class="type-file-button">
+                            <input class="type-file-file2" onClick="GetUploadify(1,'share_goods','share','img_call_back2')" size="30" hidefocus="true" nc_type="change_site_logo">
+                    </div>
+                    <span class="err"></span>
+                    <p class="notic">商品分享码背景图</p>
+                    <div style="overflow: hidden;" id="share_goods">
+                        <volist name="share_bg[goods]" id="goods">
+                            <div style="float: left;margin-right: 20px">
+                                <div class="ys-btn-close" style="top: 10px;left: 415px;">×</div>
+                                <div class="selected-group-goods">
+                                    <div class="goods-thumb">
+                                        <input type="hidden" name="share_bg_goods[]" value="{$goods}">
+                                        <img style="width: 405px;height: 504px" src="{$goods}"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </volist>
+                    </div>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>用户个人分享码背景图</label>
+                </dt>
+                <dd class="opt">
+                    <div class="input-file-show" style="padding-left: 0px;">
+                        <input type="button" name="button" value="选择上传..." class="type-file-button">
+                        <input class="type-file-file2" onClick="GetUploadify(1,'share_user','share','img_call_back2')" size="30" hidefocus="true" nc_type="change_site_logo">
+                    </div>
+                    <span class="err"></span>
+                    <p class="notic">用户个人分享码背景图</p>
+                    <div style="overflow: hidden;" id="share_user">
+                        <volist name="share_bg[user]" id="user">
+                            <div style="float: left;margin-right: 20px">
+                                <div class="ys-btn-close" style="top: 10px;left: 415px;">×</div>
+                                <div class="selected-group-goods">
+                                    <div class="goods-thumb">
+                                        <input type="hidden" name="share_bg_user[]" value="{$user}">
+                                        <img style="width: 405px;height: 504px" src="{$user}"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </volist>
+                    </div>
+                </dd>
+            </dl>
             <div class="bot">
                 <input type="hidden" name="inc_type" value="{$inc_type}">
                 <a href="JavaScript:void(0);" class="ncap-btn-big ncap-btn-green"
@@ -87,11 +164,37 @@
 </div>
 </body>
 <script type="text/javascript">
-    //网站图标
+    $(function () {
+        $(document).on("click", '.ys-btn-close', function (e) {
+            $(this).parent().remove();
+        })
+    });
+
     function img_call_back(fileurl_tmp, elementid) {
         $("#" + elementid).val(fileurl_tmp);
         $("#" + elementid + '_a').attr('href', fileurl_tmp);
         $("#" + elementid + '_i').attr('onmouseover', "layer.tips('<img src=" + fileurl_tmp + ">',this,{tips: [1, '#fff']});");
+    }
+
+    function img_call_back2(fileurl_tmp, elementid) {
+        switch (elementid) {
+            case 'share_goods':
+                var name = 'share_bg_goods[]';
+                break;
+            case 'share_user':
+                var name = 'share_bg_user[]';
+                break;
+        }
+        var div = '<div style="float: left;margin-right: 20px">' +
+            '           <div class="ys-btn-close" style="top: 10px;left: 415px;">×</div>' +
+            '               <div class="selected-group-goods">' +
+            '                   <div class="goods-thumb">' +
+            '                       <input type="hidden" name="' + name + '" value="' + fileurl_tmp + '">' +
+            '                   <img style="width: 405px;height: 504px" src="' + fileurl_tmp + '"/>' +
+            '                </div>' +
+            '           </div>' +
+            '      </div>';
+        $('#' + elementid).append(div);
     }
 </script>
 </html>

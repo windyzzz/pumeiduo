@@ -15,6 +15,7 @@ use app\admin\logic\GoodsLogic;
 use app\admin\model\AppIcon;
 use app\admin\model\AppIconConfig;
 use app\common\logic\ModuleLogic;
+use app\common\model\ShareBg;
 use think\Cache;
 use think\db;
 use think\Page;
@@ -113,13 +114,33 @@ class System extends Base
         }
         $this->assign('inc_type', $inc_type);
         $config = tpCache($inc_type);
-        if ('shop_info' == $inc_type) {
-            $province = M('region2')->where(['parent_id' => 0])->select();
-            $city = M('region2')->where(['parent_id' => $config['province']])->select();
-            $area = M('region2')->where(['parent_id' => $config['city']])->select();
-            $this->assign('province', $province);
-            $this->assign('city', $city);
-            $this->assign('area', $area);
+        switch ($inc_type) {
+            case 'shop_info':
+                $province = M('region2')->where(['parent_id' => 0])->select();
+                $city = M('region2')->where(['parent_id' => $config['province']])->select();
+                $area = M('region2')->where(['parent_id' => $config['city']])->select();
+                $this->assign('province', $province);
+                $this->assign('city', $city);
+                $this->assign('area', $area);
+                break;
+            case 'share':
+                $shareBg = M('share_bg')->select();
+                $shareBgList = [
+                    'goods' => [],
+                    'user' => []
+                ];
+                foreach ($shareBg as $item) {
+                    switch ($item['type']) {
+                        case 'goods':
+                            $shareBgList['goods'][] = $item['image'];
+                            break;
+                        case 'user':
+                            $shareBgList['user'][] = $item['image'];
+                            break;
+                    }
+                }
+                $this->assign('share_bg', $shareBgList);
+                break;
         }
         $this->assign('config', $config); //当前配置项
         //C('TOKEN_ON',false);
@@ -136,6 +157,30 @@ class System extends Base
         $inc_type = $param['inc_type'];
         //unset($param['__hash__']);
         unset($param['inc_type']);
+        if (isset($param['share_bg_goods'])) {
+            M('share_bg')->where(['type' => 'goods'])->delete();
+            $shareBgGoods = [];
+            foreach ($param['share_bg_goods'] as $goods) {
+                $shareBgGoods[] = [
+                    'type' => 'goods',
+                    'image' => $goods
+                ];
+            }
+            (new ShareBg())->saveAll($shareBgGoods);
+            unset($param['share_bg_goods']);
+        }
+        if (isset($param['share_bg_user'])) {
+            M('share_bg')->where(['type' => 'user'])->delete();
+            $shareBgUser = [];
+            foreach ($param['share_bg_user'] as $user) {
+                $shareBgUser[] = [
+                    'type' => 'user',
+                    'image' => $user
+                ];
+            }
+            (new ShareBg())->saveAll($shareBgUser);
+            unset($param['share_bg_user']);
+        }
         tpCache($inc_type, $param);
         $this->success('操作成功', U('System/index', ['inc_type' => $inc_type]));
     }
