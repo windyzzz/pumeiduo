@@ -619,7 +619,7 @@ class Goods extends Base
         if ($zone != 3) {
             // 促销
             $goods['promotion'] = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
-                ->where(['gtg.goods_id' => $goods_id, 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
+                ->where(['gtg.goods_id' => $goods_id, 'gtg.item_id' => $itemId, 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
                 ->field('pg.id prom_id, pg.type, pg.title, pg.expression');
             if ($this->user_id) {
                 $goods['promotion'] = $goods['promotion']->where(['pg.group' => ['LIKE', '%' . $this->user['distribut_level'] . '%']]);
@@ -928,7 +928,7 @@ class Goods extends Base
         if ($goods['zone'] != 3) {
             // 促销
             $promotion = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
-                ->where(['gtg.goods_id' => $goods_id, 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
+                ->where(['gtg.goods_id' => $goods_id, 'gtg.item_id' => $itemId, 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
                 ->field('pg.id prom_id, pg.title, pg.type, pg.expression')->order('expression desc');
             if ($this->user_id) {
                 $promotion = $promotion->where(['pg.group' => ['LIKE', '%' . $this->user['distribut_level'] . '%']]);
@@ -1136,7 +1136,7 @@ class Goods extends Base
             }
             // 促销
             $promotion = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
-                ->where(['gtg.goods_id' => $goodsId, 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
+                ->where(['gtg.goods_id' => $goodsId, 'gtg.item_id' => $itemId, 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
                 ->field('pg.id prom_id, pg.title, pg.type, pg.expression')->order('expression desc');
             if ($this->user_id) {
                 $promotion = $promotion->where(['pg.group' => ['LIKE', '%' . $this->user['distribut_level'] . '%']]);
