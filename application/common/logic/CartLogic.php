@@ -928,7 +928,8 @@ class CartLogic extends Model
     public function getUserCartGoodsNum($source = 1)
     {
         $where = [
-            'c.goods_num' => ['NEQ', 0]
+            'c.goods_num' => ['NEQ', 0],
+            'c.prom_type' => ['NEQ', 2]
         ];
         switch ($source) {
             case 1:
