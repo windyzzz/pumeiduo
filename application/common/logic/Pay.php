@@ -1367,8 +1367,11 @@ class Pay
                 ->alias('g')
                 ->join('prom_goods pg', "g.promo_id = pg.id and pg.group like '%" . $user_info['distribut_level'] . "%' and pg.start_time <= " . NOW_TIME . " and pg.end_time >= " . NOW_TIME . " and pg.is_end = '0' and pg.is_open = 1 and pg.min_num <= " . $v["goods_num"])
                 ->where(array('g.goods_id' => $v['goods_id']));
-            if ($v['item_id'] > 0) {
+            if (isset($v['item_id']) && $v['item_id'] > 0) {
                 $goods_tao_grade = $goods_tao_grade->where(['g.item_id' => $v['item_id']]);
+            } elseif (isset($v['spec_key']) && $v['spec_key'] > 0) {
+                $itemId = M('spec_goods_price')->where(['key' => $v['spec_key']])->value('item_id');
+                $goods_tao_grade = $goods_tao_grade->where(['g.item_id' => $itemId]);
             }
             $goods_tao_grade = $goods_tao_grade->field('pg.id, pg.title, pg.type, pg.goods_num, pg.goods_price, pg.buy_limit, pg.expression')->select();
             $is_can_buy = true;
