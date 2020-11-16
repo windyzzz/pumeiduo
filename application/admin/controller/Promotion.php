@@ -365,10 +365,8 @@ class Promotion extends Base
     public function prom_goods_save()
     {
         $prom_id = I('id/d');
-
         $data = I('post.');
         $title = input('title');
-
         /*$promGoodsValidate = Loader::validate('PromGoods');
         if(!$promGoodsValidate->batch()->check($data)){
             $return = ['status' => 0,'msg' =>'操作失败',
@@ -399,6 +397,7 @@ class Promotion extends Base
 
         if ($prom_id) {
             M('goods')->where(['prom_type' => 3, 'prom_id' => $prom_id])->save(['prom_id' => 0, 'prom_type' => 0]);
+            M('spec_goods_price')->where(['prom_type' => 3, 'prom_id' => $prom_id])->save(['prom_id' => 0, 'prom_type' => 0]);
             M('prom_goods')->where(['id' => $prom_id])->save($data);
             $last_id = $prom_id;
             adminLog("管理员修改了商品促销 " . $title);
@@ -409,18 +408,31 @@ class Promotion extends Base
 
         M('goods_tao_grade')->where(array('promo_id' => $last_id))->delete();
         $promGoods = $data['goods'];
-//        $tao_goods = array();
         if ($promGoods) {
             foreach ($promGoods as $goodsKey => $goodsVal) {
                 $dfd = explode('_', $goodsKey);
-                $tao_goods = array(
-                    'goods_id' => $dfd[0],
-                    'item_id' => $goodsVal['item_id'][0],
-                    'promo_id' => $last_id,
-                    'stock' => 1
-                );
-                M('goods_tao_grade')->data($tao_goods)->add();
-                M('goods')->where(['goods_id' => $dfd[0]])->update(['prom_type' => 3, 'prom_id' => $last_id]);
+                if (isset($goodsVal['item_id']) && is_array($goodsVal['item_id'])) {
+                    foreach ($goodsVal['item_id'] as $itemId) {
+                        $tao_goods = array(
+                            'goods_id' => $dfd[0],
+                            'item_id' => $itemId,
+                            'promo_id' => $last_id,
+                            'stock' => 1
+                        );
+                        M('goods_tao_grade')->data($tao_goods)->add();
+                        M('goods')->where(['goods_id' => $dfd[0]])->update(['prom_type' => 0, 'prom_id' => 0]);
+                        M('spec_goods_price')->where(['item_id' => $itemId])->update(['prom_type' => 3, 'prom_id' => $last_id]);
+                    }
+                } else {
+                    $tao_goods = array(
+                        'goods_id' => $dfd[0],
+                        'item_id' => 0,
+                        'promo_id' => $last_id,
+                        'stock' => 1
+                    );
+                    M('goods_tao_grade')->data($tao_goods)->add();
+                    M('goods')->where(['goods_id' => $dfd[0]])->update(['prom_type' => 3, 'prom_id' => $last_id]);
+                }
             }
 
         }
@@ -435,7 +447,7 @@ class Promotion extends Base
             $this->ajaxReturn(['status' => -1, 'msg' => '该活动有订单参与不能删除!']);
         }
         M('goods')->where("prom_id=$prom_id and prom_type=3")->save(['prom_id' => 0, 'prom_type' => 0]);
-        Db::name('spec_goods_price')->where(['prom_type' => 3, 'prom_id' => $prom_id])->save(['prom_id' => 0, 'prom_type' => 0]);
+        M('spec_goods_price')->where(['prom_type' => 3, 'prom_id' => $prom_id])->save(['prom_id' => 0, 'prom_type' => 0]);
         M('prom_goods')->where("id=$prom_id")->delete();
         $this->ajaxReturn(['status' => 1, 'msg' => '删除活动成功']);
     }
