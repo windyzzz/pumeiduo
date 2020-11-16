@@ -82,14 +82,24 @@ class UsersLogic extends Model
 
     function check_apply_customs($user_id)
     {
-        // 查看用户等级预升级记录
-        $userPreLog = M('user_pre_distribute_log')->where(['user_id' => $user_id, 'status' => 0])->order('id DESC')->find();
-        if (empty($userPreLog)) {
-            $this->error = "您尚未有资格开通金卡会员\r\n请购买SVIP升级套餐后\r\n按系统提示进行申请\r\n有任何疑问请联系客服" . tpCache('shop_info.mobile');
-            return false;
-        } else {
-            // 更新预升级记录
-            M('user_pre_distribute_log')->where(['user_id' => $user_id, 'id' => ['NEQ', $userPreLog['id']]])->update(['status' => -1]);
+        /*
+         * 用户已升级的下级
+         */
+        $memberCount = M('users')->where(['distribut_level' => ['>=', 2]])->where(['first_leader' => $user_id])->count('user_id');
+        if (tpCache('basic.apply_check_num') > $memberCount) {
+            // 不符合资格1
+            /*
+             * 查看用户等级预升级记录
+             */
+            $userPreLog = M('user_pre_distribute_log')->where(['user_id' => $user_id, 'status' => 0])->order('id DESC')->find();
+            if (empty($userPreLog)) {
+                // 不符合资格1
+                $this->error = "您尚未有资格开通金卡会员\r\n请购买SVIP升级套餐后\r\n按系统提示进行申请\r\n有任何疑问请联系客服" . tpCache('shop_info.mobile');
+                return false;
+            } else {
+                // 更新预升级记录
+                M('user_pre_distribute_log')->where(['user_id' => $user_id, 'id' => ['NEQ', $userPreLog['id']]])->update(['status' => -1]);
+            }
         }
 
         $apply_customs = M('apply_customs')->where(array('user_id' => $user_id))->find();
@@ -110,18 +120,12 @@ class UsersLogic extends Model
             $this->error = '您尚未有资格开通金卡会员';
             return false;
         }
-//        $count = M('users')->where(array('first_leader' => $user_id, 'distribut_level' => array('egt', 2)))->count();
-//        $apply_check_num = tpCache('basic.apply_check_num');
-//        if ($count < $apply_check_num) {
-//            $this->error = '您尚未有资格开通金卡会员';
-//            return false;
-//        }
 
         $this->error = '提交';
-        return true;
+        return ['order_id' => isset($userPreLog) ? $userPreLog['order_id'] : 0];
     }
 
-    function apply_customs($user_id, $data, $orderId = 0, $isApp = false)
+    function apply_customs($user_id, $data, $isApp = false)
     {
         Db::startTrans();
         $check_apply_customs = $this->check_apply_customs($user_id);
@@ -179,7 +183,7 @@ class UsersLogic extends Model
             'mobile' => $data['mobile'],
             'add_time' => NOW_TIME,
             'referee_user_id' => $referee_user_id,
-            'order_id' => $orderId,
+            'order_id' => $check_apply_customs['order_id'],
             'status' => 0,
             'success_time' => 0,
             'cancel_time' => 0,

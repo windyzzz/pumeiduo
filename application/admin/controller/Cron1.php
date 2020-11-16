@@ -12,6 +12,7 @@
 namespace app\admin\controller;
 
 use app\common\logic\SmsLogic;
+use app\common\model\GoodsClick;
 use app\common\model\GoodspvUpdateLog;
 use app\common\model\SpecialSmsLog;
 use think\Controller;
@@ -8937,6 +8938,23 @@ class Cron1 extends Controller
         M('task_log')->where(['task_id' => 4, 'created_at' => ['BETWEEN', [$time3, $time2]], 'finished_at' => ['NEQ', 0]])->update(['status' => 1]);
         Db::commit();
         var_dump(1);
+        exit();
+    }
+
+    public function initGoodsClick()
+    {
+        $goodsInfo = M('goods')->field('goods_id')->select();
+        $clickData = [];
+        foreach ($goodsInfo as $goods) {
+            $clickData[] = [
+                'goods_id' => $goods['goods_id'],
+                'user_id' => 0,
+                'add_time' => NOW_TIME,
+                'is_first' => 1
+            ];
+        }
+        (new GoodsClick())->saveAll($clickData);
+        var_dump(11);
         exit();
     }
 }
