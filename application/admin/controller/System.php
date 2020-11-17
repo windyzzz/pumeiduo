@@ -156,32 +156,42 @@ class System extends Base
         $param = I('post.');
         $inc_type = $param['inc_type'];
         //unset($param['__hash__']);
+        Db::startTrans();
+        if ($param['inc_type'] == 'share') {
+            if (isset($param['share_bg_goods'])) {
+                M('share_bg')->where(['type' => 'goods'])->delete();
+                $shareBgGoods = [];
+                foreach ($param['share_bg_goods'] as $goods) {
+                    $shareBgGoods[] = [
+                        'type' => 'goods',
+                        'image' => $goods
+                    ];
+                }
+                (new ShareBg())->saveAll($shareBgGoods);
+                unset($param['share_bg_goods']);
+            } else {
+                Db::rollback();
+                $this->error('请上传商品分享码背景图', U('System/index', ['inc_type' => $inc_type]));
+            }
+            if (isset($param['share_bg_user'])) {
+                M('share_bg')->where(['type' => 'user'])->delete();
+                $shareBgUser = [];
+                foreach ($param['share_bg_user'] as $user) {
+                    $shareBgUser[] = [
+                        'type' => 'user',
+                        'image' => $user
+                    ];
+                }
+                (new ShareBg())->saveAll($shareBgUser);
+                unset($param['share_bg_user']);
+            } else {
+                Db::rollback();
+                $this->error('请上传个人分享码背景图', U('System/index', ['inc_type' => $inc_type]));
+            }
+        }
         unset($param['inc_type']);
-        if (isset($param['share_bg_goods'])) {
-            M('share_bg')->where(['type' => 'goods'])->delete();
-            $shareBgGoods = [];
-            foreach ($param['share_bg_goods'] as $goods) {
-                $shareBgGoods[] = [
-                    'type' => 'goods',
-                    'image' => $goods
-                ];
-            }
-            (new ShareBg())->saveAll($shareBgGoods);
-            unset($param['share_bg_goods']);
-        }
-        if (isset($param['share_bg_user'])) {
-            M('share_bg')->where(['type' => 'user'])->delete();
-            $shareBgUser = [];
-            foreach ($param['share_bg_user'] as $user) {
-                $shareBgUser[] = [
-                    'type' => 'user',
-                    'image' => $user
-                ];
-            }
-            (new ShareBg())->saveAll($shareBgUser);
-            unset($param['share_bg_user']);
-        }
         tpCache($inc_type, $param);
+        Db::commit();
         $this->success('操作成功', U('System/index', ['inc_type' => $inc_type]));
     }
 
