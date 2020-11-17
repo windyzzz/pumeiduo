@@ -7,6 +7,15 @@ use think\Url;
 
 class Share extends Base
 {
+    
+    public function __construct()
+    {
+        parent::__construct();
+        if ($this->passAuth) {
+            die(json_encode(['status' => -999, 'msg' => '请先登录']));
+        }
+    }
+
     /**
      * 获取分享链接
      * @return \think\response\Json
@@ -64,6 +73,9 @@ class Share extends Base
      */
     public function qrCodeLink()
     {
+        if (!$this->user) {
+            return json(['status' => 0, 'msg' => '请先登录']);
+        }
         // 用户头像
         $headPic = $this->user['head_pic'];
         $headPicPath = simplifyPath($headPic);  // 过滤域名
