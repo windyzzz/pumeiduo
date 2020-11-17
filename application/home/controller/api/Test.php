@@ -8,7 +8,7 @@ use think\Loader;
 class Test
 {
 
-    public function combinePic($pic1_path, $head_pic_path, $nickname)
+    public function combinePic($pic1_path, $head_pic_path, $nickname, $qr_path)
     {
         /*
          * 上部分图
@@ -73,7 +73,6 @@ class Test
 //        $pic2_width = imagesx($pic2);
 //        $pic2_height = imagesy($pic2);
         // 二维码
-        $qr_path = 'public/upload/share/goods/goods_1_166.png';
         $qr = imagecreatefromstring(file_get_contents($qr_path));
         $qr_width = imagesx($qr);       // 二维码原本宽
         $qr_height = imagesy($qr);      // 二维码原本高
