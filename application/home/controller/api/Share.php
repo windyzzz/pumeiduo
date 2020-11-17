@@ -344,8 +344,8 @@ class Share extends Base
         }
         imagedestroy($pic1);
         imagedestroy($pic2);
-        // 圆角处理
-        img_radius('path', $pic1_path, '', 30);
+//        // 圆角处理
+//        img_radius('path', $pic1_path, '', 30);
         return true;
     }
 }
