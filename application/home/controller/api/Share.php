@@ -57,19 +57,24 @@ class Share extends Base
         return json(['status' => 1, 'result' => $return]);
     }
 
-
+    /**
+     * 获取二维码分享图
+     * @return \think\response\Json
+     * @throws \Exception
+     */
     public function qrCode()
     {
         // 用户头像
         $headPic = $this->user['head_pic'];
         $headPicPath = simplifyPath($headPic);  // 过滤域名
+        $headPicType = 'path';
         if (!$headPicPath) {
             // 网络图片
             $res = download_image($headPic, md5(mt_rand()) . '.jpg', PUBLIC_PATH . 'upload/share/temp/', 1, false);
             if ($res == false) {
                 $headPicPath = 'public/images/default_head.png';
             } else {
-                $netHeadPic = true;
+                $headPicType = 'resource';
                 $headPicPath = $res['save_path'] . $res['file_name'];
             }
         }
@@ -124,13 +129,13 @@ class Share extends Base
             $pic2Path = PUBLIC_PATH . 'upload/share/temp/' . md5(mt_rand()) . '.jpg';
             copy('public/upload/share/pic2.png', $pic2Path);
             // 组合图片
-            $res = $this->combinePic($pic1Path, $pic2Path, $headPicPath, $nickname, $qrPath);
+            $res = $this->combinePic($pic1Path, $pic2Path, $nickname, $qrPath, $headPicType, $headPicPath, $this->user['head_pic']);
             if ($res) {
                 unlink($pic2Path);
             }
             $userShareData[] = [
                 'user_id' => $this->user_id,
-                'head_pic' => isset($netHeadPic) ? $headPicPath : '',
+                'head_pic' => $headPicType == 'resource' ? $headPicPath : '',
                 'share_pic' => $pic1Path,
                 'add_time' => NOW_TIME
             ];
@@ -172,12 +177,14 @@ class Share extends Base
      * 组合图片
      * @param $pic1_path
      * @param $pic2_path
-     * @param $head_pic_path
      * @param $nickname
      * @param $qr_path
+     * @param $head_pic_type
+     * @param $head_pic_path
+     * @param $head_pic_resource
      * @return bool
      */
-    private function combinePic($pic1_path, $pic2_path, $head_pic_path, $nickname, $qr_path)
+    private function combinePic($pic1_path, $pic2_path, $nickname, $qr_path, $head_pic_type, $head_pic_path, $head_pic_resource)
     {
         /*
          * 上部分图
@@ -187,7 +194,7 @@ class Share extends Base
         $pic1_width = imagesx($pic1);
         $pic1_height = imagesy($pic1);
         // 用户头像
-        $head_pic_path = img_YJ($head_pic_path);     // 圆角处理
+        $head_pic_path = img_YJ($head_pic_type, $head_pic_path, $head_pic_resource);     // 圆角处理
         $head_pic = imagecreatefromstring(file_get_contents($head_pic_path));
         $head_width = imagesx($head_pic);       // 头像原本宽
         $head_height = imagesy($head_pic);      // 头像原本高

@@ -2124,20 +2124,31 @@ function download_image($url, $fileName, $dirName, $type = 1, $time = true)
 
 /**
  * 图片圆角处理
+ * @param $type
  * @param $imgPath
+ * @param $imgResource
  * @return mixed
  */
-function img_YJ($imgPath)
+function img_YJ($type, $imgPath, $imgResource = '')
 {
-    $ext = pathinfo($imgPath);
-    $src_img = null;
-    switch ($ext['extension']) {
-        case 'jpg':
-            $src_img = imagecreatefromjpeg($imgPath);
+    switch ($type) {
+        case 'path':
+            $ext = pathinfo($imgPath);
+            $src_img = null;
+            switch ($ext['extension']) {
+                case 'jpg':
+                    $src_img = imagecreatefromjpeg($imgPath);
+                    break;
+                case 'png':
+                    $src_img = imagecreatefrompng($imgPath);
+                    break;
+            }
             break;
-        case 'png':
-            $src_img = imagecreatefrompng($imgPath);
+        case 'resource':
+            $src_img = imagecreatefromstring(file_get_contents($imgResource));
             break;
+        default:
+            return false;
     }
     $wh = getimagesize($imgPath);
     $w = $wh[0];
