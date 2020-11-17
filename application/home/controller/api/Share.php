@@ -228,7 +228,7 @@ class Share extends Base
         $pic1_width = imagesx($pic1);
         $pic1_height = imagesy($pic1);
         // 用户头像
-        $head_pic_path = img_YJ($head_pic_type, $head_pic_path, $head_pic_resource);     // 圆角处理
+        $head_pic_path = img_radius($head_pic_type, $head_pic_path, $head_pic_resource, 0);     // 圆角处理
         $head_pic = imagecreatefromstring(file_get_contents($head_pic_path));
         $head_width = imagesx($head_pic);       // 头像原本宽
         $head_height = imagesy($head_pic);      // 头像原本高
@@ -344,6 +344,8 @@ class Share extends Base
         }
         imagedestroy($pic1);
         imagedestroy($pic2);
+        // 圆角处理
+        img_radius('path', $pic1_path, '', 30);
         return true;
     }
 }

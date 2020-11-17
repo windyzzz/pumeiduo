@@ -2177,6 +2177,86 @@ function img_YJ($type, $imgPath, $imgResource = '')
 }
 
 /**
+ * 图片圆角处理
+ * @param $type
+ * @param $imgPath
+ * @param string $imgResource
+ * @param int $radius
+ * @return bool
+ */
+function img_radius($type, $imgPath, $imgResource = '', $radius = 15)
+{
+    switch ($type) {
+        case 'path':
+            $ext = pathinfo($imgPath);
+            $src_img = null;
+            switch ($ext['extension']) {
+                case 'jpg':
+                    $src_img = imagecreatefromjpeg($imgPath);
+                    break;
+                case 'png':
+                    $src_img = imagecreatefrompng($imgPath);
+                    break;
+            }
+            break;
+        case 'resource':
+            $src_img = imagecreatefromstring(file_get_contents($imgResource));
+            break;
+        default:
+            return false;
+    }
+    $wh = getimagesize($imgPath);
+    $w = $wh[0];
+    $h = $wh[1];
+    $radius = $radius == 0 ? (min($w, $h) / 2) : $radius;
+    $img = imagecreatetruecolor($w, $h);
+    //这一句一定要有
+    imagesavealpha($img, true);
+    //拾取一个完全透明的颜色,最后一个参数127为全透明
+    $bg = imagecolorallocatealpha($img, 255, 255, 255, 127);
+    imagefill($img, 0, 0, $bg);
+    $r = $radius; //圆 角半径
+    for ($x = 0; $x < $w; $x++) {
+        for ($y = 0; $y < $h; $y++) {
+            $rgbColor = imagecolorat($src_img, $x, $y);
+            if (($x >= $radius && $x <= ($w - $radius)) || ($y >= $radius && $y <= ($h - $radius))) {
+                //不在四角的范围内,直接画
+                imagesetpixel($img, $x, $y, $rgbColor);
+            } else {
+                //在四角的范围内选择画
+                //上左
+                $y_x = $r; //圆心X坐标
+                $y_y = $r; //圆心Y坐标
+                if (((($x - $y_x) * ($x - $y_x) + ($y - $y_y) * ($y - $y_y)) <= ($r * $r))) {
+                    imagesetpixel($img, $x, $y, $rgbColor);
+                }
+                //上右
+                $y_x = $w - $r; //圆心X坐标
+                $y_y = $r; //圆心Y坐标
+                if (((($x - $y_x) * ($x - $y_x) + ($y - $y_y) * ($y - $y_y)) <= ($r * $r))) {
+                    imagesetpixel($img, $x, $y, $rgbColor);
+                }
+                //下左
+                $y_x = $r; //圆心X坐标
+                $y_y = $h - $r; //圆心Y坐标
+                if (((($x - $y_x) * ($x - $y_x) + ($y - $y_y) * ($y - $y_y)) <= ($r * $r))) {
+                    imagesetpixel($img, $x, $y, $rgbColor);
+                }
+                //下右
+                $y_x = $w - $r; //圆心X坐标
+                $y_y = $h - $r; //圆心Y坐标
+                if (((($x - $y_x) * ($x - $y_x) + ($y - $y_y) * ($y - $y_y)) <= ($r * $r))) {
+                    imagesetpixel($img, $x, $y, $rgbColor);
+                }
+            }
+        }
+    }
+    // 输出图片
+    imagepng($img, $imgPath);
+    return $imgPath;
+}
+
+/**
  * 分享二维码
  * @param $type
  * @param $user_id

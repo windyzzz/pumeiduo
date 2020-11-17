@@ -138,131 +138,6 @@ class Test
         exit();
     }
 
-    public function splicingPic()
-    {
-        $pic_list = array(
-            'public/upload/share/goods/11.jpg',
-            'public/images/qrcode/goods/goods_1_166.png',
-        );
-        $pic_list = array_slice($pic_list, 0, 2);
-
-        $bg_w = 270; // 背景图片宽度
-        $bg_h = 458; // 背景图片高度
-        $background = imagecreatetruecolor($bg_w, $bg_h); // 背景图片
-        $color = imagecolorallocate($background, 202, 201, 201); // 为真彩色画布创建白色背景，再设置为透明
-        imagefill($background, 0, 0, $color);
-        imageColorTransparent($background, $color);
-
-        $pic_count = 1;
-        $lineArr = array(); // 需要换行的位置
-        $space_x = 3;
-        $space_y = 3;
-        $line_x = 0;
-        switch ($pic_count) {
-            case 1: // 正中间
-                $start_x = intval($bg_w / 4); // 开始位置X
-                $start_y = intval($bg_h / 4); // 开始位置Y
-                $pic_w = intval($bg_w / 2); // 宽度
-                $pic_h = intval($bg_h / 2); // 高度
-                break;
-            case 2: // 中间位置并排
-                $start_x = 2;
-                $start_y = intval($bg_h / 4) + 3;
-                $pic_w = intval($bg_w / 2) - 5;
-                $pic_h = intval($bg_h / 2) - 5;
-                $space_x = 5;
-                break;
-            case 3:
-                $start_x = 40; // 开始位置X
-                $start_y = 5; // 开始位置Y
-                $pic_w = intval($bg_w / 2) - 5; // 宽度
-                $pic_h = intval($bg_h / 2) - 5; // 高度
-                $lineArr = array(2);
-                $line_x = 4;
-                break;
-            case 4:
-                $start_x = 4; // 开始位置X
-                $start_y = 5; // 开始位置Y
-                $pic_w = intval($bg_w / 2) - 5; // 宽度
-                $pic_h = intval($bg_h / 2) - 5; // 高度
-                $lineArr = array(3);
-                $line_x = 4;
-                break;
-            case 5:
-                $start_x = 30; // 开始位置X
-                $start_y = 30; // 开始位置Y
-                $pic_w = intval($bg_w / 3) - 5; // 宽度
-                $pic_h = intval($bg_h / 3) - 5; // 高度
-                $lineArr = array(3);
-                $line_x = 5;
-                break;
-            case 6:
-                $start_x = 5; // 开始位置X
-                $start_y = 30; // 开始位置Y
-                $pic_w = intval($bg_w / 3) - 5; // 宽度
-                $pic_h = intval($bg_h / 3) - 5; // 高度
-                $lineArr = array(4);
-                $line_x = 5;
-                break;
-            case 7:
-                $start_x = 53; // 开始位置X
-                $start_y = 5; // 开始位置Y
-                $pic_w = intval($bg_w / 3) - 5; // 宽度
-                $pic_h = intval($bg_h / 3) - 5; // 高度
-                $lineArr = array(2, 5);
-                $line_x = 5;
-                break;
-            case 8:
-                $start_x = 30; // 开始位置X
-                $start_y = 5; // 开始位置Y
-                $pic_w = intval($bg_w / 3) - 5; // 宽度
-                $pic_h = intval($bg_h / 3) - 5; // 高度
-                $lineArr = array(3, 6);
-                $line_x = 5;
-                break;
-            case 9:
-                $start_x = 5; // 开始位置X
-                $start_y = 5; // 开始位置Y
-                $pic_w = intval($bg_w / 3) - 5; // 宽度
-                $pic_h = intval($bg_h / 3) - 5; // 高度
-                $lineArr = array(4, 7);
-                $line_x = 5;
-                break;
-        }
-        foreach ($pic_list as $k => $pic_path) {
-            $kk = $k + 1;
-            if (in_array($kk, $lineArr)) {
-                $start_x = $line_x;
-                $start_y = $start_y + $pic_h + $space_y;
-            }
-            $pathInfo = pathinfo($pic_path);
-            switch (strtolower($pathInfo['extension'])) {
-                case 'jpg':
-                case 'jpeg':
-                    $imagecreatefromjpeg = 'imagecreatefromjpeg';
-                    break;
-                case 'png':
-                    $imagecreatefromjpeg = 'imagecreatefrompng';
-                    break;
-                case 'gif':
-                default:
-                    $imagecreatefromjpeg = 'imagecreatefromstring';
-                    $pic_path = file_get_contents($pic_path);
-                    break;
-            }
-            $resource = $imagecreatefromjpeg($pic_path);
-            // $start_x,$start_y copy图片在背景中的位置
-            // 0,0 被copy图片的位置
-            // $pic_w,$pic_h copy后的高度和宽度
-            imagecopyresized($background, $resource, $start_x, $start_y, 0, 0, $pic_w, $pic_h, imagesx($resource), imagesy($resource)); // 最后两个参数为原始图片宽度和高度，倒数两个参数为copy时的图片宽度和高度
-            $start_x = $start_x + $pic_w + $space_x;
-        }
-
-        // 输出图片
-        imagepng($background, $pic_list[0]);
-    }
-
-
     function img_YJ($imgPath)
     {
         $ext = pathinfo($imgPath);
@@ -300,6 +175,82 @@ class Test
         switch ($ext['extension']) {
             case 'jpg':
                 $imgPath = substr($imgPath, 0, strrpos($imgPath, '.')) . '.jpg';
+//                imagejpeg($img, $imgPath);    // jpeg格式图片无法设置透明度
+                imagepng($img, $imgPath);
+                break;
+            case 'png':
+                $imgPath = substr($imgPath, 0, strrpos($imgPath, '.')) . '.png';
+                imagepng($img, $imgPath);
+                break;
+        }
+        return $imgPath;
+    }
+
+
+    function img_YJ_v2()
+    {
+        $imgPath = 'public/upload/132.jpg';
+        $radius = 0;
+        $ext = pathinfo($imgPath);
+        $src_img = null;
+        switch ($ext['extension']) {
+            case 'jpg':
+                $src_img = imagecreatefromjpeg($imgPath);
+                break;
+            case 'png':
+                $src_img = imagecreatefrompng($imgPath);
+                break;
+        }
+        $wh = getimagesize($imgPath);
+        $w = $wh[0];
+        $h = $wh[1];
+        $radius = $radius == 0 ? (min($w, $h) / 2) : $radius;
+        $img = imagecreatetruecolor($w, $h);
+        //这一句一定要有
+        imagesavealpha($img, true);
+        //拾取一个完全透明的颜色,最后一个参数127为全透明
+        $bg = imagecolorallocatealpha($img, 255, 255, 255, 127);
+        imagefill($img, 0, 0, $bg);
+        $r = $radius; //圆 角半径
+        for ($x = 0; $x < $w; $x++) {
+            for ($y = 0; $y < $h; $y++) {
+                $rgbColor = imagecolorat($src_img, $x, $y);
+                if (($x >= $radius && $x <= ($w - $radius)) || ($y >= $radius && $y <= ($h - $radius))) {
+                    //不在四角的范围内,直接画
+                    imagesetpixel($img, $x, $y, $rgbColor);
+                } else {
+                    //在四角的范围内选择画
+                    //上左
+                    $y_x = $r; //圆心X坐标
+                    $y_y = $r; //圆心Y坐标
+                    if (((($x - $y_x) * ($x - $y_x) + ($y - $y_y) * ($y - $y_y)) <= ($r * $r))) {
+                        imagesetpixel($img, $x, $y, $rgbColor);
+                    }
+                    //上右
+                    $y_x = $w - $r; //圆心X坐标
+                    $y_y = $r; //圆心Y坐标
+                    if (((($x - $y_x) * ($x - $y_x) + ($y - $y_y) * ($y - $y_y)) <= ($r * $r))) {
+                        imagesetpixel($img, $x, $y, $rgbColor);
+                    }
+                    //下左
+                    $y_x = $r; //圆心X坐标
+                    $y_y = $h - $r; //圆心Y坐标
+                    if (((($x - $y_x) * ($x - $y_x) + ($y - $y_y) * ($y - $y_y)) <= ($r * $r))) {
+                        imagesetpixel($img, $x, $y, $rgbColor);
+                    }
+                    //下右
+                    $y_x = $w - $r; //圆心X坐标
+                    $y_y = $h - $r; //圆心Y坐标
+                    if (((($x - $y_x) * ($x - $y_x) + ($y - $y_y) * ($y - $y_y)) <= ($r * $r))) {
+                        imagesetpixel($img, $x, $y, $rgbColor);
+                    }
+                }
+            }
+        }
+        // 输出图片
+        switch ($ext['extension']) {
+            case 'jpg':
+                $imgPath = substr($imgPath, 0, strrpos($imgPath, '.')) . '.png';
 //                imagejpeg($img, $imgPath);    // jpeg格式图片无法设置透明度
                 imagepng($img, $imgPath);
                 break;
