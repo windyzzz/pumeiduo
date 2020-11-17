@@ -58,11 +58,11 @@ class Share extends Base
     }
 
     /**
-     * 获取二维码分享图
+     * 获取二维码分享图与链接
      * @return \think\response\Json
      * @throws \Exception
      */
-    public function qrCode()
+    public function qrCodeLink()
     {
         // 用户头像
         $headPic = $this->user['head_pic'];
@@ -80,65 +80,90 @@ class Share extends Base
         }
         // 用户昵称
         $nickname = $this->user['nickname'] ?? $this->user_id;
+
+        $type = I('type', 1);
         $goodsId = I('goods_id', 0);
-        if ($goodsId > 0) {
-            /*
-             * 商品分享码
-             */
-            // 二维码
-            $qrPath = 'public/images/qrcode/goods/goods_' . $this->user_id . '_' . $goodsId . '.png';
-            if (!file_exists(SITE_URL . '/' . $qrPath)) {
-                $logo = 'public/images/qrcode/qr_logo.png';
-                if (!file_exists($logo)) {
-                    $logo = '';
+        $articleId = I('article_id', '');
+        switch ($type) {
+            case 1:
+                // 推荐码
+                $url = SITE_URL . '#/register?invite=' . $this->user_id;
+                $title = '推荐码分享';
+                $content = '推荐码分享';
+                $image = '';
+                // 二维码
+                $qrPath = 'public/images/qrcode/user/user_' . $this->user_id . '_min.jpg';
+                if (!file_exists(SITE_URL . '/' . $qrPath)) {
+                    $logo = 'public/images/qrcode/qr_logo.png';
+                    if (!file_exists($logo)) {
+                        $logo = '';
+                    }
+                    $qrPath = create_qrcode('user', $this->user_id, $goodsId, $logo);
                 }
-                $qrPath = create_qrcode('goods', $this->user_id, $goodsId, $logo);
-            }
-            // 分享背景图
-            $shareBg = M('share_bg')->where(['type' => 'goods'])->getField('image', true);
-        } else {
-            /*
-             * 个人分享码
-             */
-            // 二维码
-            $qrPath = 'public/images/qrcode/user/user_' . $this->user_id . '_min.jpg';
-            if (!file_exists(SITE_URL . '/' . $qrPath)) {
-                $logo = 'public/images/qrcode/qr_logo.png';
-                if (!file_exists($logo)) {
-                    $logo = '';
+                // 分享背景图
+                $shareBg = M('share_bg')->where(['type' => 'user'])->getField('image', true);
+                break;
+            case 2:
+                // 商品
+                if (!$goodsId || $goodsId <= 0) return json(['status' => 0, 'msg' => '商品ID错误']);
+                $url = SITE_URL . '#/goods/goods_details?goods_id=' . $goodsId . '&cart_type=0&invite=' . $this->user_id;
+                $goodsInfo = M('goods')->where(['goods_id' => $goodsId])->field('goods_name, goods_remark, original_img')->find();
+                $title = $goodsInfo['goods_name'];
+                $content = !empty($goodsInfo['goods_remark']) ? $goodsInfo['goods_remark'] : $goodsInfo['goods_name'];
+                $image = SITE_URL . $goodsInfo['original_img'];
+                // 二维码
+                $qrPath = 'public/images/qrcode/goods/goods_' . $this->user_id . '_' . $goodsId . '.png';
+                if (!file_exists(SITE_URL . '/' . $qrPath)) {
+                    $logo = 'public/images/qrcode/qr_logo.png';
+                    if (!file_exists($logo)) {
+                        $logo = '';
+                    }
+                    $qrPath = create_qrcode('goods', $this->user_id, $goodsId, $logo);
                 }
-                $qrPath = create_qrcode('user', $this->user_id, $goodsId, $logo);
-            }
-            // 分享背景图
-            $shareBg = M('share_bg')->where(['type' => 'user'])->getField('image', true);
+                // 分享背景图
+                $shareBg = M('share_bg')->where(['type' => 'goods'])->getField('image', true);
+                break;
+            case 3:
+                // 活动文章
+                if (!$articleId || $articleId <= 0) return json(['status' => 0, 'msg' => '文章ID错误']);
+                $url = SITE_URL . '#/news/news_particulars?article_id=' . $articleId . '&invite=' . $this->user_id;
+                $articleInfo = M('article')->where(['article_id' => $articleId])->field('title, description')->find();
+                $title = $articleInfo['title'];
+                $content = $articleInfo['description'];
+                $image = SITE_URL . tpCache('share.article_logo');
+                break;
+            default:
+                return json(['status' => 0, 'msg' => '类型错误']);
         }
         $userShareData = [];
-        foreach ($shareBg as $bg) {
-            $bg = substr($bg, 1);
-            if (file_exists($bg)) {
-                $pic1Path = PUBLIC_PATH . 'upload/share/temp/';
-                if (!file_exists($pic1Path)) {
-                    mkdir($pic1Path, 0755, true);
+        if (!empty($shareBg)) {
+            foreach ($shareBg as $bg) {
+                $bg = substr($bg, 1);
+                if (file_exists($bg)) {
+                    $pic1Path = PUBLIC_PATH . 'upload/share/temp/';
+                    if (!file_exists($pic1Path)) {
+                        mkdir($pic1Path, 0755, true);
+                    }
+                    $pic1Path = $pic1Path . md5(mt_rand()) . '.jpg';
+                    copy($bg, $pic1Path);
+                } else {
+                    continue;
                 }
-                $pic1Path = $pic1Path . md5(mt_rand()) . '.jpg';
-                copy($bg, $pic1Path);
-            } else {
-                continue;
+                // 下部分图
+                $pic2Path = PUBLIC_PATH . 'upload/share/temp/' . md5(mt_rand()) . '.jpg';
+                copy('public/upload/share/pic2.png', $pic2Path);
+                // 组合图片
+                $res = $this->combinePic($pic1Path, $pic2Path, $nickname, $qrPath, $headPicType, $headPicPath, $this->user['head_pic']);
+                if ($res) {
+                    unlink($pic2Path);
+                }
+                $userShareData[] = [
+                    'user_id' => $this->user_id,
+                    'head_pic' => $headPicType == 'resource' ? $headPicPath : '',
+                    'share_pic' => $pic1Path,
+                    'add_time' => NOW_TIME
+                ];
             }
-            // 下部分图
-            $pic2Path = PUBLIC_PATH . 'upload/share/temp/' . md5(mt_rand()) . '.jpg';
-            copy('public/upload/share/pic2.png', $pic2Path);
-            // 组合图片
-            $res = $this->combinePic($pic1Path, $pic2Path, $nickname, $qrPath, $headPicType, $headPicPath, $this->user['head_pic']);
-            if ($res) {
-                unlink($pic2Path);
-            }
-            $userShareData[] = [
-                'user_id' => $this->user_id,
-                'head_pic' => $headPicType == 'resource' ? $headPicPath : '',
-                'share_pic' => $pic1Path,
-                'add_time' => NOW_TIME
-            ];
         }
         if (!empty($userShareData)) {
             // 把之前的本地图片都删除
@@ -170,7 +195,16 @@ class Share extends Base
                 'type' => substr($imgInfo['mime'], strrpos($imgInfo['mime'], '/') + 1),
             ];
         }
-        return json(['status' => 1, 'result' => ['list' => $userShareList]]);
+        $return = [
+            'share_link' => [
+                'url' => $url,
+                'title' => $title,
+                'content' => $content,
+                'image' => $image,
+            ],
+            'share_image' => $userShareList
+        ];
+        return json(['status' => 1, 'result' => $return]);
     }
 
     /**
