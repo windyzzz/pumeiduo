@@ -270,8 +270,7 @@ class Share extends Base
         $pic1 = imagecreatefromstring(file_get_contents($pic1_path));
         // 背景图
         $bg_width = 1125;    // 背景图片宽度
-//        $bg_height = 1809;   // 背景图片高度
-        $bg_height = 2625;   // 背景图片高度（测试）
+        $bg_height = 1809;   // 背景图片高度
         $background = imagecreatetruecolor($bg_width, $bg_height);  // 背景图片
         $color = imagecolorallocate($background, 255, 255, 255);
         imagefill($background, 0, 0, $color);
@@ -344,11 +343,8 @@ class Share extends Base
         $pic2_width = imagesx($pic2);
         $pic2_height = imagesy($pic2);
         $from_x = 0;                                    // 组合的下图左上角所在坐标点x
-//        $from_y = ($pic1_height - $pic2_height);        // 组合的下图左上角所在坐标点y
-        $from_y = ($pic1_height - $pic2_height - 408 - 408);        // 组合的下图左上角所在坐标点y（测试）
+        $from_y = ($pic1_height - $pic2_height);        // 组合的下图左上角所在坐标点y
         imagecopyresampled($pic1, $pic2, $from_x, $from_y, 0, 0, $pic2_width, $pic2_height, $pic2_width, $pic2_height);
-        imagecopyresampled($pic1, $pic2, $from_x, $from_y + 408, 0, 0, $pic2_width, $pic2_height, $pic2_width, $pic2_height);
-        imagecopyresampled($pic1, $pic2, $from_x, $from_y + 408 + 408, 0, 0, $pic2_width, $pic2_height, $pic2_width, $pic2_height);
         // 输出图片
         switch ($ext1['extension']) {
             case 'jpg':
