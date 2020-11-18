@@ -58,6 +58,8 @@ class Community
         if (!empty($param['search'])) {
             $whereOr['ca.content'] = ['LIKE', '%' . $param['search'] . '%'];
             $whereOr['g.goods_name'] = ['LIKE', '%' . $param['search'] . '%'];
+            // 搜索量增加
+            M('community_article_keyword')->where(['name' => $param['search']])->setInc('click');
         }
         return $whereOr;
     }

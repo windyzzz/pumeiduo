@@ -62,6 +62,7 @@
                             <tr>
                                 <td>
                                     <input name="keyword[{$k}][id]" type="hidden" value="{$vo[id]}">
+                                    <input name="keyword[{$k}][click]" type="hidden" value="{$vo[click]}">
                                     <input name="keyword[{$k}][name]" type="text" value="{$vo[name]}" class="form-control" style="width:150px; text-align: center;">（搜索量：{$vo.click}）
                                 </td>
                                 <td>
@@ -113,6 +114,7 @@
         var tr = '<tr>' +
             '       <td>' +
             '           <input name="keyword[' + keyword_count + '][id]" type="hidden" value="0">' +
+            '           <input name="keyword[' + keyword_count + '][click]" type="hidden" value="0">' +
             '           <input name="keyword[' + keyword_count + '][name]" type="text" value="" class="form-control" style="width:150px; text-align: center;">（搜索量：0）' +
             '       </td>' +
             '       <td>' +

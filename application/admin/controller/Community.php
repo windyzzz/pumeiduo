@@ -47,11 +47,17 @@ class Community extends Base
             }
             // 关键词
             foreach ($keyword as $key) {
-                $keywordId = M('community_article_keyword')->where(['id' => $key['id']])->value('id');
-                if ($keywordId) {
-                    M('community_article_keyword')->where(['id' => $keywordId])->update($key);
+                if ($key['id'] == 0) {
+                    if (M('community_article_keyword')->where(['name' => $key['name']])->value('id')) {
+                        continue;
+                    } else {
+                        M('community_article_keyword')->add($key);
+                    }
                 } else {
-                    M('community_article_keyword')->add($key);
+                    if (empty($key['name'])) {
+                        continue;
+                    }
+                    M('community_article_keyword')->where(['id' => $key['id']])->update($key);
                 }
             }
             Db::commit();
