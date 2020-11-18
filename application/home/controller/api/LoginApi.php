@@ -225,6 +225,24 @@ class LoginApi
     }
 
     /**
+     * 解密获得用户手机信息
+     * @return \think\response\Json
+     */
+    public function getUserPhone()
+    {
+        try {
+            $sessionKey = I('session_key', '');
+            $iv = I('iv', '');
+            $encryptedData = I('encrypted_data', '');
+            // 解密获得用户信息
+            $wechatUserInfo = $this->class_obj->decryptData($sessionKey, $iv, $encryptedData);
+            return json(['status' => 1, 'result' => $wechatUserInfo]);
+        } catch (Exception $e) {
+            return json(['status' => 0, 'msg' => $e->getMessage()]);
+        }
+    }
+
+    /**
      * 授权登录注册（小程序）
      * @return \think\response\Json
      */
