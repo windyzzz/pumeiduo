@@ -577,6 +577,10 @@ class ActivityLogic extends Model
             } else {
                 $activityGoods[$k]['exchange_price'] = $v['shop_price'];
             }
+            // 优化价格显示
+            if ($activityGoods[$k]['exchange_integral'] == 0) {
+                $activityGoods[$k]['shop_price'] = $activityGoods[$k]['exchange_price'];
+            }
         }
         // 组合数据
         foreach ($activityList as $key => $item) {
