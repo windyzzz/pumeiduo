@@ -47,7 +47,7 @@ class Community extends Base
             }
             // 关键词
             foreach ($keyword as $key) {
-                $keywordId = M('community_article_keyword')->where(['name' => $key['name']])->value('id');
+                $keywordId = M('community_article_keyword')->where(['id' => $key['id']])->value('id');
                 if ($keywordId) {
                     M('community_article_keyword')->where(['id' => $keywordId])->update($key);
                 } else {
