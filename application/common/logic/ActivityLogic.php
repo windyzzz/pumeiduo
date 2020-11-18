@@ -597,6 +597,7 @@ class ActivityLogic extends Model
             // banner处理
             $bannerInfo = json_decode($item['banner'], true);
             if ($bannerInfo) {
+                $activityList[$key]['banner'] = $bannerInfo['img'];
                 $bannerInfo['img'] = getFullPath($bannerInfo['img']);
                 $activityList[$key]['banner_info'] = $bannerInfo;
             } else {
