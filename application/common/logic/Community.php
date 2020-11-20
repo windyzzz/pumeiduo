@@ -72,7 +72,10 @@ class Community
     private function articleSort($param)
     {
         $sort = '';
-        $sortSet = [];
+        $sortSet = [
+            'share' => 'DESC',
+            'publish_time' => 'DESC'
+        ];
         if (!empty($param['sort']) && !empty($param['order'])) {
             $paramSort = explode(',', $param['sort']);
             $paramOrder = explode(',', $param['order']);
@@ -92,12 +95,6 @@ class Community
                     $sort .= $articleSort . ' DESC, publish_time DESC,';
                     break;
             }
-        }
-        if (empty($sortSet)) {
-            $sortSet = [
-                'publish_time' => 'DESC',
-                'share' => 'DESC'
-            ];
         }
         $sort .= ' add_time DESC';
         return ['sort' => $sort, 'sort_set' => $sortSet];
