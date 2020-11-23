@@ -833,9 +833,12 @@ class Goods extends Base
             'applet_qr_code' => '',    // 小程序分享二维码
             'tabs' => [],
         ];
+        if ($this->isApplet) {
+            $goodsInfo['exchange_integral'] = '0';
+            $goodsInfo['exchange_price'] = $goods['shop_price'];
+        }
         if ($goods['is_agent'] == 1) {
             // 代理商商品基础价格设置
-            $goodsInfo['exchange_integral'] = '0';
             $goodsInfo['exchange_price'] = $goods['retail_price'];  // 零售价
             if ($this->user) {
                 switch ($this->user['distribut_level']) {
@@ -1145,9 +1148,12 @@ class Goods extends Base
             'buy_least' => $goods['least_buy_num'],
             'is_supply' => $goods['is_supply'],
         ];
+        if ($this->isApplet) {
+            $goodsInfo['exchange_integral'] = '0';
+            $goodsInfo['exchange_price'] = $goods['shop_price'];
+        }
         if ($goods['is_agent'] == 1) {
             // 代理商商品基础价格设置
-            $goodsInfo['exchange_integral'] = '0';
             $goodsInfo['exchange_price'] = $goods['retail_price'];  // 零售价
             if ($this->user) {
                 switch ($this->user['distribut_level']) {
