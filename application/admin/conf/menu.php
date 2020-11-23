@@ -176,6 +176,11 @@ return [
             ['name' => '板块3', 'act' => 'module3', 'op' => 'Activity'],
         ]],
 
+        ['name' => '商学院', 'child' => [
+            ['name' => '公司简介', 'act' => 'module', 'op' => 'School', 'type' => 'module1'],
+            ['name' => '产品专区', 'act' => 'module', 'op' => 'School', 'type' => 'module2'],
+        ]],
+
         // array('name' => '统计','child' => array(
         // 		array('name' => '销售概况', 'act'=>'index', 'op'=>'Report'),
         // 		array('name' => '销售排行', 'act'=>'saleTop', 'op'=>'Report'),
