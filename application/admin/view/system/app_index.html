@@ -1,0 +1,173 @@
+<include file="public/layout" />
+<style>
+    .ys-btn-close {
+        position: relative;
+        top: -12px;
+        left: -16px;
+        width: 18px;
+        height: 18px;
+        border: 1px solid #ccc;
+        line-height: 18px;
+        text-align: center;
+        display: inline-block;
+        border-radius: 50%;
+        z-index: 1;
+        background-color: #fff;
+        cursor: pointer;
+    }
+    .selected-group-goods {
+        background-color: #FFF;
+        width: 162px;
+        padding: 9px;
+        margin-bottom: 10px;
+        border: solid 1px #E6E6E6;
+        box-shadow: 2px 2px 0 rgba(153,153,153,0.1);
+    }
+</style>
+<body style="background-color: #FFF; overflow: auto;">
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title">
+            <div class="subject">
+                <h3>首页设置</h3>
+                <h5>APP首页设置</h5>
+            </div>
+        </div>
+    </div>
+    <form method="post" id="handlepost" action="{:U('System/appIndex')}" enctype="multipart/form-data" name="form">
+        <div class="ncap-form-default">
+            <dl class="row">
+                <dt class="tit">金刚区icon</dt>
+                <dd class="opt" id="index_icon">
+                    <div style="margin-bottom: 10px;">
+                        <span>一行icon的个数：</span>
+                        <input type="text" name="index_icon_config[index][row_num]" value="{$index_icon_config[row_num]}" style="text-align: center; width: 100px;"
+                               onKeyUp="this.value=this.value.replace(/[^\d]/g,'')"
+                               onpaste="this.value=this.value.replace(/[^\d]/g,'')"/>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <span>不允许访问时候的提示：</span>
+                        <input type="text" name="index_icon_config[index][not_allow_tips]" value="{$index_icon_config[not_allow_tips]}" style="text-align: center; width: 300px;"/>
+                    </div>
+                    <volist name="index_icon" id="item" key="k">
+                        <div style="float: left; margin-right: 20px;">
+                            <div class="selected-group-goods">
+                                <div class="goods-thumb">
+                                    <img class="index_icon{$k}" style="width: 162px;height: 162px" src="{$item[img]}"/>
+                                </div>
+                                <div style="margin-bottom: 10px;">
+                                    <input type="hidden" id="index_icon{$k}" name="index_icon[icon{$k}][img]" value="{$item[img]}" class="type-file-text">
+                                    <input style="cursor: pointer;" type="button" name="button" value="选择上传..." class="type-file-button" onClick="GetUploadify(1,'index_icon{$k}','index','img_call_back')">
+                                    <div style="clear: both;"></div>
+                                </div>
+                                <div>
+                                    <span>名字</span>
+                                    <input type="text" name="index_icon[icon{$k}][name]" value="{$item[name]}" style="text-align: center;">
+                                </div>
+                                <div style="margin-top: 10px;">
+                                    <span>排序</span>
+                                    <input type="text" name="index_icon[icon{$k}][sort]" value="{$item[sort]}" style="text-align: center;"
+                                           onKeyUp="this.value=this.value.replace(/[^\d]/g,'')"
+                                           onpaste="this.value=this.value.replace(/[^\d]/g,'')"/>
+                                </div>
+                                <div class="onoff" style="margin-top: 10px;">
+                                    <label for="index_icon[icon{$k}]_is_open1" class="cb-enable <if condition='$item[is_open] eq 1'>selected</if>">开启</label>
+                                    <label for="index_icon[icon{$k}]_is_open0" class="cb-disable <if condition='$item[is_open] eq 0'>selected</if>">隐藏</label>
+                                    <input id="index_icon[icon{$k}]_is_open1" name="index_icon[icon{$k}][is_open]" <if condition='$item[is_open] eq 1'>checked</if> value="1" type="radio">
+                                    <input id="index_icon[icon{$k}]_is_open0" name="index_icon[icon{$k}][is_open]" <if condition='$item[is_open] eq 0'>checked</if> value="0" type="radio">
+                                </div>
+                                <div class="onoff" style="margin-top: 10px;">
+                                    <label for="index_icon[icon{$k}]_is_allow1" class="cb-enable <if condition='$item[is_allow] eq 1'>selected</if>">允许访问</label>
+                                    <label for="index_icon[icon{$k}]_is_allow0" class="cb-disable <if condition='$item[is_allow] eq 0'>selected</if>">不允许</label>
+                                    <input id="index_icon[icon{$k}]_is_allow1" name="index_icon[icon{$k}][is_allow]" <if condition='$item[is_allow] eq 1'>checked</if> value="1" type="radio">
+                                    <input id="index_icon[icon{$k}]_is_allow0" name="index_icon[icon{$k}][is_allow]" <if condition='$item[is_allow] eq 0'>checked</if> value="0" type="radio">
+                                </div>
+                                <input type="hidden" name="index_icon[icon{$k}][type]" value="index">
+                            </div>
+                        </div>
+                        <if condition="$k % 4 == 0">
+                            <div style="clear: both;"></div>
+                        </if>
+                    </volist>
+                    <div style="float: left; margin-right: 20px;">
+                        <div class="selected-group-goods">
+                            <div class="goods-thumb">
+                                <img class="" style="width: 162px;height: 162px; cursor: pointer;" src="/public/images/add-button.jpg" onclick="addIcon(this)"/>
+                            </div>
+                        </div>
+                    </div>
+                </dd>
+            </dl>
+            <div class="bot">
+                <a href="JavaScript:void(0);" class="ncap-btn-big ncap-btn-green" onclick="document.form.submit()">确认提交</a>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="goTop"> <a href="JavaScript:void(0);" id="btntop"><i class="fa fa-angle-up"></i></a><a href="JavaScript:void(0);" id="btnbottom"><i class="fa fa-angle-down"></i></a></div>
+</body>
+<script type="text/javascript">
+    $(function () {
+        index_icon_count = {$index_icon_count};
+    });
+
+    function img_call_back(fileurl_tmp, elementid) {
+        $("#" + elementid).val(fileurl_tmp);
+        $("." + elementid).attr('src', fileurl_tmp);
+    }
+
+    function addIcon(obj) {
+        index_icon_count += 1;
+        var div = '<div style="float: left; margin-right: 20px;">' +
+            '           <div class="selected-group-goods">' +
+            '               <div class="goods-thumb">' +
+            '                   <img class="index_icon' + index_icon_count + '" style="width: 162px;height: 162px" src=""/>' +
+            '               </div>' +
+            '               <div style="margin-bottom: 10px;">' +
+            '                   <input type="hidden" id="index_icon' + index_icon_count + '" name="index_icon[icon' + index_icon_count + '][img]" value="" class="type-file-text">' +
+            '                   <input style="cursor: pointer;" type="button" name="button" value="选择上传..." class="type-file-button" onClick="GetUploadify(1,\'index_icon' + index_icon_count + '\',\'index\',\'img_call_back\')">' +
+            '                   <div style="clear: both;"></div>' +
+            '               </div>' +
+            '               <div><span>名字</span><input type="text" name="index_icon[icon' + index_icon_count + '][name]" value="" style="text-align: center;"></div>' +
+            '               <div style="margin-top: 10px;">' +
+            '                   <span>排序</span>' +
+            '                   <input type="text" name="index_icon[icon' + index_icon_count + '][sort]" value="" style="text-align: center;"' +
+            '                          onKeyUp="this.value=this.value.replace(/[^\\d]/g,\'\')"' +
+            '                          onpaste="this.value=this.value.replace(/[^\\d]/g,\'\')"/>' +
+            '               </div>' +
+            '               <div class="onoff" style="margin-top: 10px;">' +
+            '                   <label for="index_icon[icon' + index_icon_count + ']_is_open1" class="cb-enable selected">开启</label>' +
+            '                   <label for="index_icon[icon' + index_icon_count + ']_is_open0" class="cb-disable">隐藏</label>' +
+            '                   <input id="index_icon[icon' + index_icon_count + ']_is_open1" name="index_icon[icon' + index_icon_count + '][is_open]" value="1" type="radio" checked>' +
+            '                   <input id="index_icon[icon' + index_icon_count + ']_is_open0" name="index_icon[icon' + index_icon_count + '][is_open]" value="0" type="radio">' +
+            '               </div>' +
+            '               <div class="onoff" style="margin-top: 10px;">' +
+            '                   <label for="index_icon[icon' + index_icon_count + ']_is_allow1" class="cb-enable selected">允许访问</label>' +
+            '                   <label for="index_icon[icon' + index_icon_count + ']_is_allow0" class="cb-disable">不允许</label>' +
+            '                   <input id="index_icon[icon' + index_icon_count + ']_is_allow1" name="index_icon[icon' + index_icon_count + '][is_allow]" value="1" type="radio" checked>' +
+            '                   <input id="index_icon[icon' + index_icon_count + ']_is_allow0" name="index_icon[icon' + index_icon_count + '][is_allow]" value="0" type="radio">' +
+            '               </div>' +
+            '               <input type="hidden" name="index_icon[icon' + index_icon_count + '][type]" value="index">' +
+            '            </div>' +
+            '      </div>';
+        if (index_icon_count % 4 == 0) {
+            div += '<div style="clear: both;"></div>';
+        }
+        $(obj).parent().parent().parent().before(div);
+        $(".cb-enable").click(function () {
+            var parent = $(this).parents('.onoff');
+            $('.cb-disable', parent).removeClass('selected');
+            $(this).addClass('selected');
+            $('.checkbox', parent).attr('checked', true);
+        });
+        $(".cb-disable").click(function () {
+            var parent = $(this).parents('.onoff');
+            $('.cb-enable', parent).removeClass('selected');
+            $(this).addClass('selected');
+            $('.checkbox', parent).attr('checked', false);
+        });
+    }
+</script>
+</html>

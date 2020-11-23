@@ -111,6 +111,7 @@ class Base extends Controller
             'c=api.Article&a=articleCateList',          // 文章分类列表
             'c=api.Article&a=articleListNew',           // 文章列表
             'c=api.Community&a=allCategory',            // 社区所有分类
+            'c=api.Community&a=articleKeyword',         // 社区文章搜索热词
             'c=api.Community&a=article',                // 社区文章列表
             'c=api.Activity&a=cateActList',             // 分类主题活动列表
             'c=api.Activity&a=cateActGoodsList',        // 分类主题活动商品列表

@@ -20,6 +20,16 @@ class Community extends Base
     }
 
     /**
+     * 社区文章搜索热词
+     * @return \think\response\Json
+     */
+    public function articleKeyword()
+    {
+        $keyword = M('community_article_keyword')->where(['is_open' => 1])->order('sort DESC')->field('name, is_hot')->select();
+        return json(['status' => 1, 'result' => ['list' => $keyword]]);
+    }
+
+    /**
      * 获取全部分类
      * @return \think\response\Json
      */
@@ -71,7 +81,9 @@ class Community extends Base
     {
         $communityLogic = new CommunityLogic();
         // 获取文章数据
-        $list = $communityLogic->getArticleList(I('get.'))['list'];
+        $getArticleList = $communityLogic->getArticleList(I('get.'));
+        $list = $getArticleList['list'];
+        $sortSet = $getArticleList['sort_set'];
         // 文章列表
         $articleList = [];
         foreach ($list as $key => $value) {
@@ -114,7 +126,7 @@ class Community extends Base
         // 数据处理
         $goodsIds = array_column($list, 'goods_id');
         $articleList = $communityLogic->handleArticleData($articleList, $goodsIds);
-        return json(['status' => 1, 'result' => ['list' => $articleList]]);
+        return json(['status' => 1, 'result' => ['sort_set' => $sortSet, 'list' => $articleList]]);
     }
 
     /**
@@ -127,7 +139,8 @@ class Community extends Base
         // 获取用户文章数据
         $param = I('get.');
         $param['user_id'] = $this->user_id;
-        $list = $communityLogic->getArticleList($param)['list'];
+        $getArticleList = $communityLogic->getArticleList($param);
+        $list = $getArticleList['list'];
         // 社区文章分类数据
         $category = M('community_category')->getField('id, cate_name', true);
         // 文章列表

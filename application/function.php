@@ -1906,6 +1906,28 @@ function getFullPath($path)
     return $path;
 }
 
+
+function simplifyPath($path)
+{
+    switch ($_SERVER['SERVER_ADDR']) {
+        case '61.238.101.139':
+            // 测试
+            $domain = 'test.pumeiduo.com/';
+            break;
+        case '61.238.101.138':
+            // 正式
+            $domain = 'mall.pumeiduo.com/';
+            break;
+        default:
+            // 本地
+            $domain = 'pumeiduo.server/';
+    }
+    if (!strrpos($path, $domain)) {
+        return false;
+    }
+    return substr($path, strrpos($path, $domain) + count(str_split($domain)));
+}
+
 /**
  * 图片转base64
  * @param string $img
@@ -2054,9 +2076,10 @@ function getImageInfo($url)
  * @param $fileName
  * @param $dirName
  * @param int $type
+ * @param bool $time
  * @return array|bool
  */
-function download_image($url, $fileName, $dirName, $type = 1)
+function download_image($url, $fileName, $dirName, $type = 1, $time = true)
 {
     if ($url == '') {
         return false;
@@ -2082,14 +2105,209 @@ function download_image($url, $fileName, $dirName, $type = 1)
         default:
             return false;
     }
+    if (empty($file)) {
+        return false;
+    }
     // 设置文件保存路径
-    $dirName = $dirName . date('Y/m-d', time());
+    if ($time) {
+        $dirName = $dirName . date('Y/m-d', time());
+    }
     if (!file_exists($dirName)) {
-        mkdir($dirName, 0777, true);
+        mkdir($dirName, 0755, true);
     }
     // 保存文件
     $res = fopen($dirName . '/' . $fileName, 'a');
     fwrite($res, $file);
     fclose($res);
     return ['file_name' => $fileName, 'save_path' => $dirName];
+}
+
+/**
+ * 图片圆角处理
+ * @param $type
+ * @param $imgPath
+ * @param $imgResource
+ * @return mixed
+ */
+function img_YJ($type, $imgPath, $imgResource = '')
+{
+    switch ($type) {
+        case 'path':
+            $ext = pathinfo($imgPath);
+            $src_img = null;
+            switch ($ext['extension']) {
+                case 'jpg':
+                    $src_img = imagecreatefromjpeg($imgPath);
+                    break;
+                case 'png':
+                    $src_img = imagecreatefrompng($imgPath);
+                    break;
+            }
+            break;
+        case 'resource':
+            $src_img = imagecreatefromstring(file_get_contents($imgResource));
+            break;
+        default:
+            return false;
+    }
+    $wh = getimagesize($imgPath);
+    $w = $wh[0];
+    $h = $wh[1];
+    $w = min($w, $h);
+    $h = $w;
+    $img = imagecreatetruecolor($w, $h);
+    imagesavealpha($img, true);
+    // 拾取一个完全透明的颜色,最后一个参数127为全透明
+    $bg = imagecolorallocatealpha($img, 255, 255, 255, 127);
+    imagefill($img, 0, 0, $bg);
+    $r = $w / 2;    // 圆半径
+    $y_x = $r;      // 圆心X坐标
+    $y_y = $r;      // 圆心Y坐标
+    for ($x = 0; $x < $w; $x++) {
+        for ($y = 0; $y < $h; $y++) {
+            $rgbColor = imagecolorat($src_img, $x, $y);
+            if (((($x - $r) * ($x - $r) + ($y - $r) * ($y - $r)) < ($r * $r))) {
+                imagesetpixel($img, $x, $y, $rgbColor);
+            }
+        }
+    }
+    // 输出图片
+    imagepng($img, $imgPath);
+    return $imgPath;
+}
+
+/**
+ * 图片圆角处理
+ * @param $type
+ * @param $imgPath
+ * @param string $imgResource
+ * @param int $radius
+ * @return bool
+ */
+function img_radius($type, $imgPath, $imgResource = '', $radius = 15)
+{
+    switch ($type) {
+        case 'path':
+            $ext = pathinfo($imgPath);
+            $src_img = null;
+            switch ($ext['extension']) {
+                case 'jpg':
+                    $src_img = imagecreatefromjpeg($imgPath);
+                    break;
+                case 'png':
+                    $src_img = imagecreatefrompng($imgPath);
+                    break;
+            }
+            break;
+        case 'resource':
+            $src_img = imagecreatefromstring(file_get_contents($imgResource));
+            break;
+        default:
+            return false;
+    }
+    $wh = getimagesize($imgPath);
+    $w = $wh[0];
+    $h = $wh[1];
+    $radius = $radius == 0 ? (min($w, $h) / 2) : $radius;
+    $img = imagecreatetruecolor($w, $h);
+    //这一句一定要有
+    imagesavealpha($img, true);
+    //拾取一个完全透明的颜色,最后一个参数127为全透明
+    $bg = imagecolorallocatealpha($img, 255, 255, 255, 127);
+    imagefill($img, 0, 0, $bg);
+    $r = $radius; //圆 角半径
+    for ($x = 0; $x < $w; $x++) {
+        for ($y = 0; $y < $h; $y++) {
+            $rgbColor = imagecolorat($src_img, $x, $y);
+            if (($x >= $radius && $x <= ($w - $radius)) || ($y >= $radius && $y <= ($h - $radius))) {
+                //不在四角的范围内,直接画
+                imagesetpixel($img, $x, $y, $rgbColor);
+            } else {
+                //在四角的范围内选择画
+                //上左
+                $y_x = $r; //圆心X坐标
+                $y_y = $r; //圆心Y坐标
+                if (((($x - $y_x) * ($x - $y_x) + ($y - $y_y) * ($y - $y_y)) <= ($r * $r))) {
+                    imagesetpixel($img, $x, $y, $rgbColor);
+                }
+                //上右
+                $y_x = $w - $r; //圆心X坐标
+                $y_y = $r; //圆心Y坐标
+                if (((($x - $y_x) * ($x - $y_x) + ($y - $y_y) * ($y - $y_y)) <= ($r * $r))) {
+                    imagesetpixel($img, $x, $y, $rgbColor);
+                }
+                //下左
+                $y_x = $r; //圆心X坐标
+                $y_y = $h - $r; //圆心Y坐标
+                if (((($x - $y_x) * ($x - $y_x) + ($y - $y_y) * ($y - $y_y)) <= ($r * $r))) {
+                    imagesetpixel($img, $x, $y, $rgbColor);
+                }
+                //下右
+                $y_x = $w - $r; //圆心X坐标
+                $y_y = $h - $r; //圆心Y坐标
+                if (((($x - $y_x) * ($x - $y_x) + ($y - $y_y) * ($y - $y_y)) <= ($r * $r))) {
+                    imagesetpixel($img, $x, $y, $rgbColor);
+                }
+            }
+        }
+    }
+    // 输出图片
+    imagepng($img, $imgPath);
+    return $imgPath;
+}
+
+/**
+ * 分享二维码
+ * @param $type
+ * @param $user_id
+ * @param int $goods_id
+ * @param string $logo
+ * @return bool
+ */
+function create_qrcode($type, $user_id, $goods_id = 0, $logo = '')
+{
+    \think\Loader::import('phpqrcode', EXTEND_PATH);
+
+    switch ($type) {
+        case 'goods':
+            $url = SITE_URL . '/#/goods/goods_details?goods_id=' . $goods_id . '&cart_type=0&invite=' . $user_id;
+            $filename = 'public/images/qrcode/goods/goods_' . $user_id . '_' . $goods_id . '.png';
+            break;
+        case 'user':
+            $url = SITE_URL . '/#/register?invite=' . $user_id;
+            $filename = 'public/images/qrcode/user/user_' . $user_id . '_min.png';
+            break;
+        default:
+            return false;
+    }
+    $value = $url;                  //二维码内容
+    $errorCorrectionLevel = 'L';    //容错级别
+    $matrixPointSize = 10;          //生成图片大小
+    //生成二维码图片
+    \QRcode::png($value, $filename, $errorCorrectionLevel, $matrixPointSize, 2);
+
+    //判断是否生成带logo的二维码
+    if (file_exists($logo)) {
+        $QR = imagecreatefromstring(file_get_contents($filename));        //目标图象连接资源。
+        $logo = imagecreatefromstring(file_get_contents($logo));    //源图象连接资源。
+
+        $QR_width = imagesx($QR);            //二维码图片宽度
+        $QR_height = imagesy($QR);            //二维码图片高度
+        $logo_width = imagesx($logo);        //logo图片宽度
+        $logo_height = imagesy($logo);        //logo图片高度
+        $logo_qr_width = $QR_width / 4;       //组合之后logo的宽度(占二维码的1/5)
+        $scale = $logo_width / $logo_qr_width;       //logo的宽度缩放比(本身宽度/组合后的宽度)
+        $logo_qr_height = $logo_height / $scale;  //组合之后logo的高度
+        $from_width = ($QR_width - $logo_qr_width) / 2;   //组合之后logo左上角所在坐标点
+
+        //重新组合图片并调整大小
+        //imagecopyresampled() 将一幅图像(源图象)中的一块正方形区域拷贝到另一个图像中
+        imagecopyresampled($QR, $logo, $from_width, $from_width, 0, 0, $logo_qr_width, $logo_qr_height, $logo_width, $logo_height);
+
+        //输出图片
+        imagepng($QR, $filename);
+        imagedestroy($QR);
+        imagedestroy($logo);
+    }
+    return $filename;
 }

@@ -26,6 +26,7 @@ return [
             ['name' => '节日设置', 'act' => 'icon', 'op' => 'System'],
             ['name' => '银行列表', 'act' => 'bankList', 'op' => 'System'],
             ['name' => '清除缓存', 'act' => 'cleanCache', 'op' => 'System'],
+            ['name' => 'APP首页', 'act' => 'appIndex', 'op' => 'System'],
         ]],
         ['name' => '会员', 'child' => [
             ['name' => '会员列表', 'act' => 'index', 'op' => 'User'],

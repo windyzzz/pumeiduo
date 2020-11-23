@@ -594,6 +594,20 @@ class ActivityLogic extends Model
                     break;
                 }
             }
+            // banner处理
+            $bannerInfo = json_decode($item['banner'], true);
+            if ($bannerInfo) {
+                $activityList[$key]['banner'] = $bannerInfo['img'];
+                $bannerInfo['img'] = getFullPath($bannerInfo['img']);
+                $activityList[$key]['banner_info'] = $bannerInfo;
+            } else {
+                $activityList[$key]['banner_info'] = [
+                    'img' => getFullPath($item['banner']),
+                    'width' => 750,
+                    'height' => 500,
+                    'type' => 'jpeg'
+                ];
+            }
         }
         return $activityList;
     }

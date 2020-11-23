@@ -49,6 +49,10 @@ class Activity extends Base
             $this->assign('activity_goods', $activity_goods);
             $info['start_time'] = date('Y-m-d H:i:s', $info['start_time']);
             $info['end_time'] = date('Y-m-d H:i:s', $info['end_time']);
+            $bannerInfo = json_decode($info['banner'], true);
+            if ($bannerInfo) {
+                $info['banner'] = $bannerInfo['img'];
+            }
         } else {
             $info['start_time'] = date('Y-m-d H:i:s');
             $info['end_time'] = date('Y-m-d H:i:s', time() + 3600 * 60 * 24);
@@ -76,6 +80,16 @@ class Activity extends Base
             $return = ['status' => 0, 'msg' => rtrim($msg, '，')];
             $this->ajaxReturn($return);
         }
+        $imgInfo = getimagesize(PUBLIC_PATH . substr($data['banner'], strrpos($data['banner'], 'public') + 7));
+        if (empty($imgInfo)) {
+            $this->error('上传banner发生错误');
+        }
+        $data['banner'] = json_encode([
+            'img' => $data['banner'],
+            'width' => $imgInfo[0],
+            'height' => $imgInfo[1],
+            'type' => substr($imgInfo['mime'], strrpos($imgInfo['mime'], '/') + 1),
+        ]);
         $data['start_time'] = strtotime($data['start_time']);
         $data['end_time'] = strtotime($data['end_time']);
         if ($activityId) {
