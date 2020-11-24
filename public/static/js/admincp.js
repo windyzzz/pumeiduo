@@ -41,7 +41,7 @@
     });
     // 侧边导航三级级菜单点击
     $('.sub-menu').find('a').click(function () {
-        openItem($(this).attr('data-param'));
+        openItem($(this).attr('data-param'), $(this).attr('data-val'));
     });
 
     // 顶部各个模块切换
@@ -107,7 +107,7 @@
 });
 
 // 点击菜单，iframe页面跳转
-function openItem(param) {
+function openItem(param, val = '') {
     //console.log(param);
     $('.sub-menu').find('li').removeClass('active');
     data_str = param.split('|');
@@ -121,8 +121,8 @@ function openItem(param) {
     //$('li[data-param="' + data_str[0] + '"]').addClass('active');
     $this.parent().addClass('active').parents('dl:first').addClass('active').parents('div:first').show();
     var url = '/index.php?m=Admin&c=' + data_str[1] + '&a=' + data_str[0];
-    if (data_str[2]) {
-        url += '&type=' + data_str[2];
+    if (val) {
+        url += '&type=' + val;
     }
     $('#workspace').attr('src', url);
     $.cookie('workspaceParam', data_str[0] + '|' + data_str[1], {expires: 1, path: "/"});

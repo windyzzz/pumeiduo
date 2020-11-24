@@ -454,7 +454,19 @@ function getMenuArr()
             }
         }
     }
-
+    foreach ($menuArr as $mk => $mr) {
+        foreach ($mr['child'] as $nk => $nrr) {
+            if (empty($nrr['child'])) {
+                unset($menuArr[$mk]['child'][$nk]);
+                continue;
+            }
+            foreach ($nrr['child'] as $ck => $child) {
+                if (empty($child['type'])) {
+                    $menuArr[$mk]['child'][$nk]['child'][$ck]['type'] = '1';
+                }
+            }
+        }
+    }
     return $menuArr;
 }
 
