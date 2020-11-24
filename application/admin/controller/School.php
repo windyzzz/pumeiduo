@@ -68,6 +68,40 @@ class School extends Controller
         return $this->fetch();
     }
 
+
+    public function addModuleClass()
+    {
+        if (IS_POST) {
+            $param = I('post.');
+            $type = $param['type'];
+            $callback = $param['call_back'];
+            unset($param['type']);
+            unset($param['call_back']);
+            if (empty($param['distribute_level'])) {
+                $param['distribute_level'] = '0';
+            } else {
+                if (in_array('0', $param['distribute_level'])) {
+                    $param['distribute_level'] = '0';
+                } else {
+                    $distributeLevel = '';
+                    foreach ($param['distribute_level'] as $level) {
+                        $distributeLevel .= $level . ',';
+                    }
+                    $param['distribute_level'] = rtrim($distributeLevel, ',');
+                }
+            }
+            $classId = M('school_class')->add($param);
+            echo "<script>parent.{$callback}('{$type}');</script>";
+            exit();
+        }
+
+        $moduleId = I('module_id');
+        $type = I('type', 'module1');
+        $this->assign('module_id', $moduleId);
+        $this->assign('module_type', $type);
+        return $this->fetch('add_module_class');
+    }
+
     /**
      * 更新模块分类信息
      */

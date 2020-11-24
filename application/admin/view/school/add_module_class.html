@@ -1,0 +1,81 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="__STATIC__/css/edit_address.css" type="text/css">
+    <script src="__PUBLIC__/js/jquery-1.10.2.min.js"></script>
+    <script src="__PUBLIC__/js/layer/layer-min.js"></script>
+    <script src="__PUBLIC__/js/global.js"></script>
+    <script src="__PUBLIC__/js/pc_common.js"></script>
+</head>
+<include file="public/layout"/>
+<body>
+<div class="adderss-add">
+    <div class="ner-reac ol_box_4" style="visibility: visible; position: fixed; z-index: 500; width: 100%; height:100%">
+        <div class="box-ct">
+            <form action="{:U('Admin/School/addModuleClass')}" method="post" name="form1">
+                <div class="ncap-form-default">
+                    <dl class="row">
+                        <dt class="tit">
+                            <label>分类名</label>
+                        </dt>
+                        <dd class="opt">
+                            <input type="text" class="input-txt" name="name" value="" style="text-align: center;">
+                        </dd>
+                    </dl>
+                    <dl class="row">
+                        <dt class="tit">
+                            <label>排序</label>
+                        </dt>
+                        <dd class="opt">
+                            <input type="text" name="sort" value="0" style="text-align: center; width: 10%;"
+                                   onKeyUp="this.value=this.value.replace(/[^\d]/g,'')"
+                                   onpaste="this.value=this.value.replace(/[^\d]/g,'')"/>
+                        </dd>
+                    </dl>
+                    <dl class="row">
+                        <dt class="tit">
+                            <label>是否开启</label>
+                        </dt>
+                        <dd class="opt onoff">
+                            <label for="class_is_open1" class="cb-enable selected">开启</label>
+                            <label for="class_is_open0" class="cb-disable">隐藏</label>
+                            <input id="class_is_open1" name="is_open" value="1" type="radio" checked>
+                            <input id="class_is_open0" name="is_open" value="0" type="radio">
+                        </dd>
+                    </dl>
+                    <dl class="row">
+                        <dt class="tit">
+                            <label>是否允许访问</label>
+                        </dt>
+                        <dd class="opt onoff">
+                            <label for="class_is_allow1" class="cb-enable selected">允许访问</label>
+                            <label for="class_is_allow0" class="cb-disable">不允许</label>
+                            <input id="class_is_allow1" name="is_allow" value="1" type="radio" checked>
+                            <input id="class_is_allow0" name="is_allow" value="0" type="radio">
+                        </dd>
+                    </dl>
+                    <dl class="row">
+                        <dt class="tit">
+                            <label>访问限制</label>
+                        </dt>
+                        <dd class="opt ctype">
+                            <input name="distribute_level[]" type="checkbox" value="0"><label>所有人</label>
+                            <input name="distribute_level[]" type="checkbox" value="1"><label>普通会员</label>
+                            <input name="distribute_level[]" type="checkbox" value="2"><label>VIP</label>
+                            <input name="distribute_level[]" type="checkbox" value="3"><label>SVIP</label>
+                        </dd>
+                    </dl>
+                    <div class="bot">
+                        <input type="hidden" name="module_id" value="{$module_id}">
+                        <input type="hidden" name="type" value="{$module_type}">
+                        <input type="hidden" name="call_back" value="addModuleCallback">
+                        <a class="ncap-btn-big ncap-btn-green" onclick="document.form1.submit()">确认提交</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

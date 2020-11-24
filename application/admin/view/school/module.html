@@ -89,6 +89,7 @@
                     </a>
                 </li>
             </foreach>
+            <li><a onclick="addModule('{$module.id}', '{$module.type}')"><h1>+</h1></a></li>
         </ul>
     </div>
     <form method="post" id="datapost2" action="{:U('School/updateModuleClass')}" enctype="multipart/form-data" name="form">
@@ -179,6 +180,22 @@
     function img_call_back(fileurl_tmp, elementid) {
         $("#" + elementid).val(fileurl_tmp);
         $("." + elementid).attr('src', fileurl_tmp);
+    }
+
+    function addModule(module_id, module_type) {
+        var url = "{:U('Admin/School/addModuleClass')}/module_id/" + module_id + "/type/" + module_type;
+        layer.open({
+            type: 2,
+            title: '站内信',
+            shadeClose: true,
+            shade: 0.8,
+            area: ['580px', '480px'],
+            content: url
+        });
+    }
+
+    function addModuleCallback(module_type) {
+        window.location.href = "{:U('Admin/School/module')}/type/" + module_type;
     }
     
     function updateModule(postId) {
