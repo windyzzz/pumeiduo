@@ -380,10 +380,10 @@ class UsersLogic extends Model
                         'token' => $userToken,
                         'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
                     ];
-                    if (empty($user['head_pic'])) {
+                    if (!$this->checkHeadPic($user['head_pic'])) {
                         $updateData['head_pic'] = !empty($data['headimgurl']) ? $data['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png';
                     }
-                    if (empty($user['nickname'])) {
+                    if (!$this->checkNickname($user['nickname'])) {
                         $updateData['nickname'] = !empty($data['nickname']) ? $data['nickname'] : $user['mobile'];
                     }
                     Db::name('users')->where(['user_id' => $oauthUser['user_id']])->update($updateData);
@@ -464,10 +464,10 @@ class UsersLogic extends Model
                         'token' => $userToken,
                         'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
                     ];
-                    if (empty($user['head_pic'])) {
+                    if (!$this->checkHeadPic($user['head_pic'])) {
                         $updateData['head_pic'] = !empty($oauthData['headimgurl']) ? $oauthData['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png';
                     }
-                    if (empty($user['nickname'])) {
+                    if (!$this->checkNickname($user['nickname'])) {
                         $updateData['nickname'] = !empty($data['nickname']) ? $data['nickname'] : $user['mobile'];
                     }
                     Db::name('users')->where(['user_id' => $oauthUser['user_id']])->update($updateData);
@@ -1211,10 +1211,10 @@ class UsersLogic extends Model
                 'token' => TokenLogic::setToken(),
                 'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
             ];
-            if (empty($user['head_pic'])) {
+            if (!$this->checkHeadPic($user['head_pic'])) {
                 $updateData['head_pic'] = !empty($data['headimgurl']) ? $data['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png';
             }
-            if (empty($user['nickname'])) {
+            if (!$this->checkNickname($user['nickname'])) {
                 $updateData['nickname'] = !empty($data['nickname']) ? $data['nickname'] : $user['mobile'];
             }
             M('users')->where(['user_id' => $userId])->update($updateData);
@@ -1370,10 +1370,10 @@ class UsersLogic extends Model
                 'token' => TokenLogic::setToken(),
                 'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
             ];
-            if (empty($user['head_pic'])) {
+            if (!$this->checkHeadPic($user['head_pic'])) {
                 $updateData['head_pic'] = !empty($oauthData['headimgurl']) ? $oauthData['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png';
             }
-            if (empty($user['nickname'])) {
+            if (!$this->checkNewProfit($user['nickname'])) {
                 $updateData['nickname'] = !empty($data['nickname']) ? $data['nickname'] : $user['mobile'];
             }
             M('users')->where(['user_id' => $userId])->update($updateData);
@@ -3456,5 +3456,31 @@ class UsersLogic extends Model
         } else {
             return ['status' => -1];
         }
+    }
+
+    /**
+     * 检查用户头像
+     * @param $headPic
+     * @return bool
+     */
+    public function checkHeadPic($headPic)
+    {
+        if (empty($headPic) || strstr($headPic, 'default_head')) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * 检查用户昵称
+     * @param $nickname
+     * @return bool
+     */
+    public function checkNickname($nickname)
+    {
+        if (empty($nickname) || strstr($nickname, '手机用户')) {
+            return false;
+        }
+        return true;
     }
 }
