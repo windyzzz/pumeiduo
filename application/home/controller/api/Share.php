@@ -235,7 +235,7 @@ class Share extends Base
         /*
          * 上部分图
          */
-        $ext1 = pathinfo($pic1_path);
+        $ext1 = getimagesize($pic1_path)['mime'];
         $pic1 = imagecreatefromstring(file_get_contents($pic1_path));
         $pic1_width = imagesx($pic1);
         $pic1_height = imagesy($pic1);
@@ -258,11 +258,11 @@ class Share extends Base
         $font_y = 270;                                          // 嵌入字体y轴的位置
         imagettftext($pic1, 30, 0, $font_x, $font_y, $color, $font, $nickname);
         // 输出图片
-        switch ($ext1['extension']) {
-            case 'jpg':
+        switch ($ext1) {
+            case 'image/jpg':
                 imagejpeg($pic1, $pic1_path);
                 break;
-            case 'png':
+            case 'image/png':
                 imagepng($pic1, $pic1_path);
                 break;
         }
@@ -277,11 +277,11 @@ class Share extends Base
 //        imageColorTransparent($background, $color);
         imagecopyresampled($background, $pic1, 0, 0, 0, 0, $pic1_width, $pic1_height, $pic1_width, $pic1_height);
         // 输出图片
-        switch ($ext1['extension']) {
-            case 'jpg':
+        switch ($ext1) {
+            case 'image/jpg':
                 imagejpeg($background, $pic1_path);
                 break;
-            case 'png':
+            case 'image/png':
                 imagepng($background, $pic1_path);
                 break;
         }
@@ -289,7 +289,7 @@ class Share extends Base
         /*
          * 下部分图
          */
-        $ext2 = pathinfo($pic2_path);
+        $ext2 = getimagesize($pic2_path)['mime'];
         $pic2 = imagecreatefromstring(file_get_contents($pic2_path));
 //        $pic2_width = imagesx($pic2);
 //        $pic2_height = imagesy($pic2);
@@ -303,11 +303,11 @@ class Share extends Base
         $from_y = 42;                   // 组合之后二维码左上角所在坐标点y
         imagecopyresampled($pic2, $qr, $from_x, $from_y, 0, 0, $qr_pic2_width, $qr_pic2_height, $qr_width, $qr_height);
         // 输出图片
-        switch ($ext2['extension']) {
-            case 'jpg':
+        switch ($ext2) {
+            case 'image/jpg':
                 imagejpeg($pic2, $pic2_path);
                 break;
-            case 'png':
+            case 'image/png':
                 imagepng($pic2, $pic2_path);
                 break;
         }
@@ -323,11 +323,11 @@ class Share extends Base
         $from_y = 132;                   // 组合之后logo左上角所在坐标点y
         imagecopyresampled($pic2, $logo, $from_x, $from_y, 0, 0, $logo_pic2_width, $logo_pic2_height, $logo_width, $logo_height);
         // 输出图片
-        switch ($ext2['extension']) {
-            case 'jpg':
+        switch ($ext2) {
+            case 'image/jpg':
                 imagejpeg($pic2, $pic2_path);
                 break;
-            case 'png':
+            case 'image/png':
                 imagepng($pic2, $pic2_path);
                 break;
         }
@@ -335,7 +335,7 @@ class Share extends Base
         /*
          * 上下图组合
          */
-        $ext1 = pathinfo($pic1_path);
+        $ext1 = getimagesize($pic1_path)['mime'];
         $pic1 = imagecreatefromstring(file_get_contents($pic1_path));
 //        $pic1_width = imagesx($pic1);
         $pic1_height = imagesy($pic1);
@@ -346,11 +346,11 @@ class Share extends Base
         $from_y = ($pic1_height - $pic2_height);        // 组合的下图左上角所在坐标点y
         imagecopyresampled($pic1, $pic2, $from_x, $from_y, 0, 0, $pic2_width, $pic2_height, $pic2_width, $pic2_height);
         // 输出图片
-        switch ($ext1['extension']) {
-            case 'jpg':
+        switch ($ext1) {
+            case 'image/jpg':
                 imagejpeg($pic1, $pic1_path);
                 break;
-            case 'png':
+            case 'image/png':
                 imagepng($pic1, $pic1_path);
                 break;
         }
