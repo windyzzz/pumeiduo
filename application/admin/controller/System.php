@@ -12,7 +12,10 @@
 namespace app\admin\controller;
 
 use app\admin\logic\GoodsLogic;
+use app\admin\model\AppIcon;
+use app\admin\model\AppIconConfig;
 use app\common\logic\ModuleLogic;
+use app\common\model\ShareBg;
 use think\Cache;
 use think\db;
 use think\Page;
@@ -111,13 +114,33 @@ class System extends Base
         }
         $this->assign('inc_type', $inc_type);
         $config = tpCache($inc_type);
-        if ('shop_info' == $inc_type) {
-            $province = M('region2')->where(['parent_id' => 0])->select();
-            $city = M('region2')->where(['parent_id' => $config['province']])->select();
-            $area = M('region2')->where(['parent_id' => $config['city']])->select();
-            $this->assign('province', $province);
-            $this->assign('city', $city);
-            $this->assign('area', $area);
+        switch ($inc_type) {
+            case 'shop_info':
+                $province = M('region2')->where(['parent_id' => 0])->select();
+                $city = M('region2')->where(['parent_id' => $config['province']])->select();
+                $area = M('region2')->where(['parent_id' => $config['city']])->select();
+                $this->assign('province', $province);
+                $this->assign('city', $city);
+                $this->assign('area', $area);
+                break;
+            case 'share':
+                $shareBg = M('share_bg')->select();
+                $shareBgList = [
+                    'goods' => [],
+                    'user' => []
+                ];
+                foreach ($shareBg as $item) {
+                    switch ($item['type']) {
+                        case 'goods':
+                            $shareBgList['goods'][] = $item['image'];
+                            break;
+                        case 'user':
+                            $shareBgList['user'][] = $item['image'];
+                            break;
+                    }
+                }
+                $this->assign('share_bg', $shareBgList);
+                break;
         }
         $this->assign('config', $config); //当前配置项
         //C('TOKEN_ON',false);
@@ -133,8 +156,42 @@ class System extends Base
         $param = I('post.');
         $inc_type = $param['inc_type'];
         //unset($param['__hash__']);
+        Db::startTrans();
+        if ($param['inc_type'] == 'share') {
+//            if (isset($param['share_bg_goods'])) {
+//                M('share_bg')->where(['type' => 'goods'])->delete();
+//                $shareBgGoods = [];
+//                foreach ($param['share_bg_goods'] as $goods) {
+//                    $shareBgGoods[] = [
+//                        'type' => 'goods',
+//                        'image' => $goods
+//                    ];
+//                }
+//                (new ShareBg())->saveAll($shareBgGoods);
+//                unset($param['share_bg_goods']);
+//            } else {
+//                Db::rollback();
+//                $this->error('请上传商品分享码背景图', U('System/index', ['inc_type' => $inc_type]));
+//            }
+            if (isset($param['share_bg_user'])) {
+                M('share_bg')->where(['type' => 'user'])->delete();
+                $shareBgUser = [];
+                foreach ($param['share_bg_user'] as $user) {
+                    $shareBgUser[] = [
+                        'type' => 'user',
+                        'image' => $user
+                    ];
+                }
+                (new ShareBg())->saveAll($shareBgUser);
+                unset($param['share_bg_user']);
+            } else {
+                Db::rollback();
+                $this->error('请上传个人分享码背景图', U('System/index', ['inc_type' => $inc_type]));
+            }
+        }
         unset($param['inc_type']);
         tpCache($inc_type, $param);
+        Db::commit();
         $this->success('操作成功', U('System/index', ['inc_type' => $inc_type]));
     }
 
@@ -561,6 +618,76 @@ class System extends Base
         $this->assign('page', $page);
         $this->assign('bank_list', $bankList);
         return view('bank_list');
+    }
+
+    /**
+     * app首页设置
+     * @return mixed
+     * @throws \Exception
+     */
+    public function appIndex()
+    {
+        if (IS_POST) {
+            $post = I('post.');
+            $indexIconConfig = $post['index_icon_config'];
+            $indexIcon = $post['index_icon'];
+            Db::startTrans();
+            // 清除数据
+            M('app_icon_config')->where('1=1')->delete();
+            // 添加数据
+            $appIconConfig = [];
+            foreach ($indexIconConfig as $key => $config) {
+                $appIconConfig[] = [
+                    'type' => $key,
+                    'row_num' => $config['row_num'],
+                    'not_allow_tips' => $config['not_allow_tips']
+                ];
+            }
+            if (!empty($appIconConfig)) {
+                $appIconConfigModel = new AppIconConfig();
+                $appIconConfigModel->saveAll($appIconConfig);
+            }
+            // 清除数据
+            M('app_icon')->where('1=1')->delete();
+            // 添加数据
+            $appIcon = [];
+            foreach ($indexIcon as $key => $icon) {
+                $imgInfo = getimagesize(PUBLIC_PATH . substr($icon['img'], strrpos($icon['img'], 'public') + 7));
+                if (empty($imgInfo)) {
+                    $this->error('图片上传错误');
+                }
+                $appIcon[] = [
+                    'code' => $key,
+                    'name' => $icon['name'],
+                    'img' => json_encode([
+                        'img' => $icon['img'],
+                        'width' => $imgInfo[0],
+                        'height' => $imgInfo[1],
+                        'type' => substr($imgInfo['mime'], strrpos($imgInfo['mime'], '/') + 1),
+                    ]),
+                    'is_open' => $icon['is_open'],
+                    'is_allow' => $icon['is_allow'],
+                    'sort' => $icon['sort'],
+                    'type' => $icon['type'],
+                ];
+            }
+            if (!empty($appIcon)) {
+                $appIconModel = new AppIcon();
+                $appIconModel->saveAll($appIcon);
+            }
+            Db::commit();
+            $this->success('操作成功', U('System/appIndex'));
+        }
+        $indexIconConfig = M('app_icon_config')->where(['type' => 'index'])->find();
+        $indexIcon = M('app_icon')->where(['type' => 'index'])->order('sort DESC')->select();
+        foreach ($indexIcon as &$icon) {
+            $iconImg = json_decode($icon['img'], true);
+            $icon['img'] = $iconImg['img'];
+        }
+        $this->assign('index_icon_config', $indexIconConfig);
+        $this->assign('index_icon_count', count($indexIcon));
+        $this->assign('index_icon', $indexIcon);
+        return $this->fetch('app_index');
     }
 
     public function shop_info()

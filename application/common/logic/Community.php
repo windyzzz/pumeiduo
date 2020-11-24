@@ -48,27 +48,56 @@ class Community
     }
 
     /**
+     * 文章搜索条件2
+     * @param $param
+     * @return array
+     */
+    private function articleWhereOr($param)
+    {
+        $whereOr = [];
+        if (!empty($param['search'])) {
+            $whereOr['ca.content'] = ['LIKE', '%' . $param['search'] . '%'];
+            $whereOr['g.goods_name'] = ['LIKE', '%' . $param['search'] . '%'];
+            // 搜索量增加
+            M('community_article_keyword')->where(['name' => $param['search']])->setInc('click');
+        }
+        return $whereOr;
+    }
+
+    /**
      * 文章搜索排序
      * @param $param
-     * @return string
+     * @return array
      */
     private function articleSort($param)
     {
         $sort = '';
+        $sortSet = [
+            'share' => 'DESC',
+            'publish_time' => 'DESC'
+        ];
         if (!empty($param['sort']) && !empty($param['order'])) {
-
-        }
-        $articleSort = M('community_config')->where(['type' => 'article_sort'])->value('content');
-        switch ($articleSort) {
-            case 'publish_time':
-                $sort .= $articleSort . ' DESC, share DESC,';
-                break;
-            case 'share':
-                $sort .= $articleSort . ' DESC, publish_time DESC,';
-                break;
+            $paramSort = explode(',', $param['sort']);
+            $paramOrder = explode(',', $param['order']);
+            if (count($paramSort) == count($paramOrder)) {
+                foreach ($paramSort as $k => $v) {
+                    $sort .= $v . ' ' . $paramOrder[$k] . ',';
+                    $sortSet[$v] = $paramOrder[$k];
+                }
+            }
+        } else {
+            $articleSort = M('community_config')->where(['type' => 'article_sort'])->value('content');
+            switch ($articleSort) {
+                case 'publish_time':
+                    $sort .= $articleSort . ' DESC, share DESC,';
+                    break;
+                case 'share':
+                    $sort .= $articleSort . ' DESC, publish_time DESC,';
+                    break;
+            }
         }
         $sort .= ' add_time DESC';
-        return $sort;
+        return ['sort' => $sort, 'sort_set' => $sortSet];
     }
 
     /**
@@ -81,17 +110,33 @@ class Community
     {
         // 搜索条件
         $where = $this->articleWhere($param);
+        $whereOr = $this->articleWhereOr($param);
         // 排序
-        $sort = $this->articleSort($param);
+        $sortParam = $this->articleSort($param);
+        $sort = $sortParam['sort'];
+        $sortSet = $sortParam['sort_set'];
+        // 数据数量
+        $count = M('community_article ca')->where($where);
+        if (!empty($whereOr)) {
+            $count = $count->join('goods g', 'g.goods_id = ca.goods_id', 'LEFT')->where(function ($query) use ($whereOr) {
+                $query->whereOr($whereOr);
+            });
+        }
+        $count = $count->count();
         // 查询数据
-        $count = M('community_article ca')->where($where)->count();
         $page = new Page($count, $num);
         $articleList = M('community_article ca')
             ->join('users u', 'u.user_id = ca.user_id', 'LEFT')
             ->join('goods g', 'g.goods_id = ca.goods_id', 'LEFT')
             ->field('ca.*, u.nickname, u.user_name, u.head_pic, g.goods_name, g.original_img, g.shop_price, g.exchange_integral, g.is_on_sale')
-            ->where($where)->order($sort)->limit($page->firstRow . ',' . $page->listRows)->select();
-        return ['total' => $count, 'list' => $articleList];
+            ->where($where);
+        if (!empty($whereOr)) {
+            $articleList = $articleList->where(function ($query) use ($whereOr) {
+                $query->whereOr($whereOr);
+            });
+        }
+        $articleList = $articleList->order($sort)->limit($page->firstRow . ',' . $page->listRows)->select();
+        return ['total' => $count, 'list' => $articleList, 'sort_set' => $sortSet];
     }
 
     /**

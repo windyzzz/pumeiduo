@@ -577,6 +577,10 @@ class ActivityLogic extends Model
             } else {
                 $activityGoods[$k]['exchange_price'] = $v['shop_price'];
             }
+            // 优化价格显示
+            if ($activityGoods[$k]['exchange_integral'] == 0) {
+                $activityGoods[$k]['shop_price'] = $activityGoods[$k]['exchange_price'];
+            }
         }
         // 组合数据
         foreach ($activityList as $key => $item) {
@@ -589,6 +593,20 @@ class ActivityLogic extends Model
                 if ($count == 9) {
                     break;
                 }
+            }
+            // banner处理
+            $bannerInfo = json_decode($item['banner'], true);
+            if ($bannerInfo) {
+                $activityList[$key]['banner'] = $bannerInfo['img'];
+                $bannerInfo['img'] = getFullPath($bannerInfo['img']);
+                $activityList[$key]['banner_info'] = $bannerInfo;
+            } else {
+                $activityList[$key]['banner_info'] = [
+                    'img' => getFullPath($item['banner']),
+                    'width' => 750,
+                    'height' => 500,
+                    'type' => 'jpeg'
+                ];
             }
         }
         return $activityList;

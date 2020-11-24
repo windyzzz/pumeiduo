@@ -623,6 +623,10 @@ class GoodsLogic extends Model
                     $lookSee[$k]['exchange_price'] = $v['shop_price'];
                 }
             }
+            // 优化价格显示
+            if ($goodsList[$k]['exchange_integral'] == 0) {
+                $goodsList[$k]['shop_price'] = $goodsList[$k]['exchange_price'];
+            }
         }
         return $lookSee;
     }
@@ -1338,6 +1342,10 @@ class GoodsLogic extends Model
             }
             // 第三类，默认
             $goodsList[$k]['tags'][] = ['type' => 'default', 'title' => '品牌直营'];
+            // 优化价格显示
+            if ($goodsList[$k]['exchange_integral'] == 0) {
+                $goodsList[$k]['shop_price'] = $goodsList[$k]['exchange_price'];
+            }
         }
         return ['goods_list' => $goodsList, 'goods_images' => isset($goods_images) ?? []];
     }

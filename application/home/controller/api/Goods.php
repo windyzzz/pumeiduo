@@ -221,7 +221,7 @@ class Goods extends Base
         $commentStatistics = $goodsLogic->commentStatistics($goods_id); // 获取某个商品的评论统计
         $point_rate = tpCache('shopping.point_rate');
 
-        $look_see = $goodsLogic->get_look_see($goods);
+        $look_see = $goodsLogic->get_look_see_v2($goods);
 
         // 判断商品性质
         $goods['nature'] = [];
