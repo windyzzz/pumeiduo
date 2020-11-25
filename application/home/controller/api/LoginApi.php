@@ -255,7 +255,7 @@ class LoginApi
         $code = I('post.code', '');
         $scene = I('post.scene', 1);
         $invite = I('post.invite', 0);
-        $inviteOpenid = I('post.invite_openid', 0);
+        $inviteOpenid = I('post.invite_openid', '');
 
         $userLogic = new UsersLogic();
         // 验证验证码

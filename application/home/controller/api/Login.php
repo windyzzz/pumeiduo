@@ -277,8 +277,8 @@ class Login extends Base
         //     }
         // }
 
-        $invite = I('invite');
-        $inviteOpenid = I('invite_openid');
+        $invite = I('invite', '');
+        $inviteOpenid = I('invite_openid', '');
 //        if (!empty($invite)) {
 //            $invite = get_user_info($invite); //根据user_id查找邀请人
 //        }

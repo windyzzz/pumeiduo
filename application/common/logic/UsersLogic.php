@@ -961,7 +961,7 @@ class UsersLogic extends Model
      * @throws \think\db\exception\ModelNotFoundException
      * @throws \think\exception\DbException
      */
-    public function reg($username, $password, $password2, $push_id = 0, $invite = 0, $inviteOpenid = 0, $nickname = '', $head_pic = '', $openId = '', $userToken = null, $source = 1)
+    public function reg($username, $password, $password2, $push_id = 0, $invite = 0, $inviteOpenid = '', $nickname = '', $head_pic = '', $openId = '', $userToken = null, $source = 1)
     {
         $is_validated = 0;
 //        if (check_email($username)) {
@@ -1020,9 +1020,9 @@ class UsersLogic extends Model
 
         if (!$invite) $invite = S('invite_' . $userToken);
         if ($invite > 0) {
-            if ($inviteOpenid > 0) {
+            if (!empty($inviteOpenid)) {
                 // 根据openid获取用户ID
-                $invite = M('user')->where(['openid' => $inviteOpenid, 'is_lock' => 0, 'is_cancel' => 0])->value('user_id');
+                $invite = M('user')->where(['openid' => $inviteOpenid, 'is_lock' => 0, 'is_cancel' => 0])->order('user_id DESC')->value('user_id');
             }
             $map['will_invite_uid'] = $invite;
             // 如果找到他老爸还要找他爷爷他祖父等
@@ -1277,7 +1277,7 @@ class UsersLogic extends Model
      * @param $inviteOpenid
      * @return array
      */
-    public function oauthRegApplet($unionid, $openid, $username, $password, $invite = 0, $inviteOpenid = 0)
+    public function oauthRegApplet($unionid, $openid, $username, $password, $invite = 0, $inviteOpenid = '')
     {
         $oauthUser = M('oauth_users')->where(['unionid' => $unionid])->order('tu_id desc')->find();
         if (!$oauthUser) {
@@ -1287,9 +1287,10 @@ class UsersLogic extends Model
         $isReg = false;
         // 邀请人处理
         if ($invite > 0) {
-            if ($inviteOpenid > 0) {
+            if (!empty($inviteOpenid)) {
                 // 根据openid获取用户ID
-                $invite = M('user')->where(['openid' => $inviteOpenid, 'is_lock' => 0, 'is_cancel' => 0])->value('user_id');
+                $inviteUid = M('users')->where(['openid' => $inviteOpenid, 'is_lock' => 0, 'is_cancel' => 0])->order('user_id DESC')->value('user_id');
+                if ($inviteUid > 0) $invite = $inviteUid;
             }
         }
         Db::startTrans();
