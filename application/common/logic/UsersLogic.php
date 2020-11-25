@@ -944,15 +944,24 @@ class UsersLogic extends Model
     }
 
     /**
-     * 注册.
-     *
-     * @param $username  邮箱或手机
-     * @param $password  密码
-     * @param $password2 确认密码
-     *
+     * 注册
+     * @param $username
+     * @param $password
+     * @param $password2
+     * @param int $push_id
+     * @param int $invite
+     * @param int $inviteOpenid
+     * @param string $nickname
+     * @param string $head_pic
+     * @param string $openId
+     * @param null $userToken
+     * @param int $source
      * @return array
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
      */
-    public function reg($username, $password, $password2, $push_id = 0, $invite = 0, $nickname = '', $head_pic = '', $openId = '', $userToken = null, $source = 1)
+    public function reg($username, $password, $password2, $push_id = 0, $invite = 0, $inviteOpenid = 0, $nickname = '', $head_pic = '', $openId = '', $userToken = null, $source = 1)
     {
         $is_validated = 0;
 //        if (check_email($username)) {
@@ -1010,9 +1019,13 @@ class UsersLogic extends Model
         $map['invite_uid'] = $map['will_invite_uid'] = $map['first_leader'] = 0;
 
         if (!$invite) $invite = S('invite_' . $userToken);
-        // 如果找到他老爸还要找他爷爷他祖父等
         if ($invite > 0) {
+            if ($inviteOpenid > 0) {
+                // 根据openid获取用户ID
+                $invite = M('user')->where(['openid' => $inviteOpenid, 'is_lock' => 0, 'is_cancel' => 0])->value('user_id');
+            }
             $map['will_invite_uid'] = $invite;
+            // 如果找到他老爸还要找他爷爷他祖父等
             // $first_leader = M('users')->where("user_id = {$map['first_leader']}")->find();
             // $map['second_leader'] = $first_leader['first_leader'];
             // $map['third_leader'] = $first_leader['second_leader'];
@@ -1261,9 +1274,10 @@ class UsersLogic extends Model
      * @param $username
      * @param $password
      * @param $invite
+     * @param $inviteOpenid
      * @return array
      */
-    public function oauthRegApplet($unionid, $openid, $username, $password, $invite = 0)
+    public function oauthRegApplet($unionid, $openid, $username, $password, $invite = 0, $inviteOpenid = 0)
     {
         $oauthUser = M('oauth_users')->where(['unionid' => $unionid])->order('tu_id desc')->find();
         if (!$oauthUser) {
@@ -1271,6 +1285,13 @@ class UsersLogic extends Model
         }
         $oauthData = unserialize($oauthUser['oauth_data']);
         $isReg = false;
+        // 邀请人处理
+        if ($invite > 0) {
+            if ($inviteOpenid > 0) {
+                // 根据openid获取用户ID
+                $invite = M('user')->where(['openid' => $inviteOpenid, 'is_lock' => 0, 'is_cancel' => 0])->value('user_id');
+            }
+        }
         Db::startTrans();
         if (check_mobile($username)) {
             $userId = M('users')->where('mobile', $username)->where('is_cancel', 0)->value('user_id');
@@ -1321,9 +1342,9 @@ class UsersLogic extends Model
                             'reg_time' => time(),
                             'last_login' => time(),
                             'token' => TokenLogic::setToken(),
-                            'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
+                            'time_out' => strtotime('+' . config('REDIS_DAY') . ' days'),
+                            'will_invite_uid' => $invite
                         ];
-                        if ($invite > 0) $data['will_invite_uid'] = $invite;
                         $userId = M('users')->add($data);
                     } elseif ($userInfo['is_lock'] == 1) {
                         return ['status' => 0, 'msg' => '微信绑定的账号已被冻结'];
@@ -1345,9 +1366,9 @@ class UsersLogic extends Model
                         'reg_time' => time(),
                         'last_login' => time(),
                         'token' => TokenLogic::setToken(),
-                        'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
+                        'time_out' => strtotime('+' . config('REDIS_DAY') . ' days'),
+                        'will_invite_uid' => $invite
                     ];
-                    if ($invite > 0) $data['will_invite_uid'] = $invite;
                     $userId = M('users')->add($data);
                 }
             }

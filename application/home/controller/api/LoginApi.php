@@ -255,6 +255,7 @@ class LoginApi
         $code = I('post.code', '');
         $scene = I('post.scene', 1);
         $invite = I('post.invite', 0);
+        $inviteOpenid = I('post.invite_openid', 0);
 
         $userLogic = new UsersLogic();
         // 验证验证码
@@ -273,7 +274,7 @@ class LoginApi
             }
         }
         // 授权用户注册
-        $res = $userLogic->oauthRegApplet($unionid, $openid, $username, $password, $invite);
+        $res = $userLogic->oauthRegApplet($unionid, $openid, $username, $password, $invite, $inviteOpenid);
         return json($res);
     }
 }

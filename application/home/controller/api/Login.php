@@ -278,12 +278,13 @@ class Login extends Base
         // }
 
         $invite = I('invite');
+        $inviteOpenid = I('invite_openid');
 //        if (!empty($invite)) {
 //            $invite = get_user_info($invite); //根据user_id查找邀请人
 //        }
         $source = $this->isApp == 1 ? 3 : 1;    // 1微信 3APP
         $source = $this->isApplet == 1 ? 4 : $source;   // 4小程序
-        $data = $logic->reg($username, $password, $password2, 0, $invite, '', '', $openId, $this->userToken, $source);
+        $data = $logic->reg($username, $password, $password2, 0, $invite, $inviteOpenid, '', '', $openId, $this->userToken, $source);
         if (1 != $data['status']) {
             return json($data);
         }
