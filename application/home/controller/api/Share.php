@@ -259,7 +259,7 @@ class Share extends Base
         imagettftext($pic1, 30, 0, $font_x, $font_y, $color, $font, $nickname);
         // 输出图片
         switch ($ext1) {
-            case 'image/jpg':
+            case 'image/jpeg':
                 imagejpeg($pic1, $pic1_path);
                 break;
             case 'image/png':
@@ -278,7 +278,7 @@ class Share extends Base
         imagecopyresampled($background, $pic1, 0, 0, 0, 0, $pic1_width, $pic1_height, $pic1_width, $pic1_height);
         // 输出图片
         switch ($ext1) {
-            case 'image/jpg':
+            case 'image/jpeg':
                 imagejpeg($background, $pic1_path);
                 break;
             case 'image/png':
@@ -304,7 +304,7 @@ class Share extends Base
         imagecopyresampled($pic2, $qr, $from_x, $from_y, 0, 0, $qr_pic2_width, $qr_pic2_height, $qr_width, $qr_height);
         // 输出图片
         switch ($ext2) {
-            case 'image/jpg':
+            case 'image/jpeg':
                 imagejpeg($pic2, $pic2_path);
                 break;
             case 'image/png':
@@ -324,7 +324,7 @@ class Share extends Base
         imagecopyresampled($pic2, $logo, $from_x, $from_y, 0, 0, $logo_pic2_width, $logo_pic2_height, $logo_width, $logo_height);
         // 输出图片
         switch ($ext2) {
-            case 'image/jpg':
+            case 'image/jpeg':
                 imagejpeg($pic2, $pic2_path);
                 break;
             case 'image/png':
@@ -347,7 +347,7 @@ class Share extends Base
         imagecopyresampled($pic1, $pic2, $from_x, $from_y, 0, 0, $pic2_width, $pic2_height, $pic2_width, $pic2_height);
         // 输出图片
         switch ($ext1) {
-            case 'image/jpg':
+            case 'image/jpeg':
                 imagejpeg($pic1, $pic1_path);
                 break;
             case 'image/png':

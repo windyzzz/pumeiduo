@@ -2140,7 +2140,7 @@ function img_YJ($type, $imgPath, $imgResource = '')
             $imgInfo = getimagesize($imgPath);
             $src_img = null;
             switch ($imgInfo['mime']) {
-                case 'image/jpg':
+                case 'image/jpeg':
                     $src_img = imagecreatefromjpeg($imgPath);
                     break;
                 case 'image/png':
@@ -2195,7 +2195,7 @@ function img_radius($type, $imgPath, $imgResource = '', $radius = 15)
             $imgInfo = getimagesize($imgPath);
             $src_img = null;
             switch ($imgInfo['mime']) {
-                case 'image/jpg':
+                case 'image/jpeg':
                     $src_img = imagecreatefromjpeg($imgPath);
                     break;
                 case 'image/png':
