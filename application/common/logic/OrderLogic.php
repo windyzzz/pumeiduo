@@ -479,7 +479,7 @@ class OrderLogic
             $userExpenditureMoney = $order['goods_price'] - $order['order_prom_amount'] - $order['coupon_price'];    //用户实际使用金额
 //            $rate = round($useRapplyReturnMoney / $userExpenditureMoney, 2);
 //            $shipping_rate = $order['shipping_price'] / $order['total_amount'];
-            $user_electronic = round($order['user_electronic'] - $order['user_electronic'] * $order['shipping_price'] / $order['total_amount'], 2);
+            $user_electronic = round($order['user_electronic'] - $order['user_electronic'] * $order['shipping_price'] / ($order['order_amount'] + $order['user_electronic']), 2);
 
             // $data['refund_integral'] = floor($useRapplyReturnMoney / $userExpenditureMoney*$order['integral']);//该退积分支付
             $data['refund_integral'] = $order_goods['use_integral'] * $order_goods['goods_num']; //该退积分支付

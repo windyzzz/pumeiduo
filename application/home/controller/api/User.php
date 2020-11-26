@@ -3449,11 +3449,13 @@ class User extends Base
                 $result = $usersLogic->get_money_log($this->user_id, 0, null, true)['result'];
                 foreach ($result as $res) {
                     foreach ($res as $log) {
+                        $changeTime = strtotime($log['change_time']);
                         $return['log_list'][] = [
                             'id' => $log['log_id'],
                             'title' => $log['desc'],
                             'amount' => $log['user_money'],
-                            'add_time' => strtotime($log['change_time'])
+                            'add_time' => $changeTime,
+                            'add_month' => date('Y-m', $changeTime)
                         ];
                     }
                 }
@@ -3466,11 +3468,13 @@ class User extends Base
                 $result = $usersLogic->get_electronic_log($this->user_id, 0, null, true)['result'];
                 foreach ($result as $res) {
                     foreach ($res as $log) {
+                        $changeTime = strtotime($log['change_time']);
                         $return['log_list'][] = [
                             'id' => $log['log_id'],
                             'title' => $log['desc'],
                             'amount' => $log['user_electronic'],
-                            'add_time' => strtotime($log['change_time'])
+                            'add_time' => $changeTime,
+                            'add_month' => date('Y-m', $changeTime)
                         ];
                     }
                 }

@@ -954,7 +954,7 @@ class Order extends Base
             if ($type != -1) {
                 $useApplyReturnMoney = $orderGoods['final_price'] * $orderGoods['goods_num'];    // 要退的总价 商品购买单价*申请数量
                 $userExpenditureMoney = $order['goods_price'] - $order['order_prom_amount'] - $order['coupon_price'];    // 用户实际使用金额
-                $user_electronic = round($order['user_electronic'] - $order['user_electronic'] * $order['shipping_price'] / $order['total_amount'], 2);
+                $user_electronic = round($order['user_electronic'] - $order['user_electronic'] * $order['shipping_price'] / ($order['order_amount'] + $order['user_electronic']), 2);
                 // 该退积分支付
                 $refundIntegral = round($orderGoods['use_integral'] * $orderGoods['goods_num'], 2);
                 // 该退电子币
@@ -966,7 +966,6 @@ class Order extends Base
                         $refundMoney = round($useApplyReturnMoney / $userExpenditureMoney * ($order_amount - $order['shipping_price']), 2);
                     }
                 }
-
                 // 公司地址
                 if (isset($cOrder) && $cOrder['order_type'] == 3) {
                     $address = '暂无售后地址信息';
