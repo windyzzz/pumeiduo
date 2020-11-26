@@ -168,7 +168,7 @@ class System extends Base
 //                    ];
 //                }
 //                (new ShareBg())->saveAll($shareBgGoods);
-//                unset($param['share_bg_goods']);
+                unset($param['share_bg_goods']);
 //            } else {
 //                Db::rollback();
 //                $this->error('请上传商品分享码背景图', U('System/index', ['inc_type' => $inc_type]));
