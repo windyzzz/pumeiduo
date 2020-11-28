@@ -1034,7 +1034,7 @@ class CartLogic extends Model
                 case 1:
                 case 2:
                 case 3:
-                    if ($cart['goods']['is_agent'] == 1 || $cart['goods']['applet_on_sale'] == 1) {
+                    if ($cart['goods']['is_agent'] == 1) {
                         unset($cartList[$cartKey]);
                         continue 2;
                     }
@@ -1042,6 +1042,10 @@ class CartLogic extends Model
             //商品不存在或者已经下架
             if (!$noSale) {
                 if (empty($cart['goods']) || 1 != $cart['goods']['is_on_sale'] || 0 == $cart['goods_num']) {
+                    $cart->delete();
+                    unset($cartList[$cartKey]);
+                    continue;
+                } elseif ($source == 4 && $cart['goods']['applet_on_sale'] == 0) {
                     $cart->delete();
                     unset($cartList[$cartKey]);
                     continue;

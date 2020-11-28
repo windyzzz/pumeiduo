@@ -193,7 +193,7 @@ class Goods extends Base
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
-        if (!$this->isApplet && ($goods['is_agent'] == 1 || $goods['applet_on_sale'] == 1)) {
+        if (!$this->isApplet && $goods['is_agent'] == 1) {
             return json(['status' => 0, 'msg' => '请在小程序浏览商品', 'result' => null]);
         }
         if ($this->isApplet && $goods['is_agent'] == 0) {
@@ -398,7 +398,7 @@ class Goods extends Base
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
-        if (!$this->isApplet && ($goods['is_agent'] == 1 || $goods['applet_on_sale'] == 1)) {
+        if (!$this->isApplet && $goods['is_agent'] == 1) {
             return json(['status' => 0, 'msg' => '请在小程序浏览商品', 'result' => null]);
         }
         if ($this->isApplet && $goods['applet_on_sale'] == 0) {
@@ -798,7 +798,7 @@ class Goods extends Base
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架']);
         }
-        if (!$this->isApplet && ($goods['is_agent'] == 1 || $goods['applet_on_sale'] == 1)) {
+        if (!$this->isApplet && $goods['is_agent'] == 1) {
             return json(['status' => 0, 'msg' => '请在小程序浏览商品', 'result' => null]);
         }
         if ($this->isApplet && $goods['applet_on_sale'] == 0) {
@@ -1086,7 +1086,7 @@ class Goods extends Base
                         if ($goods['integral_pv'] == 0) {
                             $goodsInfo['integral_pv'] = '';
                         } else {
-                            $goodsInfo['integral_pv'] = bcmul($goods['exchange_price'], ($goodsInfo['exchange_price'] / ($goods['shop_price'] - $goods['exchange_integral'])), 2);
+                            $goodsInfo['integral_pv'] = bcmul($goods['integral_pv'], ($goodsInfo['exchange_price'] / ($goods['shop_price'] - $goods['exchange_integral'])), 2);
                         }
                         if ($goods['commission'] == 0) {
                             $goodsInfo['commission'] = '';
@@ -1710,7 +1710,6 @@ class Goods extends Base
             $goods_where['applet_on_sale'] = 1;
         } else {
             $goods_where['is_agent'] = 0;
-            $goods_where['applet_on_sale'] = 0;
         }
         if ($couponId != 0) {
             $filter_goods_id = Db::name('goods_coupon')->where(['coupon_id' => $couponId])->getField('goods_id', true);
@@ -1814,7 +1813,6 @@ class Goods extends Base
                 $where['applet_on_sale'] = 1;
             } else {
                 $where['is_agent'] = 0;
-                $goods_where['applet_on_sale'] = 0;
             }
             // 搜索词被搜索数量+1
             Db::name('search_word')->where('keywords', $search)->setInc('search_num');
@@ -1849,7 +1847,6 @@ class Goods extends Base
                 $goods_where['applet_on_sale'] = 1;
             } else {
                 $goods_where['is_agent'] = 0;
-                $goods_where['applet_on_sale'] = 0;
             }
             if ($couponId != 0) {
                 $filter_goods_id = Db::name('goods_coupon')->where(['coupon_id' => $couponId])->getField('goods_id', true);
