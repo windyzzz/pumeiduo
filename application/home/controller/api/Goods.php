@@ -193,6 +193,9 @@ class Goods extends Base
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
+        if (!$this->isApplet && ($goods['is_agent'] == 1 || $goods['applet_on_sale'] == 1)) {
+            return json(['status' => 0, 'msg' => '请在小程序浏览商品', 'result' => null]);
+        }
         if ($this->isApplet && $goods['is_agent'] == 0) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
@@ -395,7 +398,7 @@ class Goods extends Base
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
-        if (!$this->isApplet && $goods['is_agent'] == 1) {
+        if (!$this->isApplet && ($goods['is_agent'] == 1 || $goods['applet_on_sale'] == 1)) {
             return json(['status' => 0, 'msg' => '请在小程序浏览商品', 'result' => null]);
         }
         if ($this->isApplet && $goods['applet_on_sale'] == 0) {
@@ -495,7 +498,7 @@ class Goods extends Base
                 } elseif ($goods['commission'] == 0) {
                     $goods['commission'] = '';
                 } else {
-                    $goods['commission'] = bcdiv(bcmul(bcsub($goods['shop_price'], $goods['exchange_integral'], 2), $goods['commission'], 2), 100, 2);
+                    $goods['commission'] = bcdiv(bcmul($goods['exchange_price'], $goods['commission'], 2), 100, 2);
                 }
             } else {
                 $goods['integral_pv'] = '';
@@ -795,7 +798,7 @@ class Goods extends Base
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架']);
         }
-        if (!$this->isApplet && $goods['is_agent'] == 1) {
+        if (!$this->isApplet && ($goods['is_agent'] == 1 || $goods['applet_on_sale'] == 1)) {
             return json(['status' => 0, 'msg' => '请在小程序浏览商品', 'result' => null]);
         }
         if ($this->isApplet && $goods['applet_on_sale'] == 0) {
@@ -1048,19 +1051,19 @@ class Goods extends Base
                         if ($goods['commission'] == 0) {
                             $goodsInfo['commission'] = '';
                         } else {
-                            $goodsInfo['commission'] = bcdiv(bcmul($goods['retail_price'], $goods['commission'], 2), 100, 2);   // 零售价佣金
+                            $goodsInfo['commission'] = bcdiv(bcmul($goods['exchange_price'], $goods['commission'], 2), 100, 2);   // 零售价佣金
                         }
                         break;
                     case 3:
                         if ($goods['buying_price_pv'] == 0) {
                             $goodsInfo['integral_pv'] = '';
                         } else {
-                            $goodsInfo['integral_pv'] = $goods['buying_price_pv'];  // 进货价pv
+                            $goodsInfo['integral_pv'] = bcmul($goods['buying_price_pv'], ($goodsInfo['exchange_price'] / $goods['buying_price']), 2); // 进货价pv
                         }
                         if ($goods['commission'] == 0) {
                             $goodsInfo['commission'] = '';
                         } else {
-                            $goodsInfo['commission'] = bcdiv(bcmul($goods['buying_price'], $goods['commission'], 2), 100, 2);   // 进货价佣金
+                            $goodsInfo['commission'] = bcdiv(bcmul($goodsInfo['exchange_price'], $goods['commission'], 2), 100, 2);   // 进货价佣金
                         }
                         break;
                 }
@@ -1076,19 +1079,19 @@ class Goods extends Base
                         if ($goods['commission'] == 0) {
                             $goodsInfo['commission'] = '';
                         } else {
-                            $goodsInfo['commission'] = bcdiv(bcmul(bcsub($goods['shop_price'], $goods['exchange_integral'], 2), $goods['commission'], 2), 100, 2);
+                            $goodsInfo['commission'] = bcdiv(bcmul($goodsInfo['exchange_price'], $goods['commission'], 2), 100, 2);
                         }
                         break;
                     case 3:
                         if ($goods['integral_pv'] == 0) {
                             $goodsInfo['integral_pv'] = '';
                         } else {
-                            $goodsInfo['integral_pv'] = $goods['integral_pv'];
+                            $goodsInfo['integral_pv'] = bcmul($goods['exchange_price'], ($goodsInfo['exchange_price'] / ($goods['shop_price'] - $goods['exchange_integral'])), 2);
                         }
                         if ($goods['commission'] == 0) {
                             $goodsInfo['commission'] = '';
                         } else {
-                            $goodsInfo['commission'] = bcdiv(bcmul(bcsub($goods['shop_price'], $goods['exchange_integral'], 2), $goods['commission'], 2), 100, 2);
+                            $goodsInfo['commission'] = bcdiv(bcmul($goodsInfo['exchange_price'], $goods['commission'], 2), 100, 2);
                         }
                         break;
                 }
@@ -1707,6 +1710,7 @@ class Goods extends Base
             $goods_where['applet_on_sale'] = 1;
         } else {
             $goods_where['is_agent'] = 0;
+            $goods_where['applet_on_sale'] = 0;
         }
         if ($couponId != 0) {
             $filter_goods_id = Db::name('goods_coupon')->where(['coupon_id' => $couponId])->getField('goods_id', true);
@@ -1810,6 +1814,7 @@ class Goods extends Base
                 $where['applet_on_sale'] = 1;
             } else {
                 $where['is_agent'] = 0;
+                $goods_where['applet_on_sale'] = 0;
             }
             // 搜索词被搜索数量+1
             Db::name('search_word')->where('keywords', $search)->setInc('search_num');
@@ -1844,6 +1849,7 @@ class Goods extends Base
                 $goods_where['applet_on_sale'] = 1;
             } else {
                 $goods_where['is_agent'] = 0;
+                $goods_where['applet_on_sale'] = 0;
             }
             if ($couponId != 0) {
                 $filter_goods_id = Db::name('goods_coupon')->where(['coupon_id' => $couponId])->getField('goods_id', true);

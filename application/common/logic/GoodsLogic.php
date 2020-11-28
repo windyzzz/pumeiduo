@@ -563,6 +563,7 @@ class GoodsLogic extends Model
             case 2:
             case 3:
                 $where['g.is_agent'] = 0;
+                $where['g.applet_on_sale'] = 0;
                 break;
             case 4:
                 $where['g.applet_on_sale'] = 1;

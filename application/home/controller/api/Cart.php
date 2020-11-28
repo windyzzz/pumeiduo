@@ -95,6 +95,11 @@ class Cart extends Base
                     unset($cartList[$k]);
                     continue;
                 }
+                if ($v['goods']['is_agent'] == 1 || $v['goods']['applet_on_sale'] == 1) {
+                    // 不显示小程序商家商品
+                    unset($cartList[$k]);
+                    continue;
+                }
                 if ($v['prom_type'] == 2) {
                     // 不显示团购
                     continue;
@@ -205,7 +210,7 @@ class Cart extends Base
 //                        ];
 //                    }
 //                }
-                if (empty($v['goods']) || 1 != $v['goods']['is_on_sale']) {
+                if (empty($v['goods']) || 1 != $v['goods']['is_on_sale'] || ($this->isApplet && $v['goods']['applet_on_sale'] == 0) || (!$this->isApplet && $v['goods']['applet_on_sale'] == 1)) {
                     // 已失效商品
                     $invalidList[] = [
                         'cart_id' => $v['id'],
@@ -482,7 +487,7 @@ class Cart extends Base
                     $storeCount = $v['goods']['store_count'];
                 }
                 $key = $v['goods_id'] . '_' . $v['spec_key'];
-                if ((empty($v['goods']) || 1 != $v['goods']['is_on_sale']) || ($this->isApplet && $v['goods']['applet_on_sale'] == 0)) {
+                if ((empty($v['goods']) || 1 != $v['goods']['is_on_sale']) || ($this->isApplet && $v['goods']['applet_on_sale'] == 0) || (!$this->isApplet && $v['goods']['applet_on_sale'] == 1)) {
                     // 已失效商品
                     $cartNum -= 1;
                     $invalidList['cart_num'] += 1;
@@ -1114,8 +1119,13 @@ class Cart extends Base
                 $groupBuyGoods[$item['goods_id'] . '_' . $item['spec_key']] = $item;
             }
             foreach ($cartData as $k => $v) {
-                if (!$this->isApp && ($v['goods']['is_abroad'] == 1 && $v['goods']['is_supply'] == 1)) {
+                if (!$this->isApp && ($v['goods']['is_abroad'] == 1 || $v['goods']['is_supply'] == 1)) {
                     // 不计算韩国购商品与供应链商品
+                    $cartNum -= 1;
+                    continue;
+                }
+                if (!$this->isApplet && ($v['goods']['is_agent'] == 1 || $v['goods']['applet_on_sale'] == 1)) {
+                    // 不计算小程序上架商品
                     $cartNum -= 1;
                     continue;
                 }

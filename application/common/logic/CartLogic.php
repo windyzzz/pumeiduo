@@ -1034,7 +1034,7 @@ class CartLogic extends Model
                 case 1:
                 case 2:
                 case 3:
-                    if ($cart['goods']['is_agent'] == 1) {
+                    if ($cart['goods']['is_agent'] == 1 || $cart['goods']['applet_on_sale'] == 1) {
                         unset($cartList[$cartKey]);
                         continue 2;
                     }
