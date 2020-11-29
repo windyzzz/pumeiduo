@@ -78,16 +78,20 @@ class Share extends Base
         }
         // 用户头像
         $headPic = $this->user['head_pic'];
-        $headPicPath = simplifyPath($headPic);  // 过滤域名
         $headPicType = 'path';
-        if (!$headPicPath) {
-            // 网络图片
-            $res = download_image($headPic, md5(mt_rand()) . '.jpg', PUBLIC_PATH . 'upload/share/temp/', 1, false);
-            if ($res == false) {
-                $headPicPath = 'public/images/default_head.png';
-            } else {
-                $headPicType = 'resource';
-                $headPicPath = $res['save_path'] . $res['file_name'];
+        if (!$headPic) {
+            $headPicPath = 'public/images/default_head.png';
+        } else {
+            $headPicPath = simplifyPath($headPic);  // 过滤域名
+            if (!$headPicPath) {
+                // 网络图片
+                $res = download_image($headPic, md5(mt_rand()) . '.jpg', PUBLIC_PATH . 'upload/share/temp/', 1, false);
+                if ($res == false) {
+                    $headPicPath = 'public/images/default_head.png';
+                } else {
+                    $headPicType = 'resource';
+                    $headPicPath = $res['save_path'] . $res['file_name'];
+                }
             }
         }
         // 用户昵称
