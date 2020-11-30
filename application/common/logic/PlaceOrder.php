@@ -41,6 +41,7 @@ class PlaceOrder
     private $orderType = 1;
     private $order1Goods = [];
     private $order2Goods = [];
+    private $hasAgent = 0;
 
     /**
      * PlaceOrder constructor.
@@ -106,6 +107,11 @@ class PlaceOrder
     public function setOrderType($orderType)
     {
         $this->orderType = $orderType;
+    }
+
+    public function setHasAgent($hasAgent)
+    {
+        $this->hasAgent = $hasAgent;
     }
 
     public function addNormalOrder($source = 1)
@@ -254,6 +260,7 @@ class PlaceOrder
             'order_pv' => $this->pay->getOrderPv(),
             'id_card' => $this->userIdCard ?? '',
             'order_type' => $this->orderType,
+            'is_agent' => $this->hasAgent
         ];
         if (!empty($this->userAddress)) {
             $orderData['consignee'] = $this->userAddress['consignee']; // 收货人
@@ -354,6 +361,7 @@ class PlaceOrder
                 'pay_type' => $payItem['type'],      // 购买方式：1现金+积分 2现金
                 'order_id2' => 0,
                 'supplier_goods_id' => 0,
+                'is_agent' => $payItem['goods']['is_agent'],
             ];
             if (!empty($payItem['spec_key'])) {
                 $orderGoodsData['spec_key'] = $payItem['spec_key'];
@@ -397,6 +405,7 @@ class PlaceOrder
                         'pay_type' => 0,
                         'order_id2' => 0,
                         'supplier_goods_id' => 0,
+                        'is_agent' => 0
                     ];
                     if (!empty($v['spec_key'])) {
                         $orderGoodsData['spec_key'] = $v['spec_key'];           // 商品规格
@@ -435,6 +444,7 @@ class PlaceOrder
                         'pay_type' => 0,
                         'order_id2' => 0,
                         'supplier_goods_id' => 0,
+                        'is_agent' => 0
                     ];
                     if (!empty($v['spec_key'])) {
                         $orderGoodsData['spec_key'] = $v['spec_key']; // 商品规格
@@ -493,6 +503,7 @@ class PlaceOrder
                         'pay_type' => 0,
                         'order_id2' => 0,
                         'supplier_goods_id' => 0,
+                        'is_agent' => 0
                     ];
                     array_push($orderGoodsAllData, $orderGoodsData);
                 }
@@ -530,6 +541,7 @@ class PlaceOrder
                     'pay_type' => 0,
                     'order_id2' => 0,
                     'supplier_goods_id' => 0,
+                    'is_agent' => 0
                 ];
                 array_push($orderGoodsAllData, $orderGoodsData);
             }

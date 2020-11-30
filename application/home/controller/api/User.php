@@ -1196,7 +1196,7 @@ class User extends Base
 
                 return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
             } elseif (2 == $step) {
-                if ($this->isApp) {
+                if ($this->isApp || $this->isApplet) {
                     $old_mobile = $mobile;
                     $res = $logic->check_validate_code($code, $old_mobile, 'phone', $session_id, $scene);
                     if (!$res || 1 != $res['status']) {
@@ -1235,7 +1235,8 @@ class User extends Base
     public function goods_collect()
     {
         $userLogic = new UsersLogic();
-        $data = $userLogic->get_goods_collect($this->user_id);
+        $source = $this->isApp ? 3 : ($this->isApplet ? 4 : 1);
+        $data = $userLogic->get_goods_collect($this->user_id, $source);
         $return = [];
         $return['page'] = $data['show']; // 赋值分页输出
         $return['lists'] = $data['result'];
@@ -1373,7 +1374,8 @@ class User extends Base
             return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
         }
         // 重置密码
-        $data = $userLogic->resetPassword($user['user_id'], I('post.password'), null, true);
+        $passAuth = $this->isApp ? true : ($this->isApplet ? true : false);
+        $data = $userLogic->resetPassword($user['user_id'], I('post.password'), null, $passAuth);
         if (-1 == $data['status']) {
             return json(['status' => 0, 'msg' => $data['msg'], 'result' => $data['result']]);
         }
@@ -2372,7 +2374,7 @@ class User extends Base
             }
             return json(['status' => 1, 'msg' => '验证成功', 'result' => null]);
         } elseif ($step > 1) {
-            if ($this->isApp) {
+            if ($this->isApp || $this->isApplet) {
                 $res = $logic->check_validate_code($code, $this->user['mobile'], 'phone', $session_id, $scene);
                 if (!$res || 1 != $res['status']) {
                     return json(['status' => 0, 'msg' => $res['msg'], 'result' => null]);
@@ -3336,7 +3338,7 @@ class User extends Base
             I('post.real_name') ? $post['real_name'] = I('post.real_name') : false;  // 真实姓名
             I('post.id_cart') ? $post['id_cart'] = I('post.id_cart') : false;  // 身份证
             I('post.birthday') ? $post['birthday'] = I('post.birthday') : false;  // 生日
-            if (!check_id_card($post['id_cart'])) {
+            if (isset($post['id_cart']) && !check_id_card($post['id_cart'])) {
                 return json(['status' => 0, 'msg' => '身份证填写错误']);
             }
             $userLogic = new UsersLogic();
@@ -3447,11 +3449,13 @@ class User extends Base
                 $result = $usersLogic->get_money_log($this->user_id, 0, null, true)['result'];
                 foreach ($result as $res) {
                     foreach ($res as $log) {
+                        $changeTime = strtotime($log['change_time']);
                         $return['log_list'][] = [
                             'id' => $log['log_id'],
                             'title' => $log['desc'],
                             'amount' => $log['user_money'],
-                            'add_time' => strtotime($log['change_time'])
+                            'add_time' => $changeTime,
+                            'add_month' => date('Y-m', $changeTime)
                         ];
                     }
                 }
@@ -3464,11 +3468,13 @@ class User extends Base
                 $result = $usersLogic->get_electronic_log($this->user_id, 0, null, true)['result'];
                 foreach ($result as $res) {
                     foreach ($res as $log) {
+                        $changeTime = strtotime($log['change_time']);
                         $return['log_list'][] = [
                             'id' => $log['log_id'],
                             'title' => $log['desc'],
                             'amount' => $log['user_electronic'],
-                            'add_time' => strtotime($log['change_time'])
+                            'add_time' => $changeTime,
+                            'add_month' => date('Y-m', $changeTime)
                         ];
                     }
                 }

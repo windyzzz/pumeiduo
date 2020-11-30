@@ -95,6 +95,11 @@ class Cart extends Base
                     unset($cartList[$k]);
                     continue;
                 }
+                if ($v['goods']['is_agent'] == 1) {
+                    // 不显示小程序商家商品
+                    unset($cartList[$k]);
+                    continue;
+                }
                 if ($v['prom_type'] == 2) {
                     // 不显示团购
                     continue;
@@ -205,7 +210,7 @@ class Cart extends Base
 //                        ];
 //                    }
 //                }
-                if (empty($v['goods']) || 1 != $v['goods']['is_on_sale']) {
+                if (empty($v['goods']) || 1 != $v['goods']['is_on_sale'] || ($this->isApplet && $v['goods']['applet_on_sale'] == 0)) {
                     // 已失效商品
                     $invalidList[] = [
                         'cart_id' => $v['id'],
@@ -409,7 +414,8 @@ class Cart extends Base
 
         $cartLogic = new CartLogic();
         $cartLogic->setUserId($this->user_id);
-        $cartData = $cartLogic->getCartList(0, true, true); // 用户购物车
+        $source = $this->isApp ? 3 : ($this->isApplet ? 4 : 1);
+        $cartData = $cartLogic->getCartList(0, true, true, $source); // 用户购物车
         $cartNum = $cartData['cart_num'];   // 获取用户购物车总数
         $cartData = $cartData['cart_list'];
         // 圃美多商品
@@ -481,7 +487,7 @@ class Cart extends Base
                     $storeCount = $v['goods']['store_count'];
                 }
                 $key = $v['goods_id'] . '_' . $v['spec_key'];
-                if (empty($v['goods']) || 1 != $v['goods']['is_on_sale']) {
+                if ((empty($v['goods']) || 1 != $v['goods']['is_on_sale']) || ($this->isApplet && $v['goods']['applet_on_sale'] == 0)) {
                     // 已失效商品
                     $cartNum -= 1;
                     $invalidList['cart_num'] += 1;
@@ -1113,8 +1119,13 @@ class Cart extends Base
                 $groupBuyGoods[$item['goods_id'] . '_' . $item['spec_key']] = $item;
             }
             foreach ($cartData as $k => $v) {
-                if (!$this->isApp && ($v['goods']['is_abroad'] == 1 && $v['goods']['is_supply'] == 1)) {
+                if (!$this->isApp && ($v['goods']['is_abroad'] == 1 || $v['goods']['is_supply'] == 1)) {
                     // 不计算韩国购商品与供应链商品
+                    $cartNum -= 1;
+                    continue;
+                }
+                if (!$this->isApplet && $v['goods']['is_agent'] == 1) {
+                    // 不计算小程序上架商品
                     $cartNum -= 1;
                     continue;
                 }
@@ -1200,6 +1211,7 @@ class Cart extends Base
         }
         $cartLogic = new CartLogic();
         $cartLogic->setUserId($this->user_id);
+        $cartLogic->setUser($this->user);
         $cartLogic->setGoodsModel($goods_id);
         switch ($mode) {
             case 1:
@@ -1220,7 +1232,7 @@ class Cart extends Base
             case 2:
                 break;
         }
-        $result = $cartLogic->addGoodsToCart($this->isApp, $mode);
+        $result = $cartLogic->addGoodsToCart($this->isApp, $this->isApplet, $mode);
         return json($result);
     }
 

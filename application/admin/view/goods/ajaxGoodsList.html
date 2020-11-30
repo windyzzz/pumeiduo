@@ -38,6 +38,8 @@
                         <span style="color: green;">韩国购</span>
                     <elseif condition="$list[is_supply] == 1"/>
                         <span style="color: blue;">供应链</span>
+                    <elseif condition="$list[is_agent] == 1"/>
+                        <span style="color: orange;">代理商</span>
                     <else/>
                         <span style="color: red;">圃美多</span>
                     </if>
@@ -118,6 +120,15 @@
                 </div>
             </td>
             <td align="center" axis="col0">
+                <div style="text-align: center; width: 100px;">
+                    <if condition='$list[applet_on_sale] eq 1'>
+                        <span class="yes" onClick="appletOnSale(this, '{$list.goods_id}')"><i class="fa fa-check-circle"></i>是</span>
+                        <else/>
+                        <span class="no" onClick="appletOnSale(this, '{$list.goods_id}')"><i class="fa fa-ban"></i>否</span>
+                    </if>
+                </div>
+            </td>
+            <td align="center" axis="col0">
                 <div style="text-align: center; width: 50px; <if condition=" $list.store_count elt tpCache('basic.warning_storage')">color:#D91222;</if> ">
                 {$list.store_count}
                 </div>
@@ -172,6 +183,34 @@
             dataType: 'json',
             success: function (data) {
                 layer.alert(data.msg, {icon: 2});
+            }
+        });
+    }
+
+    /**
+     * 小程序上下架处理
+     * @param obj
+     * @param goods_id
+     */
+    function appletOnSale(obj, goods_id) {
+        var value = 0;
+        if ($(obj).hasClass('no'))
+        {
+            $(obj).removeClass('no').addClass('yes');
+            $(obj).html("<i class='fa fa-check-circle'></i>是");
+            value = 1;
+        } else if ($(obj).hasClass('yes')) {
+            $(obj).removeClass('yes').addClass('no');
+            $(obj).html("<i class='fa fa-ban'></i>否");
+            value = 0;
+        }
+        $.ajax({
+            type: 'POST',
+            url: "{:U('Admin/Goods/appletOnSale')}",
+            data: {goods_id: goods_id, on_sale : value},
+            dataType: 'json',
+            success: function (data) {
+
             }
         });
     }

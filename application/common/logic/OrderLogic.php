@@ -134,6 +134,17 @@ class OrderLogic
                 } else {
                     $res = true;
                 }
+            } elseif ('weixinApplet' == $order['pay_code']) {
+                include_once PLUGIN_PATH . 'payment/weixinApplet/weixinApplet.class.php';
+                $payment_obj = new \weixinApplet();
+                $result = $payment_obj->refund($order, $order['order_amount']);
+                if ($result['return_code'] == 'FAIL') {
+                    $msg = $result['return_msg'];
+                } elseif ($result['result_code'] == 'FAIL') {
+                    $msg = $result['err_code_des'];
+                } else {
+                    $res = true;
+                }
             } elseif ('' == $order['pay_code']) {
                 $res = true;
             } else {
@@ -468,7 +479,7 @@ class OrderLogic
             $userExpenditureMoney = $order['goods_price'] - $order['order_prom_amount'] - $order['coupon_price'];    //用户实际使用金额
 //            $rate = round($useRapplyReturnMoney / $userExpenditureMoney, 2);
 //            $shipping_rate = $order['shipping_price'] / $order['total_amount'];
-            $user_electronic = round($order['user_electronic'] - $order['user_electronic'] * $order['shipping_price'] / $order['total_amount'], 2);
+            $user_electronic = round($order['user_electronic'] - $order['user_electronic'] * $order['shipping_price'] / ($order['order_amount'] + $order['user_electronic']), 2);
 
             // $data['refund_integral'] = floor($useRapplyReturnMoney / $userExpenditureMoney*$order['integral']);//该退积分支付
             $data['refund_integral'] = $order_goods['use_integral'] * $order_goods['goods_num']; //该退积分支付

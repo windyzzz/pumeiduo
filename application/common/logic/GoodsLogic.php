@@ -16,6 +16,7 @@ use app\common\logic\supplier\GoodsService;
 use app\common\model\Goods;
 use app\common\util\TpshopException;
 use think\Db;
+use think\Exception;
 use think\Model;
 
 /**
@@ -546,21 +547,33 @@ class GoodsLogic extends Model
     /**
      * 猜你喜欢
      * @param $filterGoods
-     * @param $userId
+     * @param $user
+     * @param $source
      * @return mixed
      */
-    public function get_look_see_v2($filterGoods, $userId = null)
+    public function get_look_see_v2($filterGoods, $user = null, $source = 3)
     {
-        $goodsList = M('goods g')->field('g.goods_id, g.cat_id, g.goods_name, g.goods_remark, g.original_img, g.shop_price, g.exchange_integral, g.sale_type');
+        $goodsList = M('goods g')->field('g.*');
         $where = [
             'g.is_on_sale' => 1,
             'g.zone' => 1
         ];
+        switch ($source) {
+            case 1:
+            case 2:
+            case 3:
+                $where['g.is_agent'] = 0;
+                $where['g.applet_on_sale'] = 0;
+                break;
+            case 4:
+                $where['g.applet_on_sale'] = 1;
+                break;
+        }
         if (!empty($filterGoods)) {
             $where['g.goods_id'] = ['NEQ', $filterGoods['goods_id']];
             $where['g.cat_id'] = $filterGoods['cat_id'];
         }
-        if ($userId) {
+        if ($user) {
             $goodsList = $goodsList->join('goods_visit gv', 'gv.goods_id = g.goods_id', 'LEFT')->group('g.goods_id');
         }
         $count = $goodsList->where($where)->count();
@@ -578,21 +591,45 @@ class GoodsLogic extends Model
         }
         $goodsList = $goodsList->where($where)->limit($offset, 4)->select();
         shuffle($goodsList);
+        $lookSee = [];
         foreach ($goodsList as $k => $v) {
+            $lookSee[$k] = [
+                'goods_id' => $v['goods_id'],
+                'cat_id' => $v['cat_id'],
+                'goods_name' => $v['goods_name'],
+                'goods_remark' => $v['goods_remark'],
+                'shop_price' => $v['shop_price'],
+                'exchange_integral' => $v['exchange_integral'],
+                'sale_type' => $v['sale_type'],
+            ];
             // 缩略图
-            $goodsList[$k]['original_img_new'] = getFullPath($v['original_img']);
+            $lookSee[$k]['original_img_new'] = getFullPath($v['original_img']);
             // 处理显示金额
-            if ($v['exchange_integral'] != 0) {
-                $goodsList[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);
+            if ($v['is_agent'] == 1) {
+                $lookSee[$k]['exchange_integral'] = '0';
+                $lookSee[$k]['exchange_price'] = $v['retail_price'];  // 零售价
+                if ($user) {
+                    switch ($user['distribut_level']) {
+                        case 3:
+                            $lookSee[$k]['exchange_price'] = $v['buying_price'];  // 进货价
+                            break;
+                        default:
+                            $lookSee[$k]['exchange_price'] = $v['retail_price'];  // 零售价
+                    }
+                }
             } else {
-                $goodsList[$k]['exchange_price'] = $v['shop_price'];
+                if ($v['exchange_integral'] != 0) {
+                    $lookSee[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);
+                } else {
+                    $lookSee[$k]['exchange_price'] = $v['shop_price'];
+                }
             }
             // 优化价格显示
             if ($goodsList[$k]['exchange_integral'] == 0) {
                 $goodsList[$k]['shop_price'] = $goodsList[$k]['exchange_price'];
             }
         }
-        return $goodsList;
+        return $lookSee;
     }
 
     /**
@@ -1787,11 +1824,12 @@ class GoodsLogic extends Model
      * @param $payType
      * @param $cartIds
      * @param $isApp
+     * @param $isApplet
      * @param $userId
      * @param $passAuth
      * @return array
      */
-    public function getOrderGoodsData(CartLogic $cartLogic, $goodsId, $itemId, $goodsNum, $payType, $cartIds, $isApp, $userId, $passAuth = false)
+    public function getOrderGoodsData(CartLogic $cartLogic, $goodsId, $itemId, $goodsNum, $payType, $cartIds, $isApp, $isApplet, $userId, $passAuth = false)
     {
         if (!empty($goodsId) && empty(trim($cartIds))) {
             /*
@@ -1803,7 +1841,7 @@ class GoodsLogic extends Model
             $cartLogic->setType($payType);
             $cartLogic->setCartType(0);
             try {
-                $buyGoods = $cartLogic->buyNow($isApp, $passAuth);
+                $buyGoods = $cartLogic->buyNow($isApp, $isApplet, $passAuth);
             } catch (TpshopException $tpE) {
                 $error = $tpE->getErrorArr();
                 return ['status' => 0, 'msg' => $error['msg']];
@@ -1827,7 +1865,8 @@ class GoodsLogic extends Model
             if (0 == $cartLogic->getUserCartOrderCount()) {
                 return ['status' => 0, 'msg' => '你的购物车没有选中商品'];
             }
-            $cartList = $cartLogic->getCartList(1); // 获取用户选中的购物车商品
+            $source = $isApp ? 3 : ($isApplet ? 4 : 1);
+            $cartList = $cartLogic->getCartList(1, false, false, $source); // 获取用户选中的购物车商品
             $vipGoods = [];
             foreach ($cartList as $key => $cart) {
                 if ($cart['prom_type'] == 0) {
@@ -1958,7 +1997,7 @@ class GoodsLogic extends Model
                 $cartLogic = new CartLogic();
                 $cartLogic->setUserId($user['user_id']);
                 // 获取订单商品数据
-                $res = $this->getOrderGoodsData($cartLogic, $goodsId, $itemId, 1, 1, '', 1, $user['user_id'], true);
+                $res = $this->getOrderGoodsData($cartLogic, $goodsId, $itemId, 1, 1, '', 1, 1, $user['user_id'], true);
                 if ($res['status'] != 1) {
                     throw new TpshopException('地址商品信息', 0, ['status' => 0, 'msg' => $res['msg']]);
                 } else {
@@ -2045,5 +2084,43 @@ class GoodsLogic extends Model
             return $this->createGoodsPwd($goodsInfo);
         }
         return $password;
+    }
+
+    /**
+     * 获取商品小程序分享码
+     * @param $goodsId
+     * @param $userId
+     * @return string
+     */
+    public function createGoodsAppletCode($goodsId, $userId)
+    {
+        // 获取配置
+        $data = M('Plugin')->where('code', 'wechatApplet')->where('type', 'login')->find();
+        $config = unserialize($data['config_value']);
+        include_once "plugins/login/wechatApplet/wechatApplet.class.php";
+        $class = '\\wechatApplet';
+        $classObj = new $class($config);
+        try {
+            $param = [
+                'goods_id' => $goodsId,
+                'user_id' => $userId
+            ];
+            $qrCode = $classObj->getQrCode($param);
+            // 将微信返回的图片数据流写入文件保存本地
+            $baseUrl = PUBLIC_PATH . 'images/qrcode/applet/goods/';
+            if (!file_exists($baseUrl)) {
+                // 检查是否有该文件夹，如果没有就创建，并给予最高权限
+                mkdir($baseUrl, 0755, true);
+            }
+            $picName = 'goods_' . $goodsId . '_' . $userId . '.png';
+            $picUrl = $baseUrl . $picName;
+            $res = file_put_contents($picUrl, $qrCode);
+            if ($res == false) {
+                throw new Exception('写入错误');
+            }
+            return SITE_URL . '/public/images/qrcode/applet/goods/' . $picName;
+        } catch (Exception $e) {
+            return '';
+        }
     }
 }

@@ -1092,7 +1092,7 @@ class Pay
             $cartLogic->setType($extra['pay_type']);
             $cartLogic->setCartType(0);
             try {
-                $buyGoods = $cartLogic->buyNow(true, true);
+                $buyGoods = $cartLogic->buyNow(true, false, true);
             } catch (TpshopException $tpE) {
                 $error = $tpE->getErrorArr();
                 throw new TpshopException('计算订单价格', 0, ['status' => 0, 'msg' => $error['msg']]);
@@ -1266,7 +1266,7 @@ class Pay
                                 $cartLogic->setType(2);
                             }
                             $cartLogic->setCartType(0);
-                            $buyGoods = $cartLogic->buyNow(true, true);
+                            $buyGoods = $cartLogic->buyNow(true, false, true);
                             $buyGoods['member_goods_price'] = '0';
                             $buyGoods['use_integral'] = '0';
                             $buyGoods['re_id'] = $coupon_id;
