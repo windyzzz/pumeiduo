@@ -1634,7 +1634,7 @@ class Goods extends Base
                 break;
             case 1:
                 $data['applet_on_time'] = NOW_TIME;
-                $data['applet_out_time'] = strtotime('+1 month');
+                $data['applet_out_time'] = strtotime('+12 month');
                 break;
         }
         M('goods')->where(['goods_id' => $goodsId])->update($data);
