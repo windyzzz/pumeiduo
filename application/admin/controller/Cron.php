@@ -1688,4 +1688,23 @@ AND log_id NOT IN
             M('community_article')->where(['id' => ['IN', $articleIds]])->update(['status' => 1, 'publish_time' => NOW_TIME]);
         }
     }
+
+    /**
+     * 删除分享海报图
+     */
+    public function clearShareImage()
+    {
+        $beforeUserShare = M('user_share_image')->where(['add_time' => ['<=', time() - 3600]])->select();
+        $ids = [];
+        foreach ($beforeUserShare as $item) {
+            if (!empty($item['head_pic']) && file_exists($item['head_pic'])) {
+                unlink($item['head_pic']);
+            }
+            if (!empty($item['share_pic']) && file_exists($item['share_pic'])) {
+                unlink($item['share_pic']);
+            }
+            $ids[] = $item['id'];
+        }
+        M('user_share_image')->where(['id' => ['IN', $ids]])->delete();
+    }
 }

@@ -7,7 +7,7 @@ use think\Url;
 
 class Share extends Base
 {
-    
+
     public function __construct()
     {
         parent::__construct();
@@ -184,15 +184,17 @@ class Share extends Base
         if (!empty($userShareData)) {
             // 把之前的本地图片都删除
             $beforeUserShare = M('user_share_image')->where(['user_id' => $this->user_id])->select();
-            foreach ($beforeUserShare as $item) {
-                if (!empty($item['head_pic']) && file_exists($item['head_pic'])) {
-                    unlink($item['head_pic']);
+            if (!empty($beforeUserShare)) {
+                foreach ($beforeUserShare as $item) {
+                    if (!empty($item['head_pic']) && file_exists($item['head_pic'])) {
+                        unlink($item['head_pic']);
+                    }
+                    if (!empty($item['share_pic']) && file_exists($item['share_pic'])) {
+                        unlink($item['share_pic']);
+                    }
                 }
-                if (!empty($item['share_pic']) && file_exists($item['share_pic'])) {
-                    unlink($item['share_pic']);
-                }
+                M('user_share_image')->where(['user_id' => $this->user_id])->delete();
             }
-            M('user_share_image')->where(['user_id' => $this->user_id])->delete();
             // 增加新记录
             $userShareImage = new UserShareImage();
             $userShareImage->saveAll($userShareData);
@@ -244,7 +246,7 @@ class Share extends Base
         $pic1_width = imagesx($pic1);
         $pic1_height = imagesy($pic1);
         // 用户头像
-        $head_pic_path = img_radius($head_pic_type, $head_pic_path, $head_pic_resource, 0);     // 圆角处理
+//        $head_pic_path = img_radius($head_pic_type, $head_pic_path, $head_pic_resource, 0);     // 圆角处理
         $head_pic = imagecreatefromstring(file_get_contents($head_pic_path));
         $head_width = imagesx($head_pic);       // 头像原本宽
         $head_height = imagesy($head_pic);      // 头像原本高
