@@ -291,9 +291,9 @@ class Index
                     break;
                 case 'icon9':
                     // 小程序
-                    $iconList[$key]['target_param']['applet_type'] = '';
-                    $iconList[$key]['target_param']['applet_id'] = '';
-                    $iconList[$key]['target_param']['applet_path'] = '';
+                    $iconList[$key]['target_param']['applet_type'] = '0';
+                    $iconList[$key]['target_param']['applet_id'] = 'gh_916703245d1e';
+                    $iconList[$key]['target_param']['applet_path'] = 'pages/index/index';
                     break;
             }
         }

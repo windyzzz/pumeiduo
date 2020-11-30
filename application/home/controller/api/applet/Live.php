@@ -16,7 +16,7 @@ class Live extends Base
             'limit' => 10
         ];
         if ($page == 1) {
-            $fields['start'] = 0;   // 前5个测试用
+            $fields['start'] = 0;
         } else {
             $fields['start'] = ($page - 1) * 10 + 0;
         }
