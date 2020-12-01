@@ -33,6 +33,7 @@ class CartLogic extends Model
     protected $session_id; //session_id
     protected $user_token; //用户token
     protected $user_id = 0; //user_id
+    protected $user = null; //user
     protected $userGoodsTypeCount = 0; //用户购物车的全部商品种类
     protected $userCouponNumArr; //用户符合购物车店铺可用优惠券数量
     protected $cart_id; // 购物车记录id
@@ -132,6 +133,16 @@ class CartLogic extends Model
     }
 
     /**
+     * 设置用户信息
+     *
+     * @param $user
+     */
+    public function setUser($user)
+    {
+        $this->user = $user;
+    }
+
+    /**
      * 设置购买的商品数量.
      *
      * @param $goodsBuyNum
@@ -148,12 +159,15 @@ class CartLogic extends Model
      *
      * @throws TpshopException
      */
-    public function buyNow($isApp = false, $passAuth = false)
+    public function buyNow($isApp = false, $isApplet = false, $passAuth = false)
     {
         if (empty($this->goods) && !$passAuth) {
             throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '购买商品不存在', 'result' => '']);
         }
         if ($this->goods['is_on_sale'] == 0 && !$passAuth) {
+            throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '商品已下架', 'result' => '']);
+        }
+        if ($isApplet && $this->goods['applet_on_sale'] == 0 && !$passAuth) {
             throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => '商品已下架', 'result' => '']);
         }
         if (empty($this->goodsBuyNum) && !$passAuth) {
@@ -180,6 +194,20 @@ class CartLogic extends Model
             'item_id' => empty($this->specGoodsPrice) ? 0 : $this->specGoodsPrice->item_id,
             'zone' => $this->goods['zone']
         ];
+        if ($this->goods['is_agent'] == 1) {
+            $isApp = true;
+            if (isset($this->user)) {
+                switch ($this->user['distribut_level']) {
+                    case 3:
+                        $buyGoods['member_goods_price'] = $this->goods['buying_price'];
+                        break;
+                    default:
+                        $buyGoods['member_goods_price'] = $this->goods['retail_price'];
+                }
+            } else {
+                $buyGoods['member_goods_price'] = $this->goods['retail_price'];
+            }
+        }
 //        // 订单优惠促销（查看是否有赠送商品）
 //        $orderProm = Db::name('order_prom_goods opg')->join('order_prom op', 'op.id = opg.order_prom_id')
 //            ->where(['opg.type' => 1, 'goods_id' => $this->goods['goods_id'], 'item_id' => $buyGoods['item_id']])
@@ -214,8 +242,10 @@ class CartLogic extends Model
             $buyGoods['goods']['spec_key'] = $this->specGoodsPrice['key'];
             $buyGoods['goods']['spec_key_name'] = $this->specGoodsPrice['key_name'];
             $buyGoods['goods']['shop_price'] = $this->specGoodsPrice['price'];  // 商品现金价
-            $buyGoods['member_goods_price'] = $this->specGoodsPrice['price'];
-            $buyGoods['goods_price'] = $this->specGoodsPrice['price'];
+            if ($this->goods['is_agent'] == 0) {
+                $buyGoods['member_goods_price'] = $this->specGoodsPrice['price'];
+                $buyGoods['goods_price'] = $this->specGoodsPrice['price'];
+            }
             $buyGoods['spec_key'] = $this->specGoodsPrice['key'];
             $buyGoods['spec_key_name'] = $this->specGoodsPrice['key_name']; // 规格 key_name
             $buyGoods['sku'] = $this->specGoodsPrice['sku']; //商品条形码
@@ -316,16 +346,21 @@ class CartLogic extends Model
     /**
      * 添加商品到购物车
      * @param bool $isApp
+     * @param bool $isApplet
      * @param int $mode 模式：1普通加入 2不传数量加入
      * @return array
      * @throws \think\db\exception\DataNotFoundException
      * @throws \think\db\exception\ModelNotFoundException
      * @throws \think\exception\DbException
      */
-    public function addGoodsToCart($isApp = false, $mode = 1)
+    public function addGoodsToCart($isApp = false, $isApplet = false, $mode = 1)
     {
         if (empty($this->goods)) {
             return ['status' => -3, 'msg' => '购买商品不存在', 'result' => ''];
+        } elseif ($this->goods['is_on_sale'] == 0) {
+            return ['status' => -3, 'msg' => '商品已下架', 'result' => ''];
+        } elseif ($isApplet && $this->goods['applet_on_sale'] == 0) {
+            return ['status' => -3, 'msg' => '商品已下架', 'result' => ''];
         }
         // if($this->goods['exchange_integral'] > 0){
         //     return ['status'=>0,'msg'=>'积分商品跳转','result'=>['url'=>U('Goods/goodsInfo',['id'=>$this->goods['goods_id'],'item_id'=>$this->specGoodsPrice['item_id']],'',true)]];
@@ -382,7 +417,8 @@ class CartLogic extends Model
                 $result = $this->addNormalCart($mode);
             }
         }
-        $result['result'] = ['cart_num' => $UserCartGoodsNum = $this->getUserCartGoodsNum()]; // 查找购物车数量
+        $source = $isApp ? 3 : ($isApplet ? 4 : 1);
+        $result['result'] = ['cart_num' => $UserCartGoodsNum = $this->getUserCartGoodsNum($source)]; // 查找购物车数量
         setcookie('cn', $UserCartGoodsNum, null, '/');
 
         return $result;
@@ -396,13 +432,28 @@ class CartLogic extends Model
      */
     private function addNormalCart($mode = 1)
     {
-        if (empty($this->specGoodsPrice)) {
-            $price = $this->goods['shop_price'];
+        if ($this->goods['is_agent'] == 1) {
+            if (isset($this->user)) {
+                switch ($this->user['distribut_level']) {
+                    case 3:
+                        $price = $this->goods['buying_price'];
+                        break;
+                    default:
+                        $price = $this->goods['retail_price'];
+                }
+            } else {
+                $price = $this->goods['retail_price'];
+            }
             $store_count = $this->goods['store_count'];
         } else {
-            //如果有规格价格，就使用规格价格，否则使用本店价。
-            $price = $this->specGoodsPrice['price'];
-            $store_count = $this->specGoodsPrice['store_count'];
+            if (empty($this->specGoodsPrice)) {
+                $price = $this->goods['shop_price'];
+                $store_count = $this->goods['store_count'];
+            } else {
+                //如果有规格价格，就使用规格价格，否则使用本店价。
+                $price = $this->specGoodsPrice['price'];
+                $store_count = $this->specGoodsPrice['store_count'];
+            }
         }
         // 查询购物车是否已经存在这商品
         if (!$this->user_id) {
@@ -759,12 +810,27 @@ class CartLogic extends Model
         }
 
         //如果有规格价格，就使用规格价格，否则使用本店价。
-        if ($this->specGoodsPrice) {
-            $priceBefore1 = $this->specGoodsPrice['price'];
-            $storeCount = $this->specGoodsPrice['store_count'];
-        } else {
-            $priceBefore1 = $this->goods['shop_price'];
+        if ($this->goods['is_agent'] == 1) {
+            if (isset($this->user)) {
+                switch ($this->user['distribut_level']) {
+                    case 3:
+                        $priceBefore1 = $this->goods['buying_price'];
+                        break;
+                    default:
+                        $priceBefore1 = $this->goods['retail_price'];
+                }
+            } else {
+                $priceBefore1 = $this->goods['retail_price'];
+            }
             $storeCount = $this->goods['store_count'];
+        } else {
+            if ($this->specGoodsPrice) {
+                $priceBefore1 = $this->specGoodsPrice['price'];
+                $storeCount = $this->specGoodsPrice['store_count'];
+            } else {
+                $priceBefore1 = $this->goods['shop_price'];
+                $storeCount = $this->goods['store_count'];
+            }
         }
 
         // 查询购物车是否已经存在这商品
@@ -859,12 +925,23 @@ class CartLogic extends Model
      *
      * @return float|int
      */
-    public function getUserCartGoodsNum()
+    public function getUserCartGoodsNum($source = 1)
     {
+        $where = [
+            'c.goods_num' => ['NEQ', 0],
+            'c.prom_type' => ['NEQ', 2]
+        ];
+        switch ($source) {
+            case 1:
+            case 2:
+            case 3:
+                $where['g.is_agent'] = 0;
+                break;
+        }
         if ($this->user_id) {
-            $goods_num = Db::name('cart')->where(['user_id' => $this->user_id])->count('id');
+            $goods_num = Db::name('cart c')->join('goods g', 'g.goods_id = c.goods_id')->where(['c.user_id' => $this->user_id])->where($where)->count('id');
         } else {
-            $goods_num = Db::name('cart')->where(['session_id' => $this->session_id])->count('id');
+            $goods_num = Db::name('cart c')->join('goods g', 'g.goods_id = c.goods_id')->where(['c.session_id' => $this->session_id])->where($where)->count('id');
         }
 
         return empty($goods_num) ? 0 : $goods_num;
@@ -887,14 +964,16 @@ class CartLogic extends Model
     }
 
     /**
-     * @param int $selected |是否被用户勾选中的 0 为全部 1为选中  一般没有查询不选中的商品情况
-     *                                                  获取用户的购物车列表
+     * @param int $selected |是否被用户勾选中的 0 为全部 1为选中  一般没有查询不选中的商品情况获取用户的购物车列表
      * @param bool $noSale 是否显示失效的商品，true显示 false不显示
      * @param bool $returnNum 是否输出购物车全部商品数量（包括赠品）
-     *
+     * @param int $source 来源
      * @return array
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
      */
-    public function getCartList($selected = 0, $noSale = false, $returnNum = false)
+    public function getCartList($selected = 0, $noSale = false, $returnNum = false, $source = 3)
     {
         $cart = new Cart();
         // 如果用户已经登录则按照用户id查询
@@ -925,14 +1004,13 @@ class CartLogic extends Model
         //     }
         // }
 
-        $cartCheckAfterList = $this->checkCartList($cartList, $noSale);
+        $cartCheckAfterList = $this->checkCartList($cartList, $noSale, $source);
 //        $cartCheckAfterList = $cartList;
 //        $cartGoodsTotalNum = array_sum(array_map(function ($val) {
 //            return $val['goods_num'];
 //        }, $cartCheckAfterList)); //购物车购买的商品总数
         $cartGoodsTotalNum = count($cartCheckAfterList);
         setcookie('cn', $cartGoodsTotalNum, null, '/');
-
         if ($returnNum) {
             return ['cart_list' => $cartCheckAfterList, 'cart_num' => $cartGoodsTotalNum];
         } else {
@@ -942,17 +1020,36 @@ class CartLogic extends Model
 
     /**
      * 过滤掉无效的购物车商品
-     *
      * @param $cartList
-     * @param bool $noSale 是否显示失效的商品，true显示 false不显示
+     * @param bool $noSale
+     * @param int $source 来源
+     * @return mixed
+     * @throws \think\exception\DbException
      */
-    public function checkCartList($cartList, $noSale = false)
+    public function checkCartList($cartList, $noSale = false, $source = 3)
     {
         $goodsPromFactory = new GoodsPromFactory();
         foreach ($cartList as $cartKey => $cart) {
+            switch ($source) {
+                case 1:
+                case 2:
+                case 3:
+                    if ($cart['goods']['is_agent'] == 1) {
+                        unset($cartList[$cartKey]);
+                        continue 2;
+                    }
+            }
             //商品不存在或者已经下架
             if (!$noSale) {
                 if (empty($cart['goods']) || 1 != $cart['goods']['is_on_sale'] || 0 == $cart['goods_num']) {
+                    $cart->delete();
+                    unset($cartList[$cartKey]);
+                    continue;
+                } elseif ($source == 4 && $cart['goods']['applet_on_sale'] == 0) {
+                    $cart->delete();
+                    unset($cartList[$cartKey]);
+                    continue;
+                } elseif ($cart['goods']['is_agent'] == 1 && $cart['goods']['applet_on_sale'] == 0) {
                     $cart->delete();
                     unset($cartList[$cartKey]);
                     continue;
@@ -1401,15 +1498,19 @@ class CartLogic extends Model
     public function calcGoodsPv($cartList)
     {
         foreach ($cartList as $k => $cartItem) {
-            switch ($cartItem['type']) {
-                case 1:
-                    // 现金+积分
-                    $cartList[$k]['goods_pv'] = $cartItem['goods']['integral_pv'];
-                    break;
-                case 2:
-                    // 现金
-                    $cartList[$k]['goods_pv'] = $cartItem['goods']['retail_pv'];
-                    break;
+            if ($cartItem['goods']['is_agent'] == 1) {
+                $cartList[$k]['goods_pv'] = $cartItem['goods']['buying_price_pv'];
+            } else {
+                switch ($cartItem['type']) {
+                    case 1:
+                        // 现金+积分
+                        $cartList[$k]['goods_pv'] = $cartItem['goods']['integral_pv'];
+                        break;
+                    case 2:
+                        // 现金
+                        $cartList[$k]['goods_pv'] = $cartItem['goods']['retail_pv'];
+                        break;
+                }
             }
         }
         return $cartList;
@@ -1657,6 +1758,7 @@ class CartLogic extends Model
         $hasPmd = false;
         $hasAbroad = false;
         $hasSupply = false;
+        $hasAgent = false;
         $vipLevel = [];
         foreach ($cartList as $cart) {
             if ($cart['goods']['zone'] == 3 && $cart['goods']['distribut_id'] > 1) {
@@ -1667,11 +1769,16 @@ class CartLogic extends Model
             }
             if ($cart['goods']['is_abroad'] == 1) {
                 $hasAbroad = true;
-            } elseif ($cart['goods']['is_supply'] == 1) {
-                $hasSupply = true;
-            } else {
-                $hasPmd = true;
             }
+            if ($cart['goods']['is_supply'] == 1) {
+                $hasSupply = true;
+            }
+            if ($cart['goods']['is_agent'] == 1) {
+                $hasAgent = true;
+            }
+        }
+        if ($hasAgent) {
+            return ['status' => 4];
         }
         if (!empty($vipLevel)) {
             foreach ($vipLevel as $vip) {

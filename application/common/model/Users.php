@@ -46,7 +46,7 @@ class Users extends Model
      */
     public function getRegSourceDescAttr($value, $data)
     {
-        $source = ['1' => '微信', '2' => 'PC', '3' => 'APP'];
+        $source = ['1' => '微信', '2' => 'PC', '3' => 'APP', '4' => '小程序'];
         return $source[$data['reg_source']];
     }
 
@@ -58,7 +58,7 @@ class Users extends Model
      */
     public function getLastLoginSourceDescAttr($value, $data)
     {
-        $source = ['1' => '微信', '2' => 'PC', '3' => 'APP'];
+        $source = ['1' => '微信', '2' => 'PC', '3' => 'APP', '4' => '小程序'];
         return $source[$data['last_login_source']];
     }
 }

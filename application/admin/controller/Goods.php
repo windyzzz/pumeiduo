@@ -234,12 +234,20 @@ class Goods extends Base
                 case 3:
                     $where = "$where and is_abroad = 0 and is_supply = 1";
                     break;
+                case 4:
+                    $where = "$where and is_agent = 1";
+                    break;
             }
         }
 
         $is_area_show = I('is_area_show');
-        if ($is_area_show == 1) {
-            $where .= ' and is_area_show = 1';
+        switch ($is_area_show) {
+            case 1:
+                $where .= ' and is_area_show = 1';
+                break;
+            case 3:
+                $where .= ' and applet_on_sale = 1';
+                break;
         }
 
         if ($cat_id > 0) {
@@ -297,6 +305,8 @@ class Goods extends Base
                     $goodsNature = '韩国购';
                 } elseif ($val['is_supply'] == 1) {
                     $goodsNature = '供应链';
+                } elseif ($val['is_agent'] == 0) {
+                    $goodsNature = '代理商';
                 }
                 $level_cat = $GoodsLogic->find_parent_cat($val['cat_id']); // 获取分类默认选中的下拉框
                 $first_cat = M('GoodsCategory')->where('id', $level_cat[1])->getField('name');
@@ -366,12 +376,20 @@ class Goods extends Base
                 case 3:
                     $where = "$where and is_abroad = 0 and is_supply = 1";
                     break;
+                case 4:
+                    $where = "$where and is_agent = 1";
+                    break;
             }
         }
 
         $is_area_show = I('is_area_show');
-        if ($is_area_show == 1) {
-            $where .= ' and is_area_show = 1';
+        switch ($is_area_show) {
+            case 1:
+                $where .= ' and is_area_show = 1';
+                break;
+            case 3:
+                $where .= ' and applet_on_sale = 1';
+                break;
         }
 
         if ($cat_id > 0) {
@@ -413,6 +431,8 @@ class Goods extends Base
                     $goodsNature = '韩国购';
                 } elseif ($val['is_supply'] == 1) {
                     $goodsNature = '供应链';
+                } elseif ($val['is_agent'] == 0) {
+                    $goodsNature = '代理商';
                 }
                 $val['goods_nature'] = $goodsNature;
                 if (isset($cateInfo[$val['cat_id']])) {
@@ -504,12 +524,20 @@ class Goods extends Base
                 case 3:
                     $where = "$where and is_abroad = 0 and is_supply = 1";
                     break;
+                case 4:
+                    $where = "$where and is_agent = 1";
+                    break;
             }
         }
 
         $is_area_show = I('is_area_show');
-        if ($is_area_show == 1) {
-            $where .= ' and is_area_show = 1';
+        switch ($is_area_show) {
+            case 1:
+                $where .= ' and is_area_show = 1';
+                break;
+            case 3:
+                $where .= ' and applet_on_sale = 1';
+                break;
         }
 
         if ($cat_id > 0) {
@@ -537,7 +565,7 @@ class Goods extends Base
             $outTimeEnd = strtotime($outTimeEnd);
             $where .= ' and out_time BETWEEN ' . $outTimeBegin . ' and ' . $outTimeEnd;
         }
-        
+
         $goodsList = M('Goods')->where($where)->where($map)->select();
         if (is_array($goodsList)) {
             $GoodsLogic = new GoodsLogic();
@@ -551,6 +579,8 @@ class Goods extends Base
                     $goodsNature = '韩国购';
                 } elseif ($val['is_supply'] == 1) {
                     $goodsNature = '供应链';
+                } elseif ($val['is_agent'] == 0) {
+                    $goodsNature = '代理商';
                 }
                 $val['goods_nature'] = $goodsNature;
                 if (isset($cateInfo[$val['cat_id']])) {
@@ -639,6 +669,9 @@ class Goods extends Base
                 case 3:
                     $where = "$where and is_abroad = 0 and is_supply = 1";
                     break;
+                case 4:
+                    $where = "$where and is_agent = 1";
+                    break;
             }
         }
 
@@ -648,8 +681,13 @@ class Goods extends Base
         }
 
         $is_area_show = I('is_area_show');
-        if ($is_area_show == 1) {
-            $where .= ' and is_area_show = 1';
+        switch ($is_area_show) {
+            case 1:
+                $where .= ' and is_area_show = 1';
+                break;
+            case 3:
+                $where .= ' and applet_on_sale = 1';
+                break;
         }
 
         $goodsType = I('goods_type');
@@ -825,6 +863,21 @@ class Goods extends Base
                 }
             }
 
+            if ($data['applet_on_sale2'] == 1) {
+                if ($data['applet_on_time'] == 0 || $data['applet_out_time'] == 0) {
+                    $return_arr = [
+                        'msg' => '请设置小程序上下架时间',
+                        'status' => 0
+                    ];
+                    $this->ajaxReturn($return_arr);
+                }
+                $data['applet_on_time'] = strtotime($data['applet_on_time']);
+                $data['applet_out_time'] = strtotime($data['applet_out_time']);
+            } else {
+                $data['applet_on_time'] = 0;
+                $data['applet_out_time'] = 0;
+            }
+
             $Goods->data($data, true); // 收集数据
 //            $Goods->on_time = time(); // 上架时间
 
@@ -921,7 +974,6 @@ class Goods extends Base
         }
 
         //积分类型输出 BY J
-
         if ($goodsInfo && 0 == $goodsInfo['exchange_integral']) {
             $goodsInfoData['exchange_integral_type'] = 0;
         } elseif (empty($goodsInfo) || ($goodsInfo['shop_price'] * tpCache('shopping.point_use_percent') / 100 == $goodsInfo['exchange_integral'])) {
@@ -957,6 +1009,12 @@ class Goods extends Base
                 $tabsList[$k]['status'] = $goodsTabList[$v['id']]['status'];
                 $tabsList[$k]['title'] = $goodsTabList[$v['id']]['title'];
             }
+        }
+
+        // 代理商商品
+        if ($goodsInfo['is_agent'] == 1) {
+            $goodsInfo['applet_on_time'] = date('Y-m-d H:i:s', $goodsInfo['applet_on_time']);
+            $goodsInfo['applet_out_time'] = date('Y-m-d H:i:s', $goodsInfo['applet_out_time']);
         }
 
         $distributList = Db::name('distribut_level')->select();
@@ -1557,5 +1615,29 @@ class Goods extends Base
         M('goods_images')->where(['img_id' => ['IN', $imageIds]])->delete();
         Db::commit();
         $this->ajaxReturn(['status' => 1, 'msg' => '删除成功']);
+    }
+
+    /**
+     * 小程序上架处理
+     */
+    public function appletOnSale()
+    {
+        $goodsId = I('goods_id');
+        $onSale = I('on_sale');
+        $data = [
+            'applet_on_sale' => $onSale,
+            'applet_on_sale2' => $onSale,
+        ];
+        switch ($onSale) {
+            case 0:
+                $data['applet_out_time'] = NOW_TIME;
+                break;
+            case 1:
+                $data['applet_on_time'] = NOW_TIME;
+                $data['applet_out_time'] = strtotime('+12 month');
+                break;
+        }
+        M('goods')->where(['goods_id' => $goodsId])->update($data);
+        $this->ajaxReturn(['status' => 1, 'msg' => '处理成功']);
     }
 }

@@ -28,9 +28,22 @@ class Cron extends Controller
      */
     function auto_on_out()
     {
-        M('goods')->where(array('is_area_show' => 1, 'is_on_sale' => 1, 'out_time' => array('elt', NOW_TIME)))->data(array('is_on_sale' => 0))->save();
+        /*
+         * 普通商品
+         */
+        // 上架
         M('goods')->where(array('is_area_show' => 1, 'is_on_sale' => 0, 'is_on_sale2' => 1, 'store_count' => array('gt', 0), 'on_time' => array('elt', NOW_TIME), 'out_time' => array('gt', NOW_TIME)))->data(array('is_on_sale' => 1))->save();
+        // 下架
+        M('goods')->where(array('is_area_show' => 1, 'is_on_sale' => 1, 'out_time' => array('elt', NOW_TIME)))->data(array('is_on_sale' => 0))->save();
         M('goods')->where(array('is_area_show|is_on_sale2|store_count' => 0))->data(array('is_on_sale' => 0))->save();
+        /*
+         * 代理商商品
+         */
+        // 上架
+        M('goods')->where(array('is_on_sale' => 1, 'applet_on_sale' => 0, 'applet_on_sale2' => 1, 'store_count' => array('gt', 0), 'applet_on_time' => array('elt', NOW_TIME), 'applet_out_time' => array('gt', NOW_TIME)))->data(array('applet_on_sale' => 1))->save();
+        // 下架
+        M('goods')->where(array('is_on_sale' => 1, 'applet_on_sale' => 1, 'applet_out_time' => array('elt', NOW_TIME)))->data(array('applet_on_sale' => 0))->save();
+        M('goods')->where(array('is_on_sale|is_on_sale2|applet_on_sale|applet_on_sale2|store_count' => 0))->data(array('applet_on_sale' => 0))->save();
     }
 
     // 检查错误订单积分 上次检查 2018-12-14 15:43
@@ -1674,5 +1687,24 @@ AND log_id NOT IN
         if (!empty($articleIds)) {
             M('community_article')->where(['id' => ['IN', $articleIds]])->update(['status' => 1, 'publish_time' => NOW_TIME]);
         }
+    }
+
+    /**
+     * 删除分享海报图
+     */
+    public function clearShareImage()
+    {
+        $beforeUserShare = M('user_share_image')->where(['add_time' => ['<=', time() - 3600]])->select();
+        $ids = [];
+        foreach ($beforeUserShare as $item) {
+            if (!empty($item['head_pic']) && file_exists($item['head_pic'])) {
+                unlink($item['head_pic']);
+            }
+            if (!empty($item['share_pic']) && file_exists($item['share_pic'])) {
+                unlink($item['share_pic']);
+            }
+            $ids[] = $item['id'];
+        }
+        M('user_share_image')->where(['id' => ['IN', $ids]])->delete();
     }
 }

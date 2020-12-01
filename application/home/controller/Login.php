@@ -74,7 +74,7 @@ class Login
         //     }
         // }
         $logic = new UsersLogic();
-        $res = $logic->login($username, $password, 2);
+        $res = $logic->login($username, $password, '', 2);
         if (1 == $res['status']) {
             $res['url'] = htmlspecialchars_decode(I('post.referurl'));
             session('user', $res['result']);
@@ -226,7 +226,7 @@ class Login
         if (!empty($invite)) {
             $invite = get_user_info($invite); //根据user_id查找邀请人
         }
-        $data = $logic->reg($username, $password, $password2, 0, $invite, '', '', null, 2);
+        $data = $logic->reg($username, $password, $password2, 0, $invite, 0, '', '', '', null, 2);
         if (1 != $data['status']) {
             return json($data);
         }

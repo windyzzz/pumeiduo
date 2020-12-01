@@ -159,6 +159,9 @@ class Order extends Base
             $where .= C(strtoupper(I('get.type')));
         }
         $where .= ' AND prom_type < 5 '; // 虚拟拼团订单不列出来
+        if ($this->isApplet) {
+            $where .= ' AND order_type = 4';
+        }
         // 搜索订单 根据商品名称 或者 订单编号
         $search_key = trim(I('search_key'));
         $bind = [];
@@ -392,6 +395,12 @@ class Order extends Base
                 if (M('order')->where(['parent_id' => $orderId, 'order_type' => 1])->find()) {
                     $deliveryType = '2';
                 }
+                break;
+            case 4:
+                if ($orderInfo['is_agent'] == 1) {
+                    $orderTypeTips = '含有代理商商品的订单不能售后，请联系总部客服进行处理';
+                }
+                break;
         }
         $orderInfo = set_btn_order_status($orderInfo);  // 添加属性  包括按钮显示属性 和 订单状态显示属性
         // 获取订单商品
@@ -605,9 +614,9 @@ class Order extends Base
 
     public function del_refund_goods()
     {
-        $order_id = I('id/d', 0);
+        $id = I('id/d', 0);
 
-        M('return_goods')->where('id', $order_id)->update(['status' => 6]);
+        M('return_goods')->where('id', $id)->update(['status' => 6]);
 
         return json(['status' => 1, 'msg' => '删除成功', 'result' => null]);
     }
@@ -829,7 +838,7 @@ class Order extends Base
     public function return_goods(Request $request)
     {
         $rec_id = I('rec_id', 0);
-        $return_goods = M('return_goods')->where(['rec_id' => $rec_id, 'status' => ['NEQ', -2]])->find();
+        $return_goods = M('return_goods')->where(['rec_id' => $rec_id, 'status' => ['NOT IN', [-2, 6]]])->find();
         if (!empty($return_goods)) {
             return json(['status' => 0, 'msg' => '已经提交过退货申请!', 'result' => null]);
         }
@@ -840,9 +849,6 @@ class Order extends Base
         $order = M('order')->where(['order_id' => $order_goods['order_id']])->find();
         if (empty($order)) {
             return json(['status' => 0, 'msg' => '非法操作', 'result' => null]);
-        }
-        if ($order['order_type'] == 2) {
-            return json(['status' => 0, 'msg' => '韩国购商品收货后如有质量或破损问题申请退换货时，请联系总部客服进行处理']);
         }
         $confirm_time_config = tpCache('shopping.auto_service_date'); //后台设置多少天内可申请售后
         $confirm_time = $confirm_time_config * 24 * 60 * 60;
@@ -858,6 +864,11 @@ class Order extends Base
                 // 供应链订单
                 $cOrder = M('order')->where(['order_id' => $order_goods['order_id2']])->find();
                 break;
+            case 4:
+                // 直播订单
+                if ($order['is_agent'] == 1) {
+                    return json(['status' => 0, 'msg' => '含有代理商商品的订单不能售后，请联系总部客服进行处理']);
+                }
         }
         if ($request->isPost()) {
             $model = new OrderLogic();
@@ -890,7 +901,7 @@ class Order extends Base
     {
         $type = I('type', -1);
         $recId = I('rec_id', '');
-        if (Db::name('return_goods')->where(['rec_id' => $recId, 'user_id' => $this->user_id, 'status' => ['NEQ', -2]])->find()) {
+        if (Db::name('return_goods')->where(['rec_id' => $recId, 'user_id' => $this->user_id, 'status' => ['NOT IN', [-2, 6]]])->find()) {
             return json(['status' => 0, 'msg' => '该商品已申请了售后']);
         }
         // 订单商品信息
@@ -914,8 +925,16 @@ class Order extends Base
                 // 供应链订单
                 $cOrder = M('order')->where(['order_id' => $orderGoods['order_id2']])->find();
                 break;
+            case 4:
+                // 直播订单
+                if ($order['is_agent'] == 1) {
+                    return json(['status' => 0, 'msg' => '含有代理商商品的订单不能售后，请联系总部客服进行处理']);
+                }
         }
         if ($this->request->isPost()) {
+            if ($type == -1) {
+                return json(['status' => 0, 'msg' => '退货类型错误']);
+            }
             // 申请售后
             $orderLogic = new OrderLogic();
             $res = $orderLogic->addReturnGoodsNew($recId, $type, $order, $orderGoods, I('post.'), $cOrder);
@@ -935,7 +954,7 @@ class Order extends Base
             if ($type != -1) {
                 $useApplyReturnMoney = $orderGoods['final_price'] * $orderGoods['goods_num'];    // 要退的总价 商品购买单价*申请数量
                 $userExpenditureMoney = $order['goods_price'] - $order['order_prom_amount'] - $order['coupon_price'];    // 用户实际使用金额
-                $user_electronic = round($order['user_electronic'] - $order['user_electronic'] * $order['shipping_price'] / $order['total_amount'], 2);
+                $user_electronic = round($order['user_electronic'] - $order['user_electronic'] * $order['shipping_price'] / ($order['order_amount'] + $order['user_electronic']), 2);
                 // 该退积分支付
                 $refundIntegral = round($orderGoods['use_integral'] * $orderGoods['goods_num'], 2);
                 // 该退电子币
@@ -947,7 +966,6 @@ class Order extends Base
                         $refundMoney = round($useApplyReturnMoney / $userExpenditureMoney * ($order_amount - $order['shipping_price']), 2);
                     }
                 }
-
                 // 公司地址
                 if (isset($cOrder) && $cOrder['order_type'] == 3) {
                     $address = '暂无售后地址信息';
@@ -1069,7 +1087,15 @@ class Order extends Base
                 'return_type' => $returnGoods['type'],
                 'return_status' => $returnGoods['status']
             ];
-            $return[$k]['return_status'] = !empty($returnGoods['delivery']) ? 7 : $returnGoods['status'];
+            $return[$k]['return_status'] = $returnGoods['status'];
+            if (in_array($returnGoods['type'], [1, 2])) {
+                if ($returnGoods['status'] == 1) {
+                    if (!empty($returnGoods['delivery'])) {
+                        $return[$k]['status'] = 7;  // 等待买家退货
+                    }
+                }
+            }
+//            $return[$k]['return_status'] = !empty($returnGoods['delivery']) ? 7 : $returnGoods['status'];
         }
         return json(['status' => 1, 'result' => $return]);
     }
@@ -1233,10 +1259,14 @@ class Order extends Base
         $return['return_electronic'] = $returnGoods['refund_electronic'];
         $return['return_integral'] = $returnGoods['refund_integral'];
         $return['voucher'] = $returnGoods['imgs'] ? explode(',', $returnGoods['imgs']) : [];
+        $return['voucher_new'] = [];
+        foreach ($return['voucher'] as $img) {
+            $return['voucher_new'][] = getFullPath($img);
+        }
         $return['can_delivery'] = !empty($returnGoods['delivery']) ? 0 : 1;
         if (in_array($returnGoods['type'], [1, 2])) {
             if ($returnGoods['status'] == 1) {
-                if (empty($returnGoods['delivery'])) {
+                if (!empty($returnGoods['delivery'])) {
                     $return['status'] = 7;  // 等待买家退货
                 }
             }
@@ -1403,7 +1433,7 @@ class Order extends Base
 
         // 如果订单没有售后的商品，订单状态变回已确认
         $order_id = M('return_goods')->where(['id' => $id, 'user_id' => $this->user_id])->getField('order_id');
-        if (!M('return_goods')->where('order_id', $order_id)->where('status', 'neq', -2)->find()) {
+        if (!M('return_goods')->where('order_id', $order_id)->where('status', 'not in', [-2, 6])->find()) {
             M('order')->where('order_id', $order_id)->update(['order_status' => 2]);
         }
         $return_info = M('return_goods')->where(['id' => $id, 'user_id' => $this->user_id])->find();
@@ -1827,9 +1857,10 @@ class Order extends Base
 
         $cartLogic = new CartLogic();
         $cartLogic->setUserId($this->user_id);
+        $cartLogic->setUser($this->user);
         // 获取订单商品数据
         $goodsLogic = new GoodsLogic();
-        $res = $goodsLogic->getOrderGoodsData($cartLogic, $goodsId, $itemId, $goodsNum, $payType, $cartIds, $this->isApp, $this->user_id);
+        $res = $goodsLogic->getOrderGoodsData($cartLogic, $goodsId, $itemId, $goodsNum, $payType, $cartIds, $this->isApp, $this->isApplet, $this->user_id);
         if ($res['status'] != 1) {
             return json($res);
         } else {
@@ -2204,9 +2235,10 @@ class Order extends Base
         }
         $cartLogic = new CartLogic();
         $cartLogic->setUserId($this->user_id);
+        $cartLogic->setUser($this->user);
         // 获取订单商品数据
         $goodsLogic = new GoodsLogic();
-        $res = $goodsLogic->getOrderGoodsData($cartLogic, $goodsId, $itemId, $goodsNum, $payType, $cartIds, $this->isApp, $this->user_id);
+        $res = $goodsLogic->getOrderGoodsData($cartLogic, $goodsId, $itemId, $goodsNum, $payType, $cartIds, $this->isApp, $this->isApplet, $this->user_id);
         if ($res['status'] != 1) {
             return json($res);
         } else {
@@ -2404,7 +2436,7 @@ class Order extends Base
         $idCard = I('id_card', 0);
 
         if (!$this->user['paypwd']) {
-            return json(['status' => 0, 'msg' => '请先设置支付密码']);
+            return json(['status' => -6, 'msg' => '请先设置支付密码']);
         }
         if (!$addressId) {
             return json(['status' => 0, 'msg' => '请先填写收货人信息']);
@@ -2422,9 +2454,10 @@ class Order extends Base
 
         $cartLogic = new CartLogic();
         $cartLogic->setUserId($this->user_id);
+        $cartLogic->setUser($this->user);
         // 获取订单商品数据
         $goodsLogic = new GoodsLogic();
-        $res = $goodsLogic->getOrderGoodsData($cartLogic, $goodsId, $itemId, $goodsNum, $payType, $cartIds, $this->isApp, $this->user_id);
+        $res = $goodsLogic->getOrderGoodsData($cartLogic, $goodsId, $itemId, $goodsNum, $payType, $cartIds, $this->isApp, $this->isApplet, $this->user_id);
         if ($res['status'] != 1) {
             return json($res);
         } else {
@@ -2436,6 +2469,7 @@ class Order extends Base
         if ($res['status'] === -1) {
             return json($res);
         }
+        $hasAgent = 0;  // 是否拥有代理商商品
         $orderType = 1; // 圃美多
         switch ($res['status']) {
             case 0:
@@ -2456,6 +2490,14 @@ class Order extends Base
             case 3:
                 $orderType = 3; // 供应链
                 break;
+            case 4:
+                $orderType = 4; // 直播
+                $hasAgent = 1;
+                break;
+        }
+        if ($this->isApplet) {
+            // 直播订单
+            $orderType = 4;
         }
 
         // 初始化数据 商品总额/节约金额/商品总共数量/商品使用积分
@@ -2536,11 +2578,13 @@ class Order extends Base
             $placeOrder->setUserNote($userNote);
             $placeOrder->setUserIdCard($idCard);
             $placeOrder->setOrderType($orderType);
+            $placeOrder->setHasAgent($hasAgent);
+            $source = $this->isApplet ? 4 : 3;
             Db::startTrans();
             if (2 == $prom_type) {
-                $placeOrder->addGroupBuyOrder($prom_id, 3);    // 团购订单
+                $placeOrder->addGroupBuyOrder($prom_id, $source);    // 团购订单
             } else {
-                $placeOrder->addNormalOrder(3);     // 普通订单
+                $placeOrder->addNormalOrder($source);     // 普通订单
             }
             if (empty($goodsId) && !empty($cartIds)) {
                 // 清除选中的购物车
@@ -2731,7 +2775,7 @@ class Order extends Base
                 case 1:
                     //--- 统一发货
                     // 订单商品
-                    $orderGoods = M('order_goods og')->join('goods g', 'g.goods_id = og.goods_id')->where(['og.order_id' => $orderId])->field('g.goods_id, g.original_img')->find();
+                    $orderGoods = M('order_goods og')->join('goods g', 'g.goods_id = og.goods_id')->where(['og.order_id' => $orderId])->field('og.*, g.goods_id, g.original_img')->find();
                     switch ($order['shipping_status']) {
                         case 0:
                         case 3:
@@ -2743,6 +2787,9 @@ class Order extends Base
                                 'shipping_name' => '',
                                 'invoice_no' => '',
                                 'goods_id' => $orderGoods['goods_id'],
+                                'goods_name' => $orderGoods['goods_name'],
+                                'goods_num' => $orderGoods['goods_num'],
+                                'exchange_price' => $orderGoods['member_goods_price'],
                                 'original_img' => SITE_URL . $orderGoods['original_img'],
                                 'original_img_new' => getFullPath($orderGoods['original_img']),
                                 'service_phone' => tpCache('shop_info.mobile'),
@@ -2760,6 +2807,7 @@ class Order extends Base
                         ->where($where)->order('id desc')->find();
                     switch ($order['order_type']) {
                         case 1:
+                        case 4:
                             // 圃美多
                             $apiController = new ApiController();
                             $express = $apiController->queryExpress(['shipping_code' => $delivery['shipping_code'], 'queryNo' => $delivery['invoice_no']], 'array');
@@ -2861,6 +2909,9 @@ class Order extends Base
                         'shipping_name' => $delivery['shipping_name'],
                         'invoice_no' => $delivery['invoice_no'],
                         'goods_id' => $orderGoods['goods_id'],
+                        'goods_name' => $orderGoods['goods_name'],
+                        'goods_num' => $orderGoods['goods_num'],
+                        'exchange_price' => $orderGoods['member_goods_price'],
                         'original_img' => SITE_URL . $orderGoods['original_img'],
                         'original_img_new' => getFullPath($orderGoods['original_img']),
                         'service_phone' => $express['result']['expPhone'],
@@ -2882,7 +2933,7 @@ class Order extends Base
                         case 0:
                         case 3:
                             // 订单商品
-                            $orderGoods = M('order_goods og')->join('goods g', 'g.goods_id = og.goods_id')->where(['og.order_id' => $orderId])->field('g.goods_id, g.original_img')->find();
+                            $orderGoods = M('order_goods og')->join('goods g', 'g.goods_id = og.goods_id')->where(['og.order_id' => $orderId])->field('og.*, g.goods_id, g.original_img')->find();
                             $return['delivery'][] = [
                                 'rec_id' => '',
                                 'doc_id' => '',
@@ -2892,6 +2943,9 @@ class Order extends Base
                                 'invoice_no' => '',
                                 'express' => [],
                                 'goods_id' => $orderGoods['goods_id'],
+                                'goods_name' => $orderGoods['goods_name'],
+                                'goods_num' => $orderGoods['goods_num'],
+                                'exchange_price' => $orderGoods['member_goods_price'],
                                 'original_img' => SITE_URL . $orderGoods['original_img'],
                                 'original_img_new' => getFullPath($orderGoods['original_img']),
                             ];
@@ -2899,10 +2953,11 @@ class Order extends Base
                     }
                     $delivery = M('delivery_doc dd')->join('order_goods og', 'og.rec_id = dd.rec_id')
                         ->join('goods g', 'g.goods_id = og.goods_id')
-                        ->field('dd.*, dd.id doc_id, g.goods_id, g.original_img, g.supplier_goods_id, og.order_id2')
+                        ->field('dd.*, dd.id doc_id, og.*, g.goods_id, g.original_img, g.supplier_goods_id, og.order_id2')
                         ->where($where)->select();
                     switch ($order['order_type']) {
                         case 1:
+                        case 4:
                             // 圃美多
                             $apiController = new ApiController();
                             foreach ($delivery as $item) {
@@ -2924,6 +2979,9 @@ class Order extends Base
                                     'invoice_no' => $item['invoice_no'],
                                     'express' => $express['result']['list'][0],
                                     'goods_id' => $item['goods_id'],
+                                    'goods_name' => $item['goods_name'],
+                                    'goods_num' => $item['goods_num'],
+                                    'exchange_price' => $item['member_goods_price'],
                                     'original_img' => SITE_URL . $item['original_img'],
                                     'original_img_new' => getFullPath($item['original_img']),
                                 ];
@@ -2983,6 +3041,9 @@ class Order extends Base
                                     'invoice_no' => $item['invoice_no'],
                                     'express' => $express['result']['list'][0],
                                     'goods_id' => $item['goods_id'],
+                                    'goods_name' => $item['goods_name'],
+                                    'goods_num' => $item['goods_num'],
+                                    'exchange_price' => $item['member_goods_price'],
                                     'original_img' => SITE_URL . $item['original_img'],
                                     'original_img_new' => getFullPath($item['original_img']),
                                 ];
@@ -3031,6 +3092,9 @@ class Order extends Base
                                     'invoice_no' => $item['invoice_no'],
                                     'express' => $express['result']['list'][0],
                                     'goods_id' => $item['goods_id'],
+                                    'goods_name' => $item['goods_name'],
+                                    'goods_num' => $item['goods_num'],
+                                    'exchange_price' => $item['member_goods_price'],
                                     'original_img' => SITE_URL . $item['original_img'],
                                     'original_img_new' => getFullPath($item['original_img']),
                                 ];
@@ -3045,7 +3109,7 @@ class Order extends Base
             //--- 订单商品单独物流信息
             // 订单商品
             $orderGoods = M('delivery_doc dd')->join('order_goods og', 'og.rec_id = dd.rec_id')->join('goods g', 'g.goods_id = og.goods_id')
-                ->where($where)->field('g.goods_id, g.original_img, g.supplier_goods_id')->find();
+                ->where($where)->field('og.*, g.goods_id, g.original_img, g.supplier_goods_id')->find();
             switch ($order['shipping_status']) {
                 case 0:
                 case 3:
@@ -3057,6 +3121,9 @@ class Order extends Base
                         'shipping_name' => '',
                         'invoice_no' => '',
                         'goods_id' => $orderGoods['goods_id'],
+                        'goods_name' => $orderGoods['goods_name'],
+                        'goods_num' => $orderGoods['goods_num'],
+                        'exchange_price' => $orderGoods['member_goods_price'],
                         'original_img' => SITE_URL . $orderGoods['original_img'],
                         'original_img_new' => getFullPath($orderGoods['original_img']),
                         'service_phone' => tpCache('shop_info.mobile'),
@@ -3073,6 +3140,7 @@ class Order extends Base
                 ->where($where)->order('id desc')->find();
             switch ($order['order_type']) {
                 case 1:
+                case 4:
                     // 圃美多
                     $apiController = new ApiController();
                     $express = $apiController->queryExpress(['shipping_code' => $delivery['shipping_code'], 'queryNo' => $delivery['invoice_no']], 'array');
@@ -3188,6 +3256,9 @@ class Order extends Base
                 'shipping_name' => $delivery['shipping_name'],
                 'invoice_no' => $delivery['invoice_no'],
                 'goods_id' => $orderGoods['goods_id'],
+                'goods_name' => $orderGoods['goods_name'],
+                'goods_num' => $orderGoods['goods_num'],
+                'exchange_price' => $orderGoods['member_goods_price'],
                 'original_img' => SITE_URL . $orderGoods['original_img'],
                 'original_img_new' => getFullPath($orderGoods['original_img']),
                 'service_phone' => $express['result']['expPhone'] ?? tpCache('shop_info.mobile'),
@@ -3197,6 +3268,8 @@ class Order extends Base
                 'address' => $delivery['address'],
                 'express' => $express['result']['list']
             ];
+        } else {
+            $return = [];
         }
         return json(['status' => 1, 'result' => $return]);
     }
@@ -3208,6 +3281,7 @@ class Order extends Base
     public function getOrderNum()
     {
         $return = [
+            'ALL' => 0,
             'WAITPAY' => 0,
             'WAITSEND' => 0,
             'WAITRECEIVE' => 0,
@@ -3216,8 +3290,12 @@ class Order extends Base
         ];
         // 订单数据
         $where = 'parent_id = 0 AND user_id = ' . $this->user_id . ' AND deleted != 1 AND prom_type < 5'; // 虚拟拼团订单不列出来
+        if ($this->isApplet) {
+            $where .= ' AND order_type = 4';
+        }
         $orderData = M('order')->where($where)->field('order_id, pay_status, order_status, shipping_status, pay_code')->select();
         foreach ($orderData as $order) {
+            $return['ALL'] += 1;
             if ($order['pay_status'] == 0 && $order['order_status'] == 0 && $order['pay_code'] != 'cod') {
                 $return['WAITPAY'] += 1;
             } elseif (($order['pay_status'] == 1 || $order['pay_code'] == 'cod') && $order['shipping_status'] != 1 && in_array($order['order_status'], [0, 1])) {
@@ -3232,5 +3310,15 @@ class Order extends Base
         $where = 'user_id = ' . $this->user_id . ' AND status != 6 AND status != -2';
         $return['RETURN'] = M('return_goods')->where($where)->count('id');
         return json(['status' => 1, 'result' => $return]);
+    }
+
+    /**
+     * 物流公司列表
+     * @return \think\response\Json
+     */
+    public function shippingList()
+    {
+        $shippingList = M('shipping')->where(['is_open' => 1, 'shipping_code' => ['NEQ', '00000']])->field('shipping_name, shipping_code')->select();
+        return json(['status' => 1, 'result' => ['list' => $shippingList]]);
     }
 }

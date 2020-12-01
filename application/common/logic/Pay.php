@@ -642,6 +642,9 @@ class Pay
         $this->giftLogic->setGoodsList($this->payList);
         $goods_list = $this->giftLogic->getGoodsList();
         if ($goods_list) {
+            foreach ($goods_list as $k => $v) {
+                $goods_list[$k]['original_img_new'] = getFullPath($v['original_img']);
+            }
             $this->gift_goods_list = array_values($goods_list);
             if (!$isApp) {
                 $this->payList = array_merge($this->payList, $goods_list);
@@ -825,6 +828,7 @@ class Pay
                     $gift2_goods_list[$key]['prom_type'] = 9;
                     $gift2_goods_list[$key]['prom_id'] = $val['id'];
                     $gift2_goods_list[$key]['original_img'] = $goods['original_img'];
+                    $gift2_goods_list[$key]['original_img_new'] = getFullPath($goods['original_img']);
 
                     if (!empty($val['item_id'])) {
                         $spec_goods_price = M('spec_goods_price')->where(array('goods_id' => $val['goods_id'], 'item_id' => $val['item_id']))->field('key,key_name,store_count')->find();
@@ -865,6 +869,9 @@ class Pay
                     ->join('spec_goods_price sgp', 'sgp.item_id = opg.item_id', 'LEFT')->where(['opg.order_prom_id' => $prom['id'], 'opg.type' => 2])
                     ->field('opg.goods_id, opg.item_id, opg.goods_num, g.goods_sn, g.goods_name, g.goods_remark, g.original_img, sgp.key_name spec_key_name')
                     ->select();
+                foreach ($giftGoodsList as $key => $val) {
+                    $giftGoodsList[$key]['original_img_new'] = getFullPath($val['original_img']);
+                }
                 $giftGoods[$prom['id']]['goods_list'] = $giftGoodsList;
             }
         }
@@ -1085,7 +1092,7 @@ class Pay
             $cartLogic->setType($extra['pay_type']);
             $cartLogic->setCartType(0);
             try {
-                $buyGoods = $cartLogic->buyNow(true, true);
+                $buyGoods = $cartLogic->buyNow(true, false, true);
             } catch (TpshopException $tpE) {
                 $error = $tpE->getErrorArr();
                 throw new TpshopException('计算订单价格', 0, ['status' => 0, 'msg' => $error['msg']]);
@@ -1259,7 +1266,7 @@ class Pay
                                 $cartLogic->setType(2);
                             }
                             $cartLogic->setCartType(0);
-                            $buyGoods = $cartLogic->buyNow(true, true);
+                            $buyGoods = $cartLogic->buyNow(true, false, true);
                             $buyGoods['member_goods_price'] = '0';
                             $buyGoods['use_integral'] = '0';
                             $buyGoods['re_id'] = $coupon_id;

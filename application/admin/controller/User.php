@@ -301,6 +301,16 @@ class User extends Base
                 $condition['is_cancel'] = 1;
                 break;
         }
+        //注册来源
+        $regSource = I('reg_source', 0);
+        if ($regSource > 0) {
+            $condition['reg_source'] = $regSource;
+        }
+        //最后一次登录来源
+        $lastLoginSource = I('last_login_source', 0);
+        if ($lastLoginSource > 0) {
+            $condition['last_login_source'] = $lastLoginSource;
+        }
         //排序
         if (I('order_by') == 'user_status') {
             $sort_order = 'is_lock ' . I('sort') . ', is_cancel ' . I('sort');

@@ -85,9 +85,13 @@ class MobileApp extends Base
         unset($param['update_version_all']);
         if (isset($param['show_version'])) {
             $param['show_version'] = implode(';', $param['show_version']);
+        } else {
+            $param['show_version'] = '';
         }
         if (isset($param['update_version'])) {
             $param['update_version'] = implode(';', $param['update_version']);
+        } else {
+            $param['update_version'] = '';
         }
         foreach ($param as $k => $v) {
             if (isset($config[$k])) {

@@ -7,7 +7,7 @@ use think\Url;
 
 class Share extends Base
 {
-    
+
     public function __construct()
     {
         parent::__construct();
@@ -78,16 +78,20 @@ class Share extends Base
         }
         // 用户头像
         $headPic = $this->user['head_pic'];
-        $headPicPath = simplifyPath($headPic);  // 过滤域名
         $headPicType = 'path';
-        if (!$headPicPath) {
-            // 网络图片
-            $res = download_image($headPic, md5(mt_rand()) . '.jpg', PUBLIC_PATH . 'upload/share/temp/', 1, false);
-            if ($res == false) {
-                $headPicPath = 'public/images/default_head.png';
-            } else {
-                $headPicType = 'resource';
-                $headPicPath = $res['save_path'] . $res['file_name'];
+        if (!$headPic) {
+            $headPicPath = 'public/images/default_head.png';
+        } else {
+            $headPicPath = simplifyPath($headPic);  // 过滤域名
+            if (!$headPicPath) {
+                // 网络图片
+                $res = download_image($headPic, md5(mt_rand()) . '.jpg', PUBLIC_PATH . 'upload/share/temp/', 1, false);
+                if ($res == false) {
+                    $headPicPath = 'public/images/default_head.png';
+                } else {
+                    $headPicType = 'resource';
+                    $headPicPath = $res['save_path'] . $res['file_name'];
+                }
             }
         }
         // 用户昵称
@@ -165,7 +169,7 @@ class Share extends Base
                 $pic2Path = PUBLIC_PATH . 'upload/share/temp/' . md5(mt_rand()) . '.jpg';
                 copy('public/upload/share/pic2.png', $pic2Path);
                 // 组合图片
-                $res = $this->combinePic($pic1Path, $pic2Path, $nickname, $qrPath, $headPicType, $headPicPath, $this->user['head_pic']);
+                $res = $this->combinePic($pic1Path, $pic2Path, $nickname, $qrPath, $headPicPath);
                 if ($res) {
                     unlink($pic2Path);
                 }
@@ -180,15 +184,17 @@ class Share extends Base
         if (!empty($userShareData)) {
             // 把之前的本地图片都删除
             $beforeUserShare = M('user_share_image')->where(['user_id' => $this->user_id])->select();
-            foreach ($beforeUserShare as $item) {
-                if (!empty($item['head_pic']) && file_exists($item['head_pic'])) {
-                    unlink($item['head_pic']);
+            if (!empty($beforeUserShare)) {
+                foreach ($beforeUserShare as $item) {
+                    if (!empty($item['head_pic']) && file_exists($item['head_pic'])) {
+                        unlink($item['head_pic']);
+                    }
+                    if (!empty($item['share_pic']) && file_exists($item['share_pic'])) {
+                        unlink($item['share_pic']);
+                    }
                 }
-                if (!empty($item['share_pic']) && file_exists($item['share_pic'])) {
-                    unlink($item['share_pic']);
-                }
+                M('user_share_image')->where(['user_id' => $this->user_id])->delete();
             }
-            M('user_share_image')->where(['user_id' => $this->user_id])->delete();
             // 增加新记录
             $userShareImage = new UserShareImage();
             $userShareImage->saveAll($userShareData);
@@ -225,22 +231,20 @@ class Share extends Base
      * @param $pic2_path
      * @param $nickname
      * @param $qr_path
-     * @param $head_pic_type
      * @param $head_pic_path
-     * @param $head_pic_resource
      * @return bool
      */
-    private function combinePic($pic1_path, $pic2_path, $nickname, $qr_path, $head_pic_type, $head_pic_path, $head_pic_resource)
+    private function combinePic($pic1_path, $pic2_path, $nickname, $qr_path, $head_pic_path)
     {
         /*
          * 上部分图
          */
-        $ext1 = pathinfo($pic1_path);
+        $ext1 = getimagesize($pic1_path)['mime'];
         $pic1 = imagecreatefromstring(file_get_contents($pic1_path));
         $pic1_width = imagesx($pic1);
         $pic1_height = imagesy($pic1);
         // 用户头像
-        $head_pic_path = img_radius($head_pic_type, $head_pic_path, $head_pic_resource, 0);     // 圆角处理
+        $head_pic_path = img_radius('path', $head_pic_path, '', 0);     // 圆角处理
         $head_pic = imagecreatefromstring(file_get_contents($head_pic_path));
         $head_width = imagesx($head_pic);       // 头像原本宽
         $head_height = imagesy($head_pic);      // 头像原本高
@@ -258,11 +262,11 @@ class Share extends Base
         $font_y = 270;                                          // 嵌入字体y轴的位置
         imagettftext($pic1, 30, 0, $font_x, $font_y, $color, $font, $nickname);
         // 输出图片
-        switch ($ext1['extension']) {
-            case 'jpg':
+        switch ($ext1) {
+            case 'image/jpeg':
                 imagejpeg($pic1, $pic1_path);
                 break;
-            case 'png':
+            case 'image/png':
                 imagepng($pic1, $pic1_path);
                 break;
         }
@@ -277,11 +281,11 @@ class Share extends Base
 //        imageColorTransparent($background, $color);
         imagecopyresampled($background, $pic1, 0, 0, 0, 0, $pic1_width, $pic1_height, $pic1_width, $pic1_height);
         // 输出图片
-        switch ($ext1['extension']) {
-            case 'jpg':
+        switch ($ext1) {
+            case 'image/jpeg':
                 imagejpeg($background, $pic1_path);
                 break;
-            case 'png':
+            case 'image/png':
                 imagepng($background, $pic1_path);
                 break;
         }
@@ -289,7 +293,7 @@ class Share extends Base
         /*
          * 下部分图
          */
-        $ext2 = pathinfo($pic2_path);
+        $ext2 = getimagesize($pic2_path)['mime'];
         $pic2 = imagecreatefromstring(file_get_contents($pic2_path));
 //        $pic2_width = imagesx($pic2);
 //        $pic2_height = imagesy($pic2);
@@ -303,11 +307,11 @@ class Share extends Base
         $from_y = 42;                   // 组合之后二维码左上角所在坐标点y
         imagecopyresampled($pic2, $qr, $from_x, $from_y, 0, 0, $qr_pic2_width, $qr_pic2_height, $qr_width, $qr_height);
         // 输出图片
-        switch ($ext2['extension']) {
-            case 'jpg':
+        switch ($ext2) {
+            case 'image/jpeg':
                 imagejpeg($pic2, $pic2_path);
                 break;
-            case 'png':
+            case 'image/png':
                 imagepng($pic2, $pic2_path);
                 break;
         }
@@ -323,11 +327,11 @@ class Share extends Base
         $from_y = 132;                   // 组合之后logo左上角所在坐标点y
         imagecopyresampled($pic2, $logo, $from_x, $from_y, 0, 0, $logo_pic2_width, $logo_pic2_height, $logo_width, $logo_height);
         // 输出图片
-        switch ($ext2['extension']) {
-            case 'jpg':
+        switch ($ext2) {
+            case 'image/jpeg':
                 imagejpeg($pic2, $pic2_path);
                 break;
-            case 'png':
+            case 'image/png':
                 imagepng($pic2, $pic2_path);
                 break;
         }
@@ -335,7 +339,7 @@ class Share extends Base
         /*
          * 上下图组合
          */
-        $ext1 = pathinfo($pic1_path);
+        $ext1 = getimagesize($pic1_path)['mime'];
         $pic1 = imagecreatefromstring(file_get_contents($pic1_path));
 //        $pic1_width = imagesx($pic1);
         $pic1_height = imagesy($pic1);
@@ -346,11 +350,11 @@ class Share extends Base
         $from_y = ($pic1_height - $pic2_height);        // 组合的下图左上角所在坐标点y
         imagecopyresampled($pic1, $pic2, $from_x, $from_y, 0, 0, $pic2_width, $pic2_height, $pic2_width, $pic2_height);
         // 输出图片
-        switch ($ext1['extension']) {
-            case 'jpg':
+        switch ($ext1) {
+            case 'image/jpeg':
                 imagejpeg($pic1, $pic1_path);
                 break;
-            case 'png':
+            case 'image/png':
                 imagepng($pic1, $pic1_path);
                 break;
         }

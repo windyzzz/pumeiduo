@@ -46,7 +46,7 @@ class DistributLogic
         $is_vip = false;
         $vipLevel = 1;
         foreach ($order_goods as $ov) {
-            $goods_info = M('goods')->field('zone, distribut_id, commission, integral_pv, retail_pv')->where(['goods_id' => $ov['goods_id']])->find();
+            $goods_info = M('goods')->field('zone, distribut_id, commission, integral_pv, retail_pv, is_agent, buying_price_pv')->where(['goods_id' => $ov['goods_id']])->find();
             if (3 == $goods_info['zone'] && $goods_info['distribut_id'] > 1) {
                 // 会员升级区
                 $is_vip = true;
@@ -55,19 +55,23 @@ class DistributLogic
             }
             $hasGoodsPv = false;
             if ($userLevel >= 3) {
-                switch ($ov['pay_type']) {
-                    case 1:
-                        // 现金+积分
-                        if ($goods_info['integral_pv'] > 0) {
-                            $hasGoodsPv = true;
-                        }
-                        break;
-                    case 2:
-                        // 现金
-                        if ($goods_info['retail_pv'] > 0) {
-                            $hasGoodsPv = true;
-                        }
-                        break;
+                if ($goods_info['is_agent'] == 1 && $goods_info['buying_price_pv'] > 0) {
+                    $hasGoodsPv = true;
+                } else {
+                    switch ($ov['pay_type']) {
+                        case 1:
+                            // 现金+积分
+                            if ($goods_info['integral_pv'] > 0) {
+                                $hasGoodsPv = true;
+                            }
+                            break;
+                        case 2:
+                            // 现金
+                            if ($goods_info['retail_pv'] > 0) {
+                                $hasGoodsPv = true;
+                            }
+                            break;
+                    }
                 }
             }
             if (!$hasGoodsPv) {

@@ -1901,7 +1901,11 @@ function getFullPath($path)
         return '';
     }
     if (!strstr($path, 'http') && !strstr($path, 'https')) {
-        return SITE_URL . $path;
+        if (strpos($path, '/') == 0) {
+            return SITE_URL . $path;
+        } else {
+            return SITE_URL . '/' . $path;
+        }
     }
     return $path;
 }
@@ -2133,13 +2137,13 @@ function img_YJ($type, $imgPath, $imgResource = '')
 {
     switch ($type) {
         case 'path':
-            $ext = pathinfo($imgPath);
+            $imgInfo = getimagesize($imgPath);
             $src_img = null;
-            switch ($ext['extension']) {
-                case 'jpg':
+            switch ($imgInfo['mime']) {
+                case 'image/jpeg':
                     $src_img = imagecreatefromjpeg($imgPath);
                     break;
-                case 'png':
+                case 'image/png':
                     $src_img = imagecreatefrompng($imgPath);
                     break;
             }
@@ -2188,13 +2192,13 @@ function img_radius($type, $imgPath, $imgResource = '', $radius = 15)
 {
     switch ($type) {
         case 'path':
-            $ext = pathinfo($imgPath);
+            $imgInfo = getimagesize($imgPath);
             $src_img = null;
-            switch ($ext['extension']) {
-                case 'jpg':
+            switch ($imgInfo['mime']) {
+                case 'image/jpeg':
                     $src_img = imagecreatefromjpeg($imgPath);
                     break;
-                case 'png':
+                case 'image/png':
                     $src_img = imagecreatefrompng($imgPath);
                     break;
             }

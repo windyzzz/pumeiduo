@@ -189,10 +189,14 @@ class Goods extends Base
         $goods_id = I('goods_id/d');
 
 //        $Goods = new \app\common\model\Goods();
-        $goods = Db::name('goods')->where('goods_id', $goods_id)->field('goods_id, cat_id, extend_cat_id, goods_sn, goods_name, goods_type, goods_remark, goods_content, 
-            brand_id, store_count, comment_count, market_price, shop_price, cost_price, give_integral, exchange_integral, original_img, limit_buy_num, least_buy_num,
-            is_on_sale, is_free_shipping, is_recommend, is_new, is_hot, is_virtual, virtual_indate, click_count, zone, prom_type, prom_id, commission, integral_pv, is_supply')->find();
+        $goods = Db::name('goods')->where('goods_id', $goods_id)->find();
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
+            return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
+        }
+        if (!$this->isApplet && $goods['is_agent'] == 1) {
+            return json(['status' => 0, 'msg' => '请在小程序浏览商品', 'result' => null]);
+        }
+        if ($this->isApplet && $goods['is_agent'] == 0) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
         if (cookie('user_id')) {
@@ -390,10 +394,14 @@ class Goods extends Base
         if (!$goods_id) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
-        $goods = Db::name('goods')->where('goods_id', $goods_id)->field('goods_id, cat_id, extend_cat_id, goods_sn, goods_name, goods_type, goods_remark, goods_content, 
-            brand_id, store_count, comment_count, market_price, shop_price, cost_price, give_integral, exchange_integral, original_img, limit_buy_num, least_buy_num,
-            is_on_sale, is_free_shipping, is_recommend, is_new, is_hot, is_virtual, virtual_indate, click_count, zone, commission, integral_pv, is_abroad')->find();
+        $goods = Db::name('goods')->where('goods_id', $goods_id)->find();
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
+            return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
+        }
+        if (!$this->isApplet && $goods['is_agent'] == 1) {
+            return json(['status' => 0, 'msg' => '请在小程序浏览商品', 'result' => null]);
+        }
+        if ($this->isApplet && $goods['applet_on_sale'] == 0) {
             return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
         }
         M('Goods')->where('goods_id', $goods_id)->save(['click_count' => $goods['click_count'] + 1]); // 统计点击数
@@ -490,7 +498,7 @@ class Goods extends Base
                 } elseif ($goods['commission'] == 0) {
                     $goods['commission'] = '';
                 } else {
-                    $goods['commission'] = bcdiv(bcmul(bcsub($goods['shop_price'], $goods['exchange_integral'], 2), $goods['commission'], 2), 100, 2);
+                    $goods['commission'] = bcdiv(bcmul($goods['exchange_price'], $goods['commission'], 2), 100, 2);
                 }
             } else {
                 $goods['integral_pv'] = '';
@@ -790,6 +798,12 @@ class Goods extends Base
         if (empty($goods) || (0 == $goods['is_on_sale']) || (1 == $goods['is_virtual'] && $goods['virtual_indate'] <= time())) {
             return json(['status' => 0, 'msg' => '该商品已经下架']);
         }
+        if (!$this->isApplet && $goods['is_agent'] == 1) {
+            return json(['status' => 0, 'msg' => '请在小程序浏览商品', 'result' => null]);
+        }
+        if ($this->isApplet && $goods['applet_on_sale'] == 0) {
+            return json(['status' => 0, 'msg' => '该商品已经下架', 'result' => null]);
+        }
         M('Goods')->where('goods_id', $goods_id)->save(['click_count' => $goods['click_count'] + 1]); // 统计点击数
         M('goods_click')->add(['goods_id' => $goods['goods_id'], 'user_id' => $this->user_id ?? 0, 'add_time' => NOW_TIME]); // 点击记录
         $originalImg = getFullPath($goods['original_img']);
@@ -819,42 +833,32 @@ class Goods extends Base
             'now_time' => NOW_TIME,
             'share_goods_image' => !empty($originalImg) ? $originalImg : '',    // 商品分享图
             'share_qr_code' => '',    // 分享二维码
+            'applet_qr_code' => '',    // 小程序分享二维码
             'tabs' => [],
         ];
+        if ($this->isApplet) {
+            $goodsInfo['exchange_integral'] = '0';
+            $goodsInfo['exchange_price'] = $goods['shop_price'];
+        }
+        if ($goods['is_agent'] == 1) {
+            // 代理商商品基础价格设置
+            $goodsInfo['exchange_price'] = $goods['retail_price'];  // 零售价
+            if ($this->user) {
+                switch ($this->user['distribut_level']) {
+                    case 3:
+                        $goodsInfo['exchange_price'] = $goods['buying_price'];  // 进货价
+                        break;
+                    default:
+                        $goodsInfo['exchange_price'] = $goods['retail_price'];  // 零售价
+                }
+            }
+        }
         // 处理商品内容图片
 //        if (!strstr($goodsInfo['goods_content'], 'http') && !strstr($goodsInfo['goods_content'], 'https')) {
 //            $goodsInfo['goods_content'] = str_replace('/public', SITE_URL . '/public', $goodsInfo['goods_content']);
 //        }
         if (strstr($goodsInfo['goods_content'], 'src="/public')) {
             $goodsInfo['goods_content'] = str_replace('src="/public', 'src="' . SITE_URL . '/public', $goodsInfo['goods_content']);
-        }
-        if ($this->user) {
-            $goodsLogic = new GoodsLogic();
-            // 用户浏览记录
-            $goodsLogic->add_visit_log($this->user_id, $goods);
-            // 用户收藏
-            $goodsCollect = $goodsLogic->getCollectGoods($this->user_id);
-            if (!empty($goodsCollect)) {
-                foreach ($goodsCollect as $value) {
-                    if ($goods_id == $value['goods_id']) {
-                        $isEnshrine = 1;
-                        break;
-                    }
-                }
-            }
-            // 分享二维码
-            $filename = '/public/images/qrcode/goods/goods_' . $this->user_id . '_' . $goods_id . '.png';
-            if (!file_exists(SITE_URL . $filename)) {
-                $logo = 'public/images/qrcode/qr_logo.png';
-                if (!file_exists($logo)) {
-                    $logo = '';
-                }
-                $this->scerweima($this->user_id, $goods['goods_id'], $logo);
-            }
-            $goodsInfo['share_qr_code'] = SITE_URL . $filename;
-        } else {
-            $goodsInfo['integral_pv'] = '';
-            $goodsInfo['commission'] = '';
         }
         // 商品标签
         $goodsTab = Db::name('goods_tab')->where(['goods_id' => $goods_id, 'status' => 1])->limit(0, 3)->field('tab_id, title')->select();
@@ -878,7 +882,7 @@ class Goods extends Base
             $flashSale = $flashSale[0];
             // 秒杀商品
             $goodsInfo['goods_type'] = 'flash_sale';
-            $goodsInfo['exchange_integral'] = $flashSale['can_integral'] == 0 ? '0' : $goods['exchange_integral'];
+            $goodsInfo['exchange_integral'] = $flashSale['can_integral'] == 0 ? '0' : $goodsInfo['exchange_integral'];
             $goodsInfo['exchange_price'] = bcsub($flashSale['price'], $goodsInfo['exchange_integral'], 2);
             $goodsInfo['buy_limit'] = $flashSale['buy_limit'];
             $goodsInfo['limit_num'] = $flashSale['goods_num'];
@@ -893,7 +897,7 @@ class Goods extends Base
                 $groupBuy = $groupBuy[0];
                 // 团购商品
                 $goodsInfo['goods_type'] = 'group_buy';
-                $goodsInfo['exchange_integral'] = $groupBuy['can_integral'] == 0 ? '0' : $goods['exchange_integral'];
+                $goodsInfo['exchange_integral'] = $groupBuy['can_integral'] == 0 ? '0' : $goodsInfo['exchange_integral'];
                 $goodsInfo['exchange_price'] = bcsub($groupBuy['price'], $goodsInfo['exchange_integral'], 2);
                 $goodsInfo['buy_limit'] = $groupBuy['buy_limit'];
                 $goodsInfo['limit_num'] = bcdiv($groupBuy['goods_num'], $groupBuy['group_goods_num'], 2);
@@ -907,23 +911,6 @@ class Goods extends Base
             $goodsInfo['buy_least'] = '0';
             $goodsInfo['integral_pv'] = '';
             $goodsInfo['commission'] = '';
-        } elseif ($this->user) {
-            // 商品pv
-            if ($this->user['distribut_level'] < 3) {
-                $goodsInfo['integral_pv'] = '';
-            } elseif ($goods['integral_pv'] == 0) {
-                $goodsInfo['integral_pv'] = '';
-            } else {
-                $goodsInfo['integral_pv'] = $goods['integral_pv'];
-            }
-            // 商品佣金
-            if ($this->user['distribut_level'] < 2) {
-                $goodsInfo['commission'] = '';
-            } elseif ($goods['commission'] == 0) {
-                $goodsInfo['commission'] = '';
-            } else {
-                $goodsInfo['commission'] = bcdiv(bcmul(bcsub($goods['shop_price'], $goods['exchange_integral'], 2), $goods['commission'], 2), 100, 2);
-            }
         }
         // 商品促销、优惠券
         $promotion = [];
@@ -1021,6 +1008,95 @@ class Goods extends Base
                 }
             }
         }
+        if ($this->user) {
+            $goodsLogic = new GoodsLogic();
+            // 用户浏览记录
+            $goodsLogic->add_visit_log($this->user_id, $goods);
+            // 用户收藏
+            $goodsCollect = $goodsLogic->getCollectGoods($this->user_id);
+            if (!empty($goodsCollect)) {
+                foreach ($goodsCollect as $value) {
+                    if ($goods_id == $value['goods_id']) {
+                        $isEnshrine = 1;
+                        break;
+                    }
+                }
+            }
+            // 分享二维码
+            $filename = '/public/images/qrcode/goods/goods_' . $this->user_id . '_' . $goods_id . '.png';
+            if (!file_exists(SITE_URL . $filename)) {
+                $logo = 'public/images/qrcode/qr_logo.png';
+                if (!file_exists($logo)) {
+                    $logo = '';
+                }
+                $this->scerweima($this->user_id, $goods['goods_id'], $logo);
+            }
+            $goodsInfo['share_qr_code'] = SITE_URL . $filename;
+            if ($this->isApplet) {
+                // 小程序分享二维码
+                $goodsInfo['applet_qr_code'] = $goodsLogic->createGoodsAppletCode(I('goods_id/d', null), $this->user_id);
+            }
+            if ($goods['is_agent'] == 1) {
+                /*
+                 * 代理商商品
+                 */
+                // 商品pv、佣金
+                switch ($this->user['distribut_level']) {
+                    case 1:
+                        $goodsInfo['integral_pv'] = '';
+                        $goodsInfo['commission'] = '';
+                        break;
+                    case 2:
+                        $goodsInfo['integral_pv'] = '';
+                        if ($goods['commission'] == 0) {
+                            $goodsInfo['commission'] = '';
+                        } else {
+                            $goodsInfo['commission'] = bcdiv(bcmul($goods['exchange_price'], $goods['commission'], 2), 100, 2);   // 零售价佣金
+                        }
+                        break;
+                    case 3:
+                        if ($goods['buying_price_pv'] == 0) {
+                            $goodsInfo['integral_pv'] = '';
+                        } else {
+                            $goodsInfo['integral_pv'] = bcmul($goods['buying_price_pv'], ($goodsInfo['exchange_price'] / $goods['buying_price']), 2); // 进货价pv
+                        }
+                        if ($goods['commission'] == 0) {
+                            $goodsInfo['commission'] = '';
+                        } else {
+                            $goodsInfo['commission'] = bcdiv(bcmul($goodsInfo['exchange_price'], $goods['commission'], 2), 100, 2);   // 进货价佣金
+                        }
+                        break;
+                }
+            } else {
+                // 商品pv、佣金
+                switch ($this->user['distribut_level']) {
+                    case 1:
+                        $goodsInfo['integral_pv'] = '';
+                        $goodsInfo['commission'] = '';
+                        break;
+                    case 2:
+                        $goodsInfo['integral_pv'] = '';
+                        if ($goods['commission'] == 0) {
+                            $goodsInfo['commission'] = '';
+                        } else {
+                            $goodsInfo['commission'] = bcdiv(bcmul($goodsInfo['exchange_price'], $goods['commission'], 2), 100, 2);
+                        }
+                        break;
+                    case 3:
+                        if ($goods['integral_pv'] == 0) {
+                            $goodsInfo['integral_pv'] = '';
+                        } else {
+                            $goodsInfo['integral_pv'] = bcmul($goods['integral_pv'], ($goodsInfo['exchange_price'] / ($goods['shop_price'] - $goods['exchange_integral'])), 2);
+                        }
+                        if ($goods['commission'] == 0) {
+                            $goodsInfo['commission'] = '';
+                        } else {
+                            $goodsInfo['commission'] = bcdiv(bcmul($goodsInfo['exchange_price'], $goods['commission'], 2), 100, 2);
+                        }
+                        break;
+                }
+            }
+        }
         // 韩国购物流流程图
         $goodsInfo['abroad_freight_process'] = [
             'url' => '',
@@ -1061,11 +1137,37 @@ class Goods extends Base
         $addressId = I('address_id', '');
         if (!$goodsId) return json(['status' => 0, 'msg' => '请传入正确的商品ID']);
         // 商品价格属性
-        $goodsInfo = M('goods')->where(['goods_id' => $goodsId])->field('original_img, shop_price, exchange_integral, store_count, limit_buy_num buy_limit, least_buy_num buy_least, is_supply')->find();
-        if (!$goodsInfo) return json(['status' => 0, 'msg' => '请传入正确的商品ID']);
-        $goodsInfo['goods_type'] = 'normal';
-        $goodsInfo['original_img_new'] = getFullPath($goodsInfo['original_img']);
-        $goodsInfo['exchange_price'] = bcsub($goodsInfo['shop_price'], $goodsInfo['exchange_integral'], 2);
+        $goods = M('goods')->where(['goods_id' => $goodsId])->find();
+        if (!$goods) return json(['status' => 0, 'msg' => '请传入正确的商品ID']);
+        $goodsInfo = [
+            'goods_type' => 'normal',
+            'original_img' => $goods['original_img'],
+            'original_img_new' => getFullPath($goods['original_img']),
+            'shop_price' => $goods['shop_price'],
+            'exchange_integral' => $goods['exchange_integral'],
+            'exchange_price' => bcsub($goods['shop_price'], $goods['exchange_integral'], 2),
+            'store_count' => $goods['store_count'],
+            'buy_limit' => $goods['limit_buy_num'],
+            'buy_least' => $goods['least_buy_num'],
+            'is_supply' => $goods['is_supply'],
+        ];
+        if ($this->isApplet) {
+            $goodsInfo['exchange_integral'] = '0';
+            $goodsInfo['exchange_price'] = $goods['shop_price'];
+        }
+        if ($goods['is_agent'] == 1) {
+            // 代理商商品基础价格设置
+            $goodsInfo['exchange_price'] = $goods['retail_price'];  // 零售价
+            if ($this->user) {
+                switch ($this->user['distribut_level']) {
+                    case 3:
+                        $goodsInfo['exchange_price'] = $goods['buying_price'];  // 进货价
+                        break;
+                    default:
+                        $goodsInfo['exchange_price'] = $goods['retail_price'];  // 零售价
+                }
+            }
+        }
         // 商品活动属性
         $flashSale = Db::name('flash_sale fs')
             ->join('goods g', 'g.goods_id = fs.goods_id')
@@ -1114,7 +1216,7 @@ class Goods extends Base
             $goodsSpecPrice = $goodsLogic->get_spec_price($goodsId);
             $goodsSpecPrice = array_combine(array_column($goodsSpecPrice, 'key'), array_values($goodsSpecPrice));
             // 根据商品活动属性计算商品价格
-            if (empty($extendGoodsSpec) && !empty($goodsSpecPrice)) {
+            if (empty($extendGoodsSpec) && !empty($goodsSpecPrice) && $goods['is_agent'] == 0) {
                 $goodsInfo['original_img_new'] = !empty($goodsSpecPrice[$defaultKey]['spec_img']) ? getFullPath($goodsSpecPrice[$defaultKey]['spec_img']) : $goodsInfo['original_img_new'];
                 $goodsInfo['shop_price'] = $goodsSpecPrice[$defaultKey]['price'];
                 $goodsInfo['store_count'] = $goodsInfo['is_supply'] == 0 ? $goodsSpecPrice[$defaultKey]['store_count'] : $goodsInfo['store_count'];
@@ -1181,7 +1283,7 @@ class Goods extends Base
             // 没有地址，不显示库存
             $goodsInfo['store_count'] = '-1';
         } elseif (($goodsInfo['store_count'] != 0 && $addressGoodsData['user_address']['out_range'] == 1) || $addressGoodsData['user_address']['is_illegal'] == 1) {
-            // 有地址，超出配送范围，不显示库存
+            // 有地址，超出配送范围，或者地址不符合规则，不显示库存
             $goodsInfo['store_count'] = '-1';
         }
         $returnData = [
@@ -1464,9 +1566,9 @@ class Goods extends Base
             return json($res);
         }
         // 移除购物车
-        $cartLogic = new CartLogic();
-        $cartLogic->setUserId($this->user_id);
-        $cartLogic->deleteByGoodsId($goodsIds);
+//        $cartLogic = new CartLogic();
+//        $cartLogic->setUserId($this->user_id);
+//        $cartLogic->deleteByGoodsId($goodsIds);
 
         return json($res);
     }
@@ -1604,6 +1706,11 @@ class Goods extends Base
             $goods_where['is_abroad'] = 0;
             $goods_where['is_supply'] = 0;
         }
+        if ($this->isApplet) {
+            $goods_where['applet_on_sale'] = 1;
+        } else {
+            $goods_where['is_agent'] = 0;
+        }
         if ($couponId != 0) {
             $filter_goods_id = Db::name('goods_coupon')->where(['coupon_id' => $couponId])->getField('goods_id', true);
         } else {
@@ -1702,6 +1809,11 @@ class Goods extends Base
             $SearchWordLogic = new SearchWordLogic();
             $where = $SearchWordLogic->getSearchWordWhere($search);
             $where['is_on_sale'] = 1;
+            if ($this->isApplet) {
+                $where['applet_on_sale'] = 1;
+            } else {
+                $where['is_agent'] = 0;
+            }
             // 搜索词被搜索数量+1
             Db::name('search_word')->where('keywords', $search)->setInc('search_num');
             // 搜索的商品数量
@@ -1731,6 +1843,11 @@ class Goods extends Base
             // 筛选
             $cat_id_arr = getCatGrandson($id);
             $goods_where = ['is_on_sale' => 1, 'cat_id|extend_cat_id' => ['in', $cat_id_arr]];
+            if ($this->isApplet) {
+                $goods_where['applet_on_sale'] = 1;
+            } else {
+                $goods_where['is_agent'] = 0;
+            }
             if ($couponId != 0) {
                 $filter_goods_id = Db::name('goods_coupon')->where(['coupon_id' => $couponId])->getField('goods_id', true);
             } else {
@@ -2779,7 +2896,8 @@ class Goods extends Base
     public function look_see()
     {
         $goods = M('goods')->where(['goods_id' => I('goods_id', 0)])->find();
-        $lookSee = (new GoodsLogic())->get_look_see_v2($goods, $this->user_id);
+        $source = $this->isApp ? 3 : ($this->isApplet ? 4 : 1);
+        $lookSee = (new GoodsLogic())->get_look_see_v2($goods, $this->user, $source);
         $filterGoodsIds = [];
         foreach ($lookSee as $item) {
             $filterGoodsIds[] = $item['goods_id'];
@@ -3121,7 +3239,7 @@ class Goods extends Base
             $cartLogic->setUserId($this->user_id);
             // 获取订单商品数据
             $goodsLogic = new GoodsLogic();
-            $res = $goodsLogic->getOrderGoodsData($cartLogic, $goodsId, $itemId, 1, 1, '', $this->isApp, $this->user_id, true);
+            $res = $goodsLogic->getOrderGoodsData($cartLogic, $goodsId, $itemId, 1, 1, '', $this->isApp, $this->isApplet, $this->user_id, true);
             if ($res['status'] != 1) {
                 return json($res);
             } else {
