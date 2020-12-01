@@ -8957,4 +8957,14 @@ class Cron1 extends Controller
         var_dump(11);
         exit();
     }
+    
+    public function updateUserHeadPic()
+    {
+        $str = 'index.php//';
+        M('users')->where(['head_pic' => ['LIKE', '%' . $str . '%']])->update([
+            'head_pic' => 'https://mall.pumeiduo.com/public/images/default_head.png'
+        ]);
+        var_dump('ok');
+        exit();
+    }
 }
