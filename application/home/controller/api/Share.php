@@ -169,7 +169,7 @@ class Share extends Base
                 $pic2Path = PUBLIC_PATH . 'upload/share/temp/' . md5(mt_rand()) . '.jpg';
                 copy('public/upload/share/pic2.png', $pic2Path);
                 // 组合图片
-                $res = $this->combinePic($pic1Path, $pic2Path, $nickname, $qrPath, $headPicType, $headPicPath, $this->user['head_pic']);
+                $res = $this->combinePic($pic1Path, $pic2Path, $nickname, $qrPath, $headPicPath);
                 if ($res) {
                     unlink($pic2Path);
                 }
@@ -231,12 +231,10 @@ class Share extends Base
      * @param $pic2_path
      * @param $nickname
      * @param $qr_path
-     * @param $head_pic_type
      * @param $head_pic_path
-     * @param $head_pic_resource
      * @return bool
      */
-    private function combinePic($pic1_path, $pic2_path, $nickname, $qr_path, $head_pic_type, $head_pic_path, $head_pic_resource)
+    private function combinePic($pic1_path, $pic2_path, $nickname, $qr_path, $head_pic_path)
     {
         /*
          * 上部分图
@@ -246,7 +244,7 @@ class Share extends Base
         $pic1_width = imagesx($pic1);
         $pic1_height = imagesy($pic1);
         // 用户头像
-//        $head_pic_path = img_radius($head_pic_type, $head_pic_path, $head_pic_resource, 0);     // 圆角处理
+        $head_pic_path = img_radius('path', $head_pic_path, '', 0);     // 圆角处理
         $head_pic = imagecreatefromstring(file_get_contents($head_pic_path));
         $head_width = imagesx($head_pic);       // 头像原本宽
         $head_height = imagesy($head_pic);      // 头像原本高
