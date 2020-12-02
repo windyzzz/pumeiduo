@@ -4,11 +4,20 @@ namespace app\admin\controller;
 
 
 use app\admin\model\SchoolArticle;
+use app\common\logic\OssLogic;
 use think\Db;
 use think\Page;
 
 class School extends Base
 {
+    private $ossClient = null;
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->ossClient = new OssLogic();
+    }
+
     /**
      * 模块信息
      * @return mixed
@@ -155,5 +164,123 @@ class School extends Base
         M('school_article')->where(['class_id' => $classId])->delete();
         Db::commit();
         $this->ajaxReturn(['status' => 1, 'msg' => '删除成功']);
+    }
+
+    /**
+     * 分类文章
+     * @return mixed
+     */
+    public function article()
+    {
+        $type = I('type');
+        $classId = I('class_id');
+        $articleId = I('article_id', 0);
+        if (IS_POST) {
+            $param = I('post.');
+            unset($param['type']);
+            unset($param['article_id']);
+            // 验证参数
+            $validate = validate('School');
+            if (!$validate->scene('article_add')->check($param)) {
+                return $this->ajaxReturn(['status' => 0, 'msg' => $validate->getError()]);
+            }
+            // 等级限制
+            if (empty($param['distribute_level'])) {
+                $param['distribute_level'] = '0';
+            } else {
+                if (in_array('0', $param['distribute_level'])) {
+                    $param['distribute_level'] = '0';
+                } else {
+                    $distributeLevel = '';
+                    foreach ($param['distribute_level'] as $level) {
+                        $distributeLevel .= $level . ',';
+                    }
+                    $param['distribute_level'] = rtrim($distributeLevel, ',');
+                }
+            }
+            // 封面图上传到OSS服务器
+            if (!empty($param['cover'])) {
+                if (strstr($param['cover'], 'aliyuncs.com')) {
+                    // 原图
+                    $param['cover'] = M('school_article')->where(['id' => $articleId])->value('cover');
+                } else {
+                    // 新图
+                    $filePath = PUBLIC_PATH . substr($param['cover'], strrpos($param['cover'], '/public/') + 8);
+                    $fileName = substr($param['cover'], strrpos($param['cover'], '/') + 1);
+                    $object = 'image/' . date('Y/m/d/H/') . $fileName;
+                    $return_url = $this->ossClient->uploadFile($filePath, $object);
+                    if (!$return_url) {
+                        return $this->ajaxReturn(['status' => 0, 'msg' => 'ERROR：' . $this->ossClient->getError()]);
+                    } else {
+                        // 图片信息
+                        $imageInfo = getimagesize($filePath);
+                        $param['cover'] = 'url:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1];
+                        unlink($filePath);
+                    }
+                }
+            }
+            // 发布时间
+            $param['publish_time'] = strtotime($param['publish_time']);
+            if ($articleId) {
+                $publishTime = M('school_article')->where(['id' => $articleId])->value('publish_time');
+                if ($publishTime != $param['publish_time']) {
+                    $param['status'] = 2;   // 预发布
+                    $param['update_time'] = NOW_TIME;
+                }
+                M('school_article')->where(['id' => $articleId])->update($param);
+            } else {
+                $param['status'] = 2;   // 预发布
+                $param['add_time'] = NOW_TIME;
+                M('school_article')->add($param);
+            }
+            $this->ajaxReturn(['status' => 1, 'msg' => '处理成功', 'result' => ['type' => $type, 'class_id' => $classId]]);
+        }
+        if ($articleId) {
+            $articleInfo = M('school_article')->where(['id' => $articleId])->find();
+            $articleInfo['distribute_level'] = explode(',', $articleInfo['distribute_level']);
+            $cover = explode(',', $articleInfo['cover']);
+            $articleInfo['cover'] = $this->ossClient::url(substr($cover[0], strrpos($cover[0], 'url:') + 4));
+            $articleInfo['publish_time'] = date('Y-m-d H:i:s', $articleInfo['publish_time']);
+        } else {
+            $articleInfo = [];
+            $articleInfo['sort'] = 0;
+            $articleInfo['integral'] = 0;
+            $articleInfo['publish_time'] = date('Y-m-d H:i:s', time());
+        }
+        $this->assign('type', $type);
+        $this->assign('class_id', $classId);
+        $this->assign('info', $articleInfo);
+        $this->assign('article_id', $articleId);
+        return $this->fetch();
+    }
+
+    /**
+     * 停止发布文章
+     */
+    public function stopArticle()
+    {
+        $type = I('type');
+        $classId = I('class_id');
+        $articleId = I('article_id', 0);
+        M('school_article')->where(['id' => $articleId])->update([
+            'status' => 3,
+            'update_time' => NOW_TIME
+        ]);
+        $this->ajaxReturn(['status' => 1, 'msg' => '处理成功', 'result' => ['type' => $type, 'class_id' => $classId]]);
+    }
+
+    /**
+     * 删除文章
+     */
+    public function delArticle()
+    {
+        $type = I('type');
+        $classId = I('class_id');
+        $articleId = I('article_id', 0);
+        M('school_article')->where(['id' => $articleId])->update([
+            'status' => -1,
+            'delete_time' => NOW_TIME,
+        ]);
+        $this->ajaxReturn(['status' => 1, 'msg' => '处理成功', 'result' => ['type' => $type, 'class_id' => $classId]]);
     }
 }

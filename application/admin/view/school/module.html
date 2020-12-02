@@ -208,6 +208,9 @@
                         <th align="center" abbr="article_time" axis="col6" class="">
                             <div style="text-align: center; width: 120px;" class="">发布时间</div>
                         </th>
+                        <th align="center" abbr="article_time" axis="col6" class="">
+                            <div style="text-align: center; width: 120px;" class="">更新时间</div>
+                        </th>
                         <th align="center" axis="col1" class="handle">
                             <div style="text-align: center; width: 150px;">操作</div>
                         </th>
@@ -221,7 +224,7 @@
         </div>
         <div class="tDiv">
             <div class="tDiv2">
-                <a href="{:U('School/article')}">
+                <a href="{:U('School/article')}/type/{$module[type]}/class_id/{$module_class[id]}">
                     <div class="fbutton">
                         <div title="添加文章" class="add">
                             <span><i class="fa fa-plus"></i>添加文章</span>
@@ -292,10 +295,17 @@
                                     </if>
                                 </div>
                             </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">
+                                    <if condition="!empty($vo[update_time])">
+                                        {$vo.update_time}
+                                    </if>
+                                </div>
+                            </td>
                             <td align="left" class="handle">
                                 <div style="text-align: left; width: 150px; max-width:150px;">
-                                    <a class="btn blue" href="{:U('School/articleInfo', array('article_id' => $vo['id']))}"><i class="fa fa-pencil-square-o"></i>编辑</a>
-                                    <a class="btn red del" data-id="{$vo['id']}"><i class="fa fa-trash-o"></i>删除</a>
+                                    <a class="btn blue" href="{:U('School/article')}/type/{$module[type]}/class_id/{$module_class[id]}/article_id/{$vo[id]}"><i class="fa fa-pencil-square-o"></i>编辑</a>
+                                    <a class="btn red del" onclick="delArticle('{$module[type]}', '{$module_class[id]}', '{$vo[id]}')"><i class="fa fa-trash-o"></i>删除</a>
                                 </div>
                             </td>
                             <td align="" class="" style="width: 100%;">
@@ -363,6 +373,34 @@
                         });
                     } else {
                         layer.msg(data.msg, {icon: 2, time: 2000});
+                    }
+                }
+            });
+        }, function () {
+            console.log("取消");
+        });
+    }
+
+    function delArticle(type, class_id, article_id) {
+        layer.confirm('确认删除？', {
+            btn: ['确定', '取消']
+        }, function () {
+            $.ajax({
+                type: "POST",
+                url: "{:U('School/delArticle')}",
+                data: {'type': type, 'class_id': class_id, 'article_id': article_id},
+                dataType: "json",
+                error: function () {
+                    layer.alert("服务器繁忙, 请联系管理员!");
+                },
+                success: function (data) {
+                    if (data.status === 1) {
+                        var result = data.result;
+                        layer.msg(data.msg, {icon: 1, time: 1000}, function () {
+                            location.href = "{:U('Admin/School/module')}/type/" + result.type + "/class_id/" + result.class_id;
+                        });
+                    } else if (data.status === 0) {
+                        layer.msg(data.msg, {icon: 2, time: 1000});
                     }
                 }
             });
