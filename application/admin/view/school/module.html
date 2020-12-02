@@ -151,16 +151,17 @@
                     <label>访问限制</label>
                 </dt>
                 <dd class="opt ctype">
-                    <input name="distribute_level[]" type="checkbox" value="0" <if condition="in_array(0, $module_class['distribute_level'])">checked</if> ><label>所有人</label>
-                    <input name="distribute_level[]" type="checkbox" value="1" <if condition="in_array(1, $module_class['distribute_level'])">checked</if> ><label>普通会员</label>
-                    <input name="distribute_level[]" type="checkbox" value="2" <if condition="in_array(2, $module_class['distribute_level'])">checked</if> ><label>VIP</label>
-                    <input name="distribute_level[]" type="checkbox" value="3" <if condition="in_array(3, $module_class['distribute_level'])">checked</if> ><label>SVIP</label>
+                    <input name="distribute_level[]" type="checkbox" value="0" <if condition="!empty($module_class['distribute_level']) && in_array(0, $module_class['distribute_level'])">checked</if> ><label>所有人</label>
+                    <input name="distribute_level[]" type="checkbox" value="1" <if condition="!empty($module_class['distribute_level']) && in_array(1, $module_class['distribute_level'])">checked</if> ><label>普通会员</label>
+                    <input name="distribute_level[]" type="checkbox" value="2" <if condition="!empty($module_class['distribute_level']) && in_array(2, $module_class['distribute_level'])">checked</if> ><label>VIP</label>
+                    <input name="distribute_level[]" type="checkbox" value="3" <if condition="!empty($module_class['distribute_level']) && in_array(3, $module_class['distribute_level'])">checked</if> ><label>SVIP</label>
                 </dd>
             </dl>
             <div class="bot">
                 <input type="hidden" name="type" value="{$module[type]}">
                 <input type="hidden" name="class_id" value="{$module_class[id]}">
                 <a class="ncap-btn-big ncap-btn-green" onclick="updateModule('datapost2')">确认提交</a>
+                <a class="ncap-btn-big ncap-btn-red" onclick="delModule('{$module[type]}', '{$module_class[id]}')">删除分类</a>
             </div>
         </div>
     </form>
@@ -341,6 +342,33 @@
 
     function updateModule(postId) {
         $('#' + postId).submit();
+    }
+
+    function delModule(type, class_id) {
+        layer.confirm('确认删除？（分类下的文章都会被删除）', {
+            btn: ['确定', '取消']
+        }, function () {
+            $.ajax({
+                type: "POST",
+                url: "{:U('Admin/School/delModuleClass')}",
+                data: {'class_id': class_id},
+                dataType: 'json',
+                error: function (request) {
+                    layer.msg("服务器繁忙, 请联系管理员!", {icon: 1, time: 2000});
+                },
+                success: function (data) {
+                    if (data.status == 1) {
+                        layer.msg(data.msg, {icon: 1, time: 2000}, function () {
+                            window.location.href = "{:U('Admin/School/module')}/type/" + type;
+                        });
+                    } else {
+                        layer.msg(data.msg, {icon: 2, time: 2000});
+                    }
+                }
+            });
+        }, function () {
+            console.log("取消");
+        });
     }
 </script>
 </body>

@@ -4,10 +4,10 @@ namespace app\admin\controller;
 
 
 use app\admin\model\SchoolArticle;
-use think\Controller;
+use think\Db;
 use think\Page;
 
-class School extends Controller
+class School extends Base
 {
     /**
      * 模块信息
@@ -140,5 +140,20 @@ class School extends Controller
         }
         M('school_class')->where(['id' => $classId])->update($param);
         $this->success('操作成功', U('School/module', ['type' => $type, 'class_id' => $classId]));
+    }
+
+    /**
+     * 删除模块分类
+     */
+    public function delModuleClass()
+    {
+        $classId = I('class_id');
+        Db::startTrans();
+        // 删除分类
+        M('school_class')->where(['id' => $classId])->delete();
+        // 删除分类下文章
+        M('school_article')->where(['class_id' => $classId])->delete();
+        Db::commit();
+        $this->ajaxReturn(['status' => 1, 'msg' => '删除成功']);
     }
 }
