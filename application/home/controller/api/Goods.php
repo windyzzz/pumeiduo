@@ -842,6 +842,7 @@ class Goods extends Base
         }
         if ($goods['is_agent'] == 1) {
             // 代理商商品基础价格设置
+            $goodsInfo['shop_price'] = bcsub($goods['shop_price'], $goods['exchange_integral'], 2);
             $goodsInfo['exchange_price'] = $goods['retail_price'];  // 零售价
             if ($this->user) {
                 switch ($this->user['distribut_level']) {

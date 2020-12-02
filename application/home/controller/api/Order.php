@@ -1868,8 +1868,6 @@ class Order extends Base
         }
 
         // 检查下单商品
-        $orderType = 1; // 圃美多
-        $canElectronic = 1;
         $res = $cartLogic->checkCartGoods($this->user, $cartList['cartList']);
         if ($res['status'] === -1) {
             return json($res);
@@ -1881,6 +1879,9 @@ class Order extends Base
             'id_card_tips' => '',
             'purchase_tips' => '',
         ];
+        $hasAgent = 0;  // 是否拥有代理商商品
+        $orderType = 1; // 圃美多
+        $canElectronic = 1;
         switch ($res['status']) {
             case 0:
                 return json($res);
@@ -1894,6 +1895,9 @@ class Order extends Base
                 $abroad['id_card_tips'] = M('abroad_config')->where(['type' => 'id_card'])->value('content');
                 // 获取韩国购产品购买须知
                 $abroad['purchase_tips'] = M('abroad_config')->where(['type' => 'purchase'])->value('content');
+                break;
+            case 4:
+                $hasAgent = 1;
                 break;
         }
 
@@ -1914,6 +1918,10 @@ class Order extends Base
         $userCouponList = $couponLogic->getUserAbleCouponList($this->user_id, $cartGoodsId, $cartGoodsCatId, $this->isApp);
         $couponList = [];
         foreach ($userCouponList as $k => $coupon) {
+            if ($hasAgent == 1 && $coupon['coupon']['use_type'] == 0) {
+                // 含有代理商商品的订单不能使用通用优惠券
+                continue;
+            }
             $couponList[$k] = [
                 'coupon_id' => $coupon['coupon']['id'],
                 'name' => $coupon['coupon']['name'],
@@ -2048,7 +2056,7 @@ class Order extends Base
             }
             // 使用优惠券
             if (isset($couponId) && $couponId > 0) {
-                $payLogic->useCouponById($couponId, $payLogic->getPayList(), 'no');
+                $payLogic->useCouponById($couponId, $payLogic->getPayList(), $hasAgent);
             }
 
             $payLogic->activity(true);      // 满单赠品
@@ -2544,7 +2552,7 @@ class Order extends Base
 
             // 使用优惠券
             if (isset($couponId) && $couponId > 0) {
-                $payLogic->useCouponById($couponId, $payLogic->getPayList());
+                $payLogic->useCouponById($couponId, $payLogic->getPayList(), $hasAgent);
             }
             // 使用兑换券
             if (isset($exchangeId) && $exchangeId > 0) {
