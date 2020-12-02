@@ -3,10 +3,36 @@
 namespace app\home\controller\api;
 
 
+use app\common\logic\supplier\GoodsService;
 use think\Loader;
 
 class Test
 {
+
+
+    public function checkSupplierGoods()
+    {
+        // 用户地址信息
+        $userId = I('user_id');
+        $userAddress = M('user_address')->where(['user_id' => $userId])->find();
+        $province = M('region2')->where(['id' => $userAddress['province']])->value('ml_region_id');
+        $city = M('region2')->where(['id' => $userAddress['city']])->value('ml_region_id');
+        $district = M('region2')->where(['id' => $userAddress['district']])->value('ml_region_id');
+        $town = M('region2')->where(['id' => $userAddress['twon']])->value('ml_region_id') ?? 0;
+        // 商品信息
+        $goodsId = I('goods_id');
+        $goodsInfo = M('goods')->where(['goods_id' => $goodsId])->find();
+        $specGoods = M('spec_goods_price')->where(['goods_id' => $goodsId])->find();
+        $goodsData[] = [
+            'goods_id' => $goodsInfo['supplier_goods_id'],
+            'spec_key' => !empty($specGoods) ? $specGoods['key'] : '',
+            'goods_num' => 1,
+        ];
+        $res = (new GoodsService())->checkGoodsRegion($goodsData, $province, $city, $district, $town);
+        var_dump($res);
+        exit();
+    }
+
 
     public function combinePic($pic1_path, $head_pic_path, $nickname, $qr_path)
     {
@@ -137,6 +163,7 @@ class Test
         imagedestroy($pic2);
         exit();
     }
+
 
     function img_YJ($imgPath)
     {
