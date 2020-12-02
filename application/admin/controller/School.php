@@ -3,7 +3,9 @@
 namespace app\admin\controller;
 
 
+use app\admin\model\SchoolArticle;
 use think\Controller;
+use think\Page;
 
 class School extends Controller
 {
@@ -50,6 +52,7 @@ class School extends Controller
         $moduleClass = [];
         if ($classId == '' && !empty($classList)) {
             $moduleClass = $classList[0];
+            $classId = $moduleClass['id'];
             $moduleClass['distribute_level'] = explode(',', $moduleClass['distribute_level']);
         } else {
             foreach ($classList as $class) {
@@ -60,15 +63,25 @@ class School extends Controller
                 }
             }
         }
+        // 模块分类文章列表
+        $count = M('school_article')->where(['class_id' => $classId])->count();
+        $page = new Page($count, 10);
+        $schoolArticle = new SchoolArticle();
+        $articleList = $schoolArticle->where(['class_id' => $classId, 'status' => ['NEQ', -1]])->limit($page->firstRow . ',' . $page->listRows)->order('sort DESC')->select();
 
         $this->assign('class_id', $classId);
         $this->assign('module', $module);
         $this->assign('class_list', $classList);
         $this->assign('module_class', $moduleClass);
+        $this->assign('article_list', $articleList);
+        $this->assign('page', $page);
         return $this->fetch();
     }
 
-
+    /**
+     * 增加模块分类
+     * @return mixed
+     */
     public function addModuleClass()
     {
         if (IS_POST) {

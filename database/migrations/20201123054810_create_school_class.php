@@ -33,6 +33,7 @@ class CreateSchoolClass extends Migrator
             ->addColumn('name', 'string', ['comment' => '名称'])
             ->addColumn('is_open', 'integer', ['default' => 1, 'comment' => '是否开启'])
             ->addColumn('is_allow', 'integer', ['default' => 1, 'comment' => '是否允许访问'])
+            ->addColumn('is_learn', 'integer', ['default' => 0, 'comment' => '是否需要学习完前一个课程'])
             ->addColumn('sort', 'integer', ['default' => 0, 'comment' => '排序'])
             ->addColumn('distribute_level', 'string', ['default' => '0', 'comment' => '允许查看的用户等级，0所有人'])
             ->create();
