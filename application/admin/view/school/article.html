@@ -1,6 +1,6 @@
 <include file="public/layout"/>
 <load href="__ROOT__/public/plugins/Ueditor/ueditor.config.js"/>
-<load href="__ROOT__/public/plugins/Ueditor/ueditor.all.min.js"/>
+<load href="__ROOT__/public/plugins/Ueditor/ueditor.all2.js"/>
 <script type="text/javascript" charset="utf-8" src="__ROOT__/public/plugins/Ueditor/lang/zh-cn/zh-cn.js"></script>
 <script src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
 <style type="text/css">
@@ -141,7 +141,7 @@
         $('#publish_time').layDate();
     });
 
-    var url = "{:url('Ueditor/index',array('savePath'=>'article'))}";
+    var url = "{:url('Ueditor/index',array('savePath'=>'school'))}";
     var ue = UE.getEditor('post_content', {
         serverUrl: url,
         zIndex: 999,

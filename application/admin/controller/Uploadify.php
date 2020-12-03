@@ -20,10 +20,10 @@ class Uploadify extends Base
         $image_upload_limit_size = config('image_upload_limit_size');
         $fileType = I('fileType', 'Images');  //上传文件类型，视频，图片
         if ('Flash' == $fileType) {
-            $upload = U('Admin/Ueditor/videoUp', ['savepath' => $path, 'pictitle' => 'banner', 'dir' => 'video']);
+            $upload = U('Admin/Ueditor/videoUp', ['savepath' => $path, 'pictitle' => 'banner', 'dir' => 'video', 'is_oss' => 'no']);
             $type = 'mp4,3gp,flv,avi,wmv';
         } else {
-            $upload = U('Admin/Ueditor/imageUp', ['savepath' => $path, 'pictitle' => 'banner', 'dir' => 'images']);
+            $upload = U('Admin/Ueditor/imageUp', ['savepath' => $path, 'pictitle' => 'banner', 'dir' => 'images', 'is_oss' => 'no']);
             $type = 'jpg,png,gif,jpeg';
         }
         $info = [
