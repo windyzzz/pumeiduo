@@ -1156,11 +1156,9 @@ class Pay
     }
 
     /**
-     * 使用优惠券.
-     *
-     * @param $coupon_id
+     * 使用优惠券
      */
-    public function useCouponById($coupon_id, $payList = array(), $output = 'throw')
+    public function useCouponById($coupon_id, $payList = array(), $hasAgent = false, $output = 'throw')
     {
         if ($coupon_id > 0) {
             $couponList = new CouponList();
@@ -1193,6 +1191,9 @@ class Pay
                         $this->couponId = $coupon_id;
                         switch ($coupon['use_type']) {
                             case 0:
+                                if ($hasAgent) {
+                                    throw new TpshopException('计算订单价格', 0, ['status' => 0, 'msg' => '代理商商品订单不能使用通用优惠券']);
+                                }
                             case 1:
                             case 2:
                                 $this->couponPrice = $coupon['money'];
