@@ -121,9 +121,9 @@ function openItem(param, val = '') {
     //$('li[data-param="' + data_str[0] + '"]').addClass('active');
     $this.parent().addClass('active').parents('dl:first').addClass('active').parents('div:first').show();
     var url = '/index.php?m=Admin&c=' + data_str[1] + '&a=' + data_str[0];
-    if (val) {
-        url += '&type=' + val;
-    }
+    // if (val) {
+    //     url += '&type=' + val;
+    // }
     $('#workspace').attr('src', url);
     $.cookie('workspaceParam', data_str[0] + '|' + data_str[1], {expires: 1, path: "/"});
 }

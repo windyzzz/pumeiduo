@@ -18,20 +18,30 @@ class School extends Base
         $this->ossClient = new OssLogic();
     }
 
+    public function module1()
+    {
+        $classId = I('class_id', '');
+        return $this->module('module1', $classId);
+    }
+
+    public function module2()
+    {
+        $classId = I('class_id', '');
+        return $this->module('module2', $classId);
+    }
+
     /**
      * 模块信息
+     * @param $type
+     * @param $classId
      * @return mixed
      */
-    public function module()
+    public function module($type, $classId)
     {
-        $type = I('type', 'module1');
-        $classId = I('class_id', '');
-
         if (IS_POST) {
             // 更新模块信息
             $param = I('post.');
             $type = $param['type'];
-            unset($param['type']);
             if (empty($param['img'])) {
                 $this->error('图片上传错误');
             }
@@ -39,15 +49,18 @@ class School extends Base
             if (empty($imgInfo)) {
                 $this->error('图片上传错误');
             }
-            // 更新模块信息
             $param['img'] = json_encode([
                 'img' => $param['img'],
                 'width' => $imgInfo[0],
                 'height' => $imgInfo[1],
                 'type' => substr($imgInfo['mime'], strrpos($imgInfo['mime'], '/') + 1),
             ]);
-            M('school')->where(['type' => $type])->update($param);
-            $this->success('操作成功', U('School/module', ['type' => $type]));
+            if (M('school')->where(['type' => $type])->find()) {
+                M('school')->where(['type' => $type])->update($param);
+            } else {
+                M('school')->add($param);
+            }
+            $this->success('操作成功', U('School/' . $type));
         }
 
         // 模块信息
@@ -78,13 +91,14 @@ class School extends Base
         $schoolArticle = new SchoolArticle();
         $articleList = $schoolArticle->where(['class_id' => $classId, 'status' => ['NEQ', -1]])->limit($page->firstRow . ',' . $page->listRows)->order('sort DESC')->select();
 
+        $this->assign('type', $type);
         $this->assign('class_id', $classId);
         $this->assign('module', $module);
         $this->assign('class_list', $classList);
         $this->assign('module_class', $moduleClass);
         $this->assign('article_list', $articleList);
         $this->assign('page', $page);
-        return $this->fetch();
+        return $this->fetch('module');
     }
 
     /**
@@ -148,7 +162,7 @@ class School extends Base
             }
         }
         M('school_class')->where(['id' => $classId])->update($param);
-        $this->success('操作成功', U('School/module', ['type' => $type, 'class_id' => $classId]));
+        $this->success('操作成功', U('School/' . $type, ['class_id' => $classId]));
     }
 
     /**

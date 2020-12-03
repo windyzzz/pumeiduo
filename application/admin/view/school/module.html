@@ -8,7 +8,7 @@
             </div>
         </div>
     </div>
-    <form method="post" id="datapost1" action="{:U('School/module')}" enctype="multipart/form-data" name="form">
+    <form method="post" id="datapost1" action="/index.php/admin/School/{$type}" enctype="multipart/form-data" name="form">
         <div class="ncap-form-default">
             <dl class="row">
                 <dt class="tit">
@@ -67,18 +67,25 @@
                 </dd>
             </dl>
             <div class="bot">
-                <input type="hidden" name="type" value="{$module[type]}">
+                <input type="hidden" name="type" value="{$type}">
                 <a class="ncap-btn-big ncap-btn-green" onclick="updateModule('datapost1')">确认提交</a>
             </div>
         </div>
     </form>
 </div>
 <div class="page">
+    <div class="flexigrid">
+    <div class="mDiv">
+        <div class="ftitle">
+            <h3>分类信息</h3>
+        </div>
+    </div>
+    </div>
     <div class="item-title">
         <ul class="tab-base nc-row">
             <foreach name="class_list" item="v" key="k">
                 <li>
-                    <a href="{:U('School/module', ['type'=>$module['type'],'class_id'=>$v['id']])}"
+                    <a href="/index.php/admin/School/{$type}/class_id/{$v[id]}"
                         <if condition="empty($class_id) && $k==0">
                             class="current"
                         <elseif condition="$v['id']==$class_id"/>
@@ -92,79 +99,81 @@
             <li><a onclick="addModule('{$module.id}', '{$module.type}')"><h1>+</h1></a></li>
         </ul>
     </div>
-    <form method="post" id="datapost2" action="{:U('School/updateModuleClass')}" enctype="multipart/form-data" name="form">
-        <div class="ncap-form-default">
-            <dl class="row">
-                <dt class="tit">
-                    <label>分类名</label>
-                </dt>
-                <dd class="opt">
-                    <input type="text" class="input-txt" name="name" value="{$module_class['name']}" style="text-align: center;">
-                </dd>
-            </dl>
-            <dl class="row">
-                <dt class="tit">
-                    <label>排序</label>
-                </dt>
-                <dd class="opt">
-                    <input type="text" name="sort" value="{$module_class['sort']}" style="text-align: center; width: 10%;"
-                           onKeyUp="this.value=this.value.replace(/[^\d]/g,'')"
-                           onpaste="this.value=this.value.replace(/[^\d]/g,'')"/>
-                </dd>
-            </dl>
-            <dl class="row">
-                <dt class="tit">
-                    <label>是否开启</label>
-                </dt>
-                <dd class="opt onoff">
-                    <label for="class_is_open1" class="cb-enable <if condition='$module_class[is_open] eq 1'>selected</if>">开启</label>
-                    <label for="class_is_open0" class="cb-disable <if condition='$module_class[is_open] eq 0'>selected</if>">隐藏</label>
-                    <input id="class_is_open1" name="is_open" <if condition='$module_class[is_open] eq 1'>checked</if> value="1" type="radio">
-                    <input id="class_is_open0" name="is_open" <if condition='$module_class[is_open] eq 0'>checked</if> value="0" type="radio">
-                </dd>
-            </dl>
-            <dl class="row">
-                <dt class="tit">
-                    <label>是否允许访问</label>
-                </dt>
-                <dd class="opt onoff">
-                    <label for="class_is_allow1" class="cb-enable <if condition='$module_class[is_allow] eq 1'>selected</if>">允许访问</label>
-                    <label for="class_is_allow0" class="cb-disable <if condition='$module_class[is_allow] eq 0'>selected</if>">不允许</label>
-                    <input id="class_is_allow1" name="is_allow" <if condition='$module_class[is_allow] eq 1'>checked</if> value="1" type="radio">
-                    <input id="class_is_allow0" name="is_allow" <if condition='$module_class[is_allow] eq 0'>checked</if> value="0" type="radio">
-                </dd>
-            </dl>
-            <dl class="row">
-                <dt class="tit">
-                    <label>是否需要学习完上一个课程</label>
-                </dt>
-                <dd class="opt onoff">
-                    <label for="class_is_learn1" class="cb-enable <if condition='$module_class[is_learn] eq 1'>selected</if>">需要</label>
-                    <label for="class_is_learn0" class="cb-disable <if condition='$module_class[is_learn] eq 0'>selected</if>">不需要</label>
-                    <input id="class_is_learn1" name="is_learn" <if condition='$module_class[is_learn] eq 1'>checked</if> value="1" type="radio">
-                    <input id="class_is_learn0" name="is_learn" <if condition='$module_class[is_learn] eq 0'>checked</if> value="0" type="radio">
-                    <p class="notic">上一个课程指的是排序在前一个的课程</p>
-                </dd>
-            </dl>
-            <dl class="row">
-                <dt class="tit">
-                    <label>访问限制</label>
-                </dt>
-                <dd class="opt ctype">
-                    <input name="distribute_level[]" type="checkbox" value="0" <if condition="!empty($module_class['distribute_level']) && in_array(0, $module_class['distribute_level'])">checked</if> ><label>所有人</label>
-                    <input name="distribute_level[]" type="checkbox" value="1" <if condition="!empty($module_class['distribute_level']) && in_array(1, $module_class['distribute_level'])">checked</if> ><label>普通会员</label>
-                    <input name="distribute_level[]" type="checkbox" value="2" <if condition="!empty($module_class['distribute_level']) && in_array(2, $module_class['distribute_level'])">checked</if> ><label>VIP</label>
-                    <input name="distribute_level[]" type="checkbox" value="3" <if condition="!empty($module_class['distribute_level']) && in_array(3, $module_class['distribute_level'])">checked</if> ><label>SVIP</label>
-                </dd>
-            </dl>
-            <div class="bot">
-                <input type="hidden" name="type" value="{$module[type]}">
-                <input type="hidden" name="class_id" value="{$module_class[id]}">
-                <a class="ncap-btn-big ncap-btn-green" onclick="updateModule('datapost2')">确认提交</a>
-                <a class="ncap-btn-big ncap-btn-red" onclick="delModule('{$module[type]}', '{$module_class[id]}')">删除分类</a>
+    <if condition="!empty($module_class)">
+        <form method="post" id="datapost2" action="{:U('School/updateModuleClass')}" enctype="multipart/form-data" name="form">
+            <div class="ncap-form-default">
+                <dl class="row">
+                    <dt class="tit">
+                        <label>分类名</label>
+                    </dt>
+                    <dd class="opt">
+                        <input type="text" class="input-txt" name="name" value="{$module_class['name']}" style="text-align: center;">
+                    </dd>
+                </dl>
+                <dl class="row">
+                    <dt class="tit">
+                        <label>排序</label>
+                    </dt>
+                    <dd class="opt">
+                        <input type="text" name="sort" value="{$module_class['sort']}" style="text-align: center; width: 10%;"
+                               onKeyUp="this.value=this.value.replace(/[^\d]/g,'')"
+                               onpaste="this.value=this.value.replace(/[^\d]/g,'')"/>
+                    </dd>
+                </dl>
+                <dl class="row">
+                    <dt class="tit">
+                        <label>是否开启</label>
+                    </dt>
+                    <dd class="opt onoff">
+                        <label for="class_is_open1" class="cb-enable <if condition='$module_class[is_open] eq 1'>selected</if>">开启</label>
+                        <label for="class_is_open0" class="cb-disable <if condition='$module_class[is_open] eq 0'>selected</if>">隐藏</label>
+                        <input id="class_is_open1" name="is_open" <if condition='$module_class[is_open] eq 1'>checked</if> value="1" type="radio">
+                        <input id="class_is_open0" name="is_open" <if condition='$module_class[is_open] eq 0'>checked</if> value="0" type="radio">
+                    </dd>
+                </dl>
+                <dl class="row">
+                    <dt class="tit">
+                        <label>是否允许访问</label>
+                    </dt>
+                    <dd class="opt onoff">
+                        <label for="class_is_allow1" class="cb-enable <if condition='$module_class[is_allow] eq 1'>selected</if>">允许访问</label>
+                        <label for="class_is_allow0" class="cb-disable <if condition='$module_class[is_allow] eq 0'>selected</if>">不允许</label>
+                        <input id="class_is_allow1" name="is_allow" <if condition='$module_class[is_allow] eq 1'>checked</if> value="1" type="radio">
+                        <input id="class_is_allow0" name="is_allow" <if condition='$module_class[is_allow] eq 0'>checked</if> value="0" type="radio">
+                    </dd>
+                </dl>
+                <dl class="row">
+                    <dt class="tit">
+                        <label>是否需要学习完上一个课程</label>
+                    </dt>
+                    <dd class="opt onoff">
+                        <label for="class_is_learn1" class="cb-enable <if condition='$module_class[is_learn] eq 1'>selected</if>">需要</label>
+                        <label for="class_is_learn0" class="cb-disable <if condition='$module_class[is_learn] eq 0'>selected</if>">不需要</label>
+                        <input id="class_is_learn1" name="is_learn" <if condition='$module_class[is_learn] eq 1'>checked</if> value="1" type="radio">
+                        <input id="class_is_learn0" name="is_learn" <if condition='$module_class[is_learn] eq 0'>checked</if> value="0" type="radio">
+                        <p class="notic">上一个课程指的是排序在前一个的课程</p>
+                    </dd>
+                </dl>
+                <dl class="row">
+                    <dt class="tit">
+                        <label>访问限制</label>
+                    </dt>
+                    <dd class="opt ctype">
+                        <input name="distribute_level[]" type="checkbox" value="0" <if condition="!empty($module_class['distribute_level']) && in_array(0, $module_class['distribute_level'])">checked</if> ><label>所有人</label>
+                        <input name="distribute_level[]" type="checkbox" value="1" <if condition="!empty($module_class['distribute_level']) && in_array(1, $module_class['distribute_level'])">checked</if> ><label>普通会员</label>
+                        <input name="distribute_level[]" type="checkbox" value="2" <if condition="!empty($module_class['distribute_level']) && in_array(2, $module_class['distribute_level'])">checked</if> ><label>VIP</label>
+                        <input name="distribute_level[]" type="checkbox" value="3" <if condition="!empty($module_class['distribute_level']) && in_array(3, $module_class['distribute_level'])">checked</if> ><label>SVIP</label>
+                    </dd>
+                </dl>
+                <div class="bot">
+                    <input type="hidden" name="type" value="{$type}">
+                    <input type="hidden" name="class_id" value="{$module_class[id]}">
+                    <a class="ncap-btn-big ncap-btn-green" onclick="updateModule('datapost2')">确认提交</a>
+                    <a class="ncap-btn-big ncap-btn-red" onclick="delModule('{$type}', '{$module_class[id]}')">删除分类</a>
+                </div>
             </div>
-        </div>
-    </form>
+        </form>
+    </if>
     <div class="flexigrid">
         <div class="mDiv">
             <div class="ftitle">
@@ -200,6 +209,9 @@
                             <div style="text-align: center; width: 80px;" class="">排序</div>
                         </th>
                         <th align="center" abbr="article_time" axis="col6" class="">
+                            <div style="text-align: center; width: 80px;" class="">推荐文章</div>
+                        </th>
+                        <th align="center" abbr="article_time" axis="col6" class="">
                             <div style="text-align: center; width: 120px;" class="">状态</div>
                         </th>
                         <th align="center" abbr="article_time" axis="col6" class="">
@@ -224,7 +236,7 @@
         </div>
         <div class="tDiv">
             <div class="tDiv2">
-                <a href="{:U('School/article')}/type/{$module[type]}/class_id/{$module_class[id]}">
+                <a href="{:U('School/article')}/type/{$type}/class_id/{$module_class[id]}">
                     <div class="fbutton">
                         <div title="添加文章" class="add">
                             <span><i class="fa fa-plus"></i>添加文章</span>
@@ -271,6 +283,19 @@
                                 </div>
                             </td>
                             <td align="left" class="">
+                                <div style="text-align: center; width: 80px;">
+                                    <if condition='$vo[is_recommend] eq 1'>
+                                        <span class="yes"
+                                              onClick="changeTableVal('school_article','id','{$vo.id}','is_recommend',this)"><i
+                                                class="fa fa-check-circle"></i>是</span>
+                                        <else/>
+                                        <span class="no"
+                                              onClick="changeTableVal('school_article','id','{$vo.id}','is_recommend',this)"><i
+                                                class="fa fa-ban"></i>否</span>
+                                    </if>
+                                </div>
+                            </td>
+                            <td align="left" class="">
                                 <div style="text-align: center; width: 120px;
                                     <switch name='$vo[status]'>
                                         <case value='1'>
@@ -304,8 +329,8 @@
                             </td>
                             <td align="left" class="handle">
                                 <div style="text-align: left; width: 150px; max-width:150px;">
-                                    <a class="btn blue" href="{:U('School/article')}/type/{$module[type]}/class_id/{$module_class[id]}/article_id/{$vo[id]}"><i class="fa fa-pencil-square-o"></i>编辑</a>
-                                    <a class="btn red del" onclick="delArticle('{$module[type]}', '{$module_class[id]}', '{$vo[id]}')"><i class="fa fa-trash-o"></i>删除</a>
+                                    <a class="btn blue" href="{:U('School/article')}/type/{$type}/class_id/{$module_class[id]}/article_id/{$vo[id]}"><i class="fa fa-pencil-square-o"></i>编辑</a>
+                                    <a class="btn red del" onclick="delArticle('{$type}', '{$module_class[id]}', '{$vo[id]}')"><i class="fa fa-trash-o"></i>删除</a>
                                 </div>
                             </td>
                             <td align="" class="" style="width: 100%;">
@@ -347,7 +372,7 @@
     }
 
     function addModuleCallback(module_type) {
-        window.location.href = "{:U('Admin/School/module')}/type/" + module_type;
+        window.location.href = "{:U('Admin/School/')}" + module_type;
     }
 
     function updateModule(postId) {
@@ -369,7 +394,7 @@
                 success: function (data) {
                     if (data.status == 1) {
                         layer.msg(data.msg, {icon: 1, time: 2000}, function () {
-                            window.location.href = "{:U('Admin/School/module')}/type/" + type;
+                            window.location.href = "{:U('Admin/School/')}" + type;
                         });
                     } else {
                         layer.msg(data.msg, {icon: 2, time: 2000});
@@ -397,7 +422,7 @@
                     if (data.status === 1) {
                         var result = data.result;
                         layer.msg(data.msg, {icon: 1, time: 1000}, function () {
-                            location.href = "{:U('Admin/School/module')}/type/" + result.type + "/class_id/" + result.class_id;
+                            location.href = "{:U('Admin/School/')}" + result.type + "/class_id/" + result.class_id;
                         });
                     } else if (data.status === 0) {
                         layer.msg(data.msg, {icon: 2, time: 1000});

@@ -181,7 +181,7 @@
                 if (data.status === 1) {
                     var result = data.result;
                     layer.msg(data.msg, {icon: 1, time: 1000}, function () {
-                        location.href = "{:U('Admin/School/module')}/type/" + result.type + "/class_id/" + result.class_id;
+                        location.href = "{:U('Admin/School/')}" + result.type + "/class_id/" + result.class_id;
                     });
                 } else if (data.status === 0) {
                     layer.msg(data.msg, {icon: 2, time: 1000});
@@ -206,7 +206,7 @@
                     if (data.status === 1) {
                         var result = data.result;
                         layer.msg(data.msg, {icon: 1, time: 1000}, function () {
-                            location.href = "{:U('Admin/School/module')}/type/" + result.type + "/class_id/" + result.class_id;
+                            location.href = "{:U('Admin/School/')}" + result.type + "/class_id/" + result.class_id;
                         });
                     } else if (data.status === 0) {
                         layer.msg(data.msg, {icon: 2, time: 1000});

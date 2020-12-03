@@ -177,8 +177,8 @@ return [
         ]],
 
         ['name' => '商学院', 'child' => [
-            ['name' => '公司简介', 'act' => 'module', 'op' => 'School', 'type' => 'module1'],
-//            ['name' => '产品专区', 'act' => 'module', 'op' => 'School', 'type' => 'module2'],
+            ['name' => '公司简介', 'act' => 'module1', 'op' => 'School'],
+            ['name' => '产品专区', 'act' => 'module2', 'op' => 'School'],
         ]],
 
         // array('name' => '统计','child' => array(
