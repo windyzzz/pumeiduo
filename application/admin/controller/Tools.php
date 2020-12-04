@@ -347,6 +347,7 @@ class Tools extends Base
             $parent = M('region2')->where('id', $parent_id)->find();
         }
         $names = $this->getParentRegionList($parent_id);
+        $parent_path = '';
         if (count($names) > 0) {
             $names = array_reverse($names);
             $parent_path = implode($names, '>');
