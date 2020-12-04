@@ -18,6 +18,97 @@ class School extends Base
         $this->ossClient = new OssLogic();
     }
 
+    /**
+     * 配置信息
+     * @return mixed
+     */
+    public function config()
+    {
+        // 轮播图
+        $count = M('school_image')->where(['module_id' => 0])->count();
+        $page = new Page($count, 10);
+        $images = M('school_image')->where(['module_id' => 0])->limit($page->firstRow . ',' . $page->listRows)->order('sort DESC')->select();
+        foreach ($images as &$image) {
+            $url = explode(',', $image['url']);
+            $image['url'] = $this->ossClient::url(substr($url[0], strrpos($url[0], 'url:') + 4));
+            $image['module_type'] = M('school')->where(['type' => $image['module_type']])->value('name');
+        }
+
+        $this->assign('images', $images);
+        $this->assign('page', $page);
+        return $this->fetch();
+    }
+
+    /**
+     * 轮播图
+     * @return mixed
+     */
+    public function rotate()
+    {
+        $id = I('id', 0);
+        $moduleId = I('module_id', 0);
+        if (IS_POST) {
+            $param = I('post.');
+            if ($moduleId != 0) {
+                $param['module_type'] = M('school')->where(['id' => $moduleId])->value('type');
+            }
+            if (!empty($param['url'])) {
+                if (strstr($param['url'], 'aliyuncs.com')) {
+                    // 原图
+                    $param['url'] = M('school_image')->where(['id' => $id])->value('url');
+                } else {
+                    // 新图
+                    $filePath = PUBLIC_PATH . substr($param['url'], strrpos($param['url'], '/public/') + 8);
+                    $fileName = substr($param['url'], strrpos($param['url'], '/') + 1);
+                    $object = 'image/' . date('Y/m/d/H/') . $fileName;
+                    $return_url = $this->ossClient->uploadFile($filePath, $object);
+                    if (!$return_url) {
+                        return $this->ajaxReturn(['status' => 0, 'msg' => 'ERROR：' . $this->ossClient->getError()]);
+                    } else {
+                        // 图片信息
+                        $imageInfo = getimagesize($filePath);
+                        $param['url'] = 'url:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1];
+                        unlink($filePath);
+                    }
+                }
+            }
+            if ($id) {
+                M('school_image')->where(['id' => $id])->update($param);
+            } else {
+                $param['add_time'] = NOW_TIME;
+                M('school_image')->add($param);
+            }
+            $this->ajaxReturn(['status' => 1, 'msg' => '处理成功']);
+        }
+        if ($id) {
+            $imageInfo = M('school_image')->where(['id' => $id])->find();
+            $url = explode(',', $imageInfo['url']);
+            $imageInfo['url'] = $this->ossClient::url(substr($url[0], strrpos($url[0], 'url:') + 4));
+        } else {
+            $imageInfo['sort'] = 0;
+        }
+        // 模块列表
+        $moduleList = M('school')->select();
+
+        $this->assign('id', $id);
+        $this->assign('module_id', $moduleId);
+        $this->assign('info', $imageInfo);
+        $this->assign('module_list', $moduleList);
+        return $this->fetch();
+    }
+
+    /**
+     * 删除轮播图
+     */
+    public function delRotate()
+    {
+        $id = I('id');
+        Db::startTrans();
+        M('school_image')->where(['id' => $id])->delete();
+        Db::commit();
+        $this->ajaxReturn(['status' => 1, 'msg' => '删除成功']);
+    }
+
     public function module1()
     {
         $classId = I('class_id', '');

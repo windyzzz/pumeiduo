@@ -177,6 +177,7 @@ return [
         ]],
 
         ['name' => '商学院', 'child' => [
+            ['name' => '配置', 'act' => 'config', 'op' => 'School'],
             ['name' => '公司简介', 'act' => 'module1', 'op' => 'School'],
             ['name' => '产品专区', 'act' => 'module2', 'op' => 'School'],
         ]],

@@ -1,0 +1,114 @@
+<include file="public/layout"/>
+<style type="text/css">
+    html, body {
+        overflow: visible;
+    }
+</style>
+<body style="background-color: #FFF; overflow: auto;">
+<div id="toolTipLayer" style="position: absolute; z-index: 9999; display: none; visibility: visible; left: 95px; top: 573px;"></div>
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title"><a class="back" href="javascript:history.back();" title="返回列表"><i class="fa fa-arrow-circle-o-left"></i></a>
+            <div class="subject">
+                <h3>轮播图</h3>
+            </div>
+        </div>
+    </div>
+    <form class="form-horizontal" action="{:U('School/rotate')}" id="add_post" method="post">
+        <div class="ncap-form-default">
+            <dl class="row">
+                <dt class="tit">
+                    <label>轮播图</label>
+                </dt>
+                <dd class="opt">
+                    <div class="input-file-show">
+                        <span class="show">
+                            <a id="url_a" target="_blank" class="nyroModal" rel="gal" href="{$info.url}">
+                                <i id="url_i" class="fa fa-picture-o" onmouseover="layer.tips('<img src={$info.url}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();"></i>
+                            </a>
+                        </span>
+                        <span class="type-file-box">
+                            <input type="text" id="url" name="url" value="{$info.url}" class="type-file-text">
+                            <input type="button" name="button" id="button1" value="选择上传..." class="type-file-button">
+                            <input class="type-file-file" onClick="GetUploadify(1,'url','school','img_call_back')" size="30" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">
+                        </span>
+                    </div>
+                    <span class="err"></span>
+                    <p class="notic">请上传图片格式文件</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>跳转模块</label>
+                </dt>
+                <dd class="opt">
+                    <select name="module_type">
+                        <option value="">请选择</option>
+                        <volist name="module_list" id="module">
+                            <option value="{$module.type}"
+                            <if condition="$module['type'] eq $info['module_type'] ">
+                                selected="selected"
+                            </if>
+                            >{$module.name}</option>
+                        </volist>
+                    </select>
+                    <p class="notic">不选择就不会跳转</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>排序</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" value="{$info.sort}" name="sort" class="input-txt"
+                           onKeyUp="this.value=this.value.replace(/[^\d]/g,'')"
+                           onpaste="this.value=this.value.replace(/[^\d]/g,'')"/>
+                    <span class="err" id="err_sort"></span>
+                    <p class="notic"></p>
+                </dd>
+            </dl>
+            <div class="bot">
+                <a href="JavaScript:void(0);" class="ncap-btn-big ncap-btn-green" id="submitBtn">确认提交</a>
+            </div>
+        </div>
+        <input type="hidden" name="module_id" value="{$module_id}">
+        <input type="hidden" name="id" value="{$id}">
+    </form>
+</div>
+<script type="text/javascript">
+    function img_call_back(fileurl_tmp, elementid) {
+        $("#" + elementid).val(fileurl_tmp);
+        $("#" + elementid + '_a').attr('href', fileurl_tmp);
+        $("#" + elementid + '_i').attr('onmouseover', "layer.tips('<img src=" + fileurl_tmp + ">',this,{tips: [1, '#fff']});");
+    }
+
+    $(document).on("click", '#submitBtn', function () {
+        verifyForm();
+    });
+
+    function verifyForm() {
+        $('span.err').hide();
+        $.ajax({
+            type: "POST",
+            url: "{:U('School/rotate')}",
+            data: $('#add_post').serialize(),
+            dataType: "json",
+            error: function () {
+                layer.alert("服务器繁忙, 请联系管理员!");
+            },
+            success: function (data) {
+                if (data.status === 1) {
+                    layer.msg(data.msg, {icon: 1, time: 1000}, function () {
+                        location.href = "{:U('Admin/School/Config')}";
+                    });
+                } else if (data.status === 0) {
+                    layer.msg(data.msg, {icon: 2, time: 1000});
+                }
+            }
+        });
+    }
+</script>
+</body>
+</html>
