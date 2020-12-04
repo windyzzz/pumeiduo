@@ -34,6 +34,7 @@ class CreateSchoolArticle extends Migrator
             ->addColumn('subtitle', 'string', ['default' => '', 'comment' => '副标题'])
             ->addColumn('content', 'text', ['comment' => '内容'])
             ->addColumn('cover', 'string', ['comment' => '封面图'])
+            ->addColumn('learn_type', 'integer', ['default' => 0, 'comment' => '学习类型：0不规定学习 1必修 2选修'])
             ->addColumn('learn', 'integer', ['default' => 0, 'comment' => '学习人数'])
             ->addColumn('share', 'integer', ['default' => 0, 'comment' => '分享人数'])
             ->addColumn('status', 'integer', ['default' => 1, 'comment' => '状态：-1已删除 1发布 2预发布 3不发布'])
@@ -43,7 +44,7 @@ class CreateSchoolArticle extends Migrator
             ->addColumn('is_recommend', 'integer', ['default' => '0', 'comment' => '是否是推荐'])
             ->addColumn('add_time', 'integer')
             ->addColumn('publish_time', 'integer', ['default' => 0])
-            ->addColumn('update_time', 'integer', ['default' => 0])
+            ->addColumn('up_time', 'integer', ['default' => 0])
             ->addColumn('delete_time', 'integer', ['default' => 0])
             ->create();
     }

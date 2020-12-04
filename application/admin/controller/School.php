@@ -340,7 +340,7 @@ class School extends Base
                 $publishTime = M('school_article')->where(['id' => $articleId])->value('publish_time');
                 if ($publishTime != $param['publish_time']) {
                     $param['status'] = 2;   // 预发布
-                    $param['update_time'] = NOW_TIME;
+                    $param['up_time'] = NOW_TIME;
                 }
                 M('school_article')->where(['id' => $articleId])->update($param);
             } else {
@@ -379,7 +379,7 @@ class School extends Base
         $articleId = I('article_id', 0);
         M('school_article')->where(['id' => $articleId])->update([
             'status' => 3,
-            'update_time' => NOW_TIME
+            'up_time' => NOW_TIME
         ]);
         $this->ajaxReturn(['status' => 1, 'msg' => '处理成功', 'result' => ['type' => $type, 'class_id' => $classId]]);
     }

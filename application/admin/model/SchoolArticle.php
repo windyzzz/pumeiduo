@@ -22,4 +22,20 @@ class SchoolArticle extends Model
         ];
         return $status[$data['status']];
     }
+
+    /**
+     * 文章学习类型
+     * @param $value
+     * @param $data
+     * @return mixed
+     */
+    public function getLearnTypeDescAttr($value, $data)
+    {
+        $status = [
+            '0' => '不规定',
+            '1' => '必修',
+            '2' => '选修',
+        ];
+        return $status[$data['learn_type']];
+    }
 }
