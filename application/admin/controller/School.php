@@ -130,7 +130,6 @@ class School extends Base
     public function module($type, $classId)
     {
         if (IS_POST) {
-            // 更新模块信息
             $param = I('post.');
             $type = $param['type'];
             if (empty($param['img'])) {
@@ -249,6 +248,16 @@ class School extends Base
         $classId = $param['class_id'];
         unset($param['type']);
         unset($param['class_id']);
+        switch ($param['is_learn']) {
+            case 0:
+                // 将分类下的文章设置为不规定学习
+                M('school_article')->where(['class_id' => $classId])->update(['learn_type' => 0]);
+                break;
+            case 1:
+                // 将分类下没有学习规定的文章设置为必修
+                M('school_article')->where(['class_id' => $classId, 'learn_type' => 0])->update(['learn_type' => 1]);
+                break;
+        }
         if (empty($param['distribute_level'])) {
             $param['distribute_level'] = '0';
         } else {
@@ -298,6 +307,15 @@ class School extends Base
             $validate = validate('School');
             if (!$validate->scene('article_add')->check($param)) {
                 return $this->ajaxReturn(['status' => 0, 'msg' => $validate->getError()]);
+            }
+            // 是否是学习课程
+            $schoolClass = M('school_class')->where(['id' => $param['class_id']])->find();
+            if (empty($schoolClass)) {
+                return $this->ajaxReturn(['status' => 0, 'msg' => '模块分类不存在']);
+            } else {
+                if ($schoolClass['is_learn'] == 1 && $param['learn_type'] == 0) {
+                    return $this->ajaxReturn(['status' => 0, 'msg' => '学习课程分类下的文章需要选择必修或选修']);
+                }
             }
             // 等级限制
             if (empty($param['distribute_level'])) {

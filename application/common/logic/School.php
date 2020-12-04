@@ -15,52 +15,6 @@ class School
     }
 
     /**
-     * 获取轮播图
-     * @param int $moduleId
-     * @return array
-     */
-    public function getRotate($moduleId = 0)
-    {
-        $rotate = M('school_rotate')->where(['module_id' => $moduleId, 'is_open' => 1])->order('sort DESC')->limit(0, 3)->select();
-        $list = [];
-        foreach ($rotate as $item) {
-            $url = explode(',', $item['url']);
-            $list[] = [
-                'url' => $this->ossClient::url(substr($url[0], strrpos($url[0], 'url:') + 4)),
-                'width' => substr($url[1], strrpos($url[1], 'width:') + 6),
-                'height' => substr($url[2], strrpos($url[2], 'height:') + 7),
-                'type' => $item['module_type']
-            ];
-        }
-        return ['list' => $list];
-    }
-
-    /**
-     * 获取首页icon
-     * @return array
-     */
-    public function getIcon()
-    {
-        $icon = M('school')->where(['is_open' => 1])->order('sort DESC')->select();
-        $list = [];
-        foreach ($icon as $item) {
-            $img = explode(',', $item['img']);
-            $list[] = [
-                'id' => $item['id'],
-                'url' => $this->ossClient::url(substr($img[0], strrpos($img[0], 'url:') + 4)),
-                'width' => substr($img[1], strrpos($img[1], 'width:') + 6),
-                'height' => substr($img[2], strrpos($img[2], 'height:') + 7),
-                'name' => $item['name'],
-                'type' => $item['type'],
-                'is_allow' => (int)$item['is_allow'],
-                'tips' => '功能尚未开放',
-                'need_login' => 1,
-            ];
-        }
-        return ['row_num' => 4, 'list' => $list];
-    }
-
-    /**
      * 文章条件
      * @param $param
      * @return array
@@ -123,6 +77,77 @@ class School
         return ['sort' => $sort, 'sort_set' => $sortSet];
     }
 
+
+    private function checkUserArticle($user, $article)
+    {
+        if (empty($article)) {
+            return ['status' => 0, 'msg' => '文章数据不存在'];
+        }
+        // 等级权限
+        if ($article['distribute_level'] != 0) {
+            $level = explode(',', $article['distribute_level']);
+            if (!in_array($user['distribut_level'], $level)) {
+                $levelName = '';
+                foreach ($level as $lv) {
+                    $levelName .= M('distribut_level')->where(['level_id' => $lv])->value('level_name') . '或';
+                }
+                $levelName = rtrim($levelName, '或');
+                return ['status' => 0, 'msg' => '您当前还不是' . $levelName . '，没有访问权限'];
+            }
+        }
+        // 是否已阅览
+        if (!M('user_school_article')->where(['user_id' => $user['user_id'], 'article_id' => $article['id']])->find()) {
+
+        }
+        return ['status' => 1];
+    }
+
+    /**
+     * 获取轮播图
+     * @param int $moduleId
+     * @return array
+     */
+    public function getRotate($moduleId = 0)
+    {
+        $rotate = M('school_rotate')->where(['module_id' => $moduleId, 'is_open' => 1])->order('sort DESC')->limit(0, 3)->select();
+        $list = [];
+        foreach ($rotate as $item) {
+            $url = explode(',', $item['url']);
+            $list[] = [
+                'url' => $this->ossClient::url(substr($url[0], strrpos($url[0], 'url:') + 4)),
+                'width' => substr($url[1], strrpos($url[1], 'width:') + 6),
+                'height' => substr($url[2], strrpos($url[2], 'height:') + 7),
+                'type' => $item['module_type']
+            ];
+        }
+        return ['list' => $list];
+    }
+
+    /**
+     * 获取首页icon
+     * @return array
+     */
+    public function getIcon()
+    {
+        $icon = M('school')->where(['is_open' => 1])->order('sort DESC')->select();
+        $list = [];
+        foreach ($icon as $item) {
+            $img = explode(',', $item['img']);
+            $list[] = [
+                'id' => $item['id'],
+                'url' => $this->ossClient::url(substr($img[0], strrpos($img[0], 'url:') + 4)),
+                'width' => substr($img[1], strrpos($img[1], 'width:') + 6),
+                'height' => substr($img[2], strrpos($img[2], 'height:') + 7),
+                'name' => $item['name'],
+                'type' => $item['type'],
+                'is_allow' => (int)$item['is_allow'],
+                'tips' => '功能尚未开放',
+                'need_login' => 1,
+            ];
+        }
+        return ['row_num' => 4, 'list' => $list];
+    }
+
     /**
      * 获取文章列表
      * @param $limit
@@ -163,5 +188,21 @@ class School
             ];
         }
         return ['total' => $count, 'list' => $list, 'sort_set' => $sortSet];
+    }
+
+
+
+    public function getArticleInfo($param, $user)
+    {
+        // 搜索条件
+        $where = $this->articleWhere($param);
+        // 文章数据
+        $articleInfo = M('school_article sa')->where($where)->find();
+        // 查看阅览权限
+        $res = $this->checkUserArticle($user, $articleInfo);
+        if ($res['status'] == 0) {
+            return $res;
+        }
+        return $res;
     }
 }

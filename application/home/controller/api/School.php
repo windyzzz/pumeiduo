@@ -43,7 +43,6 @@ class School extends Base
     {
         $limit = I('limit', 10);
         $param = [
-            'article_id' => I('article_id', ''),
             'class_id' => I('class_id', ''),
             'status' => I('status', ''),
             'is_recommend' => I('is_recommend', ''),
@@ -52,5 +51,16 @@ class School extends Base
         ];
         $data = $this->logic->getArticleList($limit, $param);
         return json(['status' => 1, 'msg' => '', 'result' => $data]);
+    }
+
+
+    public function articleInfo()
+    {
+        $param = [
+            'article_id' => I('article_id', ''),
+        ];
+        $res = $this->logic->getArticleInfo($param, $this->user);
+        print_r($res);
+        exit();
     }
 }
