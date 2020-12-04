@@ -338,7 +338,13 @@ class Activity extends Base
                 ])
                 ->field('c.*')->select();
             $couponIds = [];
-            foreach ($couponData as $coupon) {
+            foreach ($couponData as $key => $coupon) {
+                if ($coupon['createnum'] > 0) {
+                    if ($coupon['send_num'] >= $coupon['createnum']) {
+                        unset($couponData[$key]);
+                        continue;
+                    }
+                }
                 $couponIds[] = $coupon['id'];
             }
             // 检查是否已经领取
