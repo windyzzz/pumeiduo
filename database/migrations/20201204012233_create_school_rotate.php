@@ -3,7 +3,7 @@
 use think\migration\Migrator;
 use think\migration\db\Column;
 
-class CreateSchoolImage extends Migrator
+class CreateSchoolRotate extends Migrator
 {
     /**
      * Change Method.
@@ -28,7 +28,7 @@ class CreateSchoolImage extends Migrator
      */
     public function change()
     {
-        $this->table('school_image', ['comment' => '商学院轮播图表'])
+        $this->table('school_rotate', ['comment' => '商学院轮播图表'])
             ->addColumn('module_id', 'integer', ['default' => 0, 'comment' => '模块ID 0为最外层的轮播图'])
             ->addColumn('url', 'string', ['comment' => '图片路径'])
             ->addColumn('module_type', 'string', ['default' => '', 'comment' => '跳转模块标识'])
