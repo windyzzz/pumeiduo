@@ -30,7 +30,11 @@
 					<h5>(共{$region|count}张记录)</h5>
 				</div>
 				<div title="刷新数据" class="pReload"><i class="fa fa-refresh"></i></div>
-				<notempty name="parent_path"><div title="上级区域" class="pReload">上级区域:{$parent_path}</div></notempty>
+				<notempty name="parent_path">
+					<div title="上级区域" class="ftitle">
+						<h5>上级区域：{$parent_path}</h5>
+					</div>
+				</notempty>
 			</div>
 			<div class="hDiv">
 				<div class="hDivBox">
@@ -53,6 +57,9 @@
 							</th>
 							<th axis="col5" class="" align="center">
 								<div style="text-align: center; width: 140px;">上级地区ID</div>
+							</th>
+							<th axis="col5" class="" align="center">
+								<div style="text-align: center; width: 80px;">是否开启</div>
 							</th>
 							<th style="width:100%" axis="col6"><div></div></th>
 						</tr>
@@ -107,6 +114,19 @@
 								</td>
 								<td class="" align="center">
 									<div style="text-align: center; width: 140px;">{$vo.parent_id}</div>
+								</td>
+								<td class="" align="center">
+									<div style="text-align: center; width: 80px;">
+										<if condition='$vo[status] eq 1'>
+                                        <span class="yes"
+											  onClick="changeTableVal('region2','id','{$vo.id}','status',this)"><i
+												class="fa fa-check-circle"></i>是</span>
+											<else/>
+											<span class="no"
+												  onClick="changeTableVal('region2','id','{$vo.id}','status',this)"><i
+													class="fa fa-ban"></i>否</span>
+										</if>
+									</div>
 								</td>
 								<td class="" style="width: 100%;" align="">
 									<div>&nbsp;</div>
