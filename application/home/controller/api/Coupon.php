@@ -34,13 +34,7 @@ class Coupon extends Base
         ];
         $couponData = M('coupon')->where($where)->order('id desc')->select();
         $couponIds = [];
-        foreach ($couponData as $key => $coupon) {
-            if ($coupon['createnum'] > 0) {
-                if ($coupon['send_num'] >= $coupon['createnum']) {
-                    unset($couponData[$key]);
-                    continue;
-                }
-            }
+        foreach ($couponData as $coupon) {
             $couponIds[] = $coupon['id'];
         }
         // 优惠券商品
