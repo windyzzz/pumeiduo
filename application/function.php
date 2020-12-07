@@ -2315,3 +2315,26 @@ function create_qrcode($type, $user_id, $goods_id = 0, $logo = '')
     }
     return $filename;
 }
+
+/**
+ * 格式化时间输出
+ * @param $time
+ * @return false|string
+ */
+function format_time($time)
+{
+    $inputTime = '';
+    if ($time != 0) {
+        $inputTime = date('Y-m-d', $time);
+        if ($inputTime == date('Y-m-d', time())) {
+            $inputTime = '今天 ' . date('H:i', $time);
+        } elseif ($inputTime == date('Y-m-d', time() - (86400))) {
+            $inputTime = '昨天 ' . date('H:i', $time);
+        } elseif ($inputTime == date('Y-m-d', time() - (86400 * 2))) {
+            $inputTime = '前天 ' . date('H:i', $time);
+        } else {
+            $inputTime = date('Y-m-d H:i', $time);
+        }
+    }
+    return $inputTime;
+}

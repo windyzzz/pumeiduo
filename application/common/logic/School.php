@@ -318,6 +318,7 @@ class School
                 'share' => $item['share'],
                 'integral' => $item['integral'],
                 'distribute_level' => $item['distribute_level'],
+                'publish_time' => format_time($item['publish_time'])
             ];
         }
         // 查看用户是否已购买学习课程

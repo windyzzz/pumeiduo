@@ -24,6 +24,59 @@ class School extends Base
      */
     public function config()
     {
+        if (IS_POST) {
+            $param = I('post.');
+            // 配置
+            foreach ($param as $k => $v) {
+                if ($k == 'official') {
+                    if (strstr($v['url'], 'aliyuncs.com')) {
+                        // 原图
+                        $v['url'] = M('school_config')->where(['type' => 'official'])->value('url');
+                    } else {
+                        // 新图
+                        $filePath = PUBLIC_PATH . substr($v['url'], strrpos($v['url'], '/public/') + 8);
+                        $fileName = substr($v['url'], strrpos($v['url'], '/') + 1);
+                        $object = 'image/' . date('Y/m/d/H/') . $fileName;
+                        $return_url = $this->ossClient->uploadFile($filePath, $object);
+                        if (!$return_url) {
+                            $this->error('图片上传错误');
+                        } else {
+                            // 图片信息
+                            $imageInfo = getimagesize($filePath);
+                            $v['url'] = 'url:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1];
+                            unlink($filePath);
+                        }
+                    }
+                }
+                $data = [
+                    'type' => $k,
+                    'name' => isset($v['name']) ? $v['name'] : '',
+                    'url' => isset($v['url']) ? $v['url'] : '',
+                    'content' => isset($v['content']) ? $v['content'] : '',
+                ];
+                $config = M('school_config')->where(['type' => $k])->find();
+                if (!empty($config)) {
+                    M('school_config')->where(['id' => $config['id']])->update($data);
+                } else {
+                    M('school_config')->add($data);
+                }
+            }
+            $this->success('操作成功', U('Admin/School/config'));
+        }
+        // 配置
+        $schoolConfig = M('school_config')->select();
+        $config = [];
+        foreach ($schoolConfig as $val) {
+            if ($val['type'] == 'official' && !empty($val['url'])) {
+                $url = explode(',', $val['url']);
+                $val['url'] = $this->ossClient::url(substr($url[0], strrpos($url[0], 'url:') + 4));
+            }
+            $config[$val['type']] = [
+                'name' => $val['name'],
+                'url' => $val['url'],
+                'content' => $val['content']
+            ];
+        }
         // 轮播图
         $count = M('school_rotate')->where(['module_id' => 0])->count();
         $page = new Page($count, 10);
@@ -34,6 +87,7 @@ class School extends Base
             $image['module_type'] = M('school')->where(['type' => $image['module_type']])->value('name');
         }
 
+        $this->assign('config', $config);
         $this->assign('images', $images);
         $this->assign('page', $page);
         return $this->fetch();
@@ -119,6 +173,36 @@ class School extends Base
     {
         $classId = I('class_id', '');
         return $this->module('module2', $classId);
+    }
+
+    public function module3()
+    {
+        $classId = I('class_id', '');
+        return $this->module('module3', $classId);
+    }
+
+    public function module4()
+    {
+        $classId = I('class_id', '');
+        return $this->module('module4', $classId);
+    }
+
+    public function module5()
+    {
+        $classId = I('class_id', '');
+        return $this->module('module5', $classId);
+    }
+
+    public function module6()
+    {
+        $classId = I('class_id', '');
+        return $this->module('module6', $classId);
+    }
+
+    public function module7()
+    {
+        $classId = I('class_id', '');
+        return $this->module('module7', $classId);
     }
 
     /**

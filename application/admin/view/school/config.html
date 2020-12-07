@@ -8,20 +8,33 @@
             </div>
         </div>
     </div>
-    <form method="post" id="datapost1" action="" enctype="multipart/form-data" name="form">
+    <form method="post" id="datapost" action="{:U('School/config')}" enctype="multipart/form-data" name="form">
         <div class="ncap-form-default">
             <dl class="row">
                 <dt class="tit">
-                    <label>模块名</label>
+                    <label>官方账号</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" class="input-txt" name="name" value="{$module['name']}" style="text-align: center;">
+                    <p class="notic">用户名</p>
+                    <input type="text" class="input-txt" name="official[name]" value="{$config.official.name}">
+                    <br/>
+                    <p class="notic">头像</p>
+                    <div class="input-file-show">
+                        <span class="show">
+                            <a id="official_img_a" target="_blank" class="nyroModal" rel="gal" href="{$config.official.url}">
+                                <i id="official_img_i" class="fa fa-picture-o" onmouseover="layer.tips('<img src={$config.official.url}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();"></i>
+                            </a>
+                        </span>
+                        <span class="type-file-box">
+                            <input type="text" id="official_img" name="official[url]" value="{$config.official.url}" class="type-file-text">
+                            <input type="button" name="button" id="button1" value="选择上传..." class="type-file-button">
+                            <input class="type-file-file" onClick="GetUploadify(1,'official_img','school','img_call_back')" size="30" hidefocus="true" nc_type="change_site_logo" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">
+                        </span>
+                    </div>
                 </dd>
             </dl>
-
             <div class="bot">
-                <input type="hidden" name="type" value="{$type}">
-                <a class="ncap-btn-big ncap-btn-green" onclick="updateModule('datapost1')">确认提交</a>
+                <a class="ncap-btn-big ncap-btn-green" onclick="updateConfig('datapost')">确认提交</a>
             </div>
         </div>
     </form>
@@ -119,7 +132,7 @@
                             <td align="left" class="handle">
                                 <div style="text-align: left; width: 150px; max-width:150px;">
                                     <a class="btn blue" href="{:U('School/rotate', array('id'=>$vo[id]))}"><i class="fa fa-pencil-square-o"></i>编辑</a>
-                                    <a class="btn red del" onclick="delArticle('{$vo[id]}')"><i class="fa fa-trash-o"></i>删除</a>
+                                    <a class="btn red del" onclick="delRotate('{$vo[id]}')"><i class="fa fa-trash-o"></i>删除</a>
                                 </div>
                             </td>
                             <td align="" class="" style="width: 100%;">
@@ -143,7 +156,17 @@
         });
     });
 
-    function delArticle(id) {
+    function img_call_back(fileurl_tmp, elementid) {
+        $("#" + elementid).val(fileurl_tmp);
+        $("#" + elementid + '_a').attr('href', fileurl_tmp);
+        $("#" + elementid + '_i').attr('onmouseover', "layer.tips('<img src=" + fileurl_tmp + ">',this,{tips: [1, '#fff']});");
+    }
+
+    function updateConfig(postId) {
+        $('#' + postId).submit();
+    }
+
+    function delRotate(id) {
         layer.confirm('确认删除？', {
             btn: ['确定', '取消']
         }, function () {
