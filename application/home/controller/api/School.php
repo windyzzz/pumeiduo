@@ -26,12 +26,23 @@ class School extends Base
     }
 
     /**
-     * 获取首页icon
+     * 获取模块列表
      * @return \think\response\Json
      */
-    public function indexIcon()
+    public function module()
     {
-        $data = $this->logic->getIcon();
+        $data = $this->logic->getModule();
+        return json(['status' => 1, 'msg' => '', 'result' => $data]);
+    }
+
+    /**
+     * 获取模块分类列表
+     * @return \think\response\Json
+     */
+    public function moduleClass()
+    {
+        $moduleId = I('module_id', 0);
+        $data = $this->logic->getModuleClass($moduleId);
         return json(['status' => 1, 'msg' => '', 'result' => $data]);
     }
 
@@ -49,18 +60,32 @@ class School extends Base
             'is_integral' => I('is_integral', ''),
             'distribute_level' => I('level', '')
         ];
-        $data = $this->logic->getArticleList($limit, $param);
+        $data = $this->logic->getArticleList($limit, $param, $this->user);
+        if (isset($data['status']) && $data['status'] == 0) {
+            return json($data);
+        }
         return json(['status' => 1, 'msg' => '', 'result' => $data]);
     }
 
-
+    /**
+     * 获取文章详情
+     * @return \think\response\Json
+     */
     public function articleInfo()
     {
         $param = [
             'article_id' => I('article_id', ''),
         ];
-        $res = $this->logic->getArticleInfo($param, $this->user);
-        print_r($res);
-        exit();
+        $data = $this->logic->getArticleInfo($param, $this->user);
+        if (isset($data['status']) && $data['status'] == 0) {
+            return json($data);
+        }
+        return json(['status' => 1, 'msg' => '', 'result' => $data]);
+    }
+
+
+    public function articleContent()
+    {
+        
     }
 }

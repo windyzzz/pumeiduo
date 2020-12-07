@@ -94,6 +94,19 @@
             </dl>
             <dl class="row">
                 <dt class="tit">
+                    <label>学习需要的时间</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" value="{$info.learn_time}" name="learn_time" class="input-txt"
+                           onKeyUp="this.value=this.value.replace(/[^\d]/g,'')"
+                           onpaste="this.value=this.value.replace(/[^\d]/g,'')"/>
+                    秒
+                    <span class="err" id="err_learn_time"></span>
+                    <p class="notic">用户在文章详情停留学习的时间</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
                     <label>封面图</label>
                 </dt>
                 <dd class="opt">

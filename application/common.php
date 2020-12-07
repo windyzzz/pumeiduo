@@ -997,11 +997,6 @@ function taskLog($user_id, $task, $reward, $order_sn = '', $reward_electronic = 
  * @param bool $isOneself 是否是登录用户本人
  * @param int $task_id 任务ID
  * @return bool
- * @throws \think\Exception
- * @throws \think\db\exception\DataNotFoundException
- * @throws \think\db\exception\ModelNotFoundException
- * @throws \think\exception\DbException
- * @throws \think\exception\PDOException
  */
 function accountLog($user_id, $user_money = 0.00, $pay_points = 0.00, $desc = '', $distribut_money = 0.00, $order_id = 0, $order_sn = '', $user_electronic = 0.00, $type = 0, $isOneself = true, $task_id = 0)
 {
