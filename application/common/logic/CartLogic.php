@@ -1120,7 +1120,7 @@ class CartLogic extends Model
      */
     public function getUserCartOrderCount()
     {
-        $count = Db::name('Cart')->where(['user_id' => $this->user_id, 'selected' => 1])->count();
+        $count = Db::name('Cart')->where(['user_id' => $this->user_id, 'goods_num' => ['>', 0], 'selected' => 1])->count();
 
         return $count;
     }

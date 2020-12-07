@@ -1835,6 +1835,9 @@ class GoodsLogic extends Model
             /*
              * 单个商品下单
              */
+            if ($goodsNum <= 0) {
+                return ['status' => 0, 'msg' => '购买数量不能为0'];
+            }
             $cartLogic->setGoodsModel($goodsId);
             $cartLogic->setSpecGoodsPriceModel($itemId);
             $cartLogic->setGoodsBuyNum($goodsNum);
