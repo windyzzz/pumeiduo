@@ -3,6 +3,7 @@
 namespace app\common\logic;
 
 
+use think\Cache;
 use think\Page;
 
 class School
@@ -335,12 +336,13 @@ class School
         // 搜索条件
         $where = $this->articleWhere($param);
         // 文章数据
-        $articleInfo = M('school_article sa')->where($where)->field('content', true)->find();
+        $articleInfo = M('school_article sa')->where($where)->find();
         // 查看阅览权限
         $res = $this->checkUserArticleLimit($articleInfo, $user);
         if ($res['status'] == 0) {
             return $res;
         }
+        Cache::set('school_article_content_' . $param['article_id'], $articleInfo['content'], 60);  // 文章内容
         $cover = explode(',', $articleInfo['cover']);  // 封面图
         $info = [
             'article_id' => $articleInfo['id'],
@@ -358,5 +360,21 @@ class School
             'distribute_level' => $articleInfo['distribute_level'],
         ];
         return $info;
+    }
+
+    /**
+     * 获取文章内容
+     * @param $articleId
+     * @return array
+     */
+    public function getArticleContent($articleId)
+    {
+        if (Cache::has('school_article_content_' . $articleId)) {
+            $content = htmlspecialchars_decode(Cache::get('school_article_content_' . $articleId));
+        } else {
+            $content = M('school_article')->where(['id' => $articleId])->value('content');
+            $content = htmlspecialchars_decode($content);
+        }
+        return ['content' => $content];
     }
 }

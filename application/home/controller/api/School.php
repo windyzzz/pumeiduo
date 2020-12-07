@@ -83,9 +83,14 @@ class School extends Base
         return json(['status' => 1, 'msg' => '', 'result' => $data]);
     }
 
-
+    /**
+     * 获取文章内容
+     * @return \think\response\Json
+     */
     public function articleContent()
     {
-        
+        $articleId = I('article_id', 0);
+        $data = $this->logic->getArticleContent($articleId);
+        return json(['status' => 1, 'msg' => '', 'result' => $data]);
     }
 }
