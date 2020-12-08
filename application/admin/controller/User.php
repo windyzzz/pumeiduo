@@ -274,8 +274,8 @@ class User extends Base
         $field1 = I('field1', '');
         $value1 = I('value1', '');
         if ($value1) {
-            $value1Info = get_user_info($value1, 0, '', 'user_id');
-            $condition[$field1] = $value1Info ? $value1Info['user_id'] : -1;
+//            $value1Info = get_user_info($value1, 0, '', 'user_id');
+            $condition[$field1] = $value1;
         }
         //时间
         $field2 = I('field2', '');
