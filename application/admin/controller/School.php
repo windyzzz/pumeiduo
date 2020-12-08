@@ -467,6 +467,8 @@ class School extends Base
             $articleInfo = [];
             $articleInfo['sort'] = 0;
             $articleInfo['integral'] = 0;
+            $articleInfo['learn_time'] = 300;
+            $articleInfo['credit'] = 0;
             $articleInfo['publish_time'] = date('Y-m-d H:i:s', time());
         }
         $this->assign('type', $type);

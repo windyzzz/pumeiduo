@@ -42,6 +42,7 @@ class CreateSchoolArticle extends Migrator
             ->addColumn('sort', 'integer', ['default' => 0, 'comment' => '排序'])
             ->addColumn('distribute_level', 'string', ['default' => '0', 'comment' => '允许查看的用户等级，0所有人'])
             ->addColumn('integral', 'decimal', ['default' => '0', 'precision' => 10, 'scale' => 2, 'comment' => '学习需要积分'])
+            ->addColumn('credit', 'decimal', ['default' => '0', 'precision' => 10, 'scale' => 2, 'comment' => '学习完成得到的学分'])
             ->addColumn('is_recommend', 'integer', ['default' => '0', 'comment' => '是否是推荐'])
             ->addColumn('add_time', 'integer')
             ->addColumn('publish_time', 'integer', ['default' => 0])

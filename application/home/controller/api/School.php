@@ -100,4 +100,49 @@ class School extends Base
         $data = $this->logic->getArticleContent($articleId);
         return json(['status' => 1, 'msg' => '', 'result' => $data]);
     }
+
+    /**
+     * 获取用户文章列表
+     * @return \think\response\Json
+     */
+    public function userArticle()
+    {
+        $limit = I('limit', 10);
+        $param = [
+            'status' => I('status', ''),
+        ];
+        $data = $this->logic->getUserArticle($limit, $param, $this->user);
+        if (isset($data['status']) && $data['status'] == 0) {
+            return json($data);
+        }
+        return json(['status' => 1, 'msg' => '', 'result' => $data]);
+    }
+
+    /**
+     * 学习课程文章（完成）
+     * @return \think\response\Json
+     */
+    public function learnArticle()
+    {
+        $articleId = I('article_id', 0);
+        $data = $this->logic->learnArticle($articleId, $this->user);
+        if (isset($data['status']) && $data['status'] == 0) {
+            return json($data);
+        }
+        return json(['status' => 1, 'msg' => '', 'result' => $data]);
+    }
+
+    /**
+     * 下载文章素材
+     * @return \think\response\Json
+     */
+    public function getResource()
+    {
+        $param = [
+            'article_id' => I('article_id', ''),
+        ];
+        $data = $this->logic->downloadArticleResource($param, $this->user);
+        return json($data);
+    }
+
 }

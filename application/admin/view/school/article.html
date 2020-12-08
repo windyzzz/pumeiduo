@@ -107,6 +107,18 @@
             </dl>
             <dl class="row">
                 <dt class="tit">
+                    <label>学习完成获得的学分(乐活豆)</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" value="{$info.credit}" name="credit" class="input-txt"
+                           onKeyUp="this.value=this.value.replace(/[^.\d]/g,'')"
+                           onpaste="this.value=this.value.replace(/[^.\d]/g,'')"/>
+                    <span class="err" id="err_credit"></span>
+                    <p class="notic"></p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
                     <label>封面图</label>
                 </dt>
                 <dd class="opt">

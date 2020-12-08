@@ -996,9 +996,10 @@ function taskLog($user_id, $task, $reward, $order_sn = '', $reward_electronic = 
  * @param int $type 分类（0：其他，1：佣金结算，2：积分消费，3：下单消费，4：积分收入（包含：5：下单送积分、6：注册积分、7：邀请积分、8：签到积分、9：其他）、10：订单取消、11：电商转入积分、12：积分互转、13：电子币互转、:14：任务获得（包含：15：电子币、16：积分）
  * @param bool $isOneself 是否是登录用户本人
  * @param int $task_id 任务ID
+ * @param float $school_credit 商学院学分
  * @return bool
  */
-function accountLog($user_id, $user_money = 0.00, $pay_points = 0.00, $desc = '', $distribut_money = 0.00, $order_id = 0, $order_sn = '', $user_electronic = 0.00, $type = 0, $isOneself = true, $task_id = 0)
+function accountLog($user_id, $user_money = 0.00, $pay_points = 0.00, $desc = '', $distribut_money = 0.00, $order_id = 0, $order_sn = '', $user_electronic = 0.00, $type = 0, $isOneself = true, $task_id = 0, $school_credit = 0.00)
 {
     /* 插入帐户变动记录 */
     $account_log = [
@@ -1012,6 +1013,7 @@ function accountLog($user_id, $user_money = 0.00, $pay_points = 0.00, $desc = ''
         'order_sn' => $order_sn,
         'type' => $type,
         'task_id' => $task_id,
+        'school_credit' => $school_credit,
     ];
     /* 更新用户信息 */
 //    $sql = "UPDATE __PREFIX__users SET user_money = user_money + $user_money," .
@@ -1021,8 +1023,9 @@ function accountLog($user_id, $user_money = 0.00, $pay_points = 0.00, $desc = ''
         'pay_points' => ['exp', 'pay_points+' . $pay_points],
         'distribut_money' => ['exp', 'distribut_money+' . $distribut_money],
         'user_electronic' => ['exp', 'user_electronic+' . $user_electronic],
+        'school_credit' => ['exp', 'school_credit+' . $school_credit],
     ];
-    if (0 == ($user_money + $pay_points + $distribut_money + $user_electronic)) {
+    if (0 == ($user_money + $pay_points + $distribut_money + $user_electronic + $school_credit)) {
         return false;
     }
     $where = ['user_id' => $user_id];
@@ -1041,6 +1044,10 @@ function accountLog($user_id, $user_money = 0.00, $pay_points = 0.00, $desc = ''
     if (bccomp(0, $user_electronic, 2) == 1) {
         // 扣减电子币
         $where['user_electronic'] = ['egt', abs($user_electronic)];
+    }
+    if (bccomp(0, $school_credit, 2) == 1) {
+        // 扣减商学院学分
+        $where['school_credit'] = ['egt', abs($school_credit)];
     }
     $update = Db::name('users')->where($where)->update($update_data);
     if ($update) {

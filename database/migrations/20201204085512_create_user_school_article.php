@@ -32,8 +32,11 @@ class CreateUserSchoolArticle extends Migrator
             ->addColumn('user_id', 'integer', ['comment' => '用户ID'])
             ->addColumn('article_id', 'integer', ['comment' => '文章ID'])
             ->addColumn('integral', 'decimal', ['default' => '0', 'precision' => 10, 'scale' => 2, 'comment' => '学习需要积分'])
+            ->addColumn('credit', 'decimal', ['default' => '0', 'precision' => 10, 'scale' => 2, 'comment' => '学习完成获得的学分'])
             ->addColumn('status', 'integer', ['default' => 0, 'comment' => '学习状态：0未完成 1已完成'])
+            ->addColumn('type', 'integer', ['default' => 1, 'comment' => '课程类型：1普通 2素材'])
             ->addColumn('add_time', 'integer')
+            ->addColumn('finish_time', 'integer', ['default' => 0, 'comment' => '学习完成时间'])
             ->create();
     }
 }

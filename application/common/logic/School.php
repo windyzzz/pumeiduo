@@ -23,29 +23,51 @@ class School
     private function articleWhere($param)
     {
         $where = [];
+        // 文章ID
         if (!empty($param['article_id'])) {
             return ['sa.id' => $param['article_id']];
         }
+        // 模块分类
         if (!empty($param['class_id'])) {
             $where['sa.class_id'] = $param['class_id'];
         }
+        // 状态
         if (!empty($param['status'])) {
             $where['sa.status'] = $param['status'];
         } else {
             $where['sa.status'] = 1;
         }
+        // 是否是推荐
         if (!empty($param['is_recommend'])) {
             $where['sa.is_recommend'] = 1;
         }
+        // 是否需要积分购买
         if (!empty($param['is_integral'])) {
             $where['sa.integral'] = ['>', 0];
         }
+        // 等级限制
         if (!empty($param['distribute_level']) || $param['distribute_level'] !== '') {
             $level = explode(',', $param['distribute_level']);
             sort($level);
             $level = implode(',', $level);
             $where['sa.distribute_level'] = $level;
         }
+        return $where;
+    }
+
+    /**
+     * 用户文章记录条件
+     * @param $param
+     * @return array
+     */
+    private function userArticleWhere($param)
+    {
+        $where = [];
+        // 状态
+        if (!empty($param['status'])) {
+            $where['usa.status'] = $param['status'];
+        }
+        $where['usa.type'] = 1;
         return $where;
     }
 
@@ -104,7 +126,7 @@ class School
                     $levelName .= M('distribut_level')->where(['level_id' => $lv])->value('level_name') . '或';
                 }
                 $levelName = rtrim($levelName, '或');
-                return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
+                return ['status' => -1, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
             }
         }
         // 是否是学习课程
@@ -129,12 +151,16 @@ class School
      * 检验用户-文章限制
      * @param $article
      * @param $user
+     * @param $isResource
      * @return array
      */
-    private function checkUserArticleLimit($article, $user)
+    private function checkUserArticleLimit($article, $user, $isResource = false)
     {
         if (empty($article)) {
             return ['status' => 0, 'msg' => '文章数据不存在'];
+        }
+        if ($article['status'] != 1) {
+            return ['status' => 0, 'msg' => '文章已失效'];
         }
         // 等级权限
         if ($article['distribute_level'] != 0) {
@@ -145,7 +171,7 @@ class School
                     $levelName .= M('distribut_level')->where(['level_id' => $lv])->value('level_name') . '或';
                 }
                 $levelName = rtrim($levelName, '或');
-                return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
+                return ['status' => -1, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
             }
         }
         // 是否已购买课程
@@ -162,18 +188,29 @@ class School
             }
             // 课程消费积分
             if ($article['integral'] > 0) {
-                if ($article['integral'] > $user['pay_points']) {
-                    return ['status' => 0, 'msg' => '课程需要消费积分' . $article['integral'] . '，您的积分不足'];
+                if ($isResource) {
+                    $tips = '下载素材';
+                } else {
+                    $tips = '购买课程';
                 }
-                accountLog($user['user_id'], 0, $article['integral'], '购买课程消费积分', 0, 0, '', 0, 22);
+                if ($article['integral'] > $user['pay_points']) {
+                    return ['status' => 0, 'msg' => $tips . '需要消费积分' . $article['integral'] . '，您的积分不足'];
+                }
+                accountLog($user['user_id'], 0, -$article['integral'], $tips . '消费积分', 0, 0, '', 0, 22);
             }
-            // 用户课程记录
-            M('user_school_article')->add([
+            $logData = [
                 'user_id' => $user['user_id'],
                 'article_id' => $article['id'],
                 'integral' => $article['integral'],
                 'add_time' => NOW_TIME
-            ]);
+            ];
+            if ($isResource) {
+                $logData['type'] = 2;
+                $logData['status'] = 1;
+                $logData['finish_time'] = NOW_TIME;
+            }
+            // 用户课程记录
+            M('user_school_article')->add($logData);
         }
         return ['status' => 1];
     }
@@ -398,6 +435,8 @@ class School
             'integral' => $articleInfo['integral'],
             'distribute_level' => $articleInfo['distribute_level'],
         ];
+        // 查看用户是否已购买学习课程
+        $info = $this->checkUserArticle([$info], [$articleInfo['id']], $user)[0];
         return $info;
     }
 
@@ -415,5 +454,88 @@ class School
             $content = htmlspecialchars_decode($content);
         }
         return ['content' => $content];
+    }
+
+    /**
+     * 获取用户文章列表
+     * @param $limit
+     * @param $param
+     * @param $user
+     * @return array
+     */
+    public function getUserArticle($limit, $param, $user)
+    {
+        // 搜索条件
+        $where = $this->userArticleWhere($param);
+        $where['usa.user_id'] = $user['user_id'];
+        // 数据数量
+        $count = M('user_school_article usa')->join('school_article sa', 'sa.id = usa.article_id')->where($where)->count();
+        // 查询数据
+        $page = new Page($count, $limit);
+        $userArticle = M('user_school_article usa')->join('school_article sa', 'sa.id = usa.article_id')->where($where)
+            ->limit($page->firstRow . ',' . $page->listRows)->field('sa.*, usa.integral, usa.credit')->select();
+        $list = [];
+        foreach ($userArticle as $item) {
+            $cover = explode(',', $item['cover']);  // 封面图
+            $list[] = [
+                'article_id' => $item['id'],
+                'class_id' => $item['class_id'],
+                'title' => $item['title'],
+                'subtitle' => $item['subtitle'],
+                'cover' => [
+                    'url' => $this->ossClient::url(substr($cover[0], strrpos($cover[0], 'url:') + 4)),
+                    'width' => $cover[1] ? substr($cover[1], strrpos($cover[1], 'width:') + 6) : 1,
+                    'height' => $cover[2] ? substr($cover[2], strrpos($cover[2], 'height:') + 7) : 1,
+                ],
+                'learn' => $item['learn'],
+                'share' => $item['share'],
+                'integral' => $item['integral'],
+                'distribute_level' => $item['distribute_level'],
+                'publish_time' => format_time($item['publish_time']),
+            ];
+        }
+        return ['total' => $count, 'list' => $list];
+    }
+
+    /**
+     * 学习课程文章（完成）
+     * @param $articleId
+     * @param $user
+     * @return array
+     */
+    public function learnArticle($articleId, $user)
+    {
+        $articleInfo = M('school_article')->where(['id' => $articleId])->find();
+        $userSchoolArticle = M('user_school_article')->where(['user_id' => $user['user_id'], 'article_id' => $articleId])->find();
+        if (empty($userSchoolArticle)) {
+            return ['status' => 0, 'msg' => '请先购买课程'];
+        }
+        if ($userSchoolArticle['status'] == 0 || $userSchoolArticle['finish_time'] == 0) {
+            M('user_school_article')->where(['id' => $userSchoolArticle['id']])->update([
+                'status' => 1,
+                'credit' => $articleInfo['credit'],
+                'finish_time' => NOW_TIME
+            ]);
+            if ($articleInfo['credit'] > 0) {
+                accountLog($user['user_id'], 0, 0, '课程学习完毕奖励学分', 0, 0, '', 0, 23, true, 0, $articleInfo['credit']);
+            }
+        }
+        return ['credit' => $articleInfo['credit']];
+    }
+
+    /**
+     * 下载文章素材
+     * @param $param
+     * @param $user
+     * @return array
+     */
+    public function downloadArticleResource($param, $user)
+    {
+        // 搜索条件
+        $where = $this->articleWhere($param);
+        // 文章数据
+        $articleInfo = M('school_article sa')->where($where)->find();
+        // 查看阅览权限
+        return $this->checkUserArticleLimit($articleInfo, $user, true);
     }
 }
