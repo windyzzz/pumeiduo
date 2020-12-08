@@ -118,7 +118,9 @@
                     <label>视频</label>
                 </dt>
                 <dd class="opt">
-                    <input type="hidden" value="" name="video" id="video_input" />
+                    <input type="hidden" value="{$info[video]}" name="video" id="video_input" />
+                    <input type="hidden" value="{$info[video_cover]}" name="video_cover" id="video_cover" />
+                    <input type="hidden" value="{$info[video_axis]}" name="video_axis" id="video_axis" />
                     <video style="" controls="controls" width="600" height="300" id="video_tag" src="{$info[video]}"></video>
                     <div id="container">
                         <a id="selectfiles" href="javascript:void(0);" class='btn'>选择文件</a>

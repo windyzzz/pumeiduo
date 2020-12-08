@@ -1947,12 +1947,13 @@ function imgToBase64($img = '')
 /**
  * 获取视频封面图
  * @param $file
+ * @param $tempPath
  * @return array
  */
-function getVideoCoverImages($file)
+function getVideoCoverImages($file, $tempPath = 'upload/community/video_cover/temp/')
 {
     // 从OSS服务器下载视频
-    $localFile = (new \app\common\logic\OssLogic())->downloadFile($file, PUBLIC_PATH . 'upload/community/video_cover/temp/');
+    $localFile = (new \app\common\logic\OssLogic())->downloadFile($file, PUBLIC_PATH . $tempPath);
     $filePath = '';
     $fileAxis = '1';  // 1横向型 2竖向型
     if (!empty($localFile)) {

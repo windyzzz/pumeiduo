@@ -429,7 +429,7 @@ class Community extends Base
                                 $this->ajaxReturn(['status' => 0, 'msg' => '请上传视频']);
                             }
                             // 处理视频封面图
-                            $videoCover = getVideoCoverImages($postData['video']);
+                            $videoCover = getVideoCoverImages($postData['video'], 'upload/community/video_cover/temp/');
                             $postData['video_cover'] = $videoCover['path'];
                             $postData['video_axis'] = $videoCover['axis'];
                             $postData['image'] = '';
@@ -506,15 +506,23 @@ class Community extends Base
                             $postData['image'] = implode(';', $postImage);
                             $postData['get_image_info'] = 1;
                             $postData['video'] = '';
+                            $postData['video_cover'] = '';
+                            $postData['video_axis'] = 1;
                             break;
                         case 2:
                             if (empty($postData['video'])) {
                                 $this->ajaxReturn(['status' => 0, 'msg' => '请上传视频']);
                             }
-                            // 处理视频封面图
-                            $videoCover = getVideoCoverImages($postData['video']);
-                            $postData['video_cover'] = $videoCover['path'];
-                            $postData['video_axis'] = $videoCover['axis'];
+                            if (strstr($postData['video'], 'http')) {
+                                // 原本的图片
+                                $postData['video'] = substr($postData['video'], strrpos($postData['video'], 'video'));;
+                                continue;
+                            } else {
+                                // 处理视频封面图
+                                $videoCover = getVideoCoverImages($postData['video'], 'upload/community/video_cover/temp/');
+                                $postData['video_cover'] = $videoCover['path'];
+                                $postData['video_axis'] = $videoCover['axis'];
+                            }
                             $postData['image'] = '';
                             break;
                     }
