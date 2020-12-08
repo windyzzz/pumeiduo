@@ -515,7 +515,7 @@ class Community extends Base
                             }
                             if (strstr($postData['video'], 'http')) {
                                 // 原本的图片
-                                $postData['video'] = substr($postData['video'], strrpos($postData['video'], 'video'));;
+                                $postData['video'] = substr($postData['video'], strrpos($postData['video'], 'video'));
                                 continue;
                             } else {
                                 // 处理视频封面图

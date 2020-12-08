@@ -4,6 +4,7 @@ namespace app\admin\controller;
 
 
 use app\admin\model\SchoolArticle;
+use app\admin\model\SchoolArticleResource;
 use app\common\logic\OssLogic;
 use think\Db;
 use think\Page;
@@ -282,7 +283,11 @@ class School extends Base
         $this->assign('module_class', $moduleClass);
         $this->assign('article_list', $articleList);
         $this->assign('page', $page);
-        return $this->fetch('module');
+        if ($type == 'module6') {
+            return $this->fetch('module_6');
+        } else {
+            return $this->fetch('module');
+        }
     }
 
     /**
@@ -469,6 +474,238 @@ class School extends Base
         $this->assign('info', $articleInfo);
         $this->assign('article_id', $articleId);
         return $this->fetch();
+    }
+
+    /**
+     * 分类文章（素材专区）
+     * @return mixed
+     * @throws \Exception
+     */
+    public function article_6()
+    {
+        $type = I('type');
+        $classId = I('class_id');
+        $articleId = I('article_id', 0);
+        if (IS_POST) {
+            $postData = I('post.');
+            // 验证参数
+            $validate = validate('School');
+            if (!$validate->scene('article_add_6')->check($postData)) {
+                return $this->ajaxReturn(['status' => 0, 'msg' => $validate->getError()]);
+            }
+            Db::startTrans();
+            // 文章信息
+            $articleParam = [
+                'class_id' => $classId,
+                'title' => $postData['title'],
+                'content' => '',
+                'sort' => $postData['sort'],
+                'integral' => $postData['integral'],
+                'publish_time' => strtotime($postData['publish_time']),
+                'status' => 2,   // 预发布
+            ];
+            // 等级限制
+            if (empty($postData['distribute_level'])) {
+                $articleParam['distribute_level'] = '0';
+            } else {
+                if (in_array('0', $postData['distribute_level'])) {
+                    $articleParam['distribute_level'] = '0';
+                } else {
+                    $distributeLevel = '';
+                    foreach ($postData['distribute_level'] as $level) {
+                        $distributeLevel .= $level . ',';
+                    }
+                    $articleParam['distribute_level'] = rtrim($distributeLevel, ',');
+                }
+            }
+            if ($articleId > 0) {
+                /*
+                 * 更新
+                 */
+                // 素材信息
+                $resourceParam = [];
+                switch ($postData['upload_content']) {
+                    case 1:
+                        if (empty($postData['image'])) {
+                            $this->ajaxReturn(['status' => 0, 'msg' => '请上传图片']);
+                        }
+                        // 文章原本的图片素材
+                        $articleImage = [];
+                        $articleResource = M('school_article_resource')->where(['article_id' => $articleId, 'image' => ['NEQ', '']])->select();
+                        if (!empty($articleResource)) {
+                            foreach ($articleResource as $resource) {
+                                $image = explode(',', $resource['image']);
+                                $articleImage[substr($image[0], strrpos($image[0], 'url:') + 4)] = [
+                                    'width' => substr($image[1], strrpos($image[1], 'width:') + 6),
+                                    'height' => substr($image[2], strrpos($image[2], 'height:') + 7),
+                                ];
+                            }
+                        }
+                        // 上传到OSS服务器
+                        foreach ($postData['image'] as $image) {
+                            if (empty($image)) {
+                                continue;
+                            }
+                            if (strstr($image, 'aliyuncs.com')) {
+                                // 原本的图片
+                                $image = substr($image, strrpos($image, 'image'));
+                                $resourceParam[] = [
+                                    'image' => 'url:' . $image . ',width:' . $articleImage[$image]['width'] . ',height:' . $articleImage[$image]['height'],
+                                    'get_image_info' => 1,
+                                    'video' => ''
+                                ];
+                                continue;
+                            }
+                            $filePath = PUBLIC_PATH . substr($image, strrpos($image, '/public/') + 8);
+                            $fileName = substr($image, strrpos($image, '/') + 1);
+                            $object = 'image/' . date('Y/m/d/H/') . $fileName;
+                            $return_url = $this->ossClient->uploadFile($filePath, $object);
+                            if (!$return_url) {
+                                return $this->ajaxReturn(['status' => 0, 'msg' => 'ERROR：' . $this->ossClient->getError()]);
+                            } else {
+                                // 图片信息
+                                $imageInfo = getimagesize($filePath);
+                                $resourceParam[] = [
+                                    'image' => 'url:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1],
+                                    'get_image_info' => 1,
+                                    'video' => ''
+                                ];
+                                unlink($filePath);
+                            }
+                        }
+                        break;
+                    case 2:
+                        if (empty($postData['video'])) {
+                            $this->ajaxReturn(['status' => 0, 'msg' => '请上传视频']);
+                        }
+                        if (strstr($postData['video'], 'http')) {
+                            // 原本的视频
+                            $resourceParam[] = [
+                                'video' => substr($postData['video'], strrpos($postData['video'], 'video')),
+                                'video_cover' => $postData['video_cover'],
+                                'video_axis' => $postData['video_axis'],
+                                'image' => '',
+                            ];
+                        } else {
+                            // 处理视频封面图
+                            $videoCover = getVideoCoverImages($postData['video'], 'upload/school/video_cover/temp/');
+                            $resourceParam[] = [
+                                'video' => $postData['video'],
+                                'video_cover' => $videoCover['path'],
+                                'video_axis' => $videoCover['axis'],
+                                'image' => '',
+                            ];
+                        }
+                        break;
+                }
+                // 文章信息
+                $articleParam['up_time'] = NOW_TIME;
+                M('school_article')->where(['id' => $articleId])->update($articleParam);
+                // 文章素材信息
+                if (!empty($resourceParam)) {
+                    M('school_article_resource')->where(['article_id' => $articleId])->delete();
+                    foreach ($resourceParam as &$resource) {
+                        $resource['article_id'] = $articleId;
+                        $resource['add_time'] = NOW_TIME;
+                    }
+                    $articleResource = new SchoolArticleResource();
+                    $articleResource->saveAll($resourceParam);
+                }
+            } else {
+                /*
+                 * 添加
+                 */
+                // 素材信息
+                $resourceParam = [];
+                switch ($postData['upload_content']) {
+                    case 1:
+                        if (empty($postData['image'])) {
+                            $this->ajaxReturn(['status' => 0, 'msg' => '请上传图片']);
+                        }
+                        // 上传到OSS服务器
+                        foreach ($postData['image'] as $image) {
+                            if (empty($image)) {
+                                continue;
+                            }
+                            $filePath = PUBLIC_PATH . substr($image, strrpos($image, '/public/') + 8);
+                            $fileName = substr($image, strrpos($image, '/') + 1);
+                            $object = 'image/' . date('Y/m/d/H/') . $fileName;
+                            $return_url = $this->ossClient->uploadFile($filePath, $object);
+                            if (!$return_url) {
+                                return $this->ajaxReturn(['status' => 0, 'msg' => 'ERROR：' . $this->ossClient->getError()]);
+                            } else {
+                                // 图片信息
+                                $imageInfo = getimagesize($filePath);
+                                $resourceParam[] = [
+                                    'image' => 'url:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1],
+                                    'get_image_info' => 1,
+                                    'video' => ''
+                                ];
+                                unlink($filePath);
+                            }
+                        }
+                        break;
+                    case 2:
+                        if (empty($postData['video'])) {
+                            $this->ajaxReturn(['status' => 0, 'msg' => '请上传视频']);
+                        }
+                        // 处理视频封面图
+                        $videoCover = getVideoCoverImages($postData['video'], 'upload/school/video_cover/temp/');
+                        $resourceParam[] = [
+                            'video' => $postData['video'],
+                            'video_cover' => $videoCover['path'],
+                            'video_axis' => $videoCover['axis'],
+                            'image' => '',
+                        ];
+                        break;
+                }
+                // 文章信息
+                $articleParam['add_time'] = NOW_TIME;
+                $articleId = M('school_article')->add($articleParam);
+                // 文章素材信息
+                if (!empty($resourceParam)) {
+                    foreach ($resourceParam as &$resource) {
+                        $resource['article_id'] = $articleId;
+                        $resource['add_time'] = NOW_TIME;
+                    }
+                    $articleResource = new SchoolArticleResource();
+                    $articleResource->saveAll($resourceParam);
+                }
+            }
+            Db::commit();
+            $this->ajaxReturn(['status' => 1, 'msg' => '处理成功', 'result' => ['type' => $type, 'class_id' => $classId]]);
+        }
+        if ($articleId) {
+            $articleInfo = M('school_article')->where(['id' => $articleId])->find();
+            $articleInfo['distribute_level'] = explode(',', $articleInfo['distribute_level']);
+            $articleInfo['publish_time'] = date('Y-m-d H:i:s', $articleInfo['publish_time']);
+            // 文章素材信息
+            $articleResource = M('school_article_resource')->where(['article_id' => $articleId])->select();
+            foreach ($articleResource as &$resource) {
+                if (!empty($resource['image'])) {
+                    $image = explode(',', $resource['image']);
+                    $resource['image'] = $this->ossClient::url(substr($image[0], strrpos($image[0], 'url:') + 4));
+                    $articleInfo['upload_content'] = 1;
+                }
+                if (!empty($resource['video'])) {
+                    $resource['video'] = $this->ossClient::url($resource['video']);
+                    $articleInfo['upload_content'] = 2;
+                }
+            }
+        } else {
+            $articleInfo = [];
+            $articleInfo['sort'] = 0;
+            $articleInfo['integral'] = 0;
+            $articleInfo['publish_time'] = date('Y-m-d H:i:s', time());
+            $articleInfo['upload_content'] = 1;
+            $articleResource = [];
+        }
+        $this->assign('type', $type);
+        $this->assign('class_id', $classId);
+        $this->assign('info', $articleInfo);
+        $this->assign('resource', $articleResource);
+        $this->assign('article_id', $articleId);
+        return $this->fetch('article_6');
     }
 
     /**
