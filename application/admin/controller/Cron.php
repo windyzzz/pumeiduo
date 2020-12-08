@@ -1664,7 +1664,7 @@ AND log_id NOT IN
             ->field('id, video')->limit(5)->select();
         foreach ($article as $value) {
             // 获取视频封面图
-            $videoCover = getVideoCoverImages($value['video']);
+            $videoCover = getVideoCoverImages($value['video'], 'upload/community/video_cover/temp/');
             $upData = [
                 'video_cover' => $videoCover['path'],
                 'video_axis' => $videoCover['axis']
