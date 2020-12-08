@@ -54,12 +54,19 @@ class School extends Base
     {
         $limit = I('limit', 10);
         $param = [
+            'module_type' => I('module_type', ''),
             'class_id' => I('class_id', ''),
             'status' => I('status', ''),
             'is_recommend' => I('is_recommend', ''),
             'is_integral' => I('is_integral', ''),
             'distribute_level' => I('level', '')
         ];
+        if (!empty($param['module_type']) && empty($param['class_id']) && empty($param['is_recommend'])) {
+            // 查找模块下第一个分类
+            $param['class_id'] = M('school_class sc')->join('school s', 's.id = sc.module_id')
+                ->where(['s.type' => $param['module_type'], 'sc.is_open' => 1])->order('sc.sort DESC')->value('sc.id');
+            if (!$param['class_id']) return json(['status' => 0, 'msg' => '模块下没有分类']);
+        }
         $data = $this->logic->getArticleList($limit, $param, $this->user);
         if (isset($data['status']) && $data['status'] == 0) {
             return json($data);

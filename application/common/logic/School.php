@@ -27,7 +27,7 @@ class School
             return ['sa.id' => $param['article_id']];
         }
         if (!empty($param['class_id'])) {
-            return ['sa.class_id' => $param['class_id']];
+            $where['sa.class_id'] = $param['class_id'];
         }
         if (!empty($param['status'])) {
             $where['sa.status'] = $param['status'];
@@ -311,19 +311,57 @@ class School
                 'subtitle' => $item['subtitle'],
                 'cover' => [
                     'url' => $this->ossClient::url(substr($cover[0], strrpos($cover[0], 'url:') + 4)),
-                    'width' => substr($cover[1], strrpos($cover[1], 'width:') + 6),
-                    'height' => substr($cover[2], strrpos($cover[2], 'height:') + 7),
+                    'width' => $cover[1] ? substr($cover[1], strrpos($cover[1], 'width:') + 6) : 1,
+                    'height' => $cover[2] ? substr($cover[2], strrpos($cover[2], 'height:') + 7) : 1,
                 ],
                 'learn' => $item['learn'],
                 'share' => $item['share'],
                 'integral' => $item['integral'],
                 'distribute_level' => $item['distribute_level'],
-                'publish_time' => format_time($item['publish_time'])
+                'publish_time' => format_time($item['publish_time']),
+                'image' => [],
+                'video' => [
+                    'url' => '',
+                    'cover' => '',
+                    'axis' => '1',
+                ],
+                'user' => [
+                    'user_name' => '',
+                    'head_pic' => '',
+                ]
             ];
+        }
+        // 素材专区数据处理
+        if (!empty($param['module_type']) && $param['module_type'] == 'module6') {
+            $resource = M('school_article_resource')->where(['article_id' => ['IN', $articleIds]])->select();
+            $official = M('school_config')->where(['type' => 'official'])->find();
+            $headUrl = explode(',', $official['url']);
+            $official['url'] = $this->ossClient::url(substr($headUrl[0], strrpos($headUrl[0], 'url:') + 4));
+            foreach ($list as $k => $l) {
+                $list[$k]['user']['user_name'] = $official['name'];
+                $list[$k]['user']['head_pic'] = $official['url'];
+                foreach ($resource as $r) {
+                    if ($l['article_id'] == $r['article_id']) {
+                        if (!empty($r['image'])) {
+                            $image = explode(',', $r['image']);
+                            $list[$k]['image'][] = [
+                                'url' => $this->ossClient::url(substr($image[0], strrpos($image[0], 'url:') + 4)),
+                                'width' => $image[1],
+                                'height' => $image[2],
+                            ];
+                        } elseif (!empty($r['video'])) {
+                            $list[$k]['video']['url'] = $this->ossClient::url($r['video']);
+                            $list[$k]['video']['cover'] = $this->ossClient::url($r['video_cover']);
+                            $list[$k]['video']['axis'] = $r['video_axis'];
+                            continue 1;
+                        }
+                    }
+                }
+            }
         }
         // 查看用户是否已购买学习课程
         $list = $this->checkUserArticle($list, $articleIds, $user);
-        return ['total' => $count, 'list' => $list, 'sort_set' => $sortSet];
+        return ['sort_set' => (object)$sortSet, 'total' => $count, 'list' => $list];
     }
 
     /**
