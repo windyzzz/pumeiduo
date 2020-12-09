@@ -29,7 +29,7 @@ class CreateSchool extends Migrator
     public function change()
     {
         $this->table('school', ['comment' => '商学院模块表'])
-            ->addColumn('code', 'string', ['comment' => '标识'])
+            ->addColumn('type', 'string', ['comment' => '标识'])
             ->addColumn('name', 'string', ['comment' => '名字'])
             ->addColumn('img', 'string', ['comment' => '图标路径'])
             ->addColumn('is_open', 'integer', ['default' => 1, 'comment' => '是否开启'])

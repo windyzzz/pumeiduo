@@ -249,12 +249,18 @@ class School
         $rotate = M('school_rotate')->where(['module_id' => $moduleId, 'is_open' => 1])->order('sort DESC')->limit(0, 3)->select();
         $list = [];
         foreach ($rotate as $item) {
+            if ($item['module_type']) {
+                $module = M('school')->where(['type' => $item['module_type']])->find();
+            }
             $url = explode(',', $item['url']);
             $list[] = [
                 'url' => $this->ossClient::url(substr($url[0], strrpos($url[0], 'url:') + 4)),
                 'width' => substr($url[1], strrpos($url[1], 'width:') + 6),
                 'height' => substr($url[2], strrpos($url[2], 'height:') + 7),
-                'type' => $item['module_type']
+                'type' => $item['module_type'],
+                'is_allow' => isset($module) ? (int)$module['is_allow'] : 0,
+                'tips' => '功能尚未开放',
+                'need_login' => 1,
             ];
         }
         return ['list' => $list];

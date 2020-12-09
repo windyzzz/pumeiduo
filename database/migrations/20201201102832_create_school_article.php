@@ -35,7 +35,7 @@ class CreateSchoolArticle extends Migrator
             ->addColumn('content', 'text', ['comment' => '内容'])
             ->addColumn('cover', 'string', ['default' => '', 'comment' => '封面图'])
             ->addColumn('learn_type', 'integer', ['default' => 0, 'comment' => '学习类型：0不规定学习 1必修 2选修'])
-            ->addColumn('learn_time', 'integer', ['default' => 0, '需要学习的时间'])
+            ->addColumn('learn_time', 'integer', ['default' => 0, 'comment' => '需要学习的时间'])
             ->addColumn('learn', 'integer', ['default' => 0, 'comment' => '学习人数'])
             ->addColumn('share', 'integer', ['default' => 0, 'comment' => '分享人数'])
             ->addColumn('status', 'integer', ['default' => 1, 'comment' => '状态：-1已删除 1发布 2预发布 3不发布'])
