@@ -334,7 +334,7 @@ class School extends Base
             $module['img'] = $this->ossClient::url(substr($img[0], strrpos($img[0], 'url:') + 4));
         }
         // 兑换商品列表
-        $exchangeGoods = M('school_exchange')->select();
+        $exchangeGoods = M('school_exchange')->order('sort DESC, id ASC')->select();
         $exchange = [];
         foreach ($exchangeGoods as $k => $v) {
             $exchange[$k] = M('Goods')->where('goods_id=' . $v['goods_id'])->find();
@@ -804,21 +804,19 @@ class School extends Base
         $this->ajaxReturn(['status' => 1, 'msg' => '处理成功', 'result' => ['type' => $type, 'class_id' => $classId]]);
     }
 
-
+    /**
+     * 添加兑换商品
+     * @throws \Exception
+     */
     public function addExchange()
     {
         $postData = I('post.');
-//        echo '<pre>';
-//        print_r($postData);
-//        echo '</pre>';
-//        exit();
         $exchangeData = [];
         if (!empty($postData['item'])) {
             foreach ($postData['item'] as $data) {
                 $exchangeData[] = [
                     'goods_id' => $data['goods_id'],
                     'item_id' => $data['item_id'] ?? 0,
-                    'goods_num' => $data['goods_num'],
                     'credit' => $data['credit'],
                     'sort' => $data['sort'],
                     'is_open' => $data['is_open'],

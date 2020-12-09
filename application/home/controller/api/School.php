@@ -145,4 +145,36 @@ class School extends Base
         return json($data);
     }
 
+    /**
+     * 获取兑换商品列表
+     * @return \think\response\Json
+     */
+    public function exchange()
+    {
+        $limit = I('limit', 10);
+        $data = $this->logic->getExchangeList($limit);
+        $data['user'] = [
+            'user_id' => $this->user['user_id'],
+            'nickname' => $this->user['nickname'] ?? ($this->user['user_name'] ?? '用户' . $this->user_id),
+            'head_pic' => $this->user['head_pic'],
+            'level' => $this->user['distribut_level'],
+            'level_name' => M('DistributLevel')->where('level_id', $this->user['distribut_level'])->getField('level_name') ?? '普通会员',
+            'credit' => $this->user['school_credit']
+        ];
+        return json(['status' => 1, 'msg' => '', 'result' => $data]);
+    }
+
+    /**
+     * 获取兑换商品详情
+     * @return \think\response\Json
+     */
+    public function exchangeInfo()
+    {
+        $goodsId = I('goods_id', 0);
+        $data = $this->logic->getExchangeInfo($goodsId);
+        if (isset($data['status']) && $data['status'] == 0) {
+            return json($data);
+        }
+        return json(['status' => 1, 'msg' => '', 'result' => $data]);
+    }
 }

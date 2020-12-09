@@ -56,7 +56,7 @@
                         <input style="cursor: pointer;" type="button" name="button" value="选择上传..." class="type-file-button" onClick="GetUploadify(1,'module_img','school','img_call_back')">
                         <div style="clear: both;"></div>
                     </div>
-                    <p class="notic">长120px，宽120px</p>
+                    <p class="notic">长120px，宽40px</p>
                 </dd>
             </dl>
             <dl class="row">
@@ -127,9 +127,6 @@
                                             乐活豆:<input type="text" value="{$goods.credit}" name="item[{$goods.goods_id}_0][credit]"
                                                        onKeyUp="this.value=this.value.replace(/[^.\d]/g,'')"
                                                        onpaste="this.value=this.value.replace(/[^.\d]/g,'')"/>
-                                            数量:<input type="text" value="{$goods.goods_num}" name="item[{$goods.goods_id}_0][goods_num]"
-                                                       onKeyUp="this.value=this.value.replace(/[^\d]/g,'')"
-                                                       onpaste="this.value=this.value.replace(/[^\d]/g,'')"/>
                                             <br/>
                                             排序:<input type="text" value="{$goods.sort}" name="item[{$goods.goods_id}_0][sort]"
                                                       onKeyUp="this.value=this.value.replace(/[^\d]/g,'')"
@@ -170,10 +167,6 @@
                                             乐活豆:<input type="text" value="{$goods.credit}" name="item[{$goods.goods_id}_{$goods[SpecGoodsPrice]['item_id']}][credit]"
                                                        onKeyUp="this.value=this.value.replace(/[^.\d]/g,'')"
                                                        onpaste="this.value=this.value.replace(/[^.\d]/g,'')"/>
-                                            <br/>
-                                            数量:<input type="text" value="{$goods.goods_num}" name="item[{$goods.goods_id}_{$goods[SpecGoodsPrice]['item_id']}][goods_num]"
-                                                      onKeyUp="this.value=this.value.replace(/[^\d]/g,'')"
-                                                      onpaste="this.value=this.value.replace(/[^\d]/g,'')"/>
                                             <br/>
                                             排序:<input type="text" value="{$goods.sort}" name="item[{$goods.goods_id}_{$goods[SpecGoodsPrice]['item_id']}][sort]"
                                                       onKeyUp="this.value=this.value.replace(/[^\d]/g,'')"
@@ -251,8 +244,6 @@
                             '<br/>' +
                             '乐活豆:<input type="text" value="100.00" name="item[' + item.goods_id + '_' + o.item_id + '][credit]" onKeyUp="this.value=this.value.replace(/[^.\\d]/g,\'\')" onpaste="this.value=this.value.replace(/[^.\\d]/g,\'\')"/>' +
                             '<br/>' +
-                            '数量:<input type="text" value="1" name="item[' + item.goods_id + '_' + o.item_id + '][goods_num]" onKeyUp="this.value=this.value.replace(/[^\\d]/g,\'\')" onpaste="this.value=this.value.replace(/[^\\d]/g,\'\')"/>' +
-                            '<br/>' +
                             '排序:<input type="text" value="50" name="item[' + item.goods_id + '_' + o.item_id + '][sort]" onKeyUp="this.value=this.value.replace(/[^\\d]/g,\'\')" onpaste="this.value=this.value.replace(/[^\\d]/g,\'\')"/>' +
                             '</div>' +
                             '<div class="row" style="margin-top: 10px;">' +
@@ -275,8 +266,6 @@
                         '库存:{$goods.store_count}' +
                         '<br/>' +
                         '乐活豆:<input type="text" value="100.00" name="item[' + item.goods_id + '_0][credit]" onKeyUp="this.value=this.value.replace(/[^.\\d]/g,\'\')" onpaste="this.value=this.value.replace(/[^.\\d]/g,\'\')"/>' +
-                        '<br/>' +
-                        '数量:<input type="text" value="1" name="item[' + item.goods_id + '_0][goods_num]" onKeyUp="this.value=this.value.replace(/[^\\d]/g,\'\')" onpaste="this.value=this.value.replace(/[^\\d]/g,\'\')"/>' +
                         '<br/>' +
                         '排序:<input type="text" value="50" name="item[' + item.goods_id + '_0][sort]" onKeyUp="this.value=this.value.replace(/[^\\d]/g,\'\')" onpaste="this.value=this.value.replace(/[^\\d]/g,\'\')"/>' +
                         '</div>' +

@@ -540,4 +540,82 @@ class School
         // 查看阅览权限
         return $this->checkUserArticleLimit($articleInfo, $user, true);
     }
+
+    /**
+     * 获取兑换商品列表
+     * @param $limit
+     * @return array
+     */
+    public function getExchangeList($limit)
+    {
+        // 查询条件
+        $where = [
+            'se.is_open' => 1,
+            'g.is_on_sale' => 1
+        ];
+        // 数据数量
+        $count = M('school_exchange se')->join('goods g', 'g.goods_id = se.goods_id')->where($where)->count();
+        // 查询数据
+        $page = new Page($count, $limit);
+        $goodsIds = M('school_exchange se')->join('goods g', 'g.goods_id = se.goods_id')->where($where)->getField('se.goods_id', true);
+        $goodsList = M('school_exchange se')->join('goods g', 'g.goods_id = se.goods_id')->where($where)
+            ->field('se.*, g.goods_name, g.original_img')->order('se.sort DESC, se.id ASC')->limit($page->firstRow . ',' . $page->listRows)->select();
+        // 商品标签
+        $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $goodsIds], 'title' => ['NEQ', ''], 'status' => 1])->select();
+        $list = [];
+        foreach ($goodsList as $key => $goods) {
+            $list[$key] = [
+                'goods_id' => $goods['goods_id'],
+                'item_id' => $goods['item_id'],
+                'goods_name' => $goods['goods_name'],
+                'original_img_new' => getFullPath($goods['original_img']),
+                'credit' => $goods['credit'],
+                'tabs' => []
+            ];
+            // 规格属性
+            if ($goods['item_id']) {
+                $list[$key]['goods_name'] .= ' ' . M('spec_goods_price')->where(['item_id' => $goods['item_id']])->value('key_name');
+            }
+            // 商品标签
+            if (!empty($goodsTab)) {
+                foreach ($goodsTab as $value) {
+                    if ($goods['goods_id'] == $value['goods_id']) {
+                        $list[$key]['tabs'][] = $value['title'];
+                    }
+                }
+            }
+        }
+        return ['total' => $count, 'list' => $list];
+    }
+
+    /**
+     * 获取兑换商品详情
+     * @param $goodsId
+     * @return array
+     */
+    public function getExchangeInfo($goodsId)
+    {
+        $where = [
+            'se.goods_id' => $goodsId,
+            'se.is_open' => 1,
+            'g.is_on_sale' => 1
+        ];
+        $goodsInfo = M('school_exchange se')->join('goods g', 'g.goods_id = se.goods_id')->where($where)
+            ->field('se.item_id, se.credit, g.*')->order('se.sort DESC, se.id ASC')->find();
+        if (empty($goodsInfo)) {
+            return ['status' => 0, 'msg' => '商品已下架'];
+        }
+        if ($goodsInfo['item_id']) {
+            $goodsInfo['goods_name'] .= ' ' . M('spec_goods_price')->where(['item_id' => $goodsInfo['item_id']])->value('key_name');
+        }
+        $data = [
+            'goods_id' => $goodsInfo['goods_id'],
+            'item_id' => $goodsInfo['item_id'],
+            'goods_name' => $goodsInfo['goods_name'],
+            'goods_remark' => $goodsInfo['goods_remark'],
+            'content_url' => SITE_URL . '/index.php?m=Home&c=api.Goods&a=goodsContent&goods_id=' . $goodsInfo['goods_id'], // 内容url请求链接
+            'credit' => $goodsInfo['credit']
+        ];
+        return ['info' => $data];
+    }
 }

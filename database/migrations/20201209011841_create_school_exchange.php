@@ -31,7 +31,6 @@ class CreateSchoolExchange extends Migrator
         $this->table('school_exchange', ['comment' => '商学院商品兑换表'])
             ->addColumn('goods_id', 'integer', ['comment' => '商品ID'])
             ->addColumn('item_id', 'integer', ['default' => 0, 'comment' => '商品规格ID'])
-            ->addColumn('goods_num', 'integer', ['comment' => '商品数量'])
             ->addColumn('credit', 'decimal', ['default' => '0', 'precision' => 10, 'scale' => 2, 'comment' => '消费学分'])
             ->addColumn('is_open', 'integer', ['default' => 1, 'comment' => '是否开启'])
             ->addColumn('sort', 'integer', ['default' => 0, 'comment' => '排序'])
