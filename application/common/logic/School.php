@@ -341,6 +341,8 @@ class School
         foreach ($article as $item) {
             $articleIds[] = $item['id'];
             $cover = explode(',', $item['cover']);  // 封面图
+            $item['distribute_level'] = explode(',', $item['distribute_level']);
+            rsort($item['distribute_level']);   // 等级限制
             $list[] = [
                 'article_id' => $item['id'],
                 'class_id' => $item['class_id'],
@@ -354,7 +356,7 @@ class School
                 'learn' => $item['learn'],
                 'share' => $item['share'],
                 'integral' => $item['integral'],
-                'distribute_level' => $item['distribute_level'],
+                'distribute_level' => $item['distribute_level'][0],
                 'publish_time' => format_time($item['publish_time']),
                 'image' => [],
                 'video' => [

@@ -5,6 +5,7 @@ namespace app\admin\controller;
 
 use app\admin\model\SchoolArticle;
 use app\admin\model\SchoolArticleResource;
+use app\admin\model\SchoolExchange;
 use app\common\logic\OssLogic;
 use think\Db;
 use think\Page;
@@ -203,7 +204,7 @@ class School extends Base
     public function module7()
     {
         $classId = I('class_id', '');
-        return $this->module('module7', $classId);
+        return $this->module_7('module7', $classId);
     }
 
     /**
@@ -288,6 +289,69 @@ class School extends Base
         } else {
             return $this->fetch('module');
         }
+    }
+
+    public function module_7($type, $classId)
+    {
+        if (IS_POST) {
+            $param = I('post.');
+            $type = $param['type'];
+            if (empty($param['img'])) {
+                $this->error('图片上传错误');
+            }
+            if (!empty($param['img'])) {
+                if (strstr($param['img'], 'aliyuncs.com')) {
+                    // 原图
+                    $param['img'] = M('school')->where(['type' => $type])->value('img');
+                } else {
+                    // 新图
+                    $filePath = PUBLIC_PATH . substr($param['img'], strrpos($param['img'], '/public/') + 8);
+                    $fileName = substr($param['img'], strrpos($param['img'], '/') + 1);
+                    $object = 'image/' . date('Y/m/d/H/') . $fileName;
+                    $return_url = $this->ossClient->uploadFile($filePath, $object);
+                    if (!$return_url) {
+                        $this->error('图片上传错误');
+                    } else {
+                        // 图片信息
+                        $imageInfo = getimagesize($filePath);
+                        $param['img'] = 'url:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1];
+                        unlink($filePath);
+                    }
+                }
+            }
+            if (M('school')->where(['type' => $type])->find()) {
+                M('school')->where(['type' => $type])->update($param);
+            } else {
+                M('school')->add($param);
+            }
+            $this->success('操作成功', U('School/' . $type));
+        }
+
+        // 模块信息
+        $module = M('school')->where(['type' => $type])->find();
+        if (!empty($module['img'])) {
+            $img = explode(',', $module['img']);
+            $module['img'] = $this->ossClient::url(substr($img[0], strrpos($img[0], 'url:') + 4));
+        }
+        // 兑换商品列表
+        $exchangeGoods = M('school_exchange')->select();
+        $exchange = [];
+        foreach ($exchangeGoods as $k => $v) {
+            $exchange[$k] = M('Goods')->where('goods_id=' . $v['goods_id'])->find();
+            if ($v['item_id']) {
+                $exchange[$k]['SpecGoodsPrice'] = M('SpecGoodsPrice')->where(['item_id' => $v['item_id']])->find();
+            }
+            $exchange[$k]['goods_num'] = $v['goods_num'];
+            $exchange[$k]['credit'] = $v['credit'];
+            $exchange[$k]['is_open'] = $v['is_open'];
+            $exchange[$k]['sort'] = $v['sort'];
+        }
+
+        $this->assign('type', $type);
+        $this->assign('class_id', $classId);
+        $this->assign('module', $module);
+        $this->assign('exchange', $exchange);
+        return $this->fetch('module_7');
     }
 
     /**
@@ -738,5 +802,36 @@ class School extends Base
             'delete_time' => NOW_TIME,
         ]);
         $this->ajaxReturn(['status' => 1, 'msg' => '处理成功', 'result' => ['type' => $type, 'class_id' => $classId]]);
+    }
+
+
+    public function addExchange()
+    {
+        $postData = I('post.');
+//        echo '<pre>';
+//        print_r($postData);
+//        echo '</pre>';
+//        exit();
+        $exchangeData = [];
+        if (!empty($postData['item'])) {
+            foreach ($postData['item'] as $data) {
+                $exchangeData[] = [
+                    'goods_id' => $data['goods_id'],
+                    'item_id' => $data['item_id'] ?? 0,
+                    'goods_num' => $data['goods_num'],
+                    'credit' => $data['credit'],
+                    'sort' => $data['sort'],
+                    'is_open' => $data['is_open'],
+                ];
+            }
+        }
+        Db::startTrans();
+        M('school_exchange')->where('1=1')->delete();
+        if (!empty($exchangeData)) {
+            $schoolExchange = new SchoolExchange();
+            $schoolExchange->saveAll($exchangeData);
+        }
+        Db::commit();
+        $this->success('设置成功', U('Admin/School/module7'));
     }
 }

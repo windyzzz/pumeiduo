@@ -31,7 +31,7 @@
                         <input style="cursor: pointer;" type="button" name="button" value="选择上传..." class="type-file-button" onClick="GetUploadify(1,'module_img','school','img_call_back')">
                         <div style="clear: both;"></div>
                     </div>
-                    <p class="notic">长40px，宽40px</p>
+                    <p class="notic">长120px，宽120px</p>
                 </dd>
             </dl>
             <dl class="row">
@@ -96,7 +96,7 @@
                     </a>
                 </li>
             </foreach>
-            <li><a onclick="addModule('{$module.id}', '{$module.type}')"><h1>+</h1></a></li>
+            <li><a onclick="addModuleClass('{$module.id}', '{$module.type}')"><h1>+</h1></a></li>
         </ul>
     </div>
     <if condition="!empty($module_class)">
@@ -157,7 +157,7 @@
                     <input type="hidden" name="type" value="{$type}">
                     <input type="hidden" name="class_id" value="{$module_class[id]}">
                     <a class="ncap-btn-big ncap-btn-green" onclick="updateModule('datapost2')">确认提交</a>
-                    <a class="ncap-btn-big ncap-btn-red" onclick="delModule('{$type}', '{$module_class[id]}')">删除分类</a>
+                    <a class="ncap-btn-big ncap-btn-red" onclick="delModuleClass('{$type}', '{$module_class[id]}')">删除分类</a>
                 </div>
             </div>
         </form>
@@ -309,7 +309,11 @@
         $("." + elementid).attr('src', fileurl_tmp);
     }
 
-    function addModule(module_id, module_type) {
+    function updateModule(postId) {
+        $('#' + postId).submit();
+    }
+
+    function addModuleClass(module_id, module_type) {
         var url = "{:U('Admin/School/addModuleClass')}/module_id/" + module_id + "/type/" + module_type;
         layer.open({
             type: 2,
@@ -321,15 +325,11 @@
         });
     }
 
-    function addModuleCallback(module_type) {
+    function addModuleClassCallback(module_type) {
         window.location.href = "{:U('Admin/School/')}" + module_type;
     }
 
-    function updateModule(postId) {
-        $('#' + postId).submit();
-    }
-
-    function delModule(type, class_id) {
+    function delModuleClass(type, class_id) {
         layer.confirm('确认删除？（分类下的文章都会被删除）', {
             btn: ['确定', '取消']
         }, function () {
