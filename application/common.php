@@ -1652,10 +1652,12 @@ function confirm_order($id, $user_id = 0)
     // 供应链订单确认
     if ($order['order_type'] == 3) {
         $cOrderSn = M('order')->where(['parent_id' => $order['order_id'], 'order_type' => 3])->value('order_sn');
-        $res = (new \app\common\logic\supplier\OrderService())->confirmOrder($cOrderSn);
-        if ($res['status'] == 0) {
-            Db::rollback();
-            return $res;
+        if ($cOrderSn) {
+            $res = (new \app\common\logic\supplier\OrderService())->confirmOrder($cOrderSn);
+            if ($res['status'] == 0) {
+                Db::rollback();
+                return $res;
+            }
         }
     }
 
