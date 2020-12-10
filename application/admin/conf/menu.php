@@ -185,6 +185,7 @@ return [
             ['name' => '在线培训', 'act' => 'module5', 'op' => 'School'],
             ['name' => '素材专区', 'act' => 'module6', 'op' => 'School'],
             ['name' => '兑换专区', 'act' => 'module7', 'op' => 'School'],
+            ['name' => '我的课程', 'act' => 'module8', 'op' => 'School'],
         ]],
 
         // array('name' => '统计','child' => array(

@@ -27,7 +27,7 @@ class School extends Validate
     //验证场景
     protected $scene = [
         'article_add' => ['title', 'subtitle', 'cover', 'publish_time', 'content'],
-        'article_add_6' => ['title', 'publish_time'],
+        'article_add_6' => ['content', 'publish_time'],
     ];
 
     protected function checkEmpty($value)

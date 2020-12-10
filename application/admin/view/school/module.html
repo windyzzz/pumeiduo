@@ -367,6 +367,7 @@
     }
 
     function addModuleClass(module_id, module_type) {
+        if (module_id == '') module_id = 0;
         var url = "{:U('Admin/School/addModuleClass')}/module_id/" + module_id + "/type/" + module_type;
         layer.open({
             type: 2,

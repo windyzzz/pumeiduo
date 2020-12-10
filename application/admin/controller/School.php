@@ -207,6 +207,12 @@ class School extends Base
         return $this->module_7('module7', $classId);
     }
 
+    public function module8()
+    {
+        $classId = I('class_id', '');
+        return $this->module_8('module8', $classId);
+    }
+
     /**
      * 模块信息
      * @param $type
@@ -354,6 +360,55 @@ class School extends Base
         return $this->fetch('module_7');
     }
 
+    public function module_8($type, $classId)
+    {
+        if (IS_POST) {
+            $param = I('post.');
+            $type = $param['type'];
+            if (empty($param['img'])) {
+                $this->error('图片上传错误');
+            }
+            if (!empty($param['img'])) {
+                if (strstr($param['img'], 'aliyuncs.com')) {
+                    // 原图
+                    $param['img'] = M('school')->where(['type' => $type])->value('img');
+                } else {
+                    // 新图
+                    $filePath = PUBLIC_PATH . substr($param['img'], strrpos($param['img'], '/public/') + 8);
+                    $fileName = substr($param['img'], strrpos($param['img'], '/') + 1);
+                    $object = 'image/' . date('Y/m/d/H/') . $fileName;
+                    $return_url = $this->ossClient->uploadFile($filePath, $object);
+                    if (!$return_url) {
+                        $this->error('图片上传错误');
+                    } else {
+                        // 图片信息
+                        $imageInfo = getimagesize($filePath);
+                        $param['img'] = 'img:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ',type:' . substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1);
+                        unlink($filePath);
+                    }
+                }
+            }
+            if (M('school')->where(['type' => $type])->find()) {
+                M('school')->where(['type' => $type])->update($param);
+            } else {
+                M('school')->add($param);
+            }
+            $this->success('操作成功', U('School/' . $type));
+        }
+
+        // 模块信息
+        $module = M('school')->where(['type' => $type])->find();
+        if (!empty($module['img'])) {
+            $img = explode(',', $module['img']);
+            $module['img'] = $this->ossClient::url(substr($img[0], strrpos($img[0], 'url:') + 4));
+        }
+
+        $this->assign('type', $type);
+        $this->assign('class_id', $classId);
+        $this->assign('module', $module);
+        return $this->fetch('module_8');
+    }
+
     /**
      * 增加模块分类
      * @return mixed
@@ -362,6 +417,9 @@ class School extends Base
     {
         if (IS_POST) {
             $param = I('post.');
+            if (empty($param['module_id'])) {
+                $this->error('请先创建模块信息');
+            }
             $type = $param['type'];
             $callback = $param['call_back'];
             unset($param['type']);
@@ -521,6 +579,9 @@ class School extends Base
             }
             $this->ajaxReturn(['status' => 1, 'msg' => '处理成功', 'result' => ['type' => $type, 'class_id' => $classId]]);
         }
+        if (empty($classId)) {
+            $this->error('请先创建分类', U('Admin/School/' . $type));
+        }
         if ($articleId) {
             $articleInfo = M('school_article')->where(['id' => $articleId])->find();
             $articleInfo['distribute_level'] = explode(',', $articleInfo['distribute_level']);
@@ -563,8 +624,7 @@ class School extends Base
             // 文章信息
             $articleParam = [
                 'class_id' => $classId,
-                'title' => $postData['title'],
-                'content' => '',
+                'content' => $postData['content'],
                 'sort' => $postData['sort'],
                 'integral' => $postData['integral'],
                 'publish_time' => strtotime($postData['publish_time']),
@@ -740,6 +800,9 @@ class School extends Base
             }
             Db::commit();
             $this->ajaxReturn(['status' => 1, 'msg' => '处理成功', 'result' => ['type' => $type, 'class_id' => $classId]]);
+        }
+        if (empty($classId)) {
+            $this->error('请先创建模块分类', U('Admin/School/' . $type));
         }
         if ($articleId) {
             $articleInfo = M('school_article')->where(['id' => $articleId])->find();

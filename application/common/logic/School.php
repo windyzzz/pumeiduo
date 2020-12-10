@@ -52,6 +52,10 @@ class School
             $level = implode(',', $level);
             $where['sa.distribute_level'] = $level;
         }
+        if (count($where) == 1) {
+            // 防止前端没有传参
+            $where['sa.class_id'] = 1;
+        }
         return $where;
     }
 
@@ -345,7 +349,7 @@ class School
         $count = M('school_article sa')->where($where)->count();
         // 查询数据
         $page = new Page($count, $limit);
-        $article = M('school_article sa')->where($where)->order($sort)->limit($page->firstRow . ',' . $page->listRows)->field('content', true)->select();
+        $article = M('school_article sa')->where($where)->order($sort)->limit($page->firstRow . ',' . $page->listRows)->select();
         $list = [];
         $articleIds = [];
         foreach ($article as $item) {
@@ -358,10 +362,12 @@ class School
                 'class_id' => $item['class_id'],
                 'title' => $item['title'],
                 'subtitle' => $item['subtitle'],
+                'content' => !empty($param['module_type']) && $param['module_type'] == 'module6' ? htmlspecialchars_decode($item['content']) : '',
                 'cover' => [
                     'url' => $this->ossClient::url(substr($cover[0], strrpos($cover[0], 'url:') + 4)),
-                    'width' => $cover[1] ? substr($cover[1], strrpos($cover[1], 'width:') + 6) : 1,
-                    'height' => $cover[2] ? substr($cover[2], strrpos($cover[2], 'height:') + 7) : 1,
+                    'width' => $cover[1] ? substr($cover[1], strrpos($cover[1], 'width:') + 6) : '1',
+                    'height' => $cover[2] ? substr($cover[2], strrpos($cover[2], 'height:') + 7) : '1',
+                    'type' => $cover[3] ? substr($cover[3], strrpos($cover[3], 'type:') + 5) : '1',
                 ],
                 'learn' => $item['learn'],
                 'share' => $item['share'],
@@ -384,19 +390,22 @@ class School
         if (!empty($param['module_type']) && $param['module_type'] == 'module6') {
             $resource = M('school_article_resource')->where(['article_id' => ['IN', $articleIds]])->select();
             $official = M('school_config')->where(['type' => 'official'])->find();
-            $headUrl = explode(',', $official['url']);
-            $official['url'] = $this->ossClient::url(substr($headUrl[0], strrpos($headUrl[0], 'url:') + 4));
+            if ($official) {
+                $headUrl = explode(',', $official['url']);
+                $official['url'] = $this->ossClient::url(substr($headUrl[0], strrpos($headUrl[0], 'url:') + 4));
+            }
             foreach ($list as $k => $l) {
-                $list[$k]['user']['user_name'] = $official['name'];
-                $list[$k]['user']['head_pic'] = $official['url'];
+                $list[$k]['user']['user_name'] = $official ? $official['name'] : '';
+                $list[$k]['user']['head_pic'] = $official ? $official['url'] : '';
                 foreach ($resource as $r) {
                     if ($l['article_id'] == $r['article_id']) {
                         if (!empty($r['image'])) {
                             $image = explode(',', $r['image']);
                             $list[$k]['image'][] = [
                                 'url' => $this->ossClient::url(substr($image[0], strrpos($image[0], 'url:') + 4)),
-                                'width' => $image[1],
-                                'height' => $image[2],
+                                'width' => substr($image[1], strrpos($image[1], 'width:') + 6),
+                                'height' => substr($image[2], strrpos($image[2], 'height:') + 7),
+                                'type' => substr($image[3], strrpos($image[3], 'type:') + 5),
                             ];
                         } elseif (!empty($r['video'])) {
                             $list[$k]['video']['url'] = $this->ossClient::url($r['video']);
@@ -437,10 +446,12 @@ class School
             'class_id' => $articleInfo['class_id'],
             'title' => $articleInfo['title'],
             'subtitle' => $articleInfo['subtitle'],
+            'content' => '',
             'cover' => [
                 'url' => $this->ossClient::url(substr($cover[0], strrpos($cover[0], 'url:') + 4)),
                 'width' => substr($cover[1], strrpos($cover[1], 'width:') + 6),
                 'height' => substr($cover[2], strrpos($cover[2], 'height:') + 7),
+                'type' => substr($cover[3], strrpos($cover[3], 'type:') + 5),
             ],
             'learn' => $articleInfo['learn'],
             'share' => $articleInfo['share'],

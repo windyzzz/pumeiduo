@@ -30,7 +30,7 @@ class CreateSchoolArticle extends Migrator
     {
         $this->table('school_article', ['comment' => '商学院文章表'])
             ->addColumn('class_id', 'integer', ['comment' => '商学院模块分类ID'])
-            ->addColumn('title', 'string', ['comment' => '标题'])
+            ->addColumn('title', 'string', ['default' => '', 'comment' => '标题'])
             ->addColumn('subtitle', 'string', ['default' => '', 'comment' => '副标题'])
             ->addColumn('content', 'text', ['comment' => '内容'])
             ->addColumn('cover', 'string', ['default' => '', 'comment' => '封面图'])
