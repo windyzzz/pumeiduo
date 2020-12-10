@@ -21,7 +21,7 @@ class Order
 
         // 分销开关全局
         $distribut_switch = tpCache('distribut.switch');
-        if (1 == $distribut_switch && file_exists(APP_PATH . 'common/logic/DistributLogic.php')) {
+        if (1 == $distribut_switch && file_exists(APP_PATH . 'common/logic/DistributLogic.php') && $order['order_type'] != 5) {
             $distributLogic = new \app\common\logic\DistributLogic();
             $distributLogic->rebateLog($order); // 生成分成记录
         }

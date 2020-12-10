@@ -42,6 +42,7 @@ class Pay
     private $userElectronic = '0';          // 使用电子币
     private $payPoints = '0';               // 使用积分
     private $couponPrice = '0';             // 优惠券抵消金额
+    private $schoolCredit = '0';            // 商学院学分
 
     private $orderPromIds = [];             // 订单优惠IDs
     private $orderPromAmount = '0';         // 订单优惠金额
@@ -257,6 +258,15 @@ class Pay
         // 优惠比例
         $promRate = $this->totalAmount != '0' ? bcsub(1, ($promAmount / $this->totalAmount), 2) : '0';
         $this->orderPv = $promRate < 1 ? bcmul($promRate, $this->goodsPv, 2) : $this->goodsPv;
+    }
+
+    /**
+     * 设置商学院学分
+     * @param $credit
+     */
+    public function setSchoolCredit($credit)
+    {
+        $this->schoolCredit = $credit;
     }
 
     /**
@@ -1666,6 +1676,11 @@ class Pay
     public function getOrderPv()
     {
         return $this->orderPv;
+    }
+
+    public function getSchoolCredit()
+    {
+        return $this->schoolCredit;
     }
 
     public function getOrderSplit()

@@ -130,9 +130,11 @@ class PlaceOrder
         if (0 == $this->order['order_amount']) {
             update_pay_status($this->order['order_sn']);
         }
-        $this->deductionCoupon(); //扣除优惠券
-        $this->deductionCouponRe(); //扣除兑换券
-        $this->changUserPointMoney($this->order); //扣除用户积分余额
+        if ($this->order['order_type'] != 5) {
+            $this->deductionCoupon(); //扣除优惠券
+            $this->deductionCouponRe(); //扣除兑换券
+            $this->changUserPointMoney($this->order); //扣除用户积分余额
+        }
         $this->queueDec();
     }
 
@@ -260,8 +262,12 @@ class PlaceOrder
             'order_pv' => $this->pay->getOrderPv(),
             'id_card' => $this->userIdCard ?? '',
             'order_type' => $this->orderType,
-            'is_agent' => $this->hasAgent
+            'is_agent' => $this->hasAgent,
+            'school_credit' => $this->pay->getSchoolCredit(),
         ];
+        if ($this->orderType == 5) {
+            $orderData['order_amount'] = 0;
+        }
         if (!empty($this->userAddress)) {
             $orderData['consignee'] = $this->userAddress['consignee']; // 收货人
             $orderData['province'] = $this->userAddress['province']; //'省份id',
@@ -362,6 +368,7 @@ class PlaceOrder
                 'order_id2' => 0,
                 'supplier_goods_id' => 0,
                 'is_agent' => $payItem['goods']['is_agent'],
+                'school_credit' => $payItem['school_credit'] ?? 0,
             ];
             if (!empty($payItem['spec_key'])) {
                 $orderGoodsData['spec_key'] = $payItem['spec_key'];
@@ -405,7 +412,8 @@ class PlaceOrder
                         'pay_type' => 0,
                         'order_id2' => 0,
                         'supplier_goods_id' => 0,
-                        'is_agent' => 0
+                        'is_agent' => 0,
+                        'school_credit' => $payItem['school_credit'] ?? 0,
                     ];
                     if (!empty($v['spec_key'])) {
                         $orderGoodsData['spec_key'] = $v['spec_key'];           // 商品规格
@@ -444,7 +452,8 @@ class PlaceOrder
                         'pay_type' => 0,
                         'order_id2' => 0,
                         'supplier_goods_id' => 0,
-                        'is_agent' => 0
+                        'is_agent' => 0,
+                        'school_credit' => $payItem['school_credit'] ?? 0,
                     ];
                     if (!empty($v['spec_key'])) {
                         $orderGoodsData['spec_key'] = $v['spec_key']; // 商品规格
@@ -503,7 +512,8 @@ class PlaceOrder
                         'pay_type' => 0,
                         'order_id2' => 0,
                         'supplier_goods_id' => 0,
-                        'is_agent' => 0
+                        'is_agent' => 0,
+                        'school_credit' => $payItem['school_credit'] ?? 0,
                     ];
                     array_push($orderGoodsAllData, $orderGoodsData);
                 }
@@ -541,7 +551,8 @@ class PlaceOrder
                     'pay_type' => 0,
                     'order_id2' => 0,
                     'supplier_goods_id' => 0,
-                    'is_agent' => 0
+                    'is_agent' => 0,
+                    'school_credit' => $payItem['school_credit'] ?? 0,
                 ];
                 array_push($orderGoodsAllData, $orderGoodsData);
             }

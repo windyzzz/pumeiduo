@@ -3,7 +3,9 @@
 namespace app\common\logic;
 
 
+use app\common\util\TpshopException;
 use think\Cache;
+use think\Db;
 use think\Page;
 
 class School
@@ -411,7 +413,7 @@ class School
                             $list[$k]['video']['url'] = $this->ossClient::url($r['video']);
                             $list[$k]['video']['cover'] = $this->ossClient::url($r['video_cover']);
                             $list[$k]['video']['axis'] = $r['video_axis'];
-                            continue 1;
+                            break 1;
                         }
                     }
                 }
@@ -612,12 +614,14 @@ class School
     /**
      * 获取兑换商品详情
      * @param $goodsId
+     * @param $itemId
      * @return array
      */
-    public function getExchangeInfo($goodsId)
+    public function getExchangeInfo($goodsId, $itemId)
     {
         $where = [
             'se.goods_id' => $goodsId,
+            'se.item_id' => $itemId,
             'se.is_open' => 1,
             'g.is_on_sale' => 1
         ];
@@ -638,5 +642,132 @@ class School
             'credit' => $goodsInfo['credit']
         ];
         return ['info' => $data];
+    }
+
+    /**
+     * 创建兑换订单
+     * @param $user
+     * @param $payPwd
+     * @param $userAddress
+     * @param $goodsInfo
+     * @return array
+     */
+    public function createExchangeOrder($user, $payPwd, $userAddress, $goodsInfo)
+    {
+        $goods = M('goods')->where(['goods_id' => $goodsInfo['goods_id']])->find();
+        if ($goods['is_on_sale'] == 0) {
+            return ['status' => 0, 'msg' => '商品已下架', 'result' => ''];
+        }
+        $buyGoods = [
+            'user_id' => $user['user_id'],
+            'session_id' => $user['token'],
+            'type' => 2,
+            'cart_type' => 1,
+            'goods_id' => $goods['goods_id'],
+            'goods_sn' => $goods['goods_sn'],
+            'goods_name' => $goods['goods_name'],
+            'market_price' => $goods['market_price'],
+            'goods_price' => $goods['shop_price'],
+            'member_goods_price' => $goods['shop_price'],
+            'goods_num' => $goodsInfo['goods_num'],
+            'add_time' => NOW_TIME,
+            'prom_type' => 0,
+            'prom_id' => 0,
+            'weight' => $goods['weight'],
+            'goods' => $goods,
+            'item_id' => $goodsInfo['item_id'],
+            'zone' => $goods['zone'],
+            'cut_fee' => 0,
+            'goods_fee' => 0,
+            'total_fee' => 0,
+            'school_credit' => $goodsInfo['credit']
+        ];
+        $store_count = $goods['store_count'];
+        if ($goodsInfo['item_id']) {
+            $specGoods = M('spec_goods_price')->where(['item_id' => $goodsInfo['item_id'], 'key' => ['NEQ', '']])->find();
+            $buyGoods['goods']['spec_key'] = $specGoods['key'];
+            $buyGoods['goods']['spec_key_name'] = $specGoods['key_name'];
+            $buyGoods['goods']['shop_price'] = $specGoods['price'];
+            $buyGoods['spec_key'] = $specGoods['key'];
+            $buyGoods['spec_key_name'] = $specGoods['key_name'];
+            $buyGoods['sku'] = $specGoods['sku'];
+            $store_count = $specGoods['store_count'];
+        }
+        try {
+            if ($goodsInfo['goods_num'] > $store_count) {
+                throw new TpshopException('立即购买', 0, ['status' => 0, 'msg' => $goods['goods_name'] . '，商品库存不足，剩余' . $store_count]);
+            }
+            $schoolCredit = bcmul($goodsInfo['credit'], $goodsInfo['goods_num'], 2);
+            $payLogic = new Pay();
+            $payLogic->setUserId($user['user_id']);
+            $payLogic->payCart([$buyGoods]);
+            $payLogic->setSchoolCredit($schoolCredit);
+            // 配送物流
+            $res = $payLogic->delivery($userAddress['district']);
+            if (isset($res['status']) && $res['status'] == -1) {
+                throw new TpshopException('商学院兑换商品下单', 0, ['status' => 0, 'msg' => '订单中部分商品不支持对当前地址的配送']);
+            }
+            // 订单创建
+            $placeOrder = new PlaceOrder($payLogic);
+            $placeOrder->setUser($user);
+            $placeOrder->setPayPsw($payPwd);
+            $placeOrder->setUserAddress($userAddress);
+            $placeOrder->setOrderType(5);
+            Db::startTrans();
+            $placeOrder->addNormalOrder(3);
+            // 扣除用户商学院学分
+            accountLog($user['user_id'], 0, 0, '兑换商品消费学分', 0, 0, '', 0, 23, true, 0, -$schoolCredit);
+            Db::commit();
+            return ['status' => 1, 'msg' => '订单创建成功'];
+        } catch (TpshopException $tpe) {
+            Db::rollback();
+            return $tpe->getErrorArr();
+        }
+    }
+
+    /**
+     * 获取兑换订单记录
+     * @param $limit
+     * @param $user
+     * @return array
+     */
+    public function getExchangeLog($limit, $user)
+    {
+        $where = [
+            'o.order_type' => 5,
+            'o.user_id' => $user['user_id']
+        ];
+        // 数据数量
+        $count = M('order o')->where($where)->count();
+        // 查询数据
+        $page = new Page($count, $limit);
+        $orderIds = M('order o')->where($where)->limit($page->firstRow . ',' . $page->listRows)->getField('o.order_id', true);
+        $orderList = M('order o')->where($where)->limit($page->firstRow . ',' . $page->listRows)
+            ->field('o.order_id, o.pay_time, o.school_credit')->order('o.pay_time DESC')->select();
+        // 订单商品
+        $orderGoods = M('order_goods og')->join('goods g', 'g.goods_id = og.goods_id')->join('spec_goods_price sgp', 'sgp.goods_id = og.goods_id AND sgp.key = og.spec_key', 'LEFT')
+            ->where(['og.order_id' => ['IN', $orderIds]])
+            ->field('og.order_id, og.goods_id, og.goods_name, og.spec_key_name, og.goods_num, g.original_img, sgp.item_id')->select();
+        $list = [];
+        foreach ($orderList as $order) {
+            $buyGoods = [];
+            foreach ($orderGoods as $goods) {
+                if ($order['order_id'] == $goods['order_id']) {
+                    $buyGoods = $goods;
+                    break;
+                }
+            }
+            $list[] = [
+                'order_id' => $order['order_id'],
+                'goods_id' => $buyGoods ? $buyGoods['goods_id'] : '0',
+                'item_id' => $buyGoods ? $buyGoods['item_id'] ?? '0' : '0',
+                'goods_name' => $buyGoods ? $buyGoods['goods_name'] . ' ' . $buyGoods['spec_key_name'] : '',
+                'goods_num' => $buyGoods ? $buyGoods['goods_num'] : '0',
+                'original_img_new' => $buyGoods ? getFullPath($buyGoods['original_img']) : '0',
+                'credit' => $order['school_credit'],
+                'add_time' => date('Y-m-d H:i:s', $order['pay_time']),
+            ];
+        }
+        return ['total' => $count, 'list' => $list];
     }
 }

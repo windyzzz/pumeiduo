@@ -1534,8 +1534,10 @@ function update_pay_status($order_sn, $ext = [])
         //分销设置
         M('rebate_log')->where('order_id', $order['order_id'])->save(['status' => 1]);
 
-        // 成为分销商条件 && 分销商升级 BY J
-        update_user_distribut($order['user_id'], $order['order_id']);
+        if ($order['order_type'] != 5) {
+            // 成为分销商条件 && 分销商升级 BY J
+            update_user_distribut($order['user_id'], $order['order_id']);
+        }
 
         // 成为分销商条件
         // $distribut_condition = tpCache('distribut.condition');

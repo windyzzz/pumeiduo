@@ -3,6 +3,8 @@
 namespace app\home\controller\api;
 
 use app\common\logic\School as SchoolLogic;
+use app\common\logic\UsersLogic;
+use app\common\util\TpshopException;
 
 class School extends Base
 {
@@ -171,10 +173,134 @@ class School extends Base
     public function exchangeInfo()
     {
         $goodsId = I('goods_id', 0);
-        $data = $this->logic->getExchangeInfo($goodsId);
+        $itemId = I('item_id', 0);
+        $data = $this->logic->getExchangeInfo($goodsId, $itemId);
         if (isset($data['status']) && $data['status'] != 1) {
             return json($data);
         }
+        return json(['status' => 1, 'msg' => '', 'result' => $data]);
+    }
+
+    /**
+     * 兑换订单
+     * @return \think\response\Json
+     */
+    public function exchangeOrder()
+    {
+        $goodsId = I('goods_id', 0);
+        $itemId = I('item_id', 0);
+        $goodsNum = I('goods_num', 0);
+        $addressId = I('address_id', '');
+        $payPwd = I('pay_pwd', '');
+        try {
+            if (!$goodsId || !$goodsNum) {
+                throw new TpshopException('商学院兑换商品下单', 0, ['status' => 0, 'msg' => '请选择商品']);
+            }
+            // 商品信息
+            $data = $this->logic->getExchangeInfo($goodsId, $itemId);
+            if (isset($data['status']) && $data['status'] != 1) {
+                throw new TpshopException('商学院兑换商品下单', 0, $data);
+            }
+            $data = $data['info'];
+            unset($data['content_url']);
+            $data['goods_num'] = $goodsNum;
+            $goodsInfo = $data;
+            // 价格计算
+            $orderAmount = bcmul($goodsInfo['credit'], $goodsNum, 2);
+            if ($orderAmount > $this->user['school_credit']) {
+                throw new TpshopException('商学院兑换商品下单', 0, ['status' => 0, 'msg' => '您的乐活豆不足，只有' . $this->user['school_credit']]);
+            }
+            if ($this->request->isPost()) {
+                /*
+                 * 下单处理
+                 */
+                if (!$addressId) {
+                    throw new TpshopException('商学院兑换商品下单', 0, ['status' => 0, 'msg' => '请选择地址']);
+                }
+                if (!$this->user['paypwd']) {
+                    throw new TpshopException('商学院兑换商品下单', 0, ['status' => 0, 'msg' => '请先设置支付密码']);
+                }
+                if ($this->user['paypwd'] != systemEncrypt($payPwd)) {
+                    throw new TpshopException('商学院兑换商品下单', 0, ['status' => 0, 'msg' => '支付密码错误']);
+                }
+                $userAddress = M('user_address')->where(['address_id' => $addressId])->find();
+                if (empty($userAddress)) {
+                    throw new TpshopException('商学院兑换商品下单', 0, ['status' => 0, 'msg' => '收货人信息不存在']);
+                }
+                $res = $this->logic->createExchangeOrder($this->user, $payPwd, $userAddress, $goodsInfo);
+                return json($res);
+            }
+            // 地址信息
+            if (!$addressId) {
+                // 用户默认地址
+                $userAddress = get_user_address_list_new($this->user_id, true);
+                if (!empty($userAddress)) {
+                    $userAddress = $userAddress[0];
+                }
+            } else {
+                $userAddress = get_user_address_list_new($this->user_id, false, $addressId);
+                if (empty($userAddress)) {
+                    return json(['status' => 0, 'msg' => '收货人信息不存在']);
+                }
+                $userAddress = $userAddress[0];
+            }
+            if (!empty($userAddress)) {
+                $userAddress['town_name'] = $userAddress['town_name'] ?? '';
+                $userAddress['is_illegal'] = 0;     // 非法地址
+                $userAddress['out_range'] = 0;      // 超出配送范围
+                $userAddress['limit_tips'] = '';    // 限制的提示
+                unset($userAddress['zipcode']);
+                unset($userAddress['is_pickup']);
+                $userLogic = new UsersLogic();
+                // 地址标签
+                $addressTab = $userLogic->getAddressTab($this->user_id);
+                $tabs = $userAddress['tabs'];
+                $userAddress['tabs'] = [];
+                if ($userAddress['is_default'] == 1) {
+                    $userAddress['tabs'][] = [
+                        'tab_id' => 0,
+                        'name' => '默认',
+                        'is_selected' => 1
+                    ];
+                }
+                if (!empty($addressTab) && !empty($tabs)) {
+                    $tabs = explode(',', $tabs);
+                    foreach ($addressTab as $item) {
+                        if (in_array($item['tab_id'], $tabs)) {
+                            $userAddress['tabs'][] = [
+                                'tab_id' => $item['tab_id'],
+                                'name' => $item['name'],
+                                'is_selected' => 1
+                            ];
+                        }
+                    }
+                }
+                // 判断用户地址是否合法
+                $userAddress = $userLogic->checkAddressIllegal($userAddress);
+            }
+            // 订单信息
+            $orderInfo = [
+                'order_amount' => $orderAmount
+            ];
+            $return = [
+                'user_address' => !empty($userAddress) ? [$userAddress] : [],
+                'goods_info' => [$goodsInfo],
+                'order_info' => $orderInfo
+            ];
+            return json(['status' => 1, 'msg' => '', 'result' => $return]);
+        } catch (TpshopException $tpe) {
+            return json($tpe->getErrorArr());
+        }
+    }
+
+    /**
+     * 兑换订单记录
+     * @return \think\response\Json
+     */
+    public function exchangeLog()
+    {
+        $limit = I('limit', 10);
+        $data = $this->logic->getExchangeLog($limit, $this->user);
         return json(['status' => 1, 'msg' => '', 'result' => $data]);
     }
 }
