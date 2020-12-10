@@ -54,7 +54,7 @@ class School extends Base
     {
         $limit = I('limit', 10);
         $param = [
-            'module_type' => I('module_type', ''),
+            'module_type' => I('code', ''),
             'class_id' => I('class_id', ''),
             'status' => I('status', ''),
             'is_recommend' => I('is_recommend', ''),
@@ -68,7 +68,7 @@ class School extends Base
             if (!$param['class_id']) return json(['status' => 0, 'msg' => '模块下没有分类']);
         }
         $data = $this->logic->getArticleList($limit, $param, $this->user);
-        if (isset($data['status']) && $data['status'] == 0) {
+        if (isset($data['status']) && $data['status'] != 1) {
             return json($data);
         }
         return json(['status' => 1, 'msg' => '', 'result' => $data]);
@@ -84,7 +84,7 @@ class School extends Base
             'article_id' => I('article_id', ''),
         ];
         $data = $this->logic->getArticleInfo($param, $this->user);
-        if (isset($data['status']) && $data['status'] == 0) {
+        if (isset($data['status']) && $data['status'] != 1) {
             return json($data);
         }
         return json(['status' => 1, 'msg' => '', 'result' => $data]);
@@ -112,7 +112,7 @@ class School extends Base
             'status' => I('status', ''),
         ];
         $data = $this->logic->getUserArticle($limit, $param, $this->user);
-        if (isset($data['status']) && $data['status'] == 0) {
+        if (isset($data['status']) && $data['status'] != 1) {
             return json($data);
         }
         return json(['status' => 1, 'msg' => '', 'result' => $data]);
@@ -126,7 +126,7 @@ class School extends Base
     {
         $articleId = I('article_id', 0);
         $data = $this->logic->learnArticle($articleId, $this->user);
-        if (isset($data['status']) && $data['status'] == 0) {
+        if (isset($data['status']) && $data['status'] != 1) {
             return json($data);
         }
         return json(['status' => 1, 'msg' => '', 'result' => $data]);
@@ -172,7 +172,7 @@ class School extends Base
     {
         $goodsId = I('goods_id', 0);
         $data = $this->logic->getExchangeInfo($goodsId);
-        if (isset($data['status']) && $data['status'] == 0) {
+        if (isset($data['status']) && $data['status'] != 1) {
             return json($data);
         }
         return json(['status' => 1, 'msg' => '', 'result' => $data]);

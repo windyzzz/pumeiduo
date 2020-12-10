@@ -482,8 +482,7 @@ class Ueditor extends Base
             $return = $editor->saveUploadImage($file, $this->savePath);
             $state = $return['state'];
             $return_data['url'] = $return['url'];
-            $isOss = I('is_oss', 'yes');
-            if ($isOss == 'yes') {
+            if (I('is_oss', 'yes') == 'yes') {
                 // 上传到OSS服务器
                 $res = $this->ossUp('image', $return['url']);
                 if ($res['status'] == 0) {
@@ -598,7 +597,7 @@ class Ueditor extends Base
                 $state = 'ERROR' . $file->getError();
             }
             $return_data['url'] = '/' . UPLOAD_PATH . $new_path . $info->getSaveName();
-            if (I('is_oss', true)) {
+            if (I('is_oss', 'yes') == 'yes') {
                 // 上传到OSS服务器
                 $res = $this->ossUp('video', $return_data['url']);
                 if ($res['status'] == 0) {

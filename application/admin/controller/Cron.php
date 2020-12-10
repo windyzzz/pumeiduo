@@ -1685,7 +1685,7 @@ AND log_id NOT IN
         ];
         $articleIds = M('community_article')->where($where)->getField('id', true);
         if (!empty($articleIds)) {
-            M('community_article')->where(['id' => ['IN', $articleIds]])->update(['status' => 1, 'publish_time' => NOW_TIME]);
+            M('community_article')->where(['id' => ['IN', $articleIds]])->update(['status' => 1]);
         }
     }
 
@@ -1706,5 +1706,20 @@ AND log_id NOT IN
             $ids[] = $item['id'];
         }
         M('user_share_image')->where(['id' => ['IN', $ids]])->delete();
+    }
+
+    /**
+     * 发布商学院文章
+     */
+    public function schoolArticlePublish()
+    {
+        $where = [
+            'status' => 2,
+            'publish_time' => ['ELT', NOW_TIME]
+        ];
+        $articleIds = M('school_article')->where($where)->getField('id', true);
+        if (!empty($articleIds)) {
+            M('school_article')->where(['id' => ['IN', $articleIds]])->update(['status' => 1]);
+        }
     }
 }

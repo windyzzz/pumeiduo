@@ -45,7 +45,7 @@ class School extends Base
                         } else {
                             // 图片信息
                             $imageInfo = getimagesize($filePath);
-                            $v['url'] = 'url:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1];
+                            $v['url'] = 'img:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ',type:' . substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1);
                             unlink($filePath);
                         }
                     }
@@ -123,7 +123,7 @@ class School extends Base
                     } else {
                         // 图片信息
                         $imageInfo = getimagesize($filePath);
-                        $param['url'] = 'url:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1];
+                        $param['url'] = 'img:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ',type:' . substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1);
                         unlink($filePath);
                     }
                 }
@@ -236,7 +236,7 @@ class School extends Base
                     } else {
                         // 图片信息
                         $imageInfo = getimagesize($filePath);
-                        $param['img'] = 'url:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1];
+                        $param['img'] = 'img:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ',type:' . substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1);
                         unlink($filePath);
                     }
                 }
@@ -314,7 +314,7 @@ class School extends Base
                     } else {
                         // 图片信息
                         $imageInfo = getimagesize($filePath);
-                        $param['img'] = 'url:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1];
+                        $param['img'] = 'img:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ',type:' . substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1);
                         unlink($filePath);
                     }
                 }
@@ -500,7 +500,7 @@ class School extends Base
                     } else {
                         // 图片信息
                         $imageInfo = getimagesize($filePath);
-                        $param['cover'] = 'url:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1];
+                        $param['cover'] = 'img:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ',type:' . substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1);
                         unlink($filePath);
                     }
                 }
@@ -632,7 +632,7 @@ class School extends Base
                                 // 图片信息
                                 $imageInfo = getimagesize($filePath);
                                 $resourceParam[] = [
-                                    'image' => 'url:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1],
+                                    'image' => 'img:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ',type:' . substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1),
                                     'get_image_info' => 1,
                                     'video' => ''
                                 ];
@@ -703,7 +703,7 @@ class School extends Base
                                 // 图片信息
                                 $imageInfo = getimagesize($filePath);
                                 $resourceParam[] = [
-                                    'image' => 'url:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1],
+                                    'image' => 'img:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ',type:' . substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1),
                                     'get_image_info' => 1,
                                     'video' => ''
                                 ];

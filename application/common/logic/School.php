@@ -254,10 +254,13 @@ class School
             }
             $url = explode(',', $item['url']);
             $list[] = [
-                'url' => $this->ossClient::url(substr($url[0], strrpos($url[0], 'url:') + 4)),
-                'width' => substr($url[1], strrpos($url[1], 'width:') + 6),
-                'height' => substr($url[2], strrpos($url[2], 'height:') + 7),
-                'type' => $item['module_type'],
+                'img' => [
+                    'img' => $this->ossClient::url(substr($url[0], strrpos($url[0], 'url:') + 4)),
+                    'width' => substr($url[1], strrpos($url[1], 'width:') + 6),
+                    'height' => substr($url[2], strrpos($url[2], 'height:') + 7),
+                    'type' => substr($url[3], strrpos($url[3], 'type:') + 5),
+                ],
+                'code' => $item['module_type'],
                 'is_allow' => isset($module) ? (int)$module['is_allow'] : 0,
                 'tips' => '功能尚未开放',
                 'need_login' => 1,
@@ -278,19 +281,20 @@ class School
             $img = explode(',', $item['img']);
             $list[] = [
                 'module_id' => $item['id'],
-                'icon' => [
-                    'url' => $this->ossClient::url(substr($img[0], strrpos($img[0], 'url:') + 4)),
+                'img' => [
+                    'img' => $this->ossClient::url(substr($img[0], strrpos($img[0], 'url:') + 4)),
                     'width' => substr($img[1], strrpos($img[1], 'width:') + 6),
                     'height' => substr($img[2], strrpos($img[2], 'height:') + 7),
+                    'type' => substr($img[3], strrpos($img[3], 'type:') + 5),
                 ],
                 'name' => $item['name'],
-                'type' => $item['type'],
+                'code' => $item['type'],
                 'is_allow' => (int)$item['is_allow'],
                 'tips' => '功能尚未开放',
                 'need_login' => 1,
             ];
         }
-        return ['row_num' => 4, 'list' => $list];
+        return ['config' => ['row_num' => 4], 'list' => $list];
     }
 
     /**
@@ -311,7 +315,7 @@ class School
                 'need_login' => 1,
             ];
         }
-        return ['row_num' => 4, 'list' => $list];
+        return ['list' => $list];
     }
 
     /**
@@ -327,7 +331,7 @@ class School
         if (!empty($param['class_id'])) {
             $moduleClass = M('school_class')->where(['id' => $param['class_id']])->find();
             $res = $this->checkUserClassLimit($moduleClass, $user);
-            if ($res['status'] == 0) {
+            if ($res['status'] != 1) {
                 return $res;
             }
         }
@@ -423,7 +427,7 @@ class School
         $articleInfo = M('school_article sa')->where($where)->find();
         // 查看阅览权限
         $res = $this->checkUserArticleLimit($articleInfo, $user);
-        if ($res['status'] == 0) {
+        if ($res['status'] != 1) {
             return $res;
         }
         Cache::set('school_article_content_' . $param['article_id'], $articleInfo['content'], 60);  // 文章内容
