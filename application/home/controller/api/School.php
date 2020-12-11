@@ -208,7 +208,7 @@ class School extends Base
             // 价格计算
             $orderAmount = bcmul($goodsInfo['credit'], $goodsNum, 2);
             if ($orderAmount > $this->user['school_credit']) {
-                throw new TpshopException('商学院兑换商品下单', 0, ['status' => 0, 'msg' => '您的乐活豆不足，只有' . $this->user['school_credit']]);
+                throw new TpshopException('商学院兑换商品下单', 0, ['status' => 0, 'msg' => '您当前的乐活豆不足，只有' . $this->user['school_credit']]);
             }
             if ($this->request->isPost()) {
                 /*
@@ -277,6 +277,12 @@ class School extends Base
                 }
                 // 判断用户地址是否合法
                 $userAddress = $userLogic->checkAddressIllegal($userAddress);
+                if ($userAddress['is_illegal'] == 1) {
+                    $userAddress['limit_tips'] = '当前地址信息不完整，请添加街道后补充完整地址信息再提交订单';
+                } else {
+                    // 判断用户地址是否超出范围
+                    $userAddress = $this->logic->createExchangeOrder($this->user, $payPwd, $userAddress, $goodsInfo, false);
+                }
             }
             // 订单信息
             $orderInfo = [

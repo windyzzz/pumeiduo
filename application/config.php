@@ -165,7 +165,6 @@ return [
         return json([
             'status' => '0',
             'msg' => '服务器异常',
-            'result' => '',
         ]);
     },
 

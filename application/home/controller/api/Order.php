@@ -78,7 +78,8 @@ class Order extends Base
             $bind['search_key2'] = "%$search_key%";
         }
         $where .= ' and prom_type < 5 '; //虚拟拼团订单不列出来
-        $where .= ' and deleted != 1 '; //虚拟拼团订单不列出来
+        $where .= ' and deleted != 1 ';
+        $where .= ' AND order_type != 5 ';
 
         $count = M('order')->where($where)->bind($bind)->count();
         $Page = new Page($count, 10);
@@ -159,6 +160,8 @@ class Order extends Base
             $where .= C(strtoupper(I('get.type')));
         }
         $where .= ' AND prom_type < 5 '; // 虚拟拼团订单不列出来
+        $where .= ' and deleted != 1 ';
+        $where .= ' AND order_type != 5 ';
         if ($this->isApplet) {
             $where .= ' AND order_type = 4';
         }
@@ -171,7 +174,7 @@ class Order extends Base
             $bind['search_key2'] = "%$search_key%";
         }
         // 订单数量
-        $orderNum = Db::name('order')->where($where)->bind($bind)->count();
+        $orderNum = Db::name('order')->where($where)->bind($bind)->fetchSql(1)->count();
         $page = new Page($orderNum, 10);
         // 订单列表
         $orderList = Db::name('order')->where($where)->bind($bind)->order('order_id DESC')->limit($page->firstRow . ',' . $page->listRows)->select();

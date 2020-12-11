@@ -206,6 +206,7 @@ class Tb extends Controller
             'parent_sn' => $order['parent_id'] > 0 ? M('order')->where(['order_id' => $order['parent_id']])->value('order_sn') : '',
             'supplier_order_sn' => $order['supplier_order_sn'],
             'supplier_order_status' => $order['supplier_order_status'],
+            'school_credit' => $order['school_credit'],
         );
         //$user = get_user_info($order['user_id'],0,'','user_name,true_name,mobile');
         $delivery_record = M('delivery_doc')->where('order_id=' . $order_id)->order('id desc')->limit(1)->find();
@@ -222,7 +223,8 @@ class Tb extends Controller
                 'spec_key' => $v['spec_key'],
                 'spec_key_name' => $v['spec_key_name'],
                 'other_rec_id' => $v['rec_id'],
-                'order_sn2' => $v['order_id2'] > 0 ? M('order')->where(['order_id' => $v['order_id2']])->value('order_sn') : ''
+                'order_sn2' => $v['order_id2'] > 0 ? M('order')->where(['order_id' => $v['order_id2']])->value('order_sn') : '',
+                'school_credit' => $v['school_credit'],
             );
         }
         return $data;

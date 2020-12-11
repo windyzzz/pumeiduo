@@ -150,17 +150,17 @@ class School
                 }
             }
         }
-        return ['status' => 1];
+        return ['status' => 1, 'msg' => 'ok'];
     }
 
     /**
      * 检验用户-文章限制
      * @param $article
      * @param $user
-     * @param $isResource
+     * @param int $type 1普通文章 2素材文章
      * @return array
      */
-    private function checkUserArticleLimit($article, $user, $isResource = false)
+    private function checkUserArticleLimit($article, $user, $type = 1)
     {
         if (empty($article)) {
             return ['status' => 0, 'msg' => '文章数据不存在'];
@@ -177,7 +177,11 @@ class School
                     $levelName .= M('distribut_level')->where(['level_id' => $lv])->value('level_name') . '或';
                 }
                 $levelName = rtrim($levelName, '或');
-                return ['status' => -1, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
+                if (in_array(3, $level)) {
+                    return ['status' => -1, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
+                } else {
+                    return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
+                }
             }
         }
         // 是否已购买课程
@@ -194,10 +198,13 @@ class School
             }
             // 课程消费积分
             if ($article['integral'] > 0) {
-                if ($isResource) {
-                    $tips = '下载素材';
-                } else {
-                    $tips = '购买课程';
+                switch ($type) {
+                    case 1:
+                        $tips = '购买课程';
+                        break;
+                    case 2:
+                        $tips = '下载素材';
+                        break;
                 }
                 if ($article['integral'] > $user['pay_points']) {
                     return ['status' => 0, 'msg' => $tips . '需要消费积分' . $article['integral'] . '，您的积分不足'];
@@ -210,15 +217,25 @@ class School
                 'integral' => $article['integral'],
                 'add_time' => NOW_TIME
             ];
-            if ($isResource) {
-                $logData['type'] = 2;
+            if ($article['learn_time'] == 0) {
                 $logData['status'] = 1;
                 $logData['finish_time'] = NOW_TIME;
             }
+            switch ($type) {
+                case 1:
+                    break;
+                case 2:
+                    $logData['type'] = 2;
+                    $logData['status'] = 1;
+                    $logData['finish_time'] = NOW_TIME;
+                    break;
+            }
             // 用户课程记录
             M('user_school_article')->add($logData);
+            // 课程学习数+1
+            M('school_article')->where(['id' => $article['id']])->setInc('learn', 1);
         }
-        return ['status' => 1];
+        return ['status' => 1, 'msg' => 'ok'];
     }
 
     /**
@@ -455,6 +472,7 @@ class School
                 'height' => substr($cover[2], strrpos($cover[2], 'height:') + 7),
                 'type' => substr($cover[3], strrpos($cover[3], 'type:') + 5),
             ],
+            'learn_time' => $articleInfo['learn_time'],
             'learn' => $articleInfo['learn'],
             'share' => $articleInfo['share'],
             'integral' => $articleInfo['integral'],
@@ -561,7 +579,7 @@ class School
         // 文章数据
         $articleInfo = M('school_article sa')->where($where)->find();
         // 查看阅览权限
-        return $this->checkUserArticleLimit($articleInfo, $user, true);
+        return $this->checkUserArticleLimit($articleInfo, $user, 2);
     }
 
     /**
@@ -650,9 +668,10 @@ class School
      * @param $payPwd
      * @param $userAddress
      * @param $goodsInfo
+     * @param $isCreate
      * @return array
      */
-    public function createExchangeOrder($user, $payPwd, $userAddress, $goodsInfo)
+    public function createExchangeOrder($user, $payPwd, $userAddress, $goodsInfo, $isCreate = true)
     {
         $goods = M('goods')->where(['goods_id' => $goodsInfo['goods_id']])->find();
         if ($goods['is_on_sale'] == 0) {
@@ -704,21 +723,29 @@ class School
             $payLogic->setSchoolCredit($schoolCredit);
             // 配送物流
             $res = $payLogic->delivery($userAddress['district']);
-            if (isset($res['status']) && $res['status'] == -1) {
-                throw new TpshopException('商学院兑换商品下单', 0, ['status' => 0, 'msg' => '订单中部分商品不支持对当前地址的配送']);
+            if ($isCreate) {
+                if (isset($res['status']) && $res['status'] == -1) {
+                    throw new TpshopException('商学院兑换商品下单', 0, ['status' => 0, 'msg' => '订单中部分商品不支持对当前地址的配送']);
+                }
+                // 订单创建
+                $placeOrder = new PlaceOrder($payLogic);
+                $placeOrder->setUser($user);
+                $placeOrder->setPayPsw($payPwd);
+                $placeOrder->setUserAddress($userAddress);
+                $placeOrder->setOrderType(5);
+                Db::startTrans();
+                $placeOrder->addNormalOrder(3);
+                // 扣除用户商学院学分
+                accountLog($user['user_id'], 0, 0, '兑换商品消费学分', 0, 0, '', 0, 23, true, 0, -$schoolCredit);
+                Db::commit();
+                return ['status' => 1, 'msg' => '订单创建成功'];
+            } else {
+                if (isset($res['status']) && $res['status'] == -1) {
+                    $userAddress['out_range'] = 1;
+                    $userAddress['limit_tips'] = '当前地址不在配送范围内，请重新选择';
+                }
+                return $userAddress;
             }
-            // 订单创建
-            $placeOrder = new PlaceOrder($payLogic);
-            $placeOrder->setUser($user);
-            $placeOrder->setPayPsw($payPwd);
-            $placeOrder->setUserAddress($userAddress);
-            $placeOrder->setOrderType(5);
-            Db::startTrans();
-            $placeOrder->addNormalOrder(3);
-            // 扣除用户商学院学分
-            accountLog($user['user_id'], 0, 0, '兑换商品消费学分', 0, 0, '', 0, 23, true, 0, -$schoolCredit);
-            Db::commit();
-            return ['status' => 1, 'msg' => '订单创建成功'];
         } catch (TpshopException $tpe) {
             Db::rollback();
             return $tpe->getErrorArr();

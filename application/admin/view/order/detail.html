@@ -114,6 +114,7 @@
                                     <case value="2"><span style="color: green;">韩国购</span></case>
                                     <case value="3"><span style="color: blue;">供应链</span></case>
                                     <case value="4"><span style="color: orange;">直播</span></case>
+                                    <case value="5"><span style="color: hotpink;">商学院兑换</span></case>
                                 </switch>
                             </dd>
                             <dt>会员：</dt>
@@ -220,6 +221,9 @@
                                 <th>规格属性</th>
                                 <th>交易条件</th>
                                 <th>数量</th>
+                                <if condition="$order[order_type] == 5">
+                                    <th>乐活豆</th>
+                                </if>
                                 <th>单品价格</th>
                                 <th>现金价</th>
                                 <th>积分</th>
@@ -252,6 +256,9 @@
                                         </switch>
                                     </td>
                                     <td class="w60">{$good.goods_num}</td>
+                                    <if condition="$order[order_type] == 5">
+                                        <td>{$good.school_credit}</td>
+                                    </if>
                                     <td class="w100">{$good.goods_price}</td>
                                     <td class="w60">{$good.member_goods_price}</td>
                                     <td class="w60">{$good.use_integral}</td>
@@ -413,6 +420,10 @@
                             <dd>-{$order.discount}</dd>
                         </dl>
                         <dl>
+                            <if condition="$order[order_type] == 5">
+                                <dt>乐活豆：</dt>
+                                <dd><strong class="red_common">{$order.school_credit}</strong></dd>
+                            </if>
                             <dt>应付：</dt>
                             <dd><strong class="red_common">{$order.order_amount}</strong></dd>
                         </dl>
