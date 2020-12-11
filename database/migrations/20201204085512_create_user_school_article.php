@@ -31,6 +31,7 @@ class CreateUserSchoolArticle extends Migrator
         $this->table('user_school_article', ['comment' => '用户商学院文章记录表'])
             ->addColumn('user_id', 'integer', ['comment' => '用户ID'])
             ->addColumn('article_id', 'integer', ['comment' => '文章ID'])
+            ->addColumn('is_learn', 'integer', ['default' => '0', 'comment' => '是否是学习课程'])
             ->addColumn('integral', 'decimal', ['default' => '0', 'precision' => 10, 'scale' => 2, 'comment' => '学习需要积分'])
             ->addColumn('credit', 'decimal', ['default' => '0', 'precision' => 10, 'scale' => 2, 'comment' => '学习完成获得的学分'])
             ->addColumn('status', 'integer', ['default' => 0, 'comment' => '学习状态：0未完成 1已完成'])

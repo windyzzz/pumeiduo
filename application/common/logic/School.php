@@ -217,6 +217,9 @@ class School
                 'integral' => $article['integral'],
                 'add_time' => NOW_TIME
             ];
+            if (in_array($article['learn_type'], [1, 2])) {
+                $logData['is_learn'] = 1;
+            }
             if ($article['learn_time'] == 0) {
                 $logData['status'] = 1;
                 $logData['finish_time'] = NOW_TIME;
@@ -511,6 +514,7 @@ class School
         // 搜索条件
         $where = $this->userArticleWhere($param);
         $where['usa.user_id'] = $user['user_id'];
+        $where['usa.is_learn'] = 1;
         // 数据数量
         $count = M('user_school_article usa')->join('school_article sa', 'sa.id = usa.article_id')->where($where)->count();
         // 查询数据
