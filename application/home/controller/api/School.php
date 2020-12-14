@@ -215,7 +215,6 @@ class School extends Base
             if (isset($data['status']) && $data['status'] != 1) {
                 throw new TpshopException('商学院兑换商品下单', 0, $data);
             }
-            $data = $data['info'];
             unset($data['content_url']);
             $data['goods_num'] = $goodsNum;
             $goodsInfo = $data;

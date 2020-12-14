@@ -522,16 +522,30 @@ class School
         if (!$return_url) {
             return ['status' => 0, 'msg' => 'ERROR：' . $this->ossClient->getError()];
         }
-        // 图片信息
+        // 二维码信息
         $imageInfo = getimagesize($filePath);
         $img = [
             'img' => $this->ossClient::url($object),
-            'width' => $imageInfo[0],
-            'height' => $imageInfo[0],
+            'width' => $imageInfo[0] . '',
+            'height' => $imageInfo[0] . '',
             'type' => substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1),
         ];
         unlink($filePath);
-        return ['img' => $img];
+        // 文章信息
+        $articleInfo = M('school_article')->where(['id' => $articleId])->field('title, cover')->find();
+        $cover = explode(',', $articleInfo['cover']);  // 封面图
+        $data = [
+            'qrcode' => $img,
+            'title' => $articleInfo['title'],
+            'cover' => [
+                'url' => $this->ossClient::url(substr($cover[0], strrpos($cover[0], 'url:') + 4)),
+                'width' => substr($cover[1], strrpos($cover[1], 'width:') + 6),
+                'height' => substr($cover[2], strrpos($cover[2], 'height:') + 7),
+                'type' => substr($cover[3], strrpos($cover[3], 'type:') + 5),
+            ],
+            'user_id' => $user['user_id']
+        ];
+        return $data;
     }
 
     /**
@@ -695,7 +709,7 @@ class School
             'content_url' => SITE_URL . '/index.php?m=Home&c=api.Goods&a=goodsContent&goods_id=' . $goodsInfo['goods_id'], // 内容url请求链接
             'credit' => $goodsInfo['credit']
         ];
-        return ['info' => $data];
+        return $data;
     }
 
     /**
