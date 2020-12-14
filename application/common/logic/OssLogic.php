@@ -235,6 +235,26 @@ class OssLogic
     }
 
     /**
+     * 检查文件
+     * @param $filePath
+     * @return bool
+     */
+    public function checkFile($filePath)
+    {
+        $ossClient = self::getOssClient();
+        if (!$ossClient) {
+            return false;
+        }
+        $object = $filePath;
+        try {
+            $ossClient->doesObjectExist(self::$bucket, $object);
+        } catch (OssException $e) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * 下载文件
      * @param $filePath
      * @param $path

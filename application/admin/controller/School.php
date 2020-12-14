@@ -71,7 +71,7 @@ class School extends Base
         foreach ($schoolConfig as $val) {
             if ($val['type'] == 'official' && !empty($val['url'])) {
                 $url = explode(',', $val['url']);
-                $val['url'] = $this->ossClient::url(substr($url[0], strrpos($url[0], 'url:') + 4));
+                $val['url'] = $this->ossClient::url(substr($url[0], strrpos($url[0], 'img:') + 4));
             }
             $config[$val['type']] = [
                 'name' => $val['name'],
@@ -85,7 +85,7 @@ class School extends Base
         $images = M('school_rotate')->where(['module_id' => 0])->limit($page->firstRow . ',' . $page->listRows)->order('sort DESC')->select();
         foreach ($images as &$image) {
             $url = explode(',', $image['url']);
-            $image['url'] = $this->ossClient::url(substr($url[0], strrpos($url[0], 'url:') + 4));
+            $image['url'] = $this->ossClient::url(substr($url[0], strrpos($url[0], 'img:') + 4));
             $image['module_type'] = M('school')->where(['type' => $image['module_type']])->value('name');
         }
 
@@ -139,7 +139,7 @@ class School extends Base
         if ($id) {
             $imageInfo = M('school_rotate')->where(['id' => $id])->find();
             $url = explode(',', $imageInfo['url']);
-            $imageInfo['url'] = $this->ossClient::url(substr($url[0], strrpos($url[0], 'url:') + 4));
+            $imageInfo['url'] = $this->ossClient::url(substr($url[0], strrpos($url[0], 'img:') + 4));
         } else {
             $imageInfo['sort'] = 0;
         }
@@ -259,7 +259,7 @@ class School extends Base
         $module = M('school')->where(['type' => $type])->find();
         if (!empty($module['img'])) {
             $img = explode(',', $module['img']);
-            $module['img'] = $this->ossClient::url(substr($img[0], strrpos($img[0], 'url:') + 4));
+            $module['img'] = $this->ossClient::url(substr($img[0], strrpos($img[0], 'img:') + 4));
         }
         // 模块分类信息
         $classList = M('school_class')->where(['module_id' => $module['id']])->order('sort DESC')->select();
@@ -337,7 +337,7 @@ class School extends Base
         $module = M('school')->where(['type' => $type])->find();
         if (!empty($module['img'])) {
             $img = explode(',', $module['img']);
-            $module['img'] = $this->ossClient::url(substr($img[0], strrpos($img[0], 'url:') + 4));
+            $module['img'] = $this->ossClient::url(substr($img[0], strrpos($img[0], 'img:') + 4));
         }
         // 兑换商品列表
         $exchangeGoods = M('school_exchange')->order('sort DESC, id ASC')->select();
@@ -400,7 +400,7 @@ class School extends Base
         $module = M('school')->where(['type' => $type])->find();
         if (!empty($module['img'])) {
             $img = explode(',', $module['img']);
-            $module['img'] = $this->ossClient::url(substr($img[0], strrpos($img[0], 'url:') + 4));
+            $module['img'] = $this->ossClient::url(substr($img[0], strrpos($img[0], 'img:') + 4));
         }
 
         $this->assign('type', $type);
@@ -586,7 +586,7 @@ class School extends Base
             $articleInfo = M('school_article')->where(['id' => $articleId])->find();
             $articleInfo['distribute_level'] = explode(',', $articleInfo['distribute_level']);
             $cover = explode(',', $articleInfo['cover']);
-            $articleInfo['cover'] = $this->ossClient::url(substr($cover[0], strrpos($cover[0], 'url:') + 4));
+            $articleInfo['cover'] = $this->ossClient::url(substr($cover[0], strrpos($cover[0], 'img:') + 4));
             $articleInfo['publish_time'] = date('Y-m-d H:i:s', $articleInfo['publish_time']);
         } else {
             $articleInfo = [];
@@ -661,7 +661,7 @@ class School extends Base
                         if (!empty($articleResource)) {
                             foreach ($articleResource as $resource) {
                                 $image = explode(',', $resource['image']);
-                                $articleImage[substr($image[0], strrpos($image[0], 'url:') + 4)] = [
+                                $articleImage[substr($image[0], strrpos($image[0], 'img:') + 4)] = [
                                     'width' => substr($image[1], strrpos($image[1], 'width:') + 6),
                                     'height' => substr($image[2], strrpos($image[2], 'height:') + 7),
                                 ];
@@ -676,7 +676,7 @@ class School extends Base
                                 // 原本的图片
                                 $image = substr($image, strrpos($image, 'image'));
                                 $resourceParam[] = [
-                                    'image' => 'url:' . $image . ',width:' . $articleImage[$image]['width'] . ',height:' . $articleImage[$image]['height'],
+                                    'image' => 'img:' . $image . ',width:' . $articleImage[$image]['width'] . ',height:' . $articleImage[$image]['height'],
                                     'get_image_info' => 1,
                                     'video' => ''
                                 ];
@@ -813,7 +813,7 @@ class School extends Base
             foreach ($articleResource as &$resource) {
                 if (!empty($resource['image'])) {
                     $image = explode(',', $resource['image']);
-                    $resource['image'] = $this->ossClient::url(substr($image[0], strrpos($image[0], 'url:') + 4));
+                    $resource['image'] = $this->ossClient::url(substr($image[0], strrpos($image[0], 'img:') + 4));
                     $articleInfo['upload_content'] = 1;
                 }
                 if (!empty($resource['video'])) {

@@ -281,7 +281,7 @@ class School
             $url = explode(',', $item['url']);
             $list[] = [
                 'img' => [
-                    'img' => $this->ossClient::url(substr($url[0], strrpos($url[0], 'url:') + 4)),
+                    'img' => $this->ossClient::url(substr($url[0], strrpos($url[0], 'img:') + 4)),
                     'width' => substr($url[1], strrpos($url[1], 'width:') + 6),
                     'height' => substr($url[2], strrpos($url[2], 'height:') + 7),
                     'type' => substr($url[3], strrpos($url[3], 'type:') + 5),
@@ -308,7 +308,7 @@ class School
             $list[] = [
                 'module_id' => $item['id'],
                 'img' => [
-                    'img' => $this->ossClient::url(substr($img[0], strrpos($img[0], 'url:') + 4)),
+                    'img' => $this->ossClient::url(substr($img[0], strrpos($img[0], 'img:') + 4)),
                     'width' => substr($img[1], strrpos($img[1], 'width:') + 6),
                     'height' => substr($img[2], strrpos($img[2], 'height:') + 7),
                     'type' => substr($img[3], strrpos($img[3], 'type:') + 5),
@@ -386,7 +386,7 @@ class School
                 'subtitle' => $item['subtitle'],
                 'content' => !empty($param['module_type']) && $param['module_type'] == 'module6' ? htmlspecialchars_decode($item['content']) : '',
                 'cover' => [
-                    'url' => $this->ossClient::url(substr($cover[0], strrpos($cover[0], 'url:') + 4)),
+                    'img' => $this->ossClient::url(substr($cover[0], strrpos($cover[0], 'img:') + 4)),
                     'width' => $cover[1] ? substr($cover[1], strrpos($cover[1], 'width:') + 6) : '1',
                     'height' => $cover[2] ? substr($cover[2], strrpos($cover[2], 'height:') + 7) : '1',
                     'type' => $cover[3] ? substr($cover[3], strrpos($cover[3], 'type:') + 5) : '1',
@@ -414,7 +414,7 @@ class School
             $official = M('school_config')->where(['type' => 'official'])->find();
             if ($official) {
                 $headUrl = explode(',', $official['url']);
-                $official['url'] = $this->ossClient::url(substr($headUrl[0], strrpos($headUrl[0], 'url:') + 4));
+                $official['url'] = $this->ossClient::url(substr($headUrl[0], strrpos($headUrl[0], 'img:') + 4));
             }
             foreach ($list as $k => $l) {
                 $list[$k]['user']['user_name'] = $official ? $official['name'] : '';
@@ -424,7 +424,7 @@ class School
                         if (!empty($r['image'])) {
                             $image = explode(',', $r['image']);
                             $list[$k]['image'][] = [
-                                'url' => $this->ossClient::url(substr($image[0], strrpos($image[0], 'url:') + 4)),
+                                'img' => $this->ossClient::url(substr($image[0], strrpos($image[0], 'img:') + 4)),
                                 'width' => substr($image[1], strrpos($image[1], 'width:') + 6),
                                 'height' => substr($image[2], strrpos($image[2], 'height:') + 7),
                                 'type' => substr($image[3], strrpos($image[3], 'type:') + 5),
@@ -470,7 +470,7 @@ class School
             'subtitle' => $articleInfo['subtitle'],
             'content' => '',
             'cover' => [
-                'url' => $this->ossClient::url(substr($cover[0], strrpos($cover[0], 'url:') + 4)),
+                'img' => $this->ossClient::url(substr($cover[0], strrpos($cover[0], 'img:') + 4)),
                 'width' => substr($cover[1], strrpos($cover[1], 'width:') + 6),
                 'height' => substr($cover[2], strrpos($cover[2], 'height:') + 7),
                 'type' => substr($cover[3], strrpos($cover[3], 'type:') + 5),
@@ -510,27 +510,49 @@ class School
      */
     public function getArticleShareCode($articleId, $user)
     {
-        $qrPath = create_qrcode('school_article', $user['user_id'], ['article_id' => $articleId]);
-        if (!$qrPath) {
-            return ['status' => 0, 'msg' => '生成失败'];
+        $qrCodeInfo = M('user_school_article_qrcode')->where(['user_id' => $user['user_id'], 'article_id' => $articleId])->value('img');
+        if ($qrCodeInfo) {
+            $qrCodeInfo = explode(',', $qrCodeInfo);
         }
-        // 上传到oss服务器
-        $filePath = PUBLIC_PATH . substr($qrPath, strrpos($qrPath, 'public/') + 7);
-        $fileName = substr($qrPath, strrpos($qrPath, '/') + 1);
-        $object = 'image/' . date('Y/m/d/H/') . $fileName;
-        $return_url = $this->ossClient->uploadFile($filePath, $object);
-        if (!$return_url) {
-            return ['status' => 0, 'msg' => 'ERROR：' . $this->ossClient->getError()];
+        if ($qrCodeInfo && is_array($qrCodeInfo) && $this->ossClient->checkFile($qrCodeInfo[0])) {
+            // 文件在oss服务器存在
+            $img = [
+                'img' => $this->ossClient::url(substr($qrCodeInfo[0], strrpos($qrCodeInfo[0], 'img:') + 4)),
+                'width' => substr($qrCodeInfo[1], strrpos($qrCodeInfo[1], 'width:') + 6),
+                'height' => substr($qrCodeInfo[2], strrpos($qrCodeInfo[2], 'height:') + 7),
+                'type' => substr($qrCodeInfo[3], strrpos($qrCodeInfo[3], 'type:') + 5),
+            ];
+        } else {
+            $qrPath = create_qrcode('school_article', $user['user_id'], ['article_id' => $articleId]);
+            if (!$qrPath) {
+                return ['status' => 0, 'msg' => '生成失败'];
+            }
+            // 上传到oss服务器
+            $filePath = PUBLIC_PATH . substr($qrPath, strrpos($qrPath, 'public/') + 7);
+            $fileName = substr($qrPath, strrpos($qrPath, '/') + 1);
+            $object = 'image/' . date('Y/m/d/H/') . $fileName;
+            $return_url = $this->ossClient->uploadFile($filePath, $object);
+            if (!$return_url) {
+                return ['status' => 0, 'msg' => 'ERROR：' . $this->ossClient->getError()];
+            }
+            // 二维码信息
+            $imageInfo = getimagesize($filePath);
+            $img = [
+                'img' => $this->ossClient::url($object),
+                'width' => $imageInfo[0] . '',
+                'height' => $imageInfo[0] . '',
+                'type' => substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1),
+            ];
+            unlink($filePath);
+            // 信息记录
+            M('user_school_article_qrcode')->where(['user_id' => $user['user_id'], 'article_id' => $articleId])->delete();
+            M('user_school_article_qrcode')->add([
+                'user_id' => $user['user_id'],
+                'article_id' => $articleId,
+                'img' => 'img:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ',type:' . substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1),
+                'add_time' => NOW_TIME
+            ]);
         }
-        // 二维码信息
-        $imageInfo = getimagesize($filePath);
-        $img = [
-            'img' => $this->ossClient::url($object),
-            'width' => $imageInfo[0] . '',
-            'height' => $imageInfo[0] . '',
-            'type' => substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1),
-        ];
-        unlink($filePath);
         // 文章信息
         $articleInfo = M('school_article')->where(['id' => $articleId])->field('title, cover')->find();
         $cover = explode(',', $articleInfo['cover']);  // 封面图
@@ -538,7 +560,7 @@ class School
             'qrcode' => $img,
             'title' => $articleInfo['title'],
             'cover' => [
-                'url' => $this->ossClient::url(substr($cover[0], strrpos($cover[0], 'url:') + 4)),
+                'img' => $this->ossClient::url(substr($cover[0], strrpos($cover[0], 'img:') + 4)),
                 'width' => substr($cover[1], strrpos($cover[1], 'width:') + 6),
                 'height' => substr($cover[2], strrpos($cover[2], 'height:') + 7),
                 'type' => substr($cover[3], strrpos($cover[3], 'type:') + 5),
@@ -576,9 +598,10 @@ class School
                 'title' => $item['title'],
                 'subtitle' => $item['subtitle'],
                 'cover' => [
-                    'url' => $this->ossClient::url(substr($cover[0], strrpos($cover[0], 'url:') + 4)),
-                    'width' => $cover[1] ? substr($cover[1], strrpos($cover[1], 'width:') + 6) : 1,
-                    'height' => $cover[2] ? substr($cover[2], strrpos($cover[2], 'height:') + 7) : 1,
+                    'img' => $this->ossClient::url(substr($cover[0], strrpos($cover[0], 'img:') + 4)),
+                    'width' => substr($cover[1], strrpos($cover[1], 'width:') + 6),
+                    'height' => substr($cover[2], strrpos($cover[2], 'height:') + 7),
+                    'type' => substr($cover[3], strrpos($cover[3], 'type:') + 5),
                 ],
                 'learn' => $item['learn'],
                 'share' => $item['share'],
