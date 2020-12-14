@@ -2265,25 +2265,38 @@ function img_radius($type, $imgPath, $imgResource = '', $radius = 15)
  * 分享二维码
  * @param $type
  * @param $user_id
- * @param int $goods_id
+ * @param array $param
  * @param string $logo
  * @return bool
  */
-function create_qrcode($type, $user_id, $goods_id = 0, $logo = '')
+function create_qrcode($type, $user_id, $param = [], $logo = '')
 {
     \think\Loader::import('phpqrcode', EXTEND_PATH);
 
     switch ($type) {
         case 'goods':
-            $url = SITE_URL . '/#/goods/goods_details?goods_id=' . $goods_id . '&cart_type=0&invite=' . $user_id;
-            $filename = 'public/images/qrcode/goods/goods_' . $user_id . '_' . $goods_id . '.png';
+            if (empty($param['goods_id']) || $param['goods_id'] == 0) {
+                return false;
+            }
+            $url = SITE_URL . '/#/goods/goods_details?goods_id=' . $param['goods_id'] . '&cart_type=0&invite=' . $user_id;
+            $filename = 'public/images/qrcode/goods/goods_' . $user_id . '_' . $param['goods_id'] . '.png';
             break;
         case 'user':
             $url = SITE_URL . '/#/register?invite=' . $user_id;
             $filename = 'public/images/qrcode/user/user_' . $user_id . '_min.png';
             break;
+        case 'school_article':
+            if (empty($param['article_id']) || $param['article_id'] == 0) {
+                return false;
+            }
+            $url = SITE_URL . '/#/school_article?article_id=' . $param['article_id'];
+            $filename = 'public/images/qrcode/user/user_' . $user_id . '_' . $param['article_id'] . '_school_article.png';
+            break;
         default:
             return false;
+    }
+    if (file_exists($filename)) {
+        return $filename;
     }
     $value = $url;                  //二维码内容
     $errorCorrectionLevel = 'L';    //容错级别

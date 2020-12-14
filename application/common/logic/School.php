@@ -503,6 +503,38 @@ class School
     }
 
     /**
+     * 获取文章分享二维码
+     * @param $articleId
+     * @param $user
+     * @return array
+     */
+    public function getArticleShareCode($articleId, $user)
+    {
+        $qrPath = create_qrcode('school_article', $user['user_id'], ['article_id' => $articleId]);
+        if (!$qrPath) {
+            return ['status' => 0, 'msg' => '生成失败'];
+        }
+        // 上传到oss服务器
+        $filePath = PUBLIC_PATH . substr($qrPath, strrpos($qrPath, 'public/') + 7);
+        $fileName = substr($qrPath, strrpos($qrPath, '/') + 1);
+        $object = 'image/' . date('Y/m/d/H/') . $fileName;
+        $return_url = $this->ossClient->uploadFile($filePath, $object);
+        if (!$return_url) {
+            return ['status' => 0, 'msg' => 'ERROR：' . $this->ossClient->getError()];
+        }
+        // 图片信息
+        $imageInfo = getimagesize($filePath);
+        $img = [
+            'img' => $this->ossClient::url($object),
+            'width' => $imageInfo[0],
+            'height' => $imageInfo[0],
+            'type' => substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1),
+        ];
+        unlink($filePath);
+        return ['img' => $img];
+    }
+
+    /**
      * 获取用户文章列表
      * @param $limit
      * @param $param

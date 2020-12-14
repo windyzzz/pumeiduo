@@ -114,7 +114,7 @@ class Share extends Base
                     if (!file_exists($logo)) {
                         $logo = '';
                     }
-                    $qrPath = create_qrcode('user', $this->user_id, $goodsId, $logo);
+                    $qrPath = create_qrcode('user', $this->user_id, ['goods_id' => $goodsId], $logo);
                 }
                 // 分享背景图
                 $shareBg = M('share_bg')->where(['type' => 'user'])->getField('image', true);
@@ -134,7 +134,7 @@ class Share extends Base
                     if (!file_exists($logo)) {
                         $logo = '';
                     }
-                    $qrPath = create_qrcode('goods', $this->user_id, $goodsId, $logo);
+                    $qrPath = create_qrcode('goods', $this->user_id, ['goods_id' => $goodsId], $logo);
                 }
                 // 分享背景图
                 $shareBg = M('share_bg')->where(['type' => 'goods'])->getField('image', true);

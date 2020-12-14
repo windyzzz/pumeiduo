@@ -17,7 +17,7 @@ class School extends Base
     }
 
     /**
-     * 获取轮播图
+     * 轮播图列表
      * @return \think\response\Json
      */
     public function rotate()
@@ -28,7 +28,7 @@ class School extends Base
     }
 
     /**
-     * 获取模块列表
+     * 模块列表
      * @return \think\response\Json
      */
     public function module()
@@ -38,7 +38,7 @@ class School extends Base
     }
 
     /**
-     * 获取模块分类列表
+     * 模块分类列表
      * @return \think\response\Json
      */
     public function moduleClass()
@@ -49,7 +49,7 @@ class School extends Base
     }
 
     /**
-     * 获取文章列表
+     * 文章列表
      * @return \think\response\Json
      */
     public function articleList()
@@ -77,7 +77,7 @@ class School extends Base
     }
 
     /**
-     * 获取文章详情
+     * 文章详情
      * @return \think\response\Json
      */
     public function articleInfo()
@@ -93,7 +93,7 @@ class School extends Base
     }
 
     /**
-     * 获取文章内容
+     * 文章内容
      * @return \think\response\Json
      */
     public function articleContent()
@@ -104,7 +104,21 @@ class School extends Base
     }
 
     /**
-     * 获取用户文章列表
+     * 文章分享二维码
+     * @return \think\response\Json
+     */
+    public function articleShareCode()
+    {
+        $articleId = I('article_id', 0);
+        $data = $this->logic->getArticleShareCode($articleId, $this->user);
+        if (isset($data['status']) && $data['status'] != 1) {
+            return json($data);
+        }
+        return json(['status' => 1, 'msg' => '', 'result' => $data]);
+    }
+
+    /**
+     * 用户文章列表
      * @return \think\response\Json
      */
     public function userArticle()
@@ -148,7 +162,7 @@ class School extends Base
     }
 
     /**
-     * 获取兑换商品列表
+     * 兑换商品列表
      * @return \think\response\Json
      */
     public function exchange()
@@ -167,7 +181,7 @@ class School extends Base
     }
 
     /**
-     * 获取兑换商品详情
+     * 兑换商品详情
      * @return \think\response\Json
      */
     public function exchangeInfo()
