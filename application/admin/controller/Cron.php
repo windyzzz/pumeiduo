@@ -1405,8 +1405,11 @@ AND log_id NOT IN
                         $pushTags[] = 'svip';
                         break;
                 }
+//                $all = 0;
+//                $pushTags = [];
+                $alias = '';
                 // 发送消息
-                $res = $pushLogic->push($contentData, $extraData, $all, [], $pushTags);
+                $res = $pushLogic->push($contentData, $extraData, $all, [], $pushTags, $alias);
                 if ($res['status'] !== 1) {
                     // 更新消息发送状态
                     M('push')->where(['id' => $push['id']])->update(['status' => -1]);
