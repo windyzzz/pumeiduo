@@ -1820,6 +1820,17 @@ function get_goods_category_tree($isApp = false)
 }
 
 /**
+ * 获取商品指定级别分类
+ * @param int $level
+ * @return array
+ */
+function get_goods_category($level = 1)
+{
+    $category = M('goods_category')->where(['level' => $level, 'is_show' => 1])->order('sort_order desc, id asc')->field('id, name')->select();
+    return ['list' => $category];
+}
+
+/**
  * 写入静态页面缓存.
  */
 function write_html_cache($html)

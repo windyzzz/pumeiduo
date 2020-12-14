@@ -724,13 +724,15 @@ class School
         if ($goodsInfo['item_id']) {
             $goodsInfo['goods_name'] .= ' ' . M('spec_goods_price')->where(['item_id' => $goodsInfo['item_id']])->value('key_name');
         }
+        $goodsTab = M('GoodsTab')->where(['goods_id' => $goodsId, 'title' => ['NEQ', ''], 'status' => 1])->getField('title', true);
         $data = [
             'goods_id' => $goodsInfo['goods_id'],
             'item_id' => $goodsInfo['item_id'],
             'goods_name' => $goodsInfo['goods_name'],
             'goods_remark' => $goodsInfo['goods_remark'],
             'content_url' => SITE_URL . '/index.php?m=Home&c=api.Goods&a=goodsContent&goods_id=' . $goodsInfo['goods_id'], // 内容url请求链接
-            'credit' => $goodsInfo['credit']
+            'credit' => $goodsInfo['credit'],
+            'tabs' => $goodsTab
         ];
         return $data;
     }

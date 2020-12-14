@@ -1836,14 +1836,17 @@ class Goods extends Base
             }
             if ($id) {
                 $cat_id_arr = getCatGrandson($id);
-                $where['cat_id|extend_cat_id'] = ['in', implode(',', $cat_id_arr)];
+                $where['cat_id|extend_cat_id'] = ['in', $cat_id_arr];
             }
             $search_goods = M('goods')->where($where)->getField('goods_id, cat_id');
             $filter_goods_id = array_keys($search_goods);
         } else {
             // 筛选
-            $cat_id_arr = getCatGrandson($id);
-            $goods_where = ['is_on_sale' => 1, 'cat_id|extend_cat_id' => ['in', $cat_id_arr]];
+            $goods_where = ['is_on_sale' => 1];
+            if ($id) {
+                $cat_id_arr = getCatGrandson($id);
+                $goods_where['cat_id|extend_cat_id'] = ['in', $cat_id_arr];
+            }
             if ($this->isApplet) {
                 $goods_where['applet_on_sale'] = 1;
             } else {
@@ -2874,6 +2877,17 @@ class Goods extends Base
         $return['goods_category_tree'] = $goods_category_tree;
 
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
+    }
+
+    /**
+     * 获取商品指定级别分类
+     * @return \think\response\Json
+     */
+    public function category()
+    {
+        $level = I('level', 1);
+        $goodsCategory = get_goods_category($level);
+        return json(['status' => 1, 'msg' => '', 'result' => $goodsCategory]);
     }
 
     /**
