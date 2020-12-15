@@ -1500,6 +1500,8 @@ class CartLogic extends Model
         foreach ($cartList as $k => $cartItem) {
             if ($cartItem['goods']['is_agent'] == 1) {
                 $cartList[$k]['goods_pv'] = $cartItem['goods']['buying_price_pv'];
+            } elseif ($cartItem['goods']['applet_on_sale'] == 1) {
+                $cartList[$k]['goods_pv'] = $cartItem['goods']['integral_pv'];
             } else {
                 switch ($cartItem['type']) {
                     case 1:
