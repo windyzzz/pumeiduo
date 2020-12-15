@@ -4045,75 +4045,77 @@ class User extends Base
                     }
                     // 新用户奖励记录
                     $userNewLog = M('user_new_log')->where(['user_id' => $this->user_id, 'status' => ['NEQ', -1]])->order('add_time DESC')->find();
-                    // 优惠券信息
-                    $couponIds = explode(',', $userNewLog['coupon_id']);
-                    $couponData = M('coupon')->where(['id' => ['IN', $couponIds]])->order('id desc')->select();
-                    // 优惠券商品
-                    $couponGoods = Db::name('goods_coupon gc')->join('goods g', 'g.goods_id = gc.goods_id')->where(['gc.coupon_id' => ['in', $couponIds]])->field('gc.coupon_id, g.goods_id, g.goods_name, g.original_img')->select();
-                    // 优惠券分类
-                    $couponCate = Db::name('goods_coupon gc1')->join('goods_category gc2', 'gc1.goods_category_id = gc2.id')->where(['gc1.coupon_id' => ['in', $couponIds]])->getField('gc1.coupon_id, gc2.id cate_id, gc2.name cate_name', true);
-                    $couponLogic = new CouponLogic();
-                    $couponList = [];
-                    foreach ($couponData as $k => $coupon) {
-                        if ($coupon['use_type'] == 1) {
-                            foreach ($couponGoods as $goods) {
-                                if ($coupon['id'] == $goods['coupon_id']) {
-                                    $couponList[] = [
-                                        'coupon_id' => $coupon['id'],
-                                        'use_type' => $coupon['use_type'],
-                                        'money' => floatval($coupon['money']) . '',
-                                        'use_start_time' => date('Y.m.d', $coupon['use_start_time']),
-                                        'use_end_time' => date('Y.m.d', $coupon['use_end_time']),
-                                        'cate_id' => '',
-                                        'cate_name' => '',
-                                        'goods_id' => $goods['goods_id'],
-                                        'goods_name' => $goods['goods_name'],
-                                        'original_img_new' => getFullPath($goods['original_img']),
-                                        'title' => $coupon['name'],
-                                        'desc' => '￥' . floatval($coupon['money']) . '仅限' . $goods['goods_name'] . '可用',
-                                        'content' => $coupon['content'] ?? ''
-                                    ];
+                    if (!empty($userNewLog)) {
+                        // 优惠券信息
+                        $couponIds = explode(',', $userNewLog['coupon_id']);
+                        $couponData = M('coupon')->where(['id' => ['IN', $couponIds]])->order('id desc')->select();
+                        // 优惠券商品
+                        $couponGoods = Db::name('goods_coupon gc')->join('goods g', 'g.goods_id = gc.goods_id')->where(['gc.coupon_id' => ['in', $couponIds]])->field('gc.coupon_id, g.goods_id, g.goods_name, g.original_img')->select();
+                        // 优惠券分类
+                        $couponCate = Db::name('goods_coupon gc1')->join('goods_category gc2', 'gc1.goods_category_id = gc2.id')->where(['gc1.coupon_id' => ['in', $couponIds]])->getField('gc1.coupon_id, gc2.id cate_id, gc2.name cate_name', true);
+                        $couponLogic = new CouponLogic();
+                        $couponList = [];
+                        foreach ($couponData as $k => $coupon) {
+                            if ($coupon['use_type'] == 1) {
+                                foreach ($couponGoods as $goods) {
+                                    if ($coupon['id'] == $goods['coupon_id']) {
+                                        $couponList[] = [
+                                            'coupon_id' => $coupon['id'],
+                                            'use_type' => $coupon['use_type'],
+                                            'money' => floatval($coupon['money']) . '',
+                                            'use_start_time' => date('Y.m.d', $coupon['use_start_time']),
+                                            'use_end_time' => date('Y.m.d', $coupon['use_end_time']),
+                                            'cate_id' => '',
+                                            'cate_name' => '',
+                                            'goods_id' => $goods['goods_id'],
+                                            'goods_name' => $goods['goods_name'],
+                                            'original_img_new' => getFullPath($goods['original_img']),
+                                            'title' => $coupon['name'],
+                                            'desc' => '￥' . floatval($coupon['money']) . '仅限' . $goods['goods_name'] . '可用',
+                                            'content' => $coupon['content'] ?? ''
+                                        ];
+                                    }
                                 }
+                            } else {
+                                $couponList[$k] = [
+                                    'coupon_id' => $coupon['id'],
+                                    'use_type' => $coupon['use_type'],
+                                    'money' => floatval($coupon['money']) . '',
+                                    'use_start_time' => date('Y.m.d', $coupon['use_start_time']),
+                                    'use_end_time' => date('Y.m.d', $coupon['use_end_time']),
+                                    'cate_id' => isset($couponCate[$coupon['id']]) ? $couponCate[$coupon['id']]['cate_id'] : '',
+                                    'cate_name' => isset($couponCate[$coupon['id']]) ? $couponCate[$coupon['id']]['cate_name'] : '',
+                                    'goods_id' => '',
+                                    'goods_name' => '',
+                                    'original_img_new' => '',
+                                    'title' => '',
+                                    'desc' => '',
+                                    'content' => $coupon['content'] ?? ''
+                                ];
+                                // 优惠券展示描述
+                                $res = $couponLogic->couponTitleDesc($coupon, $couponList[$k]['goods_name'], $couponList[$k]['cate_name']);
+                                if (empty($res)) {
+                                    continue;
+                                }
+                                $couponList[$k]['title'] = $res['title'];
+                                $couponList[$k]['desc'] = $res['desc'];
                             }
-                        } else {
-                            $couponList[$k] = [
-                                'coupon_id' => $coupon['id'],
-                                'use_type' => $coupon['use_type'],
-                                'money' => floatval($coupon['money']) . '',
-                                'use_start_time' => date('Y.m.d', $coupon['use_start_time']),
-                                'use_end_time' => date('Y.m.d', $coupon['use_end_time']),
-                                'cate_id' => isset($couponCate[$coupon['id']]) ? $couponCate[$coupon['id']]['cate_id'] : '',
-                                'cate_name' => isset($couponCate[$coupon['id']]) ? $couponCate[$coupon['id']]['cate_name'] : '',
-                                'goods_id' => '',
-                                'goods_name' => '',
-                                'original_img_new' => '',
-                                'title' => '',
-                                'desc' => '',
-                                'content' => $coupon['content'] ?? ''
-                            ];
-                            // 优惠券展示描述
-                            $res = $couponLogic->couponTitleDesc($coupon, $couponList[$k]['goods_name'], $couponList[$k]['cate_name']);
-                            if (empty($res)) {
-                                continue;
-                            }
-                            $couponList[$k]['title'] = $res['title'];
-                            $couponList[$k]['desc'] = $res['desc'];
+                            unset($couponList[$k]['cate_id']);
+                            unset($couponList[$k]['cate_name']);
+                            unset($couponList[$k]['goods_id']);
+                            unset($couponList[$k]['goods_name']);
                         }
-                        unset($couponList[$k]['cate_id']);
-                        unset($couponList[$k]['cate_name']);
-                        unset($couponList[$k]['goods_id']);
-                        unset($couponList[$k]['goods_name']);
+                        $return = [
+                            'state' => 1,
+                            'coupon_list' => $couponList
+                        ];
+                        // 更新奖励记录
+                        M('user_new_log')->where(['id' => $userNewLog['id']])->update(['status' => 1]);
+                        // 更新用户信息
+                        M('users')->where(['user_id' => $this->user_id])->update(['is_new' => 0]);
+                        $user = Db::name('users')->where('user_id', $this->user_id)->find();
+                        TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
                     }
-                    $return = [
-                        'state' => 1,
-                        'coupon_list' => $couponList
-                    ];
-                    // 更新奖励记录
-                    M('user_new_log')->where(['id' => $userNewLog['id']])->update(['status' => 1]);
-                    // 更新用户信息
-                    M('users')->where(['user_id' => $this->user_id])->update(['is_new' => 0]);
-                    $user = Db::name('users')->where('user_id', $this->user_id)->find();
-                    TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
                 }
             }
         }
