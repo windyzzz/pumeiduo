@@ -294,7 +294,11 @@ class School extends Base
                     $userAddress['limit_tips'] = '当前地址信息不完整，请添加街道后补充完整地址信息再提交订单';
                 } else {
                     // 判断用户地址是否超出范围
-                    $userAddress = $this->logic->createExchangeOrder($this->user, $payPwd, $userAddress, $goodsInfo, false);
+                    $res = $this->logic->createExchangeOrder($this->user, $payPwd, $userAddress, $goodsInfo, false);
+                    if (isset($res['status']) && $res['status'] != 1) {
+                        throw new TpshopException('商学院兑换商品下单', 0, $res);
+                    }
+                    $userAddress = $res;
                 }
             }
             // 订单信息
