@@ -456,10 +456,12 @@ class School
         $where = $this->articleWhere($param);
         // 文章数据
         $articleInfo = M('school_article sa')->where($where)->find();
-        // 查看阅览权限
-        $res = $this->checkUserArticleLimit($articleInfo, $user);
-        if ($res['status'] != 1) {
-            return $res;
+        if ($user) {
+            // 查看阅览权限
+            $res = $this->checkUserArticleLimit($articleInfo, $user);
+            if ($res['status'] != 1) {
+                return $res;
+            }
         }
         Cache::set('school_article_content_' . $param['article_id'], $articleInfo['content'], 60);  // 文章内容
         $cover = explode(',', $articleInfo['cover']);  // 封面图
@@ -481,8 +483,10 @@ class School
             'integral' => $articleInfo['integral'],
             'distribute_level' => $articleInfo['distribute_level'],
         ];
-        // 查看用户是否已购买学习课程
-        $info = $this->checkUserArticle([$info], [$articleInfo['id']], $user)[0];
+        if ($user) {
+            // 查看用户是否已购买学习课程
+            $info = $this->checkUserArticle([$info], [$articleInfo['id']], $user)[0];
+        }
         return $info;
     }
 
@@ -567,6 +571,8 @@ class School
             ],
             'user_id' => $user['user_id']
         ];
+        // 更新分享次数
+        M('school_article')->where(['id' => $articleId])->setInc('share', 1);
         return $data;
     }
 
@@ -876,7 +882,7 @@ class School
                 'goods_num' => $buyGoods ? $buyGoods['goods_num'] : '0',
                 'original_img_new' => $buyGoods ? getFullPath($buyGoods['original_img']) : '0',
                 'credit' => $order['school_credit'],
-                'add_time' => date('Y-m-d H:i:s', $order['pay_time']),
+                'add_time' => date('Y-m-d', $order['pay_time']),
             ];
         }
         return ['total' => $count, 'list' => $list];

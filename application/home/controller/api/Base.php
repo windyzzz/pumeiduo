@@ -117,6 +117,7 @@ class Base extends Controller
             'c=api.Activity&a=cateActList',             // 分类主题活动列表
             'c=api.Activity&a=cateActGoodsList',        // 分类主题活动商品列表
             'c=api.Activity&a=promActivity',            // 促销活动板块配置
+            'c=api.School&a=articleContent',            // 商学院获取文章内容
         ];
     }
 
