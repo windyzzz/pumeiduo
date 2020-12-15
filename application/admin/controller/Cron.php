@@ -1443,6 +1443,7 @@ AND log_id NOT IN
             'order_pv' => ['>', 0],
             'pv_tb' => 0,
             'pv_send' => 0,
+            'pv_user_id' => ['NEQ', 0],
             'end_sale_time' => ['<=', time()]       // 售后期结束
         ];
         $orderIds = M('order')->where($where)->getField('order_id', true);

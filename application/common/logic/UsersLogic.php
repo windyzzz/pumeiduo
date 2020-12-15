@@ -1277,8 +1277,19 @@ class UsersLogic extends Model
      * @param $inviteOpenid
      * @return array
      */
-    public function oauthRegApplet($unionid, $openid, $username, $password, $invite = 0, $inviteOpenid = '')
+    public function oauthRegApplet($unionid, $openid, $username, $password = '', $invite = 0, $inviteOpenid = '')
     {
+        if (!check_mobile($username)) {
+            return ['status' => 0, 'msg' => '手机号格式不正确'];
+        }
+        // 密码处理
+        $password = htmlspecialchars($password, ENT_NOQUOTES, 'UTF-8', false);
+        if ($password && !check_password($password)) {
+            return ['status' => 0, 'msg' => '密码格式为6-20位字母数字组合'];
+        } else {
+            $password = substr($username, -4);
+        }
+        // 授权信息
         $oauthUser = M('oauth_users')->where(['unionid' => $unionid])->order('tu_id desc')->find();
         if (!$oauthUser) {
             return ['status' => 0, 'msg' => 'unionid错误'];
@@ -1294,13 +1305,12 @@ class UsersLogic extends Model
             }
         }
         Db::startTrans();
-        if (check_mobile($username)) {
-            $userId = M('users')->where('mobile', $username)->where('is_cancel', 0)->value('user_id');
-            if ($userId) {
-                //--- 手机已有账号
-                if (M('oauth_users')->where(['user_id' => $userId])->find()) {
-                    return ['status' => 0, 'msg' => '该手机号已绑定了微信号'];
-                }
+        $userId = M('users')->where('mobile', $username)->where('is_cancel', 0)->value('user_id');
+        if ($userId) {
+            //--- 手机已有账号
+            if (M('oauth_users')->where(['user_id' => $userId])->find()) {
+                return ['status' => 0, 'msg' => '该手机号已绑定了微信号'];
+            }
 //                if ($oauthUser['user_id'] != 0 && $oauthUser['user_id'] != $userId) {
 //                    // 账号信息合并
 //                    $level = M('users')->where(['user_id' => $userId])->field('distribut_level, is_zhixiao')->find();
@@ -1318,42 +1328,14 @@ class UsersLogic extends Model
 //                        return $res;
 //                    }
 //                }
-            } else {
-                //--- 手机没有账号
-                $password = htmlspecialchars($password, ENT_NOQUOTES, 'UTF-8', false);
-                if (!check_password($password)) {
-                    return ['status' => 0, 'msg' => '密码格式为6-20位字母数字组合'];
-                }
-                if ($oauthUser['user_id'] != 0) {
-                    //--- 微信之前已绑定了账号（H5微信授权）
-                    $userId = $oauthUser['user_id'];
-                    $userInfo = M('users')->where(['user_id' => $userId])->field('user_id, is_lock, is_cancel')->find();
-                    if (empty($userInfo)) {
-                        // 账号被删了，重新注册
-                        $isReg = true;
-                        $data = [
-                            'mobile' => $username,
-                            'password' => systemEncrypt($password),
-                            'openid' => $oauthData['openid'],
-                            'unionid' => $oauthData['unionid'],
-                            'oauth' => $oauthUser['oauth'],
-                            'nickname' => $oauthData['nickname'],
-                            'head_pic' => !empty($oauthData['headimgurl']) ? $oauthData['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png',
-                            'sex' => $oauthData['sex'] ?? 0,
-                            'reg_time' => time(),
-                            'last_login' => time(),
-                            'token' => TokenLogic::setToken(),
-                            'time_out' => strtotime('+' . config('REDIS_DAY') . ' days'),
-                            'will_invite_uid' => $invite
-                        ];
-                        $userId = M('users')->add($data);
-                    } elseif ($userInfo['is_lock'] == 1) {
-                        return ['status' => 0, 'msg' => '微信绑定的账号已被冻结'];
-                    } elseif ($userInfo['is_cancel'] == 1) {
-                        return ['status' => 0, 'msg' => '微信绑定的账号已被注销'];
-                    }
-                } else {
-                    // 用户注册
+        } else {
+            //--- 手机没有账号
+            if ($oauthUser['user_id'] != 0) {
+                //--- 微信之前已绑定了账号（H5微信授权）
+                $userId = $oauthUser['user_id'];
+                $userInfo = M('users')->where(['user_id' => $userId])->field('user_id, is_lock, is_cancel')->find();
+                if (empty($userInfo)) {
+                    // 账号被删了，重新注册
                     $isReg = true;
                     $data = [
                         'mobile' => $username,
@@ -1371,10 +1353,31 @@ class UsersLogic extends Model
                         'will_invite_uid' => $invite
                     ];
                     $userId = M('users')->add($data);
+                } elseif ($userInfo['is_lock'] == 1) {
+                    return ['status' => 0, 'msg' => '微信绑定的账号已被冻结'];
+                } elseif ($userInfo['is_cancel'] == 1) {
+                    return ['status' => 0, 'msg' => '微信绑定的账号已被注销'];
                 }
+            } else {
+                // 用户注册
+                $isReg = true;
+                $data = [
+                    'mobile' => $username,
+                    'password' => systemEncrypt($password),
+                    'openid' => $oauthData['openid'],
+                    'unionid' => $oauthData['unionid'],
+                    'oauth' => $oauthUser['oauth'],
+                    'nickname' => $oauthData['nickname'],
+                    'head_pic' => !empty($oauthData['headimgurl']) ? $oauthData['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png',
+                    'sex' => $oauthData['sex'] ?? 0,
+                    'reg_time' => time(),
+                    'last_login' => time(),
+                    'token' => TokenLogic::setToken(),
+                    'time_out' => strtotime('+' . config('REDIS_DAY') . ' days'),
+                    'will_invite_uid' => $invite
+                ];
+                $userId = M('users')->add($data);
             }
-        } else {
-            return ['status' => 0, 'msg' => '手机号格式不正确'];
         }
         // 更新oauth记录
         M('oauth_users')->where(['tu_id' => $oauthUser['tu_id']])->update(['user_id' => $userId]);

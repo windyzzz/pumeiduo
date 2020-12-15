@@ -1905,7 +1905,7 @@ class Order extends Base
         $cartPriceInfo = $cartLogic->getCartPriceInfo($cartList['cartList']);
         $cartList = array_merge($cartList, $cartPriceInfo);
 
-        if ($this->user['distribut_level'] >= 3) {
+        if ($this->isApplet || $this->user['distribut_level'] >= 3) {
             // 计算商品pv
             $cartList['cartList'] = $cartLogic->calcGoodsPv($cartList['cartList']);
         }
@@ -2204,7 +2204,7 @@ class Order extends Base
             'spare_pay_points' => bcsub($this->user['pay_points'], $payReturn['pay_points'], 2),
             'give_integral' => $give_integral,
             'free_shipping_price' => tpCache('shopping.freight_free') <= $payReturn['order_amount'] ? '0' : bcsub(tpCache('shopping.freight_free'), $payReturn['order_amount'], 2),
-            'order_pv' => $payReturn['order_pv'] != '0.00' ? $payReturn['order_pv'] : '',
+            'order_pv' => $this->user['distribut_level'] >= 3 && $payReturn['order_pv'] != '0.00' ? $payReturn['order_pv'] : '',
             // 韩国购信息
             'abroad' => $abroad,
             'can_electronic' => $canElectronic
@@ -2257,7 +2257,7 @@ class Order extends Base
         $cartPriceInfo = $cartLogic->getCartPriceInfo($cartList['cartList']);
         $cartList = array_merge($cartList, $cartPriceInfo);
 
-        if ($this->user['distribut_level'] >= 3) {
+        if ($this->isApplet || $this->user['distribut_level'] >= 3) {
             // 计算商品pv
             $cartList['cartList'] = $cartLogic->calcGoodsPv($cartList['cartList']);
         }
@@ -2416,7 +2416,7 @@ class Order extends Base
             'spare_pay_points' => bcsub($this->user['pay_points'], $payReturn['pay_points'], 2),
             'give_integral' => $give_integral,
             'free_shipping_price' => tpCache('shopping.freight_free') <= $payReturn['order_amount'] ? '0' : bcsub(tpCache('shopping.freight_free'), $payReturn['order_amount'], 2),
-            'order_pv' => $payReturn['order_pv'] != '0.00' ? $payReturn['order_pv'] : ''
+            'order_pv' => $this->user['distribut_level'] >= 3 && $payReturn['order_pv'] != '0.00' ? $payReturn['order_pv'] : ''
         ];
         return json(['status' => 1, 'result' => $return]);
     }
@@ -2512,7 +2512,7 @@ class Order extends Base
         $cartPriceInfo = $cartLogic->getCartPriceInfo($cartList['cartList']);
         $cartList = array_merge($cartList, $cartPriceInfo);
 
-        if ($this->user['distribut_level'] >= 3) {
+        if ($this->isApplet || $this->user['distribut_level'] >= 3) {
             // 计算商品pv
             $cartList['cartList'] = $cartLogic->calcGoodsPv($cartList['cartList']);
         }

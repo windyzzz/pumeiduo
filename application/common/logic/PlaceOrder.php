@@ -262,6 +262,9 @@ class PlaceOrder
             'order_type' => $this->orderType,
             'is_agent' => $this->hasAgent
         ];
+        if ($orderData['order_pv'] > 0) {
+            $orderData['pv_user_id'] = $user['user_id'];
+        }
         if (!empty($this->userAddress)) {
             $orderData['consignee'] = $this->userAddress['consignee']; // 收货人
             $orderData['province'] = $this->userAddress['province']; //'省份id',

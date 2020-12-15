@@ -1041,59 +1041,25 @@ class Goods extends Base
                 /*
                  * 代理商商品
                  */
-                // 商品pv、佣金
+                // 商品pv（不显示佣金）
                 switch ($this->user['distribut_level']) {
-                    case 1:
-                        $goodsInfo['integral_pv'] = '';
-                        $goodsInfo['commission'] = '';
-                        break;
-                    case 2:
-                        $goodsInfo['integral_pv'] = '';
-                        if ($goods['commission'] == 0) {
-                            $goodsInfo['commission'] = '';
-                        } else {
-                            $goodsInfo['commission'] = bcdiv(bcmul($goods['exchange_price'], $goods['commission'], 2), 100, 2);   // 零售价佣金
-                        }
-                        break;
                     case 3:
                         if ($goods['buying_price_pv'] == 0) {
                             $goodsInfo['integral_pv'] = '';
                         } else {
                             $goodsInfo['integral_pv'] = bcmul($goods['buying_price_pv'], ($goodsInfo['exchange_price'] / $goods['buying_price']), 2); // 进货价pv
                         }
-                        if ($goods['commission'] == 0) {
-                            $goodsInfo['commission'] = '';
-                        } else {
-                            $goodsInfo['commission'] = bcdiv(bcmul($goodsInfo['exchange_price'], $goods['commission'], 2), 100, 2);   // 进货价佣金
-                        }
                         break;
                 }
             } else {
                 if ($this->isApplet) {
-                    // 商品pv、佣金
+                    // 商品pv
                     switch ($this->user['distribut_level']) {
-                        case 1:
-                            $goodsInfo['integral_pv'] = '';
-                            $goodsInfo['commission'] = '';
-                            break;
-                        case 2:
-                            $goodsInfo['integral_pv'] = '';
-                            if ($goods['commission'] == 0) {
-                                $goodsInfo['commission'] = '';
-                            } else {
-                                $goodsInfo['commission'] = bcdiv(bcmul($goodsInfo['exchange_price'], $goods['commission'], 2), 100, 2);
-                            }
-                            break;
                         case 3:
                             if ($goods['integral_pv'] == 0) {
                                 $goodsInfo['integral_pv'] = '';
                             } else {
                                 $goodsInfo['integral_pv'] = $goods['integral_pv'];
-                            }
-                            if ($goods['commission'] == 0) {
-                                $goodsInfo['commission'] = '';
-                            } else {
-                                $goodsInfo['commission'] = bcdiv(bcmul($goodsInfo['exchange_price'], $goods['commission'], 2), 100, 2);
                             }
                             break;
                     }
