@@ -200,7 +200,7 @@ class OrderLogic
                     M('order')->where(['parent_id' => $order_id])->update($updata);
                 }
                 // 含有代理商商品的订单发送订单pv到代理商系统记录
-                if ($order['is_agent'] == 1 && $order['pay_status'] == 1 && $order['order_pv'] > 0 && $order['pv_tb'] == 0 && $order['pv_send'] == 0) {
+                if ($order['is_agent'] == 1 && $order['pay_status'] == 1 && $order['order_pv'] > 0 && $order['pv_tb'] == 0 && $order['pv_send'] == 0 && $order['pv_user_id'] > 0) {
                     // 通知代理商系统记录
                     include_once "plugins/Tb.php";
                     $TbLogic = new \Tb();
