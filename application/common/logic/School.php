@@ -570,7 +570,8 @@ class School
                 'height' => substr($cover[2], strrpos($cover[2], 'height:') + 7),
                 'type' => substr($cover[3], strrpos($cover[3], 'type:') + 5),
             ],
-            'user_id' => $user['user_id']
+            'user_id' => $user['user_id'],
+            'share_link' => SITE_URL . '/#/school_article?article_id=' . $articleId
         ];
         // 更新分享次数
         M('school_article')->where(['id' => $articleId])->setInc('share', 1);
