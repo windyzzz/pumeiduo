@@ -44,6 +44,7 @@ class CreateSchoolArticle extends Migrator
             ->addColumn('integral', 'decimal', ['default' => '0', 'precision' => 10, 'scale' => 2, 'comment' => '学习需要积分'])
             ->addColumn('credit', 'decimal', ['default' => '0', 'precision' => 10, 'scale' => 2, 'comment' => '学习完成得到的学分'])
             ->addColumn('is_recommend', 'integer', ['default' => '0', 'comment' => '是否是推荐'])
+            ->addColumn('show_goods', 'integer', ['default' => '0', 'comment' => '是否显示兑换商品'])
             ->addColumn('add_time', 'integer')
             ->addColumn('publish_time', 'integer', ['default' => 0])
             ->addColumn('up_time', 'integer', ['default' => 0])

@@ -482,6 +482,7 @@ class School
             'share' => $articleInfo['share'],
             'integral' => $articleInfo['integral'],
             'distribute_level' => $articleInfo['distribute_level'],
+            'show_goods' => $articleInfo['show_goods'] ? 1 : 0,
         ];
         if ($user) {
             // 查看用户是否已购买学习课程

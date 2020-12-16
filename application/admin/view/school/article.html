@@ -119,6 +119,17 @@
             </dl>
             <dl class="row">
                 <dt class="tit">
+                    <label>是否显示兑换商品</label>
+                </dt>
+                <dd class="opt onoff">
+                    <label for="module_show_goods1" class="cb-enable <if condition='$info[show_goods] eq 1'>selected</if>">开启</label>
+                    <label for="module_show_goods0" class="cb-disable <if condition='$info[show_goods] eq 0'>selected</if>">隐藏</label>
+                    <input id="module_show_goods1" name="show_goods" <if condition='$info[show_goods] eq 1'>checked</if> value="1" type="radio">
+                    <input id="module_show_goods0" name="show_goods" <if condition='$info[show_goods] eq 0'>checked</if> value="0" type="radio">
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
                     <label>封面图</label>
                 </dt>
                 <dd class="opt">
