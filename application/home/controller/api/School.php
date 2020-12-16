@@ -49,6 +49,19 @@ class School extends Base
     }
 
     /**
+     * 用户文章权限检查
+     * @return \think\response\Json
+     */
+    public function checkArticle()
+    {
+        $param = [
+            'article_id' => I('article_id', ''),
+        ];
+        $res = $this->logic->checkArticle($param, $this->user);
+        return json($res);
+    }
+
+    /**
      * 文章列表
      * @return \think\response\Json
      */

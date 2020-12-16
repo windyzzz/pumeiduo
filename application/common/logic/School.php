@@ -345,6 +345,23 @@ class School
     }
 
     /**
+     * 用户文章权限检查
+     * @param $param
+     * @param $user
+     * @return array
+     */
+    public function checkArticle($param, $user)
+    {
+        // 搜索条件
+        $where = $this->articleWhere($param);
+        // 文章数据
+        $articleInfo = M('school_article sa')->where($where)->find();
+        // 查看阅览权限
+        $res = $this->checkUserArticleLimit($articleInfo, $user, 1);
+        return $res;
+    }
+
+    /**
      * 获取文章列表
      * @param $limit
      * @param $param
@@ -456,13 +473,6 @@ class School
         $where = $this->articleWhere($param);
         // 文章数据
         $articleInfo = M('school_article sa')->where($where)->find();
-        if ($user) {
-            // 查看阅览权限
-            $res = $this->checkUserArticleLimit($articleInfo, $user);
-            if ($res['status'] != 1) {
-                return $res;
-            }
-        }
         Cache::set('school_article_content_' . $param['article_id'], $articleInfo['content'], 60);  // 文章内容
         $cover = explode(',', $articleInfo['cover']);  // 封面图
         $info = [
