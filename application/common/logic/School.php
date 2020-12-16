@@ -740,7 +740,9 @@ class School
             return ['status' => 0, 'msg' => '商品已下架'];
         }
         if ($goodsInfo['item_id']) {
-            $goodsInfo['goods_name'] .= ' ' . M('spec_goods_price')->where(['item_id' => $goodsInfo['item_id']])->value('key_name');
+            $itemInfo = M('spec_goods_price')->where(['item_id' => $goodsInfo['item_id']])->find();
+            $goodsInfo['goods_name'] .= ' ' . $itemInfo['key_name'];
+            $goodsInfo['store_count'] = $itemInfo['store_count'];
         }
         // 轮播图
         $goodsImages = M('GoodsImages')->where(['goods_id' => $goodsId])->getField('image_url', true);
@@ -758,6 +760,7 @@ class School
             'goods_remark' => $goodsInfo['goods_remark'],
             'content_url' => SITE_URL . '/index.php?m=Home&c=api.Goods&a=goodsContent&goods_id=' . $goodsInfo['goods_id'], // 内容url请求链接
             'credit' => $goodsInfo['credit'],
+            'store_count' => $goodsInfo['store_count'],
             'images' => $goodsImages,
             'tabs' => $goodsTab
         ];
