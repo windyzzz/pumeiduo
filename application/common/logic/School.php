@@ -480,7 +480,7 @@ class School
             'class_id' => $articleInfo['class_id'],
             'title' => $articleInfo['title'],
             'subtitle' => $articleInfo['subtitle'],
-            'content' => SITE_URL . '/#/news/app_school_article?article_id=' . $param['article_id'],
+            'content_url' => SITE_URL . '/#/news/app_school_article?article_id=' . $param['article_id'],
             'cover' => [
                 'img' => $this->ossClient::url(substr($cover[0], strrpos($cover[0], 'img:') + 4)),
                 'width' => substr($cover[1], strrpos($cover[1], 'width:') + 6),
