@@ -1907,7 +1907,7 @@ class Order extends Base
 
         if ($this->isApplet || $this->user['distribut_level'] >= 3) {
             // 计算商品pv
-            $cartList['cartList'] = $cartLogic->calcGoodsPv($cartList['cartList']);
+            $cartList['cartList'] = $cartLogic->calcGoodsPv($cartList['cartList'], $this->user);
         }
 
         $cartGoodsList = get_arr_column($cartList['cartList'], 'goods');
@@ -2259,7 +2259,7 @@ class Order extends Base
 
         if ($this->isApplet || $this->user['distribut_level'] >= 3) {
             // 计算商品pv
-            $cartList['cartList'] = $cartLogic->calcGoodsPv($cartList['cartList']);
+            $cartList['cartList'] = $cartLogic->calcGoodsPv($cartList['cartList'], $this->user);
         }
 
         try {
@@ -2514,7 +2514,7 @@ class Order extends Base
 
         if ($this->isApplet || $this->user['distribut_level'] >= 3) {
             // 计算商品pv
-            $cartList['cartList'] = $cartLogic->calcGoodsPv($cartList['cartList']);
+            $cartList['cartList'] = $cartLogic->calcGoodsPv($cartList['cartList'], $this->user);
         }
 
         try {

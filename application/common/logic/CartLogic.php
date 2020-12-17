@@ -1493,13 +1493,18 @@ class CartLogic extends Model
     /**
      * 计算商品pv
      * @param $cartList
+     * @param $user
      * @return mixed
      */
-    public function calcGoodsPv($cartList)
+    public function calcGoodsPv($cartList, $user)
     {
         foreach ($cartList as $k => $cartItem) {
             if ($cartItem['goods']['is_agent'] == 1) {
-                $cartList[$k]['goods_pv'] = $cartItem['goods']['buying_price_pv'];
+                if ($user['distribut_level'] >= 3) {
+                    $cartList[$k]['goods_pv'] = $cartItem['goods']['buying_price_pv'];
+                } else {
+                    $cartList[$k]['goods_pv'] = $cartItem['goods']['retail_price_pv'];
+                }
             } elseif ($cartItem['goods']['applet_on_sale'] == 1) {
                 $cartList[$k]['goods_pv'] = $cartItem['goods']['integral_pv'];
             } else {
