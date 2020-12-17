@@ -823,7 +823,8 @@ class Goods extends Base
             'exchange_integral' => $goods['exchange_integral'],
             'exchange_price' => bcsub($goods['shop_price'], $goods['exchange_integral'], 2),
             'commission' => '',
-            'integral_pv' => '',
+            'integral_pv' => '',    // 积分价pv / 进货价pv（代理商商品）
+            'retail_pv' => '',      // 零售价pv / 零售价pv（代理商商品）
             'buy_limit' => $goods['limit_buy_num'],     // 商品最大购买数量
             'buy_least' => $goods['least_buy_num'],     // 商品最低购买数量
             'limit_num' => '0',                                 // 参加活动商品最大数量
@@ -838,7 +839,6 @@ class Goods extends Base
         ];
         if ($this->isApplet) {
             $goodsInfo['exchange_integral'] = '0';
-            $goodsInfo['exchange_price'] = $goods['shop_price'];
         }
         if ($goods['is_agent'] == 1) {
             // 代理商商品基础价格设置
@@ -1044,10 +1044,16 @@ class Goods extends Base
                 // 商品pv（不显示佣金）
                 switch ($this->user['distribut_level']) {
                     case 3:
+                        $prop = $goodsInfo['exchange_price'] / $goods['buying_price'];
                         if ($goods['buying_price_pv'] == 0) {
                             $goodsInfo['integral_pv'] = '';
                         } else {
-                            $goodsInfo['integral_pv'] = bcmul($goods['buying_price_pv'], ($goodsInfo['exchange_price'] / $goods['buying_price']), 2); // 进货价pv
+                            $goodsInfo['integral_pv'] = bcmul($goods['buying_price_pv'], $prop, 2); // 进货价pv
+                        }
+                        if ($goods['retail_price_pv'] == 0) {
+                            $goodsInfo['retail_pv'] = '';
+                        } else {
+                            $goodsInfo['retail_pv'] = bcmul($goods['retail_price_pv'], $prop, 2); // 零售价pv
                         }
                         break;
                 }
