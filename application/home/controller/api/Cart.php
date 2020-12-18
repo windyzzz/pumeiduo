@@ -1209,6 +1209,9 @@ class Cart extends Base
         if (empty($goods_id)) {
             return json(['status' => 0, 'msg' => '请选择要购买的商品', 'result' => '']);
         }
+        if ($this->isApplet) {
+            $cartType = 2;
+        }
         $cartLogic = new CartLogic();
         $cartLogic->setUserId($this->user_id);
         $cartLogic->setUser($this->user);

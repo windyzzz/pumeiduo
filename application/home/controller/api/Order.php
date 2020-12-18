@@ -2107,7 +2107,24 @@ class Order extends Base
                     if ($list['use_integral'] != '0') {
                         $goodsList[$k]['exchange_price'] = bcdiv(bcsub(bcmul($list['goods']['shop_price'], 100), bcmul($list['use_integral'], 100)), 100, 2);
                     } else {
-                        $goodsList[$k]['exchange_price'] = $list['goods']['shop_price'];
+                        if ($goods['is_agent'] == 1) {
+                            // 代理商商品基础价格设置
+                            $goodsList[$k]['shop_price'] = $goods['retail_price'];  // 零售价
+                            $goodsList[$k]['exchange_price'] = $goods['retail_price'];  // 零售价
+                            if ($this->user) {
+                                switch ($this->user['distribut_level']) {
+                                    case 3:
+                                        $goodsList[$k]['exchange_price'] = $goods['buying_price'];  // 进货价
+                                        break;
+                                    default:
+                                        $goodsList[$k]['exchange_price'] = $goods['retail_price'];  // 零售价
+                                }
+                            }
+                        } elseif ($goods['applet_on_sale'] == 1) {
+                            $goodsList[$k]['exchange_price'] = $list['member_goods_price'];
+                        } else {
+                            $goodsList[$k]['exchange_price'] = $list['goods']['shop_price'];
+                        }
                     }
                 }
                 if (isset($list['gift_goods'])) {
