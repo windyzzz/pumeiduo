@@ -54,6 +54,7 @@ class School extends Base
      */
     public function checkArticle()
     {
+        if (!$this->user) return json(['status' => -999, 'msg' => '请先登录']);
         $param = [
             'article_id' => I('article_id', ''),
         ];
