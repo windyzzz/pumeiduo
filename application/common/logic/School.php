@@ -473,10 +473,12 @@ class School
         $where = $this->articleWhere($param);
         // 文章数据
         $articleInfo = M('school_article sa')->where($where)->find();
-        // 查看阅览权限
-        $res = $this->checkUserArticleLimit($articleInfo, $user, 1);
-        if ($res['status'] != 1) {
-            return $res;
+        if ($user) {
+            // 查看阅览权限
+            $res = $this->checkUserArticleLimit($articleInfo, $user, 1);
+            if ($res['status'] != 1) {
+                return $res;
+            }
         }
         Cache::set('school_article_content_' . $param['article_id'], $articleInfo['content'], 60);  // 文章内容
         $cover = explode(',', $articleInfo['cover']);  // 封面图
