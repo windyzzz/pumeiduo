@@ -249,6 +249,8 @@ class Tb extends Controller
         $orderData['goods_price'] = $goodsPrice;
         unset($orderData['order_amount']);
         unset($orderData['user_electronic']);
+        // 记录同步时间
+        M('order')->where(['order_id' => $orderId])->update(['pv_send_time' => NOW_TIME]);
         return $orderData;
     }
 

@@ -3346,4 +3346,39 @@ class Order extends Base
         $shippingList = M('shipping')->where(['is_open' => 1, 'shipping_code' => ['NEQ', '00000']])->field('shipping_name, shipping_code')->select();
         return json(['status' => 1, 'result' => ['list' => $shippingList]]);
     }
+
+    /**
+     * 订单pv统计记录
+     * @return \think\response\Json
+     */
+    public function pvList()
+    {
+        $limit = I('limit', 10);
+        $startAt = I('start_at', strtotime(date('Y-m-01 00:00:00', time())) . '');
+        $endAt = I('end_at', strtotime(date('Y-m-t 23:59:59', time())) . '');
+        $where = [
+            'order_pv' => ['>', 0],
+            'pv_tb' => 1,
+            'pv_send' => 1,
+            'pv_user_id' => $this->user_id,
+        ];
+        if ($this->isApplet) {
+            $where['order_type'] = 4;
+        }
+        // 统计
+        $sum = M('order')->where($where)->sum('order_pv');
+        $where['pv_send_time'] = ['BETWEEN', [strtotime(date('Y-m-d 00:00:00', $startAt)), strtotime(date('Y-m-d 23:59:59', $endAt))]];
+        // 数量
+        $count = M('order')->where($where)->count();
+        // 数据
+        $page = new Page($count, $limit);
+        $orderList = M('order')->where($where)->field('order_id, order_sn, user_id, order_pv, FROM_UNIXTIME(pv_send_time, "%Y-%m-%d") as pv_send_time')
+            ->order('pv_send_time DESC')->limit($page->firstRow . ',' . $page->listRows)->select();
+        $return = [
+            'pv_sum' => $sum,
+            'count' => $count,
+            'list' => $orderList
+        ];
+        return json(['status' => 1, 'result' => $return]);
+    }
 }
