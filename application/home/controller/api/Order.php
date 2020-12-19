@@ -3367,6 +3367,7 @@ class Order extends Base
         }
         // 统计
         $sum = M('order')->where($where)->sum('order_pv');
+        $sum = bcadd($sum, 0, 2);   // 精度处理
         $where['pv_send_time'] = ['BETWEEN', [strtotime(date('Y-m-d 00:00:00', $startAt)), strtotime(date('Y-m-d 23:59:59', $endAt))]];
         // 数量
         $count = M('order')->where($where)->count();
