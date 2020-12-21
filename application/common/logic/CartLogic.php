@@ -91,6 +91,7 @@ class CartLogic extends Model
         if ($goods_id > 0) {
             $goodsModel = new Goods();
             $this->goods = $goodsModel::get($goods_id);
+            $this->goods['exchange_integral2'] = $this->goods['exchange_integral'];
         }
     }
 

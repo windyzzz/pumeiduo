@@ -2077,7 +2077,8 @@ class Order extends Base
                 }
             }
             // 订单pv
-            $payLogic->setOrderPv();
+            $source = $this->isApplet ? 4 : 3;
+            $payLogic->setOrderPv($source);
 
             // 支付数据
             $payReturn = $payLogic->toArray();
@@ -2340,7 +2341,8 @@ class Order extends Base
                 return json(['status' => 0, 'msg' => '订单中部分商品不支持对当前地址的配送']);
             }
             // 订单pv
-            $payLogic->setOrderPv();
+            $source = $this->isApplet ? 4 : 3;
+            $payLogic->setOrderPv($source);
             // 使用电子币
             $payLogic->useUserElectronic($userElectronic);
 
@@ -2585,7 +2587,8 @@ class Order extends Base
                 return json(['status' => 0, 'msg' => '订单中部分商品不支持对当前地址的配送']);
             }
             // 订单pv
-            $payLogic->setOrderPv();
+            $source = $this->isApplet ? 4 : 3;
+            $payLogic->setOrderPv($source);
             // 使用电子币
             $payLogic->useUserElectronic($userElectronic);
             // 拆分订单处理
@@ -2604,7 +2607,6 @@ class Order extends Base
             $placeOrder->setUserIdCard($idCard);
             $placeOrder->setOrderType($orderType);
             $placeOrder->setHasAgent($hasAgent);
-            $source = $this->isApplet ? 4 : 3;
             Db::startTrans();
             if (2 == $prom_type) {
                 $placeOrder->addGroupBuyOrder($prom_id, $source);    // 团购订单
