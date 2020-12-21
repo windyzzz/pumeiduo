@@ -1157,10 +1157,10 @@ class Goods extends Base
         ];
         if ($this->isApplet) {
             $goodsInfo['exchange_integral'] = '0';
-            $goodsInfo['exchange_price'] = $goods['shop_price'];
         }
         if ($goods['is_agent'] == 1) {
             // 代理商商品基础价格设置
+            $goodsInfo['shop_price'] = $goods['retail_price'];  // 零售价
             $goodsInfo['exchange_price'] = $goods['retail_price'];  // 零售价
             if ($this->user) {
                 switch ($this->user['distribut_level']) {

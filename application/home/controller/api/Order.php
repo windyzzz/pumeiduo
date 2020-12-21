@@ -1803,7 +1803,7 @@ class Order extends Base
         $goodsId = I('goods_id', '');           // 商品ID
         $itemId = I('item_id', '');             // 商品规格ID
         $goodsNum = I('goods_num', '');         // 商品数量
-        $payType = input('pay_type', 1);        // 结算类型
+        $payType = I('pay_type', 1);        // 结算类型
         $cartIds = I('cart_ids', '');           // 购物车ID组合
         $addressId = I('address_id', '');       // 地址ID
 
@@ -2238,7 +2238,7 @@ class Order extends Base
         $goodsId = I('goods_id', '');           // 商品ID
         $itemId = I('item_id', '');             // 商品规格ID
         $goodsNum = I('goods_num', '');         // 商品数量
-        $payType = input('pay_type', 1);        // 结算类型
+        $payType = I('pay_type', 1);        // 结算类型
         $cartIds = I('cart_ids', '');           // 购物车ID组合
         $couponId = I('coupon_id', 0);          // 优惠券ID
         $exchangeId = I('exchange_id', 0);      // 兑换券ID
@@ -2449,7 +2449,7 @@ class Order extends Base
         $goodsId = I('goods_id', '');                   // 商品ID
         $itemId = I('item_id', '');                     // 商品规格ID
         $goodsNum = I('goods_num', '');                 // 商品数量
-        $payType = input('pay_type', 1);                // 结算类型
+        $payType = I('pay_type', 1);                // 结算类型
         $cartIds = I('cart_ids', '');                   // 购物车ID组合
         $addressId = I('address_id', '');               // 地址ID
         $couponId = I('coupon_id', '');                 // 优惠券ID
