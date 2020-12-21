@@ -767,6 +767,7 @@ class School
             'item_id' => $goodsInfo['item_id'],
             'goods_name' => $goodsInfo['goods_name'],
             'goods_remark' => $goodsInfo['goods_remark'],
+            'original_img_new' => getFullPath($goodsInfo['original_img']),
             'content_url' => SITE_URL . '/index.php?m=Home&c=api.Goods&a=goodsContent&goods_id=' . $goodsInfo['goods_id'], // 内容url请求链接
             'credit' => $goodsInfo['credit'],
             'store_count' => $goodsInfo['store_count'],
