@@ -809,6 +809,7 @@ class Goods extends Base
         $originalImg = getFullPath($goods['original_img']);
         $goodsInfo = [
             'goods_type' => 'normal',
+            'is_agent' => $goods['is_agent'],
             'goods_id' => $goods['goods_id'],
             'item_id' => $itemId . '',
             'goods_sn' => $goods['goods_sn'],
