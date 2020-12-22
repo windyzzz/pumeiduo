@@ -96,6 +96,23 @@ class School extends Base
      */
     public function articleInfo()
     {
+        if (!$this->user) return json(['status' => -999, 'msg' => '请先登录']);
+        $param = [
+            'article_id' => I('article_id', ''),
+        ];
+        $data = $this->logic->getArticleInfo($param, $this->user);
+        if (isset($data['status']) && $data['status'] != 1) {
+            return json($data);
+        }
+        return json(['status' => 1, 'msg' => '', 'result' => $data]);
+    }
+
+    /**
+     * 文章详情（H5专用）
+     * @return \think\response\Json
+     */
+    public function articleInfoH5()
+    {
         $param = [
             'article_id' => I('article_id', ''),
         ];
