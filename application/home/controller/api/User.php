@@ -4156,12 +4156,12 @@ class User extends Base
     {
         $mobile = I('mobile');
         if (!check_mobile($mobile)) return json(['status' => 0, 'msg' => '请输入正确的手机号']);
-        $infoList = M('users')->where(['mobile' => $mobile, 'is_lock' => 0, 'is_cancel' => 0, 'user_name' => ['NEQ', '']])->field('user_id, user_name')->select();
+        $infoList = M('users')->where(['mobile' => $mobile, 'is_lock' => 0, 'is_cancel' => 0])->field('user_id, user_name')->select();
         $list = [];
         foreach ($infoList as $info) {
             if (!isset($list[$info['user_name']])) {
                 $list[$info['user_name']] = [
-                    'user_name' => $info['user_name'],
+                    'user_name' => $info['user_name'] ?? '',
                     'user_ids' => [$info['user_id']]
                 ];
             } else {
