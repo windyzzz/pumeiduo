@@ -45,7 +45,7 @@ class Index
                 ->where('enabled', 1)
                 ->where('start_time', 'elt', NOW_TIME)
                 ->where('end_time', 'egt', NOW_TIME)
-                ->order('orderby')
+                ->order('orderby DESC')
                 ->select();
         }
 
