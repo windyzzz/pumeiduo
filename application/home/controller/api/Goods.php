@@ -1052,7 +1052,7 @@ class Goods extends Base
                             $goodsInfo['integral_pv'] = bcmul($goods['buying_price_pv'], $prop, 2); // 进货价pv
                         }
                         if ($goods['retail_price_pv'] == 0) {
-                            $goodsInfo['retail_pv'] = '';
+                            $goodsInfo['retail_pv'] = '0.00';
                         } else {
                             $goodsInfo['retail_pv'] = bcmul($goods['retail_price_pv'], $prop, 2); // 零售价pv
                         }
