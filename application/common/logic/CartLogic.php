@@ -91,6 +91,7 @@ class CartLogic extends Model
         if ($goods_id > 0) {
             $goodsModel = new Goods();
             $this->goods = $goodsModel::get($goods_id);
+            $this->goods['exchange_integral2'] = $this->goods['exchange_integral'];
         }
     }
 
@@ -278,7 +279,14 @@ class CartLogic extends Model
                             $member_goods_price = $buyGoods['member_goods_price'];
                             $use_integral = 0;
                             if (1 == $this->type) {
-                                $member_goods_price = bcsub($member_goods_price, $this->goods['exchange_integral'], 2);
+                                if ($isApplet) {
+                                    if ($this->goods['is_agent'] == 0) {
+                                        $member_goods_price = bcsub($member_goods_price, $this->goods['exchange_integral'], 2);
+                                    }
+                                    $this->goods['exchange_integral'] = '0';
+                                } else {
+                                    $member_goods_price = bcsub($member_goods_price, $this->goods['exchange_integral'], 2);
+                                }
                                 $use_integral = $this->goods['exchange_integral'];
                             }
                             $buyGoods['member_goods_price'] = $member_goods_price;
@@ -288,7 +296,16 @@ class CartLogic extends Model
                         $buyGoods = $goodsPromLogic->buyNow($buyGoods, $this->type, $passAuth);
                         if ($prom_type == 3 && 1 == $this->type) {
                             // 商品促销优惠
-                            $member_goods_price = bcsub($buyGoods['member_goods_price'], $this->goods['exchange_integral'], 2);
+                            if ($isApplet) {
+                                if ($this->goods['is_agent'] == 0) {
+                                    $member_goods_price = bcsub($buyGoods['member_goods_price'], $this->goods['exchange_integral'], 2);
+                                } else {
+                                    $member_goods_price = bcsub($buyGoods['member_goods_price'], 0, 2);
+                                }
+                                $this->goods['exchange_integral'] = '0';
+                            } else {
+                                $member_goods_price = bcsub($buyGoods['member_goods_price'], $this->goods['exchange_integral'], 2);
+                            }
                             $use_integral = $this->goods['exchange_integral'];
                             $buyGoods['member_goods_price'] = $member_goods_price;
                             $buyGoods['use_integral'] = $use_integral;
@@ -303,7 +320,14 @@ class CartLogic extends Model
                     $member_goods_price = $buyGoods['member_goods_price'];
                     $use_integral = 0;
                     if (1 == $this->type) {
-                        $member_goods_price = bcsub($member_goods_price, $this->goods['exchange_integral'], 2);
+                        if ($isApplet) {
+                            if ($this->goods['is_agent'] == 0) {
+                                $member_goods_price = bcsub($member_goods_price, $this->goods['exchange_integral'], 2);
+                            }
+                            $this->goods['exchange_integral'] = '0';
+                        } else {
+                            $member_goods_price = bcsub($member_goods_price, $this->goods['exchange_integral'], 2);
+                        }
                         $use_integral = $this->goods['exchange_integral'];
                     }
                     $buyGoods['member_goods_price'] = $member_goods_price;
@@ -327,7 +351,14 @@ class CartLogic extends Model
                 $member_goods_price = $buyGoods['member_goods_price'];
                 $use_integral = 0;
                 if (1 == $this->type) {
-                    $member_goods_price = bcsub($member_goods_price, $this->goods['exchange_integral'], 2);
+                    if ($isApplet) {
+                        if ($this->goods['is_agent'] == 0) {
+                            $member_goods_price = bcsub($member_goods_price, $this->goods['exchange_integral'], 2);
+                        }
+                        $this->goods['exchange_integral'] = '0';
+                    } else {
+                        $member_goods_price = bcsub($member_goods_price, $this->goods['exchange_integral'], 2);
+                    }
                     $use_integral = $this->goods['exchange_integral'];
                 }
                 $buyGoods['member_goods_price'] = $member_goods_price;
@@ -494,7 +525,9 @@ class CartLogic extends Model
             $member_goods_price = $price;
             $use_integral = 0;
             if (1 == $this->type) {
-                $member_goods_price = bcsub($price, $this->goods['exchange_integral'], 2);
+                if ($this->goods['is_agent'] == 0) {
+                    $member_goods_price = bcsub($price, $this->goods['exchange_integral'], 2);
+                }
                 $use_integral = $this->goods['exchange_integral'];
             }
 
@@ -537,7 +570,9 @@ class CartLogic extends Model
             $member_goods_price = $price;
             $use_integral = 0;
             if (1 == $this->type) {
-                $member_goods_price = bcsub($price, $this->goods['exchange_integral'], 2);
+                if ($this->goods['is_agent'] == 0) {
+                    $member_goods_price = bcsub($price, $this->goods['exchange_integral'], 2);
+                }
                 $use_integral = $this->goods['exchange_integral'];
             }
             if (!$member_goods_price) {
@@ -599,7 +634,7 @@ class CartLogic extends Model
         $flashSaleIsAble = $flashSaleLogic->checkActivityIsAble();
         if (!$flashSaleIsAble) {
             //活动没有进行中，走普通商品下单流程
-            return $this->addNormalCart();
+            return $this->addNormalCart($mode);
         }
         //活动进行中
         if (0 == $this->user_id) {
@@ -702,7 +737,7 @@ class CartLogic extends Model
         $groupBuyIsAble = $groupBuyLogic->checkActivityIsAble();
         if (!$groupBuyIsAble) {
             //活动没有进行中，走普通商品下单流程
-            return $this->addNormalCart();
+            return $this->addNormalCart($mode);
         }
         //活动进行中
         if (!$this->user_id) {
@@ -802,7 +837,7 @@ class CartLogic extends Model
         $userLevel = M('users')->where(['user_id' => $this->user_id])->value('distribut_level');
         if ($promGoodsLogic->checkActivityIsEnd() || !$promGoodsLogic->checkActivityIsAble() || !in_array($userLevel, explode(',', $promGoods['group']))) {
             //活动不存在，已关闭，不处于有效期,走添加普通商品流程
-            return $this->addNormalCart();
+            return $this->addNormalCart($mode);
         }
         //活动进行中
         if (0 == $this->user_id) {
@@ -1038,6 +1073,15 @@ class CartLogic extends Model
                         unset($cartList[$cartKey]);
                         continue 2;
                     }
+                    break;
+                case 4:
+                    if ($cart['cart_type'] == 2) {
+                        $cartList[$cartKey]['use_integral'] = '0';
+                    }
+                    if ($cart['goods']['is_agent'] == 0) {
+                        $cartList[$cartKey]['goods_price'] = $cart['member_goods_price'];
+                    }
+                    break;
             }
             //商品不存在或者已经下架
             if (!$noSale) {
@@ -1493,13 +1537,18 @@ class CartLogic extends Model
     /**
      * 计算商品pv
      * @param $cartList
+     * @param $user
      * @return mixed
      */
-    public function calcGoodsPv($cartList)
+    public function calcGoodsPv($cartList, $user)
     {
         foreach ($cartList as $k => $cartItem) {
             if ($cartItem['goods']['is_agent'] == 1) {
-                $cartList[$k]['goods_pv'] = $cartItem['goods']['buying_price_pv'];
+                if ($user['distribut_level'] >= 3) {
+                    $cartList[$k]['goods_pv'] = $cartItem['goods']['buying_price_pv'];
+                } else {
+                    $cartList[$k]['goods_pv'] = $cartItem['goods']['retail_price_pv'];
+                }
             } elseif ($cartItem['goods']['applet_on_sale'] == 1) {
                 $cartList[$k]['goods_pv'] = $cartItem['goods']['integral_pv'];
             } else {

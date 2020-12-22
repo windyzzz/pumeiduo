@@ -1803,7 +1803,7 @@ class Order extends Base
         $goodsId = I('goods_id', '');           // 商品ID
         $itemId = I('item_id', '');             // 商品规格ID
         $goodsNum = I('goods_num', '');         // 商品数量
-        $payType = input('pay_type', 1);        // 结算类型
+        $payType = I('pay_type', 1);        // 结算类型
         $cartIds = I('cart_ids', '');           // 购物车ID组合
         $addressId = I('address_id', '');       // 地址ID
 
@@ -1907,7 +1907,7 @@ class Order extends Base
 
         if ($this->isApplet || $this->user['distribut_level'] >= 3) {
             // 计算商品pv
-            $cartList['cartList'] = $cartLogic->calcGoodsPv($cartList['cartList']);
+            $cartList['cartList'] = $cartLogic->calcGoodsPv($cartList['cartList'], $this->user);
         }
 
         $cartGoodsList = get_arr_column($cartList['cartList'], 'goods');
@@ -2077,7 +2077,8 @@ class Order extends Base
                 }
             }
             // 订单pv
-            $payLogic->setOrderPv();
+            $source = $this->isApplet ? 4 : 3;
+            $payLogic->setOrderPv($source);
 
             // 支付数据
             $payReturn = $payLogic->toArray();
@@ -2107,7 +2108,24 @@ class Order extends Base
                     if ($list['use_integral'] != '0') {
                         $goodsList[$k]['exchange_price'] = bcdiv(bcsub(bcmul($list['goods']['shop_price'], 100), bcmul($list['use_integral'], 100)), 100, 2);
                     } else {
-                        $goodsList[$k]['exchange_price'] = $list['goods']['shop_price'];
+                        if ($goods['is_agent'] == 1) {
+                            // 代理商商品基础价格设置
+                            $goodsList[$k]['shop_price'] = $goods['retail_price'];  // 零售价
+                            $goodsList[$k]['exchange_price'] = $goods['retail_price'];  // 零售价
+                            if ($this->user) {
+                                switch ($this->user['distribut_level']) {
+                                    case 3:
+                                        $goodsList[$k]['exchange_price'] = $goods['buying_price'];  // 进货价
+                                        break;
+                                    default:
+                                        $goodsList[$k]['exchange_price'] = $goods['retail_price'];  // 零售价
+                                }
+                            }
+                        } elseif ($goods['applet_on_sale'] == 1) {
+                            $goodsList[$k]['exchange_price'] = $list['member_goods_price'];
+                        } else {
+                            $goodsList[$k]['exchange_price'] = $list['goods']['shop_price'];
+                        }
                     }
                 }
                 if (isset($list['gift_goods'])) {
@@ -2221,7 +2239,7 @@ class Order extends Base
         $goodsId = I('goods_id', '');           // 商品ID
         $itemId = I('item_id', '');             // 商品规格ID
         $goodsNum = I('goods_num', '');         // 商品数量
-        $payType = input('pay_type', 1);        // 结算类型
+        $payType = I('pay_type', 1);        // 结算类型
         $cartIds = I('cart_ids', '');           // 购物车ID组合
         $couponId = I('coupon_id', 0);          // 优惠券ID
         $exchangeId = I('exchange_id', 0);      // 兑换券ID
@@ -2259,7 +2277,7 @@ class Order extends Base
 
         if ($this->isApplet || $this->user['distribut_level'] >= 3) {
             // 计算商品pv
-            $cartList['cartList'] = $cartLogic->calcGoodsPv($cartList['cartList']);
+            $cartList['cartList'] = $cartLogic->calcGoodsPv($cartList['cartList'], $this->user);
         }
 
         try {
@@ -2323,7 +2341,8 @@ class Order extends Base
                 return json(['status' => 0, 'msg' => '订单中部分商品不支持对当前地址的配送']);
             }
             // 订单pv
-            $payLogic->setOrderPv();
+            $source = $this->isApplet ? 4 : 3;
+            $payLogic->setOrderPv($source);
             // 使用电子币
             $payLogic->useUserElectronic($userElectronic);
 
@@ -2432,7 +2451,7 @@ class Order extends Base
         $goodsId = I('goods_id', '');                   // 商品ID
         $itemId = I('item_id', '');                     // 商品规格ID
         $goodsNum = I('goods_num', '');                 // 商品数量
-        $payType = input('pay_type', 1);                // 结算类型
+        $payType = I('pay_type', 1);                // 结算类型
         $cartIds = I('cart_ids', '');                   // 购物车ID组合
         $addressId = I('address_id', '');               // 地址ID
         $couponId = I('coupon_id', '');                 // 优惠券ID
@@ -2514,7 +2533,7 @@ class Order extends Base
 
         if ($this->isApplet || $this->user['distribut_level'] >= 3) {
             // 计算商品pv
-            $cartList['cartList'] = $cartLogic->calcGoodsPv($cartList['cartList']);
+            $cartList['cartList'] = $cartLogic->calcGoodsPv($cartList['cartList'], $this->user);
         }
 
         try {
@@ -2568,7 +2587,8 @@ class Order extends Base
                 return json(['status' => 0, 'msg' => '订单中部分商品不支持对当前地址的配送']);
             }
             // 订单pv
-            $payLogic->setOrderPv();
+            $source = $this->isApplet ? 4 : 3;
+            $payLogic->setOrderPv($source);
             // 使用电子币
             $payLogic->useUserElectronic($userElectronic);
             // 拆分订单处理
@@ -2587,7 +2607,6 @@ class Order extends Base
             $placeOrder->setUserIdCard($idCard);
             $placeOrder->setOrderType($orderType);
             $placeOrder->setHasAgent($hasAgent);
-            $source = $this->isApplet ? 4 : 3;
             Db::startTrans();
             if (2 == $prom_type) {
                 $placeOrder->addGroupBuyOrder($prom_id, $source);    // 团购订单
@@ -3328,5 +3347,41 @@ class Order extends Base
     {
         $shippingList = M('shipping')->where(['is_open' => 1, 'shipping_code' => ['NEQ', '00000']])->field('shipping_name, shipping_code')->select();
         return json(['status' => 1, 'result' => ['list' => $shippingList]]);
+    }
+
+    /**
+     * 订单pv统计记录
+     * @return \think\response\Json
+     */
+    public function pvList()
+    {
+        $limit = I('limit', 10);
+        $startAt = I('start_at', strtotime(date('Y-m-01 00:00:00', time())) . '');
+        $endAt = I('end_at', strtotime(date('Y-m-t 23:59:59', time())) . '');
+        $where = [
+            'order_pv' => ['>', 0],
+            'pv_tb' => 1,
+            'pv_send' => 1,
+            'pv_user_id' => $this->user_id,
+        ];
+        if ($this->isApplet) {
+            $where['order_type'] = 4;
+        }
+        // 统计
+        $sum = M('order')->where($where)->sum('order_pv');
+        $sum = bcadd($sum, 0, 2);   // 精度处理
+        $where['pv_send_time'] = ['BETWEEN', [strtotime(date('Y-m-d 00:00:00', $startAt)), strtotime(date('Y-m-d 23:59:59', $endAt))]];
+        // 数量
+        $count = M('order')->where($where)->count();
+        // 数据
+        $page = new Page($count, $limit);
+        $orderList = M('order')->where($where)->field('order_id, order_sn, user_id, order_pv, FROM_UNIXTIME(pv_send_time, "%Y-%m-%d") as pv_send_time')
+            ->order('pv_send_time DESC')->limit($page->firstRow . ',' . $page->listRows)->select();
+        $return = [
+            'pv_sum' => $sum,
+            'count' => $count,
+            'list' => $orderList
+        ];
+        return json(['status' => 1, 'result' => $return]);
     }
 }

@@ -864,6 +864,13 @@ class Goods extends Base
             }
 
             if ($data['applet_on_sale2'] == 1) {
+                if (M('goods')->where(['goods_id' => $goods_id])->value('prom_type')) {
+                    $return_arr = [
+                        'msg' => '小程序不能设置活动商品',
+                        'status' => 0
+                    ];
+                    $this->ajaxReturn($return_arr);
+                }
                 if ($data['applet_on_time'] == 0 || $data['applet_out_time'] == 0) {
                     $return_arr = [
                         'msg' => '请设置小程序上下架时间',
@@ -1012,7 +1019,7 @@ class Goods extends Base
         }
 
         // 代理商商品
-        if ($goodsInfo['is_agent'] == 1) {
+        if ($goodsInfo['is_agent'] == 1 || $goodsInfo['applet_on_sale'] == 1) {
             $goodsInfo['applet_on_time'] = date('Y-m-d H:i:s', $goodsInfo['applet_on_time']);
             $goodsInfo['applet_out_time'] = date('Y-m-d H:i:s', $goodsInfo['applet_out_time']);
         }
@@ -1633,6 +1640,28 @@ class Goods extends Base
                 $data['applet_out_time'] = NOW_TIME;
                 break;
             case 1:
+                $goods = M('goods')->where(['goods_id' => $goodsId])->find();
+                if ($goods['is_on_sale'] != 1) {
+                    $return_arr = [
+                        'msg' => '商品未真正上架',
+                        'status' => 0
+                    ];
+                    $this->ajaxReturn($return_arr);
+                }
+                if ($goods['store_count'] == 0) {
+                    $return_arr = [
+                        'msg' => '商品库存不足',
+                        'status' => 0
+                    ];
+                    $this->ajaxReturn($return_arr);
+                }
+                if ($goods['prom_type']) {
+                    $return_arr = [
+                        'msg' => '小程序不能设置活动商品',
+                        'status' => 0
+                    ];
+                    $this->ajaxReturn($return_arr);
+                }
                 $data['applet_on_time'] = NOW_TIME;
                 $data['applet_out_time'] = strtotime('+12 month');
                 break;

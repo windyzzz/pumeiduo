@@ -8979,4 +8979,23 @@ class Cron1 extends Controller
         var_dump('ok');
         exit();
     }
+
+    public function updateOrderPv20201218()
+    {
+        $orderData = M('order')->where([
+            'order_pv' => ['>', 0],
+            'pv_send' => 1
+        ])->field('order_id, user_id, end_sale_time')->select();
+        Db::startTrans();
+        foreach ($orderData as $order) {
+            M('order')->where(['order_id' => $order['order_id']])->update([
+                'pv_user_id' => $order['user_id'],
+                'pv_send_time' => $order['end_sale_time']
+            ]);
+        }
+        Db::commit();
+        var_dump('ok');
+        exit();
+    }
+
 }
