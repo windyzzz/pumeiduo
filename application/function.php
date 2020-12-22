@@ -1910,7 +1910,11 @@ function getFullPath($path)
     return $path;
 }
 
-
+/**
+ * 过滤域名
+ * @param $path
+ * @return bool|string
+ */
 function simplifyPath($path)
 {
     switch ($_SERVER['SERVER_ADDR']) {
