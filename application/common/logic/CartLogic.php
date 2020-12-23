@@ -1152,6 +1152,7 @@ class CartLogic extends Model
                     $cartList[$cartKey]['goods']['integral_pv'] = bcmul($cart['goods']['integral_pv'], ($cart['member_goods_price'] / $cart['goods_price']), 2);
                 }
             }
+            $cartList[$cartKey]['goods']['exchange_integral2'] = $cart['goods']['exchange_integral'];
         }
         return $cartList;
     }
