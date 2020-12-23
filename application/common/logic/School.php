@@ -107,6 +107,49 @@ class School
     }
 
     /**
+     * 校验用户-模块限制
+     * @param $module
+     * @param $user
+     * @return array
+     */
+    private function checkUserModuleLimit($module, $user)
+    {
+        if (empty($module)) {
+            return ['status' => 0, 'msg' => '模块不存在'];
+        }
+        if ($module['is_open'] == 0) {
+            return ['status' => 0, 'msg' => '模块已关闭'];
+        }
+        if ($module['is_allow'] == 0) {
+            return ['status' => 0, 'msg' => '功能尚未开放'];
+        }
+        // 等级权限
+        if ($module['distribute_level'] != 0) {
+            if ($module['distribute_level'] == -1) {
+                return ['status' => 0, 'msg' => '功能尚未开放'];
+            }
+            $level = explode(',', $module['distribute_level']);
+            if (!in_array($user['distribut_level'], $level)) {
+                foreach ($level as $lv) {
+                    switch ($lv) {
+                        case 2:
+                            $status = -2;
+                            break;
+                        case 3:
+                            $status = -1;
+                            break;
+                        default:
+                            $status = 0;
+                    }
+                    $levelName = M('distribut_level')->where(['level_id' => $lv])->value('level_name');
+                    return ['status' => $status, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
+                }
+            }
+        }
+        return ['status' => 1, 'msg' => 'ok'];
+    }
+
+    /**
      * 校验用户-模块分类限制
      * @param $moduleClass
      * @param $user
@@ -125,14 +168,25 @@ class School
         }
         // 等级权限
         if ($moduleClass['distribute_level'] != 0) {
+            if ($moduleClass['distribute_level'] == -1) {
+                return ['status' => 0, 'msg' => '功能尚未开放'];
+            }
             $level = explode(',', $moduleClass['distribute_level']);
             if (!in_array($user['distribut_level'], $level)) {
-                $levelName = '';
                 foreach ($level as $lv) {
-                    $levelName .= M('distribut_level')->where(['level_id' => $lv])->value('level_name') . '或';
+                    switch ($lv) {
+                        case 2:
+                            $status = -2;
+                            break;
+                        case 3:
+                            $status = -1;
+                            break;
+                        default:
+                            $status = 0;
+                    }
+                    $levelName = M('distribut_level')->where(['level_id' => $lv])->value('level_name');
+                    return ['status' => $status, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
                 }
-                $levelName = rtrim($levelName, '或');
-                return ['status' => -1, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
             }
         }
         // 是否是学习课程
@@ -172,15 +226,19 @@ class School
         if ($article['distribute_level'] != 0) {
             $level = explode(',', $article['distribute_level']);
             if (!in_array($user['distribut_level'], $level)) {
-                $levelName = '';
                 foreach ($level as $lv) {
-                    $levelName .= M('distribut_level')->where(['level_id' => $lv])->value('level_name') . '或';
-                }
-                $levelName = rtrim($levelName, '或');
-                if (in_array(3, $level)) {
-                    return ['status' => -1, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
-                } else {
-                    return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
+                    switch ($lv) {
+                        case 2:
+                            $status = -2;
+                            break;
+                        case 3:
+                            $status = -1;
+                            break;
+                        default:
+                            $status = 0;
+                    }
+                    $levelName = M('distribut_level')->where(['level_id' => $lv])->value('level_name');
+                    return ['status' => $status, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
                 }
             }
         }
@@ -342,6 +400,20 @@ class School
             ];
         }
         return ['list' => $list];
+    }
+
+    /**
+     * 用户模块权限检查
+     * @param $moduleId
+     * @param $user
+     * @return array
+     */
+    public function checkModule($moduleId, $user)
+    {
+        $module = M('school')->where(['id' => $moduleId])->find();
+        // 查看阅览权限
+        $res = $this->checkUserModuleLimit($module, $user);
+        return $res;
     }
 
     /**

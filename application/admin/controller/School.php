@@ -247,6 +247,21 @@ class School extends Base
                     }
                 }
             }
+            if (empty($param['distribute_level'])) {
+                $param['distribute_level'] = '0';
+            } else {
+                if (in_array('-1', $param['distribute_level'])) {
+                    $param['distribute_level'] = '-1';
+                } elseif (in_array('0', $param['distribute_level'])) {
+                    $param['distribute_level'] = '0';
+                } else {
+                    $distributeLevel = '';
+                    foreach ($param['distribute_level'] as $level) {
+                        $distributeLevel .= $level . ',';
+                    }
+                    $param['distribute_level'] = rtrim($distributeLevel, ',');
+                }
+            }
             if (M('school')->where(['type' => $type])->find()) {
                 M('school')->where(['type' => $type])->update($param);
             } else {
@@ -260,6 +275,9 @@ class School extends Base
         if (!empty($module['img'])) {
             $img = explode(',', $module['img']);
             $module['img'] = $this->ossClient::url(substr($img[0], strrpos($img[0], 'img:') + 4));
+        }
+        if (!empty($module)) {
+            $module['distribute_level'] = explode(',', $module['distribute_level']);
         }
         // 模块分类信息
         $classList = M('school_class')->where(['module_id' => $module['id']])->order('sort DESC')->select();
@@ -325,6 +343,21 @@ class School extends Base
                     }
                 }
             }
+            if (empty($param['distribute_level'])) {
+                $param['distribute_level'] = '0';
+            } else {
+                if (in_array('-1', $param['distribute_level'])) {
+                    $param['distribute_level'] = '-1';
+                } elseif (in_array('0', $param['distribute_level'])) {
+                    $param['distribute_level'] = '0';
+                } else {
+                    $distributeLevel = '';
+                    foreach ($param['distribute_level'] as $level) {
+                        $distributeLevel .= $level . ',';
+                    }
+                    $param['distribute_level'] = rtrim($distributeLevel, ',');
+                }
+            }
             if (M('school')->where(['type' => $type])->find()) {
                 M('school')->where(['type' => $type])->update($param);
             } else {
@@ -338,6 +371,9 @@ class School extends Base
         if (!empty($module['img'])) {
             $img = explode(',', $module['img']);
             $module['img'] = $this->ossClient::url(substr($img[0], strrpos($img[0], 'img:') + 4));
+        }
+        if (!empty($module)) {
+            $module['distribute_level'] = explode(',', $module['distribute_level']);
         }
         // 兑换商品列表
         $exchangeGoods = M('school_exchange')->order('sort DESC, id ASC')->select();
@@ -388,6 +424,21 @@ class School extends Base
                     }
                 }
             }
+            if (empty($param['distribute_level'])) {
+                $param['distribute_level'] = '0';
+            } else {
+                if (in_array('-1', $param['distribute_level'])) {
+                    $param['distribute_level'] = '-1';
+                } elseif (in_array('0', $param['distribute_level'])) {
+                    $param['distribute_level'] = '0';
+                } else {
+                    $distributeLevel = '';
+                    foreach ($param['distribute_level'] as $level) {
+                        $distributeLevel .= $level . ',';
+                    }
+                    $param['distribute_level'] = rtrim($distributeLevel, ',');
+                }
+            }
             if (M('school')->where(['type' => $type])->find()) {
                 M('school')->where(['type' => $type])->update($param);
             } else {
@@ -401,6 +452,9 @@ class School extends Base
         if (!empty($module['img'])) {
             $img = explode(',', $module['img']);
             $module['img'] = $this->ossClient::url(substr($img[0], strrpos($img[0], 'img:') + 4));
+        }
+        if (!empty($module)) {
+            $module['distribute_level'] = explode(',', $module['distribute_level']);
         }
 
         $this->assign('type', $type);
@@ -427,7 +481,9 @@ class School extends Base
             if (empty($param['distribute_level'])) {
                 $param['distribute_level'] = '0';
             } else {
-                if (in_array('0', $param['distribute_level'])) {
+                if (in_array('-1', $param['distribute_level'])) {
+                    $param['distribute_level'] = '-1';
+                } elseif (in_array('0', $param['distribute_level'])) {
                     $param['distribute_level'] = '0';
                 } else {
                     $distributeLevel = '';
@@ -472,7 +528,9 @@ class School extends Base
         if (empty($param['distribute_level'])) {
             $param['distribute_level'] = '0';
         } else {
-            if (in_array('0', $param['distribute_level'])) {
+            if (in_array('-1', $param['distribute_level'])) {
+                $param['distribute_level'] = '-1';
+            } elseif (in_array('0', $param['distribute_level'])) {
                 $param['distribute_level'] = '0';
             } else {
                 $distributeLevel = '';
@@ -634,7 +692,9 @@ class School extends Base
             if (empty($postData['distribute_level'])) {
                 $articleParam['distribute_level'] = '0';
             } else {
-                if (in_array('0', $postData['distribute_level'])) {
+                if (in_array('-1', $postData['distribute_level'])) {
+                    $articleParam['distribute_level'] = '-1';
+                } elseif (in_array('0', $postData['distribute_level'])) {
                     $articleParam['distribute_level'] = '0';
                 } else {
                     $distributeLevel = '';

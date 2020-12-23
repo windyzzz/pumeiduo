@@ -57,13 +57,14 @@
             </dl>
             <dl class="row">
                 <dt class="tit">
-                    <label>是否允许访问</label>
+                    <label>访问限制</label>
                 </dt>
-                <dd class="opt onoff">
-                    <label for="module_is_allow1" class="cb-enable <if condition='$module[is_allow] eq 1'>selected</if>">允许访问</label>
-                    <label for="module_is_allow0" class="cb-disable <if condition='$module[is_allow] eq 0'>selected</if>">不允许</label>
-                    <input id="module_is_allow1" name="is_allow" <if condition='$module[is_allow] eq 1'>checked</if> value="1" type="radio">
-                    <input id="module_is_allow0" name="is_allow" <if condition='$module[is_allow] eq 0'>checked</if> value="0" type="radio">
+                <dd class="opt ctype">
+                    <input name="distribute_level[]" type="checkbox" value="-1" <if condition="!empty($module['distribute_level']) && in_array(-1, $module['distribute_level'])">checked</if> ><label>禁止访问</label>
+                    <input name="distribute_level[]" type="checkbox" value="0" <if condition="!empty($module['distribute_level']) && in_array(0, $module['distribute_level'])">checked</if> ><label>所有人</label>
+                    <input name="distribute_level[]" type="checkbox" value="1" <if condition="!empty($module['distribute_level']) && in_array(1, $module['distribute_level'])">checked</if> ><label>普通会员</label>
+                    <input name="distribute_level[]" type="checkbox" value="2" <if condition="!empty($module['distribute_level']) && in_array(2, $module['distribute_level'])">checked</if> ><label>VIP</label>
+                    <input name="distribute_level[]" type="checkbox" value="3" <if condition="!empty($module['distribute_level']) && in_array(3, $module['distribute_level'])">checked</if> ><label>SVIP</label>
                 </dd>
             </dl>
             <div class="bot">
@@ -133,20 +134,10 @@
                 </dl>
                 <dl class="row">
                     <dt class="tit">
-                        <label>是否允许访问</label>
-                    </dt>
-                    <dd class="opt onoff">
-                        <label for="class_is_allow1" class="cb-enable <if condition='$module_class[is_allow] eq 1'>selected</if>">允许访问</label>
-                        <label for="class_is_allow0" class="cb-disable <if condition='$module_class[is_allow] eq 0'>selected</if>">不允许</label>
-                        <input id="class_is_allow1" name="is_allow" <if condition='$module_class[is_allow] eq 1'>checked</if> value="1" type="radio">
-                        <input id="class_is_allow0" name="is_allow" <if condition='$module_class[is_allow] eq 0'>checked</if> value="0" type="radio">
-                    </dd>
-                </dl>
-                <dl class="row">
-                    <dt class="tit">
                         <label>访问限制</label>
                     </dt>
                     <dd class="opt ctype">
+                        <input name="distribute_level[]" type="checkbox" value="-1" <if condition="!empty($module_class['distribute_level']) && in_array(-1, $module_class['distribute_level'])">checked</if> ><label>禁止访问</label>
                         <input name="distribute_level[]" type="checkbox" value="0" <if condition="!empty($module_class['distribute_level']) && in_array(0, $module_class['distribute_level'])">checked</if> ><label>所有人</label>
                         <input name="distribute_level[]" type="checkbox" value="1" <if condition="!empty($module_class['distribute_level']) && in_array(1, $module_class['distribute_level'])">checked</if> ><label>普通会员</label>
                         <input name="distribute_level[]" type="checkbox" value="2" <if condition="!empty($module_class['distribute_level']) && in_array(2, $module_class['distribute_level'])">checked</if> ><label>VIP</label>

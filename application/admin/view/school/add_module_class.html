@@ -46,13 +46,14 @@
                     </dl>
                     <dl class="row">
                         <dt class="tit">
-                            <label>是否允许访问</label>
+                            <label>访问限制</label>
                         </dt>
-                        <dd class="opt onoff">
-                            <label for="class_is_allow1" class="cb-enable selected">允许访问</label>
-                            <label for="class_is_allow0" class="cb-disable">不允许</label>
-                            <input id="class_is_allow1" name="is_allow" value="1" type="radio" checked>
-                            <input id="class_is_allow0" name="is_allow" value="0" type="radio">
+                        <dd class="opt ctype">
+                            <input name="distribute_level[]" type="checkbox" value="-1"><label>禁止访问</label>
+                            <input name="distribute_level[]" type="checkbox" value="0"><label>所有人</label>
+                            <input name="distribute_level[]" type="checkbox" value="1"><label>普通会员</label>
+                            <input name="distribute_level[]" type="checkbox" value="2"><label>VIP</label>
+                            <input name="distribute_level[]" type="checkbox" value="3"><label>SVIP</label>
                         </dd>
                     </dl>
                     <dl class="row">
@@ -64,17 +65,6 @@
                             <label for="class_is_learn0" class="cb-disable selected">不需要</label>
                             <input id="class_is_learn1" name="is_learn" value="1" type="radio">
                             <input id="class_is_learn0" name="is_learn" value="0" type="radio" checked>
-                        </dd>
-                    </dl>
-                    <dl class="row">
-                        <dt class="tit">
-                            <label>访问限制</label>
-                        </dt>
-                        <dd class="opt ctype">
-                            <input name="distribute_level[]" type="checkbox" value="0"><label>所有人</label>
-                            <input name="distribute_level[]" type="checkbox" value="1"><label>普通会员</label>
-                            <input name="distribute_level[]" type="checkbox" value="2"><label>VIP</label>
-                            <input name="distribute_level[]" type="checkbox" value="3"><label>SVIP</label>
                         </dd>
                     </dl>
                     <div class="bot">

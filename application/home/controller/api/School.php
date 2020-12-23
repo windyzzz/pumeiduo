@@ -49,6 +49,18 @@ class School extends Base
     }
 
     /**
+     * 用户模块权限检查
+     * @return \think\response\Json
+     */
+    public function checkModule()
+    {
+        if (!$this->user) return json(['status' => -999, 'msg' => '请先登录']);
+        $moduleId = I('module_id', 0);
+        $res = $this->logic->checkModule($moduleId, $this->user);
+        return json($res);
+    }
+
+    /**
      * 用户文章权限检查
      * @return \think\response\Json
      */
