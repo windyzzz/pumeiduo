@@ -119,7 +119,7 @@ class PromGoodsLogic extends Prom
         if (empty($this->promGoods)) {
             return false;
         }
-        if (time() > $this->promGoods['start_time'] && time() < $this->promGoods['end_time'] && 0 == $this->promGoods['is_end']) {
+        if (time() > $this->promGoods['start_time'] && time() < $this->promGoods['end_time'] && 0 == $this->promGoods['is_end'] && 1 == $this->promGoods['is_open']) {
             return true;
         }
 

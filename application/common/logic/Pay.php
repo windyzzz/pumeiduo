@@ -244,19 +244,25 @@ class Pay
 
     /**
      * 设置订单pv
-     * @param $payList
+     * @param $source
      */
-    public function setOrderPv()
+    public function setOrderPv($source = 3)
     {
+        $exchangeIntegral2 = 0.00;
         foreach ($this->payList as $item) {
             if (isset($item['goods_pv'])) {
                 $this->goodsPv = bcadd($this->goodsPv, bcmul($item['goods_pv'], $item['goods_num'], 2), 2);
+                $exchangeIntegral2 = bcadd($exchangeIntegral2, $item['goods']['exchange_integral2'], 2);
             }
         }
         // 订单优惠的价格
         $promAmount = bcsub(bcadd($this->orderPromAmount, $this->couponPrice, 2), $this->goodsPromAmount, 2);
         // 优惠比例
-        $promRate = $this->totalAmount != '0' ? bcsub(1, ($promAmount / $this->totalAmount), 2) : '0';
+        if ($source == 4) {
+            $promRate = $this->totalAmount != '0' ? bcsub(1, ($promAmount / bcsub($this->totalAmount, $exchangeIntegral2, 2)), 2) : '0';
+        } else {
+            $promRate = $this->totalAmount != '0' ? bcsub(1, ($promAmount / $this->totalAmount), 2) : '0';
+        }
         $this->orderPv = $promRate < 1 ? bcmul($promRate, $this->goodsPv, 2) : $this->goodsPv;
     }
 

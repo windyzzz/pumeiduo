@@ -266,7 +266,11 @@ class PlaceOrder
             'school_credit' => $this->pay->getSchoolCredit(),
         ];
         if ($this->orderType == 5) {
+            // 商学院兑换订单
             $orderData['order_amount'] = 0;
+        }
+        if ($orderData['order_pv'] > 0) {
+            $orderData['pv_user_id'] = $user['user_id'];
         }
         if (!empty($this->userAddress)) {
             $orderData['consignee'] = $this->userAddress['consignee']; // 收货人

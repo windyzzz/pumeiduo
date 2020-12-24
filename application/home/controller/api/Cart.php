@@ -1209,6 +1209,9 @@ class Cart extends Base
         if (empty($goods_id)) {
             return json(['status' => 0, 'msg' => '请选择要购买的商品', 'result' => '']);
         }
+        if ($this->isApplet) {
+            $cartType = 2;
+        }
         $cartLogic = new CartLogic();
         $cartLogic->setUserId($this->user_id);
         $cartLogic->setUser($this->user);
@@ -1506,7 +1509,7 @@ class Cart extends Base
                 // 计算商品pv
                 if ($this->user['distribut_level'] >= 3) {
                     // 计算商品pv
-                    $buyGoods = $cartLogic->calcGoodsPv([$buyGoods])[0];
+                    $buyGoods = $cartLogic->calcGoodsPv([$buyGoods], $this->user)[0];
                 }
                 if ($buyGoods['goods']['is_abroad'] == 1) {
                     return json(['status' => -11, 'msg' => '韩国购商品请在APP进行购买', 'result' => [
@@ -1556,7 +1559,7 @@ class Cart extends Base
                 }
                 if ($this->user['distribut_level'] >= 3) {
                     // 计算商品pv
-                    $userCartList = $cartLogic->calcGoodsPv($userCartList);
+                    $userCartList = $cartLogic->calcGoodsPv($userCartList, $this->user);
                 }
                 $cartLogic->checkStockCartList($userCartList);
                 $pay->payCart($userCartList);

@@ -617,6 +617,9 @@ class GoodsLogic extends Model
                             $lookSee[$k]['exchange_price'] = $v['retail_price'];  // 零售价
                     }
                 }
+            } elseif ($source == 4) {
+                $lookSee[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);
+                $lookSee[$k]['exchange_integral'] = '0';
             } else {
                 if ($v['exchange_integral'] != 0) {
                     $lookSee[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);

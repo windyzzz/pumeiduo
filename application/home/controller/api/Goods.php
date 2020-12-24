@@ -809,6 +809,7 @@ class Goods extends Base
         $originalImg = getFullPath($goods['original_img']);
         $goodsInfo = [
             'goods_type' => 'normal',
+            'is_agent' => $goods['is_agent'],
             'goods_id' => $goods['goods_id'],
             'item_id' => $itemId . '',
             'goods_sn' => $goods['goods_sn'],
@@ -823,7 +824,8 @@ class Goods extends Base
             'exchange_integral' => $goods['exchange_integral'],
             'exchange_price' => bcsub($goods['shop_price'], $goods['exchange_integral'], 2),
             'commission' => '',
-            'integral_pv' => '',
+            'integral_pv' => '',    // 积分价pv / 进货价pv（代理商商品）
+            'retail_pv' => '',      // 零售价pv / 零售价pv（代理商商品）
             'buy_limit' => $goods['limit_buy_num'],     // 商品最大购买数量
             'buy_least' => $goods['least_buy_num'],     // 商品最低购买数量
             'limit_num' => '0',                                 // 参加活动商品最大数量
@@ -838,11 +840,10 @@ class Goods extends Base
         ];
         if ($this->isApplet) {
             $goodsInfo['exchange_integral'] = '0';
-            $goodsInfo['exchange_price'] = $goods['shop_price'];
         }
         if ($goods['is_agent'] == 1) {
             // 代理商商品基础价格设置
-            $goodsInfo['shop_price'] = bcsub($goods['shop_price'], $goods['exchange_integral'], 2);
+            $goodsInfo['shop_price'] = $goods['retail_price'];  // 零售价
             $goodsInfo['exchange_price'] = $goods['retail_price'];  // 零售价
             if ($this->user) {
                 switch ($this->user['distribut_level']) {
@@ -1041,60 +1042,62 @@ class Goods extends Base
                 /*
                  * 代理商商品
                  */
-                // 商品pv、佣金
+                // 商品pv（不显示佣金）
                 switch ($this->user['distribut_level']) {
-                    case 1:
-                        $goodsInfo['integral_pv'] = '';
-                        $goodsInfo['commission'] = '';
-                        break;
-                    case 2:
-                        $goodsInfo['integral_pv'] = '';
-                        if ($goods['commission'] == 0) {
-                            $goodsInfo['commission'] = '';
-                        } else {
-                            $goodsInfo['commission'] = bcdiv(bcmul($goods['exchange_price'], $goods['commission'], 2), 100, 2);   // 零售价佣金
-                        }
-                        break;
                     case 3:
+                        $prop = $goodsInfo['exchange_price'] / $goods['buying_price'];
                         if ($goods['buying_price_pv'] == 0) {
                             $goodsInfo['integral_pv'] = '';
                         } else {
-                            $goodsInfo['integral_pv'] = bcmul($goods['buying_price_pv'], ($goodsInfo['exchange_price'] / $goods['buying_price']), 2); // 进货价pv
+                            $goodsInfo['integral_pv'] = bcmul($goods['buying_price_pv'], $prop, 2); // 进货价pv
                         }
-                        if ($goods['commission'] == 0) {
-                            $goodsInfo['commission'] = '';
+                        if ($goods['retail_price_pv'] == 0) {
+                            $goodsInfo['retail_pv'] = '0.00';
                         } else {
-                            $goodsInfo['commission'] = bcdiv(bcmul($goodsInfo['exchange_price'], $goods['commission'], 2), 100, 2);   // 进货价佣金
+                            $goodsInfo['retail_pv'] = bcmul($goods['retail_price_pv'], $prop, 2); // 零售价pv
                         }
                         break;
                 }
             } else {
-                // 商品pv、佣金
-                switch ($this->user['distribut_level']) {
-                    case 1:
-                        $goodsInfo['integral_pv'] = '';
-                        $goodsInfo['commission'] = '';
-                        break;
-                    case 2:
-                        $goodsInfo['integral_pv'] = '';
-                        if ($goods['commission'] == 0) {
-                            $goodsInfo['commission'] = '';
-                        } else {
-                            $goodsInfo['commission'] = bcdiv(bcmul($goodsInfo['exchange_price'], $goods['commission'], 2), 100, 2);
-                        }
-                        break;
-                    case 3:
-                        if ($goods['integral_pv'] == 0) {
+                if ($this->isApplet) {
+                    // 商品pv
+                    switch ($this->user['distribut_level']) {
+                        case 3:
+                            if ($goods['integral_pv'] == 0) {
+                                $goodsInfo['integral_pv'] = '';
+                            } else {
+                                $goodsInfo['integral_pv'] = $goods['integral_pv'];
+                            }
+                            break;
+                    }
+                } else {
+                    // 商品pv、佣金
+                    switch ($this->user['distribut_level']) {
+                        case 1:
                             $goodsInfo['integral_pv'] = '';
-                        } else {
-                            $goodsInfo['integral_pv'] = bcmul($goods['integral_pv'], ($goodsInfo['exchange_price'] / ($goods['shop_price'] - $goods['exchange_integral'])), 2);
-                        }
-                        if ($goods['commission'] == 0) {
                             $goodsInfo['commission'] = '';
-                        } else {
-                            $goodsInfo['commission'] = bcdiv(bcmul($goodsInfo['exchange_price'], $goods['commission'], 2), 100, 2);
-                        }
-                        break;
+                            break;
+                        case 2:
+                            $goodsInfo['integral_pv'] = '';
+                            if ($goods['commission'] == 0) {
+                                $goodsInfo['commission'] = '';
+                            } else {
+                                $goodsInfo['commission'] = bcdiv(bcmul($goodsInfo['exchange_price'], $goods['commission'], 2), 100, 2);
+                            }
+                            break;
+                        case 3:
+                            if ($goods['integral_pv'] == 0) {
+                                $goodsInfo['integral_pv'] = '';
+                            } else {
+                                $goodsInfo['integral_pv'] = bcmul($goods['integral_pv'], ($goodsInfo['exchange_price'] / ($goods['shop_price'] - $goods['exchange_integral'])), 2);
+                            }
+                            if ($goods['commission'] == 0) {
+                                $goodsInfo['commission'] = '';
+                            } else {
+                                $goodsInfo['commission'] = bcdiv(bcmul($goodsInfo['exchange_price'], $goods['commission'], 2), 100, 2);
+                            }
+                            break;
+                    }
                 }
             }
         }
@@ -1154,10 +1157,10 @@ class Goods extends Base
         ];
         if ($this->isApplet) {
             $goodsInfo['exchange_integral'] = '0';
-            $goodsInfo['exchange_price'] = $goods['shop_price'];
         }
         if ($goods['is_agent'] == 1) {
             // 代理商商品基础价格设置
+            $goodsInfo['shop_price'] = $goods['retail_price'];  // 零售价
             $goodsInfo['exchange_price'] = $goods['retail_price'];  // 零售价
             if ($this->user) {
                 switch ($this->user['distribut_level']) {

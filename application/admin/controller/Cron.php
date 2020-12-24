@@ -1443,7 +1443,9 @@ AND log_id NOT IN
             'order_pv' => ['>', 0],
             'pv_tb' => 0,
             'pv_send' => 0,
-            'end_sale_time' => ['<=', time()]       // 售后期结束
+            'pv_user_id' => ['NEQ', 0],
+            'end_sale_time' => ['<=', time()],      // 售后期结束
+            'is_agent' => 0
         ];
         $orderIds = M('order')->where($where)->getField('order_id', true);
         // 查看订单商品是否正在申请售后（未处理完成）
