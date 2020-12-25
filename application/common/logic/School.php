@@ -488,7 +488,7 @@ class School
                 'learn' => $item['learn'],
                 'share' => $item['share'],
                 'integral' => $item['integral'],
-                'distribute_level' => $item['distribute_level'][0],
+                'distribute_level' => $item['distribute_level'][0] == 3 && count($item['distribute_level']) > 1 ? $item['distribute_level'][1] : $item['distribute_level'][0],
                 'publish_time' => format_time($item['publish_time']),
                 'image' => [],
                 'video' => [
@@ -559,6 +559,8 @@ class School
         }
         Cache::set('school_article_content_' . $param['article_id'], $articleInfo['content'], 60);  // 文章内容
         $cover = explode(',', $articleInfo['cover']);  // 封面图
+        $articleInfo['distribute_level'] = explode(',', $articleInfo['distribute_level']);
+        rsort($articleInfo['distribute_level']);   // 等级限制
         $info = [
             'article_id' => $articleInfo['id'],
             'class_id' => $articleInfo['class_id'],
@@ -576,7 +578,7 @@ class School
             'learn' => $articleInfo['learn'],
             'share' => $articleInfo['share'],
             'integral' => $articleInfo['integral'],
-            'distribute_level' => $articleInfo['distribute_level'],
+            'distribute_level' => $articleInfo['distribute_level'][0] == 3 && count($articleInfo['distribute_level']) > 1 ? $articleInfo['distribute_level'][1] : $articleInfo['distribute_level'][0],
             'show_goods' => $articleInfo['show_goods'] ? 1 : 0,
         ];
         if ($user) {
@@ -686,16 +688,18 @@ class School
         // 搜索条件
         $where = $this->userArticleWhere($param);
         $where['usa.user_id'] = $user['user_id'];
-        $where['usa.is_learn'] = 1;
+        $where['usa.integral'] = ['>', 0];
         // 数据数量
         $count = M('user_school_article usa')->join('school_article sa', 'sa.id = usa.article_id')->where($where)->count();
         // 查询数据
         $page = new Page($count, $limit);
         $userArticle = M('user_school_article usa')->join('school_article sa', 'sa.id = usa.article_id')->where($where)
-            ->limit($page->firstRow . ',' . $page->listRows)->field('sa.*, usa.integral, usa.credit')->select();
+            ->limit($page->firstRow . ',' . $page->listRows)->field('sa.*, usa.integral as use_integral, usa.credit')->select();
         $list = [];
         foreach ($userArticle as $item) {
             $cover = explode(',', $item['cover']);  // 封面图
+            $item['distribute_level'] = explode(',', $item['distribute_level']);
+            rsort($item['distribute_level']);   // 等级限制
             $list[] = [
                 'article_id' => $item['id'],
                 'class_id' => $item['class_id'],
@@ -709,8 +713,8 @@ class School
                 ],
                 'learn' => $item['learn'],
                 'share' => $item['share'],
-                'integral' => $item['integral'],
-                'distribute_level' => $item['distribute_level'],
+                'integral' => $item['use_integral'],    // 用户购买消费积分
+                'distribute_level' => $item['distribute_level'][0] == 3 && count($item['distribute_level']) > 1 ? $item['distribute_level'][1] : $item['distribute_level'][0],
                 'publish_time' => format_time($item['publish_time']),
             ];
         }
@@ -984,7 +988,7 @@ class School
                 'goods_num' => $buyGoods ? $buyGoods['goods_num'] : '0',
                 'original_img_new' => $buyGoods ? getFullPath($buyGoods['original_img']) : '0',
                 'credit' => $order['school_credit'],
-                'add_time' => date('Y-m-d', $order['pay_time']),
+                'add_time' => date('Y-m-d H:i:s', $order['pay_time']),
             ];
         }
         return ['total' => $count, 'list' => $list];
