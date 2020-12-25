@@ -345,6 +345,7 @@ class School
                     'type' => substr($url[3], strrpos($url[3], 'type:') + 5),
                 ],
                 'code' => $item['module_type'],
+                'module_id' => isset($module) ? $module['id'] : '0',
                 'is_allow' => isset($module) ? (int)$module['is_allow'] : 0,
                 'tips' => '功能尚未开放',
                 'need_login' => 1,
