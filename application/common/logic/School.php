@@ -654,11 +654,12 @@ class School
             ]);
         }
         // 文章信息
-        $articleInfo = M('school_article')->where(['id' => $articleId])->field('title, cover')->find();
+        $articleInfo = M('school_article')->where(['id' => $articleId])->field('title, subtitle, cover')->find();
         $cover = explode(',', $articleInfo['cover']);  // 封面图
         $data = [
             'qrcode' => $img,
             'title' => $articleInfo['title'],
+            'subtitle' => $articleInfo['subtitle'],
             'cover' => [
                 'img' => $this->ossClient::url(substr($cover[0], strrpos($cover[0], 'img:') + 4)),
                 'width' => substr($cover[1], strrpos($cover[1], 'width:') + 6),

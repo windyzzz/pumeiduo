@@ -267,6 +267,8 @@ class PlaceOrder
         ];
         if ($this->orderType == 5) {
             // 商学院兑换订单
+            $orderData['pay_code'] = 'school_credit';
+            $orderData['pay_name'] = '乐活豆兑换';
             $orderData['order_amount'] = 0;
         }
         if ($orderData['order_pv'] > 0) {

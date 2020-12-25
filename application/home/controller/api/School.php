@@ -351,7 +351,10 @@ class School extends Base
             $return = [
                 'user_address' => !empty($userAddress) ? [$userAddress] : [],
                 'goods_info' => [$goodsInfo],
-                'order_info' => $orderInfo
+                'order_info' => $orderInfo,
+                'user' => [
+                    'has_pay_pwd' => $this->user['paypwd'] ? 1 : 0,
+                ]
             ];
             return json(['status' => 1, 'msg' => '', 'result' => $return]);
         } catch (TpshopException $tpe) {
