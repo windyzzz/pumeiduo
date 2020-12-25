@@ -36,4 +36,14 @@ class Push extends Model
 
         return $parse_type[$data['distribute_level']];
     }
+
+    public function goods()
+    {
+        return $this->hasOne('goods', 'goods_id', 'type_id');
+    }
+
+    public function specGoodsPrice()
+    {
+        return $this->hasOne('SpecGoodsPrice', 'item_id', 'item_id');
+    }
 }

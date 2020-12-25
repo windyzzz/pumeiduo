@@ -4,6 +4,29 @@
         color: #F00;
         display: none;
     }
+    .ys-btn-close {
+        position: relative;
+        top: -12px;
+        left: -16px;
+        width: 18px;
+        height: 18px;
+        border: 1px solid #ccc;
+        line-height: 18px;
+        text-align: center;
+        display: inline-block;
+        border-radius: 50%;
+        z-index: 1;
+        background-color: #fff;
+        cursor: pointer;
+    }
+    .selected-group-goods {
+        background-color: #FFF;
+        width: 162px;
+        padding: 9px;
+        margin-bottom: 10px;
+        border: solid 1px #E6E6E6;
+        box-shadow: 2px 2px 0 rgba(153,153,153,0.1);
+    }
 </style>
 <script src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
 <body style="background-color: #FFF; overflow: auto;">
@@ -105,12 +128,40 @@
             </dl>
             <dl class="row" style="display: none;">
                 <dt class="tit">
-                    <label><em>*</em>商品编号</label>
+                    <label><em>*</em>商品信息</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" name="goods_sn" id="goods_sn" value="{$push_info.goods_sn}" class="input-txt">
-                    <span class="err" id="err_goods_sn"></span>
-                    <p class="notic">请填写商品编号</p>
+                    <div style="overflow: hidden" id="selected_group_goods">
+                        <if condition="!empty($push_info['goods'])">
+                            <div style="float: left;margin-right: 10px" class="selected-group-goods">
+                                <div class="ys-btn-close" style="top: 0px;left: 142px;">×</div>
+                                <div class="goods-thumb">
+                                    <img style="width: 162px;height: 162px"
+                                    <notempty name="$push_info['specGoodsPrice']['spec_img']">
+                                        src="{$push_info['specGoodsPrice']['spec_img']}"
+                                        <else/>
+                                        src="{$push_info['type_id']|goods_thum_images=162,162}"
+                                    </notempty>
+                                    />
+                                </div>
+                                <div class="goods-name">
+                                    <a target="_blank" href="{:U('Admin/Goods/addEditGoods',array('id'=>$push_info['type_id']))}">{$push_info.goods.goods_name}</a>
+                                </div>
+                                <div class="goods-price">
+                                    <notempty name="$push_info['specGoodsPrice']">
+                                        商城价：￥{$push_info['specGoodsPrice']['price']}库存:{$push_info['specGoodsPrice']['store_count']}
+                                        <else/>
+                                        商城价：￥{$push_info['goods']['shop_price']}库存:{$push_info['goods']['store_count']}
+                                    </notempty>
+                                </div>
+                                <input type="hidden" name="goods_id" value="{$push_info.type_id}">
+                                <input type="hidden" name="item_id" value="{$push_info.item_id}">
+                            </div>
+                        </if>
+                    </div>
+                    <p class="notic">
+                        <a onclick="selectGoods()" class="ncap-btn"><i class="fa fa-search"></i>选择商品</a>
+                    </p>
                 </dd>
             </dl>
             <div class="bot"><a onclick="verifyForm()" class="ncap-btn-big ncap-btn-green">确认提交</a></div>
@@ -123,10 +174,10 @@
         var push_type = $('#push_type').find("option:selected").val();
         if (push_type == '4') {
             $('#push_type_id').parent().parent().hide();
-            $('#goods_sn').parent().parent().show();
+            $('#selected_group_goods').parent().parent().show();
         } else {
             $('#push_type_id').parent().parent().show();
-            $('#goods_sn').parent().parent().hide();
+            $('#selected_group_goods').parent().parent().hide();
             var push_type_id = "{$push_info.type_id}";
             var url = '';
             var data = '';
@@ -177,6 +228,9 @@
                 }
             });
         }
+        $(document).on("click", '.ys-btn-close', function (e) {
+            $(this).parent().remove();
+        })
     });
 
     /**
@@ -200,10 +254,10 @@
         var push_type = $('#push_type').find("option:selected").val();
         if (push_type == '4') {
             $('#push_type_id').parent().parent().hide();
-            $('#goods_sn').parent().parent().show();
+            $('#selected_group_goods').parent().parent().show();
         } else {
             $('#push_type_id').parent().parent().show();
-            $('#goods_sn').parent().parent().hide();
+            $('#selected_group_goods').parent().parent().hide();
             var url = '';
             var data = '';
             switch (push_type) {
@@ -249,6 +303,44 @@
                 }
             });
         }
+    }
+
+    function selectGoods() {
+        var url = "{:U('Goods/search_goods',array('tpl'=>'select_goods'))}";
+        layer.open({
+            type: 2,
+            title: '选择商品',
+            shadeClose: true,
+            shade: 0.2,
+            area: ['75%', '75%'],
+            content: url,
+        });
+    }
+
+    function selGoodsCallBack(goodsItem) {
+        $('#goods_id').val(goodsItem.goods_id);
+        var html = '';
+        if (goodsItem.spec != null) {
+            //有规格
+            html = '<div style="float: left;margin: 10px auto;" class="selected-group-goods"><div class="ys-btn-close" style="top: 0px;left: 142px;">×</div><div class="goods-thumb">' +
+                '<img style="width: 162px;height: 162px" src="' + goodsItem.spec.spec_img + '"/></div> <div class="goods-name"> ' +
+                '<a target="_blank" href="/index.php/Admin/Goods/addEditGoods/id/' + goodsItem.goods_id + '">' + goodsItem.goods_name + goodsItem.spec.key_name + '</a> </div>' +
+                ' <div class="goods-price">商城价：￥' + goodsItem.spec.price + '库存:' + goodsItem.spec.store_count + '</div> ' +
+                '<input type="hidden" name="goods_id" value="' + goodsItem.goods_id + '">' +
+                '<input type="hidden" name="item_id" value="' + goodsItem.spec.item_id + '">' +
+                '</div>';
+        } else {
+            html = '<div style="float: left;margin: 10px auto;" class="selected-group-goods"><div class="ys-btn-close" style="top: 0px;left: 142px;">×</div><div class="goods-thumb">' +
+                '<img style="width: 162px;height: 162px" src="' + goodsItem.goods_image + '"/></div> <div class="goods-name"> ' +
+                '<a target="_blank" href="/index.php/Admin/Goods/addEditGoods/id/' + goodsItem.goods_id + '">' + goodsItem.goods_name + '</a> </div>' +
+                ' <div class="goods-price">商城价：￥' + goodsItem.goods_price + '库存:' + goodsItem.store_count + '</div> ' +
+                '<input type="hidden" name="goods_id" value="' + goodsItem.goods_id + '">' +
+                '<input type="hidden" name="item_id" value="0">' +
+                '</div>';
+        }
+        $('#selected_group_goods').empty().html(html);
+        $('.selected-group-goods').show();
+        layer.closeAll('iframe');
     }
 
     function verifyForm() {

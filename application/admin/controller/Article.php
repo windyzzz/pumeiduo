@@ -14,6 +14,7 @@ namespace app\admin\controller;
 use app\admin\logic\ArticleCatLogic;
 use app\admin\model\Message as MessageModel;
 use app\admin\model\Push as PushModel;
+use app\admin\model\Push;
 use think\Page;
 
 class Article extends Base
@@ -594,30 +595,27 @@ class Article extends Base
             }
             $data['push_time'] = strtotime($data['push_time']);
             switch ($data['type']) {
-                case 1:
-                    // 公告
                 case 2:
                     // 活动消息
-                case 3:
-                    // 优惠券
-                    unset($data['goods_sn']);
+                    if ($data['type_id'] == 0) {
+                        $this->ajaxReturn(['status' => 0, 'msg' => '请选择活动']);
+                    }
                     break;
                 case 4:
                     // 商品
-                    $goodsId = M('goods')->where(['goods_sn' => $data['goods_sn']])->value('goods_id');
-                    if (empty($goodsId)) {
-                        $this->ajaxReturn(['status' => 0, 'msg' => '商品不存在']);
+                    $goodsInfo = M('goods')->where(['goods_id' => $data['goods_id']])->find();
+                    if (!$goodsInfo) {
+                        $this->ajaxReturn(['status' => 0, 'msg' => '请选择商品']);
                     }
-                    $data['type_id'] = $goodsId;
+                    if ($goodsInfo['is_on_sale'] == 0) {
+                        $this->ajaxReturn(['status' => 0, 'msg' => '商品已下架']);
+                    }
+                    $data['type_id'] = $data['goods_id'];
+                    break;
+                default:
                     $data['item_id'] = 0;
-                    unset($data['goods_sn']);
-                    break;
-                case 5:
-                    // 首页
-                    unset($data['goods_sn']);
-                    $data['type_id'] = 0;
-                    break;
             }
+            unset($data['goods_id']);
             if (!empty($data['push_id'])) {
                 $data['status'] = 0;
                 M('push')->where(['id' => $data['push_id']])->update($data);
@@ -633,9 +631,8 @@ class Article extends Base
             $pushModel = new PushModel();
             $pushInfo = $pushModel->find($pushId);
             if ($pushInfo['type'] == 4) {
-                $pushInfo['goods_sn'] = M('goods')->where(['goods_id' => $pushInfo['type_id']])->value('goods_sn');
-            } else {
-                $pushInfo['goods_sn'] = '';
+                $push = new Push();
+                $pushInfo = $push->with('specGoodsPrice,goods')->find($pushId);
             }
             $this->assign('push_info', $pushInfo);
         }
