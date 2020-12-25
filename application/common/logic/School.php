@@ -335,6 +335,8 @@ class School
         foreach ($rotate as $item) {
             if ($item['module_type']) {
                 $module = M('school')->where(['type' => $item['module_type']])->find();
+            } elseif ($moduleId) {
+                $module = M('school')->where(['id' => $moduleId])->find();
             }
             $url = explode(',', $item['url']);
             $list[] = [
@@ -345,6 +347,7 @@ class School
                     'type' => substr($url[3], strrpos($url[3], 'type:') + 5),
                 ],
                 'code' => $item['module_type'],
+                'name' => isset($module) ? $module['name'] : '',
                 'module_id' => isset($module) ? $module['id'] : '0',
                 'is_allow' => isset($module) ? (int)$module['is_allow'] : 0,
                 'tips' => '功能尚未开放',
