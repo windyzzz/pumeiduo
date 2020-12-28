@@ -702,6 +702,27 @@ class User extends Base
             $condition['user_id'] = $ausers ? ['in', get_arr_column($ausers, 'user_id')] : -1;
         }
 
+        //用户状态
+        $userStatus = I('user_status', 0);
+        switch ($userStatus) {
+            case 1:
+                $condition['is_lock'] = 1;
+                break;
+            case 2:
+                $condition['is_cancel'] = 1;
+                break;
+        }
+        //注册来源
+        $regSource = I('reg_source', 0);
+        if ($regSource > 0) {
+            $condition['reg_source'] = $regSource;
+        }
+        //最后一次登录来源
+        $lastLoginSource = I('last_login_source', 0);
+        if ($lastLoginSource > 0) {
+            $condition['last_login_source'] = $lastLoginSource;
+        }
+
         $ids = I('ids');
         if ($ids) {
             $condition['user_id'] = ['in', $ids];
@@ -716,6 +737,7 @@ class User extends Base
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">生日</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">会员等级</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">累计消费</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">用户状态</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;width:120px;">父级ID</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">手机号</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">余额</td>';
@@ -742,7 +764,7 @@ class User extends Base
         for ($i = 0; $i < $p; ++$i) {
             $start = $i * 5000;
             $userList = M('users')->where($condition)
-                ->field('user_id, sex, birthday, first_leader, user_name, nickname, distribut_level, mobile, reg_time, reg_source, last_login, last_login_source, user_money, pay_points, user_electronic')
+                ->field('user_id, sex, birthday, first_leader, user_name, nickname, distribut_level, mobile, reg_time, reg_source, last_login, last_login_source, user_money, pay_points, user_electronic, is_lock, is_cancel')
                 ->order('user_id')->limit($start, 5000)->select();
             if (is_array($userList)) {
                 foreach ($userList as $k => $val) {
@@ -760,11 +782,18 @@ class User extends Base
                         default:
                             $sex = '保密';
                     }
-                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $sex. ' </td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['birthday']. ' </td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $sex . ' </td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['birthday'] . ' </td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $level_list[$val['distribut_level']] . '</td>';
                     $totalAmount = isset($user_total_amount[$val['user_id']]) ? $user_total_amount[$val['user_id']] : "0.00";
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $totalAmount . ' </td>';
+                    $userStatus = '';
+                    if ($val['is_lock'] == 1) {
+                        $userStatus = '已冻结';
+                    } elseif ($val['is_cancel'] == 1) {
+                        $userStatus = '已注销';
+                    }
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $userStatus . ' </td>';
                     $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['first_leader'] . '</td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['mobile'] . '</td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['user_money'] . '</td>';
