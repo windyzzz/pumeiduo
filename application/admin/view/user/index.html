@@ -407,7 +407,7 @@
             $('input[name="ids"]').val(selected_ids.substring(0, selected_ids.length - 1));
         }
         var data = $('#search-form2').serialize();
-        var action = "{:U('admin/User/export_user')}" + '?' + data;
+        var action = "{:U('admin/User/export_user_csv')}" + '?' + data;
         // $('#search-form2').submit();
         window.location = action;
     }
