@@ -124,7 +124,7 @@ class Login extends Base
             $res['result'] = [
                 'user_id' => $user['user_id'],
                 'sex' => $user['sex'],
-                'nickname' => $user['nickname'],
+                'nickname' => $user['nickname'] == '' ? $user['user_name'] : $user['nickname'],
                 'user_name' => $user['nickname'],
                 'real_name' => $user['user_name'],
                 'id_cart' => $user['id_cart'],

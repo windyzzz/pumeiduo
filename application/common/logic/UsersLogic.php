@@ -1087,9 +1087,9 @@ class UsersLogic extends Model
         $user = [
             'user_id' => $user['user_id'],
             'sex' => $user['sex'],
-            'nickname' => $user['nickname'],
-            'user_name' => $user['nickname'],
-            'real_name' => $user['user_name'],
+            'nickname' => $user['nickname'] == '' ? $user['user_name'] : $user['nickname'],
+            'user_name' => $user['user_name'],
+            'real_name' => $user['real_name'],
             'id_cart' => $user['id_cart'],
             'birthday' => $user['birthday'],
             'mobile' => $user['mobile'],

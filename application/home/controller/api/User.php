@@ -3367,7 +3367,7 @@ class User extends Base
         $data['user'] = [
             'user_id' => $this->user['user_id'],
             'sex' => $this->user['sex'],
-            'nickname' => $this->user['nickname'] ?? $this->user['user_name'],
+            'nickname' => $this->user['nickname'] == '' ? $this->user['user_name'] : $this->user['nickname'],
             'user_name' => $this->user['user_name'],
             'real_name' => $this->user['real_name'],
             'id_cart' => $this->user['id_cart'],
