@@ -488,6 +488,7 @@ class Ueditor extends Base
                 if ($res['status'] == 0) {
                     $state = 'ERROR：' . $res['msg'];
                 } else {
+                    unlink(PUBLIC_PATH . substr($return_data['url'], strrpos($return_data['url'], 'public') + 7));
                     $return_data['url'] = $res['url'];
                 }
             }
@@ -603,6 +604,8 @@ class Ueditor extends Base
                 if ($res['status'] == 0) {
                     $state = 'ERROR：' . $res['msg'];
                 } else {
+                    unset($info);
+                    unlink(PUBLIC_PATH . substr($return_data['url'], strrpos($return_data['url'], 'public') + 7));
                     $return_data['url'] = $res['url'];
                 }
             }
