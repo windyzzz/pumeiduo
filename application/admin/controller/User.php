@@ -166,7 +166,7 @@ class User extends Base
         //会员号
         $referee_user_name = I('referee_user_name', '');
         if ($referee_user_name) {
-            $user = get_user_info($referee_user_name, 5, '', 'user_id');
+            $user = get_user_info($referee_user_name, 5, '');
             $where['referee_user_id'] = $user ? $user['user_id'] : 0;
         }
 
@@ -678,15 +678,13 @@ class User extends Base
         if ($distribut_level) {
             $condition['distribut_level'] = $distribut_level;
         }
-
         //关系
         $field1 = I('field1', '');
         $value1 = I('value1', '');
         if ($value1) {
-            $value1Info = get_user_info($value1, 5, '', 'user_id');
+            $value1Info = get_user_info($value1, 5, '');
             $condition[$field1] = $value1Info ? $value1Info['user_id'] : -1;
         }
-
         //时间
         $field2 = I('field2', '');
         $from_time = I('from_time', '');
@@ -701,7 +699,6 @@ class User extends Base
             $ausers = M('users')->where([$field3 => $value3])->field('user_id')->select();
             $condition['user_id'] = $ausers ? ['in', get_arr_column($ausers, 'user_id')] : -1;
         }
-
         //用户状态
         $userStatus = I('user_status', 0);
         switch ($userStatus) {
@@ -722,7 +719,7 @@ class User extends Base
         if ($lastLoginSource > 0) {
             $condition['last_login_source'] = $lastLoginSource;
         }
-
+        //选中用户
         $ids = I('ids');
         if ($ids) {
             $condition['user_id'] = ['in', $ids];
@@ -763,15 +760,12 @@ class User extends Base
         $p = ceil($count / 5000);
         for ($i = 0; $i < $p; ++$i) {
             $start = $i * 5000;
-            $userList = M('users')->where($condition)
+            $userList = Db::name('users')->where($condition)
                 ->field('user_id, sex, birthday, first_leader, user_name, nickname, distribut_level, mobile, reg_time, reg_source, last_login, last_login_source, user_money, pay_points, user_electronic, is_lock, is_cancel')
                 ->order('user_id')->limit($start, 5000)->select();
             if (is_array($userList)) {
                 foreach ($userList as $k => $val) {
-                    $strTable .= '<tr>';
-                    $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['user_id'] . '</td>';
-                    $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['user_name'] . '</td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['nickname'] . ' </td>';
+                    // 性别
                     switch ($val['sex']) {
                         case 1:
                             $sex = '男';
@@ -782,17 +776,25 @@ class User extends Base
                         default:
                             $sex = '保密';
                     }
-                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $sex . ' </td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['birthday'] . ' </td>';
-                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $level_list[$val['distribut_level']] . '</td>';
+                    // 累计消费
                     $totalAmount = isset($user_total_amount[$val['user_id']]) ? $user_total_amount[$val['user_id']] : "0.00";
-                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $totalAmount . ' </td>';
+                    // 用户状态
                     $userStatus = '';
                     if ($val['is_lock'] == 1) {
                         $userStatus = '已冻结';
                     } elseif ($val['is_cancel'] == 1) {
                         $userStatus = '已注销';
                     }
+                    // 第一次登录APP时间
+                    $firstLogin = isset($firstAppLogin[$val['user_id']]) ? date('Y-m-d H:i', $firstAppLogin[$val['user_id']]) : '';
+                    $strTable .= '<tr>';
+                    $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['user_id'] . '</td>';
+                    $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['user_name'] . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['nickname'] . ' </td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $sex . ' </td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['birthday'] . ' </td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $level_list[$val['distribut_level']] . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $totalAmount . ' </td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $userStatus . ' </td>';
                     $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['first_leader'] . '</td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['mobile'] . '</td>';
@@ -801,7 +803,6 @@ class User extends Base
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['user_electronic'] . ' </td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . date('Y-m-d H:i', $val['reg_time']) . '</td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $source[$val['reg_source']] . ' </td>';
-                    $firstLogin = isset($firstAppLogin[$val['user_id']]) ? date('Y-m-d H:i', $firstAppLogin[$val['user_id']]) : '';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $firstLogin . '</td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . date('Y-m-d H:i', $val['last_login']) . '</td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $source[$val['last_login_source']] . ' </td>';
@@ -813,6 +814,131 @@ class User extends Base
         $strTable .= '</table>';
         downloadExcel($strTable, 'users_' . $i);
         exit();
+    }
+
+    /**
+     * 导出会员数据（csv）
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     */
+    public function export_user_csv()
+    {
+        $condition = [];
+        //级别
+        $distribut_level = I('distribut_level', 0, 'int');
+        if ($distribut_level) {
+            $condition['distribut_level'] = $distribut_level;
+        }
+        //关系
+        $field1 = I('field1', '');
+        $value1 = I('value1', '');
+        if ($value1) {
+            $value1Info = get_user_info($value1, 5, '');
+            $condition[$field1] = $value1Info ? $value1Info['user_id'] : -1;
+        }
+        //时间
+        $field2 = I('field2', '');
+        $from_time = I('from_time', '');
+        $to_time = I('to_time', '');
+        if ($from_time || $to_time) {
+            $condition[$field2] = whereTime($from_time, $to_time);
+        }
+        //个人信息
+        $field3 = I('field3', '');
+        $value3 = I('value3', '');
+        if ($value3) {
+            $ausers = M('users')->where([$field3 => $value3])->field('user_id')->select();
+            $condition['user_id'] = $ausers ? ['in', get_arr_column($ausers, 'user_id')] : -1;
+        }
+        //用户状态
+        $userStatus = I('user_status', 0);
+        switch ($userStatus) {
+            case 1:
+                $condition['is_lock'] = 1;
+                break;
+            case 2:
+                $condition['is_cancel'] = 1;
+                break;
+        }
+        //注册来源
+        $regSource = I('reg_source', 0);
+        if ($regSource > 0) {
+            $condition['reg_source'] = $regSource;
+        }
+        //最后一次登录来源
+        $lastLoginSource = I('last_login_source', 0);
+        if ($lastLoginSource > 0) {
+            $condition['last_login_source'] = $lastLoginSource;
+        }
+        //选中用户
+        $ids = I('ids');
+        if ($ids) {
+            $condition['user_id'] = ['in', $ids];
+        }
+        //排序
+        if (I('order_by') == 'user_status') {
+            $sort_order = 'is_lock ' . I('sort') . ', is_cancel ' . I('sort');
+        } else {
+            $sort_order = I('order_by') . ' ' . I('sort');
+        }
+        // 会员订单数据
+        $user_total_amount = M('order')->where('order_status', 'in', [1, 2, 4])->group('user_id')->getField('user_id, sum(order_amount) + sum(user_electronic)', true);
+        // 等级列表
+        $level_list = M('distribut_level')->getField('level_id, level_name');
+        // 来源
+        $source = ['1' => '微信', '2' => 'PC', '3' => 'APP'];
+        // 用户第一次APP登陆
+        $firstAppLogin = M('user_login_log')->where(['is_app_first' => 1])->group('user_id')->getField('user_id, login_time', true);
+        // 用户数据
+        $userList = Db::name('users')->where($condition)
+            ->field('user_id, sex, birthday, first_leader, user_name, nickname, distribut_level, mobile, reg_time, reg_source, last_login, last_login_source, user_money, pay_points, user_electronic, is_lock, is_cancel')
+            ->order($sort_order)->select();
+        // 表头
+        $headList = [
+            '会员ID', '用户名', '会员昵称', '性别', '生日', '会员等级', '累计消费', '用户状态', '父级ID', '手机号',
+            '余额', '积分', '电子币', '注册时间', '注册来源', '首次登陆APP时间', '最后登陆时间', '最后登陆来源'
+        ];
+        $dataList = [];
+        foreach ($userList as $key => $user) {
+            switch ($user['sex']) {
+                case 1:
+                    $sex = '男';
+                    break;
+                case 2:
+                    $sex = '女';
+                    break;
+                default:
+                    $sex = '保密';
+            }
+            $userStatus = '';
+            if ($user['is_lock'] == 1) {
+                $userStatus = '已冻结';
+            } elseif ($user['is_cancel'] == 1) {
+                $userStatus = '已注销';
+            }
+            $dataList[$key] = [
+                $user['user_id'],
+                $user['user_name'],
+                $user['nickname'],
+                $sex,
+                $user['birthday'],
+                $level_list[$user['distribut_level']],
+                isset($user_total_amount[$user['user_id']]) ? $user_total_amount[$user['user_id']] : "0.00",
+                $userStatus,
+                $user['first_leader'],
+                $user['mobile'],
+                $user['user_money'],
+                $user['pay_points'],
+                $user['user_electronic'],
+                date('Y-m-d H:i', $user['reg_time']),
+                $source[$user['reg_source']],
+                isset($firstAppLogin[$user['user_id']]) ? date('Y-m-d H:i', $firstAppLogin[$user['user_id']]) : '',
+                date('Y-m-d H:i', $user['last_login']),
+                $source[$user['last_login_source']]
+            ];
+        }
+        toCsvExcel($dataList, $headList, 'user_list');
     }
 
     /**
