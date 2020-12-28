@@ -161,7 +161,6 @@ class Order extends Base
         }
         $where .= ' AND prom_type < 5 '; // 虚拟拼团订单不列出来
         $where .= ' and deleted != 1 ';
-        $where .= ' AND order_type != 5 ';
         if ($this->isApplet) {
             $where .= ' AND order_type = 4';
         }
@@ -174,7 +173,7 @@ class Order extends Base
             $bind['search_key2'] = "%$search_key%";
         }
         // 订单数量
-        $orderNum = Db::name('order')->where($where)->bind($bind)->fetchSql(1)->count();
+        $orderNum = Db::name('order')->where($where)->bind($bind)->count();
         $page = new Page($orderNum, 10);
         // 订单列表
         $orderList = Db::name('order')->where($where)->bind($bind)->order('order_id DESC')->limit($page->firstRow . ',' . $page->listRows)->select();
@@ -205,6 +204,7 @@ class Order extends Base
                 'type' => 1,
                 'type_value' => '乐活优选',
                 'order_info' => [
+                    'order_type' => $list['order_type'],
                     'order_id' => $list['order_id'],
                     'order_sn' => $list['order_sn'],
                     'order_status' => $list['order_status'],
@@ -403,6 +403,9 @@ class Order extends Base
                 if ($orderInfo['is_agent'] == 1) {
                     $orderTypeTips = '含有代理商商品的订单不能售后，请联系总部客服进行处理';
                 }
+                break;
+            case 5:
+                $orderTypeTips = '商学院兑换商品收货后如有质量或破损问题申请退换货时，请联系总部客服进行处理';
                 break;
         }
         $orderInfo = set_btn_order_status($orderInfo);  // 添加属性  包括按钮显示属性 和 订单状态显示属性
@@ -922,17 +925,17 @@ class Order extends Base
         $cOrder = [];
         switch ($order['order_type']) {
             case 2:
-                // 韩国购订单
                 return json(['status' => 0, 'msg' => '韩国购商品收货后如有质量或破损问题申请退换货时，请联系总部客服进行处理']);
             case 3:
-                // 供应链订单
                 $cOrder = M('order')->where(['order_id' => $orderGoods['order_id2']])->find();
                 break;
             case 4:
-                // 直播订单
                 if ($order['is_agent'] == 1) {
                     return json(['status' => 0, 'msg' => '含有代理商商品的订单不能售后，请联系总部客服进行处理']);
                 }
+                break;
+            case 5:
+                return json(['status' => 0, 'msg' => '商学院兑换商品收货后如有质量或破损问题申请退换货时，请联系总部客服进行处理']);
         }
         if ($this->request->isPost()) {
             if ($type == -1) {
