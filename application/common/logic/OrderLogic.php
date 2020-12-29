@@ -46,6 +46,9 @@ class OrderLogic
         if (empty($order)) {
             return ['status' => 0, 'msg' => '订单不存在', 'result' => ''];
         }
+        if ($order['order_type'] == 5 && $is_admin == false) {
+            return ['status' => 0, 'msg' => '商学院兑换商品订单不能取消', 'result' => ''];
+        }
         if (3 == $order['order_status']) {
             return ['status' => 0, 'msg' => '该订单已取消', 'result' => ''];
         }
