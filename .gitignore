@@ -2,12 +2,9 @@
 .env
 front_bak
 pc
-plugins
 public
 runtime
 static
-thinkphp
-vendor
 index.html
 invite.txt
 jpush.log
