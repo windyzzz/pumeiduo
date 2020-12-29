@@ -2841,9 +2841,12 @@ class Order extends Base
                     switch ($order['order_type']) {
                         case 1:
                         case 4:
+                        case 5:
                             // 圃美多
                             $apiController = new ApiController();
                             $express = $apiController->queryExpress(['shipping_code' => $delivery['shipping_code'], 'queryNo' => $delivery['invoice_no']], 'array');
+                            var_dump($express);
+                            exit();
                             if ($express['status'] != 0) {
                                 $express['result'] = [];
                                 $express['result']['deliverystatus'] = 1;   // 正在派件
@@ -2991,6 +2994,7 @@ class Order extends Base
                     switch ($order['order_type']) {
                         case 1:
                         case 4:
+                        case 5:
                             // 圃美多
                             $apiController = new ApiController();
                             foreach ($delivery as $item) {
@@ -3174,6 +3178,7 @@ class Order extends Base
             switch ($order['order_type']) {
                 case 1:
                 case 4:
+                case 5:
                     // 圃美多
                     $apiController = new ApiController();
                     $express = $apiController->queryExpress(['shipping_code' => $delivery['shipping_code'], 'queryNo' => $delivery['invoice_no']], 'array');
