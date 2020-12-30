@@ -625,7 +625,11 @@ class School
                 'type' => substr($qrCodeInfo[3], strrpos($qrCodeInfo[3], 'type:') + 5),
             ];
         } else {
-            $qrPath = create_qrcode('school_article', $user['user_id'], ['article_id' => $articleId]);
+            $param = [
+                'article_id' => $articleId,
+                'distribute_level' => $user['distribut_level']
+            ];
+            $qrPath = create_qrcode('school_article', $user['user_id'], $param);
             if (!$qrPath) {
                 return ['status' => 0, 'msg' => '生成失败'];
             }
@@ -669,7 +673,7 @@ class School
                 'type' => substr($cover[3], strrpos($cover[3], 'type:') + 5),
             ],
             'user_id' => $user['user_id'],
-            'share_link' => SITE_URL . '/#/news/school_article?article_id=' . $articleId
+            'share_link' => SITE_URL . '/#/news/school_article?article_id=' . $articleId . '&distribute_level=' . $user['distribut_level']
         ];
         // 更新分享次数
         M('school_article')->where(['id' => $articleId])->setInc('share', 1);

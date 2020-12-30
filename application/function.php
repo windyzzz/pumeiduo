@@ -2293,7 +2293,10 @@ function create_qrcode($type, $user_id, $param = [], $logo = '')
             if (empty($param['article_id']) || $param['article_id'] == 0) {
                 return false;
             }
-            $url = SITE_URL . '/#/news/school_article?article_id=' . $param['article_id'];
+            if (empty($param['distribute_level']) || $param['distribute_level'] == 0) {
+                return false;
+            }
+            $url = SITE_URL . '/#/news/school_article?article_id=' . $param['article_id'] . '&distribute_level=' . $param['distribute_level'];
             $filename = 'public/images/qrcode/user/user_' . $user_id . '_' . $param['article_id'] . '_school_article.png';
             break;
         default:
