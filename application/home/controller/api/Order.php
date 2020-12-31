@@ -437,7 +437,7 @@ class Order extends Base
             'order_status_desc' => $orderInfo['order_status_desc'],
             'pay_code' => $orderInfo['pay_code'],
             'pay_name' => $orderInfo['pay_name'],
-            'goods_price' => $orderInfo['goods_price'],
+            'goods_price' => $orderInfo['order_type'] == 5 ? $orderInfo['school_credit'] : $orderInfo['goods_price'],
             'weight' => 0,
             'shipping_price' => $orderInfo['shipping_price'],
             'coupon_price' => $orderInfo['coupon_price'],

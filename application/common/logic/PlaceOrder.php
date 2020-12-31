@@ -355,7 +355,7 @@ class PlaceOrder
                 'goods_price' => $payItem['goods_price'],       // 商品价
                 'cost_price' => $goodsArr[$payItem['goods_id']]['cost_price'],          // 成本价,
                 'member_goods_price' => $payItem['member_goods_price'],                 // 会员折扣价
-                'give_integral' => $goodsArr[$payItem['goods_id']]['give_integral'],    // 购买商品赠送积分
+                'give_integral' => $this->order['order_type'] != 5 ? $goodsArr[$payItem['goods_id']]['give_integral'] : 0,    // 购买商品赠送积分
                 'spec_key' => '',
                 'spec_key_name' => '',
                 'is_gift' => 0,
