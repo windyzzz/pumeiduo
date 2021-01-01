@@ -220,7 +220,7 @@ class GiftLogic
                 $cartLogic->setGoodsBuyNum($av['goods_num']);
                 $cartLogic->setType(2);
                 $cartLogic->setCartType(0);
-                $buyGoods = $cartLogic->buyNow();
+                $buyGoods = $cartLogic->buyNow(false, false, true);
                 $buyGoods['gift_reward_id'] = $av['reward_id'];
                 $buyGoods['gift_description'] = $av['description'];
                 $arr[$ak] = $buyGoods;

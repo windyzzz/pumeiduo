@@ -651,8 +651,10 @@ class TaskLogic
                     ];
                     return ['status' => 1, 'msg' => '领取成功', 'result' => $result];
                 }
+                M('task')->where(['id' => 4])->update(['is_open' => 0]);
                 return ['status' => 0, 'msg' => '很遗憾，红包已被领取完毕'];
             } else {
+                M('task')->where(['id' => 4])->update(['is_open' => 0]);
                 return ['status' => 0, 'msg' => '很遗憾，红包已被领取完毕'];
             }
         }
