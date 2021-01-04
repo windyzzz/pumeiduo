@@ -129,20 +129,25 @@ class School
                 return ['status' => 0, 'msg' => '功能尚未开放'];
             }
             $level = explode(',', $module['distribute_level']);
-            if (!in_array($user['distribut_level'], $level)) {
-                foreach ($level as $lv) {
-                    switch ($lv) {
-                        case 2:
-                            $status = -2;
-                            break;
-                        case 3:
-                            $status = -1;
-                            break;
-                        default:
-                            $status = 0;
+            if (count(array_intersect([4, 5, 6, 7], $level)) > 1) {
+                // 拥有代理商等级划分，需要从代理商查询用户的代理商等级
+
+            } else {
+                if (!in_array($user['distribut_level'], $level)) {
+                    foreach ($level as $lv) {
+                        switch ($lv) {
+                            case 2:
+                                $status = -2;
+                                break;
+                            case 3:
+                                $status = -1;
+                                break;
+                            default:
+                                $status = 0;
+                        }
+                        $levelName = M('distribut_level')->where(['level_id' => $lv])->value('level_name');
+                        return ['status' => $status, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
                     }
-                    $levelName = M('distribut_level')->where(['level_id' => $lv])->value('level_name');
-                    return ['status' => $status, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
                 }
             }
         }
@@ -172,20 +177,25 @@ class School
                 return ['status' => 0, 'msg' => '功能尚未开放'];
             }
             $level = explode(',', $moduleClass['distribute_level']);
-            if (!in_array($user['distribut_level'], $level)) {
-                foreach ($level as $lv) {
-                    switch ($lv) {
-                        case 2:
-                            $status = -2;
-                            break;
-                        case 3:
-                            $status = -1;
-                            break;
-                        default:
-                            $status = 0;
+            if (count(array_intersect([4, 5, 6, 7], $level)) > 1) {
+                // 拥有代理商等级划分，需要从代理商查询用户的代理商等级
+
+            } else {
+                if (!in_array($user['distribut_level'], $level)) {
+                    foreach ($level as $lv) {
+                        switch ($lv) {
+                            case 2:
+                                $status = -2;
+                                break;
+                            case 3:
+                                $status = -1;
+                                break;
+                            default:
+                                $status = 0;
+                        }
+                        $levelName = M('distribut_level')->where(['level_id' => $lv])->value('level_name');
+                        return ['status' => $status, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
                     }
-                    $levelName = M('distribut_level')->where(['level_id' => $lv])->value('level_name');
-                    return ['status' => $status, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
                 }
             }
         }
@@ -225,20 +235,25 @@ class School
         // 等级权限
         if ($article['distribute_level'] != 0) {
             $level = explode(',', $article['distribute_level']);
-            if (!in_array($user['distribut_level'], $level)) {
-                foreach ($level as $lv) {
-                    switch ($lv) {
-                        case 2:
-                            $status = -2;
-                            break;
-                        case 3:
-                            $status = -1;
-                            break;
-                        default:
-                            $status = 0;
+            if (count(array_intersect([4, 5, 6, 7], $level)) > 1) {
+                // 拥有代理商等级划分，需要从代理商查询用户的代理商等级
+
+            } else {
+                if (!in_array($user['distribut_level'], $level)) {
+                    foreach ($level as $lv) {
+                        switch ($lv) {
+                            case 2:
+                                $status = -2;
+                                break;
+                            case 3:
+                                $status = -1;
+                                break;
+                            default:
+                                $status = 0;
+                        }
+                        $levelName = M('distribut_level')->where(['level_id' => $lv])->value('level_name');
+                        return ['status' => $status, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
                     }
-                    $levelName = M('distribut_level')->where(['level_id' => $lv])->value('level_name');
-                    return ['status' => $status, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
                 }
             }
         }
