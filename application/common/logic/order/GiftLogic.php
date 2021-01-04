@@ -66,11 +66,11 @@ class GiftLogic
     public function getGoodsList()
     {
         $goods_list = [];
-        if ($this->activityList)
-        {
+        $rewardGet = [];            // 符合奖励的前提配置
+        $rewardMaxMoney = 0;        // 符合奖励的最大金额
+        if ($this->activityList) {
             // 1.先找出所有的商品的分类，相应信息存放在categoryList数组中
-            foreach ($this->goodsList as $v)
-            {
+            foreach ($this->goodsList as $v) {
                 $cat_id = M('goods')->where('goods_id', $v['goods_id'])->getField('cat_id');
                 $category = M('GoodsCategory')->where('id', $cat_id)->getField('parent_id_path');
                 $category = explode('_', $category);
@@ -86,7 +86,7 @@ class GiftLogic
                 $this->categoryList[0] += $v['member_goods_price'] * $v['goods_num'];
 
                 $extend_cat_id = M('goods')->where('goods_id', $v['goods_id'])->getField('extend_cat_id');
-                if($extend_cat_id){
+                if ($extend_cat_id) {
                     $extend_category = M('GoodsCategory')->where('id', $extend_cat_id)->getField('parent_id_path');
                     $extend_category = explode('_', $extend_category);
                     if (isset($extend_category[1])) {
@@ -102,12 +102,8 @@ class GiftLogic
             }
 
             $enable_list = [];
-
-            foreach ($this->activityList as $k => $v)
-            {
-
+            foreach ($this->activityList as $k => $v) {
                 if ($v['reward']) {
-
                     // 优先找全场通用的加价购活动
                     $count = count($v['reward']) - 1;
                     $v['price'] = $v['reward'][$count]['money'];
@@ -118,7 +114,6 @@ class GiftLogic
                     }
 
                     // 寻找对应分类且可行的活动
-
                     $enable_cat = explode(',', $v['cat_id']);
 
                     $enable_cat_2 = explode(',', $v['cat_id_2']);
@@ -128,20 +123,18 @@ class GiftLogic
                             if ($c2v > 0) {
                                 unset($enable_cat[$c2k]);
                             }
-
-                            if($c2v == 0){
+                            if ($c2v == 0) {
                                 unset($enable_cat_2[$c2k]);
                             }
                         }
                     }
-
                     if ($enable_cat_3) {
                         foreach ($enable_cat_3 as $c3k => $c3v) {
                             if ($c3v > 0) {
                                 unset($enable_cat[$c3k]);
                                 unset($enable_cat_2[$c3k]);
                             }
-                            if($c3v == 0){
+                            if ($c3v == 0) {
                                 unset($enable_cat_3[$c3k]);
                             }
                         }
@@ -149,7 +142,6 @@ class GiftLogic
 
                     $enable_cat = array_merge($enable_cat, $enable_cat_2, $enable_cat_3);
                     $price = 0;
-
                     foreach ($this->categoryList as $ck => $cv) {
                         if (in_array($ck, $enable_cat)) {
                             $price += $this->categoryList[$ck];
@@ -162,12 +154,9 @@ class GiftLogic
                 }
             }
 
-
-
-            if(empty($enable_list)){
+            if (empty($enable_list)) {
                 return [];
             }
-
             foreach ($enable_list as $k => $v) {
                 if ($v['reward']) {
                     foreach ($v['reward'] as $rk => $rv) {
@@ -175,6 +164,7 @@ class GiftLogic
                         if ($rv['money'] <= $this->money) {
                             $goods_list[] = [
                                 'reward_id' => $rv['reward_id'],
+                                'reward_money' => $rv['money'],
                                 'description' => $rv['description'],
                                 'goods_id' => $v['goods_id'],
                                 'item_id' => $v['item_id'],
@@ -192,21 +182,41 @@ class GiftLogic
                                 'reward_num' => $rv['reward_num'],
                                 'type' => 1,
                             ];
+                            $rewardGet[] = [
+                                'money' => $rv['money'],
+                                'goods_id' => $v['goods_id']
+                            ];
+                            if ($rv['money'] > $rewardMaxMoney) {
+                                $rewardMaxMoney = $rv['money'];
+                            }
                             break;
                         }
                     }
                 }
             }
         }
-
+        foreach ($rewardGet as $k => $reward) {
+            if ($reward['money'] < $rewardMaxMoney) {
+                unset($rewardGet[$k]);
+            }
+        }
         // 相同规格奖励商品数量累加,商品数据处理
         if ($goods_list) {
             $arr = [];
             foreach ($goods_list as $lk => $lv) {
-                if (isset($arr[$lv['goods_id'].'-'.$lv['item_id']])) {
-                    $arr[$lv['goods_id'].'-'.$lv['item_id']]['goods_num'] += $lv['goods_num'];
+                /*
+                 * 1.不同金额设置，不同（相同）赠品，不叠加
+                 * 2.相同金额设置，不同（相同）赠品，可叠加
+                 */
+                foreach ($rewardGet as $reward) {
+                    if ($lv['reward_money'] != $reward['money']) {
+                        continue 2;
+                    }
+                }
+                if (isset($arr[$lv['goods_id'] . '-' . $lv['item_id']])) {
+                    $arr[$lv['goods_id'] . '-' . $lv['item_id']]['goods_num'] += $lv['goods_num'];
                 } else {
-                    $arr[$lv['goods_id'].'-'.$lv['item_id']] = $lv;
+                    $arr[$lv['goods_id'] . '-' . $lv['item_id']] = $lv;
                 }
             }
 
@@ -220,7 +230,7 @@ class GiftLogic
                 $cartLogic->setGoodsBuyNum($av['goods_num']);
                 $cartLogic->setType(2);
                 $cartLogic->setCartType(0);
-                $buyGoods = $cartLogic->buyNow();
+                $buyGoods = $cartLogic->buyNow(false, false, true);
                 $buyGoods['gift_reward_id'] = $av['reward_id'];
                 $buyGoods['gift_description'] = $av['description'];
                 $arr[$ak] = $buyGoods;
@@ -243,7 +253,7 @@ class GiftLogic
                 M('gift_log')->insert($this->reward_info[$rk]);
                 M('gift_reward')->where('reward_id', $rv['gift_reward_id'])->update([
                     'order_num' => ['exp', 'order_num+1'],
-                    'buy_num' => ['exp', 'buy_num+'.$rv['reward_num']],
+                    'buy_num' => ['exp', 'buy_num+' . $rv['reward_num']],
                 ]);
             }
         }
@@ -258,7 +268,7 @@ class GiftLogic
                     M('gift_log')->where('id', $v['id'])->update(['type' => 2]);
                     M('gift_reward')->where('reward_id', $v['gift_reward_id'])->update([
                         'order_num' => ['exp', 'order_num-1'],
-                        'buy_num' => ['exp', 'buy_num-'.$v['reward_num']],
+                        'buy_num' => ['exp', 'buy_num-' . $v['reward_num']],
                     ]);
                 }
             }

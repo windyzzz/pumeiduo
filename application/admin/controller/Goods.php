@@ -661,16 +661,16 @@ class Goods extends Base
         if ($goods_nature) {
             switch ($goods_nature) {
                 case 1:
-                    $where = "$where and is_abroad = 0 and is_supply = 0";
+                    $where = "$where and is_abroad = 0 and is_supply = 0 and is_agent = 0";
                     break;
                 case 2:
-                    $where = "$where and is_abroad = 1 and is_supply = 0";
+                    $where = "$where and is_abroad = 1 and is_supply = 0 and is_agent = 0";
                     break;
                 case 3:
-                    $where = "$where and is_abroad = 0 and is_supply = 1";
+                    $where = "$where and is_abroad = 0 and is_supply = 1 and is_agent = 0";
                     break;
                 case 4:
-                    $where = "$where and is_agent = 1";
+                    $where = "$where and is_abroad = 0 and is_supply = 0 and is_agent = 1";
                     break;
             }
         }

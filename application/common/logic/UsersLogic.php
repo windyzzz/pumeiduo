@@ -2478,7 +2478,7 @@ class UsersLogic extends Model
         }
         $old_password = M('users')->where('user_id', $user_id)->getField('password');
         if (systemEncrypt($new_password) == $old_password) {
-            return ['status' => -1, 'msg' => '设置失败,你重新设置的密码必须要跟原来的密码不一样。', 'result' => ''];
+            return ['status' => -1, 'msg' => '当前新密码与旧密码重复，请重新输入', 'result' => ''];
         }
         $row = M('users')->where('user_id', $user_id)->save(['password' => systemEncrypt($new_password)]);
         if (!$row) {
@@ -2546,7 +2546,7 @@ class UsersLogic extends Model
         }
         $row = M('users')->where('user_id', $user_id)->save(['password' => systemEncrypt($new_password)]);
         if (!$row) {
-            return ['status' => -1, 'msg' => '修改失败', 'result' => ''];
+            return ['status' => -1, 'msg' => '当前新密码与旧密码重复，请重新输入', 'result' => ''];
         }
         // 更新缓存
         $user = M('users')->where('user_id', $user_id)->find();
@@ -2578,7 +2578,7 @@ class UsersLogic extends Model
 
         $row = M('users')->where("user_id='{$user_id}'")->update(['password' => $new_password]);
         if (!$row) {
-            return ['status' => -1, 'msg' => '密码修改失败', 'result' => ''];
+            return ['status' => -1, 'msg' => '当前新密码与旧密码重复，请重新输入', 'result' => ''];
         }
 
         return ['status' => 1, 'msg' => '密码修改成功', 'result' => ''];
@@ -2602,7 +2602,7 @@ class UsersLogic extends Model
         }
         $row = M('users')->where('user_id', $user_id)->update(['paypwd' => systemEncrypt($new_password)]);
         if (!$row) {
-            return ['status' => -1, 'msg' => '支付密码重复', 'result' => ''];
+            return ['status' => -1, 'msg' => '当前新密码与旧密码重复，请重新输入', 'result' => ''];
         }
         $url = session('payPriorUrl') ? session('payPriorUrl') : U('User/userinfo');
         session('payPriorUrl', null);
@@ -2629,7 +2629,7 @@ class UsersLogic extends Model
 
         $row = Db::name('users')->where(['user_id' => $user_id])->update(['paypwd' => $new_password]);
         if (!$row) {
-            return ['status' => -1, 'msg' => '密码修改失败', 'result' => ''];
+            return ['status' => -1, 'msg' => '当前新密码与旧密码重复，请重新输入', 'result' => ''];
         }
 
         return ['status' => 1, 'msg' => '密码修改成功', 'result' => ''];
