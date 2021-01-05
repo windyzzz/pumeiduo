@@ -471,7 +471,7 @@ height: 32px; margin-right: 1px; margin-bottom: -1px; }
 filter:progid:DXImageTransform.Microsoft.gradient(enabled='true', startColorstr='#A5000000', endColorstr='#A5000000'); background: #293038; display: inline-block; width: 70px; height: 2px; }
 .unfold .top-border .sub-side {
 filter:progid:DXImageTransform.Microsoft.gradient(enabled='true', startColorstr='#59000000', endColorstr='#59000000'); background: #293038; display: inline-block; width: 140px; height: 2px; }
-.unfold .nav-tabs { width: 210px; overflow: hidden; height: 100%; }
+.unfold .nav-tabs { width: 230px; overflow: scroll; height: 100%; }
 .unfold .nav-tabs dl { width: 100%; position: relative; z-index: 1; }
 .unfold .nav-tabs dl.active { z-index: 2; }
 .unfold .nav-tabs dl dt { }
