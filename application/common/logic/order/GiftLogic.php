@@ -19,6 +19,8 @@ class GiftLogic
     private $activityList;
     private $order;
     private $money;
+    private $promGoodsMoney;
+    private $flashSaleGoodsMoney;
     private $reward_info;
     private $user_id;
     private $categoryList;
@@ -51,6 +53,16 @@ class GiftLogic
     public function setMoney($money)
     {
         $this->money = $money;
+    }
+
+    public function setPromGoodsMoney($money)
+    {
+        $this->promGoodsMoney = $money;
+    }
+
+    public function setFlashSaleGoodsMoney($money)
+    {
+        $this->flashSaleGoodsMoney = $money;
     }
 
     public function getRewardInfo()
@@ -115,7 +127,6 @@ class GiftLogic
 
                     // 寻找对应分类且可行的活动
                     $enable_cat = explode(',', $v['cat_id']);
-
                     $enable_cat_2 = explode(',', $v['cat_id_2']);
                     $enable_cat_3 = explode(',', $v['cat_id_3']);
                     if ($enable_cat_2) {
@@ -139,7 +150,6 @@ class GiftLogic
                             }
                         }
                     }
-
                     $enable_cat = array_merge($enable_cat, $enable_cat_2, $enable_cat_3);
                     $price = 0;
                     foreach ($this->categoryList as $ck => $cv) {
@@ -153,15 +163,20 @@ class GiftLogic
                     }
                 }
             }
-
             if (empty($enable_list)) {
                 return [];
             }
             foreach ($enable_list as $k => $v) {
                 if ($v['reward']) {
                     foreach ($v['reward'] as $rk => $rv) {
-                        // 符合奖励条件
-                        if ($rv['money'] <= $this->money) {
+                        $canReward = false;
+                        if ($v['is_usual'] == 1 && $rv['money'] <= $this->money) {
+                            $canReward = true;
+                        } elseif ($v['is_usual'] == 0 && $rv['money'] <= bcsub($this->money, bcadd($this->promGoodsMoney, $this->flashSaleGoodsMoney, 2), 2)) {
+                            $canReward = true;
+                        }
+                        if ($canReward) {
+                            // 符合奖励条件
                             $goods_list[] = [
                                 'reward_id' => $rv['reward_id'],
                                 'reward_money' => $rv['money'],
