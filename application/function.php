@@ -1891,6 +1891,20 @@ function diffDate($date1, $date2)
 }
 
 /**
+ * 获取一年的天数
+ * @param $year
+ * @return int
+ */
+function get_year_days($year)
+{
+    $days = 0;
+    for ($month = 1; $month <= 12; $month++) {
+        $days = $days + cal_days_in_month(CAL_GREGORIAN, $month, $year);
+    }
+    return $days;
+}
+
+/**
  * 获取完整路径
  * @param $path
  * @return string
