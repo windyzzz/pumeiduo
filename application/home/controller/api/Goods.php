@@ -2889,7 +2889,8 @@ class Goods extends Base
     public function category()
     {
         $level = I('level', 1);
-        $goodsCategory = get_goods_category($level);
+        $isGoodsList = I('is_goods_list', 1);
+        $goodsCategory = get_goods_category($level, $isGoodsList);
         return json(['status' => 1, 'msg' => '', 'result' => $goodsCategory]);
     }
 

@@ -1822,11 +1822,19 @@ function get_goods_category_tree($isApp = false)
 /**
  * 获取商品指定级别分类
  * @param int $level
+ * @param int $isGoodsList
  * @return array
  */
-function get_goods_category($level = 1)
+function get_goods_category($level = 1, $isGoodsList = 1)
 {
-    $category = M('goods_category')->where(['level' => $level, 'is_show' => 1])->order('sort_order desc, id asc')->field('id, name')->select();
+    $where = [
+        'level' => $level,
+        'is_show' => 1,
+    ];
+    if ($isGoodsList) {
+        $where['id'] = ['NEQ', 882];
+    }
+    $category = M('goods_category')->where($where)->order('sort_order desc, id asc')->field('id, name')->select();
     return ['list' => $category];
 }
 
