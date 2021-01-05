@@ -2024,8 +2024,8 @@ class Order extends Base
 
             $payLogic->activity3();         // 订单优惠促销
 
+            list($prom_type, $prom_id, $flashSale, $groupBuy, $prom, $usual) = $payLogic->getPromInfo();
             if (!empty($couponList)) {
-                list($prom_type, $prom_id, $flashSale, $groupBuy, $prom, $usual) = $payLogic->getPromInfo();
                 // 筛选优惠券
                 foreach ($couponList as $key => $coupon) {
                     $canCoupon = true;
@@ -2338,6 +2338,7 @@ class Order extends Base
                 $payLogic->useCouponById($couponId, $payLogic->getPayList());
             }
 
+            list($prom_type, $prom_id) = $payLogic->getPromInfo();
             $payLogic->activity(true);      // 满单赠品
             $payLogic->activity2New();      // 指定商品赠品 / 订单优惠赠品
 
@@ -2584,6 +2585,7 @@ class Order extends Base
                 $payLogic->useCouponByIdRe($exchangeId);
             }
 
+            list($prom_type, $prom_id) = $payLogic->getPromInfo();
             $payLogic->activity(true);      // 满单赠品
             $payLogic->activity2New();      // 指定商品赠品 / 订单优惠赠品
 
@@ -2603,7 +2605,6 @@ class Order extends Base
             return json($tpE->getErrorArr());
         }
         // 创建订单
-        list($prom_type, $prom_id) = $payLogic->getPromInfo();
         try {
             $placeOrder = new PlaceOrder($payLogic);
             $placeOrder->setUser($this->user);

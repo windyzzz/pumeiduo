@@ -559,7 +559,8 @@ class Report extends Base
             $amount_arr[] = $tmp_amount;
             $sign_arr[] = $tmp_sign;
             $date = date('Y', $i);
-            $j = $i + 365 * 24 * 3600;
+            $day_num = get_year_days($date);
+            $j = $i + $day_num * 24 * 3600;
             //销售不含税价
             $tmp_c_amout = 0;
             $result = Db::name('order')
@@ -589,7 +590,7 @@ class Report extends Base
             $list[] = ['day' => $date . '-01-01', 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'abroad_amount' => $tmp_abroad_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + 365 * 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
             $day[] = $date;
 
-            $i = $i + 365 * 24 * 3600;
+            $i = $i + $day_num * 24 * 3600;
         }
         rsort($list);
         $begin = date('Y', $this->begin);
@@ -664,7 +665,8 @@ class Report extends Base
             $amount_arr[] = $tmp_amount;
             $sign_arr[] = $tmp_sign;
             $date = date('Y', $i);
-            $j = $i + 365 * 24 * 3600;
+            $day_num = get_year_days($date);
+            $j = $i + $day_num * 24 * 3600;
             //销售不含税价
             $tmp_c_amout = 0;
             $result = Db::name('order')
@@ -694,7 +696,7 @@ class Report extends Base
             $list[] = ['day' => $date, 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'abroad_amount' => $tmp_abroad_amount, 'sign' => $tmp_sign, 'end' => date('Y', $i + 365 * 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
             $day[] = $date;
 
-            $i = $i + 365 * 24 * 3600;
+            $i = $i + $day_num * 24 * 3600;
         }
 
         $strTable = '<table width="500" border="1">';
