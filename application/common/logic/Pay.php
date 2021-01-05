@@ -46,6 +46,8 @@ class Pay
     private $orderPromIds = [];             // 订单优惠IDs
     private $orderPromAmount = '0';         // 订单优惠金额
     private $goodsPromAmount = '0';         // 商品优惠金额
+    private $promGoodsAmount = '0';         // 优惠商品原金额
+    private $flashSaleAmount = '0';         // 秒杀商品金额
     private $couponId;
     private $couponIdRe;
 
@@ -176,12 +178,14 @@ class Pay
                 switch ($v['prom_type']) {
                     case 1:
                         $flashSale = '1';
+                        $this->flashSaleAmount = bcadd($this->flashSaleAmount, $v['member_goods_price'], 2);
                         break;
                     case 2:
                         $groupBuy = '2';
                         break;
                     case 3:
                         $prom = '3';
+                        $this->promGoodsAmount = bcadd($this->promGoodsAmount, $v['member_goods_price'], 2);
                         break;
                 }
             } else {
@@ -645,6 +649,8 @@ class Pay
         // 赠品活动
         $this->giftLogic->setUserId($this->userId);
         $this->giftLogic->setMoney($this->orderAmount);
+        $this->giftLogic->setPromGoodsMoney($this->promGoodsAmount);
+        $this->giftLogic->setFlashSaleGoodsMoney($this->flashSaleAmount);
         $this->giftLogic->setGoodsList($this->payList);
         $goods_list = $this->giftLogic->getGoodsList();
         if ($goods_list) {
