@@ -125,13 +125,31 @@ class School
         }
         // 等级权限
         if ($module['distribute_level'] != 0) {
-            if ($module['distribute_level'] == -1) {
-                return ['status' => 0, 'msg' => '功能尚未开放'];
-            }
             $level = explode(',', $module['distribute_level']);
-            if (count(array_intersect([4, 5, 6, 7], $level)) > 1) {
+            $svipLevel = [4, 5, 6, 7, 8, 9, 10, 11];
+            $setSvipLevel = array_intersect($svipLevel, $level);
+            if (count($setSvipLevel) > 1) {
+                if ($user['distribut_level'] != 3) {
+                    return ['status' => -1, 'msg' => '您当前不是SVIP，没有访问权限'];
+                }
                 // 拥有代理商等级划分，需要从代理商查询用户的代理商等级
-
+                $url = C('SERVER_URL') . '/index.php/Crond/get_user_grade/user_name/' . $user['user_name'];
+                $res = httpRequest($url);
+                if (!$res) {
+                    return ['status' => 0, 'msg' => '权限检查失败'];
+                }
+                $res = json_decode($res, true);
+                if (isset($res['status']) && $res['status'] == 1) {
+                    $useSvipLevel = $res['station'] + 2;
+                    if (!in_array($useSvipLevel, $setSvipLevel)) {
+                        foreach ($setSvipLevel as $lv) {
+                            $levelName = M('svip_level')->where(['app_level' => $lv])->value('name');
+                            return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
+                        }
+                    }
+                } else {
+                    return ['status' => 0, 'msg' => '权限检查失败'];
+                }
             } else {
                 if (!in_array($user['distribut_level'], $level)) {
                     foreach ($level as $lv) {
@@ -173,13 +191,31 @@ class School
         }
         // 等级权限
         if ($moduleClass['distribute_level'] != 0) {
-            if ($moduleClass['distribute_level'] == -1) {
-                return ['status' => 0, 'msg' => '功能尚未开放'];
-            }
             $level = explode(',', $moduleClass['distribute_level']);
-            if (count(array_intersect([4, 5, 6, 7], $level)) > 1) {
+            $svipLevel = [4, 5, 6, 7, 8, 9, 10, 11];
+            $setSvipLevel = array_intersect($svipLevel, $level);
+            if (count($setSvipLevel) > 1) {
+                if ($user['distribut_level'] != 3) {
+                    return ['status' => -1, 'msg' => '您当前不是SVIP，没有访问权限'];
+                }
                 // 拥有代理商等级划分，需要从代理商查询用户的代理商等级
-
+                $url = C('SERVER_URL') . '/index.php/Crond/get_user_grade/user_name/' . $user['user_name'];
+                $res = httpRequest($url);
+                if (!$res) {
+                    return ['status' => 0, 'msg' => '权限检查失败'];
+                }
+                $res = json_decode($res, true);
+                if (isset($res['status']) && $res['status'] == 1) {
+                    $useSvipLevel = $res['station'] + 2;
+                    if (!in_array($useSvipLevel, $setSvipLevel)) {
+                        foreach ($setSvipLevel as $lv) {
+                            $levelName = M('svip_level')->where(['app_level' => $lv])->value('name');
+                            return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
+                        }
+                    }
+                } else {
+                    return ['status' => 0, 'msg' => '权限检查失败'];
+                }
             } else {
                 if (!in_array($user['distribut_level'], $level)) {
                     foreach ($level as $lv) {
@@ -235,9 +271,30 @@ class School
         // 等级权限
         if ($article['distribute_level'] != 0) {
             $level = explode(',', $article['distribute_level']);
-            if (count(array_intersect([4, 5, 6, 7], $level)) > 1) {
+            $svipLevel = [4, 5, 6, 7, 8, 9, 10, 11];
+            $setSvipLevel = array_intersect($svipLevel, $level);
+            if (count($setSvipLevel) > 1) {
+                if ($user['distribut_level'] != 3) {
+                    return ['status' => -1, 'msg' => '您当前不是SVIP，没有访问权限'];
+                }
                 // 拥有代理商等级划分，需要从代理商查询用户的代理商等级
-
+                $url = C('SERVER_URL') . '/index.php/Crond/get_user_grade/user_name/' . $user['user_name'];
+                $res = httpRequest($url);
+                if (!$res) {
+                    return ['status' => 0, 'msg' => '权限检查失败'];
+                }
+                $res = json_decode($res, true);
+                if (isset($res['status']) && $res['status'] == 1) {
+                    $useSvipLevel = $res['station'] + 2;
+                    if (!in_array($useSvipLevel, $setSvipLevel)) {
+                        foreach ($setSvipLevel as $lv) {
+                            $levelName = M('svip_level')->where(['app_level' => $lv])->value('name');
+                            return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
+                        }
+                    }
+                } else {
+                    return ['status' => 0, 'msg' => '权限检查失败'];
+                }
             } else {
                 if (!in_array($user['distribut_level'], $level)) {
                     foreach ($level as $lv) {
