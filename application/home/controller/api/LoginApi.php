@@ -252,27 +252,27 @@ class LoginApi
         $unionid = I('post.unionid', '');
         $username = I('post.username', '');
         $password = I('post.password', '');
-        $code = I('post.code', '');
-        $scene = I('post.scene', 1);
+//        $code = I('post.code', '');
+//        $scene = I('post.scene', 1);
         $invite = I('post.invite', 0);
         $inviteOpenid = I('post.invite_openid', '');
 
         $userLogic = new UsersLogic();
-        // 验证验证码
-        if ($code != '1238') {
-            $sessionId = S('mobile_token_' . $username);
-            if (!$sessionId) {
-                return json(['status' => 0, 'msg' => '验证码已过期']);
-            }
-            if (check_mobile($username)) {
-                $check_code = $userLogic->check_validate_code($code, $username, 'phone', $sessionId, $scene);
-                if (1 != $check_code['status']) {
-                    return json($check_code);
-                }
-            } else {
-                return json(['status' => 0, 'msg' => '手机号码不合格式']);
-            }
-        }
+//        // 验证验证码
+//        if ($code != '1238') {
+//            $sessionId = S('mobile_token_' . $username);
+//            if (!$sessionId) {
+//                return json(['status' => 0, 'msg' => '验证码已过期']);
+//            }
+//            if (check_mobile($username)) {
+//                $check_code = $userLogic->check_validate_code($code, $username, 'phone', $sessionId, $scene);
+//                if (1 != $check_code['status']) {
+//                    return json($check_code);
+//                }
+//            } else {
+//                return json(['status' => 0, 'msg' => '手机号码不合格式']);
+//            }
+//        }
         // 授权用户注册
         $res = $userLogic->oauthRegApplet($unionid, $openid, $username, $password, $invite, $inviteOpenid);
         return json($res);

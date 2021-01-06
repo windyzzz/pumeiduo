@@ -116,7 +116,7 @@ class PlaceOrder
 
     public function addNormalOrder($source = 1)
     {
-        $this->check();
+        $this->check($source);
         $this->queueInc();
         $this->addOrder($source);
         $this->addSplitOrder($source);
@@ -142,7 +142,7 @@ class PlaceOrder
     {
         $this->setPromType(2);
         $this->setPromId($prom_id);
-        $this->check();
+        $this->check($source);
         $this->queueInc();
         $this->addOrder($source);
         $this->addOrderGoods();
@@ -164,7 +164,7 @@ class PlaceOrder
     {
         $this->setPromType(6);
         $this->setPromId($teamActivity['team_id']);
-        $this->check();
+        $this->check($source);
         $this->queueInc();
         $this->addOrder($source);
         $this->addOrderGoods();
@@ -196,7 +196,7 @@ class PlaceOrder
      *
      * @throws TpshopException
      */
-    public function check()
+    public function check($source = 1)
     {
 //        $pay_points = $this->pay->getPayPoints();
 //        $user_electronic = $this->pay->getUserElectronic();
@@ -211,8 +211,10 @@ class PlaceOrder
         if (empty($this->payPsw)) {
             throw new TpshopException('提交订单', 0, ['status' => -7, 'msg' => '请输入支付密码', 'result' => '']);
         }
-        if (systemEncrypt($this->payPsw) !== $user['paypwd']) {
-            throw new TpshopException('提交订单', 0, ['status' => -8, 'msg' => '支付密码错误', 'result' => '']);
+        if ($source != 4 || $this->pay->getUserElectronic() != 0) {
+            if (systemEncrypt($this->payPsw) !== $user['paypwd']) {
+                throw new TpshopException('提交订单', 0, ['status' => -8, 'msg' => '支付密码错误', 'result' => '']);
+            }
         }
 //        }
     }
@@ -250,7 +252,7 @@ class PlaceOrder
             'invoice_title' => $this->invoiceTitle, //'发票抬头',
             'goods_price' => $this->pay->getGoodsPrice(), //'商品价格',
             'shipping_price' => $this->pay->getShippingPrice(), //'物流价格',
-            'user_electronic' => $this->pay->getUserElectronic(), //'使用余额',
+            'user_electronic' => $this->pay->getUserElectronic(), //'使用电子币',
             'coupon_price' => $this->pay->getCouponPrice(), //'使用优惠券',
             'integral' => $this->pay->getPayPoints(), //'使用积分',
             'integral_money' => $this->pay->getPayPoints(), //'使用积分抵多少钱',
