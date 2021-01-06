@@ -1905,6 +1905,31 @@ function get_year_days($year)
 }
 
 /**
+ * 秒数转换成分秒格式
+ * @param int $s
+ * @return string
+ */
+function second_to_minute($s = 0)
+{
+    //计算分钟
+    //算法：将秒数除以60，然后下舍入，既得到分钟数
+    $m = floor($s / 60);
+    if ($m == 0) {
+        return '';
+    } else {
+        $m .= '分钟';
+    }
+    //计算秒
+    //算法：取得秒%60的余数，既得到秒数
+    $s = $s % 60;
+    $s = $s == 0 ? '' : $s . '秒';
+//    //如果只有一位数，前面增加一个0
+//    $m = (strlen($m) == 1) ? '0' . $m : $m;
+//    $s = (strlen($s) == 1) ? '0' . $s : $s;
+    return $m . $s;
+}
+
+/**
  * 获取完整路径
  * @param $path
  * @return string

@@ -589,6 +589,7 @@ class School
                 'type' => substr($cover[3], strrpos($cover[3], 'type:') + 5),
             ],
             'learn_time' => $articleInfo['learn_time'],
+            'learn_time_format' => second_to_minute($articleInfo['learn_time']),
             'learn_type' => $articleInfo['learn_type'],
             'learn' => $articleInfo['learn'],
             'share' => $articleInfo['share'],
