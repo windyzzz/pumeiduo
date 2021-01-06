@@ -305,7 +305,7 @@ class Goods extends Base
                     $goodsNature = '韩国购';
                 } elseif ($val['is_supply'] == 1) {
                     $goodsNature = '供应链';
-                } elseif ($val['is_agent'] == 0) {
+                } elseif ($val['is_agent'] == 1) {
                     $goodsNature = '代理商';
                 }
                 $level_cat = $GoodsLogic->find_parent_cat($val['cat_id']); // 获取分类默认选中的下拉框
@@ -431,7 +431,7 @@ class Goods extends Base
                     $goodsNature = '韩国购';
                 } elseif ($val['is_supply'] == 1) {
                     $goodsNature = '供应链';
-                } elseif ($val['is_agent'] == 0) {
+                } elseif ($val['is_agent'] == 1) {
                     $goodsNature = '代理商';
                 }
                 $val['goods_nature'] = $goodsNature;
@@ -579,7 +579,7 @@ class Goods extends Base
                     $goodsNature = '韩国购';
                 } elseif ($val['is_supply'] == 1) {
                     $goodsNature = '供应链';
-                } elseif ($val['is_agent'] == 0) {
+                } elseif ($val['is_agent'] == 1) {
                     $goodsNature = '代理商';
                 }
                 $val['goods_nature'] = $goodsNature;
