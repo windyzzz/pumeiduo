@@ -184,40 +184,12 @@ class LoginApi
             $sessionKey = I('session_key', '');
             $iv = I('iv', '');
             $encryptedData = I('encrypted_data', '');
+            $invite = I('post.invite', 0);
+            $inviteOpenid = I('post.invite_openid', '');
             // 解密获得用户信息
             $wechatUserInfo = $this->class_obj->decryptData($sessionKey, $iv, $encryptedData);
             // 授权登录
-            $res = (new UsersLogic())->handleAppletLogin($wechatUserInfo);
-            if ($res['status'] == 1) {
-                // 登录成功
-                $user = $res['result'];
-                $res['result'] = [
-                    'user_id' => $user['user_id'],
-                    'sex' => $user['sex'],
-                    'nickname' => $user['nickname'],
-                    'user_name' => $user['nickname'],
-                    'real_name' => $user['user_name'],
-                    'id_cart' => $user['id_cart'],
-                    'birthday' => $user['birthday'],
-                    'mobile' => $user['mobile'],
-                    'head_pic' => $user['head_pic'],
-                    'type' => $user['distribut_level'] >= 3 ? '2' : $user['type'],
-                    'invite_uid' => $user['invite_uid'],
-                    'is_distribut' => $user['is_distribut'],
-                    'is_lock' => $user['is_lock'],
-                    'level' => $user['distribut_level'],
-                    'level_name' => M('DistributLevel')->where('level_id', $user['distribut_level'])->getField('level_name') ?? '普通会员',
-                    'is_not_show_jk' => $user['is_not_show_jk'],  // 是否提示加入金卡弹窗
-                    'has_pay_pwd' => $user['paypwd'] ? 1 : 0,
-                    'is_app' => TokenLogic::getValue('is_app', $user['token']) ? 1 : 0,
-                    'token' => $user['token'],
-                    'jpush_tags' => [$user['push_tag']]
-                ];
-                // 登录记录
-                $usersLogic = new UsersLogic();
-                $usersLogic->setUserId($user['user_id']);
-                $usersLogic->userLogin(4);
-            }
+            $res = (new UsersLogic())->handleAppletLogin_v2($wechatUserInfo, $invite, $inviteOpenid);
             return json($res);
         } catch (Exception $e) {
             return json(['status' => 0, 'msg' => $e->getMessage()]);
