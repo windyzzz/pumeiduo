@@ -530,9 +530,6 @@ class UsersLogic extends Model
         Db::startTrans();
         if ($oauthUser) {
             // 已授权登录过
-            $updateData['user_id'] = $oauthUser['user_id'];
-            // 更新数据
-            Db::name('oauth_users')->where(['tu_id' => $oauthUser['tu_id']])->update($updateData);
             if ($oauthUser['user_id'] == 0) {
                 // 注册账号
                 $data = [
@@ -577,10 +574,11 @@ class UsersLogic extends Model
                     $userId = $oauthUser['user_id'];
                 }
             }
+            // 更新数据
+            $updateData['user_id'] = $userId;
+            Db::name('oauth_users')->where(['tu_id' => $oauthUser['tu_id']])->update($updateData);
         } else {
             // 未授权登录过
-            // 插入数据
-            Db::name('oauth_users')->insert($updateData);
             // 注册账号
             $data = [
                 'mobile' => '',
@@ -598,6 +596,9 @@ class UsersLogic extends Model
                 'will_invite_uid' => $invite
             ];
             $userId = M('users')->add($data);
+            // 插入数据
+            $updateData['user_id'] = $userId;
+            Db::name('oauth_users')->insert($updateData);
         }
         $user = M('users')->where(['user_id' => $userId])->find();
         // 更新用户推送tags
