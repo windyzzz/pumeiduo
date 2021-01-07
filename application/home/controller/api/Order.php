@@ -2469,7 +2469,7 @@ class Order extends Base
         $userNote = I('user_note', '');                 // 用户备注
         $idCard = I('id_card', 0);
 
-        if (!$this->user['paypwd']) {
+        if ((!$this->isApplet || $userElectronic != '') && !$this->user['paypwd']) {
             return json(['status' => -6, 'msg' => '请先设置支付密码']);
         }
         if (!$addressId) {
