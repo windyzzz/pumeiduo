@@ -220,12 +220,9 @@ class Promotion extends Base
     public function gift_edit()
     {
         $id = I('id');
-
         $info = $this->service->getGiftById($id);
 
-
-        $info['type'] = 0 != $info && $info['cat_id'] ? 1 : 0;
-
+        $info['type'] = $info && $info['cat_id'] ? 1 : 0;
         $info['category'] = $info && $info['cat_id'] ? explode(',', $info['cat_id']) : array();
         $info['category2'] = $info && $info['cat_id'] ? explode(',', $info['cat_id_2']) : array();
         $info['category3'] = $info && $info['cat_id'] ? explode(',', $info['cat_id_3']) : array();
