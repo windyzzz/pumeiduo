@@ -1090,7 +1090,7 @@ class CartLogic extends Model
                     unset($cartList[$cartKey]);
                     continue;
                 } elseif ($source == 4 && $cart['goods']['applet_on_sale'] == 0) {
-                    $cart->delete();
+//                    $cart->delete();
                     unset($cartList[$cartKey]);
                     continue;
                 } elseif ($cart['goods']['is_agent'] == 1 && $cart['goods']['applet_on_sale'] == 0) {
