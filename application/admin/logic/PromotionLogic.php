@@ -63,9 +63,21 @@ class PromotionLogic
      */
     public function giftStore($data)
     {
-
         Db::startTrans();
         try {
+            if (empty($data['goods_nature'])) {
+                $data['goods_nature'] = '0';
+            } else {
+                if (in_array('0', $data['goods_nature'])) {
+                    $data['goods_nature'] = '0';
+                } else {
+                    $goodsNature = '';
+                    foreach ($data['goods_nature'] as $level) {
+                        $goodsNature .= $level . ',';
+                    }
+                    $data['goods_nature'] = rtrim($goodsNature, ',');
+                }
+            }
             if (0 == $data['type']) {
                 $data['cat_id'] = [0];
                 $data['cat_id_2'] = [0];
@@ -152,6 +164,19 @@ class PromotionLogic
     {
         Db::startTrans();
         try {
+            if (empty($data['goods_nature'])) {
+                $data['goods_nature'] = '0';
+            } else {
+                if (in_array('0', $data['goods_nature'])) {
+                    $data['goods_nature'] = '0';
+                } else {
+                    $goodsNature = '';
+                    foreach ($data['goods_nature'] as $level) {
+                        $goodsNature .= $level . ',';
+                    }
+                    $data['goods_nature'] = rtrim($goodsNature, ',');
+                }
+            }
             $gift_id = $data['id'];
             $this->giftModel->update($data);
             $reward = I('reward/a');
@@ -230,10 +255,10 @@ class PromotionLogic
 
                     // 为目前正在进行的用户任务进行修改
                     $user_Promotion = M('UserPromotion')
-                          ->where('Promotion_reward_id', $val['reward_id'])
-                          ->where('status', 'neq', 1)
-                          ->where('Promotion_id', $Promotion_id)
-                          ->select();
+                        ->where('Promotion_reward_id', $val['reward_id'])
+                        ->where('status', 'neq', 1)
+                        ->where('Promotion_id', $Promotion_id)
+                        ->select();
                     if ($user_Promotion) {
                         foreach ($user_Promotion as $k => $v) {
                             $update = [];

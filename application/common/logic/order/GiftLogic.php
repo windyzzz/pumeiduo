@@ -192,6 +192,7 @@ class GiftLogic
                             }
                         }
                     } else {
+                        $goodsNature = explode(',', $v['goods_nature']);
                         // 对应分类且可行的活动
                         $enable_cat = explode(',', $v['cat_id']);
                         $enable_cat_2 = explode(',', $v['cat_id_2']);
@@ -221,7 +222,7 @@ class GiftLogic
                         $price = 0;
                         foreach ($categoryList as $ck => $cv) {
                             foreach ($cv as $ckk => $cvv) {
-                                if ($v['goods_nature'] == $ckk && in_array($ck, $enable_cat)) {
+                                if (in_array($ckk, $goodsNature) && in_array($ck, $enable_cat)) {
                                     $price += $cvv;
                                 }
                             }

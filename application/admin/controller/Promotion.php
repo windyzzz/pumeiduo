@@ -222,6 +222,7 @@ class Promotion extends Base
         $id = I('id');
         $info = $this->service->getGiftById($id);
 
+        $info['goods_nature'] = explode(',', $info['goods_nature']);
         $info['type'] = $info && $info['cat_id'] ? 1 : 0;
         $info['category'] = $info && $info['cat_id'] ? explode(',', $info['cat_id']) : array();
         $info['category2'] = $info && $info['cat_id'] ? explode(',', $info['cat_id_2']) : array();

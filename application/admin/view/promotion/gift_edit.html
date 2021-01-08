@@ -85,14 +85,12 @@
 				<dt class="tit">
 					<label>选择商品种类</label>
 				</dt>
-				<dd class="opt">
-					<select name="goods_nature">
-						<option value="0" {$info.goods_nature==0?'selected':''}>全部</option>
-						<option value="1" {$info.goods_nature==1?'selected':''}>圃美多</option>
-						<option value="2" {$info.goods_nature==2?'selected':''}>韩国购</option>
-						<option value="3" {$info.goods_nature==3?'selected':''}>供应链</option>
-						<option value="4" {$info.goods_nature==4?'selected':''}>代理商</option>
-					</select>
+				<dd class="opt ctype">
+					<input name="goods_nature[]" type="checkbox" value="0" <if condition="!empty($info['goods_nature']) && in_array(0, $info['goods_nature'])">checked</if> ><label>全部</label>
+					<input name="goods_nature[]" type="checkbox" value="1" <if condition="!empty($info['goods_nature']) && in_array(1, $info['goods_nature'])">checked</if> ><label>圃美多</label>
+					<input name="goods_nature[]" type="checkbox" value="2" <if condition="!empty($info['goods_nature']) && in_array(2, $info['goods_nature'])">checked</if> ><label>韩国购</label>
+					<input name="goods_nature[]" type="checkbox" value="3" <if condition="!empty($info['goods_nature']) && in_array(3, $info['goods_nature'])">checked</if> ><label>供应链</label>
+					<input name="goods_nature[]" type="checkbox" value="4" <if condition="!empty($info['goods_nature']) && in_array(4, $info['goods_nature'])">checked</if> ><label>代理商</label>
 				</dd>
 			</dl>
 			<dl class="row">
