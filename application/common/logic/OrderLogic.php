@@ -303,7 +303,10 @@ class OrderLogic
             M('coupon')->where(['id' => $orderExchangeId])->setDec('use_num', 1);
         }
 
+        // 更新订单信息
         $row = M('order')->where(['order_id' => $order_id, 'user_id' => $user_id])->save(['order_status' => 3, 'cancel_time' => time()]);
+
+        // 取消订单后改变库存
         $reduce = tpCache('shopping.reduce');
         if (1 == $reduce || empty($reduce)) {
             $this->alterReturnGoodsInventory($order);
