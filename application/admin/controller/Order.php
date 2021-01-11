@@ -2371,7 +2371,12 @@ class Order extends Base
         $this->ajaxReturn(['status' => 1, 'msg' => '批量确认订单成功']);
     }
 
-
+    /**
+     * 供应链订单售后传输
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     */
     public function sendSupplierReturn()
     {
         $returnId = I('id');
@@ -2402,6 +2407,7 @@ class Order extends Base
                 }
                 M('return_goods')->where(['id' => $return_goods['id']])->update(['supplier_sale_sn' => $afterSaleSn]);
             }
+            $this->ajaxReturn(['status' => 1, 'msg' => '处理成功']);
         } else {
             $this->ajaxReturn(['status' => -1, 'msg' => '售后单不是供应链订单']);
         }

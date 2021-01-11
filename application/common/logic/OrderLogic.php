@@ -319,12 +319,14 @@ class OrderLogic
         TokenLogic::updateValue('user', $user['token'], $user, $user['time_out']);
 
         // 供应链订单取消
-        if ($order['order_type'] == 3 && !empty($order['supplier_order_sn'])) {
-            $cOrderSn = M('order')->where(['parent_id' => $order['order_id'], 'order_type' => 3])->value('order_sn');
-            $res = (new OrderService())->cancelOrder($cOrderSn);
-            if ($res['status'] == 0) {
-                Db::rollback();
-                return $res;
+        if ($order['order_type'] == 3) {
+            $cOrder = M('order')->where(['parent_id' => $order['order_id'], 'order_type' => 3])->field('order_sn, supplier_order_status')->find();
+            if ($cOrder['supplier_order_status'] == 1) {
+                $res = (new OrderService())->cancelOrder($cOrder['order_sn']);
+                if ($res['status'] == 0) {
+                    Db::rollback();
+                    return $res;
+                }
             }
         }
 

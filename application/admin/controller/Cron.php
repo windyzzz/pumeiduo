@@ -1169,6 +1169,7 @@ AND log_id NOT IN
         $time = 60 * 60;
 
         $list = M('Order')->field('UNIX_TIMESTAMP() - add_time as test,add_time,UNIX_TIMESTAMP() as now,order_id,user_id,prepare_pay_time')
+            ->where('parent_id', 0)
             ->where('pay_status', 0)
             ->where('order_status', 0)
             ->having("test > {$time}")
