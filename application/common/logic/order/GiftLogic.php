@@ -274,9 +274,9 @@ class GiftLogic
                                 'money' => $rv['money'],
                                 'goods_id' => $v['goods_id']
                             ];
-                            if (isset($rewardMaxSet[$v['goods_nature']]) && $rewardMaxSet[$v['goods_nature']] < $rv['money']) {
+                            if (!isset($rewardMaxSet[$v['goods_nature']])) {
                                 $rewardMaxSet[$v['goods_nature']] = $rv['money'];
-                            } else {
+                            } elseif ($rewardMaxSet[$v['goods_nature']] < $rv['money']) {
                                 $rewardMaxSet[$v['goods_nature']] = $rv['money'];
                             }
                             break;
