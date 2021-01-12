@@ -30,12 +30,12 @@ class MobileApp extends Base
             $config['update_version'] = [];
         }
         $versionList = M('app_log')->where(['type' => 'android'])->order('app_version ASC')->getField('app_version', true);
-        foreach ($versionList as $k => $version) {
-            if ($version == $config['app_version']) {
-                // 不显示当前版本
-                unset($versionList[$k]);
-            }
-        }
+//        foreach ($versionList as $k => $version) {
+//            if ($version == $config['app_version']) {
+//                // 不显示当前版本
+//                unset($versionList[$k]);
+//            }
+//        }
 
         $this->assign('inc_type', $inc_type);
         $this->assign('config', $config);    // 当前配置项
@@ -58,12 +58,12 @@ class MobileApp extends Base
             $config['update_version'] = [];
         }
         $versionList = M('app_log')->where(['type' => 'ios'])->order('app_version ASC')->getField('app_version', true);
-        foreach ($versionList as $k => $version) {
-            if ($version == $config['app_version']) {
-                // 不显示当前版本
-                unset($versionList[$k]);
-            }
-        }
+//        foreach ($versionList as $k => $version) {
+//            if ($version == $config['app_version']) {
+//                // 不显示当前版本
+//                unset($versionList[$k]);
+//            }
+//        }
 
         $this->assign('inc_type', $inc_type);
         $this->assign('config', $config);    // 当前配置项
