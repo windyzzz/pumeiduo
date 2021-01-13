@@ -16,6 +16,7 @@ use app\common\model\UserAddress;
 use app\home\controller\Api as ApiController;
 use think\cache\driver\Redis;
 use think\Db;
+use think\Exception;
 use think\Model;
 use think\Page;
 use think\Url;
@@ -489,6 +490,151 @@ class UsersLogic extends Model
             $result = ['status' => 2, 'result' => ['unionid' => $data['unionId'], 'openid' => $data['openId']]]; // 需要绑定手机号
         }
         return $result;
+    }
+
+
+    public function handleAppletLogin_v2($data, $invite = 0, $inviteOpenid = '')
+    {
+        // 查看是否有oauth用户记录
+        $oauthUser = M('oauth_users')->where([
+            'unionid' => $data['unionId'],
+            'oauth' => 'weixin',
+        ])->order('tu_id desc')->find();
+        $oauthData = [
+            'openid' => $data['openId'],
+            'nickname' => $data['nickName'],
+            'sex' => $data['gender'],
+            'language' => $data['language'],
+            'city' => $data['city'],
+            'province' => $data['province'],
+            'country' => $data['country'],
+            'headimgurl' => $data['avatarUrl'],
+            'unionid' => $data['unionId'],
+        ];
+        $updateData = [
+            'user_id' => '',
+            'openid' => $data['openId'],
+            'oauth' => 'weixin',
+            'unionid' => $data['unionId'],
+            'oauth_child' => 'open',
+            'oauth_data' => serialize($oauthData)
+        ];
+        // 邀请人处理
+        if ($invite > 0) {
+            if (!empty($inviteOpenid)) {
+                // 根据openid获取用户ID
+                $inviteUid = M('users')->where(['openid' => $inviteOpenid, 'is_lock' => 0, 'is_cancel' => 0])->order('user_id DESC')->value('user_id');
+                if ($inviteUid > 0) $invite = $inviteUid;
+            }
+        }
+        Db::startTrans();
+        if ($oauthUser) {
+            // 已授权登录过
+            if ($oauthUser['user_id'] == 0) {
+                // 注册账号
+                $data = [
+                    'mobile' => '',
+                    'password' => '',
+                    'openid' => $oauthData['openid'],
+                    'unionid' => $oauthData['unionid'],
+                    'oauth' => $oauthUser['oauth'],
+                    'nickname' => $oauthData['nickname'],
+                    'head_pic' => !empty($oauthData['headimgurl']) ? $oauthData['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png',
+                    'sex' => $oauthData['sex'] ?? 0,
+                    'reg_time' => time(),
+                    'last_login' => time(),
+                    'token' => TokenLogic::setToken(),
+                    'time_out' => strtotime('+' . config('REDIS_DAY') . ' days'),
+                    'will_invite_uid' => $invite
+                ];
+                $userId = M('users')->add($data);
+            } else {
+                $user = Db::name('users')->where(['user_id' => $oauthUser['user_id']])->field('head_pic, nickname, mobile, is_lock, is_cancel')->find();
+                if ($user['is_lock'] == 1) {
+                    throw new Exception(['status' => 0, 'msg' => '账号已被冻结，请联系客服解除绑定']);
+                } elseif ($user['is_cancel'] == 1) {
+                    throw new Exception(['status' => 0, 'msg' => '账号已被注销，请联系客服解除绑定']);
+                } else {
+                    // 更新用户信息
+                    $userToken = TokenLogic::setToken();
+                    $updateData = [
+                        'openid' => $oauthData['openid'],
+                        'unionid' => $oauthData['unionid'],
+                        'sex' => $oauthData['sex'] ?? 0,
+                        'token' => $userToken,
+                        'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
+                    ];
+                    if (!$this->checkHeadPic($user['head_pic'])) {
+                        $updateData['head_pic'] = !empty($oauthData['headimgurl']) ? $oauthData['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png';
+                    }
+                    if (!$this->checkNickname($user['nickname'])) {
+                        $updateData['nickname'] = !empty($data['nickname']) ? $data['nickname'] : $user['mobile'];
+                    }
+                    Db::name('users')->where(['user_id' => $oauthUser['user_id']])->update($updateData);
+                    $userId = $oauthUser['user_id'];
+                }
+            }
+            // 更新数据
+            $updateData['user_id'] = $userId;
+            Db::name('oauth_users')->where(['tu_id' => $oauthUser['tu_id']])->update($updateData);
+        } else {
+            // 未授权登录过
+            // 注册账号
+            $data = [
+                'mobile' => '',
+                'password' => '',
+                'openid' => $oauthData['openid'],
+                'unionid' => $oauthData['unionid'],
+                'oauth' => $oauthUser['oauth'],
+                'nickname' => $oauthData['nickname'],
+                'head_pic' => !empty($oauthData['headimgurl']) ? $oauthData['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png',
+                'sex' => $oauthData['sex'] ?? 0,
+                'reg_time' => time(),
+                'last_login' => time(),
+                'token' => TokenLogic::setToken(),
+                'time_out' => strtotime('+' . config('REDIS_DAY') . ' days'),
+                'will_invite_uid' => $invite
+            ];
+            $userId = M('users')->add($data);
+            // 插入数据
+            $updateData['user_id'] = $userId;
+            Db::name('oauth_users')->insert($updateData);
+        }
+        $user = M('users')->where(['user_id' => $userId])->find();
+        // 更新用户推送tags
+        $res = (new PushLogic())->bindPushTag($user);
+        if ($res['status'] == 2) {
+            $user = Db::name('users')->where('user_id', $user['user_id'])->find();
+        }
+        $user = [
+            'user_id' => $user['user_id'],
+            'sex' => $user['sex'],
+            'nickname' => $user['nickname'],
+            'user_name' => $user['nickname'],
+            'real_name' => $user['user_name'],
+            'id_cart' => $user['id_cart'],
+            'birthday' => $user['birthday'],
+            'mobile' => $user['mobile'],
+            'head_pic' => $user['head_pic'],
+            'type' => $user['distribut_level'] >= 3 ? '2' : $user['type'],
+            'invite_uid' => $user['invite_uid'],
+            'is_distribut' => $user['is_distribut'],
+            'is_lock' => $user['is_lock'],
+            'level' => $user['distribut_level'],
+            'level_name' => M('DistributLevel')->where('level_id', $user['distribut_level'])->getField('level_name') ?? '普通会员',
+            'is_not_show_jk' => $user['is_not_show_jk'],  // 是否提示加入金卡弹窗
+            'has_pay_pwd' => $user['paypwd'] ? 1 : 0,
+            'is_app' => session('is_app'),
+            'token' => $user['token'],
+            'jpush_tags' => [$user['push_tag']]
+        ];
+        // 登录记录
+        $this->setUserId($user['user_id']);
+        $this->userLogin(4);
+        // 更新用户缓存
+        (new Redis())->set('user_' . $user['token'], $user, config('REDIS_TIME'));
+        Db::commit();
+        return ['status' => 1, 'result' => $user];
     }
 
     /*
