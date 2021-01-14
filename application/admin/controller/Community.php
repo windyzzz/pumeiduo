@@ -3,6 +3,7 @@
 namespace app\admin\controller;
 
 use app\admin\model\CommunityArticle;
+use app\common\logic\CouponLogic;
 use app\common\logic\MessageLogic;
 use app\common\logic\OssLogic;
 use app\common\logic\PushLogic;
@@ -330,6 +331,79 @@ class Community extends Base
                     ];
                     M('community_article_verify_log')->add($logData);
                     if ($articleInfo['source'] == 1) {
+                        // 审核通过奖励
+                        $rewardStatus = 0;
+                        if ($status == 1) {
+                            $config = M('community_config')->where(['type' => 'is_reward'])->find();
+                            if ($config && $config['content'] == 1) {
+                                $rewardType = M('community_config')->where(['type' => 'reward_type'])->value('content');
+                                switch ($rewardType) {
+                                    case 1:
+                                        $couponIds = M('community_config')->where(['type' => 'reward_coupon'])->value('content');
+                                        if ($couponIds) {
+                                            $couponData = M('coupon')->where([
+                                                'id' => ['in', $couponIds],
+                                                'send_start_time' => ['elt', NOW_TIME],
+                                                'send_end_time' => ['egt', NOW_TIME],
+                                                'use_end_time' => ['egt', NOW_TIME],
+                                                'status' => 1,
+                                            ])->select();
+                                            // 优惠券商品
+                                            $couponGoods = Db::name('goods_coupon gc')->join('goods g', 'g.goods_id = gc.goods_id')->where(['gc.coupon_id' => ['in', $couponIds]])->field('gc.coupon_id, g.goods_id, g.goods_name, g.original_img')->select();
+                                            // 优惠券分类
+                                            $couponCate = Db::name('goods_coupon gc1')->join('goods_category gc2', 'gc1.goods_category_id = gc2.id')->where(['gc1.coupon_id' => ['in', $couponIds]])->getField('gc1.coupon_id, gc2.id cate_id, gc2.name cate_name', true);
+                                            // 组合数据
+                                            $couponIds = '';
+                                            $couponList = [];
+                                            $couponLogic = new CouponLogic();
+                                            foreach ($couponData as $k => $coupon) {
+                                                $couponIds .= $coupon['id'] . ',';
+                                                if ($coupon['use_type'] == 1) {
+                                                    // 指定商品可用
+                                                    foreach ($couponGoods as $goods) {
+                                                        if ($coupon['id'] == $goods['coupon_id']) {
+                                                            $couponList[] = [
+                                                                'coupon_id' => $coupon['id'],
+                                                                'use_type_desc' => '指定商品',
+                                                                'money' => floatval($coupon['money']) . '',
+                                                                'desc' => $coupon['name'],
+                                                                'use_start_time' => date('Y.m.d', $coupon['use_start_time']),
+                                                                'use_end_time' => date('Y.m.d', $coupon['use_end_time']),
+                                                            ];
+                                                        }
+                                                    }
+                                                } else {
+                                                    // 优惠券展示描述
+                                                    $res = $couponLogic->couponTitleDesc($coupon, '', isset($couponCate[$coupon['id']]) ? $couponCate[$coupon['id']]['cate_name'] : '');
+                                                    if (empty($res)) {
+                                                        continue;
+                                                    }
+                                                    $couponList[] = [
+                                                        'coupon_id' => $coupon['id'],
+                                                        'use_type_desc' => $res['use_type_desc'],
+                                                        'money' => floatval($coupon['money']) . '',
+                                                        'desc' => $coupon['name'],
+                                                        'use_start_time' => date('Y.m.d', $coupon['use_start_time']),
+                                                        'use_end_time' => date('Y.m.d', $coupon['use_end_time']),
+                                                    ];
+                                                }
+                                            }
+                                            if (!empty($couponList)) {
+                                                $res = $couponLogic->receive(rtrim($couponIds, ','), $articleInfo['user_id'], true);
+                                                if ($res['status'] == 1) $rewardStatus = 1;
+                                            }
+                                        }
+                                        break;
+                                    case 2:
+                                        $electronic = M('community_config')->where(['type' => 'reward_electronic'])->value('content');
+                                        if ($electronic && $electronic > 0) {
+                                            $res = accountLog($articleInfo['user_id'], 0, 0, '社区文章审核通过奖励', 0, 0, '', $electronic, 25);
+                                            if ($res) $rewardStatus = 1;
+                                        }
+                                        break;
+                                }
+                            }
+                        }
                         // 消息通知
                         $messageLogic = new MessageLogic();
                         $messageLogic->addMessage(session('admin_id'), '社区文章审核结果', $content, 0, 0, 0, $articleInfo['user_id']);
@@ -348,7 +422,16 @@ class Community extends Base
                                 'item_id' => '',
                                 'cate_id' => '',
                                 'cate_name' => '',
-                                'article_status' => $status . ''
+                                'article_status' => $status . '',   // 文章审核状态
+                                'article_reward' => [
+                                    'status' => $rewardStatus,      // 审核通过奖励是否开启
+                                    'type' => $rewardType ?? '0',   // 奖励类型
+                                    'coupon' => [
+                                        'count' => isset($couponList) ? count($couponList) : 0,
+                                        'list' => $couponList ?? []
+                                    ],
+                                    'electronic' => $electronic ?? '0'
+                                ]
                             ]
                         ];
                         $res = $pushLogic->push($contentData, $extraData, 0, [], [], $articleInfo['user_id'] . '');
