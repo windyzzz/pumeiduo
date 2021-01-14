@@ -1009,7 +1009,7 @@ class School
                 Db::startTrans();
                 $placeOrder->addNormalOrder(3);
                 // 扣除用户商学院学分
-                accountLog($user['user_id'], 0, 0, '兑换商品消费学分', 0, 0, '', 0, 23, true, 0, -$schoolCredit);
+                accountLog($user['user_id'], 0, 0, '兑换商品消费学分', 0, 0, '', 0, 24, true, 0, -$schoolCredit);
                 Db::commit();
                 return ['status' => 1, 'msg' => '订单创建成功'];
             } else {
