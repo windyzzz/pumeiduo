@@ -89,6 +89,44 @@
                     </table>
                 </dd>
             </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>审核通过奖励</label>
+                </dt>
+                <dd class="opt">
+                    <div class="onoff">
+                        <label for="is_reward[content]_1" class="cb-enable <if condition='$config.is_reward.content eq 1'>selected</if>">开启</label>
+                        <label for="is_reward[content]_0" class="cb-disable <if condition='$config.is_reward.content eq 0'>selected</if>">关闭</label>
+                        <input id="is_reward[content]_1" name="is_reward[content]" <if condition='$config.is_reward.content eq 1'>checked</if> value="1" type="radio">
+                        <input id="is_reward[content]_0" name="is_reward[content]" <if condition='$config.is_reward.content eq 0'>checked</if> value="0" type="radio">
+                    </div>
+                    <div class="reward_type" style="<if condition='$config.is_reward.content eq 0'>display:none;</if>">
+                        <select name="reward_type[content]">
+                            <option value="0">奖励选择</option>
+                            <option value="1" <if condition='$config.reward_type.content eq 1'>selected</if>>优惠券</option>
+                            <option value="2" <if condition='$config.reward_type.content eq 2'>selected</if>>电子币</option>
+                        </select>
+                    </div>
+                    <div class="reward_coupon" style="<if condition='$config.reward_type.content eq 2'>display:none;</if>">
+                        <a class="ncap-btn reward_coupon" href="javascript:;" onclick="addCoupon()">增加优惠券</a>
+                        <table>
+                            <tr><th style="width:80%">优惠券ID</th><th style="width: 50px;text-align: center;" >操作</th></tr>
+                            <tbody id="coupon_ids">
+                            <foreach name="$config.reward_coupon.content" item="vo">
+                                <tr>
+                                    <td><input name="reward_coupon[content][]" type="text" value="{$vo}" class="form-control" style="width:300px;"></td>
+                                    <td style="text-align: center;"><a class="ncap-btn" href="javascript:;" onclick="$(this).parent().parent().remove();">删除</a></td>
+                                </tr>
+                            </foreach>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="reward_electronic" style="<if condition='$config.reward_type.content eq 1'>display:none;</if>">
+                        电子币面值
+                        <input type="text" name="reward_electronic[content]"  onpaste="this.value=this.value.replace(/[^\d.]/g,'')" onkeyup="this.value=this.value.replace(/[^\d.]/g,'')" value="{$config.reward_electronic.content}" style="text-align: center;">
+                    </div>
+                </dd>
+            </dl>
             <div class="bot">
                 <a href="JavaScript:void(0);" class="ncap-btn-big ncap-btn-green" onclick="document.form.submit()">确认提交</a>
             </div>
@@ -173,6 +211,39 @@
                 });
                 break;
         }
+    }
+
+    $('input[name="is_reward[content]"]').change(function () {
+        switch (this.value) {
+            case '1':
+                $('.reward_type').show();
+                $('select[name="reward_type[content]"]').val('');
+                break;
+            case '0':
+                $('.reward_type').hide();
+                $('.reward_coupon').hide();
+                $('.reward_electronic').hide();
+                break;
+        }
+    });
+
+    $('select[name="reward_type[content]"]').change(function () {
+        switch (this.value) {
+            case '1':
+                $('.reward_coupon').show();
+                $('.reward_electronic').hide();
+                break;
+            case '2':
+                $('.reward_coupon').hide();
+                $('.reward_electronic').show();
+                break;
+        }
+    });
+
+    function addCoupon() {
+        var tr = '<tr><td><input name="reward_coupon[content][]" type="text" value="" class="form-control" style="width:300px;"></td>' +
+            '<td style="text-align: center;"><a class="ncap-btn" href="javascript:;" onclick="$(this).parent().parent().remove();">删除</a></td></tr>';
+        $('#coupon_ids').append(tr);
     }
 </script>
 </html>

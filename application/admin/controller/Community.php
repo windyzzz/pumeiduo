@@ -29,9 +29,28 @@ class Community extends Base
             $param = I('post.');
             $keyword = $param['keyword'];
             unset($param['keyword']);
+            // 参数检验
+            if ($param['is_reward']['content'] == 1) {
+                if ($param['reward_type']['content'] == 0) {
+                    $this->error('请选择优惠奖励', U('Admin/Community/config'));
+                }
+            }
+            if (isset($param['reward_coupon']) && is_array($param['reward_coupon']['content'])) {
+                $param['reward_coupon']['content'] = implode(',', $param['reward_coupon']['content']);
+            }
             Db::startTrans();
             // 配置
             foreach ($param as $k => $v) {
+                if ($k == 'reward_type') {
+                    switch ($v['content']) {
+                        case 1:
+                            $v['name'] = '优惠券';
+                            break;
+                        case 2:
+                            $v['name'] = '电子币';
+                            break;
+                    }
+                }
                 $data = [
                     'type' => $k,
                     'name' => isset($v['name']) ? $v['name'] : '',
@@ -70,7 +89,7 @@ class Community extends Base
             $config[$val['type']] = [
                 'name' => $val['name'],
                 'url' => $val['url'],
-                'content' => $val['content']
+                'content' => $val['type'] == 'reward_coupon' ? explode(',', $val['content']) : $val['content']
             ];
         }
         // 热门词
