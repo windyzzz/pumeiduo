@@ -98,6 +98,7 @@ return [
             ['name' => '品牌列表', 'act' => 'brandList', 'op' => 'Goods'],
             ['name' => '商品属性', 'act' => 'goodsAttributeList', 'op' => 'Goods'],
             ['name' => '评论列表', 'act' => 'index', 'op' => 'Comment'],
+            ['name' => '搜索热词', 'act' => 'index', 'op' => 'KeyWord'],
             // array('name' => '商品咨询', 'act'=>'ask_list', 'op'=>'Comment'),
         ]],
         ['name' => '订单', 'child' => [
@@ -149,11 +150,6 @@ return [
             ['name' => '任务详情', 'act' => 'userTask', 'op' => 'Task'],
         ]],
 
-        ['name' => '自定义', 'child' => [
-            ['name' => '搜索热词管理', 'act' => 'index', 'op' => 'KeyWord'],
-            ['name' => '分类主题活动', 'act' => 'cate_activity_list', 'op' => 'Activity'],
-        ]],
-
         ['name' => '建议', 'child' => [
             ['name' => '反馈类型', 'act' => 'suggestion_cate', 'op' => 'Suggestion'],
             ['name' => '投诉与建议', 'act' => 'suggestion_list', 'op' => 'Suggestion'],
@@ -170,10 +166,11 @@ return [
         ]],
 
         ['name' => '活动', 'child' => [
-            ['name' => '配置', 'act' => 'config', 'op' => 'Activity'],
-            ['name' => '板块1', 'act' => 'module1', 'op' => 'Activity'],
-            ['name' => '板块2', 'act' => 'module2', 'op' => 'Activity'],
-            ['name' => '板块3', 'act' => 'module3', 'op' => 'Activity'],
+            ['name' => '分类主题活动', 'act' => 'cate_activity_list', 'op' => 'Activity'],
+            ['name' => '首页活动配置', 'act' => 'config', 'op' => 'Activity'],
+            ['name' => '首页活动板块1', 'act' => 'module1', 'op' => 'Activity'],
+            ['name' => '首页活动板块2', 'act' => 'module2', 'op' => 'Activity'],
+            ['name' => '首页活动板块3', 'act' => 'module3', 'op' => 'Activity'],
         ]],
 
         ['name' => '商学院', 'child' => [
