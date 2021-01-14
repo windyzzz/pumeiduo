@@ -993,11 +993,19 @@ function taskLog($user_id, $task, $reward, $order_sn = '', $reward_electronic = 
  * @param int $order_id 订单id
  * @param string $order_sn 订单sn
  * @param float $user_electronic 电子币
- * @param int $type 分类（0：其他，1：佣金结算，2：积分消费，3：下单消费，4：积分收入（包含：5：下单送积分、6：注册积分、7：邀请积分、8：签到积分、9：其他）、10：订单取消、11：电商转入积分、12：积分互转、13：电子币互转、:14：任务获得（包含：15：电子币、16：积分）
+ * @param int $type 分类（0：其他，1：佣金结算、2：积分消费、3：下单消费、4：积分收入
+ * 5：下单送积分、6：注册积分、7：邀请积分、8：签到积分、9：其他、10：订单取消、11：电商转入积分、12：积分互转、13：电子币互转、
+ * 14：任务获得、15：任务获得电子币、16：任务获得积分、17： 、18：登录红包、19：订单退回、20：提现、21：完善资料奖励、
+ * 22：商学院购买课程、23：商学院课程学习完毕奖励、24：商学院兑换
  * @param bool $isOneself 是否是登录用户本人
  * @param int $task_id 任务ID
  * @param float $school_credit 商学院学分
  * @return bool
+ * @throws \think\Exception
+ * @throws \think\db\exception\DataNotFoundException
+ * @throws \think\db\exception\ModelNotFoundException
+ * @throws \think\exception\DbException
+ * @throws \think\exception\PDOException
  */
 function accountLog($user_id, $user_money = 0.00, $pay_points = 0.00, $desc = '', $distribut_money = 0.00, $order_id = 0, $order_sn = '', $user_electronic = 0.00, $type = 0, $isOneself = true, $task_id = 0, $school_credit = 0.00)
 {
