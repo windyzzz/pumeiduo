@@ -366,7 +366,7 @@ class Community extends Base
                                                                 'coupon_id' => $coupon['id'],
                                                                 'use_type_desc' => '指定商品',
                                                                 'money' => floatval($coupon['money']) . '',
-                                                                'desc' => $coupon['name'],
+                                                                'title' => $coupon['name'],
                                                                 'use_start_time' => date('Y.m.d', $coupon['use_start_time']),
                                                                 'use_end_time' => date('Y.m.d', $coupon['use_end_time']),
                                                             ];
@@ -382,7 +382,7 @@ class Community extends Base
                                                         'coupon_id' => $coupon['id'],
                                                         'use_type_desc' => $res['use_type_desc'],
                                                         'money' => floatval($coupon['money']) . '',
-                                                        'desc' => $coupon['name'],
+                                                        'title' => $coupon['name'],
                                                         'use_start_time' => date('Y.m.d', $coupon['use_start_time']),
                                                         'use_end_time' => date('Y.m.d', $coupon['use_end_time']),
                                                     ];
@@ -416,7 +416,7 @@ class Community extends Base
                         $extraData = [
                             'type' => '14',
                             'value' => [
-                                'need_login' => 0,
+                                'need_login' => 1,
                                 'message_url' => '',
                                 'goods_id' => '',
                                 'item_id' => '',
@@ -424,7 +424,7 @@ class Community extends Base
                                 'cate_name' => '',
                                 'article_status' => $status . '',   // 文章审核状态
                                 'article_reward' => [
-                                    'status' => $rewardStatus,      // 审核通过奖励是否开启
+                                    'is_open' => $rewardStatus,     // 审核通过奖励是否开启
                                     'type' => $rewardType ?? '0',   // 奖励类型
                                     'coupon' => [
                                         'count' => isset($couponList) ? count($couponList) : 0,
