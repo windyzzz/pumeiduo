@@ -14,8 +14,8 @@
         </div>
     </div>
     <form class="form-horizontal" id="handleposition" method="post">
-        <input type="text" name="id" value="{$prom.id}"/>
-        <input type="text" name="act" value="{$prom.act}"/>
+        <input type="hidden" name="id" value="{$prom.id}"/>
+        <input type="hidden" name="act" value="{$prom.act}"/>
         <div class="ncap-form-default">
             <dl class="row">
                 <dt class="tit">
@@ -38,7 +38,7 @@
                         <table>
                             <tr><th style="width:80%">优惠券ID</th><th style="width: 50px;text-align: center;" >操作</th></tr>
                             <tbody id="coupon_ids">
-                            <foreach name="$prom.reward_content" item="vo">
+                            <foreach name="$prom.reward_coupon" item="vo">
                                 <tr>
                                     <td><input name="reward_content[coupon][]" type="text" value="{$vo}" class="form-control" style="width:100px; text-align: center;"></td>
                                     <td style="text-align: center;"><a class="ncap-btn" href="javascript:;" onclick="$(this).parent().parent().remove();">删除</a></td>
@@ -49,7 +49,7 @@
                     </div>
                     <div class="reward_electronic" style="<if condition='$prom.reward_type eq 1'>display:none;</if>">
                         电子币面值
-                        <input type="text" name="reward_content[electronic]"  onpaste="this.value=this.value.replace(/[^\d.]/g,'')" onkeyup="this.value=this.value.replace(/[^\d.]/g,'')" value="{$prom.reward_content}" style="text-align: center;">
+                        <input type="text" name="reward_content[electronic]"  onpaste="this.value=this.value.replace(/[^\d.]/g,'')" onkeyup="this.value=this.value.replace(/[^\d.]/g,'')" value="{$prom.reward_electronic}" style="text-align: center;">
                     </div>
                 </dd>
             </dl>
@@ -69,6 +69,24 @@
                     <input type="text" id="end_time" name="end_time" value="{$prom.end_time|date='Y-m-d H:i:s',###}" class="input-txt">
                 </dd>
             </dl>
+            <if condition="$prom.id">
+                <dl class="row timed">
+                    <dt class="tit">
+                        <label>兑换码</label>
+                    </dt>
+                    <dd class="opt">
+                        <input type="text" value="{$prom.code}"  class="input-txt" disabled style="text-align: center;">
+                    </dd>
+                </dl>
+                <dl class="row timed">
+                    <dt class="tit">
+                        <label>兑换码二维码</label>
+                    </dt>
+                    <dd class="opt">
+                        <img src="{$prom.qrcode}">
+                    </dd>
+                </dl>
+            </if>
             <div class="bot"><a onclick="verifyForm();" class="ncap-btn-big ncap-btn-green">确认提交</a></div>
         </div>
     </form>

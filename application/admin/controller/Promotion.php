@@ -1247,12 +1247,25 @@ class Promotion extends Base
     {
         $promId = I('id', '');
         if ($promId) {
-
+            $prom = M('prom_qrcode')->where(['id' => $promId])->find();
+            // 赠送内容
+            switch ($prom['reward_type']) {
+                case 1:
+                    $prom['reward_coupon'] = explode(',', $prom['reward_content']);
+                    break;
+                case 2:
+                    $prom['reward_electronic'] = $prom['reward_content'];
+                    break;
+            }
+            // 兑换码二维码
+            $qrcode = explode(',', $prom['qrcode']);
+            $prom['qrcode'] = (new OssLogic())::url(substr($qrcode[0], strrpos($qrcode[0], 'img:') + 4));
+            $prom['act'] = 'edit';
         } else {
-            $prom['act'] = 'add';
             $prom['reward_type'] = 1;
             $prom['start_time'] = NOW_TIME;
             $prom['end_time'] = NOW_TIME + 604800;
+            $prom['act'] = 'add';
         }
         $this->assign('prom', $prom);
         return $this->fetch('prom_qrCode_info');
@@ -1312,6 +1325,35 @@ class Promotion extends Base
                 // 添加活动
                 M('prom_qrcode')->add($promData);
                 $this->ajaxReturn(['status' => 1, 'msg' => '添加成功']);
+                break;
+            case 'edit':
+                if (!$promId) {
+                    $this->ajaxReturn(['status' => 0, 'msg' => '缺少活动ID']);
+                }
+                $param = I('post.');
+                $promData = [];
+                switch ($param['reward_type']) {
+                    case 1:
+                        if (!isset($param['reward_content']['coupon']) || empty($param['reward_content']['coupon'][0])) {
+                            $this->ajaxReturn(['status' => 0, 'msg' => '请填写优惠券ID']);
+                        }
+                        $promData['reward_content'] = implode(',', $param['reward_content']['coupon']);
+                        break;
+                    case 2:
+                        if (empty($param['reward_content']['electronic']) || $param['reward_content']['electronic'] < 0) {
+                            $this->ajaxReturn(['status' => 0, 'msg' => '请填写正确的电子币']);
+                        }
+                        $promData['reward_content'] = $param['reward_content']['electronic'];
+                        break;
+                }
+                $promData['reward_type'] = $param['reward_type'];
+                $promData['start_time'] = strtotime($param['start_time']);
+                $promData['end_time'] = strtotime($param['end_time']);
+                $promData['is_open'] = 0;
+                // 更新活动
+                M('prom_qrcode')->where(['id' => $promId])->update($promData);
+                $this->ajaxReturn(['status' => 1, 'msg' => '编辑成功']);
+                break;
         }
     }
 }
