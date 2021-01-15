@@ -16,7 +16,9 @@ use app\admin\logic\PromotionLogic;
 use app\admin\model\FlashSale;
 use app\admin\model\Goods;
 use app\admin\model\GroupBuy;
+use app\admin\model\PromQrcode;
 use app\admin\validate\Gift as Giftvalidate;
+use app\common\logic\OssLogic;
 use app\common\model\OrderProm as OrderPromModel;
 use app\common\model\OrderPromGoods as OrderPromGoodsModel;
 use app\common\model\PromGoods;
@@ -1195,5 +1197,121 @@ class Promotion extends Base
         Db::name('goods')->where(['goods_id' => ['in', $goodsIds]])->save(['prom_id' => 0, 'prom_type' => 0]);
 
         $this->ajaxReturn(['status' => 1, 'msg' => '删除活动成功']);
+    }
+
+    /**
+     * 扫码优惠活动列表
+     * @return mixed
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     */
+    public function qrCodeList()
+    {
+        $count = M('prom_qrcode')->count();
+        $page = new Page($count, 10);
+        $promQrcode = new PromQrcode();
+        $promList = $promQrcode->order('start_time DESC')->limit($page->firstRow . ',' . $page->listRows)->select();
+        $ossLogic = new OssLogic();
+        foreach ($promList as &$prom) {
+            // 赠送内容
+            switch ($prom['reward_type']) {
+                case 1:
+                    $rewardContent = [];
+                    $couponList = M('coupon')->where(['id' => ['IN', $prom['reward_content']]])->field('id, name')->select();
+                    foreach ($couponList as $coupon) {
+                        $rewardContent[] = [
+                            'coupon_id' => $coupon['id'],
+                            'content' => 'ID:' . $coupon['id'] . ' ' . $coupon['name']
+                        ];
+                    }
+                    $prom['reward_content'] = $rewardContent;
+                    break;
+                case 2:
+                    break;
+            }
+            // 兑换码二维码
+            $qrcode = explode(',', $prom['qrcode']);
+            $prom['qrcode'] = $ossLogic::url(substr($qrcode[0], strrpos($qrcode[0], 'img:') + 4));
+        }
+        $this->assign('page', $page);
+        $this->assign('prom_list', $promList);
+        return $this->fetch('prom_qrcode_list');
+    }
+
+    /**
+     * 扫码优惠活动详情
+     * @return mixed
+     */
+    public function qrCode()
+    {
+        $promId = I('id', '');
+        if ($promId) {
+
+        } else {
+            $prom['act'] = 'add';
+            $prom['reward_type'] = 1;
+            $prom['start_time'] = NOW_TIME;
+            $prom['end_time'] = NOW_TIME + 604800;
+        }
+        $this->assign('prom', $prom);
+        return $this->fetch('prom_qrCode_info');
+    }
+
+
+    public function qrCodeInfo()
+    {
+        $act = I('act');
+        $promId = I('id', '');
+        switch ($act) {
+            case 'add':
+                $param = I('post.');
+                $promData = [];
+                switch ($param['reward_type']) {
+                    case 1:
+                        if (!isset($param['reward_content']['coupon']) || empty($param['reward_content']['coupon'][0])) {
+                            $this->ajaxReturn(['status' => 0, 'msg' => '请填写优惠券ID']);
+                        }
+                        $promData['reward_content'] = implode(',', $param['reward_content']['coupon']);
+                        break;
+                    case 2:
+                        if (empty($param['reward_content']['electronic']) || $param['reward_content']['electronic'] < 0) {
+                            $this->ajaxReturn(['status' => 0, 'msg' => '请填写正确的电子币']);
+                        }
+                        $promData['reward_content'] = $param['reward_content']['electronic'];
+                        break;
+                }
+                // 生成兑换码
+                do {
+                    $code = 'PQ' . get_rand_str(8, 0, 2);  // 8位数字
+                    $check_exist = M('prom_qrcode')->where(['code' => $code])->value('id');
+                } while ($check_exist);
+                // 生成二维码
+                $promData['code'] = $code;
+                $qrPath = create_qrcode('prom_qrcode', 0, $promData);
+                if (!$qrPath) {
+                    $this->ajaxReturn(['status' => 0, 'msg' => '二维码生成失败']);
+                }
+                // 上传到oss服务器
+                $filePath = PUBLIC_PATH . substr($qrPath, strrpos($qrPath, 'public/') + 7);
+                $fileName = substr($qrPath, strrpos($qrPath, '/') + 1);
+                $object = 'image/' . date('Y/m/d/H/') . $fileName;
+                $ossLogic = new OssLogic();
+                $return_url = $ossLogic->uploadFile($filePath, $object);
+                if (!$return_url) {
+                    $this->ajaxReturn(['status' => 0, 'msg' => 'ERROR：' . $ossLogic->getError()]);
+                }
+                // 二维码信息
+                $imageInfo = getimagesize($filePath);
+                unlink($filePath);
+                $promData['qrcode'] = 'img:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ',type:' . substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1);
+                $promData['reward_type'] = $param['reward_type'];
+                $promData['start_time'] = strtotime($param['start_time']);
+                $promData['end_time'] = strtotime($param['end_time']);
+                $promData['add_time'] = NOW_TIME;
+                // 添加活动
+                M('prom_qrcode')->add($promData);
+                $this->ajaxReturn(['status' => 1, 'msg' => '添加成功']);
+        }
     }
 }

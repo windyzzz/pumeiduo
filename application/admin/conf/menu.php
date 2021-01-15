@@ -123,6 +123,7 @@ return [
             ['name' => '满单赠品活动', 'act' => 'gift', 'op' => 'Promotion'],
             ['name' => '指定商品赠品活动', 'act' => 'gift2', 'op' => 'Promotion'],
             ['name' => '加价购', 'act' => 'index', 'op' => 'Extra'],
+            ['name' => '扫码优惠活动', 'act' => 'qrCodeList', 'op' => 'Promotion'],
             // array('name' => '预售管理','act'=>'pre_sell_list', 'op'=>'Promotion'),
             // array('name' => '拼团管理','act'=>'index', 'op'=>'Team'),
         ]],

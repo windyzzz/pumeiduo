@@ -2316,11 +2316,13 @@ function create_qrcode($type, $user_id, $param = [], $logo = '')
                 return false;
             }
             $url = SITE_URL . '/#/goods/goods_details?goods_id=' . $param['goods_id'] . '&cart_type=0&invite=' . $user_id;
-            $filename = 'public/images/qrcode/goods/goods_' . $user_id . '_' . $param['goods_id'] . '.png';
+            $dir = 'public/images/qrcode/goods/';
+            $filename = $dir . 'goods_' . $user_id . '_' . $param['goods_id'] . '.png';
             break;
         case 'user':
             $url = SITE_URL . '/#/register?invite=' . $user_id;
-            $filename = 'public/images/qrcode/user/user_' . $user_id . '_min.png';
+            $dir = 'public/images/qrcode/user/';
+            $filename = $dir . 'user_' . $user_id . '_min.png';
             break;
         case 'school_article':
             if (empty($param['article_id']) || $param['article_id'] == 0) {
@@ -2330,13 +2332,22 @@ function create_qrcode($type, $user_id, $param = [], $logo = '')
                 return false;
             }
             $url = SITE_URL . '/#/news/school_article?article_id=' . $param['article_id'] . '&distribute_level=' . $param['distribute_level'];
-            $filename = 'public/images/qrcode/user/user_' . $user_id . '_' . $param['article_id'] . '_school_article.png';
+            $dir = 'public/images/qrcode/user/';
+            $filename = $dir . 'user_' . $user_id . '_' . $param['article_id'] . '_school_article.png';
+            break;
+        case 'prom_qrcode':
+            $url = $param['code'];
+            $dir = 'public/upload/promotion/qrcode/';
+            $filename = $dir . $param['code'] . '.png';
             break;
         default:
             return false;
     }
     if (file_exists($filename)) {
-        return $filename;
+        return false;
+    }
+    if (!is_dir($dir)) {
+        mkdir($dir, 0755, true);
     }
     $value = $url;                  //二维码内容
     $errorCorrectionLevel = 'L';    //容错级别

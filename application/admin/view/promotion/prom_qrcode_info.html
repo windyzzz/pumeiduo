@@ -1,0 +1,130 @@
+<include file="public/layout" />
+<script src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
+<body style="background-color: #FFF; overflow: auto;">
+<div id="toolTipLayer" style="position: absolute; z-index: 9999; display: none; visibility: visible; left: 95px; top: 573px;"></div>
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title"><a class="back" href="javascript:history.back();" title="返回列表"><i class="fa fa-arrow-circle-o-left"></i></a>
+            <div class="subject">
+                <h3>扫码优惠活动管理 - 编辑扫码优惠活动</h3>
+                <h5>网站扫码优惠活动管理</h5>
+            </div>
+        </div>
+    </div>
+    <form class="form-horizontal" id="handleposition" method="post">
+        <input type="text" name="id" value="{$prom.id}"/>
+        <input type="text" name="act" value="{$prom.act}"/>
+        <div class="ncap-form-default">
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>赠送类型</label>
+                </dt>
+                <dd class="opt">
+                    <select name="reward_type">
+                        <option value="1"<if condition="$prom[reward_type] eq 1">selected</if>>优惠券</option>
+                        <option value="2"<if condition="$prom[reward_type] eq 2">selected</if>>电子币</option>
+                    </select>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>赠送内容</label>
+                </dt>
+                <dd class="opt">
+                    <div class="reward_coupon" style="<if condition='$prom.reward_type eq 2'>display:none;</if>">
+                        <a class="ncap-btn reward_coupon" href="javascript:;" onclick="addCoupon()">增加优惠券</a>
+                        <table>
+                            <tr><th style="width:80%">优惠券ID</th><th style="width: 50px;text-align: center;" >操作</th></tr>
+                            <tbody id="coupon_ids">
+                            <foreach name="$prom.reward_content" item="vo">
+                                <tr>
+                                    <td><input name="reward_content[coupon][]" type="text" value="{$vo}" class="form-control" style="width:100px; text-align: center;"></td>
+                                    <td style="text-align: center;"><a class="ncap-btn" href="javascript:;" onclick="$(this).parent().parent().remove();">删除</a></td>
+                                </tr>
+                            </foreach>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="reward_electronic" style="<if condition='$prom.reward_type eq 1'>display:none;</if>">
+                        电子币面值
+                        <input type="text" name="reward_content[electronic]"  onpaste="this.value=this.value.replace(/[^\d.]/g,'')" onkeyup="this.value=this.value.replace(/[^\d.]/g,'')" value="{$prom.reward_content}" style="text-align: center;">
+                    </div>
+                </dd>
+            </dl>
+            <dl class="row timed">
+                <dt class="tit">
+                    <label><em>*</em>开始日期</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" id="start_time" name="start_time" value="{$prom.start_time|date='Y-m-d H:i:s',###}"  class="input-txt">
+                </dd>
+            </dl>
+            <dl class="row timed">
+                <dt class="tit">
+                    <label><em>*</em>结束日期</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" id="end_time" name="end_time" value="{$prom.end_time|date='Y-m-d H:i:s',###}" class="input-txt">
+                </dd>
+            </dl>
+            <div class="bot"><a onclick="verifyForm();" class="ncap-btn-big ncap-btn-green">确认提交</a></div>
+        </div>
+    </form>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#start_time').layDate();
+        $('#end_time').layDate();
+    });
+
+    $('select[name="reward_type"]').change(function () {
+        switch (this.value) {
+            case '1':
+                $('.reward_coupon').show();
+                $('.reward_electronic').hide();
+                break;
+            case '2':
+                $('.reward_coupon').hide();
+                $('.reward_electronic').show();
+                break;
+        }
+    });
+
+    function addCoupon() {
+        var tr = '<tr><td><input name="reward_content[coupon][]" type="text" value="" class="form-control" style="width:100px; text-align: center;"></td>' +
+            '<td style="text-align: center;"><a class="ncap-btn" href="javascript:;" onclick="$(this).parent().parent().remove();">删除</a></td></tr>';
+        $('#coupon_ids').append(tr);
+    }
+
+    function verifyForm() {
+        $('span.err').show();
+        $.ajax({
+            type: "POST",
+            url: "{:U('Admin/Promotion/qrCodeInfo')}",
+            data: $('#handleposition').serialize(),
+            dataType: "json",
+            success: function (data) {
+                if (data.status == 1) {
+                    layer.msg(data.msg, {
+                        icon: 1,
+                        time: 1000
+                    }, function () {
+                        location.href = "{:U('Admin/Promotion/qrCodeList')}";
+                    });
+                } else {
+                    layer.msg(data.msg, {icon: 2});
+                    $.each(data.result, function (index, item) {
+                        $('#err_' + index).text(item).show();
+                    });
+                }
+            },
+            error: function () {
+                layer.alert("服务器繁忙, 请联系管理员!");
+            },
+        });
+    }
+</script>
+</body>
+</html>
