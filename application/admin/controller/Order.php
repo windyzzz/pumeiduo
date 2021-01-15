@@ -1644,6 +1644,7 @@ class Order extends Base
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">优惠券折扣</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">积分折扣</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">现金折扣</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">优惠促销</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">运费</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">总pv值</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">乐活豆</td>';
@@ -1702,6 +1703,7 @@ class Order extends Base
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['coupon_price'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['integral_money'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['user_electronic'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['order_prom_amount'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['shipping_price'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['order_pv'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['school_credit'] . '</td>';
@@ -1829,7 +1831,7 @@ class Order extends Base
         // 表头
         $headList = [
             '订单编号', '下单日期', '支付日期', '父级ID', '会员ID', '注册时间', '会员等级', '升级VIP时间', '收货人', '收货地址', '电话',
-            '应付金额', '商品金额', '优惠券折扣', '积分折扣', '现金折扣', '运费', '总pv值', '乐活豆',
+            '应付金额', '商品金额', '优惠券折扣', '积分折扣', '现金折扣', '优惠促销', '运费', '总pv值', '乐活豆',
             '订单状态', '支付状态', '发货状态', '订单来源', '支付方式',
             '商品总数', '商品编号', '商品数量', '商品名称', '商品规格', '商品单价', '交易条件'
         ];
@@ -1861,6 +1863,7 @@ class Order extends Base
                 $order['coupon_price'],
                 $order['integral_money'],
                 $order['user_electronic'],
+                $order['order_prom_amount'],
                 $order['shipping_price'],
                 $order['order_pv'],
                 $order['school_credit'],
