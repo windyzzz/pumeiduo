@@ -165,19 +165,29 @@ class Ueditor extends Base
         // 移动到框架应用根目录/public/uploads/ 目录下
         $this->savePath = $this->savePath . date('Y') . '/' . date('m-d') . '/';
         // 使用自定义的文件保存规则
-        $info = $file->rule(function ($file) {
-            return md5(mt_rand());
-        })->move(UPLOAD_PATH . $this->savePath);
+        $info = $file->move(UPLOAD_PATH . $this->savePath, false);  // 保留文件原名
 
         if ($info) {
+            $url = '/' . UPLOAD_PATH . $this->savePath . $info->getSaveName();
             $data = [
                 'state' => 'SUCCESS',
-                'url' => '/' . UPLOAD_PATH . $this->savePath . $info->getSaveName(),
+                'url' => $url,
                 'title' => $info->getFilename(),
                 'original' => $info->getFilename(),
                 'type' => '.' . $info->getExtension(),
                 'size' => $info->getSize(),
             ];
+            if (I('is_oss', 'yes') == 'yes') {
+                // 上传到OSS服务器
+                $res = $this->ossUp('file', $url);
+                if ($res['status'] == 0) {
+                    $data['state'] = 'ERROR：' . $res['msg'];
+                } else {
+                    unset($info);
+                    unlink(PUBLIC_PATH . substr($url, strrpos($url, 'public') + 7));
+                    $data['url'] = $res['url'];
+                }
+            }
             //图片加水印
             //图片应该不会走这个函数(走imageUp)，为了避免还有调用，先屏蔽。 by lhb
 //			if($this->savePath=='goods/'){
@@ -484,7 +494,7 @@ class Ueditor extends Base
             $return_data['url'] = $return['url'];
             if (I('is_oss', 'yes') == 'yes') {
                 // 上传到OSS服务器
-                $res = $this->ossUp('image', $return['url']);
+                $res = $this->ossUp('image', $return_data['url']);
                 if ($res['status'] == 0) {
                     $state = 'ERROR：' . $res['msg'];
                 } else {
