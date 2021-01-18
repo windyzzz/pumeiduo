@@ -1811,6 +1811,7 @@ class CartLogic extends Model
         $hasAbroad = false;
         $hasSupply = false;
         $hasAgent = false;
+        $hasAbroad2 = false;
         $vipLevel = [];
         foreach ($cartList as $cart) {
             if ($cart['goods']['zone'] == 3 && $cart['goods']['distribut_id'] > 1) {
@@ -1827,6 +1828,9 @@ class CartLogic extends Model
             }
             if ($cart['goods']['is_agent'] == 1) {
                 $hasAgent = true;
+            }
+            if ($cart['goods']['is_abroad2'] == 1) {
+                $hasAbroad2 = true;
             }
         }
         if ($hasAgent) {
@@ -1860,6 +1864,9 @@ class CartLogic extends Model
         }
         if ($hasSupply) {
             return ['status' => 3];
+        }
+        if ($hasAbroad2) {
+            return ['status' => 5];
         }
         return ['status' => 1];
     }
