@@ -565,7 +565,7 @@ class Ueditor extends Base
     }
 
     /**
-     * 上传视频.
+     * 上传视频/音频
      */
     public function videoUp()
     {
@@ -580,7 +580,7 @@ class Ueditor extends Base
         }
         $result = $this->validate(
             ['file' => $file],
-            ['file' => 'fileSize:40000000|fileExt:mp4,3gp,flv,avi,wmv'],
+            ['file' => 'fileSize:40000000|fileExt:mp4,3gp,flv,avi,wmv,mp3,wma,wav'],
             ['file.fileSize' => '上传文件过大', 'file.fileExt' => '上传文件后缀名必须为mp4,3gp,flv,avi,wmv']
         );
         if (true !== $result || !$file) {
@@ -600,7 +600,12 @@ class Ueditor extends Base
             $return_data['url'] = '/' . UPLOAD_PATH . $new_path . $info->getSaveName();
             if (I('is_oss', 'yes') == 'yes') {
                 // 上传到OSS服务器
-                $res = $this->ossUp('video', $return_data['url']);
+                $ext = substr($info->getSaveName(), strrpos($info->getSaveName(), '.') + 1);
+                if (in_array($ext, ['mp3', 'wma', 'wav'])) {
+                    $res = $this->ossUp('audio', $return_data['url']);
+                } else {
+                    $res = $this->ossUp('video', $return_data['url']);
+                }
                 if ($res['status'] == 0) {
                     $state = 'ERROR：' . $res['msg'];
                 } else {
