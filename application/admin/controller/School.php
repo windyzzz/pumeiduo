@@ -673,10 +673,11 @@ class School extends Base
         $articleId = I('article_id', 0);
         if (IS_POST) {
             $postData = I('post.');
+            $file = request()->file('file');    // 附件
             // 验证参数
             $validate = validate('School');
             if (!$validate->scene('article_add_6')->check($postData)) {
-                return $this->ajaxReturn(['status' => 0, 'msg' => $validate->getError()]);
+                $this->error($validate->getError());
             }
             Db::startTrans();
             // 文章信息
@@ -688,6 +689,24 @@ class School extends Base
                 'publish_time' => strtotime($postData['publish_time']),
                 'status' => 2,   // 预发布
             ];
+            if (!empty($file)) {
+                // 上传附件
+                $savePath = 'school/' . date('Y') . '/' . date('m-d') . '/';
+                $info = $file->move(UPLOAD_PATH . $savePath, false);  // 保留文件原名
+                if ($info) {
+                    $url = '/' . UPLOAD_PATH . $savePath . $info->getSaveName();
+                    // 上传到OSS服务器
+                    $res = (new Oss)->uploadFile('file', $url);
+                    if ($res['status'] == 0) {
+                        $this->error('ERROR：' . $res['msg']);
+                    } else {
+                        $fileLink = 'url:' . $res['object'] . ',type:' . $info->getExtension();
+                        unset($info);
+                        unlink(PUBLIC_PATH . substr($url, strrpos($url, 'public') + 7));
+                        $articleParam['file'] = $fileLink;
+                    }
+                }
+            }
             // 等级限制
             if (empty($postData['distribute_level'])) {
                 $articleParam['distribute_level'] = '0';
@@ -713,7 +732,7 @@ class School extends Base
                 switch ($postData['upload_content']) {
                     case 1:
                         if (empty($postData['image'])) {
-                            $this->ajaxReturn(['status' => 0, 'msg' => '请上传图片']);
+                            $this->error('请上传图片');
                         }
                         // 文章原本的图片素材
                         $articleImage = [];
@@ -724,6 +743,7 @@ class School extends Base
                                 $articleImage[substr($image[0], strrpos($image[0], 'img:') + 4)] = [
                                     'width' => substr($image[1], strrpos($image[1], 'width:') + 6),
                                     'height' => substr($image[2], strrpos($image[2], 'height:') + 7),
+                                    'type' => substr($image[3], strrpos($image[3], 'type:') + 5),
                                 ];
                             }
                         }
@@ -736,7 +756,7 @@ class School extends Base
                                 // 原本的图片
                                 $image = substr($image, strrpos($image, 'image'));
                                 $resourceParam[] = [
-                                    'image' => 'img:' . $image . ',width:' . $articleImage[$image]['width'] . ',height:' . $articleImage[$image]['height'],
+                                    'image' => 'img:' . $image . ',width:' . $articleImage[$image]['width'] . ',height:' . $articleImage[$image]['height'] . ',type:' . $articleImage[$image]['type'],
                                     'get_image_info' => 1,
                                     'video' => ''
                                 ];
@@ -747,7 +767,7 @@ class School extends Base
                             $object = 'image/' . date('Y/m/d/H/') . $fileName;
                             $return_url = $this->ossClient->uploadFile($filePath, $object);
                             if (!$return_url) {
-                                return $this->ajaxReturn(['status' => 0, 'msg' => 'ERROR：' . $this->ossClient->getError()]);
+                                $this->error('ERROR：' . $this->ossClient->getError());
                             } else {
                                 // 图片信息
                                 $imageInfo = getimagesize($filePath);
@@ -762,7 +782,7 @@ class School extends Base
                         break;
                     case 2:
                         if (empty($postData['video'])) {
-                            $this->ajaxReturn(['status' => 0, 'msg' => '请上传视频']);
+                            $this->error('请上传视频');
                         }
                         if (strstr($postData['video'], 'http')) {
                             // 原本的视频
@@ -806,7 +826,7 @@ class School extends Base
                 switch ($postData['upload_content']) {
                     case 1:
                         if (empty($postData['image'])) {
-                            $this->ajaxReturn(['status' => 0, 'msg' => '请上传图片']);
+                            $this->error('请上传图片');
                         }
                         // 上传到OSS服务器
                         foreach ($postData['image'] as $image) {
@@ -818,7 +838,7 @@ class School extends Base
                             $object = 'image/' . date('Y/m/d/H/') . $fileName;
                             $return_url = $this->ossClient->uploadFile($filePath, $object);
                             if (!$return_url) {
-                                return $this->ajaxReturn(['status' => 0, 'msg' => 'ERROR：' . $this->ossClient->getError()]);
+                                $this->error('ERROR：' . $this->ossClient->getError());
                             } else {
                                 // 图片信息
                                 $imageInfo = getimagesize($filePath);
@@ -833,7 +853,7 @@ class School extends Base
                         break;
                     case 2:
                         if (empty($postData['video'])) {
-                            $this->ajaxReturn(['status' => 0, 'msg' => '请上传视频']);
+                            $this->error('请上传视频');
                         }
                         // 处理视频封面图
                         $videoCover = getVideoCoverImages($postData['video'], 'upload/school/video_cover/temp/');
@@ -859,7 +879,7 @@ class School extends Base
                 }
             }
             Db::commit();
-            $this->ajaxReturn(['status' => 1, 'msg' => '处理成功', 'result' => ['type' => $type, 'class_id' => $classId]]);
+            $this->success('处理成功', U('Admin/School/') . $type . '/class_id/' . $classId);
         }
         if (empty($classId)) {
             $this->error('请先创建模块分类', U('Admin/School/' . $type));
@@ -880,6 +900,11 @@ class School extends Base
                     $resource['video'] = $this->ossClient::url($resource['video']);
                     $articleInfo['upload_content'] = 2;
                 }
+            }
+            // 附件
+            if (!empty($articleInfo['file'])) {
+                $file = explode(',', $articleInfo['file']);
+                $articleInfo['file'] = substr($file[0], strrpos($file[0], '/') + 1);
             }
         } else {
             $articleInfo = [];

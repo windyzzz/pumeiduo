@@ -179,7 +179,7 @@ class Ueditor extends Base
             ];
             if (I('is_oss', 'yes') == 'yes') {
                 // 上传到OSS服务器
-                $res = $this->ossUp('file', $url);
+                $res = (new Oss())->uploadFile('file', $url);
                 if ($res['status'] == 0) {
                     $data['state'] = 'ERROR：' . $res['msg'];
                 } else {
@@ -494,7 +494,7 @@ class Ueditor extends Base
             $return_data['url'] = $return['url'];
             if (I('is_oss', 'yes') == 'yes') {
                 // 上传到OSS服务器
-                $res = $this->ossUp('image', $return_data['url']);
+                $res = (new Oss())->uploadFile('image', $return_data['url']);
                 if ($res['status'] == 0) {
                     $state = 'ERROR：' . $res['msg'];
                 } else {
@@ -612,9 +612,9 @@ class Ueditor extends Base
                 // 上传到OSS服务器
                 $ext = substr($info->getSaveName(), strrpos($info->getSaveName(), '.') + 1);
                 if (in_array($ext, ['mp3', 'wma', 'wav'])) {
-                    $res = $this->ossUp('audio', $return_data['url']);
+                    $res = (new Oss())->uploadFile('audio', $return_data['url']);
                 } else {
-                    $res = $this->ossUp('video', $return_data['url']);
+                    $res = (new Oss())->uploadFile('video', $return_data['url']);
                 }
                 if ($res['status'] == 0) {
                     $state = 'ERROR：' . $res['msg'];
@@ -631,25 +631,5 @@ class Ueditor extends Base
         $return_data['state'] = $state;
         $return_data['path'] = $path;
         $this->ajaxReturn($return_data);
-    }
-
-    /**
-     * 上传到oss服务器
-     * @param $dir
-     * @param $path
-     * @return array
-     */
-    public function ossUp($dir, $path)
-    {
-        $filePath = PUBLIC_PATH . substr($path, strrpos($path, '/public/') + 8);
-        $fileName = substr($path, strrpos($path, '/') + 1);
-        $object = $dir . '/' . date('Y/m/d/H/') . $fileName;
-        $return_url = $this->ossClient->uploadFile($filePath, $object);
-        if (!$return_url) {
-            $result = ['status' => 0, 'msg' => 'OSS服务器上传失败'];
-        } else {
-            $result = ['status' => 1, 'url' => $this->ossClient::url($object)];
-        }
-        return $result;
     }
 }

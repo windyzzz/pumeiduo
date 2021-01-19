@@ -17,7 +17,7 @@
             </div>
         </div>
     </div>
-    <form class="form-horizontal" action="{:U('School/article_6')}" id="add_post" method="post">
+    <form class="form-horizontal" action="{:U('School/article_6')}" id="add_post" method="post" enctype="multipart/form-data">
         <div class="ncap-form-default">
             <dl class="row">
                 <dt class="tit">
@@ -155,11 +155,23 @@
                         <a id="selectfiles" href="javascript:void(0);" class='btn'>选择文件</a>
                         <b style="font-size: 16px; display: none;" id="percent">上传进度:0%</b>
                     </div>
-                    <p class="notic">上传视频大小不要超过200M</p>
+                    <p class="notic">上传视频大小不要超过500M</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>附件上传</label>
+                </dt>
+                <dd class="opt">
+                    现有附件：<input type="text" value="{$info.file}" class="input-txt" style="text-align: center;" readonly>
+                    <br/>
+                    <input type="file" name="file">
+                    <p class="notic">上传文件大小不要超过50M</p>
                 </dd>
             </dl>
             <div class="bot">
-                <a href="JavaScript:void(0);" class="ncap-btn-big ncap-btn-green" id="submitBtn">确认提交</a>
+                <a href="#" class="ncap-btn-big ncap-btn-green" onclick="document.getElementById('add_post').submit();return false;">确认提交</a>
+                <!--<a href="JavaScript:void(0);" class="ncap-btn-big ncap-btn-green" id="submitBtn">确认提交</a>-->
                 <if condition="$article_id != 0">
                     <a href="JavaScript:void(0);" class="ncap-btn-big ncap-btn-red" id="stopBtn">停止发布</a>
                 </if>

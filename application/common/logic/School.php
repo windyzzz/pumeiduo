@@ -539,6 +539,7 @@ class School
         $article = M('school_article sa')->where($where)->order($sort)->limit($page->firstRow . ',' . $page->listRows)->select();
         $list = [];
         $articleIds = [];
+        $fileList = [];     // 附件列表
         foreach ($article as $item) {
             $articleIds[] = $item['id'];
             $cover = explode(',', $item['cover']);  // 封面图
@@ -568,11 +569,19 @@ class School
                     'cover' => '',
                     'axis' => '1',
                 ],
+                'file' => [
+                    'url' => '',
+                    'type' => ''
+                ],
                 'user' => [
                     'user_name' => '',
                     'head_pic' => '',
                 ]
             ];
+            if (!empty($item['file'])) {
+                $item['file'] = explode(',', $item['file']);
+                $fileList[$item['id']] = $item['file'];
+            }
         }
         // 素材专区数据处理
         if (!empty($param['module_type']) && $param['module_type'] == 'module6') {
@@ -583,6 +592,8 @@ class School
                 $official['url'] = $this->ossClient::url(substr($headUrl[0], strrpos($headUrl[0], 'img:') + 4));
             }
             foreach ($list as $k => $l) {
+                $list[$k]['file']['url'] = isset($fileList[$l['article_id']]) ? $this->ossClient::url(substr($fileList[$l['article_id']][0], strrpos($fileList[$l['article_id']][0], 'url:') + 4)) : '';
+                $list[$k]['file']['type'] = isset($fileList[$l['article_id']]) ? substr($fileList[$l['article_id']][1], strrpos($fileList[$l['article_id']][1], 'type:') + 5) : '';
                 $list[$k]['user']['user_name'] = $official ? $official['name'] : '';
                 $list[$k]['user']['head_pic'] = $official ? $official['url'] : '';
                 foreach ($resource as $r) {
