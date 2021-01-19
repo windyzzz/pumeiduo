@@ -448,6 +448,7 @@ class School
                     'type' => substr($img[3], strrpos($img[3], 'type:') + 5),
                 ],
                 'name' => $item['name'],
+                'desc' => $item['desc'] ?? '',
                 'code' => $item['type'],
                 'is_allow' => (int)$item['is_allow'],
                 'tips' => '功能尚未开放',
