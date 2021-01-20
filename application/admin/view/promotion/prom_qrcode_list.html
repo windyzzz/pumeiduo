@@ -70,7 +70,7 @@
 		</div>
 		<div class="tDiv">
 			<div class="tDiv2">
-				<a href="{:U('Promotion/qrCode')}">
+				<a href="{:U('Promotion/qrCodeInfo')}">
 					<div class="fbutton">
 						<div title="添加活动" class="add">
 							<span><i class="fa fa-plus"></i>添加活动</span>
@@ -134,8 +134,8 @@
 									<a class="btn blue nyroModal" target="_blank" rel="gal" href="{$vo.qrcode}">
 										<i class="fa fa-picture-o" onmouseover="layer.tips('<img src={$vo.qrcode}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();"></i>二维码
 									</a>
-									<a class="btn blue" href="{:U('Promotion/qrCode',array('id'=>$vo['id']))}"><i class="fa fa-pencil-square-o"></i>编辑</a>
-									<a class="btn red" onclick="return confirm('确定删除当前数据？')" href="{:U('Promotion/qrCodeInfo',array('id'=>$vo['id'],'act'=>'del'))}"><i class="fa fa-trash-o"></i>删除</a>
+									<a class="btn blue" href="{:U('Promotion/qrCodeInfo',array('id'=>$vo['id']))}"><i class="fa fa-pencil-square-o"></i>编辑</a>
+									<a class="btn red" onclick="return confirm('确定删除当前数据？')" href="{:U('Promotion/qrCodeAct',array('id'=>$vo['id'],'act'=>'del'))}"><i class="fa fa-trash-o"></i>删除</a>
 								</div>
 							</td>
 							<td align="" class="" style="width: 100%;">

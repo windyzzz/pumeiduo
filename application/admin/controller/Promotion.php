@@ -1208,10 +1208,10 @@ class Promotion extends Base
      */
     public function qrCodeList()
     {
-        $count = M('prom_qrcode')->count();
+        $count = M('prom_qrcode')->where('is_del', 0)->count();
         $page = new Page($count, 10);
         $promQrcode = new PromQrcode();
-        $promList = $promQrcode->order('start_time DESC')->limit($page->firstRow . ',' . $page->listRows)->select();
+        $promList = $promQrcode->where('is_del', 0)->order('start_time DESC')->limit($page->firstRow . ',' . $page->listRows)->select();
         $ossLogic = new OssLogic();
         foreach ($promList as &$prom) {
             // 赠送内容
@@ -1243,7 +1243,7 @@ class Promotion extends Base
      * 扫码优惠活动详情
      * @return mixed
      */
-    public function qrCode()
+    public function qrCodeInfo()
     {
         $promId = I('id', '');
         if ($promId) {
@@ -1271,8 +1271,10 @@ class Promotion extends Base
         return $this->fetch('prom_qrCode_info');
     }
 
-
-    public function qrCodeInfo()
+    /**
+     * 扫码优惠活动处理
+     */
+    public function qrCodeAct()
     {
         $act = I('act');
         $promId = I('id', '');
@@ -1353,6 +1355,13 @@ class Promotion extends Base
                 // 更新活动
                 M('prom_qrcode')->where(['id' => $promId])->update($promData);
                 $this->ajaxReturn(['status' => 1, 'msg' => '编辑成功']);
+                break;
+            case 'del':
+                if (!$promId) {
+                    $this->error('缺少活动ID');
+                }
+                M('prom_qrcode')->where(['id' => $promId])->update(['is_del' => 1]);
+                $this->success('删除活动成功', U('Promotion/qrCodeList'));
                 break;
         }
     }

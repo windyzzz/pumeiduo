@@ -120,7 +120,7 @@
         $('span.err').show();
         $.ajax({
             type: "POST",
-            url: "{:U('Admin/Promotion/qrCodeInfo')}",
+            url: "{:U('Admin/Promotion/qrCodeAct')}",
             data: $('#handleposition').serialize(),
             dataType: "json",
             success: function (data) {
