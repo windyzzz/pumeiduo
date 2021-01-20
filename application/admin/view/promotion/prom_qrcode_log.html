@@ -6,8 +6,8 @@
 	<div class="fixed-bar">
 		<div class="item-title">
 			<div class="subject">
-				<h3>扫码优惠活动管理</h3>
-				<h5>网站系统扫码优惠活动审核与管理</h5>
+				<h3>扫码优惠活动记录</h3>
+				<h5>网站系统扫码扫码优惠活动记录</h5>
 			</div>
 		</div>
 	</div>
@@ -18,13 +18,13 @@
 			<span title="收起提示" id="explanationZoom" style="display: block;"></span>
 		</div>
 		<ul>
-			<li>扫码优惠活动管理, 由平台设置管理.</li>
+			<li>扫码优惠活动记录, 由平台设置管理.</li>
 		</ul>
 	</div>
 	<div class="flexigrid">
 		<div class="mDiv">
 			<div class="ftitle">
-				<h3>扫码优惠活动管理列表</h3>
+				<h3>扫码优惠活动记录列表</h3>
 			</div>
 			<div title="刷新数据" class="pReload"><i class="fa fa-refresh"></i></div>
 		</div>
@@ -40,25 +40,16 @@
 							<div style="text-align: center; width: 50px;" class="">ID</div>
 						</th>
 						<th align="left" abbr="article_title" axis="col3" class="">
+							<div style="text-align: center; width: 150px;" class="">领取用户</div>
+						</th>
+						<th align="left" abbr="article_title" axis="col3" class="">
 							<div style="text-align: center; width: 150px;" class="">赠送类型</div>
 						</th>
 						<th align="left" abbr="article_title" axis="col3" class="">
 							<div style="text-align: center; width: 240px;" class="">赠送内容</div>
 						</th>
-						<th align="left" abbr="article_title" axis="col3" class="">
-							<div style="text-align: center; width: 150px;" class="">兑换码</div>
-						</th>
 						<th align="center" abbr="article_time" axis="col6" class="">
-							<div style="text-align: center; width: 150px;" class="">开始时间</div>
-						</th>
-						<th align="center" abbr="article_time" axis="col6" class="">
-							<div style="text-align: center; width: 150px;" class="">结束时间</div>
-						</th>
-						<th align="center" abbr="article_time" axis="col6" class="">
-							<div style="text-align: center; width: 80px;" class="">是否开启</div>
-						</th>
-						<th align="left" axis="col1" class="handle">
-							<div style="text-align: center; width: 240px;">操作</div>
+							<div style="text-align: center; width: 150px;" class="">领取时间</div>
 						</th>
 						<th style="width:100%" axis="col7">
 							<div></div>
@@ -68,29 +59,30 @@
 				</table>
 			</div>
 		</div>
-		<div class="tDiv">
-			<div class="tDiv2">
-				<a href="{:U('Promotion/qrCodeInfo')}">
-					<div class="fbutton">
-						<div title="添加活动" class="add">
-							<span><i class="fa fa-plus"></i>添加活动</span>
-						</div>
-					</div>
-				</a>
-			</div>
-			<div style="clear:both"></div>
-		</div>
 		<div class="bDiv" style="height: auto;">
 			<div id="flexigrid" cellpadding="0" cellspacing="0" border="0">
 				<table>
 					<tbody>
-					<foreach name="prom_list" item="vo" key="k" >
+					<foreach name="log_list" item="vo" key="k" >
 						<tr>
 							<td class="sign">
 								<div style="width: 24px;"><i class="ico-check"></i></div>
 							</td>
 							<td align="left" class="">
 								<div style="text-align: center; width: 50px;">{$vo.id}</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 150px;">
+									<a target="_blank" href="{:U('Admin/User/detail',array('id'=>$vo['user_id']))}">
+										<if condition="!empty($vo[nickname])">
+											{$vo.nickname}
+										<elseif condition="!empty($vo[user_name])"/>
+											{$vo.user_name}
+										<else/>
+											用户：{$vo.user_id}
+										</if>
+									</a>
+								</div>
 							</td>
 							<td align="left" class="">
 								<div style="text-align: center; width: 150px;">{$vo.reward_type_desc}</div>
@@ -112,32 +104,7 @@
 								</div>
 							</td>
 							<td align="left" class="">
-								<div style="text-align: center; width: 150px;">{$vo.code}</div>
-							</td>
-							<td align="left" class="">
-								<div style="text-align: center; width: 150px;">{$vo.start_time|date='Y-m-d H:i:s',###}</div>
-							</td>
-							<td align="left" class="">
-								<div style="text-align: center; width: 150px;">{$vo.end_time|date='Y-m-d H:i:s',###}</div>
-							</td>
-							<td align="left" class="">
-								<div style="text-align: center; width: 80px;">
-									<if condition='$vo[is_open] eq 1'>
-										<span class="yes" onClick="changeTableVal('prom_qrcode','id','{$vo.id}','is_open',this)" ><i class="fa fa-check-circle"></i>是</span>
-									<else />
-										<span class="no" onClick="changeTableVal('prom_qrcode','id','{$vo.id}','is_open',this)" ><i class="fa fa-ban"></i>否</span>
-									</if>
-								</div>
-							</td>
-							<td align="left" class="handle">
-								<div style="text-align: left; width: 240px;">
-									<a class="btn blue nyroModal" target="_blank" rel="gal" href="{$vo.qrcode}">
-										<i class="fa fa-picture-o" onmouseover="layer.tips('<img src={$vo.qrcode}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();"></i>二维码
-									</a>
-									<a class="btn green" href="{:U('Promotion/qrCodeLog',array('id'=>$vo['id']))}"><i class="fa fa-search"></i>领取记录</a>
-									<a class="btn blue" href="{:U('Promotion/qrCodeInfo',array('id'=>$vo['id']))}"><i class="fa fa-pencil-square-o"></i>编辑</a>
-									<a class="btn red" onclick="return confirm('确定删除当前数据？')" href="{:U('Promotion/qrCodeAct',array('id'=>$vo['id'],'act'=>'del'))}"><i class="fa fa-trash-o"></i>删除</a>
-								</div>
+								<div style="text-align: center; width: 150px;">{$vo.add_time|date='Y-m-d H:i:s',###}</div>
 							</td>
 							<td align="" class="" style="width: 100%;">
 								<div>&nbsp;</div>

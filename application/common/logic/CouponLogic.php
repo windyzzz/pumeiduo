@@ -684,9 +684,10 @@ class CouponLogic extends Model
      * 领取优惠券
      * @param $couponId
      * @param $userId
+     * @param bool $noResponse 是否不需要提示重复领取错误
      * @return array
      */
-    public function receive($couponId, $userId)
+    public function receive($couponId, $userId, $noResponse = false)
     {
         if (!$couponId) {
             return ['status' => 0, 'msg' => '操作有误'];
@@ -715,8 +716,10 @@ class CouponLogic extends Model
                 if (in_array($coupon['nature'], [1, 3])) {
                     // 检查用户是否已经领取
                     $is_has_coupon = M('coupon_list')->where(array('cid' => $couponId, 'uid' => $userId))->field('id')->find();
-                    if ($is_has_coupon) {
+                    if ($is_has_coupon && !$noResponse) {
                         throw new Exception('您已经领取过了');
+                    } else if ($is_has_coupon && $noResponse) {
+                        continue;
                     }
                 }
                 do {

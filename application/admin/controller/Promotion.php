@@ -17,6 +17,7 @@ use app\admin\model\FlashSale;
 use app\admin\model\Goods;
 use app\admin\model\GroupBuy;
 use app\admin\model\PromQrcode;
+use app\admin\model\PromQrcodeLog;
 use app\admin\validate\Gift as Giftvalidate;
 use app\common\logic\OssLogic;
 use app\common\model\OrderProm as OrderPromModel;
@@ -1364,5 +1365,44 @@ class Promotion extends Base
                 $this->success('删除活动成功', U('Promotion/qrCodeList'));
                 break;
         }
+    }
+
+    /**
+     * 扫码优惠活动领取记录
+     * @return mixed
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     */
+    public function qrCodeLog()
+    {
+        $promId = I('id', '');
+        $count = M('prom_qrcode_log')->where(['prom_id' => $promId])->count();
+        $page = new Page($count, 10);
+        $promQrcodeLog = new PromQrcodeLog();
+        $logList = $promQrcodeLog->alias('l')->join('users u', 'u.user_id = l.user_id')
+            ->where(['l.prom_id' => $promId])->field('l.*, u.nickname, u.user_name')
+            ->order('add_time DESC')->limit($page->firstRow . ',' . $page->listRows)->select();
+        foreach ($logList as &$log) {
+            // 赠送内容
+            switch ($log['reward_type']) {
+                case 1:
+                    $rewardContent = [];
+                    $couponList = M('coupon')->where(['id' => ['IN', $log['reward_content']]])->field('id, name')->select();
+                    foreach ($couponList as $coupon) {
+                        $rewardContent[] = [
+                            'coupon_id' => $coupon['id'],
+                            'content' => 'ID:' . $coupon['id'] . ' ' . $coupon['name']
+                        ];
+                    }
+                    $log['reward_content'] = $rewardContent;
+                    break;
+                case 2:
+                    break;
+            }
+        }
+        $this->assign('page', $page);
+        $this->assign('log_list', $logList);
+        return $this->fetch('prom_qrcode_log');
     }
 }
