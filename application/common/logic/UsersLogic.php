@@ -542,6 +542,7 @@ class UsersLogic extends Model
                     'head_pic' => !empty($oauthData['headimgurl']) ? $oauthData['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png',
                     'sex' => $oauthData['sex'] ?? 0,
                     'reg_time' => time(),
+                    'reg_source' => 4,
                     'last_login' => time(),
                     'token' => TokenLogic::setToken(),
                     'time_out' => strtotime('+' . config('REDIS_DAY') . ' days'),
@@ -590,6 +591,7 @@ class UsersLogic extends Model
                 'head_pic' => !empty($oauthData['headimgurl']) ? $oauthData['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png',
                 'sex' => $oauthData['sex'] ?? 0,
                 'reg_time' => time(),
+                'reg_source' => 4,
                 'last_login' => time(),
                 'token' => TokenLogic::setToken(),
                 'time_out' => strtotime('+' . config('REDIS_DAY') . ' days'),
@@ -1260,7 +1262,7 @@ class UsersLogic extends Model
     }
 
     /**
-     * 授权用户注册
+     * APP授权用户注册
      * @param $openid
      * @param $username
      * @param $password
@@ -1322,6 +1324,7 @@ class UsersLogic extends Model
                             'head_pic' => !empty($oauthData['headimgurl']) ? $oauthData['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png',
                             'sex' => $oauthData['sex'] ?? 0,
                             'reg_time' => time(),
+                            'reg_source' => 3,
                             'last_login' => time(),
                             'token' => TokenLogic::setToken(),
                             'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
@@ -1345,6 +1348,7 @@ class UsersLogic extends Model
                         'head_pic' => !empty($oauthData['headimgurl']) ? $oauthData['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png',
                         'sex' => $oauthData['sex'] ?? 0,
                         'reg_time' => time(),
+                        'reg_source' => 3,
                         'last_login' => time(),
                         'token' => TokenLogic::setToken(),
                         'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')

@@ -50,7 +50,7 @@ class LoginApi
     }
 
     /**
-     * 授权登录（新）
+     * APP授权登录（新）
      * @return \think\response\Json
      */
     public function loginNew()
@@ -97,7 +97,7 @@ class LoginApi
     }
 
     /**
-     * 授权登录注册
+     * APP授权登录注册
      * @return \think\response\Json
      */
     public function oauthReg()
