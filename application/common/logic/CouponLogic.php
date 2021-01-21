@@ -702,7 +702,8 @@ class CouponLogic extends Model
                 $where = array(
                     'send_start_time' => array('elt', NOW_TIME),
                     'send_end_time' => array('egt', NOW_TIME),
-                    'id' => $couponId
+                    'id' => $couponId,
+                    'status' => 1,
                 );
                 $coupon = M('coupon')->where($where)->find();
                 if (!$coupon) {

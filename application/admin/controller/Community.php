@@ -348,45 +348,25 @@ class Community extends Base
                                                 'use_end_time' => ['egt', NOW_TIME],
                                                 'status' => 1,
                                             ])->select();
-                                            // 优惠券商品
-                                            $couponGoods = Db::name('goods_coupon gc')->join('goods g', 'g.goods_id = gc.goods_id')->where(['gc.coupon_id' => ['in', $couponIds]])->field('gc.coupon_id, g.goods_id, g.goods_name, g.original_img')->select();
-                                            // 优惠券分类
-                                            $couponCate = Db::name('goods_coupon gc1')->join('goods_category gc2', 'gc1.goods_category_id = gc2.id')->where(['gc1.coupon_id' => ['in', $couponIds]])->getField('gc1.coupon_id, gc2.id cate_id, gc2.name cate_name', true);
                                             // 组合数据
                                             $couponIds = '';
                                             $couponList = [];
                                             $couponLogic = new CouponLogic();
                                             foreach ($couponData as $k => $coupon) {
                                                 $couponIds .= $coupon['id'] . ',';
-                                                if ($coupon['use_type'] == 1) {
-                                                    // 指定商品可用
-                                                    foreach ($couponGoods as $goods) {
-                                                        if ($coupon['id'] == $goods['coupon_id']) {
-                                                            $couponList[] = [
-                                                                'coupon_id' => $coupon['id'],
-                                                                'use_type_desc' => '指定商品',
-                                                                'money' => floatval($coupon['money']) . '',
-                                                                'title' => $coupon['name'],
-                                                                'use_start_time' => date('Y.m.d', $coupon['use_start_time']),
-                                                                'use_end_time' => date('Y.m.d', $coupon['use_end_time']),
-                                                            ];
-                                                        }
-                                                    }
-                                                } else {
-                                                    // 优惠券展示描述
-                                                    $res = $couponLogic->couponTitleDesc($coupon, '', isset($couponCate[$coupon['id']]) ? $couponCate[$coupon['id']]['cate_name'] : '');
-                                                    if (empty($res)) {
-                                                        continue;
-                                                    }
-                                                    $couponList[] = [
-                                                        'coupon_id' => $coupon['id'],
-                                                        'use_type_desc' => $res['use_type_desc'],
-                                                        'money' => floatval($coupon['money']) . '',
-                                                        'title' => $coupon['name'],
-                                                        'use_start_time' => date('Y.m.d', $coupon['use_start_time']),
-                                                        'use_end_time' => date('Y.m.d', $coupon['use_end_time']),
-                                                    ];
+                                                // 优惠券展示描述
+                                                $res = $couponLogic->couponTitleDesc($coupon);
+                                                if (empty($res)) {
+                                                    continue;
                                                 }
+                                                $couponList[] = [
+                                                    'coupon_id' => $coupon['id'],
+                                                    'use_type_desc' => $res['use_type_desc'],
+                                                    'money' => floatval($coupon['money']) . '',
+                                                    'title' => $coupon['name'],
+                                                    'use_start_time' => date('Y.m.d', $coupon['use_start_time']),
+                                                    'use_end_time' => date('Y.m.d', $coupon['use_end_time']),
+                                                ];
                                             }
                                             if (!empty($couponList)) {
                                                 $res = $couponLogic->receive(rtrim($couponIds, ','), $articleInfo['user_id'], true);
