@@ -537,7 +537,7 @@ class UsersLogic extends Model
                     'password' => '',
                     'openid' => $oauthData['openid'],
                     'unionid' => $oauthData['unionid'],
-                    'oauth' => $oauthUser['oauth'],
+                    'oauth' => $oauthUser['oauth'] ?? 'weixin',
                     'nickname' => $oauthData['nickname'],
                     'head_pic' => !empty($oauthData['headimgurl']) ? $oauthData['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png',
                     'sex' => $oauthData['sex'] ?? 0,
@@ -586,7 +586,7 @@ class UsersLogic extends Model
                 'password' => '',
                 'openid' => $oauthData['openid'],
                 'unionid' => $oauthData['unionid'],
-                'oauth' => $oauthUser['oauth'],
+                'oauth' => $oauthUser['oauth'] ?? 'weixin',
                 'nickname' => $oauthData['nickname'],
                 'head_pic' => !empty($oauthData['headimgurl']) ? $oauthData['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png',
                 'sex' => $oauthData['sex'] ?? 0,
@@ -678,7 +678,7 @@ class UsersLogic extends Model
                 'token' => TokenLogic::setToken(),
                 'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
             ];
-            if ($openId) {
+            if ($openId && !M('users')->where('open_id', $openId)->value('user_id')) {
                 $save['oauth'] = 'weixin';
                 $save['openid'] = $openId;
             }
