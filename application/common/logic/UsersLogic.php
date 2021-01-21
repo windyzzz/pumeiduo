@@ -606,7 +606,7 @@ class UsersLogic extends Model
         if ($res['status'] == 2) {
             $user = Db::name('users')->where('user_id', $user['user_id'])->find();
         }
-        $user = [
+        $returnUser = [
             'user_id' => $user['user_id'],
             'sex' => $user['sex'],
             'nickname' => $user['nickname'],
@@ -634,7 +634,7 @@ class UsersLogic extends Model
         // 更新用户缓存
         (new Redis())->set('user_' . $user['token'], $user, config('REDIS_TIME'));
         Db::commit();
-        return ['status' => 1, 'result' => $user];
+        return ['status' => 1, 'result' => $returnUser];
     }
 
     /*
