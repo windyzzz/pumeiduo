@@ -572,7 +572,8 @@ class School
                 ],
                 'file' => [
                     'url' => '',
-                    'type' => ''
+                    'type' => '',
+                    'name' => '',
                 ],
                 'user' => [
                     'user_name' => '',
@@ -595,6 +596,7 @@ class School
             foreach ($list as $k => $l) {
                 $list[$k]['file']['url'] = isset($fileList[$l['article_id']]) ? $this->ossClient::url(substr($fileList[$l['article_id']][0], strrpos($fileList[$l['article_id']][0], 'url:') + 4)) : '';
                 $list[$k]['file']['type'] = isset($fileList[$l['article_id']]) ? substr($fileList[$l['article_id']][1], strrpos($fileList[$l['article_id']][1], 'type:') + 5) : '';
+                $list[$k]['file']['name'] = isset($fileList[$l['article_id']]) ? substr($fileList[$l['article_id']][0], strrpos($fileList[$l['article_id']][0], '/') + 1) : '';
                 $list[$k]['user']['user_name'] = $official ? $official['name'] : '';
                 $list[$k]['user']['head_pic'] = $official ? $official['url'] : '';
                 foreach ($resource as $r) {
