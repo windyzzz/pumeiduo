@@ -168,7 +168,28 @@ class LoginApi
     {
         try {
             $res = $this->class_obj->getCodeInfo();
-            return json(['status' => 1, 'result' => ['session_key' => $res['session_key']]]);
+            $return = [
+                'session_key' => $res['session_key'],
+            ];
+            return json(['status' => 1, 'result' => $return]);
+        } catch (Exception $e) {
+            return json(['status' => 0, 'msg' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * 根据code获取信息（小程序）
+     * @return \think\response\Json
+     */
+    public function getCodeInfo()
+    {
+        try {
+            $res = $this->class_obj->getCodeInfo();
+            $return = [
+                'session_key' => $res['session_key'],
+                'openid' => $res['openid']
+            ];
+            return json(['status' => 1, 'result' => $return]);
         } catch (Exception $e) {
             return json(['status' => 0, 'msg' => $e->getMessage()]);
         }
