@@ -678,7 +678,7 @@ class UsersLogic extends Model
                 'token' => TokenLogic::setToken(),
                 'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
             ];
-            if ($openId && !M('users')->where('open_id', $openId)->value('user_id')) {
+            if ($openId && !M('users')->where('openid', $openId)->value('user_id')) {
                 $save['oauth'] = 'weixin';
                 $save['openid'] = $openId;
             }
