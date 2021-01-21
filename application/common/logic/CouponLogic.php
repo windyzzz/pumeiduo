@@ -695,6 +695,7 @@ class CouponLogic extends Model
         $couponIds = explode(',', $couponId);
         try {
             Db::startTrans();
+            $couponGetIds = [];
             foreach ($couponIds as $couponId) {
                 if (empty($couponId)) {
                     continue;
@@ -735,9 +736,10 @@ class CouponLogic extends Model
                 ];
                 M('coupon_list')->add($add);
                 M('coupon')->where(array('id' => $couponId))->setInc('send_num', 1);
+                $couponGetIds[] = $coupon['id'];
             }
             Db::commit();
-            return ['status' => 1, 'msg' => '领取成功'];
+            return ['status' => 1, 'msg' => '领取成功', 'result' => ['get_ids' => $couponGetIds]];
         } catch (Exception $e) {
             Db::rollback();
             return ['status' => 0, 'msg' => $e->getMessage()];

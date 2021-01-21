@@ -32,13 +32,34 @@ class Qrcode
             if (M('prom_qrcode_log')->where(['user_id' => $userId, 'prom_id' => $prom['id']])->find()) {
                 throw new Exception('您已经领取过了');
             }
+            $couponList = [];
+            $electronic = '0';
             switch ($prom['reward_type']) {
                 case 1:
                     $couponIds = $prom['reward_content'];
                     // 发放优惠券
-                    $res = (new CouponLogic())->receive($couponIds, $userId, true);
+                $couponLogic = new CouponLogic();
+                    $res = $couponLogic->receive($couponIds, $userId, true);
                     if ($res['status'] == 0) {
                         throw new Exception($res['msg']);
+                    }
+                    $couponGetIds = $res['result']['get_ids'];
+                    $couponGetList = M('coupon')->where([
+                        'send_start_time' => array('elt', NOW_TIME),
+                        'send_end_time' => array('egt', NOW_TIME),
+                        'id' => ['IN', $couponGetIds]
+                    ])->select();
+                    foreach ($couponGetList as $coupon) {
+                        $res = $couponLogic->couponTitleDesc($coupon);
+                        if (empty($res)) continue;
+                        $couponList[] = [
+                            'coupon_id' => $coupon['id'],
+                            'use_type_desc' => $res['use_type_desc'],
+                            'money' => floatval($coupon['money']) . '',
+                            'title' => $coupon['name'],
+                            'use_start_time' => date('Y.m.d', $coupon['use_start_time']),
+                            'use_end_time' => date('Y.m.d', $coupon['use_end_time']),
+                        ];
                     }
                     break;
                 case 2:
@@ -54,7 +75,15 @@ class Qrcode
                 'reward_content' => $prom['reward_content'],
                 'add_time' => NOW_TIME
             ]);
-            return ['status' => 1, 'msg' => '领取成功'];
+            $return = [
+                'reward_type' => $prom['reward_type'],
+                'coupon' => [
+                    'count' => count($couponList),
+                    'list' => $couponList
+                ],
+                'electronic' => $electronic
+            ];
+            return ['status' => 1, 'result' => $return];
         } else {
             throw new Exception('兑换码错误');
         }
