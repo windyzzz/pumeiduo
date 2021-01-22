@@ -38,16 +38,15 @@ class Qrcode
                 case 1:
                     $couponIds = $prom['reward_content'];
                     // 发放优惠券
-                $couponLogic = new CouponLogic();
+                    $couponLogic = new CouponLogic();
                     $res = $couponLogic->receive($couponIds, $userId, true);
                     if ($res['status'] == 0) {
                         throw new Exception($res['msg']);
                     }
-                    $couponGetIds = $res['result']['get_ids'];
                     $couponGetList = M('coupon')->where([
                         'send_start_time' => array('elt', NOW_TIME),
                         'send_end_time' => array('egt', NOW_TIME),
-                        'id' => ['IN', $couponGetIds]
+                        'id' => ['IN', $couponIds]
                     ])->select();
                     foreach ($couponGetList as $coupon) {
                         $res = $couponLogic->couponTitleDesc($coupon);

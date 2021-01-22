@@ -798,6 +798,15 @@ class Goods extends Base
                 ];
                 $this->ajaxReturn($return_arr);
             }
+            if ($data['is_agent'] == 1) {
+                $goodsInfo = M('goods')->where(['goods_id' => $goods_id])->field('is_abroad, is_supply')->find();
+                if ($goodsInfo['is_abroad'] == 1) {
+                    $this->ajaxReturn(['status' => -1, 'msg' => '韩国购商品不能设为代理商商品']);
+                }
+                if ($goodsInfo['is_supply'] == 1) {
+                    $this->ajaxReturn(['status' => -1, 'msg' => '供应链商品不能设为代理商商品']);
+                }
+            }
             $data['virtual_indate'] = !empty($virtual_indate) ? strtotime($virtual_indate) : 0;
             $data['exchange_integral'] = (1 == $data['is_virtual']) ? 0 : $data['exchange_integral'];
             $data['video'] = $data['video_path'];

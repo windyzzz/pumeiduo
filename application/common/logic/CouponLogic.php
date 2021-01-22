@@ -693,9 +693,9 @@ class CouponLogic extends Model
             return ['status' => 0, 'msg' => '操作有误'];
         }
         $couponIds = explode(',', $couponId);
+        $couponNum = count($couponIds);
         try {
             Db::startTrans();
-            $couponGetIds = [];
             foreach ($couponIds as $couponId) {
                 if (empty($couponId)) {
                     continue;
@@ -717,10 +717,16 @@ class CouponLogic extends Model
                 if (in_array($coupon['nature'], [1, 3])) {
                     // 检查用户是否已经领取
                     $is_has_coupon = M('coupon_list')->where(array('cid' => $couponId, 'uid' => $userId))->field('id')->find();
-                    if ($is_has_coupon && !$noResponse) {
-                        throw new Exception('您已经领取过了');
-                    } else if ($is_has_coupon && $noResponse) {
-                        continue;
+                    if ($noResponse) {
+                        if ($is_has_coupon) {
+                            continue;
+                        }
+                    } else {
+                        if ($couponNum > 1 && $is_has_coupon) {
+                            continue;
+                        } else if ($is_has_coupon) {
+                            continue;
+                        }
                     }
                 }
                 do {
@@ -739,7 +745,7 @@ class CouponLogic extends Model
                 $couponGetIds[] = $coupon['id'];
             }
             Db::commit();
-            return ['status' => 1, 'msg' => '领取成功', 'result' => ['get_ids' => $couponGetIds]];
+            return ['status' => 1, 'msg' => '领取成功'];
         } catch (Exception $e) {
             Db::rollback();
             return ['status' => 0, 'msg' => $e->getMessage()];

@@ -537,11 +537,12 @@ class UsersLogic extends Model
                     'password' => '',
                     'openid' => $oauthData['openid'],
                     'unionid' => $oauthData['unionid'],
-                    'oauth' => $oauthUser['oauth'],
+                    'oauth' => $oauthUser['oauth'] ?? 'weixin',
                     'nickname' => $oauthData['nickname'],
                     'head_pic' => !empty($oauthData['headimgurl']) ? $oauthData['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png',
                     'sex' => $oauthData['sex'] ?? 0,
                     'reg_time' => time(),
+                    'reg_source' => 4,
                     'last_login' => time(),
                     'token' => TokenLogic::setToken(),
                     'time_out' => strtotime('+' . config('REDIS_DAY') . ' days'),
@@ -585,11 +586,12 @@ class UsersLogic extends Model
                 'password' => '',
                 'openid' => $oauthData['openid'],
                 'unionid' => $oauthData['unionid'],
-                'oauth' => $oauthUser['oauth'],
+                'oauth' => $oauthUser['oauth'] ?? 'weixin',
                 'nickname' => $oauthData['nickname'],
                 'head_pic' => !empty($oauthData['headimgurl']) ? $oauthData['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png',
                 'sex' => $oauthData['sex'] ?? 0,
                 'reg_time' => time(),
+                'reg_source' => 4,
                 'last_login' => time(),
                 'token' => TokenLogic::setToken(),
                 'time_out' => strtotime('+' . config('REDIS_DAY') . ' days'),
@@ -606,7 +608,7 @@ class UsersLogic extends Model
         if ($res['status'] == 2) {
             $user = Db::name('users')->where('user_id', $user['user_id'])->find();
         }
-        $user = [
+        $returnUser = [
             'user_id' => $user['user_id'],
             'sex' => $user['sex'],
             'nickname' => $user['nickname'],
@@ -634,7 +636,7 @@ class UsersLogic extends Model
         // 更新用户缓存
         (new Redis())->set('user_' . $user['token'], $user, config('REDIS_TIME'));
         Db::commit();
-        return ['status' => 1, 'result' => $user];
+        return ['status' => 1, 'result' => $returnUser];
     }
 
     /*
@@ -676,7 +678,7 @@ class UsersLogic extends Model
                 'token' => TokenLogic::setToken(),
                 'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
             ];
-            if ($openId) {
+            if ($openId && !M('users')->where('openid', $openId)->value('user_id')) {
                 $save['oauth'] = 'weixin';
                 $save['openid'] = $openId;
             }
@@ -1260,7 +1262,7 @@ class UsersLogic extends Model
     }
 
     /**
-     * 授权用户注册
+     * APP授权用户注册
      * @param $openid
      * @param $username
      * @param $password
@@ -1322,6 +1324,7 @@ class UsersLogic extends Model
                             'head_pic' => !empty($oauthData['headimgurl']) ? $oauthData['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png',
                             'sex' => $oauthData['sex'] ?? 0,
                             'reg_time' => time(),
+                            'reg_source' => 3,
                             'last_login' => time(),
                             'token' => TokenLogic::setToken(),
                             'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
@@ -1345,6 +1348,7 @@ class UsersLogic extends Model
                         'head_pic' => !empty($oauthData['headimgurl']) ? $oauthData['headimgurl'] : url('/', '', '', true) . '/public/images/default_head.png',
                         'sex' => $oauthData['sex'] ?? 0,
                         'reg_time' => time(),
+                        'reg_source' => 3,
                         'last_login' => time(),
                         'token' => TokenLogic::setToken(),
                         'time_out' => strtotime('+' . config('REDIS_DAY') . ' days')
