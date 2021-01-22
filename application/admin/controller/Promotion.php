@@ -1269,7 +1269,7 @@ class Promotion extends Base
             $prom['act'] = 'add';
         }
         $this->assign('prom', $prom);
-        return $this->fetch('prom_qrCode_info');
+        return $this->fetch('prom_qrcode_info');
     }
 
     /**
