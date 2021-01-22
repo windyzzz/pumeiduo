@@ -161,23 +161,6 @@ class LoginApi
     }
 
     /**
-     * 获取session_key（小程序）
-     * @return \think\response\Json
-     */
-    public function getSessionKey()
-    {
-        try {
-            $res = $this->class_obj->getCodeInfo();
-            $return = [
-                'session_key' => $res['session_key'],
-            ];
-            return json(['status' => 1, 'result' => $return]);
-        } catch (Exception $e) {
-            return json(['status' => 0, 'msg' => $e->getMessage()]);
-        }
-    }
-
-    /**
      * 根据code获取信息（小程序）
      * @return \think\response\Json
      */
