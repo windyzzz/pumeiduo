@@ -96,7 +96,7 @@ function navigate_admin()
 function downloadExcel($strTable, $filename)
 {
     set_time_limit(0);    // 防止超时
-    ini_set("memory_limit", "128M");  // 防止内存溢出
+    ini_set("memory_limit", "512M");  // 防止内存溢出
     header('Content-type: application/vnd.ms-excel');
     header('Content-Type: application/force-download');
     header('Content-Disposition: attachment; filename=' . $filename . '_' . date('Y-m-d') . '.xls');
@@ -121,7 +121,7 @@ function downloadExcel($strTable, $filename)
 function exportExcel($expTitle, $expCellName, $expTableData, $type, $showPic = false, $output = 'download')
 {
     set_time_limit(0);    // 防止超时
-    ini_set("memory_limit", "128M");  // 防止内存溢出
+    ini_set("memory_limit", "512M");  // 防止内存溢出
     $cellNum = count($expCellName);
     $dataNum = count($expTableData);
     /*引入phpexcel核心类文件*/
@@ -222,7 +222,7 @@ function exportExcel($expTitle, $expCellName, $expTableData, $type, $showPic = f
 function toCsvExcel($dataList, $headList, $fileName, $exportUrl = 'php://output')
 {
     set_time_limit(0);    // 防止超时
-    ini_set("memory_limit", "128M");  // 防止内存溢出
+    ini_set("memory_limit", "512M");  // 防止内存溢出
     header('Content-Type: application/vnd.ms-excel');
     header('Content-Disposition: attachment;filename="' . $fileName . '_' . date('Y-m-d') . '.csv"');
     header('Cache-Control: max-age=0');

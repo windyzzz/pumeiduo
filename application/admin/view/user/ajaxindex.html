@@ -85,10 +85,18 @@
                     </div>
                 </td>
                 <td align="left" class="">
-                    <div style="text-align: center; width: 120px;">{$list.last_login|date='Y-m-d H:i',###}</div>
+                    <div style="text-align: center; width: 120px;">
+                        <if condition="$list.last_login != 0">
+                            {$list.last_login|date='Y-m-d H:i',###}
+                        </if>
+                    </div>
                 </td>
                 <td align="left" class="">
-                    <div style="text-align: center; width: 120px;"><a href="{:U(userLoginLog, array('user_id' => $list[user_id]))}">{$list.last_login_source_desc}</a></div>
+                    <div style="text-align: center; width: 120px;">
+                        <if condition="$list.last_login != 0">
+                            <a href="{:U(userLoginLog, array('user_id' => $list[user_id]))}">{$list.last_login_source_desc}</a>
+                        </if>
+                    </div>
                 </td>
                 <td align="" class="" style="width: 100%;">
                     <div>&nbsp;</div>

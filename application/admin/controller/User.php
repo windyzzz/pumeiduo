@@ -934,8 +934,8 @@ class User extends Base
                 date('Y-m-d H:i', $user['reg_time']),
                 $source[$user['reg_source']],
                 isset($firstAppLogin[$user['user_id']]) ? date('Y-m-d H:i', $firstAppLogin[$user['user_id']]) : '',
-                date('Y-m-d H:i', $user['last_login']),
-                $source[$user['last_login_source']]
+                $user['last_login'] != 0 ? date('Y-m-d H:i', $user['last_login']) : '',
+                $user['last_login'] != 0 ? $source[$user['last_login_source']] : ''
             ];
         }
         toCsvExcel($dataList, $headList, 'user_list');

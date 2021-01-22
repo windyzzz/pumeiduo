@@ -3385,7 +3385,7 @@ class UsersLogic extends Model
             'source' => $source,
             'is_app_first' => $isAppFirst ?? 0
         ]);
-        M('users')->where(['user_id' => $this->user_id])->update(['last_login_source' => $source]);
+        M('users')->where(['user_id' => $this->user_id])->update(['last_login_source' => $source, 'last_login' => time()]);
     }
 
     /**
