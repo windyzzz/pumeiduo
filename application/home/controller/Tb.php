@@ -492,9 +492,16 @@ class Tb extends Controller
 
     function save_stock($goods)
     {
-        $isSupply = M('goods')->where(array('goods_sn' => $goods['goods_sn']))->value('is_supply');
-        if ($isSupply == 1) {
+        $goods_info = M('goods')->field('goods_id, trade_type, is_supply')->where(array('goods_sn' => $goods['goods_sn']))->find();
+        if ($goods_info['is_supply'] == 1) {
             return true;
+        }
+
+        // 查看商品的订单是否正在同步中
+        $res = M('order_goods og')->join('tb', 'tb.from_id = og.order_id')
+            ->where(['og.goods_id' => $goods_info['goods_id'], 'tb.type' => 6, 'tb.status' => 0])->value('tb.id');
+        if ($res) {
+            return '需要等待APP商品订单同步完毕';
         }
 
         $spec_goods_price = !empty($goods['spec_goods_price']) ? $goods['spec_goods_price'] : '';
@@ -509,8 +516,6 @@ class Tb extends Controller
             }
         } else {
             //一键代发产品  获取子规格
-            $goods_info = M('goods')->field('trade_type,goods_id')->where(array('goods_sn' => $goods['goods_sn']))->find();
-
             if ($goods_info['trade_type'] == 2) {
                 $spec_goods_price = M('spec_goods_price')->where(array('goods_id' => $goods_info['goods_id']))->field('item_id')->order('item_id asc')->select();
 
