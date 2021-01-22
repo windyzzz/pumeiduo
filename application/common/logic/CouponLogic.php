@@ -693,6 +693,7 @@ class CouponLogic extends Model
             return ['status' => 0, 'msg' => '操作有误'];
         }
         $couponIds = explode(',', $couponId);
+        $couponNum = count($couponIds);
         try {
             Db::startTrans();
             foreach ($couponIds as $couponId) {
@@ -717,7 +718,9 @@ class CouponLogic extends Model
                 if (!$repeat && in_array($coupon['nature'], [1, 3])) {
                     // 检查用户是否已经领取
                     $is_has_coupon = M('coupon_list')->where(array('cid' => $couponId, 'uid' => $userId))->field('id')->find();
-                    if ($is_has_coupon) {
+                    if ($couponNum > 1 && $is_has_coupon) {
+                        continue;
+                    } elseif ($is_has_coupon) {
                         throw new Exception('您已经领取过了');
                     }
                 }

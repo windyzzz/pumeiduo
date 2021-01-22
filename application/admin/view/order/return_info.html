@@ -135,10 +135,7 @@
                                 </dd>
                             </dl>
                         <else/>
-                            <div class="bot">
-                                <input type="hidden" name="return_id" value="{$id}">
-                                <a href="JavaScript:;" subimtid="return_form" data-href="{:U('Admin/Order/cancelSupplierReturn')}" class="ncap-btn-big ncap-btn-green submitBtn" >取消供应链售后</a>
-                            </div>
+
                         </if>
                     <else/>
                         <dl class="row">
@@ -205,7 +202,11 @@
                     <if condition="empty($return_goods[supplier_sale_sn])">
                         <div class="bot"><a href="JavaScript:;" subimtid="return_form" data-href="{:U('Admin/Order/sendSupplierReturn')}" class="ncap-btn-big ncap-btn-green submitBtn">发送到供应链系统</a></div>
                     <else/>
-                        <div class="bot"><a class="ncap-btn-big ncap-btn-green">请等待供应链系统处理</a></div>
+                        <div class="bot">请等待供应链系统处理</div>
+                        <div class="bot">
+                            <input type="hidden" name="return_id" value="{$id}">
+                            <a href="JavaScript:;" subimtid="return_form" data-href="{:U('Admin/Order/cancelSupplierReturn')}" class="ncap-btn-big ncap-btn-green submitBtn" >取消供应链售后</a>
+                        </div>
                     </if>
                 <else/>
                     <div class="bot"><a href="JavaScript:;" subimtid="return_form" data-href="{:U('Admin/Order/checkReturniInfo')}" class="ncap-btn-big ncap-btn-green submitBtn">确认提交</a></div>
