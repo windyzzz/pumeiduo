@@ -33,6 +33,34 @@
                     </div>
                 </dd>
             </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>学习规则达标设置</label>
+                    <br/>
+                    <a class="ncap-btn" href="javascript:;" onclick="addStandard()">增加</a>
+                </dt>
+                <dd class="opt">
+                    <table style="width: 30%;">
+                        <tr><th>等级</th><th>学习课程数量百分比</th></tr>
+                        <tbody id="standard">
+                        <volist name="standard" id="vo" key="k">
+                            <tr>
+                                <td>
+                                    <input type="text" name="standard[{$k}][level]" value="{$vo.level}" style="text-align: center">
+                                </td>
+                                <td>
+                                    <input type="text" name="standard[{$k}][class_percent]" value="{$vo.class_percent}" style="text-align: center" onpaste="this.value=this.value.replace(/[^\d.]/g,'')" onkeyup="this.value=this.value.replace(/[^\d.]/g,'')">%
+                                </td>
+                                <td style="text-align: center;"><a class="ncap-btn" onclick="delStandard(this)">删除</a></td>
+                            </tr>
+                        </volist>
+                        </tbody>
+                    </table>
+                    说明：
+                    <br/>
+                    <textarea style="width: 20%; height: 100%; line-height: 150%;" rows="6" disabled>{$standard_tips}</textarea>
+                </dd>
+            </dl>
             <div class="bot">
                 <a class="ncap-btn-big ncap-btn-green" onclick="updateConfig('datapost')">确认提交</a>
             </div>
@@ -150,6 +178,8 @@
 
 <script type="text/javascript">
     $(document).ready(function () {
+        standard_count = {$standard_count};
+
         // 点击刷新数据
         $('.fa-refresh').click(function () {
             location.href = location.href;
@@ -160,6 +190,24 @@
         $("#" + elementid).val(fileurl_tmp);
         $("#" + elementid + '_a').attr('href', fileurl_tmp);
         $("#" + elementid + '_i').attr('onmouseover', "layer.tips('<img src=" + fileurl_tmp + ">',this,{tips: [1, '#fff']});");
+    }
+
+    function addStandard() {
+        standard_count += 1;
+        var tr = '<tr>' +
+            '         <td>' +
+            '             <input type="text" name="standard[' + standard_count +'][level]" value="" style="text-align: center">' +
+            '         </td>' +
+            '         <td>' +
+            '             <input type="text" name="standard[' + standard_count + '][class_percent]" value="" style="text-align: center" onpaste="this.value=this.value.replace(/[^\\d.]/g,\'\')" onkeyup="this.value=this.value.replace(/[^\\d.]/g,\'\')">%' +
+            '         </td>' +
+            '         <td style="text-align: center;"><a class="ncap-btn" onclick="delStandard(this)">删除</a></td>' +
+            '     </tr>';
+        $('#standard').append(tr);
+    }
+
+    function delStandard(obj) {
+        $(obj).parent().parent().remove();
     }
 
     function updateConfig(postId) {

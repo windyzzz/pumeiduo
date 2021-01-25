@@ -6,6 +6,7 @@ namespace app\admin\controller;
 use app\admin\model\SchoolArticle;
 use app\admin\model\SchoolArticleResource;
 use app\admin\model\SchoolExchange;
+use app\admin\model\SchoolStandard;
 use app\common\logic\OssLogic;
 use think\Db;
 use think\Page;
@@ -30,37 +31,50 @@ class School extends Base
             $param = I('post.');
             // 配置
             foreach ($param as $k => $v) {
-                if ($k == 'official') {
-                    if (strstr($v['url'], 'aliyuncs.com')) {
-                        // 原图
-                        $v['url'] = M('school_config')->where(['type' => 'official'])->value('url');
-                    } else {
-                        // 新图
-                        $filePath = PUBLIC_PATH . substr($v['url'], strrpos($v['url'], '/public/') + 8);
-                        $fileName = substr($v['url'], strrpos($v['url'], '/') + 1);
-                        $object = 'image/' . date('Y/m/d/H/') . $fileName;
-                        $return_url = $this->ossClient->uploadFile($filePath, $object);
-                        if (!$return_url) {
-                            $this->error('图片上传错误');
+                switch ($k) {
+                    case 'official':
+                        if (strstr($v['url'], 'aliyuncs.com')) {
+                            // 原图
+                            $v['url'] = M('school_config')->where(['type' => 'official'])->value('url');
                         } else {
-                            // 图片信息
-                            $imageInfo = getimagesize($filePath);
-                            $v['url'] = 'img:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ',type:' . substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1);
-                            unlink($filePath);
+                            // 新图
+                            $filePath = PUBLIC_PATH . substr($v['url'], strrpos($v['url'], '/public/') + 8);
+                            $fileName = substr($v['url'], strrpos($v['url'], '/') + 1);
+                            $object = 'image/' . date('Y/m/d/H/') . $fileName;
+                            $return_url = $this->ossClient->uploadFile($filePath, $object);
+                            if (!$return_url) {
+                                $this->error('图片上传错误');
+                            } else {
+                                // 图片信息
+                                $imageInfo = getimagesize($filePath);
+                                $v['url'] = 'img:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ',type:' . substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1);
+                                unlink($filePath);
+                            }
                         }
-                    }
-                }
-                $data = [
-                    'type' => $k,
-                    'name' => isset($v['name']) ? $v['name'] : '',
-                    'url' => isset($v['url']) ? $v['url'] : '',
-                    'content' => isset($v['content']) ? $v['content'] : '',
-                ];
-                $config = M('school_config')->where(['type' => $k])->find();
-                if (!empty($config)) {
-                    M('school_config')->where(['id' => $config['id']])->update($data);
-                } else {
-                    M('school_config')->add($data);
+                        $data = [
+                            'type' => $k,
+                            'name' => isset($v['name']) ? $v['name'] : '',
+                            'url' => isset($v['url']) ? $v['url'] : '',
+                            'content' => isset($v['content']) ? $v['content'] : '',
+                        ];
+                        $config = M('school_config')->where(['type' => $k])->find();
+                        if (!empty($config)) {
+                            M('school_config')->where(['id' => $config['id']])->update($data);
+                        } else {
+                            M('school_config')->add($data);
+                        }
+                        break;
+                    case 'standard':
+                        $standardData = [];
+                        foreach ($v as $item) {
+                            $standardData[] = $item;
+                        }
+                        M('school_standard')->where('1=1')->delete();
+                        if (!empty($standardData)) {
+                            $schoolStandard = new SchoolStandard();
+                            $schoolStandard->saveAll($standardData);
+                        }
+                        break;
                 }
             }
             $this->success('操作成功', U('Admin/School/config'));
@@ -79,6 +93,24 @@ class School extends Base
                 'content' => $val['content']
             ];
         }
+        // 学习达标设置
+        $standard = M('school_standard')->order('class_percent DESC')->select();
+        $standardCount = count($standard);
+        $standardTips = '';
+        foreach ($standard as $k => $v) {
+            $standard[$k]['class_percent'] = floatval($v['class_percent']);
+            if (isset($standard[$k + 1])) {
+                $left = floatval($standard[$k + 1]['class_percent']) . '% <= ';
+            } else {
+                $left = '0% <= ';
+            }
+            if ($v['class_percent'] == 100) {
+                $right = ' <= 100%';
+            } else {
+                $right = ' < ' . floatval($v['class_percent']) . '%';
+            }
+            $standardTips .= '等级' . $v['level'] . '：' . $left . '所学课程' . $right . "\r\n";
+        }
         // 轮播图
         $count = M('school_rotate')->where(['module_id' => 0])->count();
         $page = new Page($count, 10);
@@ -90,6 +122,9 @@ class School extends Base
         }
 
         $this->assign('config', $config);
+        $this->assign('standard', $standard);
+        $this->assign('standard_count', $standardCount);
+        $this->assign('standard_tips', $standardTips);
         $this->assign('images', $images);
         $this->assign('page', $page);
         return $this->fetch();
