@@ -1822,6 +1822,8 @@ class CartLogic extends Model
             }
             if ($cart['goods']['is_abroad'] == 1) {
                 $hasAbroad = true;
+            } elseif ($cart['goods']['is_abroad2'] == 1) {
+                $hasAbroad2 = true;
             } else {
                 $hasPmd = true;
             }
@@ -1830,9 +1832,6 @@ class CartLogic extends Model
             }
             if ($cart['goods']['is_agent'] == 1) {
                 $hasAgent = true;
-            }
-            if ($cart['goods']['is_abroad2'] == 1) {
-                $hasAbroad2 = true;
             }
         }
         if ($hasAgent) {
@@ -1861,14 +1860,17 @@ class CartLogic extends Model
         if (($hasPmd && $hasAbroad) || ($hasSupply && $hasAbroad)) {
             return ['status' => 0, 'msg' => '韩国购商品请分开结算'];
         }
+        if (($hasPmd && $hasAbroad2) || ($hasSupply && $hasAbroad2)) {
+            return ['status' => 0, 'msg' => '京畿道直邮商品请分开结算'];
+        }
         if (!$hasPmd && $hasAbroad) {
             return ['status' => 2];
         }
+        if (!$hasPmd && $hasAbroad2) {
+            return ['status' => 5];
+        }
         if ($hasSupply) {
             return ['status' => 3];
-        }
-        if ($hasAbroad2) {
-            return ['status' => 5];
         }
         return ['status' => 1];
     }

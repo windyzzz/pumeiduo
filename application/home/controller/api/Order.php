@@ -1874,9 +1874,9 @@ class Order extends Base
         }
 
         // 检查下单商品
-        $res = $cartLogic->checkCartGoods($this->user, $cartList['cartList']);
-        if ($res['status'] === -1) {
-            return json($res);
+        $cartGoodsRes = $cartLogic->checkCartGoods($this->user, $cartList['cartList']);
+        if ($cartGoodsRes['status'] === -1) {
+            return json($cartGoodsRes);
         }
         $abroad = [
             'state' => 0,
@@ -1888,9 +1888,9 @@ class Order extends Base
         $hasAgent = 0;      // 是否拥有代理商商品
         $orderType = 1;     // 圃美多
         $canElectronic = 1;
-        switch ($res['status']) {
+        switch ($cartGoodsRes['status']) {
             case 0:
-                return json($res);
+                return json($cartGoodsRes);
             case 2:
                 $orderType = 2; // 韩国购
                 $canElectronic = 0;
@@ -1986,9 +1986,9 @@ class Order extends Base
             $payLogic->setUserId($this->user_id);
             // 计算购物车价格
             $payLogic->payCart($cartList['cartList']);
-            // 韩国购检查订单价格
-            if ($orderType == 2) {
-                $res = $payLogic->checkOrderAmount(2);
+            // 检查订单价格
+            if ($cartGoodsRes['status'] == 2 || $cartGoodsRes['status'] == 5) {
+                $res = $payLogic->checkOrderAmount($cartGoodsRes['status']);
                 if ($res['status'] == 0) {
                     return json($res);
                 }
@@ -2526,15 +2526,15 @@ class Order extends Base
         }
 
         // 检查下单商品
-        $res = $cartLogic->checkCartGoods($this->user, $cartList['cartList']);
-        if ($res['status'] === -1) {
-            return json($res);
+        $cartGoodsRes = $cartLogic->checkCartGoods($this->user, $cartList['cartList']);
+        if ($cartGoodsRes['status'] === -1) {
+            return json($cartGoodsRes);
         }
         $hasAgent = 0;  // 是否拥有代理商商品
         $orderType = 1; // 圃美多
-        switch ($res['status']) {
+        switch ($cartGoodsRes['status']) {
             case 0:
-                return json($res);
+                return json($cartGoodsRes);
             case 2:
                 $orderType = 2; // 韩国购
                 if (!empty($extraGoods)) {
@@ -2581,9 +2581,9 @@ class Order extends Base
             $payLogic->setUserId($this->user_id);   // 设置支付用户ID
             // 计算购物车价格
             $payLogic->payCart($cartList['cartList']);
-            // 韩国购检查订单价格
-            if ($orderType == 2) {
-                $res = $payLogic->checkOrderAmount(2);
+            // 检查订单价格
+            if ($cartGoodsRes['status'] == 2 || $cartGoodsRes['status'] == 5) {
+                $res = $payLogic->checkOrderAmount($cartGoodsRes['status']);
                 if ($res['status'] == 0) {
                     return json($res);
                 }
