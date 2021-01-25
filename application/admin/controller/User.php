@@ -602,13 +602,13 @@ class User extends Base
             if (!empty($_POST['email'])) {
                 $email = trim($_POST['email']);
                 $c = M('users')->where("user_id != $uid and email = '$email'")->count();
-                $c && exit($this->error('邮箱不得和已有用户重复'));
+//                $c && exit($this->error('邮箱不得和已有用户重复'));
             }
 
             if (!empty($_POST['mobile'])) {
                 $mobile = trim($_POST['mobile']);
                 $c = M('users')->where("user_id != $uid and mobile = '$mobile'")->count();
-                $c && exit($this->error('手机号不得和已有用户重复'));
+//                $c && exit($this->error('手机号不得和已有用户重复'));
             }
 
             if ($_POST['user_money'] != $user['user_money'] || $_POST['user_electronic'] != $user['user_electronic'] || $_POST['pay_points'] != $user['pay_points']) {
@@ -934,8 +934,8 @@ class User extends Base
                 date('Y-m-d H:i', $user['reg_time']),
                 $source[$user['reg_source']],
                 isset($firstAppLogin[$user['user_id']]) ? date('Y-m-d H:i', $firstAppLogin[$user['user_id']]) : '',
-                date('Y-m-d H:i', $user['last_login']),
-                $source[$user['last_login_source']]
+                $user['last_login'] != 0 ? date('Y-m-d H:i', $user['last_login']) : '',
+                $user['last_login'] != 0 ? $source[$user['last_login_source']] : ''
             ];
         }
         toCsvExcel($dataList, $headList, 'user_list');

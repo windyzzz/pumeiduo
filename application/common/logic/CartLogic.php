@@ -1822,6 +1822,8 @@ class CartLogic extends Model
             }
             if ($cart['goods']['is_abroad'] == 1) {
                 $hasAbroad = true;
+            } else {
+                $hasPmd = true;
             }
             if ($cart['goods']['is_supply'] == 1) {
                 $hasSupply = true;
