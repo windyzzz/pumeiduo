@@ -25,7 +25,7 @@ class Tb extends Controller
         $where = array(
             'status' => 0
         );
-        $tb = M('tb')->where($where)->order('add_time asc')->limit(10)->select();
+        $tb = M('tb')->where($where)->order('add_time asc')->limit(50)->select();
 
         if ($tb) {
             include_once "plugins/Tb.php";
