@@ -24,6 +24,7 @@ class School extends Base
     /**
      * 配置信息
      * @return mixed
+     * @throws \Exception
      */
     public function config()
     {
@@ -74,6 +75,8 @@ class School extends Base
                             $schoolStandard = new SchoolStandard();
                             $schoolStandard->saveAll($standardData);
                         }
+                        // 缓存记录
+                        cache('school_standard', $standardData, 0);
                         break;
                 }
             }
@@ -94,20 +97,20 @@ class School extends Base
             ];
         }
         // 学习达标设置
-        $standard = M('school_standard')->order('class_percent DESC')->select();
+        $standard = M('school_standard')->order('course_percent DESC')->select();
         $standardCount = count($standard);
         $standardTips = '';
         foreach ($standard as $k => $v) {
-            $standard[$k]['class_percent'] = floatval($v['class_percent']);
+            $standard[$k]['course_percent'] = floatval($v['course_percent']);
             if (isset($standard[$k + 1])) {
-                $left = floatval($standard[$k + 1]['class_percent']) . '% <= ';
+                $left = floatval($standard[$k + 1]['course_percent']) . '% <= ';
             } else {
                 $left = '0% <= ';
             }
-            if ($v['class_percent'] == 100) {
+            if ($v['course_percent'] == 100) {
                 $right = ' <= 100%';
             } else {
-                $right = ' < ' . floatval($v['class_percent']) . '%';
+                $right = ' < ' . floatval($v['course_percent']) . '%';
             }
             $standardTips .= '等级' . $v['level'] . '：' . $left . '所学课程' . $right . "\r\n";
         }
@@ -128,6 +131,92 @@ class School extends Base
         $this->assign('images', $images);
         $this->assign('page', $page);
         return $this->fetch();
+    }
+
+    /**
+     * 用户学习达标列表
+     * @return mixed
+     */
+    public function userStandardList()
+    {
+        // 学习课程id
+        $courseIds = M('school_article')->where([
+            'learn_type' => ['IN', [1, 2]],
+            'status' => 1,
+        ])->getField('id', true);
+        // 学习课程总数量
+        $courseNum = count($courseIds);
+        // 记录时间
+        $source = I('source', 1);
+        switch ($source) {
+            case 1:
+                // 当前一个月
+                $from = strtotime(date('Y-m-01 00:00:00', time()));
+                $to = strtotime(date('Y-m-t 23:59:59', time()));
+                break;
+            case 2:
+                // 指定时间段
+                $from = strtotime(I('time_from'));
+                $to = strtotime(I('time_to'));
+                break;
+        }
+        $where = [
+            'article_id' => ['IN', $courseIds],
+            'status' => 1,
+            'finish_time' => ['BETWEEN', [$from, $to]]
+        ];
+        // 用户学习课程记录总数
+        $count = M('user_school_article')->where($where)->group('user_id')->count();
+        $page = new Page($count, 10);
+        // 用户学习课程记录列表
+        $userLog = M('user_school_article usa')->join('users u', 'u.user_id = usa.user_id')
+            ->where($where)
+            ->group('usa.user_id')
+            ->field('u.user_id, u.nickname, u.user_name, count(article_id) as count')
+            ->limit($page->firstRow . ',' . $page->listRows)->select();
+        // 学习规则达标设置
+        $schoolStandard = cache('school_standard');
+        $standardTips = '学习课程总数：' . $courseNum . " \r\n";
+        if (empty($schoolStandard)) {
+            $userLog = [];
+        } else {
+            if (!empty($courseNum)) {
+                foreach ($schoolStandard as $k => $standard) {
+                    $schoolStandard[$k]['course_num'] = $standard['course_percent'] / 100 * $courseNum;
+                    if (isset($schoolStandard[$k + 1])) {
+                        $left = ($schoolStandard[$k + 1]['course_percent'] / 100 * $courseNum) . ' <= ';
+                    } else {
+                        $left = '0 <= ';
+                    }
+                    if ($standard['course_percent'] == 100) {
+                        $right = ' <= ' . $courseNum;
+                    } else {
+                        $right = ' < ' . ($standard['course_percent'] / 100 * $courseNum);
+                    }
+                    $standardTips .= '等级' . $standard['level'] . '：' . $left . '所学课程' . $right . "\r\n";
+                }
+                $schoolStandard = array_reverse($schoolStandard);
+                foreach ($userLog as $k1 => $log) {
+                    foreach ($schoolStandard as $k2 => $standard) {
+                        if ($log['count'] < $standard['course_num']) {
+                            $userLog[$k1]['course_level'] = $standard['level'];
+                            break 1;
+                        } elseif ($k2 == (count($schoolStandard) - 1)) {
+                            $userLog[$k1]['course_level'] = $standard['level'];
+                            break 1;
+                        }
+                    }
+                }
+            }
+        }
+        $this->assign('standard_tips', $standardTips);
+        $this->assign('standard', array_reverse($schoolStandard));
+        $this->assign('page', $page);
+        $this->assign('source', $source);
+        $this->assign('time_from', date('Y-m-d H:i:s', $from));
+        $this->assign('time_to', date('Y-m-d H:i:s', $to));
+        $this->assign('log', $userLog);
+        return $this->fetch('user_standard_list');
     }
 
     /**

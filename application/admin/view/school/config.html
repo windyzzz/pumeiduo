@@ -49,7 +49,7 @@
                                     <input type="text" name="standard[{$k}][level]" value="{$vo.level}" style="text-align: center">
                                 </td>
                                 <td>
-                                    <input type="text" name="standard[{$k}][class_percent]" value="{$vo.class_percent}" style="text-align: center" onpaste="this.value=this.value.replace(/[^\d.]/g,'')" onkeyup="this.value=this.value.replace(/[^\d.]/g,'')">%
+                                    <input type="text" name="standard[{$k}][course_percent]" value="{$vo.course_percent}" style="text-align: center" onpaste="this.value=this.value.replace(/[^\d.]/g,'')" onkeyup="this.value=this.value.replace(/[^\d.]/g,'')">%
                                 </td>
                                 <td style="text-align: center;"><a class="ncap-btn" onclick="delStandard(this)">删除</a></td>
                             </tr>
@@ -59,6 +59,9 @@
                     说明：
                     <br/>
                     <textarea style="width: 20%; height: 100%; line-height: 150%;" rows="6" disabled>{$standard_tips}</textarea>
+                    <p class="notic">课程：设置了必修/选修，且发布中的文章</p>
+                    <br/>
+                    <a class="ncap-btn-big ncap-btn-blue" href="{:U('School/userStandardList')}"><span>用户学习达标列表</span></a>
                 </dd>
             </dl>
             <div class="bot">
@@ -199,7 +202,7 @@
             '             <input type="text" name="standard[' + standard_count +'][level]" value="" style="text-align: center">' +
             '         </td>' +
             '         <td>' +
-            '             <input type="text" name="standard[' + standard_count + '][class_percent]" value="" style="text-align: center" onpaste="this.value=this.value.replace(/[^\\d.]/g,\'\')" onkeyup="this.value=this.value.replace(/[^\\d.]/g,\'\')">%' +
+            '             <input type="text" name="standard[' + standard_count + '][course_percent]" value="" style="text-align: center" onpaste="this.value=this.value.replace(/[^\\d.]/g,\'\')" onkeyup="this.value=this.value.replace(/[^\\d.]/g,\'\')">%' +
             '         </td>' +
             '         <td style="text-align: center;"><a class="ncap-btn" onclick="delStandard(this)">删除</a></td>' +
             '     </tr>';
