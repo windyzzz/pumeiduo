@@ -400,7 +400,7 @@ class Pay
             $this->order1['integral'] = $integral;
             $this->order1['order_pv'] = $promRate < 1 ? bcmul($promRate, $goodsPv, 2) : $goodsPv;
 
-            $order1GoodsRate = $this->order1['goods_price'] / bcadd($this->order1['goods_price'], $this->order2['goods_price'], 2);
+            $order1GoodsRate = ($this->order1['goods_price'] == 0 || $this->order2['goods_price'] == 0) ? 1 : $this->order1['goods_price'] / bcadd($this->order1['goods_price'], $this->order2['goods_price'], 2);
             // 子订单的优惠分摊（订单优惠 + 优惠券优惠）
             $this->order1['goods_prom_price'] = $promAmount;
             // 子订单的订单优惠分摊
@@ -428,7 +428,7 @@ class Pay
             $this->order2['integral'] = $integral;
             $this->order2['order_pv'] = $promRate < 1 ? bcmul($promRate, $goodsPv, 2) : $goodsPv;
 
-            $order2GoodsRate = $this->order2['goods_price'] / bcadd($this->order1['goods_price'], $this->order2['goods_price'], 2);
+            $order2GoodsRate = ($this->order1['goods_price'] == 0 || $this->order2['goods_price'] == 0) ? 1 : $this->order2['goods_price'] / bcadd($this->order1['goods_price'], $this->order2['goods_price'], 2);
             // 子订单的优惠分摊（订单优惠 + 优惠券优惠）
             $this->order2['goods_prom_price'] = $promAmount;
             // 子订单的订单优惠分摊
