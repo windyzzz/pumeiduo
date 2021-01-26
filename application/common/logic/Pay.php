@@ -372,7 +372,7 @@ class Pay
         // 订单属性优惠价格（订单优惠 + 优惠券优惠 - 商品优惠）
         $promAmount = bcsub(bcadd($this->orderPromAmount, $this->couponPrice, 2), $this->goodsPromAmount, 2);
         // 优惠比例
-        $promRate = bcsub(1, ($promAmount / $this->totalAmount), 2);
+        $promRate = $this->totalAmount == 0 ? 1 : bcsub(1, ($promAmount / $this->totalAmount), 2);
         if (empty($this->order1Goods) || empty($this->order2Goods)) {
 //            $promAmount = $promAmount;
             $orderPromAmount = $this->orderPromAmount;
