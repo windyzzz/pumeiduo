@@ -128,10 +128,7 @@ class School
             $level = explode(',', $module['distribute_level']);
             $svipLevel = [4, 5, 6, 7, 8, 9, 10, 11];
             $setSvipLevel = array_intersect($svipLevel, $level);
-            if (count($setSvipLevel) > 1) {
-                if ($user['distribut_level'] != 3) {
-                    return ['status' => -1, 'msg' => '您当前不是SVIP，没有访问权限'];
-                }
+            if ($user['distribut_level'] == 3 && count($setSvipLevel) > 1) {
                 // 拥有代理商等级划分，需要从代理商查询用户的代理商等级
                 $url = C('SERVER_URL') . '/index.php/Crond/get_user_grade/user_name/' . $user['user_name'];
                 $res = httpRequest($url);
@@ -194,10 +191,7 @@ class School
             $level = explode(',', $moduleClass['distribute_level']);
             $svipLevel = [4, 5, 6, 7, 8, 9, 10, 11];
             $setSvipLevel = array_intersect($svipLevel, $level);
-            if (count($setSvipLevel) > 1) {
-                if ($user['distribut_level'] != 3) {
-                    return ['status' => -1, 'msg' => '您当前不是SVIP，没有访问权限'];
-                }
+            if ($user['distribut_level'] == 3 && count($setSvipLevel) > 1) {
                 // 拥有代理商等级划分，需要从代理商查询用户的代理商等级
                 $url = C('SERVER_URL') . '/index.php/Crond/get_user_grade/user_name/' . $user['user_name'];
                 $res = httpRequest($url);
@@ -273,10 +267,7 @@ class School
             $level = explode(',', $article['distribute_level']);
             $svipLevel = [4, 5, 6, 7, 8, 9, 10, 11];
             $setSvipLevel = array_intersect($svipLevel, $level);
-            if (count($setSvipLevel) > 1) {
-                if ($user['distribut_level'] != 3) {
-                    return ['status' => -1, 'msg' => '您当前不是SVIP，没有访问权限'];
-                }
+            if ($user['distribut_level'] == 3 && count($setSvipLevel) > 1) {
                 // 拥有代理商等级划分，需要从代理商查询用户的代理商等级
                 $url = C('SERVER_URL') . '/index.php/Crond/get_user_grade/user_name/' . $user['user_name'];
                 $res = httpRequest($url);
