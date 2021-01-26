@@ -205,7 +205,11 @@ class Pay
         $goodsListCount = count($this->payList);
         for ($payCursor = '0'; $payCursor < $goodsListCount; ++$payCursor) {
 //            $this->totalAmount = bcadd($this->totalAmount, $this->payList[$payCursor]['goods_price'], 2);
-            $this->totalAmount = bcadd($this->totalAmount, bcmul($this->payList[$payCursor]['goods_num'], $this->payList[$payCursor]['goods_price'], 2), 2);
+            if ($this->payList[$payCursor]['goods_price'] == 0) {
+                $this->totalAmount = bcadd($this->totalAmount, bcmul($this->payList[$payCursor]['goods_num'], $this->payList[$payCursor]['member_goods_price'], 2), 2);
+            } else {
+                $this->totalAmount = bcadd($this->totalAmount, bcmul($this->payList[$payCursor]['goods_num'], $this->payList[$payCursor]['goods_price'], 2), 2);
+            }
             $goods_fee = $this->payList[$payCursor]['goods_fee'] = bcmul($this->payList[$payCursor]['goods_num'], $this->payList[$payCursor]['member_goods_price'], 2);    // 小计
             $this->goodsPrice = bcadd($this->goodsPrice, $goods_fee, 2); // 商品总价
             $this->shopPrice = bcadd($this->shopPrice, bcmul($this->payList[$payCursor]['goods_num'], $this->payList[$payCursor]['goods']['shop_price'], 2), 2);    // 商品总现金价
@@ -372,7 +376,7 @@ class Pay
         // 订单属性优惠价格（订单优惠 + 优惠券优惠 - 商品优惠）
         $promAmount = bcsub(bcadd($this->orderPromAmount, $this->couponPrice, 2), $this->goodsPromAmount, 2);
         // 优惠比例
-        $promRate = $this->totalAmount == 0 ? 1 : bcsub(1, ($promAmount / $this->totalAmount), 2);
+        $promRate = $this->totalAmount != '0' ? bcsub(1, ($promAmount / $this->totalAmount), 2) : 1;
         if (empty($this->order1Goods) || empty($this->order2Goods)) {
 //            $promAmount = $promAmount;
             $orderPromAmount = $this->orderPromAmount;
