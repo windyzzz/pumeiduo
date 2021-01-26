@@ -23,6 +23,8 @@
                 说明：
                 <br/>
                 <textarea style="width: 20%; height: 100%; line-height: 150%;" rows="7" disabled>{$standard_tips}</textarea>
+                <br/>
+                <p style="color: red;">“达标等级”不能进行搜索（因为技术上涉及到列表分页，达标等级是动态生成），只能进行导出</p>
             </li>
         </ul>
     </div>
@@ -34,8 +36,8 @@
             </div>
             <div title="刷新数据" class="pReload"><i class="fa fa-refresh"></i></div>
         </div>
-        <form class="navbar-form form-inline" action="{:U('Admin/School/userStandardList')}" method="post">
-            <div class="sDiv" style="width: 20%;float: left;">
+        <form class="navbar-form form-inline" id="search-form" action="{:U('Admin/School/userStandardList')}" method="post">
+            <div class="sDiv">
                 <div class="sDiv2">
                     <select name="source" class="select">
                         <option value="">达标日期</option>
@@ -52,13 +54,6 @@
                            class="qsbox" placeholder="" style="text-align: center;">
                 </div>
                 <div class="sDiv2">
-                    <input type="submit" class="btn" value="搜索">
-                </div>
-            </div>
-        </form>
-        <form class="navbar-form form-inline" action="{:U('Admin/School/exportUserStandardList')}" method="post">
-            <div class="sDiv" style="width: 20%;float: left;">
-                <div class="sDiv2">
                     <select name="level" class="select">
                         <option value="">达标等级</option>
                         <volist name="standard" id="vo" key="k">
@@ -67,7 +62,10 @@
                     </select>
                 </div>
                 <div class="sDiv2">
-                    <input type="submit" class="btn" value="导出">
+                    <input type="submit" class="btn" value="搜索">
+                </div>
+                <div class="sDiv2">
+                    <input type="button" class="btn" onclick="export_list()" value="导出">
                 </div>
             </div>
         </form>
@@ -164,6 +162,11 @@
                 break;
         }
     });
+
+    function export_list() {
+        $('#search-form').attr('action', "/index.php/Admin/School/exportUserStandardList");
+        $('#search-form').submit();
+    }
 </script>
 </body>
 </html>

@@ -180,7 +180,7 @@ class School extends Base
         if (empty($schoolStandard)) {
             $userLog = [];
         } else {
-            if (!empty($courseNum)) {
+            if (!empty($courseIds)) {
                 foreach ($schoolStandard as $k => $standard) {
                     $schoolStandard[$k]['course_num'] = $standard['course_percent'] / 100 * $courseNum;
                     if (isset($schoolStandard[$k + 1])) {
@@ -217,6 +217,96 @@ class School extends Base
         $this->assign('time_to', date('Y-m-d H:i:s', $to));
         $this->assign('log', $userLog);
         return $this->fetch('user_standard_list');
+    }
+
+
+    public function exportUserStandardList()
+    {
+        // 学习课程id
+        $courseIds = M('school_article')->where([
+            'learn_type' => ['IN', [1, 2]],
+            'status' => 1,
+        ])->getField('id', true);
+        // 学习课程总数量
+        $courseNum = count($courseIds);
+        // 记录时间
+        $source = I('source', 1);
+        switch ($source) {
+            case 1:
+                // 当前一个月
+                $from = strtotime(date('Y-m-01 00:00:00', time()));
+                $to = strtotime(date('Y-m-t 23:59:59', time()));
+                break;
+            case 2:
+                // 指定时间段
+                $from = strtotime(I('time_from'));
+                $to = strtotime(I('time_to'));
+                break;
+        }
+        $where = [
+            'article_id' => ['IN', $courseIds],
+            'status' => 1,
+            'finish_time' => ['BETWEEN', [$from, $to]]
+        ];
+        // 用户学习课程记录列表
+        $userLog = M('user_school_article usa')->join('users u', 'u.user_id = usa.user_id')
+            ->where($where)
+            ->group('usa.user_id')
+            ->field('u.user_id, u.nickname, u.user_name, count(article_id) as count')
+            ->select();
+        // 学习规则达标设置
+        $schoolStandard = cache('school_standard');
+        if (empty($schoolStandard)) {
+            $userLog = [];
+        } else {
+            if (!empty($courseIds)) {
+                $level = I('level', '');
+                foreach ($schoolStandard as $k => $standard) {
+                    $schoolStandard[$k]['course_num'] = $standard['course_percent'] / 100 * $courseNum;
+                }
+                $schoolStandard = array_reverse($schoolStandard);
+                foreach ($userLog as $k1 => $log) {
+                    foreach ($schoolStandard as $k2 => $standard) {
+                        if ($log['count'] < $standard['course_num']) {
+                            if ($level && $level != $standard['level']) {
+                                unset($userLog[$k1]);
+                            } else {
+                                $userLog[$k1]['course_level'] = $standard['level'];
+                            }
+                            break 1;
+                        } elseif ($k2 == (count($schoolStandard) - 1)) {
+                            if ($level && $level != $standard['level']) {
+                                unset($userLog[$k1]);
+                            } else {
+                                $userLog[$k1]['course_level'] = $standard['level'];
+                            }
+                            break 1;
+                        }
+                    }
+                }
+            }
+        }
+        // 表头
+        $headList = [
+            '用户', '课程数量', '达标等级'
+        ];
+        // 表数据
+        $dataList = [];
+        foreach ($userLog as $log) {
+            if (!empty($log['nickname'])) {
+                $userName = $log['nickname'];
+            } elseif (!empty($log['user_name'])) {
+                $userName = $log['user_name'];
+            } else {
+                $userName = '用户：' . $log['user_id'];
+            }
+            $dataList[] = [
+                $userName,
+                $log['count'],
+                $log['course_level']
+            ];
+        }
+        toCsvExcel($dataList, $headList, 'user_standard_list');
     }
 
     /**
