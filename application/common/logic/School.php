@@ -126,7 +126,7 @@ class School
         // 等级权限
         if ($module['distribute_level'] != 0) {
             $level = explode(',', $module['distribute_level']);
-            $svipLevel = [4, 5, 6, 7, 8, 9, 10, 11];
+            $svipLevel = [3, 4, 5, 6, 7, 8, 9, 10, 11];
             $setSvipLevel = array_intersect($svipLevel, $level);
             if ($user['distribut_level'] == 3 && count($setSvipLevel) > 1) {
                 // 拥有代理商等级划分，需要从代理商查询用户的代理商等级
@@ -189,7 +189,7 @@ class School
         // 等级权限
         if ($moduleClass['distribute_level'] != 0) {
             $level = explode(',', $moduleClass['distribute_level']);
-            $svipLevel = [4, 5, 6, 7, 8, 9, 10, 11];
+            $svipLevel = [3, 4, 5, 6, 7, 8, 9, 10, 11];
             $setSvipLevel = array_intersect($svipLevel, $level);
             if ($user['distribut_level'] == 3 && count($setSvipLevel) > 1) {
                 // 拥有代理商等级划分，需要从代理商查询用户的代理商等级
@@ -265,7 +265,7 @@ class School
         // 等级权限
         if ($article['distribute_level'] != 0) {
             $level = explode(',', $article['distribute_level']);
-            $svipLevel = [4, 5, 6, 7, 8, 9, 10, 11];
+            $svipLevel = [3, 4, 5, 6, 7, 8, 9, 10, 11];
             $setSvipLevel = array_intersect($svipLevel, $level);
             if ($user['distribut_level'] == 3 && count($setSvipLevel) > 1) {
                 // 拥有代理商等级划分，需要从代理商查询用户的代理商等级
