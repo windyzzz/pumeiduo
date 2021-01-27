@@ -210,7 +210,7 @@ class School extends Base
             }
         }
         $this->assign('standard_tips', $standardTips);
-        $this->assign('standard', array_reverse($schoolStandard));
+        $this->assign('standard', !empty($schoolStandard) ? array_reverse($schoolStandard) : []);
         $this->assign('page', $page);
         $this->assign('source', $source);
         $this->assign('time_from', date('Y-m-d H:i:s', $from));
