@@ -686,7 +686,7 @@ class Goods extends Base
                 $where .= ' and is_area_show = 1';
                 break;
             case 3:
-                $where .= ' and applet_on_sale = 1';
+                $where .= ' and applet_on_sale = 1 or is_agent = 1';
                 break;
         }
 
