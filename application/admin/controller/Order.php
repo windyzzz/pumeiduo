@@ -267,7 +267,7 @@ class Order extends Base
     */
     public function ajaxdelivery()
     {
-        $condition = [];
+        $condition = ['parent_id' => 0];
         I('consignee') ? $condition['consignee'] = trim(I('consignee')) : false;
         '' != I('order_sn') ? $condition['order_sn'] = trim(I('order_sn')) : false;
         $shipping_status = I('shipping_status');
