@@ -68,6 +68,7 @@ class School extends Base
                     case 'standard':
                         $standardData = [];
                         foreach ($v as $item) {
+                            if ($item == '' || $item['num'] == 0) continue;
                             $standardData[] = $item;
                         }
                         M('school_standard')->where('1=1')->delete();
@@ -97,23 +98,9 @@ class School extends Base
             ];
         }
         // 学习达标设置
-        $standard = M('school_standard')->order('course_percent DESC')->select();
+        $standard = M('school_standard')->order('type ASC, num DESC')->select();
         $standardCount = count($standard);
-        $standardTips = '';
-        foreach ($standard as $k => $v) {
-            $standard[$k]['course_percent'] = floatval($v['course_percent']);
-            if (isset($standard[$k + 1])) {
-                $left = floatval($standard[$k + 1]['course_percent']) . '% <= ';
-            } else {
-                $left = '0% <= ';
-            }
-            if ($v['course_percent'] == 100) {
-                $right = ' <= 100%';
-            } else {
-                $right = ' < ' . floatval($v['course_percent']) . '%';
-            }
-            $standardTips .= '等级' . $v['level'] . '：' . $left . '所学课程' . $right . "\r\n";
-        }
+        $svipLevel = M('svip_level')->order('app_level ASC')->select();
         // 轮播图
         $count = M('school_rotate')->where(['module_id' => 0])->count();
         $page = new Page($count, 10);
@@ -127,16 +114,13 @@ class School extends Base
         $this->assign('config', $config);
         $this->assign('standard', $standard);
         $this->assign('standard_count', $standardCount);
-        $this->assign('standard_tips', $standardTips);
+        $this->assign('svip_level', $svipLevel);
         $this->assign('images', $images);
         $this->assign('page', $page);
         return $this->fetch();
     }
 
-    /**
-     * 用户学习达标列表
-     * @return mixed
-     */
+
     public function userStandardList()
     {
         // 学习课程id
@@ -144,79 +128,106 @@ class School extends Base
             'learn_type' => ['IN', [1, 2]],
             'status' => 1,
         ])->getField('id', true);
-        // 学习课程总数量
-        $courseNum = count($courseIds);
-        // 记录时间
-        $source = I('source', 1);
-        switch ($source) {
-            case 1:
-                // 当前一个月
-                $from = strtotime(date('Y-m-01 00:00:00', time()));
-                $to = strtotime(date('Y-m-t 23:59:59', time()));
-                break;
-            case 2:
-                // 指定时间段
-                $from = strtotime(I('time_from'));
-                $to = strtotime(I('time_to'));
-                break;
+        // 用户学习课程记录总数
+        $count = M('user_school_article')->where(['article_id' => ['IN', $courseIds]])->group('user_id')->count();
+        // 用户课程学习记录
+        $page = new Page($count, 10);
+        $userCourseLog = M('user_school_article usa')->join('users u', 'u.user_id = usa.user_id')
+            ->join('distribut_level dl', 'dl.level_id = u.distribut_level')
+            ->where(['article_id' => ['IN', $courseIds]])->group('usa.user_id')
+            ->field('u.user_id, u.nickname, u.user_name, u.school_credit, u.distribut_level, dl.level_name')
+            ->limit($page->firstRow . ',' . $page->listRows)->select();
+        foreach ($userCourseLog as &$log) {
+            $log['is_reach'] = 0;       // 未达标
+            $log['course_num'] = 0;     // 用户课程数量
+            // 检查是否达标
+            /*
+             * 查看课程数量
+             */
+            $user = [
+                'user_id' => $log['user_id'],
+                'user_name' => $log['user_name'],
+                'distribut_level' => $log['distribut_level']
+            ];
+            $res = $this->checkUserCourseNum($user, $courseIds);
+            if ($res['status'] == -1) {
+                $this->error($res['msg']);
+            }
+            $log['course_num'] = $res['course_num'];
+            if ($res['user_level'] > 3) {
+                if (cache('svip_level')) {
+                    $log['level_name'] = cache('svip_level')[$res['user_level']];
+                } else {
+                    $svipLevel = M('svip_level')->getField('app_level, name', true);
+                    cache('svip_level', $svipLevel, 0);
+                    $log['level_name'] = $svipLevel[$res['user_level']];
+                }
+            }
+            if ($res['status'] == 1) {
+                $log['is_reach'] = 1;
+            }
+            /*
+             * 查看乐活豆数量
+             */
+
         }
+        echo '<pre>';
+        print_r($userCourseLog);
+        echo '</pre>';
+        exit();
+    }
+
+    /**
+     * 检查用户是否满足课程数量达标
+     * @param array $user 用户信息
+     * @param array $courseIds 学习课程IDs
+     * @return array
+     */
+    private function checkUserCourseNum($user, $courseIds)
+    {
         $where = [
+            'user_id' => $user['user_id'],
             'article_id' => ['IN', $courseIds],
             'status' => 1,
-            'finish_time' => ['BETWEEN', [$from, $to]]
         ];
         // 用户学习课程记录总数
-        $count = M('user_school_article')->where($where)->group('user_id')->count();
-        $page = new Page($count, 10);
-        // 用户学习课程记录列表
-        $userLog = M('user_school_article usa')->join('users u', 'u.user_id = usa.user_id')
-            ->where($where)
-            ->group('usa.user_id')
-            ->field('u.user_id, u.nickname, u.user_name, count(article_id) as count')
-            ->limit($page->firstRow . ',' . $page->listRows)->select();
-        // 学习规则达标设置
-        $schoolStandard = cache('school_standard');
-        $standardTips = '学习课程总数：' . $courseNum . " \r\n";
-        if (empty($schoolStandard)) {
-            $userLog = [];
-        } else {
-            if (!empty($courseIds)) {
-                foreach ($schoolStandard as $k => $standard) {
-                    $schoolStandard[$k]['course_num'] = $standard['course_percent'] / 100 * $courseNum;
-                    if (isset($schoolStandard[$k + 1])) {
-                        $left = ($schoolStandard[$k + 1]['course_percent'] / 100 * $courseNum) . ' <= ';
-                    } else {
-                        $left = '0 <= ';
-                    }
-                    if ($standard['course_percent'] == 100) {
-                        $right = ' <= ' . $courseNum;
-                    } else {
-                        $right = ' < ' . ($standard['course_percent'] / 100 * $courseNum);
-                    }
-                    $standardTips .= '等级' . $standard['level'] . '：' . $left . '所学课程' . $right . "\r\n";
+        $userCourseNum = M('user_school_article')->where($where)->group('user_id')->getField('count(article_id) as count');
+        $userCourseNum = $userCourseNum ?? 0;
+        $userLevel = $user['distribut_level'];
+        if ($userLevel == 3) {
+            if (cache('svip_level_' . $user['user_id'])) {
+                $userLevel = cache('svip_level_' . $user['user_id']);
+            } else {
+                // 拥有代理商等级划分，需要从代理商查询用户的代理商等级
+                $url = C('SERVER_URL') . '/index.php/Crond/get_user_grade/user_name/' . $user['user_name'];
+                $res = httpRequest($url);
+                if (!$res) {
+                    return ['status' => -1, 'msg' => $user['user_id'] . '代理商等级获取检查失败'];
                 }
-                $schoolStandard = array_reverse($schoolStandard);
-                foreach ($userLog as $k1 => $log) {
-                    foreach ($schoolStandard as $k2 => $standard) {
-                        if ($log['count'] < $standard['course_num']) {
-                            $userLog[$k1]['course_level'] = $standard['level'];
-                            break 1;
-                        } elseif ($k2 == (count($schoolStandard) - 1)) {
-                            $userLog[$k1]['course_level'] = $standard['level'];
-                            break 1;
-                        }
-                    }
+                $res = json_decode($res, true);
+                if (isset($res['status']) && $res['status'] == 1) {
+                    $userLevel = $res['station'] + 2;
+                    cache('svip_level_' . $user['user_id'], $userLevel, 3600);
+                } else {
+                    return ['status' => -1, 'msg' => '代理商等级获取检查失败'];
                 }
             }
         }
-        $this->assign('standard_tips', $standardTips);
-        $this->assign('standard', !empty($schoolStandard) ? array_reverse($schoolStandard) : []);
-        $this->assign('page', $page);
-        $this->assign('source', $source);
-        $this->assign('time_from', date('Y-m-d H:i:s', $from));
-        $this->assign('time_to', date('Y-m-d H:i:s', $to));
-        $this->assign('log', $userLog);
-        return $this->fetch('user_standard_list');
+        // 学习规则达标设置
+        $return = ['status' => 0, 'course_num' => $userCourseNum, 'user_level' => $userLevel];
+        $schoolStandard = cache('school_standard');
+        foreach ($schoolStandard as $v) {
+            if ($v['type'] == 2) {
+                continue;
+            }
+            if ($userLevel == $v['distribute_level']) {
+                if ($userCourseNum >= $v['num']) {
+                    $return['status'] = 1;
+                }
+                break;
+            }
+        }
+        return $return;
     }
 
 

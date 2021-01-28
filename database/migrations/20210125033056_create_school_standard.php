@@ -29,8 +29,9 @@ class CreateSchoolStandard extends Migrator
     public function change()
     {
         $this->table('school_standard', ['comment' => '商学院学习达标标准'])
-            ->addColumn('level', 'string', ['comment' => '等级'])
-            ->addColumn('course_percent', 'decimal', ['default' => '0', 'precision' => 10, 'scale' => 2, 'comment' => '课程数量百分比'])
+            ->addColumn('type', 'integer', ['comment' => '类型：1课程数量 2乐活豆数量'])
+            ->addColumn('distribute_level', 'integer', ['comment' => '用户等级'])
+            ->addColumn('num', 'integer', ['comment' => '数量'])
             ->create();
     }
 }
