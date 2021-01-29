@@ -127,20 +127,25 @@ class School extends Base
      */
     public function userStandardList()
     {
+        $isExport = I('is_export', '');     // 是否导出
+        $appLevel = I('app_level', '');
         // 学习课程id
         $courseIds = M('school_article')->where([
             'learn_type' => ['IN', [1, 2]],
             'status' => 1,
         ])->getField('id', true);
-        // 用户学习课程记录总数
-        $count = M('user_school_article')->where(['article_id' => ['IN', $courseIds]])->group('user_id')->count();
-        // 用户课程学习记录
-        $page = new Page($count, 10);
         $userCourseLog = M('user_school_article usa')->join('users u', 'u.user_id = usa.user_id')
             ->join('distribut_level dl', 'dl.level_id = u.distribut_level')
             ->where(['article_id' => ['IN', $courseIds]])->group('usa.user_id')
-            ->field('u.user_id, u.nickname, u.user_name, u.school_credit, u.distribut_level, dl.level_name')
-            ->limit($page->firstRow . ',' . $page->listRows)->select();
+            ->field('u.user_id, u.nickname, u.user_name, u.school_credit, u.distribut_level, dl.level_name');
+        if (!$isExport) {
+            // 用户学习课程记录总数
+            $count = M('user_school_article')->where(['article_id' => ['IN', $courseIds]])->group('user_id')->count();
+            // 用户课程学习记录
+            $page = new Page($count, 10);
+            $userCourseLog = $userCourseLog->limit($page->firstRow . ',' . $page->listRows);
+        }
+        $userCourseLog = $userCourseLog->select();
         $usersLogic = new UsersLogic();
         // svip等级
         if (cache('svip_level')) {
@@ -149,7 +154,15 @@ class School extends Base
             $svipLevel = M('svip_level')->getField('app_level, name', true);
             cache('svip_level', $svipLevel, 0);
         }
-        foreach ($userCourseLog as &$log) {
+        $dataList = [];     // 导出数据
+        foreach ($userCourseLog as $k => &$log) {
+            if (!empty($log['nickname'])) {
+                $log['userName'] = $log['nickname'];
+            } elseif (!empty($log['user_name'])) {
+                $log['userName'] = $log['user_name'];
+            } else {
+                $log['userName'] = '用户：' . $log['user_id'];
+            }
             $log['is_reach'] = 0;       // 未达标
             $log['course_num'] = 0;     // 用户课程数量
             if ($log['distribut_level'] == 3) {
@@ -161,6 +174,10 @@ class School extends Base
                 $log['level_name'] = $svipLevel[$userLevel];
             } else {
                 $userLevel = $log['distribut_level'];
+            }
+            if ($appLevel && $appLevel != $userLevel) {
+                unset($userCourseLog[$k]);
+                continue;
             }
             // 检查是否达标
             /*
@@ -187,11 +204,26 @@ class School extends Base
                     $log['is_reach'] = 1;
                 }
             }
+            $dataList[] = [
+                $log['userName'],
+                $log['level_name'],
+                $log['course_num'],
+                $log['school_credit'],
+                $log['is_reach'] == 1 ? '已达标' : '未达标'
+            ];
         }
-        $this->assign('svip_level', $svipLevel);
-        $this->assign('page', $page);
-        $this->assign('log', $userCourseLog);
-        return $this->fetch('user_standard_list');
+        if (!$isExport) {
+            $this->assign('svip_level', $svipLevel);
+            $this->assign('page', $page);
+            $this->assign('log', $userCourseLog);
+            return $this->fetch('user_standard_list');
+        } else {
+            // 表头
+            $headList = [
+                '用户', '用户等级', '课程数量', '乐活豆数量', '是否达标'
+            ];
+            toCsvExcel($dataList, $headList, 'user_standard_list');
+        }
     }
 
     /**
@@ -227,7 +259,11 @@ class School extends Base
         return $return;
     }
 
-
+    /**
+     * 检查用户是否满足乐活豆数量达标
+     * @param $user
+     * @return array
+     */
     private function checkUserSchoolCredit($user)
     {
         // 学习规则达标设置
@@ -245,96 +281,6 @@ class School extends Base
             }
         }
         return $return;
-    }
-
-
-    public function exportUserStandardList()
-    {
-        // 学习课程id
-        $courseIds = M('school_article')->where([
-            'learn_type' => ['IN', [1, 2]],
-            'status' => 1,
-        ])->getField('id', true);
-        // 学习课程总数量
-        $courseNum = count($courseIds);
-        // 记录时间
-        $source = I('source', 1);
-        switch ($source) {
-            case 1:
-                // 当前一个月
-                $from = strtotime(date('Y-m-01 00:00:00', time()));
-                $to = strtotime(date('Y-m-t 23:59:59', time()));
-                break;
-            case 2:
-                // 指定时间段
-                $from = strtotime(I('time_from'));
-                $to = strtotime(I('time_to'));
-                break;
-        }
-        $where = [
-            'article_id' => ['IN', $courseIds],
-            'status' => 1,
-            'finish_time' => ['BETWEEN', [$from, $to]]
-        ];
-        // 用户学习课程记录列表
-        $userLog = M('user_school_article usa')->join('users u', 'u.user_id = usa.user_id')
-            ->where($where)
-            ->group('usa.user_id')
-            ->field('u.user_id, u.nickname, u.user_name, count(article_id) as count')
-            ->select();
-        // 学习规则达标设置
-        $schoolStandard = cache('school_standard');
-        if (empty($schoolStandard)) {
-            $userLog = [];
-        } else {
-            if (!empty($courseIds)) {
-                $level = I('level', '');
-                foreach ($schoolStandard as $k => $standard) {
-                    $schoolStandard[$k]['course_num'] = $standard['course_percent'] / 100 * $courseNum;
-                }
-                $schoolStandard = array_reverse($schoolStandard);
-                foreach ($userLog as $k1 => $log) {
-                    foreach ($schoolStandard as $k2 => $standard) {
-                        if ($log['count'] < $standard['course_num']) {
-                            if ($level && $level != $standard['level']) {
-                                unset($userLog[$k1]);
-                            } else {
-                                $userLog[$k1]['course_level'] = $standard['level'];
-                            }
-                            break 1;
-                        } elseif ($k2 == (count($schoolStandard) - 1)) {
-                            if ($level && $level != $standard['level']) {
-                                unset($userLog[$k1]);
-                            } else {
-                                $userLog[$k1]['course_level'] = $standard['level'];
-                            }
-                            break 1;
-                        }
-                    }
-                }
-            }
-        }
-        // 表头
-        $headList = [
-            '用户', '课程数量', '达标等级'
-        ];
-        // 表数据
-        $dataList = [];
-        foreach ($userLog as $log) {
-            if (!empty($log['nickname'])) {
-                $userName = $log['nickname'];
-            } elseif (!empty($log['user_name'])) {
-                $userName = $log['user_name'];
-            } else {
-                $userName = '用户：' . $log['user_id'];
-            }
-            $dataList[] = [
-                $userName,
-                $log['count'],
-                $log['course_level']
-            ];
-        }
-        toCsvExcel($dataList, $headList, 'user_standard_list');
     }
 
     /**

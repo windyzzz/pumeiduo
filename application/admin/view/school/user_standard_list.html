@@ -46,6 +46,7 @@
                         </volist>
                     </select>
                 </div>
+                <input type="hidden" name="is_export" value="0">
                 <div class="sDiv2">
                     <input type="button" class="btn" onclick="export_list()" value="导出">
                 </div>
@@ -94,13 +95,7 @@
                             <td align="left" class="">
                                 <div style="text-align: center; width: 150px;">
                                     <a target="_blank" href="{:U('Admin/User/detail',array('id'=>$vo['user_id']))}">
-                                        <if condition="!empty($vo[nickname])">
-                                            {$vo.nickname}
-                                            <elseif condition="!empty($vo[user_name])"/>
-                                            {$vo.user_name}
-                                            <else/>
-                                            用户：{$vo.user_id}
-                                        </if>
+                                        {$vo.userName}
                                     </a>
                                 </div>
                             </td>
@@ -164,8 +159,9 @@
     });
 
     function export_list() {
-        $('#search-form').attr('action', "/index.php/Admin/School/exportUserStandardList");
+        $('input[name="is_export"]').val('1');
         $('#search-form').submit();
+        $('input[name="is_export"]').val('0');
     }
 </script>
 </body>
