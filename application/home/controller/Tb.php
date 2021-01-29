@@ -808,4 +808,34 @@ class Tb extends Controller
         return true;
     }
 
+    /**
+     * 更新用户代理商等级
+     * @return false|string
+     */
+    function save_user_svip()
+    {
+        $data = $_POST['result'];
+        if ($data) {
+            $logId = Db::name('svip_transfer_log')->add(['data' => $data, 'add_time' => NOW_TIME]);
+            $data = json_decode($data, true);
+            if (empty($data['user_name']) || empty($data['level_id'])) {
+                return json_encode(['status' => 0, 'msg' => '请传入正确的参数']);
+            }
+            $svipLevel = M('svip_level')->where(['agent_level' => $data['level_id']])->find();
+            if (empty($svipLevel)) {
+                return json_encode(['status' => 0, 'msg' => '等级ID错误']);
+            }
+            $res = M('users')->where(['user_name' => $data['user_name']])->update([
+                'svip_level' => $svipLevel['app_level'],
+                'svip_name' => $svipLevel['name']
+            ]);
+            if ($res) {
+                M('svip_transfer_log')->where(['id' => $logId])->update(['status' => 1]);
+                return json_encode(['status' => 1]);
+            } else {
+                return json_encode(['status' => 0, 'msg' => '更新失败']);
+            }
+        }
+        return json_encode(['status' => 0, 'msg' => '参数不能为空']);
+    }
 }
