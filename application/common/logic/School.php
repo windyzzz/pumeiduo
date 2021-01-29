@@ -129,12 +129,16 @@ class School
             $svipLevel = [3, 4, 5, 6, 7, 8, 9, 10, 11];
             $setSvipLevel = array_intersect($svipLevel, $level);
             if ($user['distribut_level'] == 3 && count($setSvipLevel) > 1) {
-                // 拥有代理商等级划分，需要从代理商查询用户的代理商等级
-                $res = (new UsersLogic())->getAgentSvip($user['user_name']);
-                if ($res['status'] == 0) {
-                    return $res;
+                if ($user['svip_level'] == 0) {
+                    // 拥有代理商等级划分，需要从代理商查询用户的代理商等级
+                    $res = (new UsersLogic())->getAgentSvip($user['user_name']);
+                    if ($res['status'] == 0) {
+                        return $res;
+                    }
+                    $useSvipLevel = $res['app_level'];
+                } else {
+                    $useSvipLevel = $user['svip_level'];
                 }
-                $useSvipLevel = $res['app_level'];
                 if (!in_array($useSvipLevel, $setSvipLevel)) {
                     foreach ($setSvipLevel as $lv) {
                         if ($lv == 3) {
@@ -189,12 +193,16 @@ class School
             $svipLevel = [3, 4, 5, 6, 7, 8, 9, 10, 11];
             $setSvipLevel = array_intersect($svipLevel, $level);
             if ($user['distribut_level'] == 3 && count($setSvipLevel) > 1) {
-                // 拥有代理商等级划分，需要从代理商查询用户的代理商等级
-                $res = (new UsersLogic())->getAgentSvip($user['user_name']);
-                if ($res['status'] == 0) {
-                    return $res;
+                if ($user['svip_level'] == 0) {
+                    // 拥有代理商等级划分，需要从代理商查询用户的代理商等级
+                    $res = (new UsersLogic())->getAgentSvip($user['user_name']);
+                    if ($res['status'] == 0) {
+                        return $res;
+                    }
+                    $useSvipLevel = $res['app_level'];
+                } else {
+                    $useSvipLevel = $user['svip_level'];
                 }
-                $useSvipLevel = $res['app_level'];
                 if (!in_array($useSvipLevel, $setSvipLevel)) {
                     foreach ($setSvipLevel as $lv) {
                         if ($lv == 3) {
@@ -262,12 +270,16 @@ class School
             $svipLevel = [3, 4, 5, 6, 7, 8, 9, 10, 11];
             $setSvipLevel = array_intersect($svipLevel, $level);
             if ($user['distribut_level'] == 3 && count($setSvipLevel) > 1) {
-                // 拥有代理商等级划分，需要从代理商查询用户的代理商等级
-                $res = (new UsersLogic())->getAgentSvip($user['user_name']);
-                if ($res['status'] == 0) {
-                    return $res;
+                if ($user['svip_level'] == 0) {
+                    // 拥有代理商等级划分，需要从代理商查询用户的代理商等级
+                    $res = (new UsersLogic())->getAgentSvip($user['user_name']);
+                    if ($res['status'] == 0) {
+                        return $res;
+                    }
+                    $useSvipLevel = $res['app_level'];
+                } else {
+                    $useSvipLevel = $user['svip_level'];
                 }
-                $useSvipLevel = $res['app_level'];
                 if (!in_array($useSvipLevel, $setSvipLevel)) {
                     foreach ($setSvipLevel as $lv) {
                         if ($lv == 3) {
