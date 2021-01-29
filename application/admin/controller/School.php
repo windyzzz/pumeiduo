@@ -122,6 +122,98 @@ class School extends Base
     }
 
     /**
+     * 用户学习课程列表
+     * @return mixed
+     */
+    public function userCourseList()
+    {
+        $isExport = I('is_export', '');     // 是否导出
+        $where = ['distribut_level' => ['NEQ', 1]];
+        if ($userId = I('user_id', '')) {
+            $where['user_id'] = $userId;
+        }
+        if ($username = I('user_name', '')) {
+            $where['user_name'] = $username;
+        }
+        if ($nickname = I('nickname', '')) {
+            $where['nickname'] = $nickname;
+        }
+        if ($distributeLevel = I('distribute_level')) {
+            $where['distribut_level'] = $distributeLevel;
+        }
+        $userList = M('users')->where($where)->order('user_id DESC')->field('user_id, nickname, user_name, distribut_level, school_credit');
+        if (!$isExport) {
+            // 用户总数
+            $count = M('users')->where($where)->count();
+            $page = new Page($count, 10);
+            // 用户列表
+            $userList = $userList->limit($page->firstRow . ',' . $page->listRows);
+        }
+        $userList = $userList->select();
+        // 学习课程id
+        $courseIds = M('school_article')->where([
+            'learn_type' => ['IN', [1, 2]],
+            'status' => 1,
+        ])->getField('id', true);
+        // svip等级
+        if (cache('svip_level')) {
+            $svipLevel = cache('svip_level');
+        } else {
+            $svipLevel = M('svip_level')->getField('app_level, name', true);
+            cache('svip_level', $svipLevel, 0);
+        }
+        $usersLogic = new UsersLogic();
+        $timeFrom = I('time_from', '') ? strtotime(I('time_from')) : '';
+        $timeTo = I('time_to', '') ? strtotime(I('time_to')) : '';
+        $dataList = [];     // 导出数据
+        foreach ($userList as &$user) {
+            $user['course_num'] = 0;    // 学习课程数量
+            if ($user['distribut_level'] == 3) {
+                $res = $usersLogic->getAgentSvip($user['user_name']);
+                if ($res['status'] == 0) {
+                    $this->error($res['msg']);
+                }
+                $userLevel = $res['app_level'];
+                $user['level_name'] = $svipLevel[$userLevel];
+            } else {
+                $userLevel = $user['distribut_level'];
+                $user['level_name'] = 'VIP';
+            }
+            $userData = [
+                'user_id' => $user['user_id'],
+                'user_level' => $userLevel
+            ];
+            $res = $this->checkUserCourseNum(false, $userData, $courseIds, $timeFrom, $timeTo);
+            $user['course_num'] = $res['course_num'];
+            $dataList[] = [
+                $user['user_id'],
+                $user['nickname'],
+                $user['user_name'],
+                $user['level_name'],
+                $user['course_num'],
+                $user['school_credit']
+            ];
+        }
+        if (!$isExport) {
+            $this->assign('user_id', $userId);
+            $this->assign('user_name', $username);
+            $this->assign('nickname', $nickname);
+            $this->assign('distribute_level', $distributeLevel);
+            $this->assign('time_from', I('time_from', ''));
+            $this->assign('time_to', I('time_to', ''));
+            $this->assign('page', $page);
+            $this->assign('list', $userList);
+            return $this->fetch('user_course_list');
+        } else {
+            // 表头
+            $headList = [
+                '用户ID', '用户昵称', '用户名', '用户等级', '课程数量', '乐活豆数量'
+            ];
+            toCsvExcel($dataList, $headList, 'user_course_list');
+        }
+    }
+
+    /**
      * 用户学习达标列表
      * @return mixed
      */
@@ -187,7 +279,7 @@ class School extends Base
                 'user_id' => $log['user_id'],
                 'user_level' => $userLevel
             ];
-            $res = $this->checkUserCourseNum($user, $courseIds);
+            $res = $this->checkUserCourseNum(true, $user, $courseIds);
             $log['course_num'] = $res['course_num'];
             if ($res['status'] == 1) {
                 $log['is_reach'] = 1;
@@ -228,32 +320,40 @@ class School extends Base
 
     /**
      * 检查用户是否满足课程数量达标
+     * @param bool $isCheck 是否检查达标
      * @param array $user 用户信息
      * @param array $courseIds 学习课程IDs
+     * @param string $timeFrom 学习时间开始
+     * @param string $timeTo 学习时间结束
      * @return array
      */
-    private function checkUserCourseNum($user, $courseIds)
+    private function checkUserCourseNum($isCheck, $user, $courseIds, $timeFrom = '', $timeTo = '')
     {
         $where = [
             'user_id' => $user['user_id'],
             'article_id' => ['IN', $courseIds],
             'status' => 1,
         ];
+        if ($timeFrom && $timeTo) {
+            $where['finish_time'] = ['BETWEEN', [$timeFrom, $timeTo]];
+        }
         // 用户学习课程记录总数
         $userCourseNum = M('user_school_article')->where($where)->group('user_id')->getField('count(article_id) as count');
         $userCourseNum = $userCourseNum ?? 0;
         // 学习规则达标设置
         $return = ['status' => 0, 'course_num' => $userCourseNum];
-        $schoolStandard = cache('school_standard');
-        foreach ($schoolStandard as $v) {
-            if ($v['type'] == 2) {
-                continue;
-            }
-            if ($user['user_level'] == $v['distribute_level']) {
-                if ($userCourseNum >= $v['num']) {
-                    $return['status'] = 1;
+        if ($isCheck) {
+            $schoolStandard = cache('school_standard');
+            foreach ($schoolStandard as $v) {
+                if ($v['type'] == 2) {
+                    continue;
                 }
-                break;
+                if ($user['user_level'] == $v['distribute_level']) {
+                    if ($userCourseNum >= $v['num']) {
+                        $return['status'] = 1;
+                    }
+                    break;
+                }
             }
         }
         return $return;
