@@ -818,10 +818,10 @@ class Tb extends Controller
         if ($data) {
             $logId = Db::name('svip_transfer_log')->add(['data' => $data, 'add_time' => NOW_TIME]);
             $data = json_decode($data, true);
-            if (empty($data['user_name']) || empty($data['level_id'])) {
+            if (empty($data['user_name']) || empty($data['station'])) {
                 return json_encode(['status' => 0, 'msg' => '请传入正确的参数']);
             }
-            $svipLevel = M('svip_level')->where(['agent_level' => $data['level_id']])->find();
+            $svipLevel = M('svip_level')->where(['agent_level' => $data['station']])->find();
             if (empty($svipLevel)) {
                 return json_encode(['status' => 0, 'msg' => '等级ID错误']);
             }
@@ -831,7 +831,7 @@ class Tb extends Controller
             ]);
             if ($res) {
                 M('svip_transfer_log')->where(['id' => $logId])->update(['status' => 1]);
-                return json_encode(['status' => 1]);
+                return json_encode(['status' => 1, 'msg' => '更新成功']);
             } else {
                 return json_encode(['status' => 0, 'msg' => '更新失败']);
             }
