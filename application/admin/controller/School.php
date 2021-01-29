@@ -8,6 +8,7 @@ use app\admin\model\SchoolArticleResource;
 use app\admin\model\SchoolExchange;
 use app\admin\model\SchoolStandard;
 use app\common\logic\OssLogic;
+use app\common\logic\UsersLogic;
 use think\Db;
 use think\Page;
 
@@ -120,7 +121,10 @@ class School extends Base
         return $this->fetch();
     }
 
-
+    /**
+     * 用户学习达标列表
+     * @return mixed
+     */
     public function userStandardList()
     {
         // 学习课程id
@@ -137,44 +141,57 @@ class School extends Base
             ->where(['article_id' => ['IN', $courseIds]])->group('usa.user_id')
             ->field('u.user_id, u.nickname, u.user_name, u.school_credit, u.distribut_level, dl.level_name')
             ->limit($page->firstRow . ',' . $page->listRows)->select();
+        $usersLogic = new UsersLogic();
+        // svip等级
+        if (cache('svip_level')) {
+            $svipLevel = cache('svip_level');
+        } else {
+            $svipLevel = M('svip_level')->getField('app_level, name', true);
+            cache('svip_level', $svipLevel, 0);
+        }
         foreach ($userCourseLog as &$log) {
             $log['is_reach'] = 0;       // 未达标
             $log['course_num'] = 0;     // 用户课程数量
+            if ($log['distribut_level'] == 3) {
+                $res = $usersLogic->getAgentSvip($log['user_name']);
+                if ($res['status'] == 0) {
+                    $this->error($res['msg']);
+                }
+                $userLevel = $res['app_level'];
+                $log['level_name'] = $svipLevel[$userLevel];
+            } else {
+                $userLevel = $log['distribut_level'];
+            }
             // 检查是否达标
             /*
              * 查看课程数量
              */
             $user = [
                 'user_id' => $log['user_id'],
-                'user_name' => $log['user_name'],
-                'distribut_level' => $log['distribut_level']
+                'user_level' => $userLevel
             ];
             $res = $this->checkUserCourseNum($user, $courseIds);
-            if ($res['status'] == -1) {
-                $this->error($res['msg']);
-            }
             $log['course_num'] = $res['course_num'];
-            if ($res['user_level'] > 3) {
-                if (cache('svip_level')) {
-                    $log['level_name'] = cache('svip_level')[$res['user_level']];
-                } else {
-                    $svipLevel = M('svip_level')->getField('app_level, name', true);
-                    cache('svip_level', $svipLevel, 0);
-                    $log['level_name'] = $svipLevel[$res['user_level']];
-                }
-            }
             if ($res['status'] == 1) {
                 $log['is_reach'] = 1;
+            } else {
+                /*
+                 * 查看乐活豆数量
+                 */
+                $user = [
+                    'school_credit' => $log['school_credit'],
+                    'user_level' => $userLevel
+                ];
+                $res = $this->checkUserSchoolCredit($user);
+                if ($res['status'] == 1) {
+                    $log['is_reach'] = 1;
+                }
             }
-            /*
-             * 查看乐活豆数量
-             */
-
         }
-        echo '<pre>';
-        print_r($userCourseLog);
-        echo '</pre>';
-        exit();
+        $this->assign('svip_level', $svipLevel);
+        $this->assign('page', $page);
+        $this->assign('log', $userCourseLog);
+        return $this->fetch('user_standard_list');
     }
 
     /**
@@ -193,35 +210,35 @@ class School extends Base
         // 用户学习课程记录总数
         $userCourseNum = M('user_school_article')->where($where)->group('user_id')->getField('count(article_id) as count');
         $userCourseNum = $userCourseNum ?? 0;
-        $userLevel = $user['distribut_level'];
-        if ($userLevel == 3) {
-            if (cache('svip_level_' . $user['user_id'])) {
-                $userLevel = cache('svip_level_' . $user['user_id']);
-            } else {
-                // 拥有代理商等级划分，需要从代理商查询用户的代理商等级
-                $url = C('SERVER_URL') . '/index.php/Crond/get_user_grade/user_name/' . $user['user_name'];
-                $res = httpRequest($url);
-                if (!$res) {
-                    return ['status' => -1, 'msg' => $user['user_id'] . '代理商等级获取检查失败'];
-                }
-                $res = json_decode($res, true);
-                if (isset($res['status']) && $res['status'] == 1) {
-                    $userLevel = $res['station'] + 2;
-                    cache('svip_level_' . $user['user_id'], $userLevel, 3600);
-                } else {
-                    return ['status' => -1, 'msg' => '代理商等级获取检查失败'];
-                }
-            }
-        }
         // 学习规则达标设置
-        $return = ['status' => 0, 'course_num' => $userCourseNum, 'user_level' => $userLevel];
+        $return = ['status' => 0, 'course_num' => $userCourseNum];
         $schoolStandard = cache('school_standard');
         foreach ($schoolStandard as $v) {
             if ($v['type'] == 2) {
                 continue;
             }
-            if ($userLevel == $v['distribute_level']) {
+            if ($user['user_level'] == $v['distribute_level']) {
                 if ($userCourseNum >= $v['num']) {
+                    $return['status'] = 1;
+                }
+                break;
+            }
+        }
+        return $return;
+    }
+
+
+    private function checkUserSchoolCredit($user)
+    {
+        // 学习规则达标设置
+        $return = ['status' => 0];
+        $schoolStandard = cache('school_standard');
+        foreach ($schoolStandard as $v) {
+            if ($v['type'] == 1) {
+                continue;
+            }
+            if ($user['user_level'] == $v['distribute_level']) {
+                if ($user['school_credit'] >= $v['num']) {
                     $return['status'] = 1;
                 }
                 break;
