@@ -752,7 +752,7 @@ class User extends Base
         // 等级列表
         $level_list = M('distribut_level')->getField('level_id, level_name');
         // 来源
-        $source = ['1' => '微信', '2' => 'PC', '3' => 'APP'];
+        $source = ['1' => '微信', '2' => 'PC', '3' => 'APP', '4' => '小程序'];
         // 用户第一次APP登陆
         $firstAppLogin = M('user_login_log')->where(['is_app_first' => 1])->group('user_id')->getField('user_id, login_time', true);
         // 用户数据
@@ -887,7 +887,7 @@ class User extends Base
         // 等级列表
         $level_list = M('distribut_level')->getField('level_id, level_name');
         // 来源
-        $source = ['1' => '微信', '2' => 'PC', '3' => 'APP'];
+        $source = ['1' => '微信', '2' => 'PC', '3' => 'APP', '4' => '小程序'];
         // 用户第一次APP登陆
         $firstAppLogin = M('user_login_log')->where(['is_app_first' => 1])->group('user_id')->getField('user_id, login_time', true);
         // 用户数据
