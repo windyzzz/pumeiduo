@@ -643,17 +643,24 @@ class Pay
 
     /**
      * 检查使用订单优惠前的订单价格
-     * @param $orderType
+     * @param int $type 2:韩国购；5京畿道直邮
      * @return array
      */
-    public function checkOrderAmount($orderType)
+    public function checkOrderAmount($type)
     {
-        switch ($orderType) {
+        switch ($type) {
             case 2:
                 // 韩国购
-                if ($this->totalNum > 1 && $this->shopPrice >= 1000) {
+                if ($this->totalNum > 1 && $this->orderAmount >= 1000) {
                     return ['status' => 0, 'msg' => '由于海关政策影响，韩国购订单单次下单金额不能超过1000元，请分开下单。'];
                 }
+                break;
+            case 5:
+                // 京畿道直邮
+                if ($this->totalNum > 1 && $this->orderAmount >= 1000) {
+                    return ['status' => 0, 'msg' => '由于海关政策影响，京畿道直邮订单单次下单金额不能超过1000元，请分开下单。'];
+                }
+                break;
         }
         return ['status' => 1];
     }

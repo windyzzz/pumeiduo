@@ -654,6 +654,7 @@ class Tb extends Controller
             'is_supply' => $isSupply,
             'supplier_goods_id' => $goods['supplier_goods_id'],
             'is_abroad' => $goods['is_abroad'],
+            'is_abroad2' => $goods['is_abroad2'],
             'is_free_shipping' => $isSupply
         );
         $goods_data['is_area_show'] = $goods['area3'] == 1 ? 1 : 0; //是否可以显示在本区
