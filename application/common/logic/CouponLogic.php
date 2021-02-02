@@ -173,12 +173,12 @@ class CouponLogic extends Model
         $coupon_list = M('Coupon')->where('type_value', 'LIKE', '%4%')->select();
         if (!empty($coupon_list)) {
             $couponIds = [];
+            $activityLogic = new \app\common\logic\ActivityLogic();
             foreach ($coupon_list as $v) {
                 if ($v['type_value']) {
                     $type_value = explode(',', $v['type_value']);
                     if (in_array(4, $type_value)) {
                         if ($this->check($v)) {
-                            $activityLogic = new \app\common\logic\ActivityLogic();
                             $result = $activityLogic->get_coupon($v['id'], $user_id);
                             if (1 != $result['status']) {
                                 Log::record('新用户：' . $user_id . ' 获取新人优惠券：' . $v['id'] . '失败。原因：' . $result['msg'] . '优惠券ID：' . $v['id']);
@@ -204,15 +204,36 @@ class CouponLogic extends Model
     {
         $coupon_list = M('Coupon')->where('type_value', 'LIKE', '%5%')->select();
         if (!empty($coupon_list)) {
+            $activityLogic = new \app\common\logic\ActivityLogic();
             foreach ($coupon_list as $v) {
                 if ($v['type_value']) {
                     $type_value = explode(',', $v['type_value']);
                     if (in_array(5, $type_value)) {
                         if ($this->check($v)) {
-                            $activityLogic = new \app\common\logic\ActivityLogic();
                             $result = $activityLogic->get_coupon($v['id'], $user_id, $order_id);
                             if (1 != $result['status']) {
                                 Log::record('新VIP：' . $user_id . ' 获取新VIP优惠券：' . $v['id'] . '失败。原因：' . $result['msg'] . '优惠券ID：' . $v['id']);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public function sendFirstSvipUser($user_id)
+    {
+        $coupon_list = M('Coupon')->where('type_value', 'LIKE', '%6%')->select();
+        if (!empty($coupon_list)) {
+            $activityLogic = new \app\common\logic\ActivityLogic();
+            foreach ($coupon_list as $v) {
+                if ($v['type_value']) {
+                    $type_value = explode(',', $v['type_value']);
+                    if (in_array(6, $type_value)) {
+                        if ($this->check($v)) {
+                            $result = $activityLogic->get_coupon($v['id'], $user_id);
+                            if (1 != $result['status']) {
+                                Log::record('SVIP：' . $user_id . ' 获取SVIP优惠券：' . $v['id'] . '失败。原因：' . $result['msg'] . '优惠券ID：' . $v['id']);
                             }
                         }
                     }

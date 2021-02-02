@@ -85,7 +85,7 @@ class LoginApi
                 ];
                 // 登录记录
                 $usersLogic = new UsersLogic();
-                $usersLogic->setUserId($user['user_id']);
+                $usersLogic->setUser($user);
                 $usersLogic->userLogin(3);
             }
             return json($res);
