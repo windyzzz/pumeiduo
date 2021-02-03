@@ -29,8 +29,7 @@ class UpdateUsers20210129 extends Migrator
     public function change()
     {
         $this->table('users')
-            ->addColumn('svip_level', 'integer', ['default' => 0, 'comment' => '代理商的等级标识', 'after' => 'distribut_level'])
-            ->addColumn('svip_name', 'string', ['default' => '', 'comment' => '代理商等级名称', 'after' => 'svip_level'])
+            ->addColumn('svip_level', 'integer', ['default' => 3, 'comment' => '代理商的等级标识', 'after' => 'distribut_level'])
             ->update();
     }
 }

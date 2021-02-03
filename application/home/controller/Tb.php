@@ -831,8 +831,7 @@ class Tb extends Controller
                 return json_encode(['status' => 0, 'msg' => '用户信息不存在']);
             }
             M('users')->where(['user_name' => $data['user_name']])->update([
-                'svip_level' => $svipLevel['app_level'],
-                'svip_name' => $svipLevel['name']
+                'svip_level' => $svipLevel['app_level']
             ]);
             M('svip_transfer_log')->where(['id' => $logId])->update(['status' => 1]);
             return json_encode(['status' => 1, 'msg' => '更新成功']);
