@@ -40,7 +40,9 @@
                     <select name="distribute_level">
                         <option value="">用户等级</option>
                         <option value="2" <if condition="$distribute_level == 2">selected</if> >VIP</option>
-                        <option value="3" <if condition="$distribute_level == 3">selected</if> >SVIP</option>
+                        <volist name="svip_level" id="vo" key="k">
+                            <option value="{$key}" <if condition="$distribute_level == $key">selected</if>>{$vo}</option>
+                        </volist>
                     </select>
                 </div>
                 <div class="sDiv2">

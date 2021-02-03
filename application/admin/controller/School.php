@@ -139,7 +139,11 @@ class School extends Base
             $where['nickname'] = $nickname;
         }
         if ($distributeLevel = I('distribute_level')) {
-            $where['distribut_level'] = $distributeLevel;
+            if ($distributeLevel < 3) {
+                $where['distribut_level'] = $distributeLevel;
+            } else {
+                $where['svip_level'] = $distributeLevel;
+            }
         }
         $userList = M('users')->where($where)->order('user_id DESC')->field('user_id, nickname, user_name, distribut_level, school_credit, svip_level, svip_name');
         if (!$isExport) {
@@ -206,6 +210,7 @@ class School extends Base
             $this->assign('distribute_level', $distributeLevel);
             $this->assign('time_from', I('time_from', ''));
             $this->assign('time_to', I('time_to', ''));
+            $this->assign('svip_level', $svipLevel);
             $this->assign('page', $page);
             $this->assign('list', $userList);
             return $this->fetch('user_course_list');
@@ -234,7 +239,7 @@ class School extends Base
         $userCourseLog = M('user_school_article usa')->join('users u', 'u.user_id = usa.user_id')
             ->join('distribut_level dl', 'dl.level_id = u.distribut_level')
             ->where(['article_id' => ['IN', $courseIds]])->group('usa.user_id')
-            ->field('u.user_id, u.nickname, u.user_name, u.school_credit, u.distribut_level, u.svip_level, u.svip_name dl.level_name');
+            ->field('u.user_id, u.nickname, u.user_name, u.school_credit, u.distribut_level, u.svip_level, u.svip_name level_name');
         if (!$isExport) {
             // 用户学习课程记录总数
             $count = M('user_school_article')->where(['article_id' => ['IN', $courseIds]])->group('user_id')->count();
