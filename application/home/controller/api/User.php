@@ -3697,6 +3697,9 @@ class User extends Base
         if (!$this->isApp) {
             return json(['status' => 0, 'msg' => '抱歉，该区域目前只在APP开放，请下载最新版APP体验']);
         }
+        if (!$this->user) {
+            return json(['status' => 0, 'msg' => '请先登录']);
+        }
         if ($this->user['distribut_level'] != 3) {
             return json(['status' => 0, 'msg' => '抱歉，SVIP才能进入']);
         }

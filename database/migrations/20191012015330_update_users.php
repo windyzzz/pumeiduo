@@ -54,7 +54,7 @@ class UpdateUsers extends Migrator
 
         $this->table('users')
             ->addColumn('reg_source', 'integer', ['default' => 1, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
-                'comment' => '注册来源：1微信 2PC 3APP 4管理后台', 'after' => 'reg_time'])
+                'comment' => '注册来源：1微信 2PC 3APP 4小程序', 'after' => 'reg_time'])
             ->addColumn('last_login_source', 'integer', ['default' => 1, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
                 'comment' => '最后一次登录来源：1微信 2PC 3APP', 'after' => 'last_login'])
             ->update();

@@ -50,7 +50,7 @@ class LoginApi
     }
 
     /**
-     * 授权登录（新）
+     * APP授权登录（新）
      * @return \think\response\Json
      */
     public function loginNew()
@@ -97,7 +97,7 @@ class LoginApi
     }
 
     /**
-     * 授权登录注册
+     * APP授权登录注册
      * @return \think\response\Json
      */
     public function oauthReg()
@@ -161,14 +161,18 @@ class LoginApi
     }
 
     /**
-     * 获取session_key（小程序）
+     * 根据code获取信息（小程序）
      * @return \think\response\Json
      */
-    public function getSessionKey()
+    public function getCodeInfo()
     {
         try {
             $res = $this->class_obj->getCodeInfo();
-            return json(['status' => 1, 'result' => ['session_key' => $res['session_key']]]);
+            $return = [
+                'session_key' => $res['session_key'],
+                'openid' => $res['openid']
+            ];
+            return json(['status' => 1, 'result' => $return]);
         } catch (Exception $e) {
             return json(['status' => 0, 'msg' => $e->getMessage()]);
         }

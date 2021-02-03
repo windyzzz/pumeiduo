@@ -1045,7 +1045,7 @@ class Goods extends Base
                 // 商品pv（不显示佣金）
                 switch ($this->user['distribut_level']) {
                     case 3:
-                        $prop = $goodsInfo['exchange_price'] / $goods['buying_price'];
+                        $prop = $goods['buying_price'] == 0 ? 1 : $goodsInfo['exchange_price'] / $goods['buying_price'];
                         if ($goods['buying_price_pv'] == 0) {
                             $goodsInfo['integral_pv'] = '';
                         } else {
@@ -1089,7 +1089,7 @@ class Goods extends Base
                             if ($goods['integral_pv'] == 0) {
                                 $goodsInfo['integral_pv'] = '';
                             } else {
-                                $goodsInfo['integral_pv'] = bcmul($goods['integral_pv'], ($goodsInfo['exchange_price'] / ($goods['shop_price'] - $goods['exchange_integral'])), 2);
+                                $goodsInfo['integral_pv'] = $goods['shop_price'] == 0 ? $goods['integral_pv'] : bcmul($goods['integral_pv'], ($goodsInfo['exchange_price'] / ($goods['shop_price'] - $goods['exchange_integral'])), 2);
                             }
                             if ($goods['commission'] == 0) {
                                 $goodsInfo['commission'] = '';

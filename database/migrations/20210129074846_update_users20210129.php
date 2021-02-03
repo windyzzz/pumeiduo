@@ -3,7 +3,7 @@
 use think\migration\Migrator;
 use think\migration\db\Column;
 
-class UpdateUsers20201027 extends Migrator
+class UpdateUsers20210129 extends Migrator
 {
     /**
      * Change Method.
@@ -29,10 +29,8 @@ class UpdateUsers20201027 extends Migrator
     public function change()
     {
         $this->table('users')
-            ->changeColumn('reg_source', 'integer', ['default' => 1, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
-                'comment' => '注册来源：1微信 2PC 3APP 4小程序', 'after' => 'reg_time'])
-            ->changeColumn('last_login_source', 'integer', ['default' => 1, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
-                'comment' => '最后一次登录来源：1微信 2PC 3APP 4小程序', 'after' => 'last_login'])
+            ->addColumn('svip_level', 'integer', ['default' => 0, 'comment' => '代理商的等级标识', 'after' => 'distribut_level'])
+            ->addColumn('svip_name', 'string', ['default' => '', 'comment' => '代理商等级名称', 'after' => 'svip_level'])
             ->update();
     }
 }

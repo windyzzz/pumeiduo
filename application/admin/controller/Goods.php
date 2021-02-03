@@ -226,16 +226,19 @@ class Goods extends Base
         if ($goods_nature) {
             switch ($goods_nature) {
                 case 1:
-                    $where = "$where and is_abroad = 0 and is_supply = 0 and is_agent = 0";
+                    $where = "$where and is_abroad = 0 and is_supply = 0 and is_agent = 0 and is_abroad2 = 0";
                     break;
                 case 2:
-                    $where = "$where and is_abroad = 1 and is_supply = 0 and is_agent = 0";
+                    $where = "$where and is_abroad = 1 and is_supply = 0 and is_agent = 0 and is_abroad2 = 0";
                     break;
                 case 3:
-                    $where = "$where and is_abroad = 0 and is_supply = 1 and is_agent = 0";
+                    $where = "$where and is_abroad = 0 and is_supply = 1 and is_agent = 0 and is_abroad2 = 0";
                     break;
                 case 4:
-                    $where = "$where and is_abroad = 0 and is_supply = 0 and is_agent = 1";
+                    $where = "$where and is_abroad = 0 and is_supply = 0 and is_agent = 1 and is_abroad2 = 0";
+                    break;
+                case 5:
+                    $where = "$where and is_abroad = 0 and is_supply = 0 and is_agent = 0 and is_abroad2 = 1";
                     break;
             }
         }
@@ -368,16 +371,19 @@ class Goods extends Base
         if ($goods_nature) {
             switch ($goods_nature) {
                 case 1:
-                    $where = "$where and is_abroad = 0 and is_supply = 0 and is_agent = 0";
+                    $where = "$where and is_abroad = 0 and is_supply = 0 and is_agent = 0 and is_abroad2 = 0";
                     break;
                 case 2:
-                    $where = "$where and is_abroad = 1 and is_supply = 0 and is_agent = 0";
+                    $where = "$where and is_abroad = 1 and is_supply = 0 and is_agent = 0 and is_abroad2 = 0";
                     break;
                 case 3:
-                    $where = "$where and is_abroad = 0 and is_supply = 1 and is_agent = 0";
+                    $where = "$where and is_abroad = 0 and is_supply = 1 and is_agent = 0 and is_abroad2 = 0";
                     break;
                 case 4:
-                    $where = "$where and is_abroad = 0 and is_supply = 0 and is_agent = 1";
+                    $where = "$where and is_abroad = 0 and is_supply = 0 and is_agent = 1 and is_abroad2 = 0";
+                    break;
+                case 5:
+                    $where = "$where and is_abroad = 0 and is_supply = 0 and is_agent = 0 and is_abroad2 = 1";
                     break;
             }
         }
@@ -433,6 +439,8 @@ class Goods extends Base
                     $goodsNature = '供应链';
                 } elseif ($val['is_agent'] == 1) {
                     $goodsNature = '代理商';
+                } elseif ($val['is_abroad2'] == 1) {
+                    $goodsNature = '京畿道直邮';
                 }
                 $val['goods_nature'] = $goodsNature;
                 if (isset($cateInfo[$val['cat_id']])) {
@@ -516,16 +524,19 @@ class Goods extends Base
         if ($goods_nature) {
             switch ($goods_nature) {
                 case 1:
-                    $where = "$where and is_abroad = 0 and is_supply = 0 and is_agent = 0";
+                    $where = "$where and is_abroad = 0 and is_supply = 0 and is_agent = 0 and is_abroad2 = 0";
                     break;
                 case 2:
-                    $where = "$where and is_abroad = 1 and is_supply = 0 and is_agent = 0";
+                    $where = "$where and is_abroad = 1 and is_supply = 0 and is_agent = 0 and is_abroad2 = 0";
                     break;
                 case 3:
-                    $where = "$where and is_abroad = 0 and is_supply = 1 and is_agent = 0";
+                    $where = "$where and is_abroad = 0 and is_supply = 1 and is_agent = 0 and is_abroad2 = 0";
                     break;
                 case 4:
-                    $where = "$where and is_abroad = 0 and is_supply = 0 and is_agent = 1";
+                    $where = "$where and is_abroad = 0 and is_supply = 0 and is_agent = 1 and is_abroad2 = 0";
+                    break;
+                case 5:
+                    $where = "$where and is_abroad = 0 and is_supply = 0 and is_agent = 0 and is_abroad2 = 1";
                     break;
             }
         }
@@ -661,16 +672,19 @@ class Goods extends Base
         if ($goods_nature) {
             switch ($goods_nature) {
                 case 1:
-                    $where = "$where and is_abroad = 0 and is_supply = 0 and is_agent = 0";
+                    $where = "$where and is_abroad = 0 and is_supply = 0 and is_agent = 0 and is_abroad2 = 0";
                     break;
                 case 2:
-                    $where = "$where and is_abroad = 1 and is_supply = 0 and is_agent = 0";
+                    $where = "$where and is_abroad = 1 and is_supply = 0 and is_agent = 0 and is_abroad2 = 0";
                     break;
                 case 3:
-                    $where = "$where and is_abroad = 0 and is_supply = 1 and is_agent = 0";
+                    $where = "$where and is_abroad = 0 and is_supply = 1 and is_agent = 0 and is_abroad2 = 0";
                     break;
                 case 4:
-                    $where = "$where and is_abroad = 0 and is_supply = 0 and is_agent = 1";
+                    $where = "$where and is_abroad = 0 and is_supply = 0 and is_agent = 1 and is_abroad2 = 0";
+                    break;
+                case 5:
+                    $where = "$where and is_abroad = 0 and is_supply = 0 and is_agent = 0 and is_abroad2 = 1";
                     break;
             }
         }
@@ -686,7 +700,7 @@ class Goods extends Base
                 $where .= ' and is_area_show = 1';
                 break;
             case 3:
-                $where .= ' and applet_on_sale = 1';
+                $where .= ' and applet_on_sale = 1 or is_agent = 1';
                 break;
         }
 
@@ -797,6 +811,15 @@ class Goods extends Base
                     'data' => $error,
                 ];
                 $this->ajaxReturn($return_arr);
+            }
+            if ($data['is_agent'] == 1) {
+                $goodsInfo = M('goods')->where(['goods_id' => $goods_id])->field('is_abroad, is_supply')->find();
+                if ($goodsInfo['is_abroad'] == 1) {
+                    $this->ajaxReturn(['status' => -1, 'msg' => '韩国购商品不能设为代理商商品']);
+                }
+                if ($goodsInfo['is_supply'] == 1) {
+                    $this->ajaxReturn(['status' => -1, 'msg' => '供应链商品不能设为代理商商品']);
+                }
             }
             $data['virtual_indate'] = !empty($virtual_indate) ? strtotime($virtual_indate) : 0;
             $data['exchange_integral'] = (1 == $data['is_virtual']) ? 0 : $data['exchange_integral'];

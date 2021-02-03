@@ -3,7 +3,7 @@
 use think\migration\Migrator;
 use think\migration\db\Column;
 
-class UpdateUsers20201027 extends Migrator
+class CreateSvipTransferLog extends Migrator
 {
     /**
      * Change Method.
@@ -28,11 +28,10 @@ class UpdateUsers20201027 extends Migrator
      */
     public function change()
     {
-        $this->table('users')
-            ->changeColumn('reg_source', 'integer', ['default' => 1, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
-                'comment' => '注册来源：1微信 2PC 3APP 4小程序', 'after' => 'reg_time'])
-            ->changeColumn('last_login_source', 'integer', ['default' => 1, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
-                'comment' => '最后一次登录来源：1微信 2PC 3APP 4小程序', 'after' => 'last_login'])
-            ->update();
+        $this->table('svip_transfer_log', ['comment' =>'SVIP等级传输记录表'])
+            ->addColumn('data', 'text')
+            ->addColumn('status', 'integer', ['default' => 0])
+            ->addColumn('add_time', 'integer')
+            ->create();
     }
 }

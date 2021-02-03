@@ -1874,9 +1874,9 @@ class Order extends Base
         }
 
         // 检查下单商品
-        $res = $cartLogic->checkCartGoods($this->user, $cartList['cartList']);
-        if ($res['status'] === -1) {
-            return json($res);
+        $cartGoodsRes = $cartLogic->checkCartGoods($this->user, $cartList['cartList']);
+        if ($cartGoodsRes['status'] === -1) {
+            return json($cartGoodsRes);
         }
         $abroad = [
             'state' => 0,
@@ -1885,12 +1885,12 @@ class Order extends Base
             'id_card_tips' => '',
             'purchase_tips' => '',
         ];
-        $hasAgent = 0;  // 是否拥有代理商商品
-        $orderType = 1; // 圃美多
+        $hasAgent = 0;      // 是否拥有代理商商品
+        $orderType = 1;     // 圃美多
         $canElectronic = 1;
-        switch ($res['status']) {
+        switch ($cartGoodsRes['status']) {
             case 0:
-                return json($res);
+                return json($cartGoodsRes);
             case 2:
                 $orderType = 2; // 韩国购
                 $canElectronic = 0;
@@ -1904,6 +1904,16 @@ class Order extends Base
                 break;
             case 4:
                 $hasAgent = 1;
+                break;
+            case 5:
+                // 京畿道直邮商品
+                $abroad['state'] = 1;
+                // 获取身份证信息
+                $abroad['id_card'] = $this->user['id_cart'] ?? '';
+                $abroad['hide_id_card'] = $this->user['id_cart'] ? hideStr($this->user['id_cart'], 4, 4, 4, '*') : '';
+                $abroad['id_card_tips'] = M('abroad_config')->where(['type' => 'id_card'])->value('content');
+                // 获取韩国购产品购买须知
+                $abroad['purchase_tips'] = M('abroad_config')->where(['type' => 'purchase'])->value('content');
                 break;
         }
 
@@ -1976,9 +1986,9 @@ class Order extends Base
             $payLogic->setUserId($this->user_id);
             // 计算购物车价格
             $payLogic->payCart($cartList['cartList']);
-            // 韩国购检查订单价格
-            if ($orderType == 2) {
-                $res = $payLogic->checkOrderAmount(2);
+            // 检查订单价格
+            if ($cartGoodsRes['status'] == 2 || $cartGoodsRes['status'] == 5) {
+                $res = $payLogic->checkOrderAmount($cartGoodsRes['status']);
                 if ($res['status'] == 0) {
                     return json($res);
                 }
@@ -2385,7 +2395,24 @@ class Order extends Base
                     if ($list['use_integral'] != '0') {
                         $goodsList[$k]['exchange_price'] = bcdiv(bcsub(bcmul($list['goods']['shop_price'], 100), bcmul($list['use_integral'], 100)), 100, 2);
                     } else {
-                        $goodsList[$k]['exchange_price'] = $list['goods']['shop_price'];
+                        if ($goods['is_agent'] == 1) {
+                            // 代理商商品基础价格设置
+                            $goodsList[$k]['shop_price'] = $goods['retail_price'];  // 零售价
+                            $goodsList[$k]['exchange_price'] = $goods['retail_price'];  // 零售价
+                            if ($this->user) {
+                                switch ($this->user['distribut_level']) {
+                                    case 3:
+                                        $goodsList[$k]['exchange_price'] = $goods['buying_price'];  // 进货价
+                                        break;
+                                    default:
+                                        $goodsList[$k]['exchange_price'] = $goods['retail_price'];  // 零售价
+                                }
+                            }
+                        } elseif ($goods['applet_on_sale'] == 1) {
+                            $goodsList[$k]['exchange_price'] = $list['member_goods_price'];
+                        } else {
+                            $goodsList[$k]['exchange_price'] = $list['goods']['shop_price'];
+                        }
                     }
                 }
                 if (isset($list['gift_goods'])) {
@@ -2499,15 +2526,15 @@ class Order extends Base
         }
 
         // 检查下单商品
-        $res = $cartLogic->checkCartGoods($this->user, $cartList['cartList']);
-        if ($res['status'] === -1) {
-            return json($res);
+        $cartGoodsRes = $cartLogic->checkCartGoods($this->user, $cartList['cartList']);
+        if ($cartGoodsRes['status'] === -1) {
+            return json($cartGoodsRes);
         }
         $hasAgent = 0;  // 是否拥有代理商商品
         $orderType = 1; // 圃美多
-        switch ($res['status']) {
+        switch ($cartGoodsRes['status']) {
             case 0:
-                return json($res);
+                return json($cartGoodsRes);
             case 2:
                 $orderType = 2; // 韩国购
                 if (!empty($extraGoods)) {
@@ -2527,6 +2554,12 @@ class Order extends Base
             case 4:
                 $orderType = 4; // 直播
                 $hasAgent = 1;
+                break;
+            case 5:
+                if ($idCard == 0) {
+                    $idCard = M('user_id_card_info')->where(['user_id' => $this->user_id, 'real_name' => $userAddress['consignee']])->value('id_card');
+                    if (empty($idCard)) return json(['status' => 0, 'msg' => '请填写正确的身份证格式']);
+                }
                 break;
         }
         if ($this->isApplet) {
@@ -2548,9 +2581,9 @@ class Order extends Base
             $payLogic->setUserId($this->user_id);   // 设置支付用户ID
             // 计算购物车价格
             $payLogic->payCart($cartList['cartList']);
-            // 韩国购检查订单价格
-            if ($orderType == 2) {
-                $res = $payLogic->checkOrderAmount(2);
+            // 检查订单价格
+            if ($cartGoodsRes['status'] == 2 || $cartGoodsRes['status'] == 5) {
+                $res = $payLogic->checkOrderAmount($cartGoodsRes['status']);
                 if ($res['status'] == 0) {
                     return json($res);
                 }
