@@ -826,16 +826,16 @@ class Tb extends Controller
             if (empty($svipLevel)) {
                 return json_encode(['status' => 0, 'msg' => '等级ID错误']);
             }
-            $res = M('users')->where(['user_name' => $data['user_name']])->update([
+            $user = M('users')->where(['user_name' => $data['user_name']])->find();
+            if (empty($user)) {
+                return json_encode(['status' => 0, 'msg' => '用户信息不存在']);
+            }
+            M('users')->where(['user_name' => $data['user_name']])->update([
                 'svip_level' => $svipLevel['app_level'],
                 'svip_name' => $svipLevel['name']
             ]);
-            if ($res) {
-                M('svip_transfer_log')->where(['id' => $logId])->update(['status' => 1]);
-                return json_encode(['status' => 1, 'msg' => '更新成功']);
-            } else {
-                return json_encode(['status' => 0, 'msg' => '更新失败']);
-            }
+            M('svip_transfer_log')->where(['id' => $logId])->update(['status' => 1]);
+            return json_encode(['status' => 1, 'msg' => '更新成功']);
         }
         return json_encode(['status' => 0, 'msg' => '参数不能为空']);
     }
