@@ -139,13 +139,20 @@ class School extends Base
             $where['nickname'] = $nickname;
         }
         if ($distributeLevel = I('distribute_level')) {
-            if ($distributeLevel < 3) {
-                $where['distribut_level'] = $distributeLevel;
-            } else {
-                $where['svip_level'] = $distributeLevel;
+            switch ($distributeLevel) {
+                case 1:
+                case 2:
+                    $where['distribut_level'] = $distributeLevel;
+                    break;
+                case 3:
+                    $where['distribut_level'] = $distributeLevel;
+                    $where['svip_level'] = $distributeLevel;
+                    break;
+                default:
+                    $where['svip_level'] = $distributeLevel;
             }
         }
-        $userList = M('users')->where($where)->order('user_id DESC')->field('user_id, nickname, user_name, distribut_level, school_credit, svip_level, svip_name');
+        $userList = M('users')->where($where)->order('user_id DESC')->field('user_id, nickname, user_name, distribut_level, school_credit, svip_level');
         if (!$isExport) {
             // 用户总数
             $count = M('users')->where($where)->count();
@@ -172,21 +179,20 @@ class School extends Base
         $dataList = [];     // 导出数据
         foreach ($userList as &$user) {
             $user['course_num'] = 0;    // 学习课程数量
-            if ($user['distribut_level'] == 3) {
-                if ($user['svip_level'] == 0) {
-                    $res = $usersLogic->getAgentSvip($user['user_name']);
-                    if ($res['status'] == 0) {
-                        $this->error($res['msg']);
+            switch ($user['distribut_level']) {
+                case 3:
+                    if ($user['svip_level'] == 0) {
+                        $res = $usersLogic->getAgentSvip($user['user_name']);
+                        if ($res['status'] == 0) {
+                            $this->error($res['msg']);
+                        }
                     }
-                    $userLevel = $res['app_level'];
-                    $user['level_name'] = $svipLevel[$userLevel];
-                } else {
                     $userLevel = $user['svip_level'];
-                    $user['level_name'] = $user['svip_name'];
-                }
-            } else {
-                $userLevel = $user['distribut_level'];
-                $user['level_name'] = 'VIP';
+                    $user['level_name'] = $svipLevel[$userLevel];
+                    break;
+                default:
+                    $userLevel = $user['distribut_level'];
+                    $user['level_name'] = 'VIP';
             }
             $userData = [
                 'user_id' => $user['user_id'],
@@ -239,7 +245,7 @@ class School extends Base
         $userCourseLog = M('user_school_article usa')->join('users u', 'u.user_id = usa.user_id')
             ->join('distribut_level dl', 'dl.level_id = u.distribut_level')
             ->where(['article_id' => ['IN', $courseIds]])->group('usa.user_id')
-            ->field('u.user_id, u.nickname, u.user_name, u.school_credit, u.distribut_level, u.svip_level, u.svip_name level_name');
+            ->field('u.user_id, u.nickname, u.user_name, u.school_credit, u.distribut_level, u.svip_level');
         if (!$isExport) {
             // 用户学习课程记录总数
             $count = M('user_school_article')->where(['article_id' => ['IN', $courseIds]])->group('user_id')->count();
@@ -267,20 +273,25 @@ class School extends Base
             }
             $log['is_reach'] = 0;       // 未达标
             $log['course_num'] = 0;     // 用户课程数量
-            if ($log['distribut_level'] == 3) {
-                if ($log['svip_level'] == 0) {
-                    $res = $usersLogic->getAgentSvip($log['user_name']);
-                    if ($res['status'] == 0) {
-                        $this->error($res['msg']);
+            switch ($log['distribut_level']) {
+                case 3:
+                    if ($log['svip_level'] == 0) {
+                        $res = $usersLogic->getAgentSvip($log['user_name']);
+                        if ($res['status'] == 0) {
+                            $this->error($res['msg']);
+                        }
                     }
-                    $userLevel = $res['app_level'];
-                    $log['level_name'] = $svipLevel[$userLevel];
-                } else {
                     $userLevel = $log['svip_level'];
-                    $log['level_name'] = $log['svip_name'];
-                }
-            } else {
-                $userLevel = $log['distribut_level'];
+                    $log['level_name'] = $svipLevel[$userLevel];
+                    break;
+                case 2:
+                    $userLevel = $log['distribut_level'];
+                    $log['level_name'] = 'VIP';
+                    break;
+                case 1:
+                    $userLevel = $log['distribut_level'];
+                    $log['level_name'] = '普通会员';
+                    break;
             }
             if ($appLevel && $appLevel != $userLevel) {
                 unset($userCourseLog[$k]);
