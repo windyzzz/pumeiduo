@@ -178,7 +178,7 @@ class School extends Base
         $dataList = [];     // 导出数据
         foreach ($userList as &$user) {
             $user['course_num'] = 0;    // 学习课程数量
-            if ($user['svip_level'] == 3) {
+            if ($user['svip_level'] == 0 || $user['svip_level'] == 3) {
                 $userLevel = $user['distribut_level'];
                 $user['level_name'] = $userLevel < 3 ? 'VIP' : 'SVIP';
             } else {
@@ -287,7 +287,7 @@ class School extends Base
             }
             $log['is_reach'] = 0;       // 未达标
             $log['course_num'] = 0;     // 用户课程数量
-            if ($log['svip_level'] == 3) {
+            if ($log['svip_level'] == 0 || $log['svip_level'] == 3) {
                 $userLevel = $log['distribut_level'];
                 switch ($userLevel) {
                     case 1:
