@@ -387,6 +387,7 @@ class Tb extends Controller
             'supplier_order_status' => $order['supplier_order_status'],
             'supplier_pay_status' => $order['supplier_pay_status'],
             'supplier_shipping_status' => $order['supplier_shipping_status'],
+            'is_merge' => $order['is_merge'],
         ];
         M('order')->where(array('order_sn' => $order['order_sn']))->data($data)->save();
         // 更新订单物流信息
