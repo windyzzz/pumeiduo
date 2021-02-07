@@ -1040,6 +1040,7 @@ class Order extends Base
             ->limit("{$page->firstRow},{$page->listRows}")
             ->select();
         $goods_id_arr = get_arr_column($list, 'goods_id');
+        $goodsList = [];
         if (!empty($goods_id_arr)) {
             $goodsList = M('goods')->where('goods_id', 'in', implode(',', $goods_id_arr))->getField('goods_id,goods_name,original_img,shop_price,exchange_integral');
         }
