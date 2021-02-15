@@ -113,10 +113,14 @@ class Report extends Base
                 foreach ($result as $k => $v) {
                     if ($v['re_id'] == 0) {
                         if ($v['member_goods_price'] > 0 || $v['use_integral'] > 0) {
-                            if ($v['use_integral'] > 0) {
-                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['ctax_price'], (bcadd($v['member_goods_price'], $v['use_integral'], 2) / $v['goods_price']), 2), $v['goods_num'], 2), 2);
+                            if ($v['goods_price'] == 0) {
+                                $tmp_c_amout = bcadd($tmp_c_amout, 0, 2);
                             } else {
-                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['stax_price'], ($v['member_goods_price'] / $v['goods_price']), 2), $v['goods_num'], 2), 2);
+                                if ($v['use_integral'] > 0) {
+                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['ctax_price'], (bcadd($v['member_goods_price'], $v['use_integral'], 2) / $v['goods_price']), 2), $v['goods_num'], 2), 2);
+                                } else {
+                                    $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['stax_price'], ($v['member_goods_price'] / $v['goods_price']), 2), $v['goods_num'], 2), 2);
+                                }
                             }
                         }
                     }
@@ -198,10 +202,14 @@ class Report extends Base
                 foreach ($result as $k => $v) {
                     if ($v['re_id'] == 0) {
                         if ($v['member_goods_price'] > 0 || $v['use_integral'] > 0) {
-                            if ($v['use_integral'] > 0) {
-                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['ctax_price'], (bcadd($v['member_goods_price'], $v['use_integral'], 2) / $v['goods_price']), 2), $v['goods_num'], 2), 2);
+                            if ($v['goods_price'] == 0) {
+                                $tmp_c_amout = bcadd($tmp_c_amout, 0, 2);
                             } else {
-                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['stax_price'], ($v['member_goods_price'] / $v['goods_price']), 2), $v['goods_num'], 2), 2);
+                                if ($v['use_integral'] > 0) {
+                                    $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['ctax_price'], (bcadd($v['member_goods_price'], $v['use_integral'], 2) / $v['goods_price']), 2), $v['goods_num'], 2), 2);
+                                } else {
+                                    $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['stax_price'], ($v['member_goods_price'] / $v['goods_price']), 2), $v['goods_num'], 2), 2);
+                                }
                             }
                         }
                     }
@@ -332,10 +340,14 @@ class Report extends Base
                 foreach ($result as $k => $v) {
                     if ($v['re_id'] == 0) {
                         if ($v['member_goods_price'] > 0 || $v['use_integral'] > 0) {
-                            if ($v['use_integral'] > 0) {
-                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['ctax_price'], (bcadd($v['member_goods_price'], $v['use_integral'], 2) / $v['goods_price']), 2), $v['goods_num'], 2), 2);
+                            if ($v['goods_price'] == 0) {
+                                $tmp_c_amout = bcadd($tmp_c_amout, 0, 2);
                             } else {
-                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['stax_price'], ($v['member_goods_price'] / $v['goods_price']), 2), $v['goods_num'], 2), 2);
+                                if ($v['use_integral'] > 0) {
+                                    $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['ctax_price'], (bcadd($v['member_goods_price'], $v['use_integral'], 2) / $v['goods_price']), 2), $v['goods_num'], 2), 2);
+                                } else {
+                                    $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['stax_price'], ($v['member_goods_price'] / $v['goods_price']), 2), $v['goods_num'], 2), 2);
+                                }
                             }
                         }
                     }
@@ -440,10 +452,14 @@ class Report extends Base
                 foreach ($result as $k => $v) {
                     if ($v['re_id'] == 0) {
                         if ($v['member_goods_price'] > 0 || $v['use_integral'] > 0) {
-                            if ($v['use_integral'] > 0) {
-                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['ctax_price'], (bcadd($v['member_goods_price'], $v['use_integral'], 2) / $v['goods_price']), 2), $v['goods_num'], 2), 2);
+                            if ($v['goods_price'] == 0) {
+                                $tmp_c_amout = bcadd($tmp_c_amout, 0, 2);
                             } else {
-                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['stax_price'], ($v['member_goods_price'] / $v['goods_price']), 2), $v['goods_num'], 2), 2);
+                                if ($v['use_integral'] > 0) {
+                                    $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['ctax_price'], (bcadd($v['member_goods_price'], $v['use_integral'], 2) / $v['goods_price']), 2), $v['goods_num'], 2), 2);
+                                } else {
+                                    $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['stax_price'], ($v['member_goods_price'] / $v['goods_price']), 2), $v['goods_num'], 2), 2);
+                                }
                             }
                         }
                     }
@@ -575,10 +591,14 @@ class Report extends Base
                 foreach ($result as $k => $v) {
                     if ($v['re_id'] == 0) {
                         if ($v['member_goods_price'] > 0 || $v['use_integral'] > 0) {
-                            if ($v['use_integral'] > 0) {
-                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['ctax_price'], (bcadd($v['member_goods_price'], $v['use_integral'], 2) / $v['goods_price']), 2), $v['goods_num'], 2), 2);
+                            if ($v['goods_price'] == 0) {
+                                $tmp_c_amout = bcadd($tmp_c_amout, 0, 2);
                             } else {
-                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['stax_price'], ($v['member_goods_price'] / $v['goods_price']), 2), $v['goods_num'], 2), 2);
+                                if ($v['use_integral'] > 0) {
+                                    $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['ctax_price'], (bcadd($v['member_goods_price'], $v['use_integral'], 2) / $v['goods_price']), 2), $v['goods_num'], 2), 2);
+                                } else {
+                                    $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['stax_price'], ($v['member_goods_price'] / $v['goods_price']), 2), $v['goods_num'], 2), 2);
+                                }
                             }
                         }
                     }
@@ -681,10 +701,14 @@ class Report extends Base
                 foreach ($result as $k => $v) {
                     if ($v['re_id'] == 0) {
                         if ($v['member_goods_price'] > 0 || $v['use_integral'] > 0) {
-                            if ($v['use_integral'] > 0) {
-                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['ctax_price'], (bcadd($v['member_goods_price'], $v['use_integral'], 2) / $v['goods_price']), 2), $v['goods_num'], 2), 2);
+                            if ($v['goods_price'] == 0) {
+                                $tmp_c_amout = bcadd($tmp_c_amout, 0, 2);
                             } else {
-                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['stax_price'], ($v['member_goods_price'] / $v['goods_price']), 2), $v['goods_num'], 2), 2);
+                                if ($v['use_integral'] > 0) {
+                                    $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['ctax_price'], (bcadd($v['member_goods_price'], $v['use_integral'], 2) / $v['goods_price']), 2), $v['goods_num'], 2), 2);
+                                } else {
+                                    $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['stax_price'], ($v['member_goods_price'] / $v['goods_price']), 2), $v['goods_num'], 2), 2);
+                                }
                             }
                         }
                     }
