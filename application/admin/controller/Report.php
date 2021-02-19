@@ -53,8 +53,12 @@ class Report extends Base
         }
         $this->assign('today', $today);
 
+        $arr = [];
+        $brr = [];
+        $crr = [];
+        $drr = [];
         $res1 = Db::name('order')
-            ->field(" COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-%m-%d') as gap ")
+            ->field("COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-%m-%d') as gap ")
             ->where(" order_type in(1,3) AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
             ->select();
@@ -89,99 +93,29 @@ class Report extends Base
             }
             $crr[$val['gap']] = $val['amount'];
         }
-        for ($i = $this->begin; $i <= $this->end; $i = $i + 24 * 3600) {
-            $tmp_num = empty($arr[date('Y-m-d', $i)]) ? 0 : $arr[date('Y-m-d', $i)];
-            $tmp_amount = empty($brr[date('Y-m-d', $i)]) ? 0 : $brr[date('Y-m-d', $i)];
-            $tmp_abroad_amount = empty($crr[date('Y-m-d', $i)]) ? 0 : $crr[date('Y-m-d', $i)];
-            $tmp_sign = empty($tmp_num) ? 0 : round($tmp_amount / $tmp_num, 2);
-            $order_arr[] = $tmp_num;
-            $amount_arr[] = $tmp_amount;
-            $sign_arr[] = $tmp_sign;
-            $date = date('Y-m-d', $i);
-            $j = $i + 24 * 3600;
-            //销售不含税价
-            $tmp_c_amout = 0;
-            $result = Db::name('order')
-                ->alias('oi')
-                ->join('order_goods og', 'og.order_id = oi.order_id', 'left')
-                ->join('goods g', 'og.goods_id = g.goods_id', 'left')
-                ->where("oi.add_time >$i AND oi.add_time < $j AND oi.pay_status=1 AND oi.order_status in(1,2,4) ")
-                ->field('oi.order_id, og.rec_id, og.goods_price, og.member_goods_price, og.use_integral, og.re_id, og.goods_num, g.goods_id, g.goods_name, g.ctax_price, g.stax_price, g.zone')
-                ->select();
-            $vip_order_num = 0;
-            if ($result) {
-                foreach ($result as $k => $v) {
-                    if ($v['re_id'] == 0) {
-                        if ($v['member_goods_price'] > 0 || $v['use_integral'] > 0) {
-                            if ($v['goods_price'] == 0) {
-                                $tmp_c_amout = bcadd($tmp_c_amout, 0, 2);
-                            } else {
-                                if ($v['use_integral'] > 0) {
-                                $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['ctax_price'], (bcadd($v['member_goods_price'], $v['use_integral'], 2) / $v['goods_price']), 2), $v['goods_num'], 2), 2);
-                                } else {
-                                    $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['stax_price'], ($v['member_goods_price'] / $v['goods_price']), 2), $v['goods_num'], 2), 2);
-                                }
-                            }
-                        }
-                    }
-                    if ($v['zone'] == 3) {
-                        $vip_order_num++;
-                    }
-                }
-            }
-            $list[] = ['day' => $date, 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'abroad_amount' => $tmp_abroad_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
-            $day[] = $date;
-        }
-        rsort($list);
-        $this->assign('list', $list);
-        $result = ['order' => $order_arr, 'amount' => $amount_arr, 'sign' => $sign_arr, 'time' => $day];
-        $this->assign('result', json_encode($result));
-
-        return $this->fetch();
-    }
-
-    public function exportIndex()
-    {
-        $res1 = Db::name('order')
-            ->field(" COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-%m-%d') as gap ")
-            ->where(" order_type in(1,3) AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+        $res4 = Db::name('order')
+            ->field("COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-%m-%d') as gap ")
+            ->where(" order_type = 4 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
             ->select();
-        foreach ($res1 as $val) {
-            $arr[$val['gap']] = $val['tnum'];
-            $brr[$val['gap']] = $val['amount'];
-        }
-        $res2 = Db::name('order')
-            ->field(" COUNT(*) as tnum, FROM_UNIXTIME(add_time,'%Y-%m-%d') as gap ")
-            ->where(" order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
-            ->group('gap')
-            ->select();
-        foreach ($res2 as $val) {
+        foreach ($res4 as $val) {
             if (isset($arr[$val['gap']])) {
                 $arr[$val['gap']] += $val['tnum'];
             } else {
                 $arr[$val['gap']] = $val['tnum'];
             }
-        }
-        $res3 = Db::name('order o')
-            ->join('order_goods og', 'og.order_id = o.order_id')
-            ->join('goods g', 'g.goods_id = og.goods_id')
-            ->field(" sum(g.cost_price * og.goods_num) as amount, FROM_UNIXTIME(o.add_time,'%Y-%m-%d') as gap ")
-            ->where(" order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
-            ->group('gap')
-            ->select();
-        foreach ($res3 as $val) {
             if (isset($brr[$val['gap']])) {
                 $brr[$val['gap']] += $val['amount'];
             } else {
                 $brr[$val['gap']] = $val['amount'];
             }
-            $crr[$val['gap']] = $val['amount'];
+            $drr[$val['gap']] = $val['amount'];
         }
         for ($i = $this->begin; $i <= $this->end; $i = $i + 24 * 3600) {
             $tmp_num = empty($arr[date('Y-m-d', $i)]) ? 0 : $arr[date('Y-m-d', $i)];
             $tmp_amount = empty($brr[date('Y-m-d', $i)]) ? 0 : $brr[date('Y-m-d', $i)];
             $tmp_abroad_amount = empty($crr[date('Y-m-d', $i)]) ? 0 : $crr[date('Y-m-d', $i)];
+            $tmp_live_amount = empty($drr[date('Y-m-d', $i)]) ? 0 : $drr[date('Y-m-d', $i)];
             $tmp_sign = empty($tmp_num) ? 0 : round($tmp_amount / $tmp_num, 2);
             $order_arr[] = $tmp_num;
             $amount_arr[] = $tmp_amount;
@@ -218,7 +152,119 @@ class Report extends Base
                     }
                 }
             }
-            $list[] = ['day' => $date, 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'abroad_amount' => $tmp_abroad_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
+            $list[] = ['day' => $date, 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'abroad_amount' => $tmp_abroad_amount, 'live_amount' => $tmp_live_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
+            $day[] = $date;
+        }
+        rsort($list);
+        $this->assign('list', $list);
+        $result = ['order' => $order_arr, 'amount' => $amount_arr, 'sign' => $sign_arr, 'time' => $day];
+        $this->assign('result', json_encode($result));
+
+        return $this->fetch();
+    }
+
+    public function exportIndex()
+    {
+        $arr = [];
+        $brr = [];
+        $crr = [];
+        $drr = [];
+        $res1 = Db::name('order')
+            ->field(" COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-%m-%d') as gap ")
+            ->where(" order_type in(1,3) AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->group('gap')
+            ->select();
+        foreach ($res1 as $val) {
+            $arr[$val['gap']] = $val['tnum'];
+            $brr[$val['gap']] = $val['amount'];
+        }
+        $res2 = Db::name('order')
+            ->field(" COUNT(*) as tnum, FROM_UNIXTIME(add_time,'%Y-%m-%d') as gap ")
+            ->where(" order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->group('gap')
+            ->select();
+        foreach ($res2 as $val) {
+            if (isset($arr[$val['gap']])) {
+                $arr[$val['gap']] += $val['tnum'];
+            } else {
+                $arr[$val['gap']] = $val['tnum'];
+            }
+        }
+        $res3 = Db::name('order o')
+            ->join('order_goods og', 'og.order_id = o.order_id')
+            ->join('goods g', 'g.goods_id = og.goods_id')
+            ->field(" sum(g.cost_price * og.goods_num) as amount, FROM_UNIXTIME(o.add_time,'%Y-%m-%d') as gap ")
+            ->where(" order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->group('gap')
+            ->select();
+        foreach ($res3 as $val) {
+            if (isset($brr[$val['gap']])) {
+                $brr[$val['gap']] += $val['amount'];
+            } else {
+                $brr[$val['gap']] = $val['amount'];
+            }
+            $crr[$val['gap']] = $val['amount'];
+        }
+        $res4 = Db::name('order')
+            ->field(" COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-%m-%d') as gap ")
+            ->where(" order_type = 4 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->group('gap')
+            ->select();
+        foreach ($res4 as $val) {
+            if (isset($arr[$val['gap']])) {
+                $arr[$val['gap']] += $val['tnum'];
+            } else {
+                $arr[$val['gap']] = $val['tnum'];
+            }
+            if (isset($brr[$val['gap']])) {
+                $brr[$val['gap']] += $val['amount'];
+            } else {
+                $brr[$val['gap']] = $val['amount'];
+            }
+            $drr[$val['gap']] = $val['amount'];
+        }
+        for ($i = $this->begin; $i <= $this->end; $i = $i + 24 * 3600) {
+            $tmp_num = empty($arr[date('Y-m-d', $i)]) ? 0 : $arr[date('Y-m-d', $i)];
+            $tmp_amount = empty($brr[date('Y-m-d', $i)]) ? 0 : $brr[date('Y-m-d', $i)];
+            $tmp_abroad_amount = empty($crr[date('Y-m-d', $i)]) ? 0 : $crr[date('Y-m-d', $i)];
+            $tmp_live_amount = empty($drr[date('Y-m-d', $i)]) ? 0 : $drr[date('Y-m-d', $i)];
+            $tmp_sign = empty($tmp_num) ? 0 : round($tmp_amount / $tmp_num, 2);
+            $order_arr[] = $tmp_num;
+            $amount_arr[] = $tmp_amount;
+            $sign_arr[] = $tmp_sign;
+            $date = date('Y-m-d', $i);
+            $j = $i + 24 * 3600;
+            //销售不含税价
+            $tmp_c_amout = 0;
+            $result = Db::name('order')
+                ->alias('oi')
+                ->join('order_goods og', 'og.order_id = oi.order_id', 'left')
+                ->join('goods g', 'og.goods_id = g.goods_id', 'left')
+                ->where("oi.add_time >$i AND oi.add_time < $j AND oi.pay_status=1 AND oi.order_status in(1,2,4) ")
+                ->field('oi.order_id, og.rec_id, og.goods_price, og.member_goods_price, og.use_integral, og.re_id, og.goods_num, g.goods_id, g.goods_name, g.ctax_price, g.stax_price, g.zone')
+                ->select();
+            $vip_order_num = 0;
+            if ($result) {
+                foreach ($result as $k => $v) {
+                    if ($v['re_id'] == 0) {
+                        if ($v['member_goods_price'] > 0 || $v['use_integral'] > 0) {
+                            if ($v['goods_price'] == 0) {
+                                $tmp_c_amout = bcadd($tmp_c_amout, 0, 2);
+                            } else {
+                                if ($v['use_integral'] > 0) {
+                                    $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['ctax_price'], (bcadd($v['member_goods_price'], $v['use_integral'], 2) / $v['goods_price']), 2), $v['goods_num'], 2), 2);
+                                } else {
+                                    $tmp_c_amout = bcadd($tmp_c_amout, bcmul(bcmul($v['stax_price'], ($v['member_goods_price'] / $v['goods_price']), 2), $v['goods_num'], 2), 2);
+                                }
+                            }
+                        }
+                    }
+                    if ($v['zone'] == 3) {
+                        $vip_order_num++;
+                    }
+                }
+            }
+            $list[] = ['day' => $date, 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'abroad_amount' => $tmp_abroad_amount, 'live_amount' => $tmp_live_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
             $day[] = $date;
         }
         $strTable = '<table width="500" border="1">';
@@ -228,6 +274,7 @@ class Report extends Base
         $strTable .= '<td style="text-align:left;font-size:12px;" width="100">订单数</td>';
         $strTable .= '<td style="text-align:left;font-size:12px;" width="*">销售总额</td>';
         $strTable .= '<td style="text-align:left;font-size:12px;" width="*">韩国购销售总额（成本价）</td>';
+        $strTable .= '<td style="text-align:left;font-size:12px;" width="*">直播销售总额</td>';
         $strTable .= '<td style="text-align:left;font-size:12px;" width="*">销售不含税价</td>';
         $strTable .= '<td style="text-align:left;font-size:12px;" width="*">客单价</td>';
         $strTable .= '</tr>';
@@ -239,6 +286,7 @@ class Report extends Base
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['order_num'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['amount'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['abroad_amount'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['live_amount'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['c_amount'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['sign'] . '</td>';
                 $strTable .= '</tr>';
@@ -277,8 +325,12 @@ class Report extends Base
         }
         $this->assign('today', $today);
 
+        $arr = [];
+        $brr = [];
+        $crr = [];
+        $drr = [];
         $res1 = Db::name('order')
-            ->field(" COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-%m') as gap ")
+            ->field("COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-%m') as gap ")
             ->where(" order_type in(1,3) AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
             ->select();
@@ -313,6 +365,24 @@ class Report extends Base
             }
             $crr[$val['gap']] = $val['amount'];
         }
+        $res4 = Db::name('order')
+            ->field("COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-%m') as gap ")
+            ->where(" order_type = 4 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->group('gap')
+            ->select();
+        foreach ($res4 as $val) {
+            if (isset($arr[$val['gap']])) {
+                $arr[$val['gap']] += $val['tnum'];
+            } else {
+                $arr[$val['gap']] = $val['tnum'];
+            }
+            if (isset($brr[$val['gap']])) {
+                $brr[$val['gap']] += $val['amount'];
+            } else {
+                $brr[$val['gap']] = $val['amount'];
+            }
+            $drr[$val['gap']] = $val['amount'];
+        }
         for ($i = $this->begin; $i <= $this->end;) {
             $year = date('Y', $i);
             $m = date('m', $i);
@@ -320,6 +390,7 @@ class Report extends Base
             $tmp_num = empty($arr[date('Y-m', $i)]) ? 0 : $arr[date('Y-m', $i)];
             $tmp_amount = empty($brr[date('Y-m', $i)]) ? 0 : $brr[date('Y-m', $i)];
             $tmp_abroad_amount = empty($crr[date('Y-m', $i)]) ? 0 : $crr[date('Y-m', $i)];
+            $tmp_live_amount = empty($drr[date('Y-m', $i)]) ? 0 : $drr[date('Y-m', $i)];
             $tmp_sign = empty($tmp_num) ? 0 : round($tmp_amount / $tmp_num, 2);
             $order_arr[] = $tmp_num;
             $amount_arr[] = $tmp_amount;
@@ -356,7 +427,7 @@ class Report extends Base
                     }
                 }
             }
-            $list[] = ['day' => $date . '-01', 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'abroad_amount' => $tmp_abroad_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + $day_num * 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
+            $list[] = ['day' => $date . '-01', 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'abroad_amount' => $tmp_abroad_amount, 'live_amount' => $tmp_live_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + $day_num * 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
             $day[] = $date;
             $i = $i + $day_num * 24 * 3600;
         }
@@ -389,6 +460,10 @@ class Report extends Base
             $this->end = strtotime('+1 month');
         }
 
+        $arr = [];
+        $brr = [];
+        $crr = [];
+        $drr = [];
         $res1 = Db::name('order')
             ->field(" COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-%m') as gap ")
             ->where(" order_type in(1,3) AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
@@ -425,6 +500,24 @@ class Report extends Base
             }
             $crr[$val['gap']] = $val['amount'];
         }
+        $res4 = Db::name('order')
+            ->field(" COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-%m') as gap ")
+            ->where(" order_type = 4 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->group('gap')
+            ->select();
+        foreach ($res4 as $val) {
+            if (isset($arr[$val['gap']])) {
+                $arr[$val['gap']] += $val['tnum'];
+            } else {
+                $arr[$val['gap']] = $val['tnum'];
+            }
+            if (isset($brr[$val['gap']])) {
+                $brr[$val['gap']] += $val['amount'];
+            } else {
+                $brr[$val['gap']] = $val['amount'];
+            }
+            $drr[$val['gap']] = $val['amount'];
+        }
         for ($i = $this->begin; $i <= $this->end;) {
             $year = date('Y', $i);
             $m = date('m', $i);
@@ -432,6 +525,7 @@ class Report extends Base
             $tmp_num = empty($arr[date('Y-m', $i)]) ? 0 : $arr[date('Y-m', $i)];
             $tmp_amount = empty($brr[date('Y-m', $i)]) ? 0 : $brr[date('Y-m', $i)];
             $tmp_abroad_amount = empty($crr[date('Y-m', $i)]) ? 0 : $crr[date('Y-m', $i)];
+            $tmp_live_amount = empty($drr[date('Y-m', $i)]) ? 0 : $drr[date('Y-m', $i)];
             $tmp_sign = empty($tmp_num) ? 0 : round($tmp_amount / $tmp_num, 2);
             $order_arr[] = $tmp_num;
             $amount_arr[] = $tmp_amount;
@@ -468,7 +562,7 @@ class Report extends Base
                     }
                 }
             }
-            $list[] = ['day' => $date, 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'abroad_amount' => $tmp_abroad_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + $day_num * 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
+            $list[] = ['day' => $date, 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'abroad_amount' => $tmp_abroad_amount, 'live_amount' => $tmp_live_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + $day_num * 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
             $day[] = $date;
             $i = $i + $day_num * 24 * 3600;
         }
@@ -480,6 +574,7 @@ class Report extends Base
         $strTable .= '<td style="text-align:left;font-size:12px;" width="100">订单数</td>';
         $strTable .= '<td style="text-align:left;font-size:12px;" width="*">销售总额</td>';
         $strTable .= '<td style="text-align:left;font-size:12px;" width="*">韩国购销售总额（成本价）</td>';
+        $strTable .= '<td style="text-align:left;font-size:12px;" width="*">直播销售总额</td>';
         $strTable .= '<td style="text-align:left;font-size:12px;" width="*">销售不含税价</td>';
         $strTable .= '<td style="text-align:left;font-size:12px;" width="*">客单价</td>';
         $strTable .= '</tr>';
@@ -491,6 +586,7 @@ class Report extends Base
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['order_num'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['amount'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['abroad_amount'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['live_amount'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['c_amount'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['sign'] . '</td>';
                 $strTable .= '</tr>';
@@ -530,8 +626,12 @@ class Report extends Base
         }
         $this->assign('today', $today);
 
+        $arr = [];
+        $brr = [];
+        $crr = [];
+        $drr = [];
         $res1 = Db::name('order')
-            ->field(" COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-01-01') as gap ")
+            ->field("COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-01-01') as gap ")
             ->where(" order_type in(1,3) AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
             ->select();
@@ -566,10 +666,29 @@ class Report extends Base
             }
             $crr[$val['gap']] = $val['amount'];
         }
+        $res4 = Db::name('order')
+            ->field("COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-01-01') as gap ")
+            ->where(" order_type = 4 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->group('gap')
+            ->select();
+        foreach ($res4 as $val) {
+            if (isset($arr[$val['gap']])) {
+                $arr[$val['gap']] += $val['tnum'];
+            } else {
+                $arr[$val['gap']] = $val['tnum'];
+            }
+            if (isset($brr[$val['gap']])) {
+                $brr[$val['gap']] += $val['amount'];
+            } else {
+                $brr[$val['gap']] = $val['amount'];
+            }
+            $drr[$val['gap']] = $val['amount'];
+        }
         for ($i = $this->begin; $i <= $this->end;) {
             $tmp_num = empty($arr[date('Y-01-01', $i)]) ? 0 : $arr[date('Y-01-01', $i)];
             $tmp_amount = empty($brr[date('Y-01-01', $i)]) ? 0 : $brr[date('Y-01-01', $i)];
             $tmp_abroad_amount = empty($crr[date('Y-01-01', $i)]) ? 0 : $crr[date('Y-01-01', $i)];
+            $tmp_live_amount = empty($drr[date('Y-01-01', $i)]) ? 0 : $drr[date('Y-01-01', $i)];
             $tmp_sign = empty($tmp_num) ? 0 : round($tmp_amount / $tmp_num, 2);
             $order_arr[] = $tmp_num;
             $amount_arr[] = $tmp_amount;
@@ -607,7 +726,7 @@ class Report extends Base
                     }
                 }
             }
-            $list[] = ['day' => $date . '-01-01', 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'abroad_amount' => $tmp_abroad_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + 365 * 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
+            $list[] = ['day' => $date . '-01-01', 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'abroad_amount' => $tmp_abroad_amount, 'live_amount' => $tmp_live_amount, 'sign' => $tmp_sign, 'end' => date('Y-m-d', $i + 365 * 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
             $day[] = $date;
 
             $i = $i + $day_num * 24 * 3600;
@@ -629,7 +748,6 @@ class Report extends Base
     {
         if (I('start_time')) {
             $this->begin = strtotime(date('Y-01-01', $this->begin));
-            $this->end = $this->begin;
             $year = date('Y', $this->end);
             $m = 12;
             $day_num = date('t', strtotime("$year-$m"));
@@ -640,6 +758,10 @@ class Report extends Base
             $this->end = strtotime(date('Y-01-01', $this->end));
         }
 
+        $arr = [];
+        $brr = [];
+        $crr = [];
+        $drr = [];
         $res1 = Db::name('order')
             ->field(" COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-01-01') as gap ")
             ->where(" order_type in(1,3) AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
@@ -676,10 +798,29 @@ class Report extends Base
             }
             $crr[$val['gap']] = $val['amount'];
         }
+        $res4 = Db::name('order')
+            ->field(" COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-01-01') as gap ")
+            ->where(" order_type = 4 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->group('gap')
+            ->select();
+        foreach ($res4 as $val) {
+            if (isset($arr[$val['gap']])) {
+                $arr[$val['gap']] += $val['tnum'];
+            } else {
+                $arr[$val['gap']] = $val['tnum'];
+            }
+            if (isset($brr[$val['gap']])) {
+                $brr[$val['gap']] += $val['amount'];
+            } else {
+                $brr[$val['gap']] = $val['amount'];
+            }
+            $drr[$val['gap']] = $val['amount'];
+        }
         for ($i = $this->begin; $i <= $this->end;) {
             $tmp_num = empty($arr[date('Y-01-01', $i)]) ? 0 : $arr[date('Y-01-01', $i)];
             $tmp_amount = empty($brr[date('Y-01-01', $i)]) ? 0 : $brr[date('Y-01-01', $i)];
             $tmp_abroad_amount = empty($crr[date('Y-01-01', $i)]) ? 0 : $crr[date('Y-01-01', $i)];
+            $tmp_live_amount = empty($drr[date('Y-01-01', $i)]) ? 0 : $drr[date('Y-01-01', $i)];
             $tmp_sign = empty($tmp_num) ? 0 : round($tmp_amount / $tmp_num, 2);
             $order_arr[] = $tmp_num;
             $amount_arr[] = $tmp_amount;
@@ -717,7 +858,7 @@ class Report extends Base
                     }
                 }
             }
-            $list[] = ['day' => $date, 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'abroad_amount' => $tmp_abroad_amount, 'sign' => $tmp_sign, 'end' => date('Y', $i + 365 * 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
+            $list[] = ['day' => $date, 'order_num' => $tmp_num, 'amount' => $tmp_amount, 'abroad_amount' => $tmp_abroad_amount, 'live_amount' => $tmp_live_amount, 'sign' => $tmp_sign, 'end' => date('Y', $i + 365 * 24 * 60 * 60), 'c_amount' => $tmp_c_amout, 'vip_order_num' => $vip_order_num];
             $day[] = $date;
 
             $i = $i + $day_num * 24 * 3600;
@@ -730,6 +871,7 @@ class Report extends Base
         $strTable .= '<td style="text-align:left;font-size:12px;" width="100">订单数</td>';
         $strTable .= '<td style="text-align:left;font-size:12px;" width="*">销售总额</td>';
         $strTable .= '<td style="text-align:left;font-size:12px;" width="*">韩国购销售总额（成本价）</td>';
+        $strTable .= '<td style="text-align:left;font-size:12px;" width="*">直播销售总额</td>';
         $strTable .= '<td style="text-align:left;font-size:12px;" width="*">销售不含税价</td>';
         $strTable .= '<td style="text-align:left;font-size:12px;" width="*">客单价</td>';
         $strTable .= '</tr>';
@@ -741,6 +883,7 @@ class Report extends Base
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['order_num'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['amount'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['abroad_amount'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['live_amount'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['c_amount'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['sign'] . '</td>';
                 $strTable .= '</tr>';
