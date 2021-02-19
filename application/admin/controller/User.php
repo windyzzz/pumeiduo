@@ -736,6 +736,9 @@ class User extends Base
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">累计消费</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">用户状态</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;width:120px;">父级ID</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">一级下线数</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">二级下线数</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">三级下线数</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">手机号</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">余额</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">积分</td>';
@@ -763,6 +766,17 @@ class User extends Base
             $userList = Db::name('users')->where($condition)
                 ->field('user_id, sex, birthday, first_leader, user_name, nickname, distribut_level, mobile, reg_time, reg_source, last_login, last_login_source, user_money, pay_points, user_electronic, is_lock, is_cancel')
                 ->order('user_id')->limit($start, 5000)->select();
+            $user_id_arr = get_arr_column($userList, 'user_id');
+            if (!empty($user_id_arr)) {
+                $first_leader = DB::query('select first_leader,count(1) as count  from __PREFIX__users where first_leader in(' . implode(',', $user_id_arr) . ')  group by first_leader');
+                $first_leader = convert_arr_key($first_leader, 'first_leader');
+
+                $second_leader = DB::query('select second_leader,count(1) as count  from __PREFIX__users where second_leader in(' . implode(',', $user_id_arr) . ')  group by second_leader');
+                $second_leader = convert_arr_key($second_leader, 'second_leader');
+
+                $third_leader = DB::query('select third_leader,count(1) as count  from __PREFIX__users where third_leader in(' . implode(',', $user_id_arr) . ')  group by third_leader');
+                $third_leader = convert_arr_key($third_leader, 'third_leader');
+            }
             if (is_array($userList)) {
                 foreach ($userList as $k => $val) {
                     // 性别
@@ -797,6 +811,9 @@ class User extends Base
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $totalAmount . ' </td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $userStatus . ' </td>';
                     $strTable .= '<td style="text-align:center;font-size:12px;">' . $val['first_leader'] . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $first_leader[$val['user_id']]['count'] ?? 0 . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $second_leader[$val['user_id']]['count'] ?? 0 . '</td>';
+                    $strTable .= '<td style="text-align:left;font-size:12px;">' . $third_leader[$val['user_id']]['count'] ?? 0 . '</td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['mobile'] . '</td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['user_money'] . '</td>';
                     $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['pay_points'] . ' </td>';
@@ -894,10 +911,21 @@ class User extends Base
         $userList = Db::name('users')->where($condition)
             ->field('user_id, sex, birthday, first_leader, user_name, nickname, distribut_level, mobile, reg_time, reg_source, last_login, last_login_source, user_money, pay_points, user_electronic, is_lock, is_cancel')
             ->order($sort_order)->select();
+        $user_id_arr = get_arr_column($userList, 'user_id');
+        if (!empty($user_id_arr)) {
+            $first_leader = DB::query('select first_leader,count(1) as count  from __PREFIX__users where first_leader in(' . implode(',', $user_id_arr) . ')  group by first_leader');
+            $first_leader = convert_arr_key($first_leader, 'first_leader');
+
+            $second_leader = DB::query('select second_leader,count(1) as count  from __PREFIX__users where second_leader in(' . implode(',', $user_id_arr) . ')  group by second_leader');
+            $second_leader = convert_arr_key($second_leader, 'second_leader');
+
+            $third_leader = DB::query('select third_leader,count(1) as count  from __PREFIX__users where third_leader in(' . implode(',', $user_id_arr) . ')  group by third_leader');
+            $third_leader = convert_arr_key($third_leader, 'third_leader');
+        }
         // 表头
         $headList = [
-            '会员ID', '用户名', '会员昵称', '性别', '生日', '会员等级', '累计消费', '用户状态', '父级ID', '手机号',
-            '余额', '积分', '电子币', '注册时间', '注册来源', '首次登陆APP时间', '最后登陆时间', '最后登陆来源'
+            '会员ID', '用户名', '会员昵称', '性别', '生日', '会员等级', '累计消费', '用户状态', '父级ID', '一级下线数', '二级下线数', '二级下线数',
+            '手机号', '余额', '积分', '电子币', '注册时间', '注册来源', '首次登陆APP时间', '最后登陆时间', '最后登陆来源'
         ];
         $dataList = [];
         foreach ($userList as $key => $user) {
@@ -927,6 +955,9 @@ class User extends Base
                 isset($user_total_amount[$user['user_id']]) ? $user_total_amount[$user['user_id']] : "0.00",
                 $userStatus,
                 $user['first_leader'],
+                $first_leader[$user['user_id']]['count'] ?? 0,
+                $second_leader[$user['user_id']]['count'] ?? 0,
+                $third_leader[$user['user_id']]['count'] ?? 0,
                 $user['mobile'],
                 $user['user_money'],
                 $user['pay_points'],
