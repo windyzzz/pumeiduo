@@ -1891,9 +1891,11 @@ class Order extends Base
         $canElectronic = 1;
         switch ($cartGoodsRes['status']) {
             case 0:
+                // 错误提示返回
                 return json($cartGoodsRes);
             case 2:
-                $orderType = 2; // 韩国购
+                // 韩国购商品
+                $orderType = 2;
                 $canElectronic = 0;
                 $abroad['state'] = 1;
                 // 获取身份证信息
@@ -1904,6 +1906,7 @@ class Order extends Base
                 $abroad['purchase_tips'] = M('abroad_config')->where(['type' => 'purchase'])->value('content');
                 break;
             case 4:
+                // 代理商商品
                 $hasAgent = 1;
                 break;
             case 5:
@@ -2535,9 +2538,11 @@ class Order extends Base
         $orderType = 1; // 圃美多
         switch ($cartGoodsRes['status']) {
             case 0:
+                // 错误提示返回
                 return json($cartGoodsRes);
             case 2:
-                $orderType = 2; // 韩国购
+                // 韩国购商品
+                $orderType = 2;
                 if (!empty($extraGoods)) {
                     return json(['status' => 0, 'msg' => '海外购产品无法购买加价购商品']);
                 }
@@ -2550,13 +2555,15 @@ class Order extends Base
                 }
                 break;
             case 3:
-                $orderType = 3; // 供应链
+                // 供应链商品
+                $orderType = 3;
                 break;
             case 4:
-                $orderType = 4; // 直播
+                // 代理商商品
                 $hasAgent = 1;
                 break;
             case 5:
+                // 京畿道直邮商品
                 if ($idCard == 0) {
                     $idCard = M('user_id_card_info')->where(['user_id' => $this->user_id, 'real_name' => $userAddress['consignee']])->value('id_card');
                     if (empty($idCard)) return json(['status' => 0, 'msg' => '请填写正确的身份证格式']);
@@ -2646,6 +2653,9 @@ class Order extends Base
             $placeOrder->setUserAddress($userAddress);
             $placeOrder->setUserNote($userNote);
             $placeOrder->setUserIdCard($idCard);
+            if ($this->isApplet && $cartGoodsRes['status'] == 2) {
+                $placeOrder->isLiveAbroad(1);
+            }
             $placeOrder->setOrderType($orderType);
             $placeOrder->setHasAgent($hasAgent);
             Db::startTrans();

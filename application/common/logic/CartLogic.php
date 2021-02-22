@@ -1807,11 +1807,11 @@ class CartLogic extends Model
      */
     public function checkCartGoods($user, $cartList)
     {
-        $hasPmd = false;
-        $hasAbroad = false;
-        $hasSupply = false;
-        $hasAgent = false;
-        $hasAbroad2 = false;
+        $hasPmd = false;        // 圃美多商品
+        $hasAbroad = false;     // 韩国购商品
+        $hasSupply = false;     // 供应链商品
+        $hasAgent = false;      // 代理商商品
+        $hasAbroad2 = false;    // 京畿道商品
         $vipLevel = [];
         foreach ($cartList as $cart) {
             if ($cart['goods']['zone'] == 3 && $cart['goods']['distribut_id'] > 1) {
