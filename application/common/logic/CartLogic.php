@@ -1863,6 +1863,9 @@ class CartLogic extends Model
         if (($hasPmd && $hasAbroad2) || ($hasSupply && $hasAbroad2)) {
             return ['status' => 0, 'msg' => '京畿道直邮商品请分开结算'];
         }
+        if ($hasAbroad && $hasAbroad2) {
+            return ['status' => 0, 'msg' => '韩国购商品与京畿道直邮商品请分开结算'];
+        }
         if (!$hasPmd && $hasAbroad) {
             return ['status' => 2];
         }
