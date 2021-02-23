@@ -1176,7 +1176,7 @@ class GoodsLogic extends Model
      * @param bool $isApp
      * @return array
      */
-    public function getGoodsList($filter_goods_id, $sort, $page, $user = null)
+    public function getGoodsList($filter_goods_id, $sort, $page, $user = null, $isApp = false)
     {
         $sort['sort'] = 'desc';
         if (!isset($sort['goods_id'])) {
