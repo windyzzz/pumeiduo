@@ -202,7 +202,7 @@ class Order extends Base
             }
             $orderData[$k] = [
                 'type' => 1,
-                'type_value' => '乐活优选',
+                'type_value' => $list['order_type'] == 2 ? '韩国购' : '乐活优选',
                 'order_info' => [
                     'order_type' => $list['order_type'],
                     'order_id' => $list['order_id'],
@@ -2215,7 +2215,7 @@ class Order extends Base
             // 商品列表 赠品列表
             'order_goods' => [
                 'type' => 1,
-                'type_value' => '乐活优选',
+                'type_value' => $orderType == 2 ? '韩国购' : '乐活优选',
                 'goods_list' => array_values($goodsList),
                 'gift_list' => array_values($giftList)
             ],
@@ -2289,6 +2289,22 @@ class Order extends Base
             return json($res);
         } else {
             $cartList['cartList'] = $res['result'];
+        }
+
+        // 检查下单商品
+        $cartGoodsRes = $cartLogic->checkCartGoods($this->user, $cartList['cartList']);
+        if ($cartGoodsRes['status'] === -1) {
+            return json($cartGoodsRes);
+        }
+        $orderType = 1;     // 圃美多
+        switch ($cartGoodsRes['status']) {
+            case 0:
+                // 错误提示返回
+                return json($cartGoodsRes);
+            case 2:
+                // 韩国购商品
+                $orderType = 2;
+                break;
         }
 
         // 初始化数据 商品总额/节约金额/商品总共数量/商品使用积分
@@ -2452,7 +2468,7 @@ class Order extends Base
             // 商品列表 赠品列表
             'order_goods' => [
                 'type' => 1,
-                'type_value' => '乐活优选',
+                'type_value' => $orderType == 2 ? '韩国购' : '乐活优选',
                 'goods_list' => array_values($goodsList),
                 'gift_list' => array_values($giftList)
             ],
