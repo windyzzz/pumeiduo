@@ -59,7 +59,7 @@ class Report extends Base
         $drr = [];
         $res1 = Db::name('order')
             ->field("COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-%m-%d') as gap ")
-            ->where(" order_type in(1,3) AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->where("parent_id = 0 AND order_type in(1,3) AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
             ->select();
         foreach ($res1 as $val) {
@@ -68,7 +68,7 @@ class Report extends Base
         }
         $res2 = Db::name('order')
             ->field(" COUNT(*) as tnum, FROM_UNIXTIME(add_time,'%Y-%m-%d') as gap ")
-            ->where(" order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->where("parent_id = 0 AND order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
             ->select();
         foreach ($res2 as $val) {
@@ -82,7 +82,7 @@ class Report extends Base
             ->join('order_goods og', 'og.order_id = o.order_id')
             ->join('goods g', 'g.goods_id = og.goods_id')
             ->field(" sum(g.cost_price * og.goods_num) as amount, FROM_UNIXTIME(o.add_time,'%Y-%m-%d') as gap ")
-            ->where(" order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->where("parent_id = 0 AND order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
             ->select();
         foreach ($res3 as $val) {
@@ -95,7 +95,7 @@ class Report extends Base
         }
         $res4 = Db::name('order')
             ->field("COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-%m-%d') as gap ")
-            ->where(" order_type = 4 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->where("parent_id = 0 AND order_type = 4 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
             ->select();
         foreach ($res4 as $val) {
@@ -171,7 +171,7 @@ class Report extends Base
         $drr = [];
         $res1 = Db::name('order')
             ->field(" COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-%m-%d') as gap ")
-            ->where(" order_type in(1,3) AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->where("parent_id = 0 AND order_type in(1,3) AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
             ->select();
         foreach ($res1 as $val) {
@@ -180,7 +180,7 @@ class Report extends Base
         }
         $res2 = Db::name('order')
             ->field(" COUNT(*) as tnum, FROM_UNIXTIME(add_time,'%Y-%m-%d') as gap ")
-            ->where(" order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->where("parent_id = 0 AND order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
             ->select();
         foreach ($res2 as $val) {
@@ -194,7 +194,7 @@ class Report extends Base
             ->join('order_goods og', 'og.order_id = o.order_id')
             ->join('goods g', 'g.goods_id = og.goods_id')
             ->field(" sum(g.cost_price * og.goods_num) as amount, FROM_UNIXTIME(o.add_time,'%Y-%m-%d') as gap ")
-            ->where(" order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->where("parent_id = 0 AND order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
             ->select();
         foreach ($res3 as $val) {
@@ -207,7 +207,7 @@ class Report extends Base
         }
         $res4 = Db::name('order')
             ->field(" COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-%m-%d') as gap ")
-            ->where(" order_type = 4 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->where("parent_id = 0 AND order_type = 4 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
             ->select();
         foreach ($res4 as $val) {
@@ -331,7 +331,7 @@ class Report extends Base
         $drr = [];
         $res1 = Db::name('order')
             ->field("COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-%m') as gap ")
-            ->where(" order_type in(1,3) AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->where("parent_id = 0 AND order_type in(1,3) AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
             ->select();
         foreach ($res1 as $val) {
@@ -340,7 +340,7 @@ class Report extends Base
         }
         $res2 = Db::name('order')
             ->field(" COUNT(*) as tnum, FROM_UNIXTIME(add_time,'%Y-%m') as gap ")
-            ->where(" order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->where("parent_id = 0 AND order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
             ->select();
         foreach ($res2 as $val) {
@@ -354,7 +354,7 @@ class Report extends Base
             ->join('order_goods og', 'og.order_id = o.order_id')
             ->join('goods g', 'g.goods_id = og.goods_id')
             ->field(" sum(g.cost_price * og.goods_num) as amount, FROM_UNIXTIME(o.add_time,'%Y-%m') as gap ")
-            ->where(" order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->where("parent_id = 0 AND order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
             ->select();
         foreach ($res3 as $val) {
@@ -367,7 +367,7 @@ class Report extends Base
         }
         $res4 = Db::name('order')
             ->field("COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-%m') as gap ")
-            ->where(" order_type = 4 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->where("parent_id = 0 AND order_type = 4 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
             ->select();
         foreach ($res4 as $val) {
@@ -466,7 +466,7 @@ class Report extends Base
         $drr = [];
         $res1 = Db::name('order')
             ->field(" COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-%m') as gap ")
-            ->where(" order_type in(1,3) AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->where("parent_id = 0 AND order_type in(1,3) AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
             ->select();
         foreach ($res1 as $val) {
@@ -475,7 +475,7 @@ class Report extends Base
         }
         $res2 = Db::name('order')
             ->field(" COUNT(*) as tnum, FROM_UNIXTIME(add_time,'%Y-%m') as gap ")
-            ->where(" order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->where("parent_id = 0 AND order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
             ->select();
         foreach ($res2 as $val) {
@@ -489,7 +489,7 @@ class Report extends Base
             ->join('order_goods og', 'og.order_id = o.order_id')
             ->join('goods g', 'g.goods_id = og.goods_id')
             ->field(" sum(g.cost_price * og.goods_num) as amount, FROM_UNIXTIME(o.add_time,'%Y-%m') as gap ")
-            ->where(" order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->where("parent_id = 0 AND order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
             ->select();
         foreach ($res3 as $val) {
@@ -502,7 +502,7 @@ class Report extends Base
         }
         $res4 = Db::name('order')
             ->field(" COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-%m') as gap ")
-            ->where(" order_type = 4 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->where("parent_id = 0 AND order_type = 4 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
             ->select();
         foreach ($res4 as $val) {
@@ -632,7 +632,7 @@ class Report extends Base
         $drr = [];
         $res1 = Db::name('order')
             ->field("COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-01-01') as gap ")
-            ->where(" order_type in(1,3) AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->where("parent_id = 0 AND order_type in(1,3) AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
             ->select();
         foreach ($res1 as $val) {
@@ -641,7 +641,7 @@ class Report extends Base
         }
         $res2 = Db::name('order')
             ->field(" COUNT(*) as tnum, FROM_UNIXTIME(add_time,'%Y-01-01') as gap ")
-            ->where(" order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->where("parent_id = 0 AND order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
             ->select();
         foreach ($res2 as $val) {
@@ -655,7 +655,7 @@ class Report extends Base
             ->join('order_goods og', 'og.order_id = o.order_id')
             ->join('goods g', 'g.goods_id = og.goods_id')
             ->field(" sum(g.cost_price * og.goods_num) as amount, FROM_UNIXTIME(o.add_time,'%Y-01-01') as gap ")
-            ->where(" order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->where("parent_id = 0 AND order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
             ->select();
         foreach ($res3 as $val) {
@@ -668,7 +668,7 @@ class Report extends Base
         }
         $res4 = Db::name('order')
             ->field("COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-01-01') as gap ")
-            ->where(" order_type = 4 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->where("parent_id = 0 AND order_type = 4 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
             ->select();
         foreach ($res4 as $val) {
@@ -764,7 +764,7 @@ class Report extends Base
         $drr = [];
         $res1 = Db::name('order')
             ->field(" COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-01-01') as gap ")
-            ->where(" order_type in(1,3) AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->where("parent_id = 0 AND order_type in(1,3) AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
             ->select();
         foreach ($res1 as $val) {
@@ -773,7 +773,7 @@ class Report extends Base
         }
         $res2 = Db::name('order')
             ->field(" COUNT(*) as tnum, FROM_UNIXTIME(add_time,'%Y-01-01') as gap ")
-            ->where(" order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->where("parent_id = 0 AND order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
             ->select();
         foreach ($res2 as $val) {
@@ -787,7 +787,7 @@ class Report extends Base
             ->join('order_goods og', 'og.order_id = o.order_id')
             ->join('goods g', 'g.goods_id = og.goods_id')
             ->field(" sum(g.cost_price * og.goods_num) as amount, FROM_UNIXTIME(o.add_time,'%Y-01-01') as gap ")
-            ->where(" order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->where("parent_id = 0 AND order_type = 2 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
             ->select();
         foreach ($res3 as $val) {
@@ -800,7 +800,7 @@ class Report extends Base
         }
         $res4 = Db::name('order')
             ->field(" COUNT(*) as tnum,sum(order_amount + user_electronic) as amount, FROM_UNIXTIME(add_time,'%Y-01-01') as gap ")
-            ->where(" order_type = 4 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
+            ->where("parent_id = 0 AND order_type = 4 AND add_time >$this->begin AND add_time < $this->end AND (pay_status=1 OR pay_code='cod') AND order_status in(1,2,4) ")
             ->group('gap')
             ->select();
         foreach ($res4 as $val) {
@@ -1262,11 +1262,11 @@ class Report extends Base
     public function saleOrder()
     {
         $end_time = strtotime(I('end_time'));
-        $order_where = "o.add_time>$this->begin and o.add_time<$end_time AND (pay_status=1 or pay_code='cod')";  //交易成功的有效订单
+        $order_where = "o.parent_id = 0 and o.add_time>$this->begin and o.add_time<$end_time AND (pay_status=1 or pay_code='cod')";  //交易成功的有效订单
         $order_count = Db::name('order')->alias('o')->where($order_where)->whereIn('order_status', '1,2,4')->count();
         $Page = new Page($order_count, 20);
         $order_list = Db::name('order')->alias('o')
-            ->field('o.order_id,o.order_sn,o.goods_price,o.shipping_price,o.total_amount,o.add_time,u.user_id,u.nickname')
+            ->field('o.order_id,o.order_type,o.order_sn,o.goods_price,o.shipping_price,o.total_amount,o.add_time,u.user_id,u.nickname')
             ->join('users u', 'u.user_id = o.user_id', 'left')
             ->where($order_where)->whereIn('order_status', '1,2,4')
             ->limit($Page->firstRow, $Page->listRows)->select();
