@@ -1834,9 +1834,6 @@ class CartLogic extends Model
                 $hasAgent = true;
             }
         }
-        if ($hasAgent) {
-            return ['status' => 4];
-        }
         if (!empty($vipLevel)) {
             foreach ($vipLevel as $vip) {
                 if ($user['distribut_level'] >= $vip['level']) {
@@ -1857,14 +1854,17 @@ class CartLogic extends Model
                 }
             }
         }
-        if (($hasPmd && $hasAbroad) || ($hasSupply && $hasAbroad)) {
+        if (($hasPmd && $hasAbroad) || ($hasSupply && $hasAbroad) || ($hasAgent && $hasAbroad)) {
             return ['status' => 0, 'msg' => '韩国购商品请分开结算'];
         }
-        if (($hasPmd && $hasAbroad2) || ($hasSupply && $hasAbroad2)) {
+        if (($hasPmd && $hasAbroad2) || ($hasSupply && $hasAbroad2) || ($hasAgent && $hasAbroad2)) {
             return ['status' => 0, 'msg' => '京畿道直邮商品请分开结算'];
         }
         if ($hasAbroad && $hasAbroad2) {
             return ['status' => 0, 'msg' => '韩国购商品与京畿道直邮商品请分开结算'];
+        }
+        if ($hasAgent) {
+            return ['status' => 4];
         }
         if (!$hasPmd && $hasAbroad) {
             return ['status' => 2];
