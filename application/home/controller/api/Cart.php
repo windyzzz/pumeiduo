@@ -1099,7 +1099,8 @@ class Cart extends Base
         if ($this->user_id) {
             $cartLogic = new CartLogic();
             $cartLogic->setUserId($this->user_id);
-            $cartData = $cartLogic->getCartList(0, true, true); // 用户购物车
+            $source = $this->isApp ? 3 : ($this->isApplet ? 4 : 1);
+            $cartData = $cartLogic->getCartList(0, true, true, $source); // 用户购物车
             $cartNum = $cartData['cart_num'];   // 获取用户购物车总数
             $cartData = $cartData['cart_list'];
             // 秒杀活动商品
@@ -1119,7 +1120,7 @@ class Cart extends Base
                 $groupBuyGoods[$item['goods_id'] . '_' . $item['spec_key']] = $item;
             }
             foreach ($cartData as $k => $v) {
-                if (!$this->isApp && ($v['goods']['is_abroad'] == 1 || $v['goods']['is_supply'] == 1)) {
+                if (!$this->isApp && !$this->isApplet && ($v['goods']['is_abroad'] == 1 || $v['goods']['is_supply'] == 1)) {
                     // 不计算韩国购商品与供应链商品
                     $cartNum -= 1;
                     continue;
