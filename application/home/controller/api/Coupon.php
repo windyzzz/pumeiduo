@@ -30,7 +30,7 @@ class Coupon extends Base
             'use_end_time' => array('egt', NOW_TIME),
             'status' => 1,
             'nature' => 1,
-            'type_value' => ['not in', [4, 5]]  // 新用户、新VIP，通过其他方式获取
+            'type_value' => ['not in', [4, 5, 6]]  // 新用户、新VIP、SVIP首次登陆APP，通过其他方式获取
         ];
         $couponData = M('coupon')->where($where)->order('id desc')->select();
         $couponIds = [];
@@ -57,7 +57,6 @@ class Coupon extends Base
                 if (in_array('2', $typeValue)) $target .= 'VIP、';
                 if (in_array('3', $typeValue)) $target .= 'SVIP、';
                 if (in_array('4', $typeValue)) $target .= '新注册会员、';
-                if (in_array('5', $typeValue)) continue;
                 $target = rtrim($target, '、');
                 $target .= '可用';
             }
