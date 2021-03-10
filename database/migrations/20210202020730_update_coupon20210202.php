@@ -29,8 +29,7 @@ class UpdateCoupon20210202 extends Migrator
     public function change()
     {
         $this->table('coupon')
-            ->changeColumn('type_value', 'string', ['default' => 0, 'limit' => 2,
-                'comment' => '发放对象 0：所有人，1：注册会员，2：普卡会员，3：网店会员，4：新用户，5：新VIP，6：SVIP(首次登陆APP)'])
+            ->changeColumn('type_value', 'string', ['default' => 0, 'comment' => '发放对象 0：所有人，1：注册会员，2：普卡会员，3：网店会员，4：新用户，5：新VIP，6：SVIP(首次登陆APP)'])
             ->update();
     }
 }
