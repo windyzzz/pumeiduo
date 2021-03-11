@@ -16,6 +16,7 @@ use app\common\logic\CouponLogic;
 use app\common\logic\FreightLogic;
 use app\common\logic\GoodsLogic;
 use app\common\logic\GoodsPromFactory;
+use app\common\logic\OssLogic;
 use app\common\logic\SearchWordLogic;
 use app\common\logic\Pay as PayLogic;
 use app\common\logic\TaskLogic;
@@ -751,6 +752,12 @@ class Goods extends Base
             }
         }
 
+        $goods['video'] = [
+            'url' => !empty($goods['video']) ? (new OssLogic())::url($goods['video']) : '',
+            'cover' => !empty($goods['video_cover']) ? (new OssLogic())::url($goods['video_cover']) : '',
+            'axis' => $goods['video_axis']
+        ];
+
         // 组装数据
         $result['goods'] = $goods;
         $result['can_cart'] = $zone == 3 ? 0 : 1;   // 能否加入购物车
@@ -820,6 +827,11 @@ class Goods extends Base
             'content_url' => SITE_URL . '/index.php?m=Home&c=api.Goods&a=goodsContent&goods_id=' . $goods['goods_id'], // 内容url请求链接
             'original_img_new' => $originalImg,
             'goods_images_list' => [],
+            'video' => [
+                'url' => !empty($goods['video']) ? (new OssLogic())::url($goods['video']) : '',
+                'cover' => !empty($goods['video_cover']) ? (new OssLogic())::url($goods['video_cover']) : '',
+                'axis' => $goods['video_axis']
+            ],
             'shop_price' => $goods['shop_price'],
             'exchange_integral' => $goods['exchange_integral'],
             'exchange_price' => bcsub($goods['shop_price'], $goods['exchange_integral'], 2),

@@ -199,6 +199,8 @@ var uploader = new plupload.Uploader({
                 console.log(res);
                 $('#video_input').val(res.filename)
             } else if (info.status == 203) {
+                var res = JSON.parse(info.response);
+                console.log(res);
                 alert('上传到OSS成功，但是oss访问用户设置的上传回调服务器失败');
             } else {
                 alert('上传错误:' + info.response);
