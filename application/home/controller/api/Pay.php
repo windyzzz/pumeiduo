@@ -91,7 +91,10 @@ class Pay extends Base
                 break;
             case 'weixinApplet':
                 // 微信小程序
-                $openId = M('users')->where(['user_id' => $this->order['user_id']])->value('openid');
+                $openId = I('openid', '');
+                if (!$openId) {
+                    $openId = M('users')->where(['user_id' => $this->order['user_id']])->value('openid');
+                }
                 if (empty($openId)) {
                     return json(['status' => 0, 'msg' => '用户openid获取失败']);
                 }

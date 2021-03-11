@@ -145,6 +145,7 @@ class Finance extends Base
         if ($type) {
             $where = "$where and type = '$type'";
         } else {
+            $type = 'd';
             $where = "$where and type = 'd'";
         }
 
@@ -158,15 +159,6 @@ class Finance extends Base
             $where = "$where and (user_id = '$user_id')";
         }
 
-        $ids = I('ids');
-
-        if ($ids) {
-            $where = "$where and id IN ($ids)";
-        }
-        // dump($where);
-        // exit;
-        $commission_list = M('CommissionLog')->where($where)->order('id desc')->select();
-
         $strTable = '<table width="500" border="1">';
         $strTable .= '<tr>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">创建日期</td>';
@@ -177,25 +169,45 @@ class Finance extends Base
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">获佣金额</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">店铺金额</td>';
         $strTable .= '</tr>';
-        if (is_array($commission_list)) {
-            foreach ($commission_list as $k => $val) {
-                $finished_at = null;
-                $status = '未领取';
-                if (1 == $val['status']) {
-                    $status = '已领取';
-                    $finished_at = $val['finished_at'];
-                }
-                $strTable .= '<tr>';
-                $strTable .= '<td style="text-align:center;font-size:12px">' . exchangeDate($val['create_time']) . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['total_amount'] . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['real_amount'] . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">' . commission_type($val['status']) . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['order_num'] . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['sale_free'] . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">' . $val['shop_free'] . '</td>';
-                $strTable .= '</tr>';
+
+        $list = M('CommissionLog')->where($where)->order('id desc')->select();
+        foreach ($list as $k => $v) {
+            switch ($type) {
+                case 'd':
+                    $startDate = $v['create_time'];
+                    $endDate = strtotime(date('Y-m-d 23:59:59', $v['create_time']));
+                    break;
+                case 'm':
+                    $endDate = $v['create_time'];
+                    $startDate = strtotime(date('Y-m-t 23:59:59', strtotime(date('Y-m-01 H:i:s', $endDate) . ' -1 month')));
+                    break;
+                case 'y':
+                    $endDate = $v['create_time'];
+                    $startDate = strtotime(date('Y-12-31 23:59:59', strtotime(date('Y-m-d H:i:s', $endDate) . ' -1 year')));
+                    break;
             }
+            // VIP套组分享奖励金额
+            $vipProfit = M('account_log')->where([
+                'user_money' => ['>', 0],
+                'change_time' => ['BETWEEN', [$startDate, $endDate]],
+                'type' => 14
+            ])->sum('user_money');
+
+            $list[$k]['total_amount'] = bcadd($list[$k]['total_amount'], $vipProfit, 2);
+            $list[$k]['real_amount'] = bcadd($list[$k]['real_amount'], $vipProfit, 2);
+            $list[$k]['sale_free'] = bcadd($list[$k]['sale_free'], $vipProfit, 2);
+
+            $strTable .= '<tr>';
+            $strTable .= '<td style="text-align:center;font-size:12px">' . exchangeDate($v['create_time']) . '</td>';
+            $strTable .= '<td style="text-align:left;font-size:12px;">' . bcadd($v['total_amount'], $vipProfit, 2) . '</td>';
+            $strTable .= '<td style="text-align:left;font-size:12px;">' . bcadd($v['real_amount'], $vipProfit, 2) . '</td>';
+            $strTable .= '<td style="text-align:left;font-size:12px;">' . commission_type($v['status']) . '</td>';
+            $strTable .= '<td style="text-align:left;font-size:12px;">' . $v['order_num'] . '</td>';
+            $strTable .= '<td style="text-align:left;font-size:12px;">' . bcadd($v['sale_free'], $vipProfit, 2) . '</td>';
+            $strTable .= '<td style="text-align:left;font-size:12px;">' . $v['shop_free'] . '</td>';
+            $strTable .= '</tr>';
         }
+
         $strTable .= '</table>';
         unset($commission_list);
         downloadExcel($strTable, 'commission_list');

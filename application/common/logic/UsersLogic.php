@@ -27,7 +27,18 @@ use think\Url;
  */
 class UsersLogic extends Model
 {
+    protected $user = [];
     protected $user_id = 0;
+
+    /**
+     * 设置用户信息
+     *
+     * @param $user
+     */
+    public function setUser($user = [])
+    {
+        $this->user = $user;
+    }
 
     /**
      * 设置用户ID.
@@ -327,7 +338,7 @@ class UsersLogic extends Model
             session('is_app', 1);
             session('is_app', 1);
             // 登录记录
-            $this->setUserId($userId);
+            $this->setUser($user_info);
             $this->userLogin(1);
             $result = ['status' => 1, 'msg' => '登录成功'];
         }
@@ -550,11 +561,11 @@ class UsersLogic extends Model
                 ];
                 $userId = M('users')->add($data);
             } else {
-                $user = Db::name('users')->where(['user_id' => $oauthUser['user_id']])->field('head_pic, nickname, mobile, is_lock, is_cancel')->find();
+                $user = Db::name('users')->where(['user_id' => $oauthUser['user_id']])->field('user_id, head_pic, nickname, mobile, is_lock, is_cancel')->find();
                 if ($user['is_lock'] == 1) {
-                    throw new Exception(['status' => 0, 'msg' => '账号已被冻结，请联系客服解除绑定']);
+                    throw new Exception('账号已被冻结，请联系客服解除绑定(ID:' . $user['user_id'] . ')');
                 } elseif ($user['is_cancel'] == 1) {
-                    throw new Exception(['status' => 0, 'msg' => '账号已被注销，请联系客服解除绑定']);
+                    throw new Exception('账号已被注销，请联系客服解除绑定(ID:' . $user['user_id'] . ')');
                 } else {
                     // 更新用户信息
                     $userToken = TokenLogic::setToken();
@@ -631,7 +642,7 @@ class UsersLogic extends Model
             'jpush_tags' => [$user['push_tag']]
         ];
         // 登录记录
-        $this->setUserId($user['user_id']);
+        $this->setUser($user);
         $this->userLogin(4);
         // 更新用户缓存
         (new Redis())->set('user_' . $user['token'], $user, config('REDIS_TIME'));
@@ -648,24 +659,24 @@ class UsersLogic extends Model
             return ['status' => 0, 'msg' => '请填写账号或密码'];
         }
         if (check_mobile($username)) {
-            $users = Db::name('users')->where('is_cancel', 0)->where(['mobile' => $username])->whereOr(['email' => $username]);
+            $users = Db::name('users')->where(['mobile' => $username])->whereOr(['email' => $username]);
         } else {
-            $users = Db::name('users')->where('is_cancel', 0)->where(['user_id' => $username])->whereOr(['email' => $username]);
+            $users = Db::name('users')->where(['user_id' => $username])->whereOr(['email' => $username]);
         }
-        $userData = $users->field('user_id, is_lock')->select(); // 手机号登陆的情况下会有多个账号
+        $userData = $users->field('user_id, is_lock, is_cancel')->select(); // 手机号登陆的情况下会有多个账号
         if (empty($userData)) {
             return ['status' => -1, 'msg' => '账号不存在!'];
         }
         // 检验账号有效性
         $userId = 0;
         foreach ($userData as $user) {
-            if ($user['is_lock'] == 0) {
+            if ($user['is_lock'] == 0 && $user['is_cancel'] == 0) {
                 $userId = $user['user_id'];
                 break;
             }
         }
         if ($userId == 0) {
-            return ['status' => 0, 'msg' => '该账号已被冻结，请联系客服' . tpCache('shop_info.mobile')];
+            return ['status' => 0, 'msg' => '该账号已被冻结或已被注销，请联系客服' . tpCache('shop_info.mobile')];
         }
         $userPassword = Db::name('users')->where('user_id', $userId)->value('password');
         if (systemEncrypt($password) != $userPassword) {
@@ -690,7 +701,7 @@ class UsersLogic extends Model
                 $user = Db::name('users')->where('user_id', $userId)->find();
             }
             // 登录记录
-            $this->setUserId($userId);
+            $this->setUser($user);
             $this->userLogin($source);
             // 检查用户是否是新用户（未有消费记录）
             if (!M('order')->where(['user_id' => $userId])->value('order_id')) {
@@ -1060,7 +1071,7 @@ class UsersLogic extends Model
             $user['last_login_source'] = $map['last_login_source'];
         }
         // 登录记录
-        $this->setUserId($user['user_id']);
+        $this->setUser($user);
         $this->userLogin($source);
 
         return ['status' => 1, 'msg' => '登陆成功', 'result' => $user];
@@ -1232,7 +1243,7 @@ class UsersLogic extends Model
         if ($res['status'] == 2) {
             $user = Db::name('users')->where('user_id', $user_id)->find();
         }
-        $user = [
+        $returnUser = [
             'user_id' => $user['user_id'],
             'sex' => $user['sex'],
             'nickname' => $user['nickname'] == '' ? $user['user_name'] : $user['nickname'],
@@ -1256,9 +1267,9 @@ class UsersLogic extends Model
             'new_profit' => 1
         ];
         // 登录记录
-        $this->setUserId($user['user_id']);
+        $this->setUser($user);
         $this->userLogin($source);
-        return ['status' => 1, 'msg' => '注册成功', 'result' => $user];
+        return ['status' => 1, 'msg' => '注册成功', 'result' => $returnUser];
     }
 
     /**
@@ -1388,7 +1399,7 @@ class UsersLogic extends Model
         if ($res['status'] == 2) {
             $user = Db::name('users')->where('user_id', $user['user_id'])->find();
         }
-        $user = [
+        $returnUser = [
             'user_id' => $user['user_id'],
             'sex' => $user['sex'],
             'nickname' => $user['nickname'],
@@ -1411,10 +1422,10 @@ class UsersLogic extends Model
             'jpush_tags' => [$user['push_tag']]
         ];
         // 登录记录
-        $this->setUserId($user['user_id']);
+        $this->setUser($user);
         $this->userLogin(3);
         Db::commit();
-        return ['status' => 1, 'msg' => '注册成功', 'result' => $user];
+        return ['status' => 1, 'msg' => '注册成功', 'result' => $returnUser];
     }
 
     /**
@@ -1559,7 +1570,7 @@ class UsersLogic extends Model
         if ($res['status'] == 2) {
             $user = Db::name('users')->where('user_id', $user['user_id'])->find();
         }
-        $user = [
+        $returnUser = [
             'user_id' => $user['user_id'],
             'sex' => $user['sex'],
             'nickname' => $user['nickname'],
@@ -1582,10 +1593,10 @@ class UsersLogic extends Model
             'jpush_tags' => [$user['push_tag']]
         ];
         // 登录记录
-        $this->setUserId($user['user_id']);
+        $this->setUser($user);
         $this->userLogin(4);
         Db::commit();
-        return ['status' => 1, 'msg' => '注册成功', 'result' => $user];
+        return ['status' => 1, 'msg' => '注册成功', 'result' => $returnUser];
     }
 
     /*
@@ -1683,9 +1694,9 @@ class UsersLogic extends Model
      */
     public function get_order_goods($order_id)
     {
-        $sql = 'SELECT og.*, g.commission, g.original_img, g.weight, og.use_integral, og.give_integral, rg.status, g.zone FROM __PREFIX__order_goods og 
-                LEFT JOIN __PREFIX__goods g ON g.goods_id = og.goods_id 
-                LEFT JOIN __PREFIX__return_goods rg ON rg.rec_id = og.rec_id 
+        $sql = 'SELECT og.*, g.commission, g.original_img, g.weight, og.use_integral, og.give_integral, rg.status, g.zone FROM __PREFIX__order_goods og
+                LEFT JOIN __PREFIX__goods g ON g.goods_id = og.goods_id
+                LEFT JOIN __PREFIX__return_goods rg ON rg.rec_id = og.rec_id
                 WHERE og.order_id = :order_id';
         $bind['order_id'] = $order_id;
         $goods_list = DB::query($sql, $bind);
@@ -3375,17 +3386,21 @@ class UsersLogic extends Model
     {
         if ($source == 3) {
             // 查看是否是第一次使用APP登陆
-            $isAppFirst = M('user_login_log')->where(['user_id' => $this->user_id, 'source' => 3])->value('id') ? 0 : 1;
+            $isAppFirst = M('user_login_log')->where(['user_id' => $this->user['user_id'], 'source' => 3])->value('id') ? 0 : 1;
+            if ($isAppFirst && $this->user['distribut_level'] == 3) {
+                // SVIP首次登陆APP赠送优惠券
+                (new CouponLogic())->sendFirstSvipUser($this->user['user_id']);
+            }
         }
         M('user_login_log')->add([
-            'user_id' => $this->user_id,
+            'user_id' => $this->user['user_id'],
             'login_ip' => request()->ip(),
             'login_time' => time(),
             'login_date' => date('Y-m-d', time()),
             'source' => $source,
             'is_app_first' => $isAppFirst ?? 0
         ]);
-        M('users')->where(['user_id' => $this->user_id])->update(['last_login_source' => $source]);
+        M('users')->where(['user_id' => $this->user['user_id']])->update(['last_login_source' => $source, 'last_login' => time()]);
     }
 
     /**

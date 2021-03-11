@@ -60,6 +60,9 @@
                     <!--    <th align="left" abbr="article_title" axis="col3" class="">
                             <div style="text-align: center; width: 200px;" class="">主单号</div>
                         </th>-->
+						<th align="left" abbr="article_title" axis="col3" class="">
+							<div style="text-align: center; width: 80px;" class="">订单类型</div>
+						</th>
 						<th align="center" abbr="ac_id" axis="col4" class="">
 							<div style="text-align: center; width: 100px;" class="">用户名</div>
 						</th>
@@ -101,6 +104,17 @@
 							<!--<td align="center" class="">
 								<div style="text-align: center; width: 200px;">{$order.master_order_sn}</div>
 							</td>-->
+							<td align="left" abbr="order_sn" axis="col3" class="">
+								<div style="text-align: center; width: 80px;" class="">
+									<switch name="$order[order_type]">
+										<case value="1"><span style="color: red;">圃美多</span></case>
+										<case value="2"><span style="color: green;">韩国购</span></case>
+										<case value="3"><span style="color: blue;">供应链</span></case>
+										<case value="4"><span style="color: orange;">直播</span></case>
+										<case value="5"><span style="color: hotpink;">商学院兑换</span></case>
+									</switch>
+								</div>
+							</td>
                             <td align="left" class="">
                                 <div style="text-align: center; width: 100px;">{$order.nickname}</div>
                             </td>

@@ -42,6 +42,7 @@ class PlaceOrder
     private $order1Goods = [];
     private $order2Goods = [];
     private $hasAgent = 0;
+    private $isLiveAbroad = 0;
 
     /**
      * PlaceOrder constructor.
@@ -112,6 +113,11 @@ class PlaceOrder
     public function setHasAgent($hasAgent)
     {
         $this->hasAgent = $hasAgent;
+    }
+
+    public function isLiveAbroad($isLiveAbroad)
+    {
+        $this->isLiveAbroad = $isLiveAbroad;
     }
 
     public function addNormalOrder($source = 1)
@@ -266,6 +272,7 @@ class PlaceOrder
             'order_type' => $this->orderType,
             'is_agent' => $this->hasAgent,
             'school_credit' => $this->pay->getSchoolCredit(),
+            'is_live_abroad' => $this->isLiveAbroad
         ];
         if ($this->orderType == 5) {
             // 商学院兑换订单
@@ -342,11 +349,11 @@ class PlaceOrder
         $goodsArr = Db::name('goods')->where('goods_id', 'IN', $goods_ids)->getField('goods_id,cost_price,give_integral,commission,exchange_integral,trade_type,sale_type');
         $orderGoodsAllData = [];
 
-        $promRate = bcsub(1, ($orderDiscounts / $this->pay->getTotalAmount()), 2);
+        $promRate = $this->pay->getTotalAmount() != '0' ? bcsub(1, ($orderDiscounts / $this->pay->getTotalAmount()), 2) : 1;
         $orderPromId = [];  // 订单优惠促销ID
         $orderDiscount = 0.00;  // 订单优惠金额
         foreach ($payList as $payKey => $payItem) {
-            $finalPrice = bcsub($payItem['member_goods_price'], bcmul($payItem['member_goods_price'] / $this->pay->getGoodsPrice(), $orderDiscounts, 2), 2);
+            $finalPrice = $this->pay->getGoodsPrice() == 0 ? $payItem['member_goods_price'] : bcsub($payItem['member_goods_price'], bcmul($payItem['member_goods_price'] / $this->pay->getGoodsPrice(), $orderDiscounts, 2), 2);
             $orderGoodsData = [
                 'order_id' => $this->order['order_id'],         // 订单id
                 'goods_id' => $payItem['goods_id'],             // 商品id

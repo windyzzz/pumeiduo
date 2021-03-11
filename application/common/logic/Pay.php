@@ -205,7 +205,11 @@ class Pay
         $goodsListCount = count($this->payList);
         for ($payCursor = '0'; $payCursor < $goodsListCount; ++$payCursor) {
 //            $this->totalAmount = bcadd($this->totalAmount, $this->payList[$payCursor]['goods_price'], 2);
-            $this->totalAmount = bcadd($this->totalAmount, bcmul($this->payList[$payCursor]['goods_num'], $this->payList[$payCursor]['goods_price'], 2), 2);
+            if ($this->payList[$payCursor]['goods_price'] == 0) {
+                $this->totalAmount = bcadd($this->totalAmount, bcmul($this->payList[$payCursor]['goods_num'], $this->payList[$payCursor]['member_goods_price'], 2), 2);
+            } else {
+                $this->totalAmount = bcadd($this->totalAmount, bcmul($this->payList[$payCursor]['goods_num'], $this->payList[$payCursor]['goods_price'], 2), 2);
+            }
             $goods_fee = $this->payList[$payCursor]['goods_fee'] = bcmul($this->payList[$payCursor]['goods_num'], $this->payList[$payCursor]['member_goods_price'], 2);    // 小计
             $this->goodsPrice = bcadd($this->goodsPrice, $goods_fee, 2); // 商品总价
             $this->shopPrice = bcadd($this->shopPrice, bcmul($this->payList[$payCursor]['goods_num'], $this->payList[$payCursor]['goods']['shop_price'], 2), 2);    // 商品总现金价
@@ -372,7 +376,7 @@ class Pay
         // 订单属性优惠价格（订单优惠 + 优惠券优惠 - 商品优惠）
         $promAmount = bcsub(bcadd($this->orderPromAmount, $this->couponPrice, 2), $this->goodsPromAmount, 2);
         // 优惠比例
-        $promRate = bcsub(1, ($promAmount / $this->totalAmount), 2);
+        $promRate = $this->totalAmount != '0' ? bcsub(1, ($promAmount / $this->totalAmount), 2) : 1;
         if (empty($this->order1Goods) || empty($this->order2Goods)) {
 //            $promAmount = $promAmount;
             $orderPromAmount = $this->orderPromAmount;
@@ -400,7 +404,7 @@ class Pay
             $this->order1['integral'] = $integral;
             $this->order1['order_pv'] = $promRate < 1 ? bcmul($promRate, $goodsPv, 2) : $goodsPv;
 
-            $order1GoodsRate = $this->order1['goods_price'] / bcadd($this->order1['goods_price'], $this->order2['goods_price'], 2);
+            $order1GoodsRate = ($this->order1['goods_price'] == 0 || $this->order2['goods_price'] == 0) ? 1 : $this->order1['goods_price'] / bcadd($this->order1['goods_price'], $this->order2['goods_price'], 2);
             // 子订单的优惠分摊（订单优惠 + 优惠券优惠）
             $this->order1['goods_prom_price'] = $promAmount;
             // 子订单的订单优惠分摊
@@ -428,7 +432,7 @@ class Pay
             $this->order2['integral'] = $integral;
             $this->order2['order_pv'] = $promRate < 1 ? bcmul($promRate, $goodsPv, 2) : $goodsPv;
 
-            $order2GoodsRate = $this->order2['goods_price'] / bcadd($this->order1['goods_price'], $this->order2['goods_price'], 2);
+            $order2GoodsRate = ($this->order1['goods_price'] == 0 || $this->order2['goods_price'] == 0) ? 1 : $this->order2['goods_price'] / bcadd($this->order1['goods_price'], $this->order2['goods_price'], 2);
             // 子订单的优惠分摊（订单优惠 + 优惠券优惠）
             $this->order2['goods_prom_price'] = $promAmount;
             // 子订单的订单优惠分摊
@@ -639,17 +643,24 @@ class Pay
 
     /**
      * 检查使用订单优惠前的订单价格
-     * @param $orderType
+     * @param int $type 2:韩国购；5京畿道直邮
      * @return array
      */
-    public function checkOrderAmount($orderType)
+    public function checkOrderAmount($type)
     {
-        switch ($orderType) {
+        switch ($type) {
             case 2:
                 // 韩国购
-                if ($this->totalNum > 1 && $this->shopPrice >= 1000) {
+                if ($this->totalNum > 1 && $this->orderAmount >= 1000) {
                     return ['status' => 0, 'msg' => '由于海关政策影响，韩国购订单单次下单金额不能超过1000元，请分开下单。'];
                 }
+                break;
+            case 5:
+                // 京畿道直邮
+                if ($this->totalNum > 1 && $this->orderAmount >= 1000) {
+                    return ['status' => 0, 'msg' => '由于海关政策影响，京畿道直邮订单单次下单金额不能超过1000元，请分开下单。'];
+                }
+                break;
         }
         return ['status' => 1];
     }
