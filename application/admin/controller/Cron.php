@@ -1626,8 +1626,9 @@ AND log_id NOT IN
         $orderIds = M('order o1')->join('order o2', 'o2.parent_id = o1.order_id')->where([
             'o1.pay_status' => 1,
             'o2.order_type' => 3,
-            'o2.supplier_order_status' => 0,
-            'o1.add_time' => ['<=', time() - 600]   // 10分钟前的订单
+            'o2.supplier_order_status' => ['IN', [0, 2]],
+            'o1.add_time' => ['<=', time() - 600],   // 10分钟前的订单
+            'o1.order_id' => ['NOT IN', ['18339']]
         ])->getField('o1.order_id', true);
         $orderLogic = new OrderLogic();
         foreach ($orderIds as $orderId) {

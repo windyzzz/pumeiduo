@@ -205,7 +205,7 @@ class Goods extends Base
         if ($goods['brand_id']) {
             $goods['brand_name'] = M('brand')->where('id', $goods['brand_id'])->getField('name');
         }
-        $goods['original_img_new'] = getFullPath($goods['original_img_new']);
+        $goods['original_img_new'] = getFullPath($goods['original_img']);
         $goods_images_list = M('GoodsImages')->where('goods_id', $goods_id)->select(); // 商品 图册
         $goods_images_list_new = M('GoodsImages')->where('goods_id', $goods_id)->select(); // 商品 图册
         if (!empty($goods_images_list_new)) {
@@ -1045,7 +1045,7 @@ class Goods extends Base
                 // 商品pv（不显示佣金）
                 switch ($this->user['distribut_level']) {
                     case 3:
-                        $prop = $goodsInfo['exchange_price'] / $goods['buying_price'];
+                        $prop = $goods['buying_price'] == 0 ? 1 : $goodsInfo['exchange_price'] / $goods['buying_price'];
                         if ($goods['buying_price_pv'] == 0) {
                             $goodsInfo['integral_pv'] = '';
                         } else {
@@ -1089,7 +1089,7 @@ class Goods extends Base
                             if ($goods['integral_pv'] == 0) {
                                 $goodsInfo['integral_pv'] = '';
                             } else {
-                                $goodsInfo['integral_pv'] = bcmul($goods['integral_pv'], ($goodsInfo['exchange_price'] / ($goods['shop_price'] - $goods['exchange_integral'])), 2);
+                                $goodsInfo['integral_pv'] = $goods['shop_price'] == 0 ? $goods['integral_pv'] : bcmul($goods['integral_pv'], ($goodsInfo['exchange_price'] / ($goods['shop_price'] - $goods['exchange_integral'])), 2);
                             }
                             if ($goods['commission'] == 0) {
                                 $goodsInfo['commission'] = '';
@@ -1918,6 +1918,10 @@ class Goods extends Base
         if (!$this->isApp) {
             $goods_where['is_abroad'] = 0;
             $goods_where['is_supply'] = 0;
+        } elseif ($this->isApplet) {
+            $goods_where['applet_on_sale'] = 1;
+        } else {
+            $goods_where['is_agent'] = 0;
         }
         $filter_goods_id = Db::name('goods')->where($goods_where)->cache(true)->getField('goods_id', true);
 
@@ -2345,6 +2349,10 @@ class Goods extends Base
             if (!$this->isApp) {
                 $where['g.is_abroad'] = 0;
                 $where['g.is_supply'] = 0;
+            } elseif ($this->isApplet) {
+                $where['applet_on_sale'] = 1;
+            } else {
+                $where['is_agent'] = 0;
             }
             $filter_goods_id = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
                 ->join('goods g', 'g.goods_id = gtg.goods_id')
@@ -2377,6 +2385,10 @@ class Goods extends Base
                 if (!$this->isApp) {
                     $where['is_abroad'] = 0;
                     $where['is_supply'] = 0;
+                } elseif ($this->isApplet) {
+                    $where['applet_on_sale'] = 1;
+                } else {
+                    $where['is_agent'] = 0;
                 }
                 $filter_goods_id = Db::name('goods')->where($where)->getField('goods_id', true);
                 $filter_goods_id = array_unique($filter_goods_id);
@@ -2446,6 +2458,10 @@ class Goods extends Base
         if (!$this->isApp) {
             $where['is_abroad'] = 0;
             $where['is_supply'] = 0;
+        } elseif ($this->isApplet) {
+            $where['applet_on_sale'] = 1;
+        } else {
+            $where['is_agent'] = 0;
         }
         $filter_goods_id = M('goods')->where($where)->getField('goods_id', true);
         $filter_goods_id = array_unique($filter_goods_id);
@@ -2495,6 +2511,10 @@ class Goods extends Base
         if (!$this->isApp) {
             $where['is_abroad'] = 0;
             $where['is_supply'] = 0;
+        } elseif ($this->isApplet) {
+            $where['applet_on_sale'] = 1;
+        } else {
+            $where['is_agent'] = 0;
         }
         $filter_goods_id = M('goods')->where($where)->getField('goods_id', true);
         $filter_goods_id = array_unique($filter_goods_id);

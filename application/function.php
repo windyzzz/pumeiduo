@@ -1951,7 +1951,7 @@ function getFullPath($path)
 function simplifyPath($path)
 {
     switch ($_SERVER['SERVER_ADDR']) {
-        case '61.238.101.139':
+        case '61.244.8.227':
             // 测试
             $domain = 'test.pumeiduo.com/';
             break;
@@ -1962,6 +1962,9 @@ function simplifyPath($path)
         default:
             // 本地
             $domain = 'pumeiduo.server/';
+    }
+    if (strpos($path, 'pumeiduo.com/index.php')) {
+        $domain = $domain . 'index.php/';
     }
     if (!strrpos($path, $domain)) {
         return false;

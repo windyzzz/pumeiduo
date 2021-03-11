@@ -25,7 +25,7 @@ class Tb extends Controller
         $where = array(
             'status' => 0
         );
-        $tb = M('tb')->where($where)->order('add_time asc')->limit(10)->select();
+        $tb = M('tb')->where($where)->order('add_time asc')->limit(50)->select();
 
         if ($tb) {
             include_once "plugins/Tb.php";
@@ -207,6 +207,7 @@ class Tb extends Controller
             'supplier_order_sn' => $order['supplier_order_sn'],
             'supplier_order_status' => $order['supplier_order_status'],
             'school_credit' => $order['school_credit'],
+            'is_live_abroad' => $order['is_live_abroad'],
         );
         //$user = get_user_info($order['user_id'],0,'','user_name,true_name,mobile');
         $delivery_record = M('delivery_doc')->where('order_id=' . $order_id)->order('id desc')->limit(1)->find();
@@ -492,9 +493,16 @@ class Tb extends Controller
 
     function save_stock($goods)
     {
-        $isSupply = M('goods')->where(array('goods_sn' => $goods['goods_sn']))->value('is_supply');
-        if ($isSupply == 1) {
+        $goods_info = M('goods')->field('goods_id, trade_type, is_supply')->where(array('goods_sn' => $goods['goods_sn']))->find();
+        if ($goods_info['is_supply'] == 1) {
             return true;
+        }
+
+        // 查看商品的订单是否正在同步中
+        $res = M('order_goods og')->join('tb', 'tb.from_id = og.order_id')
+            ->where(['og.goods_id' => $goods_info['goods_id'], 'tb.type' => 6, 'tb.status' => 0])->value('tb.id');
+        if ($res) {
+            return '需要等待APP商品订单同步完毕';
         }
 
         $spec_goods_price = !empty($goods['spec_goods_price']) ? $goods['spec_goods_price'] : '';
@@ -509,8 +517,6 @@ class Tb extends Controller
             }
         } else {
             //一键代发产品  获取子规格
-            $goods_info = M('goods')->field('trade_type,goods_id')->where(array('goods_sn' => $goods['goods_sn']))->find();
-
             if ($goods_info['trade_type'] == 2) {
                 $spec_goods_price = M('spec_goods_price')->where(array('goods_id' => $goods_info['goods_id']))->field('item_id')->order('item_id asc')->select();
 
@@ -649,6 +655,7 @@ class Tb extends Controller
             'is_supply' => $isSupply,
             'supplier_goods_id' => $goods['supplier_goods_id'],
             'is_abroad' => $goods['is_abroad'],
+            'is_abroad2' => $goods['is_abroad2'],
             'is_free_shipping' => $isSupply
         );
         $goods_data['is_area_show'] = $goods['area3'] == 1 ? 1 : 0; //是否可以显示在本区
@@ -803,4 +810,33 @@ class Tb extends Controller
         return true;
     }
 
+    /**
+     * 更新用户代理商等级
+     * @return false|string
+     */
+    function save_user_svip()
+    {
+        $data = $_POST['result'];
+        if ($data) {
+            $logId = Db::name('svip_transfer_log')->add(['data' => $data, 'add_time' => NOW_TIME]);
+            $data = json_decode($data, true);
+            if (empty($data['user_name']) || empty($data['station'])) {
+                return json_encode(['status' => 0, 'msg' => '请传入正确的参数']);
+            }
+            $svipLevel = M('svip_level')->where(['agent_level' => $data['station']])->find();
+            if (empty($svipLevel)) {
+                return json_encode(['status' => 0, 'msg' => '等级ID错误']);
+            }
+            $user = M('users')->where(['user_name' => $data['user_name']])->find();
+            if (empty($user)) {
+                return json_encode(['status' => 0, 'msg' => '用户信息不存在']);
+            }
+            M('users')->where(['user_name' => $data['user_name']])->update([
+                'svip_level' => $svipLevel['app_level']
+            ]);
+            M('svip_transfer_log')->where(['id' => $logId])->update(['status' => 1]);
+            return json_encode(['status' => 1, 'msg' => '更新成功']);
+        }
+        return json_encode(['status' => 0, 'msg' => '参数不能为空']);
+    }
 }
