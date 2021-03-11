@@ -1951,7 +1951,7 @@ function getFullPath($path)
 function simplifyPath($path)
 {
     switch ($_SERVER['SERVER_ADDR']) {
-        case '61.244.8.79':
+        case '61.244.8.227':
             // 测试
             $domain = 'test.pumeiduo.com/';
             break;

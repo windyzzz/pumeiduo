@@ -33,7 +33,7 @@ Class Tb
     function get_url($to_system)
     {
         // 测试连接
-        $test_ip = '61.244.8.79';
+        $test_ip = '61.244.8.227';
         $test_url_arr = array(
             1 => 'http://bestputest.lohas211.com/index.php/Tb/get_system',
             2 => '',
