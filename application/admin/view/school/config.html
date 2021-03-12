@@ -65,10 +65,10 @@
                     <label>选择跳转文章（当前热点）</label>
                 </dt>
                 <dd class="opt">
-                    <select name="popup[content][target_id]" class="small form-control">
+                    <select name="popup[content][article_id]" class="small form-control">
                         <option value="0">请选择跳转文章</option>
                         <foreach name="article_list" item="v" key="k">
-                            <option value="{$v[id]}" <if condition="isset($config[popup]) && $config[popup][content][target_id] == $v[id]"> selected </if>>ID{$v.id}：{$v.title}</option>
+                            <option value="{$v[id]}" <if condition="isset($config[popup]) && $config[popup][content][article_id] == $v[id]"> selected </if>>ID{$v.id}：{$v.title}</option>
                         </foreach>
                     </select>
                 </dd>

@@ -79,6 +79,7 @@ class School extends Base
                             $url = 'video:' . $v['url']['video'] . ',video_cover:' . $videoCover['path'] . ',video_axis:' . $videoCover['axis'];
                         }
                     }
+                    $v['name'] = '弹窗跳转';
                     $v['url'] = $url;
                     $v['content'] = rtrim($content, ',');
                 }

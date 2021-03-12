@@ -414,6 +414,50 @@ class School
     }
 
     /**
+     * 获取弹窗通知
+     * @return array
+     */
+    public function getPopup()
+    {
+        $return = [
+            'is_open' => 0,
+            'video' => [
+                'url' => '',
+                'cover' => '',
+                'axis' => '1',
+            ],
+            'article_id' => ''
+        ];
+        $popupConfig = M('school_config')->where(['type' => 'popup'])->find();
+        if (!$popupConfig) {
+            return $return;
+        }
+        $content = explode(',', $popupConfig['content']);
+        $popupConfig['content'] = [];
+        foreach ($content as $value) {
+            $key = substr($value, 0, strrpos($value, ':'));
+            $value = substr($value, strrpos($value, ':') + 1);
+            $popupConfig['content'][$key] = $value;
+        }
+        if ($popupConfig['content']['is_open'] == 0) {
+            return $return;
+        }
+        $url = explode(',', $popupConfig['url']);
+        $popupConfig['url'] = [];
+        foreach ($url as $value) {
+            $key = substr($value, 0, strrpos($value, ':'));
+            $value = substr($value, strrpos($value, ':') + 1);
+            $popupConfig['url'][$key] = $key != 'video_axis' && $value ? $this->ossClient::url($value) : $value;
+        }
+        $return['is_open'] = 1;
+        $return['article_id'] = $popupConfig['content']['article_id'];
+        $return['video']['url'] = $popupConfig['url']['video'];
+        $return['video']['cover'] = $popupConfig['url']['video_cover'];
+        $return['video']['axis'] = $popupConfig['url']['video_axis'];
+        return $return;
+    }
+
+    /**
      * 获取轮播图
      * @param int $moduleId
      * @return array

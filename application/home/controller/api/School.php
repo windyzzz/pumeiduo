@@ -17,6 +17,16 @@ class School extends Base
     }
 
     /**
+     * 弹窗通知
+     * @return \think\response\Json
+     */
+    public function popup()
+    {
+        $data = $this->logic->getPopup();
+        return json(['status' => 1, 'msg' => '', 'result' => $data]);
+    }
+
+    /**
      * 轮播图列表
      * @return \think\response\Json
      */
