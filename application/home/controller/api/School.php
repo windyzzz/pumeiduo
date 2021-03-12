@@ -87,7 +87,8 @@ class School extends Base
             'status' => I('status', ''),
             'is_recommend' => I('is_recommend', ''),
             'is_integral' => I('is_integral', ''),
-            'distribute_level' => I('level', '')
+            'distribute_level' => I('level', ''),
+            'keyword' => I('keyword', '')
         ];
         if (!empty($param['module_type']) && empty($param['class_id']) && empty($param['is_recommend'])) {
             // 查找模块下第一个分类

@@ -54,11 +54,29 @@ class School
             $level = implode(',', $level);
             $where['sa.distribute_level'] = $level;
         }
+        // 搜索词
+        if (!empty($param['keyword'])) {
+            $resourceArticleIds = M('school_article_resource')->getField('article_id', true);
+            $where['sa.id'] = ['NOT IN', $resourceArticleIds];
+        }
         if (count($where) == 1) {
             // 防止前端没有传参
             $where['sa.class_id'] = 1;
         }
         return $where;
+    }
+
+
+    private function articleWhereOr($param)
+    {
+        $whereOr = [];
+        // 搜索词
+        if (!empty($param['keyword'])) {
+            $param['keyword'] = htmlspecialchars_decode($param['keyword']);
+            $whereOr['sa.title'] = ['LIKE', '%' . $param['keyword'] . '%'];
+            $whereOr['sa.content'] = ['LIKE', '%' . $param['keyword'] . '%'];
+        }
+        return $whereOr;
     }
 
     /**
@@ -528,15 +546,28 @@ class School
         }
         // 搜索条件
         $where = $this->articleWhere($param);
+        $whereOr = $this->articleWhereOr($param);
         // 排序
         $sortParam = $this->articleSort($param);
         $sort = $sortParam['sort'];
         $sortSet = $sortParam['sort_set'];
         // 数据数量
-        $count = M('school_article sa')->where($where)->count();
+        $count = M('school_article sa')->where($where);
+        if (!empty($whereOr)) {
+            $count = $count->where(function ($query) use ($whereOr) {
+                $query->whereOr($whereOr);
+            });
+        }
+        $count = $count->count();
         // 查询数据
         $page = new Page($count, $limit);
-        $article = M('school_article sa')->where($where)->order($sort)->limit($page->firstRow . ',' . $page->listRows)->select();
+        $article = M('school_article sa')->where($where);
+        if (!empty($whereOr)) {
+            $article = $article->where(function ($query) use ($whereOr) {
+                $query->whereOr($whereOr);
+            });
+        }
+        $article = $article->order($sort)->limit($page->firstRow . ',' . $page->listRows)->select();
         $list = [];
         $articleIds = [];
         foreach ($article as $item) {
