@@ -49,6 +49,38 @@ class School extends Base
                             unlink($filePath);
                         }
                     }
+                } elseif ($k == 'popup') {
+                    if (!$v['content']['is_open']) {
+                        $v['content']['is_open'] = 0;
+                    }
+                    $content = '';
+                    foreach ($v['content'] as $key => $value) {
+                        $content .= $key . ':' . $value . ',';
+                    }
+                    $url = '';
+                    if (empty($v['url']['video'])) {
+                        if ($v['content']['is_open'] == 1) {
+                            $this->error('请上传视频才开启弹窗', U('Admin/School/config'));
+                        }
+                        $url = 'video:,video_cover:,video_axis';
+                    } else {
+                        if (strstr($v['url']['video'], 'http')) {
+                            // 原本的视频
+                            foreach ($v['url'] as $key => $value) {
+                                if ($key == 'video') {
+                                    $value = substr($value, strrpos($value, 'video'));
+                                }
+                                $url .= $key . ':' . $value . ',';
+                            }
+                            $url = rtrim($url, ',');
+                        } else {
+                            // 处理视频封面图
+                            $videoCover = getVideoCoverImages($v['url']['video'], 'upload/school/video_cover/temp/');
+                            $url = 'video:' . $v['url']['video'] . ',video_cover:' . $videoCover['path'] . ',video_axis:' . $videoCover['axis'];
+                        }
+                    }
+                    $v['url'] = $url;
+                    $v['content'] = rtrim($content, ',');
                 }
                 $data = [
                     'type' => $k,
@@ -72,6 +104,21 @@ class School extends Base
             if ($val['type'] == 'official' && !empty($val['url'])) {
                 $url = explode(',', $val['url']);
                 $val['url'] = $this->ossClient::url(substr($url[0], strrpos($url[0], 'img:') + 4));
+            } elseif ($val['type'] == 'popup' && !empty($val['url']) && !empty($val['content'])) {
+                $url = explode(',', $val['url']);
+                $val['url'] = [];
+                foreach ($url as $v) {
+                    $key = substr($v, 0, strrpos($v, ':'));
+                    $value = substr($v, strrpos($v, ':') + 1);
+                    $val['url'][$key] = $key == 'video' && $value ? $this->ossClient::url($value) : $value;
+                }
+                $content = explode(',', $val['content']);
+                $val['content'] = [];
+                foreach ($content as $v) {
+                    $key = substr($v, 0, strrpos($v, ':'));
+                    $value = substr($v, strrpos($v, ':') + 1);
+                    $val['content'][$key] = $value;
+                }
             }
             $config[$val['type']] = [
                 'name' => $val['name'],
@@ -79,6 +126,10 @@ class School extends Base
                 'content' => $val['content']
             ];
         }
+//        echo '<pre>';
+//        print_r($config);
+//        echo '</pre>';
+//        exit();
         // 轮播图
         $count = M('school_rotate')->where(['module_id' => 0])->count();
         $page = new Page($count, 10);
@@ -88,10 +139,20 @@ class School extends Base
             $image['url'] = $this->ossClient::url(substr($url[0], strrpos($url[0], 'img:') + 4));
             $image['module_type'] = M('school')->where(['type' => $image['module_type']])->value('name');
         }
+        // 当前热点模块的文章
+        $articleList = M('school_article sa')
+            ->join('school_class sc', 'sc.id = sa.class_id')
+            ->join('school s', 's.id = sc.module_id')
+            ->where([
+                's.type' => 'module1',
+                'sa.status' => 1
+            ])
+            ->field('sa.id, sa.title')->select();
 
         $this->assign('config', $config);
         $this->assign('images', $images);
         $this->assign('page', $page);
+        $this->assign('article_list', $articleList);
         return $this->fetch();
     }
 
@@ -211,6 +272,12 @@ class School extends Base
     {
         $classId = I('class_id', '');
         return $this->module_8('module8', $classId);
+    }
+
+    public function module9()
+    {
+        $classId = I('class_id', '');
+        return $this->module('module9', $classId);
     }
 
     /**

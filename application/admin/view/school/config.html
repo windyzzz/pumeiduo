@@ -33,6 +33,46 @@
                     </div>
                 </dd>
             </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>是否开启弹窗</label>
+                </dt>
+                <dd class="opt onoff">
+                    <label for="popup_is_open1" class="cb-enable <if condition='isset($config[popup]) && $config[popup][content][is_open] eq 1'>selected</if>">开启</label>
+                    <label for="popup_is_open0" class="cb-disable <if condition='isset($config[popup]) && $config[popup][content][is_open] eq 0'>selected</if>">隐藏</label>
+                    <input id="popup_is_open1" name="popup[content][is_open]" <if condition='isset($config[popup]) && $config[popup][content][is_open] eq 1'>checked</if> value="1" type="radio">
+                    <input id="popup_is_open0" name="popup[content][is_open]" <if condition='isset($config[popup]) && $config[popup][content][is_open] eq 0'>checked</if> value="0" type="radio">
+                </dd>
+            </dl>
+            <dl class="row" id="video" style="<if condition='isset($config[popup]) && $config[popup][content][is_open] eq 0'>display:none</if>">
+                <dt class="tit">
+                    <label>弹窗视频</label>
+                </dt>
+                <dd class="opt">
+                    <input type="hidden" value="{$config[popup][url][video]}" name="popup[url][video]" id="video_input" />
+                    <input type="hidden" value="{$config[popup][url][video_cover]}" name="popup[url][video_cover]" />
+                    <input type="hidden" value="{$config[popup][url][video_axis]}" name="popup[url][video_axis]" />
+                    <video style="" controls="controls" width="600" height="300" id="video_tag" src="{$config[popup][url][video]}"></video>
+                    <div id="container">
+                        <a id="selectfiles" href="javascript:void(0);" class='btn'>选择文件</a>
+                        <b style="font-size: 16px; display: none;" id="percent">上传进度:0%</b>
+                    </div>
+                    <p class="notic">上传视频大小不要超过200M</p>
+                </dd>
+            </dl>
+            <dl class="row" id="article" style="<if condition='isset($config[popup]) && $config[popup][content][is_open] eq 0'>display:none</if>">
+                <dt class="tit">
+                    <label>选择跳转文章（当前热点）</label>
+                </dt>
+                <dd class="opt">
+                    <select name="popup[content][target_id]" class="small form-control">
+                        <option value="0">请选择跳转文章</option>
+                        <foreach name="article_list" item="v" key="k">
+                            <option value="{$v[id]}" <if condition="isset($config[popup]) && $config[popup][content][target_id] == $v[id]"> selected </if>>ID{$v.id}：{$v.title}</option>
+                        </foreach>
+                    </select>
+                </dd>
+            </dl>
             <div class="bot">
                 <a class="ncap-btn-big ncap-btn-green" onclick="updateConfig('datapost')">确认提交</a>
             </div>
@@ -148,6 +188,9 @@
     </div>
 </div>
 
+<link rel="stylesheet" type="text/css" href="/public/oss/style.css"/>
+<script type="text/javascript" src="/public/oss/lib/plupload-2.1.2/js/plupload.full.min.js"></script>
+<script type="text/javascript" src="/public/oss/upload.js"></script>
 <script type="text/javascript">
     $(document).ready(function () {
         // 点击刷新数据
@@ -161,6 +204,19 @@
         $("#" + elementid + '_a').attr('href', fileurl_tmp);
         $("#" + elementid + '_i').attr('onmouseover', "layer.tips('<img src=" + fileurl_tmp + ">',this,{tips: [1, '#fff']});");
     }
+
+    $('input[name="popup[content][is_open]"]').change(function () {
+        switch (this.value) {
+            case '0':
+                $('#video').hide();
+                $('#article').hide();
+                break;
+            case '1':
+                $('#video').show();
+                $('#article').show();
+                break;
+        }
+    });
 
     function updateConfig(postId) {
         $('#' + postId).submit();
