@@ -44,7 +44,7 @@
                     <input id="popup_is_open0" name="popup[content][is_open]" <if condition='isset($config[popup]) && $config[popup][content][is_open] eq 0'>checked</if> value="0" type="radio">
                 </dd>
             </dl>
-            <dl class="row" id="video" style="<if condition='isset($config[popup]) && $config[popup][content][is_open] eq 0'>display:none</if>">
+            <dl class="row" id="video" style="<if condition='!isset($config[popup]) || (isset($config[popup]) && $config[popup][content][is_open] eq 0)'>display:none</if>">
                 <dt class="tit">
                     <label>弹窗视频</label>
                 </dt>
@@ -60,7 +60,7 @@
                     <p class="notic">上传视频大小不要超过200M</p>
                 </dd>
             </dl>
-            <dl class="row" id="article" style="<if condition='isset($config[popup]) && $config[popup][content][is_open] eq 0'>display:none</if>">
+            <dl class="row" id="article" style="<if condition='!isset($config[popup]) || (isset($config[popup]) && $config[popup][content][is_open] eq 0)'>display:none</if>">
                 <dt class="tit">
                     <label>选择跳转文章（当前热点）</label>
                 </dt>
