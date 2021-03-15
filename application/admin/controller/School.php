@@ -30,58 +30,61 @@ class School extends Base
             $param = I('post.');
             // 配置
             foreach ($param as $k => $v) {
-                if ($k == 'official') {
-                    if (strstr($v['url'], 'aliyuncs.com')) {
-                        // 原图
-                        $v['url'] = M('school_config')->where(['type' => 'official'])->value('url');
-                    } else {
-                        // 新图
-                        $filePath = PUBLIC_PATH . substr($v['url'], strrpos($v['url'], '/public/') + 8);
-                        $fileName = substr($v['url'], strrpos($v['url'], '/') + 1);
-                        $object = 'image/' . date('Y/m/d/H/') . $fileName;
-                        $return_url = $this->ossClient->uploadFile($filePath, $object);
-                        if (!$return_url) {
-                            $this->error('图片上传错误');
+                switch ($k) {
+                    case 'official':
+                        if (strstr($v['url'], 'aliyuncs.com')) {
+                            // 原图
+                            $v['url'] = M('school_config')->where(['type' => 'official'])->value('url');
                         } else {
-                            // 图片信息
-                            $imageInfo = getimagesize($filePath);
-                            $v['url'] = 'img:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ',type:' . substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1);
-                            unlink($filePath);
-                        }
-                    }
-                } elseif ($k == 'popup') {
-                    if (!$v['content']['is_open']) {
-                        $v['content']['is_open'] = 0;
-                    }
-                    $content = '';
-                    foreach ($v['content'] as $key => $value) {
-                        $content .= $key . ':' . $value . ',';
-                    }
-                    $url = '';
-                    if (empty($v['url']['video'])) {
-                        if ($v['content']['is_open'] == 1) {
-                            $this->error('请上传视频才开启弹窗', U('Admin/School/config'));
-                        }
-                        $url = 'video:,video_cover:,video_axis';
-                    } else {
-                        if (strstr($v['url']['video'], 'http')) {
-                            // 原本的视频
-                            foreach ($v['url'] as $key => $value) {
-                                if ($key == 'video') {
-                                    $value = substr($value, strrpos($value, 'video'));
-                                }
-                                $url .= $key . ':' . $value . ',';
+                            // 新图
+                            $filePath = PUBLIC_PATH . substr($v['url'], strrpos($v['url'], '/public/') + 8);
+                            $fileName = substr($v['url'], strrpos($v['url'], '/') + 1);
+                            $object = 'image/' . date('Y/m/d/H/') . $fileName;
+                            $return_url = $this->ossClient->uploadFile($filePath, $object);
+                            if (!$return_url) {
+                                $this->error('图片上传错误');
+                            } else {
+                                // 图片信息
+                                $imageInfo = getimagesize($filePath);
+                                $v['url'] = 'img:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ',type:' . substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1);
+                                unlink($filePath);
                             }
-                            $url = rtrim($url, ',');
-                        } else {
-                            // 处理视频封面图
-                            $videoCover = getVideoCoverImages($v['url']['video'], 'upload/school/video_cover/temp/');
-                            $url = 'video:' . $v['url']['video'] . ',video_cover:' . $videoCover['path'] . ',video_axis:' . $videoCover['axis'];
                         }
-                    }
-                    $v['name'] = '弹窗跳转';
-                    $v['url'] = $url;
-                    $v['content'] = rtrim($content, ',');
+                        break;
+                    case 'popup':
+                        if (!$v['content']['is_open']) {
+                            $v['content']['is_open'] = 0;
+                        }
+                        $content = '';
+                        foreach ($v['content'] as $key => $value) {
+                            $content .= $key . ':' . $value . ',';
+                        }
+                        $url = '';
+                        if (empty($v['url']['video'])) {
+                            if ($v['content']['is_open'] == 1) {
+                                $this->error('请上传视频才开启弹窗', U('Admin/School/config'));
+                            }
+                            $url = 'video:,video_cover:,video_axis';
+                        } else {
+                            if (strstr($v['url']['video'], 'http')) {
+                                // 原本的视频
+                                foreach ($v['url'] as $key => $value) {
+                                    if ($key == 'video') {
+                                        $value = substr($value, strrpos($value, 'video'));
+                                    }
+                                    $url .= $key . ':' . $value . ',';
+                                }
+                                $url = rtrim($url, ',');
+                            } else {
+                                // 处理视频封面图
+                                $videoCover = getVideoCoverImages($v['url']['video'], 'upload/school/video_cover/temp/');
+                                $url = 'video:' . $v['url']['video'] . ',video_cover:' . $videoCover['path'] . ',video_axis:' . $videoCover['axis'];
+                            }
+                        }
+                        $v['name'] = '弹窗跳转';
+                        $v['url'] = $url;
+                        $v['content'] = rtrim($content, ',');
+                        break;
                 }
                 $data = [
                     'type' => $k,
