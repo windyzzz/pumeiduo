@@ -57,6 +57,9 @@ class School extends Base
                         }
                         $content = '';
                         foreach ($v['content'] as $key => $value) {
+                            if ($key == 'article_id' && $value == 0) {
+                                $this->error('请选择跳转文章', U('Admin/School/config'));
+                            }
                             $content .= $key . ':' . $value . ',';
                         }
                         $url = '';
@@ -130,10 +133,6 @@ class School extends Base
                 'content' => $val['content']
             ];
         }
-//        echo '<pre>';
-//        print_r($config);
-//        echo '</pre>';
-//        exit();
         // 轮播图
         $count = M('school_rotate')->where(['module_id' => 0])->count();
         $page = new Page($count, 10);
@@ -148,7 +147,7 @@ class School extends Base
             ->join('school_class sc', 'sc.id = sa.class_id')
             ->join('school s', 's.id = sc.module_id')
             ->where([
-                's.type' => 'module1',
+                's.type' => 'module9',
                 'sa.status' => 1
             ])
             ->field('sa.id, sa.title')->select();
