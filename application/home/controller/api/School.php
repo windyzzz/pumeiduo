@@ -22,7 +22,7 @@ class School extends Base
      */
     public function popup()
     {
-        $data = $this->logic->getPopup();
+        $data = $this->logic->getPopup($this->user_id);
         return json(['status' => 1, 'msg' => '', 'result' => $data]);
     }
 

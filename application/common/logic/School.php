@@ -417,14 +417,15 @@ class School
      * 获取弹窗通知
      * @return array
      */
-    public function getPopup()
+    public function getPopup($userId)
     {
         $return = [
             'is_open' => 0,
-            'video' => [
-                'url' => '',
-                'cover' => '',
-                'axis' => '1',
+            'img' => [
+                'img' => '',
+                'width' => '',
+                'height' => '',
+                'type' => '',
             ],
             'article_id' => ''
         ];
@@ -432,6 +433,15 @@ class School
         if (!$popupConfig) {
             return $return;
         }
+        // 查看此用户是否已经弹出过
+        if (M('user_school_config')->where(['type' => 'popup', 'user_id' => $userId])->value('id')) {
+            return $return;
+        }
+        M('user_school_config')->add([
+            'type' => 'popup',
+            'user_id' => $userId,
+            'add_time' => NOW_TIME
+        ]);
         $content = explode(',', $popupConfig['content']);
         $popupConfig['content'] = [];
         foreach ($content as $value) {
@@ -443,17 +453,12 @@ class School
             return $return;
         }
         $url = explode(',', $popupConfig['url']);
-        $popupConfig['url'] = [];
-        foreach ($url as $value) {
-            $key = substr($value, 0, strrpos($value, ':'));
-            $value = substr($value, strrpos($value, ':') + 1);
-            $popupConfig['url'][$key] = $key != 'video_axis' && $value ? $this->ossClient::url($value) : $value;
-        }
-        $return['is_open'] = 1;
+        $return['img']['img'] = $this->ossClient::url(substr($url[0], strrpos($url[0], 'img:') + 4));
+        $return['img']['width'] = substr($url[1], strrpos($url[1], 'width:') + 6);
+        $return['img']['height'] = substr($url[2], strrpos($url[2], 'height:') + 7);
+        $return['img']['type'] = substr($url[3], strrpos($url[3], 'type:') + 5);
         $return['article_id'] = $popupConfig['content']['article_id'];
-        $return['video']['url'] = $popupConfig['url']['video'];
-        $return['video']['cover'] = $popupConfig['url']['video_cover'];
-        $return['video']['axis'] = $popupConfig['url']['video_axis'];
+        $return['is_open'] = 1;
         return $return;
     }
 
@@ -483,6 +488,7 @@ class School
                 'code' => $item['module_type'],
                 'name' => isset($module) ? $module['name'] : '',
                 'module_id' => isset($module) ? $module['id'] : '0',
+                'article_id' => $item['article_id'],
                 'is_allow' => isset($module) ? (int)$module['is_allow'] : 0,
                 'tips' => '功能尚未开放',
                 'need_login' => 1,

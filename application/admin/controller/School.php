@@ -52,6 +52,7 @@ class School extends Base
                         }
                         break;
                     case 'popup':
+                        $v['name'] = '弹窗跳转';
                         if (!$v['content']['is_open']) {
                             $v['content']['is_open'] = 0;
                         }
@@ -62,31 +63,25 @@ class School extends Base
                             }
                             $content .= $key . ':' . $value . ',';
                         }
-                        $url = '';
-                        if (empty($v['url']['video'])) {
-                            if ($v['content']['is_open'] == 1) {
-                                $this->error('请上传视频才开启弹窗', U('Admin/School/config'));
-                            }
-                            $url = 'video:,video_cover:,video_axis';
+                        $v['content'] = rtrim($content, ',');
+                        if (strstr($v['url'], 'aliyuncs.com')) {
+                            // 原图
+                            $v['url'] = M('school_config')->where(['type' => 'popup'])->value('url');
                         } else {
-                            if (strstr($v['url']['video'], 'http')) {
-                                // 原本的视频
-                                foreach ($v['url'] as $key => $value) {
-                                    if ($key == 'video') {
-                                        $value = substr($value, strrpos($value, 'video'));
-                                    }
-                                    $url .= $key . ':' . $value . ',';
-                                }
-                                $url = rtrim($url, ',');
+                            // 新图
+                            $filePath = PUBLIC_PATH . substr($v['url'], strrpos($v['url'], '/public/') + 8);
+                            $fileName = substr($v['url'], strrpos($v['url'], '/') + 1);
+                            $object = 'image/' . date('Y/m/d/H/') . $fileName;
+                            $return_url = $this->ossClient->uploadFile($filePath, $object);
+                            if (!$return_url) {
+                                $this->error('图片上传错误');
                             } else {
-                                // 处理视频封面图
-                                $videoCover = getVideoCoverImages($v['url']['video'], 'upload/school/video_cover/temp/');
-                                $url = 'video:' . $v['url']['video'] . ',video_cover:' . $videoCover['path'] . ',video_axis:' . $videoCover['axis'];
+                                // 图片信息
+                                $imageInfo = getimagesize($filePath);
+                                $v['url'] = 'img:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ',type:' . substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1);
+                                unlink($filePath);
                             }
                         }
-                        $v['name'] = '弹窗跳转';
-                        $v['url'] = $url;
-                        $v['content'] = rtrim($content, ',');
                         break;
                 }
                 $data = [
@@ -113,12 +108,7 @@ class School extends Base
                 $val['url'] = $this->ossClient::url(substr($url[0], strrpos($url[0], 'img:') + 4));
             } elseif ($val['type'] == 'popup' && !empty($val['url']) && !empty($val['content'])) {
                 $url = explode(',', $val['url']);
-                $val['url'] = [];
-                foreach ($url as $v) {
-                    $key = substr($v, 0, strrpos($v, ':'));
-                    $value = substr($v, strrpos($v, ':') + 1);
-                    $val['url'][$key] = $key == 'video' && $value ? $this->ossClient::url($value) : $value;
-                }
+                $val['url'] = $this->ossClient::url(substr($url[0], strrpos($url[0], 'img:') + 4));
                 $content = explode(',', $val['content']);
                 $val['content'] = [];
                 foreach ($content as $v) {
@@ -172,24 +162,25 @@ class School extends Base
             if ($moduleId != 0) {
                 $param['module_type'] = M('school')->where(['id' => $moduleId])->value('type');
             }
-            if (!empty($param['url'])) {
-                if (strstr($param['url'], 'aliyuncs.com')) {
-                    // 原图
-                    $param['url'] = M('school_rotate')->where(['id' => $id])->value('url');
+            if (empty($param['url'])) {
+                $this->ajaxReturn(['status' => 0, 'msg' => '请上传轮播图']);
+            }
+            if (strstr($param['url'], 'aliyuncs.com')) {
+                // 原图
+                $param['url'] = M('school_rotate')->where(['id' => $id])->value('url');
+            } else {
+                // 新图
+                $filePath = PUBLIC_PATH . substr($param['url'], strrpos($param['url'], '/public/') + 8);
+                $fileName = substr($param['url'], strrpos($param['url'], '/') + 1);
+                $object = 'image/' . date('Y/m/d/H/') . $fileName;
+                $return_url = $this->ossClient->uploadFile($filePath, $object);
+                if (!$return_url) {
+                    return $this->ajaxReturn(['status' => 0, 'msg' => 'ERROR：' . $this->ossClient->getError()]);
                 } else {
-                    // 新图
-                    $filePath = PUBLIC_PATH . substr($param['url'], strrpos($param['url'], '/public/') + 8);
-                    $fileName = substr($param['url'], strrpos($param['url'], '/') + 1);
-                    $object = 'image/' . date('Y/m/d/H/') . $fileName;
-                    $return_url = $this->ossClient->uploadFile($filePath, $object);
-                    if (!$return_url) {
-                        return $this->ajaxReturn(['status' => 0, 'msg' => 'ERROR：' . $this->ossClient->getError()]);
-                    } else {
-                        // 图片信息
-                        $imageInfo = getimagesize($filePath);
-                        $param['url'] = 'img:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ',type:' . substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1);
-                        unlink($filePath);
-                    }
+                    // 图片信息
+                    $imageInfo = getimagesize($filePath);
+                    $param['url'] = 'img:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ',type:' . substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1);
+                    unlink($filePath);
                 }
             }
             if ($id) {
@@ -201,19 +192,30 @@ class School extends Base
             $this->ajaxReturn(['status' => 1, 'msg' => '处理成功']);
         }
         if ($id) {
-            $imageInfo = M('school_rotate')->where(['id' => $id])->find();
-            $url = explode(',', $imageInfo['url']);
-            $imageInfo['url'] = $this->ossClient::url(substr($url[0], strrpos($url[0], 'img:') + 4));
+            $rotate = M('school_rotate')->where(['id' => $id])->find();
+            $url = explode(',', $rotate['url']);
+            $rotate['url'] = $this->ossClient::url(substr($url[0], strrpos($url[0], 'img:') + 4));
+            if ($rotate['module_type'] != '') {
+                $articleList = M('school_article sa')
+                    ->join('school_class sc', 'sc.id = sa.class_id')
+                    ->join('school s', 's.id = sc.module_id')
+                    ->where([
+                        's.type' => $rotate['module_type'],
+                        'sa.status' => 1
+                    ])
+                    ->field('sa.id, sa.title')->select();
+            }
         } else {
-            $imageInfo['sort'] = 0;
+            $rotate['sort'] = 0;
         }
         // 模块列表
-        $moduleList = M('school')->select();
+        $moduleList = M('school')->where(['is_open' => 1])->select();
 
         $this->assign('id', $id);
         $this->assign('module_id', $moduleId);
-        $this->assign('info', $imageInfo);
+        $this->assign('info', $rotate);
         $this->assign('module_list', $moduleList);
+        $this->assign('article_list', $articleList ?? []);
         return $this->fetch();
     }
 
@@ -995,6 +997,23 @@ class School extends Base
             'delete_time' => NOW_TIME,
         ]);
         $this->ajaxReturn(['status' => 1, 'msg' => '处理成功', 'result' => ['type' => $type, 'class_id' => $classId]]);
+    }
+
+    /**
+     * 根据类型获取文章列表
+     */
+    public function ajaxGetArticle()
+    {
+        $moduleType = I('module_type');
+        $articleList = M('school_article sa')
+            ->join('school_class sc', 'sc.id = sa.class_id')
+            ->join('school s', 's.id = sc.module_id')
+            ->where([
+                's.type' => $moduleType,
+                'sa.status' => 1
+            ])
+            ->field('sa.id, sa.title')->select();
+        $this->ajaxReturn(['status' => 1, 'result' => $articleList]);
     }
 
     /**

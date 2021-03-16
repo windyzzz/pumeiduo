@@ -35,34 +35,38 @@
             </dl>
             <dl class="row">
                 <dt class="tit">
-                    <label>是否开启弹窗</label>
+                    <label>教学弹窗</label>
                 </dt>
                 <dd class="opt onoff">
                     <label for="popup_is_open1" class="cb-enable <if condition='isset($config[popup]) && $config[popup][content][is_open] eq 1'>selected</if>">开启</label>
                     <label for="popup_is_open0" class="cb-disable <if condition='isset($config[popup]) && $config[popup][content][is_open] eq 0'>selected</if>">隐藏</label>
                     <input id="popup_is_open1" name="popup[content][is_open]" <if condition='isset($config[popup]) && $config[popup][content][is_open] eq 1'>checked</if> value="1" type="radio">
                     <input id="popup_is_open0" name="popup[content][is_open]" <if condition='isset($config[popup]) && $config[popup][content][is_open] eq 0'>checked</if> value="0" type="radio">
+                    <p class="notic">针对账号只会弹出一次</p>
                 </dd>
             </dl>
             <dl class="row" id="video" style="<if condition='!isset($config[popup]) || (isset($config[popup]) && $config[popup][content][is_open] eq 0)'>display:none</if>">
                 <dt class="tit">
-                    <label>弹窗视频</label>
+                    <label>教学弹窗封面</label>
                 </dt>
                 <dd class="opt">
-                    <input type="hidden" value="{$config[popup][url][video]}" name="popup[url][video]" id="video_input" />
-                    <input type="hidden" value="{$config[popup][url][video_cover]}" name="popup[url][video_cover]" />
-                    <input type="hidden" value="{$config[popup][url][video_axis]}" name="popup[url][video_axis]" />
-                    <video style="" controls="controls" width="600" height="300" id="video_tag" src="{$config[popup][url][video]}"></video>
-                    <div id="container">
-                        <a id="selectfiles" href="javascript:void(0);" class='btn'>选择文件</a>
-                        <b style="font-size: 16px; display: none;" id="percent">上传进度:0%</b>
+                    <div class="input-file-show">
+                        <span class="show">
+                            <a id="popup_img_a" target="_blank" class="nyroModal" rel="gal" href="{$config.popup.url}">
+                                <i id="popup_img_i" class="fa fa-picture-o" onmouseover="layer.tips('<img src={$config.popup.url}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();"></i>
+                            </a>
+                        </span>
+                        <span class="type-file-box">
+                            <input type="text" id="popup_img" name="popup[url]" value="{$config.popup.url}" class="type-file-text">
+                            <input type="button" name="button" id="button2" value="选择上传..." class="type-file-button">
+                            <input class="type-file-file" onClick="GetUploadify(1,'popup_img','school','img_call_back')" size="30" hidefocus="true" nc_type="change_site_logo" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">
+                        </span>
                     </div>
-                    <p class="notic">上传视频大小不要超过200M</p>
                 </dd>
             </dl>
             <dl class="row" id="article" style="<if condition='!isset($config[popup]) || (isset($config[popup]) && $config[popup][content][is_open] eq 0)'>display:none</if>">
                 <dt class="tit">
-                    <label>选择跳转文章（当前热点）</label>
+                    <label>教学弹窗跳转文章（当前热点）</label>
                 </dt>
                 <dd class="opt">
                     <select name="popup[content][article_id]" class="small form-control">
