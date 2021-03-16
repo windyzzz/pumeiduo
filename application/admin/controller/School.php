@@ -53,17 +53,9 @@ class School extends Base
                         break;
                     case 'popup':
                         $v['name'] = '弹窗跳转';
-                        if (!$v['content']['is_open']) {
-                            $v['content']['is_open'] = 0;
+                        if (empty($v['url'])) {
+                            $this->error('请上传弹窗封面图', U('Admin/School/config'));
                         }
-                        $content = '';
-                        foreach ($v['content'] as $key => $value) {
-                            if ($key == 'article_id' && $value == 0) {
-                                $this->error('请选择跳转文章', U('Admin/School/config'));
-                            }
-                            $content .= $key . ':' . $value . ',';
-                        }
-                        $v['content'] = rtrim($content, ',');
                         if (strstr($v['url'], 'aliyuncs.com')) {
                             // 原图
                             $v['url'] = M('school_config')->where(['type' => 'popup'])->value('url');
@@ -82,6 +74,17 @@ class School extends Base
                                 unlink($filePath);
                             }
                         }
+                        if (!$v['content']['is_open']) {
+                            $v['content']['is_open'] = 0;
+                        }
+                        $content = '';
+                        foreach ($v['content'] as $key => $value) {
+                            if ($key == 'article_id' && $value == 0) {
+                                $this->error('请选择跳转文章', U('Admin/School/config'));
+                            }
+                            $content .= $key . ':' . $value . ',';
+                        }
+                        $v['content'] = rtrim($content, ',');
                         break;
                 }
                 $data = [
