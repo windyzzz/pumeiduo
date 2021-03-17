@@ -227,6 +227,7 @@ class School extends Base
     public function userStandardList()
     {
         $isExport = I('is_export', '');     // 是否导出
+        $isReach = I('is_reach', '');       // 是否达标
         $distributeLevel = I('distribute_level', '');
         // 学习课程id
         $courseIds = M('school_article')->where([
@@ -261,7 +262,7 @@ class School extends Base
             ->join('distribut_level dl', 'dl.level_id = u.distribut_level')
             ->where($where)->group('usa.user_id')
             ->field('u.user_id, u.nickname, u.user_name, u.school_credit, u.distribut_level, u.svip_level');
-        if (!$isExport) {
+        if (!$isExport && $isReach === '') {
             // 用户学习课程记录总数
             $count = M('user_school_article')->where(['article_id' => ['IN', $courseIds]])->group('user_id')->count();
             // 用户课程学习记录
@@ -329,6 +330,12 @@ class School extends Base
                     $log['is_reach'] = 1;
                 }
             }
+            if ($isReach !== '') {
+                if ($log['is_reach'] != $isReach) {
+                    unset($userCourseLog[$k]);
+                    continue;
+                }
+            }
             $dataList[] = [
                 $log['userName'],
                 $log['level_name'],
@@ -338,14 +345,26 @@ class School extends Base
             ];
         }
         if (!$isExport) {
-            $this->assign('svip_level', $svipLevel);
-            $this->assign('distribute_level', $distributeLevel);
-            $this->assign('user_id', $userId);
-            $this->assign('user_name', $username);
-            $this->assign('nickname', $nickname);
-            $this->assign('page', $page);
-            $this->assign('log', $userCourseLog);
-            return $this->fetch('user_standard_list');
+            if ($isReach === '') {
+                $this->assign('svip_level', $svipLevel);
+                $this->assign('distribute_level', $distributeLevel);
+                $this->assign('user_id', $userId);
+                $this->assign('user_name', $username);
+                $this->assign('nickname', $nickname);
+                $this->assign('is_reach', $isReach);
+                $this->assign('page', $page);
+                $this->assign('log', $userCourseLog);
+                return $this->fetch('user_standard_list');
+            } else {
+                $this->assign('svip_level', $svipLevel);
+                $this->assign('distribute_level', $distributeLevel);
+                $this->assign('user_id', $userId);
+                $this->assign('user_name', $username);
+                $this->assign('nickname', $nickname);
+                $this->assign('is_reach', (int)$isReach);
+                $this->assign('log', $userCourseLog);
+                return $this->fetch('user_standard_list_2');
+            }
         } else {
             // 表头
             $headList = [
