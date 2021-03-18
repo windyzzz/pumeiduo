@@ -22,6 +22,9 @@ class School extends Base
      */
     public function popup()
     {
+        if ($this->passAuth) {
+            die(json_encode(['status' => -999, 'msg' => '请先登录']));
+        }
         $data = $this->logic->getPopup($this->user_id);
         return json(['status' => 1, 'msg' => '', 'result' => $data]);
     }
@@ -32,6 +35,9 @@ class School extends Base
      */
     public function rotate()
     {
+        if ($this->passAuth) {
+            die(json_encode(['status' => -999, 'msg' => '请先登录']));
+        }
         $moduleId = I('module_id', 0);
         $data = $this->logic->getRotate($moduleId);
         return json(['status' => 1, 'msg' => '', 'result' => $data]);
@@ -43,6 +49,9 @@ class School extends Base
      */
     public function module()
     {
+        if ($this->passAuth) {
+            die(json_encode(['status' => -999, 'msg' => '请先登录']));
+        }
         $data = $this->logic->getModule();
         return json(['status' => 1, 'msg' => '', 'result' => $data]);
     }

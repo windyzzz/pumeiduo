@@ -503,9 +503,45 @@ class School
      */
     public function getModule()
     {
-        $module = M('school')->where(['is_open' => 1])->order('sort DESC')->select();
+        $module1 = M('school')->where(['type' => ['IN', ['module9', 'module1', 'module2']]])->select();
         $list = [];
-        foreach ($module as $item) {
+        foreach ($module1 as $item) {
+            $img = explode(',', $item['img']);
+            if ($item['type'] == 'module9') {
+                $temp = [
+                    'module_id' => $item['id'],
+                    'img' => [
+                        'img' => $this->ossClient::url(substr($img[0], strrpos($img[0], 'img:') + 4)),
+                        'width' => substr($img[1], strrpos($img[1], 'width:') + 6),
+                        'height' => substr($img[2], strrpos($img[2], 'height:') + 7),
+                        'type' => substr($img[3], strrpos($img[3], 'type:') + 5),
+                    ],
+                    'name' => $item['name'],
+                    'code' => $item['type'],
+                    'is_allow' => (int)$item['is_allow'],
+                    'tips' => '功能尚未开放',
+                    'need_login' => 1,
+                ];
+                array_unshift($list, $temp);
+            } else {
+                $list[] = [
+                    'module_id' => $item['id'],
+                    'img' => [
+                        'img' => $this->ossClient::url(substr($img[0], strrpos($img[0], 'img:') + 4)),
+                        'width' => substr($img[1], strrpos($img[1], 'width:') + 6),
+                        'height' => substr($img[2], strrpos($img[2], 'height:') + 7),
+                        'type' => substr($img[3], strrpos($img[3], 'type:') + 5),
+                    ],
+                    'name' => $item['name'],
+                    'code' => $item['type'],
+                    'is_allow' => (int)$item['is_allow'],
+                    'tips' => '功能尚未开放',
+                    'need_login' => 1,
+                ];
+            }
+        }
+        $module2 = M('school')->where(['is_open' => 1, 'type' => ['NOT IN', ['module9', 'module1', 'module2']]])->order('sort DESC')->select();
+        foreach ($module2 as $item) {
             $img = explode(',', $item['img']);
             $list[] = [
                 'module_id' => $item['id'],
