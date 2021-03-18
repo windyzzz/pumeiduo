@@ -558,7 +558,7 @@ class School
                 'need_login' => 1,
             ];
         }
-        return ['config' => ['row_num' => 4], 'list' => $list];
+        return ['config' => ['row_num' => 2], 'list' => $list];
     }
 
     /**
