@@ -2292,9 +2292,12 @@ class Order extends Base
     public function editAddress()
     {
         $orderId = I('order_id');
-        $order = M('order')->where(['order_id' => $orderId])->field('order_status, shipping_status')->find();
         if (request()->isPost()) {
             $data = I('post.');
+            $order = M('order')->where(['order_id' => $orderId])->find();
+            if ($order['is_merge'] == 1) {
+                $this->ajaxReturn(['status' => -1, 'msg' => '该订单在仓储系统已进行了合并，不能修改地址']);
+            }
             // 数据验证
             $validate = \think\Loader::validate('Order');
             if (!$validate->batch()->check($data)) {
