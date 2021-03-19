@@ -28,6 +28,8 @@ class School extends Base
     {
         if (IS_POST) {
             $param = I('post.');
+            $keyword = $param['keyword'];
+            unset($param['keyword']);
             // 配置
             foreach ($param as $k => $v) {
                 switch ($k) {
@@ -52,39 +54,41 @@ class School extends Base
                         }
                         break;
                     case 'popup':
-                        $v['name'] = '弹窗跳转';
-                        if (empty($v['url'])) {
-                            $this->error('请上传弹窗封面图', U('Admin/School/config'));
-                        }
-                        if (strstr($v['url'], 'aliyuncs.com')) {
-                            // 原图
-                            $v['url'] = M('school_config')->where(['type' => 'popup'])->value('url');
-                        } else {
-                            // 新图
-                            $filePath = PUBLIC_PATH . substr($v['url'], strrpos($v['url'], '/public/') + 8);
-                            $fileName = substr($v['url'], strrpos($v['url'], '/') + 1);
-                            $object = 'image/' . date('Y/m/d/H/') . $fileName;
-                            $return_url = $this->ossClient->uploadFile($filePath, $object);
-                            if (!$return_url) {
-                                $this->error('图片上传错误');
-                            } else {
-                                // 图片信息
-                                $imageInfo = getimagesize($filePath);
-                                $v['url'] = 'img:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ',type:' . substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1);
-                                unlink($filePath);
-                            }
-                        }
                         if (!$v['content']['is_open']) {
                             $v['content']['is_open'] = 0;
                         }
-                        $content = '';
-                        foreach ($v['content'] as $key => $value) {
-                            if ($key == 'article_id' && $value == 0) {
-                                $this->error('请选择跳转文章', U('Admin/School/config'));
+                        if ($v['content']['is_open'] == 1) {
+                            $v['name'] = '弹窗跳转';
+                            if (empty($v['url'])) {
+                                $this->error('请上传弹窗封面图', U('Admin/School/config'));
                             }
-                            $content .= $key . ':' . $value . ',';
+                            if (strstr($v['url'], 'aliyuncs.com')) {
+                                // 原图
+                                $v['url'] = M('school_config')->where(['type' => 'popup'])->value('url');
+                            } else {
+                                // 新图
+                                $filePath = PUBLIC_PATH . substr($v['url'], strrpos($v['url'], '/public/') + 8);
+                                $fileName = substr($v['url'], strrpos($v['url'], '/') + 1);
+                                $object = 'image/' . date('Y/m/d/H/') . $fileName;
+                                $return_url = $this->ossClient->uploadFile($filePath, $object);
+                                if (!$return_url) {
+                                    $this->error('图片上传错误');
+                                } else {
+                                    // 图片信息
+                                    $imageInfo = getimagesize($filePath);
+                                    $v['url'] = 'img:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ',type:' . substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1);
+                                    unlink($filePath);
+                                }
+                            }
+                            $content = '';
+                            foreach ($v['content'] as $key => $value) {
+                                if ($key == 'article_id' && $value == 0) {
+                                    $this->error('请选择跳转文章', U('Admin/School/config'));
+                                }
+                                $content .= $key . ':' . $value . ',';
+                            }
+                            $v['content'] = rtrim($content, ',');
                         }
-                        $v['content'] = rtrim($content, ',');
                         break;
                 }
                 $data = [
@@ -98,6 +102,21 @@ class School extends Base
                     M('school_config')->where(['id' => $config['id']])->update($data);
                 } else {
                     M('school_config')->add($data);
+                }
+            }
+            // 关键词
+            foreach ($keyword as $key) {
+                if ($key['id'] == 0) {
+                    if (M('school_article_keyword')->where(['name' => $key['name']])->value('id')) {
+                        continue;
+                    } else {
+                        M('school_article_keyword')->add($key);
+                    }
+                } else {
+                    if (empty($key['name'])) {
+                        continue;
+                    }
+                    M('school_article_keyword')->where(['id' => $key['id']])->update($key);
                 }
             }
             $this->success('操作成功', U('Admin/School/config'));
@@ -144,11 +163,15 @@ class School extends Base
                 'sa.status' => 1
             ])
             ->field('sa.id, sa.title')->select();
+        // 热门词
+        $keyword = M('school_article_keyword')->select();
 
         $this->assign('config', $config);
         $this->assign('images', $images);
         $this->assign('page', $page);
         $this->assign('article_list', $articleList);
+        $this->assign('keyword', $keyword);
+        $this->assign('keyword_count', count($keyword));
         return $this->fetch();
     }
 

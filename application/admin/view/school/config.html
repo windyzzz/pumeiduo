@@ -78,6 +78,47 @@
                     </select>
                 </dd>
             </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>热门搜索词</label>
+                    <br/>
+                    <a class="ncap-btn" href="javascript:;" onclick="addKeyword()">增加</a>
+                </dt>
+                <dd class="opt">
+                    <table style="width: 50%;">
+                        <tr><th style="width:40%">词名</th><th style="text-align: center;" colspan="4">操作</th></tr>
+                        <tbody id="keywords">
+                        <volist name="keyword" id="vo" key="k">
+                            <tr>
+                                <td>
+                                    <input name="keyword[{$k}][id]" type="hidden" value="{$vo[id]}">
+                                    <input name="keyword[{$k}][click]" type="hidden" value="{$vo[click]}">
+                                    <input name="keyword[{$k}][name]" type="text" value="{$vo[name]}" class="form-control" style="width:150px; text-align: center;">（搜索量：{$vo.click}）
+                                </td>
+                                <td>
+                                    <div class="onoff">
+                                        <label for="keyword[{$k}]_is_open1" class="cb-enable <if condition='$vo[is_open] eq 1'>selected</if>">显示</label>
+                                        <label for="keyword[{$k}]_is_open0" class="cb-disable <if condition='$vo[is_open] eq 0'>selected</if>">隐藏</label>
+                                        <input id="keyword[{$k}]_is_open1" name="keyword[{$k}][is_open]" <if condition='$vo[is_open] eq 1'>checked</if> value="1" type="radio">
+                                        <input id="keyword[{$k}]_is_open0" name="keyword[{$k}][is_open]" <if condition='$vo[is_open] eq 0'>checked</if> value="0" type="radio">
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="onoff">
+                                        <label for="keyword[{$k}]_is_hot1" class="cb-enable <if condition='$vo[is_hot] eq 1'>selected</if>">是热词</label>
+                                        <label for="keyword[{$k}]_is_hot0" class="cb-disable <if condition='$vo[is_hot] eq 0'>selected</if>">不是</label>
+                                        <input id="keyword[{$k}]_is_hot1" name="keyword[{$k}][is_hot]" <if condition='$vo[is_hot] eq 1'>checked</if> value="1" type="radio">
+                                        <input id="keyword[{$k}]_is_hot0" name="keyword[{$k}][is_hot]" <if condition='$vo[is_hot] eq 0'>checked</if> value="0" type="radio">
+                                    </div>
+                                </td>
+                                <td>排序<input name="keyword[{$k}][sort]" type="text" value="{$vo[sort]}" class="form-control" style="width:50px; text-align: center;"></td>
+                                <td style="text-align: center;"><a class="ncap-btn" onclick="delWord(2, this, {$vo[id]})">删除</a></td>
+                            </tr>
+                        </volist>
+                        </tbody>
+                    </table>
+                </dd>
+            </dl>
             <div class="bot">
                 <a class="ncap-btn-big ncap-btn-green" onclick="updateConfig('datapost')">确认提交</a>
             </div>
@@ -198,6 +239,7 @@
 <script type="text/javascript" src="/public/oss/upload.js"></script>
 <script type="text/javascript">
     $(document).ready(function () {
+        keyword_count = {$keyword_count};
         // 点击刷新数据
         $('.fa-refresh').click(function () {
             location.href = location.href;
@@ -222,6 +264,72 @@
                 break;
         }
     });
+
+    function addKeyword() {
+        keyword_count += 1;
+        var tr = '<tr>' +
+            '       <td>' +
+            '           <input name="keyword[' + keyword_count + '][id]" type="hidden" value="0">' +
+            '           <input name="keyword[' + keyword_count + '][click]" type="hidden" value="0">' +
+            '           <input name="keyword[' + keyword_count + '][name]" type="text" value="" class="form-control" style="width:150px; text-align: center;">（搜索量：0）' +
+            '       </td>' +
+            '       <td>' +
+            '           <div class="onoff">' +
+            '               <label for="keyword[' + keyword_count + ']_is_open1" class="cb-enable selected">显示</label>' +
+            '               <label for="keyword[' + keyword_count + ']_is_open0" class="cb-disable ">隐藏</label>' +
+            '               <input id="keyword[' + keyword_count + ']_is_open1" name="keyword[' + keyword_count + '][is_open]" value="1" type="radio" checked>' +
+            '               <input id="keyword[' + keyword_count + ']_is_open0" name="keyword[' + keyword_count + '][is_open]" value="0" type="radio">' +
+            '            </div>' +
+            '        </td>' +
+            '        <td>' +
+            '            <div class="onoff">' +
+            '                <label for="keyword[' + keyword_count + ']_is_hot1" class="cb-enable selected">是热词</label>' +
+            '                <label for="keyword[' + keyword_count + ']_is_hot0" class="cb-disable ">不是</label>' +
+            '                <input id="keyword[' + keyword_count + ']_is_hot1" name="keyword[' + keyword_count + '][is_hot]" value="1" type="radio" checked>' +
+            '                <input id="keyword[' + keyword_count + ']_is_hot0" name="keyword[' + keyword_count + '][is_hot]" value="0" type="radio">' +
+            '            </div>' +
+            '        </td>' +
+            '        <td>排序<input name="keyword[' + keyword_count + '][sort]" type="text" value="0" class="form-control" style="width:50px; text-align: center;"></td>' +
+            '        <td style="text-align: center;"><a class="ncap-btn" onclick="delWord(1, this)">删除</a></td>' +
+            '     </tr>';
+        $('#keywords').append(tr);
+        $(".cb-enable").click(function () {
+            var parent = $(this).parents('.onoff');
+            $('.cb-disable', parent).removeClass('selected');
+            $(this).addClass('selected');
+            $('.checkbox', parent).attr('checked', true);
+        });
+        $(".cb-disable").click(function () {
+            var parent = $(this).parents('.onoff');
+            $('.cb-enable', parent).removeClass('selected');
+            $(this).addClass('selected');
+            $('.checkbox', parent).attr('checked', false);
+        });
+    }
+
+    function delWord(type, obj, id = '') {
+        switch (type) {
+            case 1:
+                $(obj).parent().parent().remove();
+                break;
+            case 2:
+                layer.confirm('确认删除？', {btn: ['确定', '取消']}, function (index) {
+                    layer.close(index);
+                    $.ajax({
+                        type: 'POST',
+                        url: "{:U('Admin/Community/delKeyword')}",
+                        data: {id:id},
+                        success: function () {
+                            $(obj).parent().parent().remove();
+                        }
+                    });
+                }, function (index) {
+                    // 取消
+                    layer.close(index);
+                });
+                break;
+        }
+    }
 
     function updateConfig(postId) {
         $('#' + postId).submit();

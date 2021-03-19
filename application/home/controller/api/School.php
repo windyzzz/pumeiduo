@@ -94,6 +94,16 @@ class School extends Base
     }
 
     /**
+     * 文章搜索热词
+     * @return \think\response\Json
+     */
+    public function articleKeyword()
+    {
+        $keyword = M('school_article_keyword')->where(['is_open' => 1])->order('sort DESC')->field('name, is_hot')->select();
+        return json(['status' => 1, 'result' => ['list' => $keyword]]);
+    }
+
+    /**
      * 文章列表
      * @return \think\response\Json
      */
