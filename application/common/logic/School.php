@@ -66,7 +66,11 @@ class School
         return $where;
     }
 
-
+    /**
+     * 文章条件
+     * @param $param
+     * @return array
+     */
     private function articleWhereOr($param)
     {
         $whereOr = [];
@@ -75,6 +79,8 @@ class School
             $param['keyword'] = htmlspecialchars_decode($param['keyword']);
             $whereOr['sa.title'] = ['LIKE', '%' . $param['keyword'] . '%'];
             $whereOr['sa.content'] = ['LIKE', '%' . $param['keyword'] . '%'];
+            // 搜索量增加
+            M('school_article_keyword')->where(['name' => $param['keyword']])->setInc('click');
         }
         return $whereOr;
     }
