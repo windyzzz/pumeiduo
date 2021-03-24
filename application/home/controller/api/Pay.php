@@ -33,18 +33,21 @@ class Pay extends Base
                 die(json_encode(['status' => 0, 'msg' => '此订单，已完成支付!']));
             }
         }
-        if ((!empty($this->order) && $this->order['order_type'] == 2) || $orderType == 2) {
-            // 韩国购订单
-            // 导入具体的支付类文件
-            include_once "plugins/payment/weixinApp_2/weixinApp.class.php";
-            $code = '\\' . $this->pay_code;
-            $this->payment = new $code();
+        if ($this->pay_code == 'weixinApp') {
+            if ((!empty($this->order) && $this->order['order_type'] == 2) || $orderType == 2) {
+                // 韩国购订单
+                // 导入具体的支付类文件
+                include_once "plugins/payment/weixinApp_2/weixinApp.class.php";
+            } else {
+                // 导入具体的支付类文件
+                include_once "plugins/payment/{$this->pay_code}/{$this->pay_code}.class.php";
+            }
         } else {
             // 导入具体的支付类文件
             include_once "plugins/payment/{$this->pay_code}/{$this->pay_code}.class.php";
-            $code = '\\' . $this->pay_code;
-            $this->payment = new $code();
         }
+        $code = '\\' . $this->pay_code;
+        $this->payment = new $code();
     }
 
     /**
