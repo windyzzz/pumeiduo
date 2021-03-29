@@ -561,6 +561,11 @@ class GoodsLogic extends Model
         switch ($source) {
             case 1:
             case 2:
+                $where['g.is_agent'] = 0;
+                $where['g.is_abroad'] = 0;
+                $where['g.is_agent'] = 0;
+                $where['g.is_supply'] = 0;
+                break;
             case 3:
                 $where['g.is_agent'] = 0;
                 $where['g.applet_on_sale'] = 0;
