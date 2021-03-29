@@ -473,7 +473,7 @@ class Ueditor extends Base
         }
         $result = $this->validate(
             ['file' => $file],
-            ['file' => 'image|fileSize:524288000|fileExt:jpg,jpeg,gif,png'],
+            ['file' => 'image|fileSize:1073741824|fileExt:jpg,jpeg,gif,png'],
             ['file.image' => '上传文件必须为图片', 'file.fileSize' => '上传文件过大', 'file.fileExt' => '上传文件后缀名必须为jpg,jpeg,gif,png']
         );
         if (true !== $result || !$file) {
@@ -521,7 +521,7 @@ class Ueditor extends Base
 
         $result = $this->validate(
             ['file2' => $file],
-            ['file2' => 'fileSize:30000000|fileExt:apk,ipa,pxl,deb'],
+            ['file2' => 'fileSize:1073741824|fileExt:apk,ipa,pxl,deb'],
             ['file2.fileSize' => '上传文件过大', 'file2.fileExt' => '上传文件后缀不正确']
         );
         if (true !== $result || empty($file)) {
@@ -580,7 +580,7 @@ class Ueditor extends Base
         }
         $result = $this->validate(
             ['file' => $file],
-            ['file' => 'fileSize:524288000|fileExt:mp4,3gp,flv,avi,wmv,mp3,wma,wav'],
+            ['file' => 'fileSize:1073741824|fileExt:mp4,3gp,flv,avi,wmv,mp3,wma,wav'],
             ['file.fileSize' => '上传文件过大', 'file.fileExt' => '上传文件后缀名必须为mp4,3gp,flv,avi,wmv,mp3,wma,wav']
         );
         if (true !== $result || !$file) {
