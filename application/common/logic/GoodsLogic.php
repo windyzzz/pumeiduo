@@ -2144,7 +2144,7 @@ class GoodsLogic extends Model
             if ($res == false) {
                 $shareImg = $originalImg;
             } else {
-                $shareImg = SITE_URL . substr($res['save_path'] , strrpos($res['save_path'] , '/public')). $res['file_name'];
+                $shareImg = SITE_URL . substr($res['save_path'], strrpos($res['save_path'], '/public')) . '/' . $res['file_name'];
             }
         }
         M('goods')->where('goods_id', $goodsId)->update(['share_img' => $shareImg]);
