@@ -5,6 +5,7 @@ namespace app\admin\controller;
 
 use app\admin\model\SchoolArticle;
 use app\admin\model\SchoolArticleResource;
+use app\admin\model\SchoolArticleTempResource;
 use app\admin\model\SchoolExchange;
 use app\common\logic\OssLogic;
 use think\Db;
@@ -633,7 +634,21 @@ class School extends Base
             } else {
                 $param['status'] = 2;   // 预发布
                 $param['add_time'] = NOW_TIME;
-                M('school_article')->add($param);
+                $articleId = M('school_article')->add($param);
+            }
+            // 内容的视频、音频处理
+            if (strpos($param['content'], 'src=&quot;/public/') !== false) {
+                $content = explode('src=&quot;/public/', $param['content']);
+                $tempContent = [];
+                foreach ($content as $key => $value) {
+                    if ($key == 0) continue;
+                    $tempContent[] = [
+                        'article_id' => $articleId,
+                        'local_path' => '/public/' .substr($value, 0, 61)
+                    ];
+                }
+                M('school_article_temp_resource')->where(['article_id' => $articleId])->delete();
+                (new SchoolArticleTempResource())->saveAll($tempContent);
             }
             $this->ajaxReturn(['status' => 1, 'msg' => '处理成功', 'result' => ['type' => $type, 'class_id' => $classId]]);
         }
