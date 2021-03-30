@@ -807,6 +807,20 @@ class Goods extends Base
         M('Goods')->where('goods_id', $goods_id)->save(['click_count' => $goods['click_count'] + 1]); // 统计点击数
         M('goods_click')->add(['goods_id' => $goods['goods_id'], 'user_id' => $this->user_id ?? 0, 'add_time' => NOW_TIME]); // 点击记录
         $originalImg = getFullPath($goods['original_img']);
+        if (empty($goods['share_img']) && !empty($originalImg)) {
+            if (strstr($originalImg, 'public/upload/goods')) {
+                $goods['share_img'] = $originalImg;
+            } else {
+                $fileName = substr($originalImg, strrpos($originalImg, '/') + 1);
+                $res = download_image($originalImg, $fileName, PUBLIC_PATH . 'upload/goods/', 2);
+                if ($res == false) {
+                    $goods['share_img'] = $originalImg;
+                } else {
+                    $goods['share_img'] = $res['save_path'] . $res['file_name'];
+                }
+            }
+            M('goods')->where('goods_id', $goods_id)->update(['share_img' => $goods['share_img']]);
+        }
         $goodsInfo = [
             'goods_type' => 'normal',
             'is_agent' => $goods['is_agent'],
@@ -833,7 +847,7 @@ class Goods extends Base
             'start_time' => '0',
             'end_time' => '0',
             'now_time' => NOW_TIME,
-            'share_goods_image' => !empty($originalImg) ? $originalImg : '',    // 商品分享图
+            'share_goods_image' => $goods['share_img'],    // 商品分享图
             'share_qr_code' => '',    // 分享二维码
             'applet_qr_code' => '',    // 小程序分享二维码
             'tabs' => [],
