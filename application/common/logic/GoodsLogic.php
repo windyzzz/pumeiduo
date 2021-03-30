@@ -2128,7 +2128,12 @@ class GoodsLogic extends Model
         }
     }
 
-
+    /**
+     * 生成获取商品分享图
+     * @param $goodsId
+     * @param $originalImg
+     * @return string
+     */
     public function getGoodsShareImg($goodsId, $originalImg)
     {
         if (strstr($originalImg, 'public/upload/goods')) {
@@ -2139,7 +2144,7 @@ class GoodsLogic extends Model
             if ($res == false) {
                 $shareImg = $originalImg;
             } else {
-                $shareImg = $res['save_path'] . $res['file_name'];
+                $shareImg = SITE_URL . substr($res['save_path'] , strrpos($res['save_path'] , '/public')). $res['file_name'];
             }
         }
         M('goods')->where('goods_id', $goodsId)->update(['share_img' => $shareImg]);
