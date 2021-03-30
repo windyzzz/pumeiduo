@@ -1729,6 +1729,7 @@ AND log_id NOT IN
         if (!empty($articleIds)) {
             // 查看是否有未处理的临时资源
             $ossLogic = new OssLogic();
+            Db::startTrans();
             foreach ($articleIds as $articleId) {
                 $ossPath = [];
                 $tempResource = M('school_article_temp_resource')->where(['article_id' => $articleId, 'status' => ['IN', [0, -1]]])->select();
@@ -1736,7 +1737,13 @@ AND log_id NOT IN
                     // 上传到OSS服务器
                     $filePath = PUBLIC_PATH . substr($resource['local_path'], strrpos($resource['local_path'], '/public/') + 8);
                     $fileName = substr($resource['local_path'], strrpos($resource['local_path'], '/') + 1);
-                    $object = 'video' . '/' . date('Y/m/d/H/') . $fileName;
+                    $ext = substr($resource['local_path'], strrpos($resource['local_path'], '.') + 1);
+                    if (in_array($ext, ['mp3', 'wma', 'wav'])) {
+                        $dir = 'audio';
+                    } else {
+                        $dir = 'video';
+                    }
+                    $object = $dir . '/' . date('Y/m/d/H/') . $fileName;
                     $return_url = $ossLogic->uploadFile($filePath, $object);
                     if (!$return_url) {
                         $upData = ['status' => -1];
@@ -1754,7 +1761,8 @@ AND log_id NOT IN
                 foreach ($ossPath as $localPath => $path) {
                     $content = str_replace($localPath, $path, $content);
                 }
-                M('school_article')->where(['id' => $articleId])->update($content);
+                M('school_article')->where(['id' => $articleId])->update(['content' => $content]);
+                Db::commit();
             }
             M('school_article')->where(['id' => ['IN', $articleIds]])->update(['status' => 1]);
         }
