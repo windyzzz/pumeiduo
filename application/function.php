@@ -2074,7 +2074,7 @@ function getVideoCoverImages_v2($file)
     if ($res == false) {
         return false;
     }
-    $filePath = $res['save_path'] . '/' . $res['file_name'];
+    $filePath = $res['save_path'] . $res['file_name'];
     $imageInfo = getimagesize($filePath);
     if ($imageInfo[0] > $imageInfo[1]) {
         $fileAxis = '1';    // 横向型
@@ -2109,7 +2109,7 @@ function getImageInfo($url)
     if ($res == false) {
         return false;
     }
-    $filePath = $res['save_path'] . '/' . $res['file_name'];
+    $filePath = $res['save_path'] . $res['file_name'];
     $imageInfo = getimagesize($filePath);
     unlink($filePath);
     return $imageInfo;
@@ -2155,7 +2155,7 @@ function download_image($url, $fileName, $dirName, $type = 1, $time = true)
     }
     // 设置文件保存路径
     if ($time) {
-        $dirName = $dirName . date('Y/m-d', time());
+        $dirName = $dirName . date('Y/m-d', time()) . '/';
     }
     if (!file_exists($dirName)) {
         mkdir($dirName, 0755, true);
@@ -2164,7 +2164,7 @@ function download_image($url, $fileName, $dirName, $type = 1, $time = true)
     $res = fopen($dirName . '/' . $fileName, 'a');
     fwrite($res, $file);
     fclose($res);
-    return ['file_name' => $fileName, 'save_path' => $dirName];
+    return ['save_path' => $dirName, 'file_name' => $fileName];
 }
 
 /**

@@ -806,20 +806,16 @@ class Goods extends Base
         }
         M('Goods')->where('goods_id', $goods_id)->save(['click_count' => $goods['click_count'] + 1]); // 统计点击数
         M('goods_click')->add(['goods_id' => $goods['goods_id'], 'user_id' => $this->user_id ?? 0, 'add_time' => NOW_TIME]); // 点击记录
+        $goodsLogic = new GoodsLogic();
         $originalImg = getFullPath($goods['original_img']);
         if (empty($goods['share_img']) && !empty($originalImg)) {
-            if (strstr($originalImg, 'public/upload/goods')) {
-                $goods['share_img'] = $originalImg;
-            } else {
-                $fileName = substr($originalImg, strrpos($originalImg, '/') + 1);
-                $res = download_image($originalImg, $fileName, PUBLIC_PATH . 'upload/goods/', 2);
-                if ($res == false) {
-                    $goods['share_img'] = $originalImg;
-                } else {
-                    $goods['share_img'] = $res['save_path'] . $res['file_name'];
-                }
+            $goods['share_img'] = $goodsLogic->getGoodsShareImg($goods_id, $originalImg);
+        } else {
+            $oldPic = substr($goods['share_img'], strrpos($goods['share_img'], '/') + 1);
+            $newPic = substr($originalImg, strrpos($originalImg, '/') + 1);
+            if ($oldPic != $newPic) {
+                $goods['share_img'] = $goodsLogic->getGoodsShareImg($goods_id, $originalImg);
             }
-            M('goods')->where('goods_id', $goods_id)->update(['share_img' => $goods['share_img']]);
         }
         $goodsInfo = [
             'goods_type' => 'normal',
@@ -1025,7 +1021,6 @@ class Goods extends Base
             }
         }
         if ($this->user) {
-            $goodsLogic = new GoodsLogic();
             // 用户浏览记录
             $goodsLogic->add_visit_log($this->user_id, $goods);
             // 用户收藏

@@ -2127,4 +2127,22 @@ class GoodsLogic extends Model
             return '';
         }
     }
+
+
+    public function getGoodsShareImg($goodsId, $originalImg)
+    {
+        if (strstr($originalImg, 'public/upload/goods')) {
+            $shareImg = $originalImg;
+        } else {
+            $fileName = substr($originalImg, strrpos($originalImg, '/') + 1);
+            $res = download_image($originalImg, $fileName, PUBLIC_PATH . 'upload/goods/', 2);
+            if ($res == false) {
+                $shareImg = $originalImg;
+            } else {
+                $shareImg = $res['save_path'] . $res['file_name'];
+            }
+        }
+        M('goods')->where('goods_id', $goodsId)->update(['share_img' => $shareImg]);
+        return $shareImg;
+    }
 }
