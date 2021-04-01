@@ -345,12 +345,15 @@ class GoodsLogic extends Model
         foreach ($clo_name as $k => $v) {
             $str .= " <td><b>{$spec[$v]}</b></td>";
         }
-        $str .= '<td><b>价格</b></td>
-               <td><b>库存</b></td>
-               <td><b>SKU</b></td>
-<td><b>子规格编号</b></td>
-               <td><b>操作</b></td>
-             </tr>';
+        $str .= "
+                <td><b>价格</b></td>
+                <td><b>库存</b></td>
+                <td><b>SKU</b></td>
+                <td><b>子规格编号</b></td>
+                <td><b>子规格标识</b></td>
+                <td><b>操作</b></td>
+                </tr>
+                ";
         // 显示第二行开始
         foreach ($spec_arr2 as $k => $v) {
             $str .= '<tr>';
@@ -369,6 +372,7 @@ class GoodsLogic extends Model
                 $str .= "<td><input name='item[$item_key][store_count]' value='{$keySpecGoodsPrice[$item_key][store_count]}' onkeyup='this.value=this.value.replace(/[^\d.]/g,\"\")' onpaste='this.value=this.value.replace(/[^\d.]/g,\"\")'/></td>";
                 $str .= "<td><input name='item[$item_key][sku]' value='{$keySpecGoodsPrice[$item_key][sku]}' /><input type='hidden' name='item[$item_key][key_name]' value='$item_name' /></td>";
                 $str .= "<td>{$keySpecGoodsPrice[$item_key]['item_sn']}</td>";
+                $str .= "<td>{$keySpecGoodsPrice[$item_key]['key']}</td>";
             }
 
             $str .= "<td><button type='button' class='btn btn-default delete_item'>无效</button></td>";
