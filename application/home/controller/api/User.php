@@ -3986,7 +3986,7 @@ class User extends Base
                 $age++;
             }
             if ($age < $setAge) {
-                return json(['status' => 0, 'msg' => "您未满18周岁，不能购买烟酒类商品"]);
+                return json(['status' => 0, 'msg' => "您未满{$setAge}周岁，不能购买烟酒类商品"]);
             }
         }
         // 记录身份证信息
