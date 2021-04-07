@@ -3960,6 +3960,7 @@ class User extends Base
     {
         $realName = I('real_name', '');
         $idCard = I('id_card', '');
+        $setAge = I('age', 0);
         if (empty($realName)) return json(['status' => 0, 'msg' => '请传入真实姓名']);
         if (empty($idCard)) return json(['status' => 0, 'msg' => '请传入身份证号码']);
         if (!check_id_card($idCard)) return json(['status' => 0, 'msg' => '请填写正确的身份证号码']);
@@ -3972,6 +3973,21 @@ class User extends Base
         $res = $apiController->checkIdCard($query, 'array');
         if ($res['status'] != '01') {
             return json(['status' => 0, 'msg' => "请填写正确的身份信息\r\n（身份证号以及姓名）"]);
+        }
+        if ($setAge > 0) {
+            // 验证是否已满XX周岁
+            $birthday = $res['birthday'];
+            $age = date('Y', time()) - date('Y', strtotime($birthday)) - 1;
+            if (date('m', time()) == date('m', strtotime($birthday))) {
+                if (date('d', time()) > date('d', strtotime($birthday))) {
+                    $age++;
+                }
+            } elseif (date('m', time()) > date('m', strtotime($birthday))) {
+                $age++;
+            }
+            if ($age < $setAge) {
+                return json(['status' => 0, 'msg' => "您未满{$setAge}周岁，不能购买烟酒类商品"]);
+            }
         }
         // 记录身份证信息
         if (!M('user_id_card_info')->where(['real_name' => $realName, 'id_card' => $idCard])->find()) {

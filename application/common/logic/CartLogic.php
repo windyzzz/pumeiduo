@@ -1812,6 +1812,7 @@ class CartLogic extends Model
         $hasSupply = false;     // 供应链商品
         $hasAgent = false;      // 代理商商品
         $hasAbroad2 = false;    // 京畿道商品
+        $categoryTips = false;  // 商品种类提示
         $vipLevel = [];
         foreach ($cartList as $cart) {
             if ($cart['goods']['zone'] == 3 && $cart['goods']['distribut_id'] > 1) {
@@ -1832,6 +1833,9 @@ class CartLogic extends Model
             }
             if ($cart['goods']['is_agent'] == 1) {
                 $hasAgent = true;
+            }
+            if ( M('goods_category')->where(['id' => ['IN', [$cart['goods']['cat_id'], $cart['goods']['extend_cat_id']]], 'is_tips' => 1])->value('id')) {
+                $categoryTips = true;
             }
         }
         if (!empty($vipLevel)) {
@@ -1864,17 +1868,17 @@ class CartLogic extends Model
             return ['status' => 0, 'msg' => '韩国购商品与京畿道直邮商品请分开结算'];
         }
         if ($hasAgent) {
-            return ['status' => 4];
+            return ['status' => 4, 'category_tips' => $categoryTips];
         }
         if (!$hasPmd && $hasAbroad) {
-            return ['status' => 2];
+            return ['status' => 2, 'category_tips' => $categoryTips];
         }
         if (!$hasPmd && $hasAbroad2) {
-            return ['status' => 5];
+            return ['status' => 5, 'category_tips' => $categoryTips];
         }
         if ($hasSupply) {
-            return ['status' => 3];
+            return ['status' => 3, 'category_tips' => $categoryTips];
         }
-        return ['status' => 1];
+        return ['status' => 1, 'category_tips' => $categoryTips];
     }
 }
