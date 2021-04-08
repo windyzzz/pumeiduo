@@ -68,20 +68,6 @@ class School extends Base
                             M('school_config')->add($data);
                         }
                         break;
-                    case 'standard':
-                        $standardData = [];
-                        foreach ($v as $item) {
-                            if ($item == '' || $item['num'] == 0) continue;
-                            $standardData[] = $item;
-                        }
-                        M('school_standard')->where('1=1')->delete();
-                        if (!empty($standardData)) {
-                            $schoolStandard = new SchoolStandard();
-                            $schoolStandard->saveAll($standardData);
-                        }
-                        // 缓存记录
-                        cache('school_standard', $standardData, 0);
-                        break;
                     case 'popup':
                         if (!$v['content']['is_open']) {
                             $v['content']['is_open'] = 0;
@@ -118,19 +104,33 @@ class School extends Base
                             }
                             $v['content'] = rtrim($content, ',');
                         }
+                        $data = [
+                            'type' => $k,
+                            'name' => isset($v['name']) ? $v['name'] : '',
+                            'url' => isset($v['url']) ? $v['url'] : '',
+                            'content' => isset($v['content']) ? $v['content'] : '',
+                        ];
+                        $config = M('school_config')->where(['type' => $k])->find();
+                        if (!empty($config)) {
+                            M('school_config')->where(['id' => $config['id']])->update($data);
+                        } else {
+                            M('school_config')->add($data);
+                        }
                         break;
-                }
-                $data = [
-                    'type' => $k,
-                    'name' => isset($v['name']) ? $v['name'] : '',
-                    'url' => isset($v['url']) ? $v['url'] : '',
-                    'content' => isset($v['content']) ? $v['content'] : '',
-                ];
-                $config = M('school_config')->where(['type' => $k])->find();
-                if (!empty($config)) {
-                    M('school_config')->where(['id' => $config['id']])->update($data);
-                } else {
-                    M('school_config')->add($data);
+                    case 'standard':
+                        $standardData = [];
+                        foreach ($v as $item) {
+                            if ($item == '' || $item['num'] == 0) continue;
+                            $standardData[] = $item;
+                        }
+                        M('school_standard')->where('1=1')->delete();
+                        if (!empty($standardData)) {
+                            $schoolStandard = new SchoolStandard();
+                            $schoolStandard->saveAll($standardData);
+                        }
+                        // 缓存记录
+                        cache('school_standard', $standardData, 0);
+                        break;
                 }
             }
             // 关键词
