@@ -27,7 +27,18 @@ use think\Url;
  */
 class UsersLogic extends Model
 {
+    protected $user = [];
     protected $user_id = 0;
+
+    /**
+     * 设置用户信息
+     *
+     * @param $user
+     */
+    public function setUser($user = [])
+    {
+        $this->user = $user;
+    }
 
     /**
      * 设置用户ID.
@@ -327,7 +338,7 @@ class UsersLogic extends Model
             session('is_app', 1);
             session('is_app', 1);
             // 登录记录
-            $this->setUserId($userId);
+            $this->setUser($user_info);
             $this->userLogin(1);
             $result = ['status' => 1, 'msg' => '登录成功'];
         }
@@ -631,7 +642,7 @@ class UsersLogic extends Model
             'jpush_tags' => [$user['push_tag']]
         ];
         // 登录记录
-        $this->setUserId($user['user_id']);
+        $this->setUser($user);
         $this->userLogin(4);
         // 更新用户缓存
         (new Redis())->set('user_' . $user['token'], $user, config('REDIS_TIME'));
@@ -690,7 +701,7 @@ class UsersLogic extends Model
                 $user = Db::name('users')->where('user_id', $userId)->find();
             }
             // 登录记录
-            $this->setUserId($userId);
+            $this->setUser($user);
             $this->userLogin($source);
             // 检查用户是否是新用户（未有消费记录）
             if (!M('order')->where(['user_id' => $userId])->value('order_id')) {
@@ -1060,7 +1071,7 @@ class UsersLogic extends Model
             $user['last_login_source'] = $map['last_login_source'];
         }
         // 登录记录
-        $this->setUserId($user['user_id']);
+        $this->setUser($user);
         $this->userLogin($source);
 
         return ['status' => 1, 'msg' => '登陆成功', 'result' => $user];
@@ -1232,7 +1243,7 @@ class UsersLogic extends Model
         if ($res['status'] == 2) {
             $user = Db::name('users')->where('user_id', $user_id)->find();
         }
-        $user = [
+        $returnUser = [
             'user_id' => $user['user_id'],
             'sex' => $user['sex'],
             'nickname' => $user['nickname'] == '' ? $user['user_name'] : $user['nickname'],
@@ -1256,9 +1267,9 @@ class UsersLogic extends Model
             'new_profit' => 1
         ];
         // 登录记录
-        $this->setUserId($user['user_id']);
+        $this->setUser($user);
         $this->userLogin($source);
-        return ['status' => 1, 'msg' => '注册成功', 'result' => $user];
+        return ['status' => 1, 'msg' => '注册成功', 'result' => $returnUser];
     }
 
     /**
@@ -1388,7 +1399,7 @@ class UsersLogic extends Model
         if ($res['status'] == 2) {
             $user = Db::name('users')->where('user_id', $user['user_id'])->find();
         }
-        $user = [
+        $returnUser = [
             'user_id' => $user['user_id'],
             'sex' => $user['sex'],
             'nickname' => $user['nickname'],
@@ -1411,10 +1422,10 @@ class UsersLogic extends Model
             'jpush_tags' => [$user['push_tag']]
         ];
         // 登录记录
-        $this->setUserId($user['user_id']);
+        $this->setUser($user);
         $this->userLogin(3);
         Db::commit();
-        return ['status' => 1, 'msg' => '注册成功', 'result' => $user];
+        return ['status' => 1, 'msg' => '注册成功', 'result' => $returnUser];
     }
 
     /**
@@ -1559,7 +1570,7 @@ class UsersLogic extends Model
         if ($res['status'] == 2) {
             $user = Db::name('users')->where('user_id', $user['user_id'])->find();
         }
-        $user = [
+        $returnUser = [
             'user_id' => $user['user_id'],
             'sex' => $user['sex'],
             'nickname' => $user['nickname'],
@@ -1582,10 +1593,10 @@ class UsersLogic extends Model
             'jpush_tags' => [$user['push_tag']]
         ];
         // 登录记录
-        $this->setUserId($user['user_id']);
+        $this->setUser($user);
         $this->userLogin(4);
         Db::commit();
-        return ['status' => 1, 'msg' => '注册成功', 'result' => $user];
+        return ['status' => 1, 'msg' => '注册成功', 'result' => $returnUser];
     }
 
     /*
@@ -3375,17 +3386,21 @@ class UsersLogic extends Model
     {
         if ($source == 3) {
             // 查看是否是第一次使用APP登陆
-            $isAppFirst = M('user_login_log')->where(['user_id' => $this->user_id, 'source' => 3])->value('id') ? 0 : 1;
+            $isAppFirst = M('user_login_log')->where(['user_id' => $this->user['user_id'], 'source' => 3])->value('id') ? 0 : 1;
+            if ($isAppFirst && $this->user['distribut_level'] == 3) {
+                // SVIP首次登陆APP赠送优惠券
+                (new CouponLogic())->sendFirstSvipUser($this->user['user_id']);
+            }
         }
         M('user_login_log')->add([
-            'user_id' => $this->user_id,
+            'user_id' => $this->user['user_id'],
             'login_ip' => request()->ip(),
             'login_time' => time(),
             'login_date' => date('Y-m-d', time()),
             'source' => $source,
             'is_app_first' => $isAppFirst ?? 0
         ]);
-        M('users')->where(['user_id' => $this->user_id])->update(['last_login_source' => $source, 'last_login' => time()]);
+        M('users')->where(['user_id' => $this->user['user_id']])->update(['last_login_source' => $source, 'last_login' => time()]);
     }
 
     /**

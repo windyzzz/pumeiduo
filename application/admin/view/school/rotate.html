@@ -59,6 +59,24 @@
             </dl>
             <dl class="row">
                 <dt class="tit">
+                    <label>跳转文章</label>
+                </dt>
+                <dd class="opt">
+                    <select name="article_id">
+                        <option value="">请选择</option>
+                        <volist name="article_list" id="article">
+                            <option value="{$article.id}"
+                            <if condition="$article['id'] eq $info['article_id'] ">
+                                selected="selected"
+                            </if>
+                            >ID{$article.id}：{$article.title}</option>
+                        </volist>
+                    </select>
+                    <p class="notic">选择就会跳转到文章，不选择则会跳转模块</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
                     <label>排序</label>
                 </dt>
                 <dd class="opt">
@@ -84,6 +102,32 @@
         $("#" + elementid + '_i').attr('onmouseover', "layer.tips('<img src=" + fileurl_tmp + ">',this,{tips: [1, '#fff']});");
     }
 
+    $('select[name="module_type"]').change(function () {
+        $('select[name="article_id"]').html('<option value="">请选择</option>');
+        if (this.value != '' && this.value != 'module6' && this.value != 'module7' && this.value != 'module8') {
+            $.ajax({
+                type: "GET",
+                url: "{:U('School/ajaxGetArticle')}",
+                data: {'module_type': this.value},
+                dataType: "json",
+                error: function () {
+                    layer.alert("服务器繁忙, 请联系管理员!");
+                },
+                success: function (data) {
+                    if (data.status === 1) {
+                        var option = '';
+                        $.each(data.result, function (index, item) {
+                            option += '<option value="' + item.id + '">ID' + item.id + '：' + item.title + '</option>';
+                        });
+                        if (option != '') {
+                            $('select[name="article_id"]').append(option);
+                        }
+                    }
+                }
+            });
+        }
+    });
+
     $(document).on("click", '#submitBtn', function () {
         verifyForm();
     });
@@ -101,7 +145,7 @@
             success: function (data) {
                 if (data.status === 1) {
                     layer.msg(data.msg, {icon: 1, time: 1000}, function () {
-                        location.href = "{:U('Admin/School/Config')}";
+                        location.href = "{:U('Admin/School/config')}";
                     });
                 } else if (data.status === 0) {
                     layer.msg(data.msg, {icon: 2, time: 1000});

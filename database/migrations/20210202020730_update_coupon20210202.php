@@ -3,7 +3,7 @@
 use think\migration\Migrator;
 use think\migration\db\Column;
 
-class UpdateUsers20210129 extends Migrator
+class UpdateCoupon20210202 extends Migrator
 {
     /**
      * Change Method.
@@ -28,8 +28,8 @@ class UpdateUsers20210129 extends Migrator
      */
     public function change()
     {
-        $this->table('users')
-            ->addColumn('svip_level', 'integer', ['default' => 3, 'comment' => '代理商的等级标识', 'after' => 'distribut_level'])
+        $this->table('coupon')
+            ->changeColumn('type_value', 'string', ['default' => 0, 'comment' => '发放对象 0：所有人，1：注册会员，2：普卡会员，3：网店会员，4：新用户，5：新VIP，6：SVIP(首次登陆APP)'])
             ->update();
     }
 }

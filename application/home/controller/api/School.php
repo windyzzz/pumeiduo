@@ -17,11 +17,27 @@ class School extends Base
     }
 
     /**
+     * 弹窗通知
+     * @return \think\response\Json
+     */
+    public function popup()
+    {
+        if ($this->passAuth) {
+            die(json_encode(['status' => -999, 'msg' => '请先登录']));
+        }
+        $data = $this->logic->getPopup($this->user_id);
+        return json(['status' => 1, 'msg' => '', 'result' => $data]);
+    }
+
+    /**
      * 轮播图列表
      * @return \think\response\Json
      */
     public function rotate()
     {
+        if ($this->passAuth) {
+            die(json_encode(['status' => -999, 'msg' => '请先登录']));
+        }
         $moduleId = I('module_id', 0);
         $data = $this->logic->getRotate($moduleId);
         return json(['status' => 1, 'msg' => '', 'result' => $data]);
@@ -33,6 +49,9 @@ class School extends Base
      */
     public function module()
     {
+        if ($this->passAuth) {
+            die(json_encode(['status' => -999, 'msg' => '请先登录']));
+        }
         $data = $this->logic->getModule();
         return json(['status' => 1, 'msg' => '', 'result' => $data]);
     }
@@ -75,6 +94,16 @@ class School extends Base
     }
 
     /**
+     * 文章搜索热词
+     * @return \think\response\Json
+     */
+    public function articleKeyword()
+    {
+        $keyword = M('school_article_keyword')->where(['is_open' => 1])->order('sort DESC')->field('name, is_hot')->select();
+        return json(['status' => 1, 'result' => ['list' => $keyword]]);
+    }
+
+    /**
      * 文章列表
      * @return \think\response\Json
      */
@@ -87,7 +116,8 @@ class School extends Base
             'status' => I('status', ''),
             'is_recommend' => I('is_recommend', ''),
             'is_integral' => I('is_integral', ''),
-            'distribute_level' => I('level', '')
+            'distribute_level' => I('level', ''),
+            'keyword' => I('keyword', '')
         ];
         if (!empty($param['module_type']) && empty($param['class_id']) && empty($param['is_recommend'])) {
             // 查找模块下第一个分类

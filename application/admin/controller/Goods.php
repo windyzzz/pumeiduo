@@ -250,6 +250,9 @@ class Goods extends Base
                 break;
             case 3:
                 $where .= ' and applet_on_sale = 1';
+                if (in_array($goods_nature, [0, 4])) {
+                    $where .= ' and applet_on_sale = 1 or is_agent = 1';
+                }
                 break;
         }
 
@@ -700,7 +703,11 @@ class Goods extends Base
                 $where .= ' and is_area_show = 1';
                 break;
             case 3:
-                $where .= ' and applet_on_sale = 1 or is_agent = 1';
+                if (in_array($goods_nature, [0, 4])) {
+                    $where .= ' and (applet_on_sale = 1 or is_agent = 1)';
+                } else {
+                    $where .= ' and applet_on_sale = 1';
+                }
                 break;
         }
 

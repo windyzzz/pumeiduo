@@ -1807,11 +1807,11 @@ class CartLogic extends Model
      */
     public function checkCartGoods($user, $cartList)
     {
-        $hasPmd = false;
-        $hasAbroad = false;
-        $hasSupply = false;
-        $hasAgent = false;
-        $hasAbroad2 = false;
+        $hasPmd = false;        // 圃美多商品
+        $hasAbroad = false;     // 韩国购商品
+        $hasSupply = false;     // 供应链商品
+        $hasAgent = false;      // 代理商商品
+        $hasAbroad2 = false;    // 京畿道商品
         $vipLevel = [];
         foreach ($cartList as $cart) {
             if ($cart['goods']['zone'] == 3 && $cart['goods']['distribut_id'] > 1) {
@@ -1834,9 +1834,6 @@ class CartLogic extends Model
                 $hasAgent = true;
             }
         }
-        if ($hasAgent) {
-            return ['status' => 4];
-        }
         if (!empty($vipLevel)) {
             foreach ($vipLevel as $vip) {
                 if ($user['distribut_level'] >= $vip['level']) {
@@ -1857,11 +1854,17 @@ class CartLogic extends Model
                 }
             }
         }
-        if (($hasPmd && $hasAbroad) || ($hasSupply && $hasAbroad)) {
+        if (($hasPmd && $hasAbroad) || ($hasSupply && $hasAbroad) || ($hasAgent && $hasAbroad)) {
             return ['status' => 0, 'msg' => '韩国购商品请分开结算'];
         }
-        if (($hasPmd && $hasAbroad2) || ($hasSupply && $hasAbroad2)) {
+        if (($hasPmd && $hasAbroad2) || ($hasSupply && $hasAbroad2) || ($hasAgent && $hasAbroad2)) {
             return ['status' => 0, 'msg' => '京畿道直邮商品请分开结算'];
+        }
+        if ($hasAbroad && $hasAbroad2) {
+            return ['status' => 0, 'msg' => '韩国购商品与京畿道直邮商品请分开结算'];
+        }
+        if ($hasAgent) {
+            return ['status' => 4];
         }
         if (!$hasPmd && $hasAbroad) {
             return ['status' => 2];

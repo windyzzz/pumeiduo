@@ -3,7 +3,7 @@
 use think\migration\Migrator;
 use think\migration\db\Column;
 
-class UpdateUsers20210129 extends Migrator
+class CreateSchoolArticleKeyword extends Migrator
 {
     /**
      * Change Method.
@@ -28,8 +28,14 @@ class UpdateUsers20210129 extends Migrator
      */
     public function change()
     {
-        $this->table('users')
-            ->addColumn('svip_level', 'integer', ['default' => 3, 'comment' => '代理商的等级标识', 'after' => 'distribut_level'])
-            ->update();
+        $this->table('school_article_keyword', ['comment' => '商学院文章热门搜索词表'])
+            ->addColumn('name', 'string', ['comment' => '搜索词'])
+            ->addColumn('is_open', 'integer', ['default' => 0, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
+                'comment' => '是否开启'])
+            ->addColumn('is_hot', 'integer', ['default' => 0, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
+                'comment' => '是否热门'])
+            ->addColumn('sort', 'integer', ['default' => 0, 'comment' => '排序'])
+            ->addColumn('click', 'integer', ['default' => 0, 'comment' => '点击搜索数'])
+            ->create();
     }
 }

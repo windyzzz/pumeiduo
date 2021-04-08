@@ -3,7 +3,7 @@
 use think\migration\Migrator;
 use think\migration\db\Column;
 
-class UpdateUsers20210129 extends Migrator
+class CreateUserSchoolConfig extends Migrator
 {
     /**
      * Change Method.
@@ -28,8 +28,10 @@ class UpdateUsers20210129 extends Migrator
      */
     public function change()
     {
-        $this->table('users')
-            ->addColumn('svip_level', 'integer', ['default' => 3, 'comment' => '代理商的等级标识', 'after' => 'distribut_level'])
-            ->update();
+        $this->table('user_school_config', ['comment' => '用户商学院配置记录表'])
+            ->addColumn('type', 'string', ['limit' => 20, 'comment' => '配置类型'])
+            ->addColumn('user_id', 'integer', ['comment' => '用户ID'])
+            ->addColumn('add_time', 'integer')
+            ->create();
     }
 }

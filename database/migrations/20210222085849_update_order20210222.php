@@ -3,7 +3,7 @@
 use think\migration\Migrator;
 use think\migration\db\Column;
 
-class UpdateUsers20210129 extends Migrator
+class UpdateOrder20210222 extends Migrator
 {
     /**
      * Change Method.
@@ -28,8 +28,8 @@ class UpdateUsers20210129 extends Migrator
      */
     public function change()
     {
-        $this->table('users')
-            ->addColumn('svip_level', 'integer', ['default' => 3, 'comment' => '代理商的等级标识', 'after' => 'distribut_level'])
+        $this->table('order')
+            ->addColumn('is_live_abroad', 'integer', ['default' => 0, 'comment' => '是否是直播韩国购订单'])
             ->update();
     }
 }
