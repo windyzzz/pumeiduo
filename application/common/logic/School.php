@@ -152,10 +152,7 @@ class School
             $level = explode(',', $module['distribute_level']);
             $svipLevel = [4, 5, 6, 7, 8, 9, 10, 11];
             $setSvipLevel = array_intersect($svipLevel, $level);
-            if (count($setSvipLevel) > 1) {
-                if ($user['distribut_level'] != 3) {
-                    return ['status' => -1, 'msg' => '您当前不是SVIP，没有访问权限'];
-                }
+            if (count($setSvipLevel) > 0) {
                 // 拥有代理商等级划分，需要从代理商查询用户的代理商等级
                 $url = C('SERVER_URL') . '/index.php/Crond/get_user_grade/user_name/' . $user['user_name'];
                 $res = httpRequest($url);
@@ -165,14 +162,14 @@ class School
                 $res = json_decode($res, true);
                 if (isset($res['status']) && $res['status'] == 1) {
                     $useSvipLevel = $res['station'] + 2;
-                    if (!in_array($useSvipLevel, $setSvipLevel)) {
-                        foreach ($setSvipLevel as $lv) {
-                            $levelName = M('svip_level')->where(['app_level' => $lv])->value('name');
-                            return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
-                        }
-                    }
                 } else {
-                    return ['status' => 0, 'msg' => '权限检查失败'];
+                    $useSvipLevel = $user['svip_level'];
+                }
+                if (!in_array($useSvipLevel, $setSvipLevel)) {
+                    foreach ($setSvipLevel as $lv) {
+                        $levelName = M('svip_level')->where(['app_level' => $lv])->value('name');
+                        return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
+                    }
                 }
             } else {
                 if (!in_array($user['distribut_level'], $level)) {
@@ -218,10 +215,7 @@ class School
             $level = explode(',', $moduleClass['distribute_level']);
             $svipLevel = [4, 5, 6, 7, 8, 9, 10, 11];
             $setSvipLevel = array_intersect($svipLevel, $level);
-            if (count($setSvipLevel) > 1) {
-                if ($user['distribut_level'] != 3) {
-                    return ['status' => -1, 'msg' => '您当前不是SVIP，没有访问权限'];
-                }
+            if (count($setSvipLevel) > 0) {
                 // 拥有代理商等级划分，需要从代理商查询用户的代理商等级
                 $url = C('SERVER_URL') . '/index.php/Crond/get_user_grade/user_name/' . $user['user_name'];
                 $res = httpRequest($url);
@@ -231,14 +225,14 @@ class School
                 $res = json_decode($res, true);
                 if (isset($res['status']) && $res['status'] == 1) {
                     $useSvipLevel = $res['station'] + 2;
-                    if (!in_array($useSvipLevel, $setSvipLevel)) {
-                        foreach ($setSvipLevel as $lv) {
-                            $levelName = M('svip_level')->where(['app_level' => $lv])->value('name');
-                            return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
-                        }
-                    }
                 } else {
-                    return ['status' => 0, 'msg' => '权限检查失败'];
+                    $useSvipLevel = $user['svip_level'];
+                }
+                if (!in_array($useSvipLevel, $setSvipLevel)) {
+                    foreach ($setSvipLevel as $lv) {
+                        $levelName = M('svip_level')->where(['app_level' => $lv])->value('name');
+                        return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
+                    }
                 }
             } else {
                 if (!in_array($user['distribut_level'], $level)) {
@@ -297,10 +291,7 @@ class School
             $level = explode(',', $article['distribute_level']);
             $svipLevel = [4, 5, 6, 7, 8, 9, 10, 11];
             $setSvipLevel = array_intersect($svipLevel, $level);
-            if (count($setSvipLevel) > 1) {
-                if ($user['distribut_level'] != 3) {
-                    return ['status' => -1, 'msg' => '您当前不是SVIP，没有访问权限'];
-                }
+            if (count($setSvipLevel) > 0) {
                 // 拥有代理商等级划分，需要从代理商查询用户的代理商等级
                 $url = C('SERVER_URL') . '/index.php/Crond/get_user_grade/user_name/' . $user['user_name'];
                 $res = httpRequest($url);
@@ -310,14 +301,14 @@ class School
                 $res = json_decode($res, true);
                 if (isset($res['status']) && $res['status'] == 1) {
                     $useSvipLevel = $res['station'] + 2;
-                    if (!in_array($useSvipLevel, $setSvipLevel)) {
-                        foreach ($setSvipLevel as $lv) {
-                            $levelName = M('svip_level')->where(['app_level' => $lv])->value('name');
-                            return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
-                        }
-                    }
                 } else {
-                    return ['status' => 0, 'msg' => '权限检查失败'];
+                    $useSvipLevel = $user['svip_level'];
+                }
+                if (!in_array($useSvipLevel, $setSvipLevel)) {
+                    foreach ($setSvipLevel as $lv) {
+                        $levelName = M('svip_level')->where(['app_level' => $lv])->value('name');
+                        return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
+                    }
                 }
             } else {
                 if (!in_array($user['distribut_level'], $level)) {
@@ -523,6 +514,7 @@ class School
                         'type' => substr($img[3], strrpos($img[3], 'type:') + 5),
                     ],
                     'name' => $item['name'],
+                    'desc' => $item['desc'] ?? '',
                     'code' => $item['type'],
                     'is_allow' => (int)$item['is_allow'],
                     'tips' => '功能尚未开放',
@@ -539,6 +531,7 @@ class School
                         'type' => substr($img[3], strrpos($img[3], 'type:') + 5),
                     ],
                     'name' => $item['name'],
+                    'desc' => $item['desc'] ?? '',
                     'code' => $item['type'],
                     'is_allow' => (int)$item['is_allow'],
                     'tips' => '功能尚未开放',
@@ -558,6 +551,7 @@ class School
                     'type' => substr($img[3], strrpos($img[3], 'type:') + 5),
                 ],
                 'name' => $item['name'],
+                'desc' => $item['desc'] ?? '',
                 'code' => $item['type'],
                 'is_allow' => (int)$item['is_allow'],
                 'tips' => '功能尚未开放',
