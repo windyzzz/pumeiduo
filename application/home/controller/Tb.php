@@ -208,6 +208,7 @@ class Tb extends Controller
             'supplier_order_status' => $order['supplier_order_status'],
             'school_credit' => $order['school_credit'],
             'is_live_abroad' => $order['is_live_abroad'],
+            'is_live_supplier' => $order['is_live_supplier'],
         );
         //$user = get_user_info($order['user_id'],0,'','user_name,true_name,mobile');
         $delivery_record = M('delivery_doc')->where('order_id=' . $order_id)->order('id desc')->limit(1)->find();

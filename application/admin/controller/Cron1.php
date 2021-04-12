@@ -8998,4 +8998,20 @@ class Cron1 extends Controller
         exit();
     }
 
+    public function supplierOrderCreate()
+    {
+        $orderId = I('order_id');
+        $time = I('time');
+        $payName = I('pay_name');
+        Db::startTrans();
+        // 更新子订单状态
+        M('order')->where(['parent_id' => $orderId, 'order_type' => 1])->update([
+            'pay_status' => 1,
+            'pay_time' => $time,
+            'pay_name' => $payName
+        ]);
+        // 发送到供应链系统
+        (new \app\common\logic\OrderLogic())->supplierOrderSend($orderId, $time);
+        Db::commit();
+    }
 }

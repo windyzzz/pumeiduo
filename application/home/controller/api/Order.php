@@ -2680,6 +2680,9 @@ class Order extends Base
             if ($this->isApplet && $cartGoodsRes['status'] == 2) {
                 $placeOrder->isLiveAbroad(1);
             }
+            if ($this->isApplet && $cartGoodsRes['status'] == 3) {
+                $placeOrder->isLiveSupplier(1);
+            }
             $placeOrder->setOrderType($orderType);
             $placeOrder->setHasAgent($hasAgent);
             Db::startTrans();

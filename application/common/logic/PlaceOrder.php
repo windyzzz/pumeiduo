@@ -43,6 +43,7 @@ class PlaceOrder
     private $order2Goods = [];
     private $hasAgent = 0;
     private $isLiveAbroad = 0;
+    private $isLiveSupplier = 0;
 
     /**
      * PlaceOrder constructor.
@@ -118,6 +119,11 @@ class PlaceOrder
     public function isLiveAbroad($isLiveAbroad)
     {
         $this->isLiveAbroad = $isLiveAbroad;
+    }
+
+    public function isLiveSupplier($isLiveSupplier)
+    {
+        $this->isLiveSupplier = $isLiveSupplier;
     }
 
     public function addNormalOrder($source = 1)
@@ -272,7 +278,8 @@ class PlaceOrder
             'order_type' => $this->orderType,
             'is_agent' => $this->hasAgent,
             'school_credit' => $this->pay->getSchoolCredit(),
-            'is_live_abroad' => $this->isLiveAbroad
+            'is_live_abroad' => $this->isLiveAbroad,
+            'is_live_supplier' => $this->isLiveSupplier,
         ];
         if ($this->orderType == 5) {
             // 商学院兑换订单
