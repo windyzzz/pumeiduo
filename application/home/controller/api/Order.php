@@ -2594,7 +2594,7 @@ class Order extends Base
             $idCard = M('user_id_card_info')->where(['user_id' => $this->user_id, 'real_name' => $userAddress['consignee']])->value('id_card');
             if (empty($idCard)) return json(['status' => 0, 'msg' => '请填写正确的身份证格式']);
         }
-        if ($this->isApplet) {
+        if ($this->isApplet && $cartGoodsRes['status'] != 3) {
             // 直播订单
             $orderType = 4;
         }
