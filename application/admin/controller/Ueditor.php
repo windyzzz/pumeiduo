@@ -165,19 +165,29 @@ class Ueditor extends Base
         // 移动到框架应用根目录/public/uploads/ 目录下
         $this->savePath = $this->savePath . date('Y') . '/' . date('m-d') . '/';
         // 使用自定义的文件保存规则
-        $info = $file->rule(function ($file) {
-            return md5(mt_rand());
-        })->move(UPLOAD_PATH . $this->savePath);
+        $info = $file->move(UPLOAD_PATH . $this->savePath, false);  // 保留文件原名
 
         if ($info) {
+            $url = '/' . UPLOAD_PATH . $this->savePath . $info->getSaveName();
             $data = [
                 'state' => 'SUCCESS',
-                'url' => '/' . UPLOAD_PATH . $this->savePath . $info->getSaveName(),
+                'url' => $url,
                 'title' => $info->getFilename(),
                 'original' => $info->getFilename(),
                 'type' => '.' . $info->getExtension(),
                 'size' => $info->getSize(),
             ];
+            if (I('is_oss', 'yes') == 'yes') {
+                // 上传到OSS服务器
+                $res = (new Oss())->uploadFile('file', $url);
+                if ($res['status'] == 0) {
+                    $data['state'] = 'ERROR：' . $res['msg'];
+                } else {
+                    unset($info);
+                    unlink(PUBLIC_PATH . substr($url, strrpos($url, 'public') + 7));
+                    $data['url'] = $res['url'];
+                }
+            }
             //图片加水印
             //图片应该不会走这个函数(走imageUp)，为了避免还有调用，先屏蔽。 by lhb
 //			if($this->savePath=='goods/'){
@@ -484,7 +494,7 @@ class Ueditor extends Base
             $return_data['url'] = $return['url'];
             if (I('is_oss', 'yes') == 'yes') {
                 // 上传到OSS服务器
-                $res = $this->ossUp('image', $return['url']);
+                $res = (new Oss())->uploadFile('image', $return_data['url']);
                 if ($res['status'] == 0) {
                     $state = 'ERROR：' . $res['msg'];
                 } else {
@@ -565,7 +575,7 @@ class Ueditor extends Base
     }
 
     /**
-     * 上传视频.
+     * 上传视频/音频
      */
     public function videoUp()
     {
@@ -600,7 +610,12 @@ class Ueditor extends Base
             $return_data['url'] = '/' . UPLOAD_PATH . $new_path . $info->getSaveName();
             if (I('is_oss', 'yes') == 'yes') {
                 // 上传到OSS服务器
-                $res = $this->ossUp('video', $return_data['url']);
+                $ext = substr($info->getSaveName(), strrpos($info->getSaveName(), '.') + 1);
+                if (in_array($ext, ['mp3', 'wma', 'wav'])) {
+                    $res = (new Oss())->uploadFile('audio', $return_data['url']);
+                } else {
+                    $res = (new Oss())->uploadFile('video', $return_data['url']);
+                }
                 if ($res['status'] == 0) {
                     $state = 'ERROR：' . $res['msg'];
                 } else {
@@ -616,25 +631,5 @@ class Ueditor extends Base
         $return_data['state'] = $state;
         $return_data['path'] = $path;
         $this->ajaxReturn($return_data);
-    }
-
-    /**
-     * 上传到oss服务器
-     * @param $dir
-     * @param $path
-     * @return array
-     */
-    public function ossUp($dir, $path)
-    {
-        $filePath = PUBLIC_PATH . substr($path, strrpos($path, '/public/') + 8);
-        $fileName = substr($path, strrpos($path, '/') + 1);
-        $object = $dir . '/' . date('Y/m/d/H/') . $fileName;
-        $return_url = $this->ossClient->uploadFile($filePath, $object);
-        if (!$return_url) {
-            $result = ['status' => 0, 'msg' => 'OSS服务器上传失败'];
-        } else {
-            $result = ['status' => 1, 'url' => $this->ossClient::url($object)];
-        }
-        return $result;
     }
 }

@@ -6,7 +6,9 @@ namespace app\admin\controller;
 use app\admin\model\SchoolArticle;
 use app\admin\model\SchoolArticleResource;
 use app\admin\model\SchoolExchange;
+use app\admin\model\SchoolStandard;
 use app\common\logic\OssLogic;
+use app\common\logic\UsersLogic;
 use think\Db;
 use think\Page;
 
@@ -23,44 +25,127 @@ class School extends Base
     /**
      * 配置信息
      * @return mixed
+     * @throws \Exception
      */
     public function config()
     {
         if (IS_POST) {
             $param = I('post.');
+            $keyword = $param['keyword'];
+            unset($param['keyword']);
             // 配置
             foreach ($param as $k => $v) {
-                if ($k == 'official') {
-                    if (strstr($v['url'], 'aliyuncs.com')) {
-                        // 原图
-                        $v['url'] = M('school_config')->where(['type' => 'official'])->value('url');
-                    } else {
-                        // 新图
-                        $filePath = PUBLIC_PATH . substr($v['url'], strrpos($v['url'], '/public/') + 8);
-                        $fileName = substr($v['url'], strrpos($v['url'], '/') + 1);
-                        $object = 'image/' . date('Y/m/d/H/') . $fileName;
-                        $return_url = $this->ossClient->uploadFile($filePath, $object);
-                        if (!$return_url) {
-                            $this->error('图片上传错误');
+                switch ($k) {
+                    case 'official':
+                        if (strstr($v['url'], 'aliyuncs.com')) {
+                            // 原图
+                            $v['url'] = M('school_config')->where(['type' => 'official'])->value('url');
                         } else {
-                            // 图片信息
-                            $imageInfo = getimagesize($filePath);
-                            $v['url'] = 'img:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ',type:' . substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1);
-                            unlink($filePath);
+                            // 新图
+                            $filePath = PUBLIC_PATH . substr($v['url'], strrpos($v['url'], '/public/') + 8);
+                            $fileName = substr($v['url'], strrpos($v['url'], '/') + 1);
+                            $object = 'image/' . date('Y/m/d/H/') . $fileName;
+                            $return_url = $this->ossClient->uploadFile($filePath, $object);
+                            if (!$return_url) {
+                                $this->error('图片上传错误');
+                            } else {
+                                // 图片信息
+                                $imageInfo = getimagesize($filePath);
+                                $v['url'] = 'img:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ',type:' . substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1);
+                                unlink($filePath);
+                            }
                         }
-                    }
+                        $data = [
+                            'type' => $k,
+                            'name' => isset($v['name']) ? $v['name'] : '',
+                            'url' => isset($v['url']) ? $v['url'] : '',
+                            'content' => isset($v['content']) ? $v['content'] : '',
+                        ];
+                        $config = M('school_config')->where(['type' => $k])->find();
+                        if (!empty($config)) {
+                            M('school_config')->where(['id' => $config['id']])->update($data);
+                        } else {
+                            M('school_config')->add($data);
+                        }
+                        break;
+                    case 'popup':
+                        if (!$v['content']['is_open']) {
+                            $v['content']['is_open'] = 0;
+                        }
+                        if ($v['content']['is_open'] == 1) {
+                            $v['name'] = '弹窗跳转';
+                            if (empty($v['url'])) {
+                                $this->error('请上传弹窗封面图', U('Admin/School/config'));
+                            }
+                            if (strstr($v['url'], 'aliyuncs.com')) {
+                                // 原图
+                                $v['url'] = M('school_config')->where(['type' => 'popup'])->value('url');
+                            } else {
+                                // 新图
+                                $filePath = PUBLIC_PATH . substr($v['url'], strrpos($v['url'], '/public/') + 8);
+                                $fileName = substr($v['url'], strrpos($v['url'], '/') + 1);
+                                $object = 'image/' . date('Y/m/d/H/') . $fileName;
+                                $return_url = $this->ossClient->uploadFile($filePath, $object);
+                                if (!$return_url) {
+                                    $this->error('图片上传错误');
+                                } else {
+                                    // 图片信息
+                                    $imageInfo = getimagesize($filePath);
+                                    $v['url'] = 'img:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ',type:' . substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1);
+                                    unlink($filePath);
+                                }
+                            }
+                            $content = '';
+                            foreach ($v['content'] as $key => $value) {
+                                if ($key == 'article_id' && $value == 0) {
+                                    $this->error('请选择跳转文章', U('Admin/School/config'));
+                                }
+                                $content .= $key . ':' . $value . ',';
+                            }
+                            $v['content'] = rtrim($content, ',');
+                        }
+                        $data = [
+                            'type' => $k,
+                            'name' => isset($v['name']) ? $v['name'] : '',
+                            'url' => isset($v['url']) ? $v['url'] : '',
+                            'content' => isset($v['content']) ? $v['content'] : '',
+                        ];
+                        $config = M('school_config')->where(['type' => $k])->find();
+                        if (!empty($config)) {
+                            M('school_config')->where(['id' => $config['id']])->update($data);
+                        } else {
+                            M('school_config')->add($data);
+                        }
+                        break;
+                    case 'standard':
+                        $standardData = [];
+                        foreach ($v as $item) {
+                            if ($item == '' || $item['num'] == 0) continue;
+                            $standardData[] = $item;
+                        }
+                        M('school_standard')->where('1=1')->delete();
+                        if (!empty($standardData)) {
+                            $schoolStandard = new SchoolStandard();
+                            $schoolStandard->saveAll($standardData);
+                        }
+                        // 缓存记录
+                        cache('school_standard', $standardData, 0);
+                        break;
                 }
-                $data = [
-                    'type' => $k,
-                    'name' => isset($v['name']) ? $v['name'] : '',
-                    'url' => isset($v['url']) ? $v['url'] : '',
-                    'content' => isset($v['content']) ? $v['content'] : '',
-                ];
-                $config = M('school_config')->where(['type' => $k])->find();
-                if (!empty($config)) {
-                    M('school_config')->where(['id' => $config['id']])->update($data);
+            }
+            // 关键词
+            foreach ($keyword as $key) {
+                if ($key['id'] == 0) {
+                    if (M('school_article_keyword')->where(['name' => $key['name']])->value('id')) {
+                        continue;
+                    } else {
+                        M('school_article_keyword')->add($key);
+                    }
                 } else {
-                    M('school_config')->add($data);
+                    if (empty($key['name'])) {
+                        continue;
+                    }
+                    M('school_article_keyword')->where(['id' => $key['id']])->update($key);
                 }
             }
             $this->success('操作成功', U('Admin/School/config'));
@@ -72,6 +157,16 @@ class School extends Base
             if ($val['type'] == 'official' && !empty($val['url'])) {
                 $url = explode(',', $val['url']);
                 $val['url'] = $this->ossClient::url(substr($url[0], strrpos($url[0], 'img:') + 4));
+            } elseif ($val['type'] == 'popup' && !empty($val['url']) && !empty($val['content'])) {
+                $url = explode(',', $val['url']);
+                $val['url'] = $this->ossClient::url(substr($url[0], strrpos($url[0], 'img:') + 4));
+                $content = explode(',', $val['content']);
+                $val['content'] = [];
+                foreach ($content as $v) {
+                    $key = substr($v, 0, strrpos($v, ':'));
+                    $value = substr($v, strrpos($v, ':') + 1);
+                    $val['content'][$key] = $value;
+                }
             }
             $config[$val['type']] = [
                 'name' => $val['name'],
@@ -79,6 +174,10 @@ class School extends Base
                 'content' => $val['content']
             ];
         }
+        // 学习达标设置
+        $standard = M('school_standard')->order('type ASC, num DESC')->select();
+        $standardCount = count($standard);
+        $svipLevel = M('svip_level')->order('app_level ASC')->select();
         // 轮播图
         $count = M('school_rotate')->where(['module_id' => 0])->count();
         $page = new Page($count, 10);
@@ -88,11 +187,346 @@ class School extends Base
             $image['url'] = $this->ossClient::url(substr($url[0], strrpos($url[0], 'img:') + 4));
             $image['module_type'] = M('school')->where(['type' => $image['module_type']])->value('name');
         }
+        // 当前热点模块的文章
+        $articleList = M('school_article sa')
+            ->join('school_class sc', 'sc.id = sa.class_id')
+            ->join('school s', 's.id = sc.module_id')
+            ->where([
+                's.type' => 'module9',
+                'sa.status' => 1
+            ])
+            ->field('sa.id, sa.title')->select();
+        // 热门词
+        $keyword = M('school_article_keyword')->select();
 
         $this->assign('config', $config);
+        $this->assign('standard', $standard);
+        $this->assign('standard_count', $standardCount);
+        $this->assign('svip_level', $svipLevel);
         $this->assign('images', $images);
         $this->assign('page', $page);
+        $this->assign('article_list', $articleList);
+        $this->assign('keyword', $keyword);
+        $this->assign('keyword_count', count($keyword));
         return $this->fetch();
+    }
+
+    /**
+     * 用户学习课程列表
+     * @return mixed
+     */
+    public function userCourseList()
+    {
+        $isExport = I('is_export', '');     // 是否导出
+        $where = ['distribut_level' => ['NEQ', 1]];
+        if ($userId = I('user_id', '')) {
+            $where['user_id'] = $userId;
+        }
+        if ($username = I('user_name', '')) {
+            $where['user_name'] = $username;
+        }
+        if ($nickname = I('nickname', '')) {
+            $where['nickname'] = $nickname;
+        }
+        if ($distributeLevel = I('distribute_level')) {
+            switch ($distributeLevel) {
+                case 1:
+                case 2:
+                    $where['distribut_level'] = $distributeLevel;
+                    break;
+                case 3:
+                    $where['distribut_level'] = $distributeLevel;
+                    $where['svip_level'] = $distributeLevel;
+                    break;
+                default:
+                    $where['svip_level'] = $distributeLevel;
+            }
+        }
+        $userList = M('users')->where($where)->order('user_id DESC')->field('user_id, nickname, user_name, distribut_level, school_credit, svip_level');
+        if (!$isExport) {
+            // 用户总数
+            $count = M('users')->where($where)->count();
+            $page = new Page($count, 10);
+            // 用户列表
+            $userList = $userList->limit($page->firstRow . ',' . $page->listRows);
+        }
+        $userList = $userList->select();
+        // 学习课程id
+        $courseIds = M('school_article')->where([
+            'learn_type' => ['IN', [1, 2]],
+            'status' => 1,
+        ])->getField('id', true);
+        // svip等级
+        if (cache('svip_level')) {
+            $svipLevel = cache('svip_level');
+        } else {
+            $svipLevel = M('svip_level')->getField('app_level, name', true);
+            cache('svip_level', $svipLevel, 0);
+        }
+        $timeFrom = I('time_from', '') ? strtotime(I('time_from')) : '';
+        $timeTo = I('time_to', '') ? strtotime(I('time_to')) : '';
+        $dataList = [];     // 导出数据
+        foreach ($userList as &$user) {
+            $user['course_num'] = 0;    // 学习课程数量
+            if ($user['svip_level'] == 0 || $user['svip_level'] == 3) {
+                $userLevel = $user['distribut_level'];
+                $user['level_name'] = $userLevel < 3 ? 'VIP' : 'SVIP';
+            } else {
+                $userLevel = $user['svip_level'];
+                $user['level_name'] = $svipLevel[$userLevel];
+            }
+            $userData = [
+                'user_id' => $user['user_id'],
+                'user_level' => $userLevel
+            ];
+            $res = $this->checkUserCourseNum(false, $userData, $courseIds, $timeFrom, $timeTo);
+            $user['course_num'] = $res['course_num'];
+            $dataList[] = [
+                $user['user_id'],
+                $user['nickname'],
+                $user['user_name'],
+                $user['level_name'],
+                $user['course_num'],
+                $user['school_credit']
+            ];
+        }
+        if (!$isExport) {
+            $this->assign('svip_level', $svipLevel);
+            $this->assign('distribute_level', $distributeLevel);
+            $this->assign('user_id', $userId);
+            $this->assign('user_name', $username);
+            $this->assign('nickname', $nickname);
+            $this->assign('time_from', I('time_from', ''));
+            $this->assign('time_to', I('time_to', ''));
+            $this->assign('page', $page);
+            $this->assign('list', $userList);
+            return $this->fetch('user_course_list');
+        } else {
+            // 表头
+            $headList = [
+                '用户ID', '用户昵称', '用户名', '用户等级', '课程数量', '乐活豆数量'
+            ];
+            toCsvExcel($dataList, $headList, 'user_course_list');
+        }
+    }
+
+    /**
+     * 用户学习达标列表
+     * @return mixed
+     */
+    public function userStandardList()
+    {
+        $isExport = I('is_export', '');     // 是否导出
+        $isReach = I('is_reach', '');       // 是否达标
+        $distributeLevel = I('distribute_level', '');
+        // 学习课程id
+        $courseIds = M('school_article')->where([
+            'learn_type' => ['IN', [1, 2]],
+            'status' => 1,
+        ])->getField('id', true);
+        $where = ['article_id' => ['IN', $courseIds]];
+        if ($distributeLevel) {
+            switch ($distributeLevel) {
+                case 1:
+                case 2:
+                    $where['distribut_level'] = $distributeLevel;
+                    break;
+                case 3:
+                    $where['distribut_level'] = $distributeLevel;
+                    $where['svip_level'] = $distributeLevel;
+                    break;
+                default:
+                    $where['svip_level'] = $distributeLevel;
+            }
+        }
+        if ($userId = I('user_id', '')) {
+            $where['u.user_id'] = $userId;
+        }
+        if ($username = I('user_name', '')) {
+            $where['user_name'] = $username;
+        }
+        if ($nickname = I('nickname', '')) {
+            $where['nickname'] = $nickname;
+        }
+        $userCourseLog = M('user_school_article usa')->join('users u', 'u.user_id = usa.user_id')
+            ->join('distribut_level dl', 'dl.level_id = u.distribut_level')
+            ->where($where)->group('usa.user_id')
+            ->field('u.user_id, u.nickname, u.user_name, u.school_credit, u.distribut_level, u.svip_level');
+        if (!$isExport && $isReach === '') {
+            // 用户学习课程记录总数
+            $count = M('user_school_article')->where(['article_id' => ['IN', $courseIds]])->group('user_id')->count();
+            // 用户课程学习记录
+            $page = new Page($count, 10);
+            $userCourseLog = $userCourseLog->limit($page->firstRow . ',' . $page->listRows);
+        }
+        $userCourseLog = $userCourseLog->select();
+        // svip等级
+        if (cache('svip_level')) {
+            $svipLevel = cache('svip_level');
+        } else {
+            $svipLevel = M('svip_level')->getField('app_level, name', true);
+            cache('svip_level', $svipLevel, 0);
+        }
+        $dataList = [];     // 导出数据
+        foreach ($userCourseLog as $k => &$log) {
+            if (!empty($log['nickname'])) {
+                $log['userName'] = $log['nickname'];
+            } elseif (!empty($log['user_name'])) {
+                $log['userName'] = $log['user_name'];
+            } else {
+                $log['userName'] = '用户：' . $log['user_id'];
+            }
+            $log['is_reach'] = 0;       // 未达标
+            $log['course_num'] = 0;     // 用户课程数量
+            if ($log['svip_level'] == 0 || $log['svip_level'] == 3) {
+                $userLevel = $log['distribut_level'];
+                switch ($userLevel) {
+                    case 1:
+                        $log['level_name'] = '普通会员';
+                        break;
+                    case 2:
+                        $log['level_name'] = 'VIP';
+                        break;
+                    case 3:
+                        $log['level_name'] = 'SVIP';
+                        break;
+                }
+            } else {
+                $userLevel = $log['svip_level'];
+                $log['level_name'] = $svipLevel[$userLevel];
+            }
+            // 检查是否达标
+            /*
+             * 查看课程数量
+             */
+            $user = [
+                'user_id' => $log['user_id'],
+                'user_level' => $userLevel
+            ];
+            $res = $this->checkUserCourseNum(true, $user, $courseIds);
+            $log['course_num'] = $res['course_num'];
+            if ($res['status'] == 1) {
+                $log['is_reach'] = 1;
+            } else {
+                /*
+                 * 查看乐活豆数量
+                 */
+                $user = [
+                    'school_credit' => $log['school_credit'],
+                    'user_level' => $userLevel
+                ];
+                $res = $this->checkUserSchoolCredit($user);
+                if ($res['status'] == 1) {
+                    $log['is_reach'] = 1;
+                }
+            }
+            if ($isReach !== '') {
+                if ($log['is_reach'] != $isReach) {
+                    unset($userCourseLog[$k]);
+                    continue;
+                }
+            }
+            $dataList[] = [
+                $log['userName'],
+                $log['level_name'],
+                $log['course_num'],
+                $log['school_credit'],
+                $log['is_reach'] == 1 ? '已达标' : '未达标'
+            ];
+        }
+        if (!$isExport) {
+            if ($isReach === '') {
+                $this->assign('svip_level', $svipLevel);
+                $this->assign('distribute_level', $distributeLevel);
+                $this->assign('user_id', $userId);
+                $this->assign('user_name', $username);
+                $this->assign('nickname', $nickname);
+                $this->assign('is_reach', $isReach);
+                $this->assign('page', $page);
+                $this->assign('log', $userCourseLog);
+                return $this->fetch('user_standard_list');
+            } else {
+                $this->assign('svip_level', $svipLevel);
+                $this->assign('distribute_level', $distributeLevel);
+                $this->assign('user_id', $userId);
+                $this->assign('user_name', $username);
+                $this->assign('nickname', $nickname);
+                $this->assign('is_reach', (int)$isReach);
+                $this->assign('log', $userCourseLog);
+                return $this->fetch('user_standard_list_2');
+            }
+        } else {
+            // 表头
+            $headList = [
+                '用户', '用户等级', '课程数量', '乐活豆数量', '是否达标'
+            ];
+            toCsvExcel($dataList, $headList, 'user_standard_list');
+        }
+    }
+
+    /**
+     * 检查用户是否满足课程数量达标
+     * @param bool $isCheck 是否检查达标
+     * @param array $user 用户信息
+     * @param array $courseIds 学习课程IDs
+     * @param string $timeFrom 学习时间开始
+     * @param string $timeTo 学习时间结束
+     * @return array
+     */
+    private function checkUserCourseNum($isCheck, $user, $courseIds, $timeFrom = '', $timeTo = '')
+    {
+        $where = [
+            'user_id' => $user['user_id'],
+            'article_id' => ['IN', $courseIds],
+            'status' => 1,
+        ];
+        if ($timeFrom && $timeTo) {
+            $where['finish_time'] = ['BETWEEN', [$timeFrom, $timeTo]];
+        }
+        // 用户学习课程记录总数
+        $userCourseNum = M('user_school_article')->where($where)->group('user_id')->getField('count(article_id) as count');
+        $userCourseNum = $userCourseNum ?? 0;
+        // 学习规则达标设置
+        $return = ['status' => 0, 'course_num' => $userCourseNum];
+        if ($isCheck) {
+            $schoolStandard = cache('school_standard');
+            foreach ($schoolStandard as $v) {
+                if ($v['type'] == 2) {
+                    continue;
+                }
+                if ($user['user_level'] == $v['distribute_level']) {
+                    if ($userCourseNum >= $v['num']) {
+                        $return['status'] = 1;
+                    }
+                    break;
+                }
+            }
+        }
+        return $return;
+    }
+
+    /**
+     * 检查用户是否满足乐活豆数量达标
+     * @param $user
+     * @return array
+     */
+    private function checkUserSchoolCredit($user)
+    {
+        // 学习规则达标设置
+        $return = ['status' => 0];
+        $schoolStandard = cache('school_standard');
+        foreach ($schoolStandard as $v) {
+            if ($v['type'] == 1) {
+                continue;
+            }
+            if ($user['user_level'] == $v['distribute_level']) {
+                if ($user['school_credit'] >= $v['num']) {
+                    $return['status'] = 1;
+                }
+                break;
+            }
+        }
+        return $return;
     }
 
     /**
@@ -108,24 +542,25 @@ class School extends Base
             if ($moduleId != 0) {
                 $param['module_type'] = M('school')->where(['id' => $moduleId])->value('type');
             }
-            if (!empty($param['url'])) {
-                if (strstr($param['url'], 'aliyuncs.com')) {
-                    // 原图
-                    $param['url'] = M('school_rotate')->where(['id' => $id])->value('url');
+            if (empty($param['url'])) {
+                $this->ajaxReturn(['status' => 0, 'msg' => '请上传轮播图']);
+            }
+            if (strstr($param['url'], 'aliyuncs.com')) {
+                // 原图
+                $param['url'] = M('school_rotate')->where(['id' => $id])->value('url');
+            } else {
+                // 新图
+                $filePath = PUBLIC_PATH . substr($param['url'], strrpos($param['url'], '/public/') + 8);
+                $fileName = substr($param['url'], strrpos($param['url'], '/') + 1);
+                $object = 'image/' . date('Y/m/d/H/') . $fileName;
+                $return_url = $this->ossClient->uploadFile($filePath, $object);
+                if (!$return_url) {
+                    return $this->ajaxReturn(['status' => 0, 'msg' => 'ERROR：' . $this->ossClient->getError()]);
                 } else {
-                    // 新图
-                    $filePath = PUBLIC_PATH . substr($param['url'], strrpos($param['url'], '/public/') + 8);
-                    $fileName = substr($param['url'], strrpos($param['url'], '/') + 1);
-                    $object = 'image/' . date('Y/m/d/H/') . $fileName;
-                    $return_url = $this->ossClient->uploadFile($filePath, $object);
-                    if (!$return_url) {
-                        return $this->ajaxReturn(['status' => 0, 'msg' => 'ERROR：' . $this->ossClient->getError()]);
-                    } else {
-                        // 图片信息
-                        $imageInfo = getimagesize($filePath);
-                        $param['url'] = 'img:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ',type:' . substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1);
-                        unlink($filePath);
-                    }
+                    // 图片信息
+                    $imageInfo = getimagesize($filePath);
+                    $param['url'] = 'img:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ',type:' . substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1);
+                    unlink($filePath);
                 }
             }
             if ($id) {
@@ -137,19 +572,30 @@ class School extends Base
             $this->ajaxReturn(['status' => 1, 'msg' => '处理成功']);
         }
         if ($id) {
-            $imageInfo = M('school_rotate')->where(['id' => $id])->find();
-            $url = explode(',', $imageInfo['url']);
-            $imageInfo['url'] = $this->ossClient::url(substr($url[0], strrpos($url[0], 'img:') + 4));
+            $rotate = M('school_rotate')->where(['id' => $id])->find();
+            $url = explode(',', $rotate['url']);
+            $rotate['url'] = $this->ossClient::url(substr($url[0], strrpos($url[0], 'img:') + 4));
+            if ($rotate['module_type'] != '') {
+                $articleList = M('school_article sa')
+                    ->join('school_class sc', 'sc.id = sa.class_id')
+                    ->join('school s', 's.id = sc.module_id')
+                    ->where([
+                        's.type' => $rotate['module_type'],
+                        'sa.status' => 1
+                    ])
+                    ->field('sa.id, sa.title')->select();
+            }
         } else {
-            $imageInfo['sort'] = 0;
+            $rotate['sort'] = 0;
         }
         // 模块列表
-        $moduleList = M('school')->select();
+        $moduleList = M('school')->where(['is_open' => 1])->select();
 
         $this->assign('id', $id);
         $this->assign('module_id', $moduleId);
-        $this->assign('info', $imageInfo);
+        $this->assign('info', $rotate);
         $this->assign('module_list', $moduleList);
+        $this->assign('article_list', $articleList ?? []);
         return $this->fetch();
     }
 
@@ -211,6 +657,12 @@ class School extends Base
     {
         $classId = I('class_id', '');
         return $this->module_8('module8', $classId);
+    }
+
+    public function module9()
+    {
+        $classId = I('class_id', '');
+        return $this->module('module9', $classId);
     }
 
     /**
@@ -673,10 +1125,11 @@ class School extends Base
         $articleId = I('article_id', 0);
         if (IS_POST) {
             $postData = I('post.');
+            $file = request()->file('file');    // 附件
             // 验证参数
             $validate = validate('School');
             if (!$validate->scene('article_add_6')->check($postData)) {
-                return $this->ajaxReturn(['status' => 0, 'msg' => $validate->getError()]);
+                $this->error($validate->getError());
             }
             Db::startTrans();
             // 文章信息
@@ -688,6 +1141,24 @@ class School extends Base
                 'publish_time' => strtotime($postData['publish_time']),
                 'status' => 2,   // 预发布
             ];
+            if (!empty($file)) {
+                // 上传附件
+                $savePath = 'school/' . date('Y') . '/' . date('m-d') . '/';
+                $info = $file->move(UPLOAD_PATH . $savePath, false);  // 保留文件原名
+                if ($info) {
+                    $url = '/' . UPLOAD_PATH . $savePath . $info->getSaveName();
+                    // 上传到OSS服务器
+                    $res = (new Oss)->uploadFile('file', $url);
+                    if ($res['status'] == 0) {
+                        $this->error('ERROR：' . $res['msg']);
+                    } else {
+                        $fileLink = 'url:' . $res['object'] . ',type:' . $info->getExtension();
+                        unset($info);
+                        unlink(PUBLIC_PATH . substr($url, strrpos($url, 'public') + 7));
+                        $articleParam['file'] = $fileLink;
+                    }
+                }
+            }
             // 等级限制
             if (empty($postData['distribute_level'])) {
                 $articleParam['distribute_level'] = '0';
@@ -713,7 +1184,7 @@ class School extends Base
                 switch ($postData['upload_content']) {
                     case 1:
                         if (empty($postData['image'])) {
-                            $this->ajaxReturn(['status' => 0, 'msg' => '请上传图片']);
+                            $this->error('请上传图片');
                         }
                         // 文章原本的图片素材
                         $articleImage = [];
@@ -724,6 +1195,7 @@ class School extends Base
                                 $articleImage[substr($image[0], strrpos($image[0], 'img:') + 4)] = [
                                     'width' => substr($image[1], strrpos($image[1], 'width:') + 6),
                                     'height' => substr($image[2], strrpos($image[2], 'height:') + 7),
+                                    'type' => substr($image[3], strrpos($image[3], 'type:') + 5),
                                 ];
                             }
                         }
@@ -736,7 +1208,7 @@ class School extends Base
                                 // 原本的图片
                                 $image = substr($image, strrpos($image, 'image'));
                                 $resourceParam[] = [
-                                    'image' => 'img:' . $image . ',width:' . $articleImage[$image]['width'] . ',height:' . $articleImage[$image]['height'],
+                                    'image' => 'img:' . $image . ',width:' . $articleImage[$image]['width'] . ',height:' . $articleImage[$image]['height'] . ',type:' . $articleImage[$image]['type'],
                                     'get_image_info' => 1,
                                     'video' => ''
                                 ];
@@ -747,7 +1219,7 @@ class School extends Base
                             $object = 'image/' . date('Y/m/d/H/') . $fileName;
                             $return_url = $this->ossClient->uploadFile($filePath, $object);
                             if (!$return_url) {
-                                return $this->ajaxReturn(['status' => 0, 'msg' => 'ERROR：' . $this->ossClient->getError()]);
+                                $this->error('ERROR：' . $this->ossClient->getError());
                             } else {
                                 // 图片信息
                                 $imageInfo = getimagesize($filePath);
@@ -762,7 +1234,7 @@ class School extends Base
                         break;
                     case 2:
                         if (empty($postData['video'])) {
-                            $this->ajaxReturn(['status' => 0, 'msg' => '请上传视频']);
+                            $this->error('请上传视频');
                         }
                         if (strstr($postData['video'], 'http')) {
                             // 原本的视频
@@ -806,7 +1278,7 @@ class School extends Base
                 switch ($postData['upload_content']) {
                     case 1:
                         if (empty($postData['image'])) {
-                            $this->ajaxReturn(['status' => 0, 'msg' => '请上传图片']);
+                            $this->error('请上传图片');
                         }
                         // 上传到OSS服务器
                         foreach ($postData['image'] as $image) {
@@ -818,7 +1290,7 @@ class School extends Base
                             $object = 'image/' . date('Y/m/d/H/') . $fileName;
                             $return_url = $this->ossClient->uploadFile($filePath, $object);
                             if (!$return_url) {
-                                return $this->ajaxReturn(['status' => 0, 'msg' => 'ERROR：' . $this->ossClient->getError()]);
+                                $this->error('ERROR：' . $this->ossClient->getError());
                             } else {
                                 // 图片信息
                                 $imageInfo = getimagesize($filePath);
@@ -833,7 +1305,7 @@ class School extends Base
                         break;
                     case 2:
                         if (empty($postData['video'])) {
-                            $this->ajaxReturn(['status' => 0, 'msg' => '请上传视频']);
+                            $this->error('请上传视频');
                         }
                         // 处理视频封面图
                         $videoCover = getVideoCoverImages($postData['video'], 'upload/school/video_cover/temp/');
@@ -859,7 +1331,7 @@ class School extends Base
                 }
             }
             Db::commit();
-            $this->ajaxReturn(['status' => 1, 'msg' => '处理成功', 'result' => ['type' => $type, 'class_id' => $classId]]);
+            $this->success('处理成功', U('Admin/School/') . $type . '/class_id/' . $classId);
         }
         if (empty($classId)) {
             $this->error('请先创建模块分类', U('Admin/School/' . $type));
@@ -880,6 +1352,11 @@ class School extends Base
                     $resource['video'] = $this->ossClient::url($resource['video']);
                     $articleInfo['upload_content'] = 2;
                 }
+            }
+            // 附件
+            if (!empty($articleInfo['file'])) {
+                $file = explode(',', $articleInfo['file']);
+                $articleInfo['file'] = substr($file[0], strrpos($file[0], '/') + 1);
             }
         } else {
             $articleInfo = [];
@@ -925,6 +1402,23 @@ class School extends Base
             'delete_time' => NOW_TIME,
         ]);
         $this->ajaxReturn(['status' => 1, 'msg' => '处理成功', 'result' => ['type' => $type, 'class_id' => $classId]]);
+    }
+
+    /**
+     * 根据类型获取文章列表
+     */
+    public function ajaxGetArticle()
+    {
+        $moduleType = I('module_type');
+        $articleList = M('school_article sa')
+            ->join('school_class sc', 'sc.id = sa.class_id')
+            ->join('school s', 's.id = sc.module_id')
+            ->where([
+                's.type' => $moduleType,
+                'sa.status' => 1
+            ])
+            ->field('sa.id, sa.title')->select();
+        $this->ajaxReturn(['status' => 1, 'result' => $articleList]);
     }
 
     /**
