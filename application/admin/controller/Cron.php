@@ -12,6 +12,7 @@
 namespace app\admin\controller;
 
 use app\common\logic\OrderLogic;
+use app\common\logic\OssLogic;
 use app\common\logic\PushLogic;
 use app\common\logic\SmsLogic;
 use app\common\logic\Token as TokenLogic;
@@ -1727,6 +1728,57 @@ AND log_id NOT IN
         $articleIds = M('school_article')->where($where)->getField('id', true);
         if (!empty($articleIds)) {
             M('school_article')->where(['id' => ['IN', $articleIds]])->update(['status' => 1]);
+        }
+    }
+
+    /**
+     * 商学院文章内容视频、音频素材上传到OSS服务器
+     */
+    public function schoolArticleTempResource()
+    {
+        $tempResource = M('school_article_temp_resource')->where(['status' => ['IN', [0, -1]]])->select();
+        if (!empty($tempResource)) {
+            set_time_limit(0);
+            Db::startTrans();
+            $ossLogic = new OssLogic();
+            $articleIds = [];
+            $ossPath = [];
+            foreach ($tempResource as $resource) {
+                // 上传到OSS服务器
+                $filePath = PUBLIC_PATH . substr($resource['local_path'], strrpos($resource['local_path'], '/public/') + 8);
+                $fileName = substr($resource['local_path'], strrpos($resource['local_path'], '/') + 1);
+                $ext = substr($resource['local_path'], strrpos($resource['local_path'], '.') + 1);
+                if (in_array($ext, ['mp3', 'wma', 'wav'])) {
+                    $dir = 'audio';
+                } else {
+                    $dir = 'video';
+                }
+                $object = $dir . '/' . date('Y/m/d/H/') . $fileName;
+                $return_url = $ossLogic->uploadFile($filePath, $object);
+                if (!$return_url) {
+                    $upData = ['status' => -1];
+                } else {
+                    $upData = [
+                        'oss_path' => OssLogic::url($object),
+                        'status' => 1
+                    ];
+                    if (!in_array($resource['article_id'], $articleIds)) {
+                        $articleIds[] = $resource['article_id'];
+                    }
+                    $ossPath[$resource['article_id']][$resource['local_path']] = $upData['oss_path'];
+                }
+                M('school_article_temp_resource')->where(['id' => $resource['id']])->update($upData);
+            }
+            // 更新文章内容
+            foreach ($articleIds as $articleId) {
+                $content = M('school_article')->where(['id' => $articleId])->value('content');
+                foreach ($ossPath[$articleId] as $localPath => $path) {
+                    $content = str_replace($localPath, $path, $content);
+                    unlink(PUBLIC_PATH . substr($localPath, strrpos($localPath, 'public') + 7));
+                }
+                M('school_article')->where(['id' => $articleId])->update(['content' => $content]);
+            }
+            Db::commit();
         }
     }
 }

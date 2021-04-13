@@ -608,22 +608,22 @@ class Ueditor extends Base
                 $state = 'ERROR' . $file->getError();
             }
             $return_data['url'] = '/' . UPLOAD_PATH . $new_path . $info->getSaveName();
-            if (I('is_oss', 'yes') == 'yes') {
-                // 上传到OSS服务器
-                $ext = substr($info->getSaveName(), strrpos($info->getSaveName(), '.') + 1);
-                if (in_array($ext, ['mp3', 'wma', 'wav'])) {
-                    $res = (new Oss())->uploadFile('audio', $return_data['url']);
-                } else {
-                    $res = (new Oss())->uploadFile('video', $return_data['url']);
-                }
-                if ($res['status'] == 0) {
-                    $state = 'ERROR：' . $res['msg'];
-                } else {
-                    unset($info);
-                    unlink(PUBLIC_PATH . substr($return_data['url'], strrpos($return_data['url'], 'public') + 7));
-                    $return_data['url'] = $res['url'];
-                }
-            }
+            // 暂不上传到OSS服务器，定时任务处理
+//            if (I('is_oss', 'yes') == 'yes') {
+//                // 上传到OSS服务器
+//                if (in_array($ext, ['mp3', 'wma', 'wav'])) {
+//                    $res = (new Oss())->uploadFile('audio', $return_data['url']);
+//                } else {
+//                    $res = (new Oss())->uploadFile('video', $return_data['url']);
+//                }
+//                if ($res['status'] == 0) {
+//                    $state = 'ERROR：' . $res['msg'];
+//                } else {
+//                    unset($info);
+//                    unlink(PUBLIC_PATH . substr($return_data['url'], strrpos($return_data['url'], 'public') + 7));
+//                    $return_data['url'] = $res['url'];
+//                }
+//            }
         }
 
         $return_data['title'] = $title;
