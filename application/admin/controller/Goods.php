@@ -1734,4 +1734,96 @@ class Goods extends Base
         $this->assign('tips', $tips);
         return $this->fetch('category_tips');
     }
+
+    /**
+     * 导入excel更新商品信息
+     * @throws \PHPExcel_Exception
+     * @throws \PHPExcel_Reader_Exception
+     */
+    public function uploadEditGoods()
+    {
+        $goodsFile = request()->file('goodsFile');
+        if (empty($goodsFile)) {
+            $this->error('请先上传文件', U('Admin/Goods/goodsList'));
+        }
+        // 移动到框架应用根目录/public/uploads/ 目录下
+        $path = ROOT_PATH . 'public/upload/goods/excel';
+        $file_name = date('YmdHis');
+        $info = $goodsFile->validate(['size' => 200000000, 'ext' => 'csv,xls,xlsx'])->move($path, $file_name);
+        if ($info) {
+            //上传成功 获取上传文件信息
+            $file = $info->getPathName();
+            if (file_exists($file)) {
+                $goodsFile = iconv("utf-8", "gb2312", $file);   //转码
+                include_once "plugins/PHPExcel.php";
+                $objRead = new \PHPExcel_Reader_Excel2007();   //建立reader对象
+                if (!$objRead->canRead($goodsFile)) {
+                    $objRead = new \PHPExcel_Reader_Excel5();
+                    if (!$objRead->canRead($goodsFile)) {
+                        die('No Excel!');
+                    }
+                }
+
+                $cellName = array('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'AA', 'AB', 'AC', 'AD', 'AE', 'AF', 'AG', 'AH', 'AI', 'AJ', 'AK', 'AL', 'AM', 'AN', 'AO', 'AP', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AV', 'AW', 'AX', 'AY', 'AZ');
+                $obj = $objRead->load($file);  //建立excel对象
+                $currSheet = $obj->getSheet(0);   //获取指定的sheet表
+                $columnH = $currSheet->getHighestColumn();   //取得最大的列号
+                $columnCnt = array_search($columnH, $cellName);
+                $rowCnt = $currSheet->getHighestRow();   //获取总行数
+
+                $data = array();
+                for ($_row = 1; $_row <= $rowCnt; $_row++) {  //读取内容
+                    for ($_column = 0; $_column <= $columnCnt; $_column++) {
+                        $cellId = $cellName[$_column] . $_row;
+                        $cellValue = $currSheet->getCell($cellId)->getValue();
+                        //$cellValue = $currSheet->getCell($cellId)->getCalculatedValue();  #获取公式计算的值
+                        if ($cellValue instanceof \PHPExcel_RichText) {   //富文本转换字符串
+                            $cellValue = $cellValue->__toString();
+                        }
+                        $data[$_row][$cellName[$_column]] = $cellValue;
+                    }
+                }
+                Db::startTrans();
+                try {
+                    foreach ($data as $k => $v) {
+                        if ($k == 1 || $k == 2) continue;
+                        $goodsId = M('goods')->where(['goods_sn' => trim($v['A'])])->value('goods_id');
+                        if (!$goodsId) throw new Exception('商品编号：' . $v['A'] . '不存在');
+                        // 商品主体表更新数据
+                        $goodsUpdateData = [];
+                        if (!empty($v['C'])) $goodsUpdateData['shop_price'] = trim($v['C']);
+                        if (!empty($v['D'])) $goodsUpdateData['exchange_integral'] = trim($v['D']);
+                        if (!empty($v['E'])) $goodsUpdateData['ctax_price'] = trim($v['E']);
+                        if (!empty($v['F'])) $goodsUpdateData['stax_price'] = trim($v['F']);
+                        if (!empty($v['G'])) $goodsUpdateData['cost_price'] = trim($v['G']);
+                        if (!empty($v['H'])) $goodsUpdateData['retail_pv'] = trim($v['H']);
+                        if (!empty($v['I'])) $goodsUpdateData['integral_pv'] = trim($v['I']);
+                        if (!empty($v['J'])) $goodsUpdateData['give_integral'] = trim($v['J']);
+                        if (!empty($v['K'])) $goodsUpdateData['buying_price'] = trim($v['K']);
+                        if (!empty($v['L'])) $goodsUpdateData['retail_price'] = trim($v['L']);
+                        if (!empty($v['M'])) $goodsUpdateData['buying_price_pv'] = trim($v['M']);
+                        if (!empty($v['N'])) $goodsUpdateData['retail_price_pv'] = trim($v['N']);
+                        if (!empty($goodsUpdateData)) {
+                            M('goods')->where(['goods_id' => $goodsId])->update($goodsUpdateData);
+                        }
+                        if (!empty($v['B'])) {
+                            $itemId = M('spec_goods_price')->where(['goods_id' => $goodsId, 'key' => trim($v['B'])])->value('item_id');
+                            if (!$itemId) throw new Exception('商品编号：' . $v['A'] . '的规格' . $v['B'] . '不存在');
+                            // 商品规格表更新数据
+                            $specUpdateData = [];
+                            if (!empty($v['O'])) $specUpdateData['price'] = $v['O'];
+                            M('spec_goods_price')->where(['item_id' => $itemId])->update($specUpdateData);
+                        }
+                    }
+                    Db::commit();
+                    $this->success('导出处理成功', U('Admin/Goods/goodsList'));
+                } catch (Exception $e) {
+                    Db::rollback();
+                    $this->error('导入失败——' . $e->getMessage(), U('Admin/Goods/goodsList'));
+                }
+            }
+        } else {
+            $this->error($goodsFile->getError(), U('Admin/Goods/goodsList'));
+        }
+    }
 }
