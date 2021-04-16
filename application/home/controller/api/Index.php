@@ -56,6 +56,8 @@ class Index
         $getNewGoods = M('goods')->field('goods_name,goods_id,shop_price,exchange_integral,shop_price - exchange_integral as member_price,original_img')
             ->where('is_new', 1)
             ->where('is_on_sale', 1)
+            ->where('is_abroad', 0)
+            ->where('is_supply', 0)
             ->order('sort')
             ->select();
 
@@ -73,6 +75,8 @@ class Index
             'fl.end_time' => ['egt', $now],
             'fl.source' => ['LIKE', '%' . 1 . '%'],
             'g.is_on_sale' => 1,
+            'g.is_abroad' => 0,
+            'g.is_supply' => 0,
         ];
         $FlashSale = new FlashSale();
         $flash_sale_goods = $FlashSale->alias('fl')->join('__GOODS__ g', 'g.goods_id = fl.goods_id')->with(['specGoodsPrice', 'goods'])
@@ -89,6 +93,8 @@ class Index
         $getHotGoods = M('goods')->field('goods_name,goods_id,shop_price,exchange_integral,shop_price - exchange_integral as member_price,original_img')
             ->where('is_hot', 1)
             ->where('is_on_sale', 1)
+            ->where('is_abroad', 0)
+            ->where('is_supply', 0)
             ->limit(9)
             ->order('sort')
             ->select();
@@ -108,6 +114,8 @@ class Index
 
             $list = M('goods')->field('goods_name,goods_id,shop_price,exchange_integral,shop_price - exchange_integral as member_price,original_img')
                 ->where('is_on_sale', 1)
+                ->where('is_abroad', 0)
+                ->where('is_supply', 0)
                 ->where('goods_id', 'in', $goods_id)
                 ->order('sort')
                 ->select();
@@ -115,6 +123,8 @@ class Index
             $list = M('goods')->field('goods_name,goods_id,shop_price,exchange_integral,shop_price - exchange_integral as member_price,original_img')
                 ->where('is_recommend', 1)
                 ->where('is_on_sale', 1)
+                ->where('is_abroad', 0)
+                ->where('is_supply', 0)
                 ->order('sort')
                 ->select();
         }
@@ -134,6 +144,8 @@ class Index
         $count = M('goods')->field('goods_name,goods_id,shop_price,exchange_integral,shop_price - exchange_integral as member_price,original_img,goods_remark')
             ->where('sale_type', 2)
             ->where('is_on_sale', 1)
+            ->where('is_abroad', 0)
+            ->where('is_supply', 0)
             ->count();
 
         $page = new Page($count, 2);
@@ -141,6 +153,8 @@ class Index
         $getSeriesGoods = M('goods')->field('goods_name,goods_id,shop_price,exchange_integral,shop_price - exchange_integral as member_price,original_img,goods_remark')
             ->where('sale_type', 2)
             ->where('is_on_sale', 1)
+            ->where('is_abroad', 0)
+            ->where('is_supply', 0)
             ->limit($page->firstRow . ',' . $page->listRows)
             ->order('sort')
             ->select();
@@ -150,13 +164,14 @@ class Index
             $getSeriesGoods[$k]['tabs'] = M('GoodsTab')->where('goods_id', $v['goods_id'])->select();
         }
 
-
         //团购
         $GroupBuy = new GroupBuy();
         $where = [
             'gb.start_time' => ['elt', time()],
             'gb.end_time' => ['egt', time()],
             'g.is_on_sale' => 1,
+            'g.is_abroad' => 0,
+            'g.is_supply' => 0,
         ];
         $count = $GroupBuy->alias('gb')->join('__GOODS__ g', 'g.goods_id = gb.goods_id')->alias('gb')->where($where)->count('gb.goods_id'); // 查询满足要求的总记录数
         $Page = new Page($count, 2); // 实例化分页类 传入总记录数和每页显示的记录数
@@ -175,7 +190,6 @@ class Index
                 $groupBuyList[$k]['people_num'] = 0;
             }
         }
-
 
         $time = NOW_TIME;
         $field = 'top1,top2,top3,top4,top5,top6,top7,top8,bg1';
@@ -197,11 +211,9 @@ class Index
             }
         }
 
-
         //获取用户信息的数量
         $messageLogic = new MessageLogic();
         $user_message_count = $messageLogic->getUserMessageCount();
-
 
         //获取用户活动信息的数量
         $articleLogic = new ArticleLogic();

@@ -1876,7 +1876,7 @@ class Order extends Base
 
         // 检查下单商品
         $cartGoodsRes = $cartLogic->checkCartGoods($this->user, $cartList['cartList']);
-        if ($cartGoodsRes['status'] === -1) {
+        if ($cartGoodsRes['status'] === -1 || $cartGoodsRes['status'] === 0) {
             return json($cartGoodsRes);
         }
         $abroad = [
@@ -1886,13 +1886,16 @@ class Order extends Base
             'id_card_tips' => '',
             'purchase_tips' => '',
         ];
+        $categoryTips = [
+            'state' => 0,
+            'id_card' => '',
+            'hide_id_card' => '',
+            'id_card_tips' => '',
+        ];
         $hasAgent = 0;      // 是否拥有代理商商品
         $orderType = 1;     // 圃美多
         $canElectronic = 1;
         switch ($cartGoodsRes['status']) {
-            case 0:
-                // 错误提示返回
-                return json($cartGoodsRes);
             case 2:
                 // 韩国购商品
                 $orderType = 2;
@@ -1919,6 +1922,12 @@ class Order extends Base
                 // 获取韩国购产品购买须知
                 $abroad['purchase_tips'] = M('abroad_config')->where(['type' => 'purchase'])->value('content');
                 break;
+        }
+        if ($abroad['state'] == 0 && $cartGoodsRes['category_tips'] == true) {
+            $categoryTips['state'] = 1;
+            $categoryTips['id_card'] = $this->user['id_cart'] ?? '';
+            $categoryTips['hide_id_card'] = $this->user['id_cart'] ? hideStr($this->user['id_cart'], 4, 4, 4, '*') : '';
+            $categoryTips['id_card_tips'] = M('goods_category_tips')->where(['type' => 'id_card'])->value('content');
         }
 
         // 初始化数据 商品总额/节约金额/商品总共数量/商品使用积分
@@ -2245,6 +2254,7 @@ class Order extends Base
             'order_pv' => $this->user['distribut_level'] >= 3 && $payReturn['order_pv'] != '0.00' ? $payReturn['order_pv'] : '',
             // 韩国购信息
             'abroad' => $abroad,
+            'category_tips' => $categoryTips,
             'can_electronic' => $canElectronic
         ];
         return json(['status' => 1, 'result' => $return]);
@@ -2293,14 +2303,11 @@ class Order extends Base
 
         // 检查下单商品
         $cartGoodsRes = $cartLogic->checkCartGoods($this->user, $cartList['cartList']);
-        if ($cartGoodsRes['status'] === -1) {
+        if ($cartGoodsRes['status'] === -1 || $cartGoodsRes['status'] === 0) {
             return json($cartGoodsRes);
         }
         $orderType = 1;     // 圃美多
         switch ($cartGoodsRes['status']) {
-            case 0:
-                // 错误提示返回
-                return json($cartGoodsRes);
             case 2:
                 // 韩国购商品
                 $orderType = 2;
@@ -2547,15 +2554,12 @@ class Order extends Base
 
         // 检查下单商品
         $cartGoodsRes = $cartLogic->checkCartGoods($this->user, $cartList['cartList']);
-        if ($cartGoodsRes['status'] === -1) {
+        if ($cartGoodsRes['status'] === -1 || $cartGoodsRes['status'] === 0) {
             return json($cartGoodsRes);
         }
         $hasAgent = 0;  // 是否拥有代理商商品
         $orderType = 1; // 圃美多
         switch ($cartGoodsRes['status']) {
-            case 0:
-                // 错误提示返回
-                return json($cartGoodsRes);
             case 2:
                 // 韩国购商品
                 $orderType = 2;
@@ -2586,7 +2590,11 @@ class Order extends Base
                 }
                 break;
         }
-        if ($this->isApplet) {
+        if ($cartGoodsRes['category_tips'] == true && $idCard == 0) {
+            $idCard = M('user_id_card_info')->where(['user_id' => $this->user_id, 'real_name' => $userAddress['consignee']])->value('id_card');
+            if (empty($idCard)) return json(['status' => 0, 'msg' => '请填写正确的身份证格式']);
+        }
+        if ($this->isApplet && $cartGoodsRes['status'] != 3) {
             // 直播订单
             $orderType = 4;
         }
@@ -2671,6 +2679,9 @@ class Order extends Base
             $placeOrder->setUserIdCard($idCard);
             if ($this->isApplet && $cartGoodsRes['status'] == 2) {
                 $placeOrder->isLiveAbroad(1);
+            }
+            if ($this->isApplet && $cartGoodsRes['status'] == 3) {
+                $placeOrder->isLiveSupplier(1);
             }
             $placeOrder->setOrderType($orderType);
             $placeOrder->setHasAgent($hasAgent);

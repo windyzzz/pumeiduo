@@ -3673,4 +3673,25 @@ class UsersLogic extends Model
         }
         return true;
     }
+
+    /**
+     * 获取代理商
+     * @param $userName
+     * @return array
+     */
+    public function getAgentSvip($userName)
+    {
+        $url = C('SERVER_URL') . '/index.php/Crond/get_user_grade/user_name/' . $userName;
+        $res = httpRequest($url);
+        if (!$res) {
+            return ['status' => 0, 'msg' => '权限检查失败'];
+        }
+        $res = json_decode($res, true);
+        if (isset($res['status']) && $res['status'] == 1) {
+            $useSvipLevel = $res['station'] + 2;
+            return ['status' => 1, 'app_level' => $useSvipLevel];
+        } else {
+            return ['status' => 0, 'msg' => '权限检查失败'];
+        }
+    }
 }

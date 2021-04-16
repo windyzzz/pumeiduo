@@ -56,6 +56,9 @@
                             <th align="center" axis="col6">
                                 <div style="text-align: center; width: 80px;">是否显示</div>
                             </th>
+                            <th align="center" axis="col6">
+                                <div style="text-align: center; width: 80px;">是否提示</div>
+                            </th>
                             <th align="center" axis="col8">
                                 <div style="text-align: center; width: 60px;">分组</div>
                             </th>
@@ -83,6 +86,13 @@
                         <div class="add" title="收缩分类">
                             <span onclick="tree_open(this);"><i class="fa fa-angle-double-up"></i>收缩分类</span>
                         </div>
+                    </div>
+                    <div class="fbutton">
+                        <a href="{:U('Goods/categoryTips')}">
+                            <div class="add" title="种类提示设置">
+                                <span><i class="fa fa-cog"></i>种类提示设置</span>
+                            </div>
+                        </a>
                     </div>
                 </div>
                 <div style="clear:both"></div>
@@ -153,6 +163,21 @@
                                         <span class="no"
                                               onClick="changeTableVal('goods_category','id','{$vo.id}','is_show',this)"><i
                                                 class="fa fa-ban"></i>否</span>
+                                    </if>
+                                </div>
+                            </td>
+                            <td align="center" class="">
+                                <div style="text-align: center; width: 80px;">
+                                    <if condition="$vo[level] == 3">
+                                        <if condition='$vo[is_tips] eq 1'>
+                                            <span class="yes"
+                                              onClick="changeTableVal('goods_category','id','{$vo.id}','is_tips',this)"><i
+                                                class="fa fa-check-circle"></i>是</span>
+                                        <else/>
+                                            <span class="no"
+                                                  onClick="changeTableVal('goods_category','id','{$vo.id}','is_tips',this)"><i
+                                                    class="fa fa-ban"></i>否</span>
+                                        </if>
                                     </if>
                                 </div>
                             </td>

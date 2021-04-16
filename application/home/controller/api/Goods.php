@@ -806,7 +806,17 @@ class Goods extends Base
         }
         M('Goods')->where('goods_id', $goods_id)->save(['click_count' => $goods['click_count'] + 1]); // 统计点击数
         M('goods_click')->add(['goods_id' => $goods['goods_id'], 'user_id' => $this->user_id ?? 0, 'add_time' => NOW_TIME]); // 点击记录
+        $goodsLogic = new GoodsLogic();
         $originalImg = getFullPath($goods['original_img']);
+        if (empty($goods['share_img']) && !empty($originalImg)) {
+            $goods['share_img'] = $goodsLogic->getGoodsShareImg($goods_id, $originalImg);
+        } else {
+            $oldPic = substr($goods['share_img'], strrpos($goods['share_img'], '/') + 1);
+            $newPic = substr($originalImg, strrpos($originalImg, '/') + 1);
+            if ($oldPic != $newPic) {
+                $goods['share_img'] = $goodsLogic->getGoodsShareImg($goods_id, $originalImg);
+            }
+        }
         $goodsInfo = [
             'goods_type' => 'normal',
             'is_agent' => $goods['is_agent'],
@@ -833,7 +843,7 @@ class Goods extends Base
             'start_time' => '0',
             'end_time' => '0',
             'now_time' => NOW_TIME,
-            'share_goods_image' => !empty($originalImg) ? $originalImg : '',    // 商品分享图
+            'share_goods_image' => $goods['share_img'],    // 商品分享图
             'share_qr_code' => '',    // 分享二维码
             'applet_qr_code' => '',    // 小程序分享二维码
             'tabs' => [],
@@ -1011,7 +1021,6 @@ class Goods extends Base
             }
         }
         if ($this->user) {
-            $goodsLogic = new GoodsLogic();
             // 用户浏览记录
             $goodsLogic->add_visit_log($this->user_id, $goods);
             // 用户收藏
@@ -1297,7 +1306,7 @@ class Goods extends Base
                 ['id' => 1, 'name' => '现金 + 积分'],
                 ['id' => 2, 'name' => '现金']
             ],
-            'goods_spec' => $goodsSpec,
+            'goods_spec' => $goodsSpec ?? [],
             'goods_spec_price' => (object)$goodsSpecPrice
         ];
         return json(['status' => 1, 'result' => $returnData]);

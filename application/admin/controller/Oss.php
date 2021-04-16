@@ -3,6 +3,7 @@
 namespace app\admin\controller;
 
 
+use app\common\logic\OssLogic;
 use think\Log;
 
 class Oss extends Base
@@ -133,5 +134,24 @@ class Oss extends Base
         }
     }
 
-
+    /**
+     * 上传文件
+     * @param $dir
+     * @param $path
+     * @return array
+     */
+    public function uploadFile($dir, $path)
+    {
+        $filePath = PUBLIC_PATH . substr($path, strrpos($path, '/public/') + 8);
+        $fileName = substr($path, strrpos($path, '/') + 1);
+        $object = $dir . '/' . date('Y/m/d/H/') . $fileName;
+        $ossClient = new OssLogic();
+        $return_url = $ossClient->uploadFile($filePath, $object);
+        if (!$return_url) {
+            $result = ['status' => 0, 'msg' => 'OSS服务器上传失败'];
+        } else {
+            $result = ['status' => 1, 'url' => $ossClient::url($object), 'object' => $object];
+        }
+        return $result;
+    }
 }
