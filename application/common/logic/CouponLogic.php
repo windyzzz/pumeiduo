@@ -706,9 +706,10 @@ class CouponLogic extends Model
      * @param $couponId
      * @param $userId
      * @param bool $repeat 能否重复领取
+     * @param bool $noResponse 是否不需要提示重复领取错误
      * @return array
      */
-    public function receive($couponId, $userId, $repeat = false)
+    public function receive($couponId, $userId, $repeat = false, $noResponse = false)
     {
         if (!$couponId) {
             return ['status' => 0, 'msg' => '操作有误'];
@@ -739,10 +740,16 @@ class CouponLogic extends Model
                 if (!$repeat && in_array($coupon['nature'], [1, 3])) {
                     // 检查用户是否已经领取
                     $is_has_coupon = M('coupon_list')->where(array('cid' => $couponId, 'uid' => $userId))->field('id')->find();
-                    if ($couponNum > 1 && $is_has_coupon) {
-                        continue;
-                    } elseif ($is_has_coupon) {
-                        throw new Exception('您已经领取过了');
+                    if ($noResponse) {
+                        if ($is_has_coupon) {
+                            continue;
+                        }
+                    } else {
+                        if ($couponNum > 1 && $is_has_coupon) {
+                            continue;
+                        } else if ($is_has_coupon) {
+                            throw new Exception('你已经领取过了');
+                        }
                     }
                 }
                 do {
@@ -758,6 +765,7 @@ class CouponLogic extends Model
                 ];
                 M('coupon_list')->add($add);
                 M('coupon')->where(array('id' => $couponId))->setInc('send_num', 1);
+                $couponGetIds[] = $coupon['id'];
             }
             Db::commit();
             return ['status' => 1, 'msg' => '领取成功'];
