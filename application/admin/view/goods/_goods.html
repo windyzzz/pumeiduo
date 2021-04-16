@@ -1376,6 +1376,18 @@
         });
     });
 
+    $(function () {
+        $(document).on("click", '.delete_item', function (e) {
+            if($(this).text() == '无效'){
+                $(this).parent().parent().find('input').attr('disabled','disabled');
+                $(this).text('有效');
+            }else{
+                $(this).text('无效');
+                $(this).parent().parent().find('input').removeAttr('disabled');
+            }
+        })
+    })
+
     /** 以下是编辑时默认选中某个商品分类*/
     $(document).ready(function () {
         <if condition = "$level_cat['2'] gt 0" >

@@ -1578,7 +1578,7 @@ function update_pay_status($order_sn, $ext = [])
         // $wechat = new \app\common\logic\WechatLogic;
         // $wechat->sendTemplateMsgOnPaySuccess($order);
 
-        if ($order['order_type'] == 3) {
+        if ($order['order_type'] == 3 || $order['is_live_supplier'] == 1) {
             // 更新子订单状态
             M('order')->where(['parent_id' => $order['order_id'], 'order_type' => 1])->update([
                 'pay_status' => 1,

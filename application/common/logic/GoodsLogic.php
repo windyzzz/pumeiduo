@@ -561,6 +561,11 @@ class GoodsLogic extends Model
         switch ($source) {
             case 1:
             case 2:
+                $where['g.is_agent'] = 0;
+                $where['g.is_abroad'] = 0;
+                $where['g.is_agent'] = 0;
+                $where['g.is_supply'] = 0;
+                break;
             case 3:
                 $where['g.is_agent'] = 0;
                 $where['g.applet_on_sale'] = 0;
@@ -2121,5 +2126,28 @@ class GoodsLogic extends Model
         } catch (Exception $e) {
             return '';
         }
+    }
+
+    /**
+     * 生成获取商品分享图
+     * @param $goodsId
+     * @param $originalImg
+     * @return string
+     */
+    public function getGoodsShareImg($goodsId, $originalImg)
+    {
+        if (strstr($originalImg, 'public/upload/goods')) {
+            $shareImg = $originalImg;
+        } else {
+            $fileName = substr($originalImg, strrpos($originalImg, '/') + 1);
+            $res = download_image($originalImg, $fileName, PUBLIC_PATH . 'upload/goods/', 2);
+            if ($res == false) {
+                $shareImg = $originalImg;
+            } else {
+                $shareImg = SITE_URL . substr($res['save_path'], strrpos($res['save_path'], '/public')) . '/' . $res['file_name'];
+            }
+        }
+        M('goods')->where('goods_id', $goodsId)->update(['share_img' => $shareImg]);
+        return $shareImg;
     }
 }

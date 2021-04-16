@@ -1,0 +1,185 @@
+<include file="public/layout" />
+<script type="text/javascript" src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
+<body style="background-color: rgb(255, 255, 255); overflow: auto; cursor: default; -moz-user-select: inherit;">
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title">
+            <a class="back" href="javascript:history.back();" title="返回列表"><i class="fa fa-arrow-circle-o-left"></i></a>
+            <div class="subject">
+                <h3>用户学习课程列表</h3>
+            </div>
+        </div>
+    </div>
+    <!-- 操作说明 -->
+    <div id="explanation" class="explanation" style="color: rgb(44, 188, 163); background-color: rgb(237, 251, 248); width: 99%; height: 100%;">
+        <div id="checkZoom" class="title"><i class="fa fa-lightbulb-o"></i>
+            <h4 title="提示相关设置操作时应注意的要点">操作提示</h4>
+            <span title="收起提示" id="explanationZoom" style="display: block;"></span>
+        </div>
+        <ul>
+            <li>
+                <!--说明：-->
+                <!--<br/>-->
+                <!--<p style="color: red;">“达标等级”不能进行搜索（因为技术上涉及到列表分页，达标等级是动态生成），只能进行导出</p>-->
+            </li>
+        </ul>
+    </div>
+    <div class="flexigrid">
+        <div class="mDiv">
+            <div class="ftitle">
+                <h3>记录列表</h3>
+                <h5>(共{$page->totalRows}条记录)</h5>
+            </div>
+            <div title="刷新数据" class="pReload"><i class="fa fa-refresh"></i></div>
+        </div>
+        <form class="navbar-form form-inline" id="search-form" action="{:U('Admin/School/userCourseList')}" method="post">
+            <div class="sDiv">
+                <div class="sDiv2">
+                    <select name="distribute_level">
+                        <option value="">用户等级</option>
+                        <option value="2" <if condition="$distribute_level == 2">selected</if> >VIP</option>
+                        <volist name="svip_level" id="vo" key="k">
+                            <option value="{$key}" <if condition="$distribute_level == $key">selected</if>>{$vo}</option>
+                        </volist>
+                    </select>
+                </div>
+                <div class="sDiv2">
+                    <input type="text" size="30" name="user_id" value="{$user_id}" class="qsbox" placeholder="用户ID">
+                </div>
+                <div class="sDiv2">
+                    <input type="text" size="30" name="user_name" value="{$user_name}" class="qsbox" placeholder="用户名">
+                </div>
+                <div class="sDiv2">
+                    <input type="text" size="30" name="nickname" value="{$nickname}" class="qsbox" placeholder="用户昵称">
+                </div>
+                <div class="sDiv2">
+                    <input type="text" size="30" id="time_from" name="time_from" value="{$time_from}" class="qsbox" placeholder="开始时间">
+                </div>
+                <div class="sDiv2">
+                    <input type="text" size="30" id="time_to" name="time_to" value="{$time_to}" class="qsbox" placeholder="开始时间">
+                </div>
+                <input type="hidden" name="is_export" value="0">
+                <div class="sDiv2">
+                    <input type="submit" class="btn" value="搜索">
+                </div>
+                <div class="sDiv2">
+                    <input type="button" class="btn" onclick="export_list()" value="导出">
+                </div>
+            </div>
+        </form>
+        <div class="hDiv">
+            <div class="hDivBox">
+                <table cellspacing="0" cellpadding="0">
+                    <thead>
+                    <tr>
+                        <th class="sign" axis="col0">
+                            <div style="width: 24px;"><i class="ico-check"></i></div>
+                        </th>
+                        <th align="left" abbr="coupon_name" axis="col3" class="">
+                            <div style="text-align: center; width: 150px;" class="">用户ID</div>
+                        </th>
+                        <th align="left" abbr="coupon_name" axis="col3" class="">
+                            <div style="text-align: center; width: 150px;" class="">用户昵称</div>
+                        </th>
+                        <th align="left" abbr="coupon_name" axis="col3" class="">
+                            <div style="text-align: center; width: 150px;" class="">用户名</div>
+                        </th>
+                        <th align="left" abbr="send_type" axis="col4" class="">
+                            <div style="text-align: center; width: 120px;" class="">用户等级</div>
+                        </th>
+                        <th align="left" abbr="send_type" axis="col4" class="">
+                            <div style="text-align: center; width: 120px;" class="">课程数量</div>
+                        </th>
+                        <th align="left" abbr="send_type" axis="col4" class="">
+                            <div style="text-align: center; width: 120px;" class="">乐活豆数量</div>
+                        </th>
+                        <th style="width:100%" axis="col7">
+                            <div></div>
+                        </th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+        <div class="bDiv" style="height: auto;">
+            <div id="flexigrid" cellpadding="0" cellspacing="0" border="0">
+                <table>
+                    <tbody>
+                    <foreach name="list" item="vo" key="k" >
+                        <tr>
+                            <td class="sign">
+                                <div style="width: 24px;"><i class="ico-check"></i></div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 150px;">
+                                    <a target="_blank" href="{:U('Admin/User/detail',array('id'=>$vo['user_id']))}">
+                                        {$vo.user_id}
+                                    </a>
+                                </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 150px;">{$vo.nickname}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 150px;">{$vo.user_name}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">{$vo.level_name}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">{$vo.course_num}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">{$vo.school_credit}</div>
+                            </td>
+                            <td align="" class="" style="width: 100%;">
+                                <div>&nbsp</div>
+                            </td>
+                        </tr>
+                    </foreach>
+                    </tbody>
+                </table>
+            </div>
+            <div class="iDiv" style="display: none;"></div>
+        </div>
+        <!--分页位置-->
+        {$page->show()}
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        $('#time_from').layDate();
+        $('#time_to').layDate();
+
+        // 表格行点击选中切换
+        $('#flexigrid > table>tbody >tr').click(function () {
+            $(this).toggleClass('trSelected');
+        });
+
+        // 点击刷新数据
+        $('.fa-refresh').click(function () {
+            location.href = location.href;
+        });
+    });
+
+    $('select[name="source"]').change(function () {
+        switch (this.value) {
+            case '1':
+                $('.time_').hide();
+                break;
+            case '2':
+                $('.time_').show();
+                break;
+        }
+    });
+
+    function export_list() {
+        $('input[name="is_export"]').val('1');
+        $('#search-form').submit();
+        $('input[name="is_export"]').val('0');
+    }
+</script>
+</body>
+</html>

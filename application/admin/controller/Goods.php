@@ -1699,4 +1699,39 @@ class Goods extends Base
         M('goods')->where(['goods_id' => $goodsId])->update($data);
         $this->ajaxReturn(['status' => 1, 'msg' => '处理成功']);
     }
+
+    /**
+     * 商品种类提示
+     * @return mixed
+     */
+    public function categoryTips()
+    {
+        if (IS_POST) {
+            $param = I('post.');
+            foreach ($param as $k => $v) {
+                $data = [
+                    'type' => $k,
+                    'title' => isset($v['title']) ? $v['title'] : '',
+                    'content' => isset($v['content']) ? $v['content'] : '',
+                ];
+                $categoryTips = M('goods_category_tips')->where(['type' => $k])->find();
+                if (!empty($categoryTips)) {
+                    M('goods_category_tips')->where(['id' => $categoryTips['id']])->update($data);
+                } else {
+                    M('goods_category_tips')->add($data);
+                }
+            }
+            $this->success('操作成功', U('Admin/Goods/categoryTips'));
+        }
+        $categoryTips = M('goods_category_tips')->select();
+        $tips = [];
+        foreach ($categoryTips as $val) {
+            $tips[$val['type']] = [
+                'title' => $val['title'],
+                'content' => $val['content']
+            ];
+        }
+        $this->assign('tips', $tips);
+        return $this->fetch('category_tips');
+    }
 }

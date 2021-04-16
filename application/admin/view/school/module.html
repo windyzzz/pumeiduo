@@ -20,18 +20,32 @@
             </dl>
             <dl class="row">
                 <dt class="tit">
+                    <label>模块描述</label>
+                </dt>
+                <dd class="opt">
+                    <textarea name="desc" style="width: 20%; height: 100%; line-height: 150%;" rows="2">{$module.desc}</textarea>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
                     <label>图标</label>
                 </dt>
                 <dd class="opt">
                     <div class="goods-thumb">
-                        <img class="module_img" style="width: 90px;height: 90px" src="{$module[img]}"/>
+                        <img class="module_img" style="<if condition='$module[type] == module9'>width: 195px;height: 120px<else/>width: 90px;height: 90px</if>" src="{$module[img]}"/>
                     </div>
                     <div style="margin-bottom: 10px;">
                         <input type="hidden" id="module_img" name="img" value="{$module[img]}" class="type-file-text">
                         <input style="cursor: pointer;" type="button" name="button" value="选择上传..." class="type-file-button" onClick="GetUploadify(1,'module_img','school','img_call_back')">
                         <div style="clear: both;"></div>
                     </div>
-                    <p class="notic">长120px，宽120px</p>
+                    <p class="notic">
+                        <if condition="$module[type] == 'module9'">
+                            长498px，宽306px
+                        <else/>
+                            长150px，宽150px
+                        </if>
+                    </p>
                 </dd>
             </dl>
             <dl class="row">

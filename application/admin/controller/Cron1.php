@@ -8998,4 +8998,36 @@ class Cron1 extends Controller
         exit();
     }
 
+    public function supplierOrderCreate()
+    {
+        $orderId = I('order_id');
+        $order = M('order')->where(['order_id' => $orderId])->find();
+        Db::startTrans();
+        // 更新子订单状态
+        M('order')->where(['parent_id' => $orderId, 'order_type' => 1])->update([
+            'pay_status' => 1,
+            'pay_time' => $order['pay_time'],
+            'pay_name' => $order['pay_name']
+        ]);
+        // 发送到供应链系统
+        (new \app\common\logic\OrderLogic())->supplierOrderSend($orderId, $order['pay_time']);
+        Db::commit();
+        var_dump('ok');
+    }
+
+    public function checkLiveSupplierOrder()
+    {
+        $orderIds = M('order o')->join('order_goods og', 'og.order_id = o.order_id')
+            ->where(['o.order_type' => 4, 'og.supplier_goods_id' => ['>', 0]])
+            ->getField('o.order_id', true);
+        M('order')->where(['order_id' => ['IN', $orderIds]])->update(['is_live_supplier' => 1]);
+        var_dump('ok');
+    }
+
+    public function updateLiveSupplierOrder()
+    {
+        $orderIds = M('order')->where(['order_type' => 4, 'is_live_supplier' => 1])->getField('order_id', true);
+        M('order')->where(['order_id' => ['IN', $orderIds]])->update(['order_type' => 3]);
+        var_dump('ok');
+    }
 }

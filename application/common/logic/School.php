@@ -54,11 +54,35 @@ class School
             $level = implode(',', $level);
             $where['sa.distribute_level'] = $level;
         }
+        // 搜索词
+        if (!empty($param['keyword'])) {
+            $resourceArticleIds = M('school_article_resource')->getField('article_id', true);
+            $where['sa.id'] = ['NOT IN', $resourceArticleIds];
+        }
         if (count($where) == 1) {
             // 防止前端没有传参
             $where['sa.class_id'] = 1;
         }
         return $where;
+    }
+
+    /**
+     * 文章条件
+     * @param $param
+     * @return array
+     */
+    private function articleWhereOr($param)
+    {
+        $whereOr = [];
+        // 搜索词
+        if (!empty($param['keyword'])) {
+            $param['keyword'] = htmlspecialchars_decode($param['keyword']);
+            $whereOr['sa.title'] = ['LIKE', '%' . $param['keyword'] . '%'];
+            $whereOr['sa.content'] = ['LIKE', '%' . $param['keyword'] . '%'];
+            // 搜索量增加
+            M('school_article_keyword')->where(['name' => $param['keyword']])->setInc('click');
+        }
+        return $whereOr;
     }
 
     /**
@@ -125,47 +149,25 @@ class School
         }
         // 等级权限
         if ($module['distribute_level'] != 0) {
-            $level = explode(',', $module['distribute_level']);
-            $svipLevel = [4, 5, 6, 7, 8, 9, 10, 11];
-            $setSvipLevel = array_intersect($svipLevel, $level);
-            if (count($setSvipLevel) > 1) {
-                if ($user['distribut_level'] != 3) {
-                    return ['status' => -1, 'msg' => '您当前不是SVIP，没有访问权限'];
-                }
-                // 拥有代理商等级划分，需要从代理商查询用户的代理商等级
-                $url = C('SERVER_URL') . '/index.php/Crond/get_user_grade/user_name/' . $user['user_name'];
-                $res = httpRequest($url);
-                if (!$res) {
-                    return ['status' => 0, 'msg' => '权限检查失败'];
-                }
-                $res = json_decode($res, true);
-                if (isset($res['status']) && $res['status'] == 1) {
-                    $useSvipLevel = $res['station'] + 2;
-                    if (!in_array($useSvipLevel, $setSvipLevel)) {
-                        foreach ($setSvipLevel as $lv) {
-                            $levelName = M('svip_level')->where(['app_level' => $lv])->value('name');
-                            return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
-                        }
+            $limitLevel = explode(',', $module['distribute_level']);
+            $svipLevel = M('svip_level')->getField('app_level, name', true);
+            if (!in_array($user['distribut_level'], $limitLevel)) {
+                if ($user['svip_level'] == 3 && $limitLevel[0] < 4) {
+                    switch ($limitLevel[0]) {
+                        case 2:
+                            $status = -2;
+                            break;
+                        case 3:
+                            $status = -1;
+                            break;
+                        default:
+                            $status = 0;
                     }
-                } else {
-                    return ['status' => 0, 'msg' => '权限检查失败'];
-                }
-            } else {
-                if (!in_array($user['distribut_level'], $level)) {
-                    foreach ($level as $lv) {
-                        switch ($lv) {
-                            case 2:
-                                $status = -2;
-                                break;
-                            case 3:
-                                $status = -1;
-                                break;
-                            default:
-                                $status = 0;
-                        }
-                        $levelName = M('distribut_level')->where(['level_id' => $lv])->value('level_name');
-                        return ['status' => $status, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
-                    }
+                    $levelName = M('distribut_level')->where(['level_id' => $limitLevel[0]])->value('level_name');
+                    return ['status' => $status, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
+                } else if (!in_array($user['svip_level'], $limitLevel)) {
+                    $levelName = $svipLevel[$limitLevel[0]];
+                    return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
                 }
             }
         }
@@ -191,47 +193,25 @@ class School
         }
         // 等级权限
         if ($moduleClass['distribute_level'] != 0) {
-            $level = explode(',', $moduleClass['distribute_level']);
-            $svipLevel = [4, 5, 6, 7, 8, 9, 10, 11];
-            $setSvipLevel = array_intersect($svipLevel, $level);
-            if (count($setSvipLevel) > 1) {
-                if ($user['distribut_level'] != 3) {
-                    return ['status' => -1, 'msg' => '您当前不是SVIP，没有访问权限'];
-                }
-                // 拥有代理商等级划分，需要从代理商查询用户的代理商等级
-                $url = C('SERVER_URL') . '/index.php/Crond/get_user_grade/user_name/' . $user['user_name'];
-                $res = httpRequest($url);
-                if (!$res) {
-                    return ['status' => 0, 'msg' => '权限检查失败'];
-                }
-                $res = json_decode($res, true);
-                if (isset($res['status']) && $res['status'] == 1) {
-                    $useSvipLevel = $res['station'] + 2;
-                    if (!in_array($useSvipLevel, $setSvipLevel)) {
-                        foreach ($setSvipLevel as $lv) {
-                            $levelName = M('svip_level')->where(['app_level' => $lv])->value('name');
-                            return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
-                        }
+            $limitLevel = explode(',', $moduleClass['distribute_level']);
+            $svipLevel = M('svip_level')->getField('app_level, name', true);
+            if (!in_array($user['distribut_level'], $limitLevel)) {
+                if ($user['svip_level'] == 3 && $limitLevel[0] < 4) {
+                    switch ($limitLevel[0]) {
+                        case 2:
+                            $status = -2;
+                            break;
+                        case 3:
+                            $status = -1;
+                            break;
+                        default:
+                            $status = 0;
                     }
-                } else {
-                    return ['status' => 0, 'msg' => '权限检查失败'];
-                }
-            } else {
-                if (!in_array($user['distribut_level'], $level)) {
-                    foreach ($level as $lv) {
-                        switch ($lv) {
-                            case 2:
-                                $status = -2;
-                                break;
-                            case 3:
-                                $status = -1;
-                                break;
-                            default:
-                                $status = 0;
-                        }
-                        $levelName = M('distribut_level')->where(['level_id' => $lv])->value('level_name');
-                        return ['status' => $status, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
-                    }
+                    $levelName = M('distribut_level')->where(['level_id' => $limitLevel[0]])->value('level_name');
+                    return ['status' => $status, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
+                } else if (!in_array($user['svip_level'], $limitLevel)) {
+                    $levelName = $svipLevel[$limitLevel[0]];
+                    return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
                 }
             }
         }
@@ -268,49 +248,28 @@ class School
         if ($article['status'] != 1) {
             return ['status' => 0, 'msg' => '文章已失效'];
         }
+        $user = M('users')->where(['user_id' => $user['user_id']])->find();
         // 等级权限
         if ($article['distribute_level'] != 0) {
-            $level = explode(',', $article['distribute_level']);
-            $svipLevel = [4, 5, 6, 7, 8, 9, 10, 11];
-            $setSvipLevel = array_intersect($svipLevel, $level);
-            if (count($setSvipLevel) > 1) {
-                if ($user['distribut_level'] != 3) {
-                    return ['status' => -1, 'msg' => '您当前不是SVIP，没有访问权限'];
-                }
-                // 拥有代理商等级划分，需要从代理商查询用户的代理商等级
-                $url = C('SERVER_URL') . '/index.php/Crond/get_user_grade/user_name/' . $user['user_name'];
-                $res = httpRequest($url);
-                if (!$res) {
-                    return ['status' => 0, 'msg' => '权限检查失败'];
-                }
-                $res = json_decode($res, true);
-                if (isset($res['status']) && $res['status'] == 1) {
-                    $useSvipLevel = $res['station'] + 2;
-                    if (!in_array($useSvipLevel, $setSvipLevel)) {
-                        foreach ($setSvipLevel as $lv) {
-                            $levelName = M('svip_level')->where(['app_level' => $lv])->value('name');
-                            return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
-                        }
+            $limitLevel = explode(',', $article['distribute_level']);
+            $svipLevel = M('svip_level')->getField('app_level, name', true);
+            if (!in_array($user['distribut_level'], $limitLevel)) {
+                if ($user['svip_level'] == 3 && $limitLevel[0] < 4) {
+                    switch ($limitLevel[0]) {
+                        case 2:
+                            $status = -2;
+                            break;
+                        case 3:
+                            $status = -1;
+                            break;
+                        default:
+                            $status = 0;
                     }
-                } else {
-                    return ['status' => 0, 'msg' => '权限检查失败'];
-                }
-            } else {
-                if (!in_array($user['distribut_level'], $level)) {
-                    foreach ($level as $lv) {
-                        switch ($lv) {
-                            case 2:
-                                $status = -2;
-                                break;
-                            case 3:
-                                $status = -1;
-                                break;
-                            default:
-                                $status = 0;
-                        }
-                        $levelName = M('distribut_level')->where(['level_id' => $lv])->value('level_name');
-                        return ['status' => $status, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
-                    }
+                    $levelName = M('distribut_level')->where(['level_id' => $limitLevel[0]])->value('level_name');
+                    return ['status' => $status, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
+                } else if (!in_array($user['svip_level'], $limitLevel)) {
+                    $levelName = $svipLevel[$limitLevel[0]];
+                    return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
                 }
             }
         }
@@ -396,6 +355,55 @@ class School
     }
 
     /**
+     * 获取弹窗通知
+     * @return array
+     */
+    public function getPopup($userId)
+    {
+        $return = [
+            'is_open' => 0,
+            'img' => [
+                'img' => '',
+                'width' => '',
+                'height' => '',
+                'type' => '',
+            ],
+            'article_id' => ''
+        ];
+        $popupConfig = M('school_config')->where(['type' => 'popup'])->find();
+        if (!$popupConfig) {
+            return $return;
+        }
+        // 查看此用户是否已经弹出过
+        if (M('user_school_config')->where(['type' => 'popup', 'user_id' => $userId])->value('id')) {
+            return $return;
+        }
+        M('user_school_config')->add([
+            'type' => 'popup',
+            'user_id' => $userId,
+            'add_time' => NOW_TIME
+        ]);
+        $content = explode(',', $popupConfig['content']);
+        $popupConfig['content'] = [];
+        foreach ($content as $value) {
+            $key = substr($value, 0, strrpos($value, ':'));
+            $value = substr($value, strrpos($value, ':') + 1);
+            $popupConfig['content'][$key] = $value;
+        }
+        if ($popupConfig['content']['is_open'] == 0) {
+            return $return;
+        }
+        $url = explode(',', $popupConfig['url']);
+        $return['img']['img'] = $this->ossClient::url(substr($url[0], strrpos($url[0], 'img:') + 4));
+        $return['img']['width'] = substr($url[1], strrpos($url[1], 'width:') + 6);
+        $return['img']['height'] = substr($url[2], strrpos($url[2], 'height:') + 7);
+        $return['img']['type'] = substr($url[3], strrpos($url[3], 'type:') + 5);
+        $return['article_id'] = $popupConfig['content']['article_id'];
+        $return['is_open'] = 1;
+        return $return;
+    }
+
+    /**
      * 获取轮播图
      * @param int $moduleId
      * @return array
@@ -421,6 +429,7 @@ class School
                 'code' => $item['module_type'],
                 'name' => isset($module) ? $module['name'] : '',
                 'module_id' => isset($module) ? $module['id'] : '0',
+                'article_id' => $item['article_id'],
                 'is_allow' => isset($module) ? (int)$module['is_allow'] : 0,
                 'tips' => '功能尚未开放',
                 'need_login' => 1,
@@ -435,9 +444,47 @@ class School
      */
     public function getModule()
     {
-        $module = M('school')->where(['is_open' => 1])->order('sort DESC')->select();
+        $module1 = M('school')->where(['type' => ['IN', ['module9', 'module1', 'module2']]])->select();
         $list = [];
-        foreach ($module as $item) {
+        foreach ($module1 as $item) {
+            $img = explode(',', $item['img']);
+            if ($item['type'] == 'module9') {
+                $temp = [
+                    'module_id' => $item['id'],
+                    'img' => [
+                        'img' => $this->ossClient::url(substr($img[0], strrpos($img[0], 'img:') + 4)),
+                        'width' => substr($img[1], strrpos($img[1], 'width:') + 6),
+                        'height' => substr($img[2], strrpos($img[2], 'height:') + 7),
+                        'type' => substr($img[3], strrpos($img[3], 'type:') + 5),
+                    ],
+                    'name' => $item['name'],
+                    'desc' => $item['desc'] ?? '',
+                    'code' => $item['type'],
+                    'is_allow' => (int)$item['is_allow'],
+                    'tips' => '功能尚未开放',
+                    'need_login' => 1,
+                ];
+                array_unshift($list, $temp);
+            } else {
+                $list[] = [
+                    'module_id' => $item['id'],
+                    'img' => [
+                        'img' => $this->ossClient::url(substr($img[0], strrpos($img[0], 'img:') + 4)),
+                        'width' => substr($img[1], strrpos($img[1], 'width:') + 6),
+                        'height' => substr($img[2], strrpos($img[2], 'height:') + 7),
+                        'type' => substr($img[3], strrpos($img[3], 'type:') + 5),
+                    ],
+                    'name' => $item['name'],
+                    'desc' => $item['desc'] ?? '',
+                    'code' => $item['type'],
+                    'is_allow' => (int)$item['is_allow'],
+                    'tips' => '功能尚未开放',
+                    'need_login' => 1,
+                ];
+            }
+        }
+        $module2 = M('school')->where(['is_open' => 1, 'type' => ['NOT IN', ['module9', 'module1', 'module2']]])->order('sort DESC')->select();
+        foreach ($module2 as $item) {
             $img = explode(',', $item['img']);
             $list[] = [
                 'module_id' => $item['id'],
@@ -448,13 +495,14 @@ class School
                     'type' => substr($img[3], strrpos($img[3], 'type:') + 5),
                 ],
                 'name' => $item['name'],
+                'desc' => $item['desc'] ?? '',
                 'code' => $item['type'],
                 'is_allow' => (int)$item['is_allow'],
                 'tips' => '功能尚未开放',
                 'need_login' => 1,
             ];
         }
-        return ['config' => ['row_num' => 4], 'list' => $list];
+        return ['config' => ['row_num' => 2], 'list' => $list];
     }
 
     /**
@@ -528,17 +576,31 @@ class School
         }
         // 搜索条件
         $where = $this->articleWhere($param);
+        $whereOr = $this->articleWhereOr($param);
         // 排序
         $sortParam = $this->articleSort($param);
         $sort = $sortParam['sort'];
         $sortSet = $sortParam['sort_set'];
         // 数据数量
-        $count = M('school_article sa')->where($where)->count();
+        $count = M('school_article sa')->where($where);
+        if (!empty($whereOr)) {
+            $count = $count->where(function ($query) use ($whereOr) {
+                $query->whereOr($whereOr);
+            });
+        }
+        $count = $count->count();
         // 查询数据
         $page = new Page($count, $limit);
-        $article = M('school_article sa')->where($where)->order($sort)->limit($page->firstRow . ',' . $page->listRows)->select();
+        $article = M('school_article sa')->where($where);
+        if (!empty($whereOr)) {
+            $article = $article->where(function ($query) use ($whereOr) {
+                $query->whereOr($whereOr);
+            });
+        }
+        $article = $article->order($sort)->limit($page->firstRow . ',' . $page->listRows)->select();
         $list = [];
         $articleIds = [];
+        $fileList = [];     // 附件列表
         foreach ($article as $item) {
             $articleIds[] = $item['id'];
             $cover = explode(',', $item['cover']);  // 封面图
@@ -568,11 +630,20 @@ class School
                     'cover' => '',
                     'axis' => '1',
                 ],
+                'file' => [
+                    'url' => '',
+                    'type' => '',
+                    'name' => '',
+                ],
                 'user' => [
                     'user_name' => '',
                     'head_pic' => '',
                 ]
             ];
+            if (!empty($item['file'])) {
+                $item['file'] = explode(',', $item['file']);
+                $fileList[$item['id']] = $item['file'];
+            }
         }
         // 素材专区数据处理
         if (!empty($param['module_type']) && $param['module_type'] == 'module6') {
@@ -583,6 +654,9 @@ class School
                 $official['url'] = $this->ossClient::url(substr($headUrl[0], strrpos($headUrl[0], 'img:') + 4));
             }
             foreach ($list as $k => $l) {
+                $list[$k]['file']['url'] = isset($fileList[$l['article_id']]) ? $this->ossClient::url(substr($fileList[$l['article_id']][0], strrpos($fileList[$l['article_id']][0], 'url:') + 4)) : '';
+                $list[$k]['file']['type'] = isset($fileList[$l['article_id']]) ? substr($fileList[$l['article_id']][1], strrpos($fileList[$l['article_id']][1], 'type:') + 5) : '';
+                $list[$k]['file']['name'] = isset($fileList[$l['article_id']]) ? substr($fileList[$l['article_id']][0], strrpos($fileList[$l['article_id']][0], '/') + 1) : '';
                 $list[$k]['user']['user_name'] = $official ? $official['name'] : '';
                 $list[$k]['user']['head_pic'] = $official ? $official['url'] : '';
                 foreach ($resource as $r) {

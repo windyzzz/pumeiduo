@@ -2164,7 +2164,7 @@ function download_image($url, $fileName, $dirName, $type = 1, $time = true)
     $res = fopen($dirName . '/' . $fileName, 'a');
     fwrite($res, $file);
     fclose($res);
-    return ['file_name' => $fileName, 'save_path' => $dirName];
+    return ['save_path' => $dirName, 'file_name' => $fileName];
 }
 
 /**

@@ -1,0 +1,44 @@
+<include file="public/layout" />
+<style>
+    .system_img_location{text-align: center; width: 120px;position:absolute;top:15px; margin-left:265px;}
+</style>
+<body style="background-color: #FFF; overflow: auto;">
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title">
+            <div class="subject">
+                <h3>商品种类提示</h3>
+                <h5>商品种类提示设置</h5>
+            </div>
+        </div>
+    </div>
+    <form method="post" id="handlepost" action="{:U('Goods/categoryTips')}" enctype="multipart/form-data" name="form">
+        <div class="ncap-form-default">
+            <dl class="row">
+                <dt class="tit">
+                    <label>身份证提示</label>
+                </dt>
+                <dd class="opt">
+                    <textarea class="" style="width: 30%; height: 100%; line-height: 150%" rows="5" name="id_card[content]" title="">{$tips.id_card.content}</textarea>
+                    <p class="notic">订单结算页身份证填写提示</p>
+                </dd>
+            </dl>
+            <div class="bot">
+                <a href="JavaScript:void(0);" class="ncap-btn-big ncap-btn-green" onclick="document.form.submit()">确认提交</a>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="goTop"> <a href="JavaScript:void(0);" id="btntop"><i class="fa fa-angle-up"></i></a><a href="JavaScript:void(0);" id="btnbottom"><i class="fa fa-angle-down"></i></a></div>
+</body>
+<script type="text/javascript">
+    function img_call_back(fileurl_tmp , elementid)
+    {
+        $("#"+elementid).val(fileurl_tmp);
+        $("#"+elementid+'_a').attr('href', fileurl_tmp);
+        $("#"+elementid+'_i').attr('onmouseover', "layer.tips('<img src="+fileurl_tmp+">',this,{tips: [1, '#fff']});");
+    }
+</script>
+</html>
