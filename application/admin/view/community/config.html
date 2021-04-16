@@ -107,7 +107,7 @@
                             <option value="2" <if condition='$config.reward_type.content eq 2'>selected</if>>电子币</option>
                         </select>
                     </div>
-                    <div class="reward_coupon" style="<if condition='$config.reward_type.content eq 2'>display:none;</if>">
+                    <div class="reward_coupon" style="<if condition='in_array($config.reward_type.content, [0, 2])'>display:none;</if>">
                         <a class="ncap-btn reward_coupon" href="javascript:;" onclick="addCoupon()">增加优惠券</a>
                         <table>
                             <tr><th style="width:80%">优惠券ID</th><th style="width: 50px;text-align: center;" >操作</th></tr>
@@ -121,7 +121,7 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="reward_electronic" style="<if condition='$config.reward_type.content eq 1'>display:none;</if>">
+                    <div class="reward_electronic" style="<if condition='in_array($config.reward_type.content, [0, 1])'>display:none;</if>">
                         电子币面值
                         <input type="text" name="reward_electronic[content]"  onpaste="this.value=this.value.replace(/[^\d.]/g,'')" onkeyup="this.value=this.value.replace(/[^\d.]/g,'')" value="{$config.reward_electronic.content}" style="text-align: center;">
                     </div>

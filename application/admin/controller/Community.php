@@ -66,18 +66,20 @@ class Community extends Base
                 }
             }
             // 关键词
-            foreach ($keyword as $key) {
-                if ($key['id'] == 0) {
-                    if (M('community_article_keyword')->where(['name' => $key['name']])->value('id')) {
-                        continue;
+            if (!empty($keyword)) {
+                foreach ($keyword as $key) {
+                    if ($key['id'] == 0) {
+                        if (M('community_article_keyword')->where(['name' => $key['name']])->value('id')) {
+                            continue;
+                        } else {
+                            M('community_article_keyword')->add($key);
+                        }
                     } else {
-                        M('community_article_keyword')->add($key);
+                        if (empty($key['name'])) {
+                            continue;
+                        }
+                        M('community_article_keyword')->where(['id' => $key['id']])->update($key);
                     }
-                } else {
-                    if (empty($key['name'])) {
-                        continue;
-                    }
-                    M('community_article_keyword')->where(['id' => $key['id']])->update($key);
                 }
             }
             Db::commit();
