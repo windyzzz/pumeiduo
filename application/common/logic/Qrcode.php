@@ -35,7 +35,7 @@ class Qrcode
                     // 发放优惠券
                     $couponIds = $prom['reward_content'];
                     $couponLogic = new CouponLogic();
-                    $res = $couponLogic->receive($couponIds, $userId, true);
+                    $res = $couponLogic->receive($couponIds, $userId, false, true);
                     if ($res['status'] == 0) {
                         throw new Exception($res['msg']);
                     }
