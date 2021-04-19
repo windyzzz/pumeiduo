@@ -177,6 +177,22 @@ class School extends Base
     }
 
     /**
+     * 获取文章内容视频封面图（本地）
+     * @return \think\response\Json
+     */
+    public function articleVideoLocalCover()
+    {
+        $filePath = I('path', '');
+        $localCover = M('school_article_temp_resource')->where(['local_path' => $filePath])->value('local_cover');
+        if (!$localCover) {
+            $localCover = getVideoCoverImages_v2($filePath, 'upload/school/video_cover/temp/')['path'];
+            M('school_article_temp_resource')->where(['local_path' => $filePath])->update(['local_cover' => $localCover]);
+        }
+        $data = ['img' => SITE_URL . $localCover];
+        return json(['status' => 1, 'msg' => '', 'result' => $data]);
+    }
+
+    /**
      * 文章分享二维码
      * @return \think\response\Json
      */

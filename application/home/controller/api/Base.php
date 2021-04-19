@@ -118,6 +118,7 @@ class Base extends Controller
             'c=api.Activity&a=cateActGoodsList',        // 分类主题活动商品列表
             'c=api.Activity&a=promActivity',            // 促销活动板块配置
             'c=api.School&a=articleContent',            // 商学院获取文章内容
+            'c=api.School&a=articleVideoLocalCover',    // 商学院获取文章内容视频本地封面图
             'c=api.User&a=checkByPhone',                // 根据手机查找用户信息
         ];
     }
