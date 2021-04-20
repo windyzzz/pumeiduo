@@ -83,6 +83,18 @@
 			</dl>
 			<dl class="row">
 				<dt class="tit">
+					<label>选择商品种类</label>
+				</dt>
+				<dd class="opt ctype">
+					<input name="goods_nature[]" type="checkbox" value="0" <if condition="!empty($info['goods_nature']) && in_array(0, $info['goods_nature'])">checked</if> ><label>全部</label>
+					<input name="goods_nature[]" type="checkbox" value="1" <if condition="!empty($info['goods_nature']) && in_array(1, $info['goods_nature'])">checked</if> ><label>圃美多</label>
+					<input name="goods_nature[]" type="checkbox" value="2" <if condition="!empty($info['goods_nature']) && in_array(2, $info['goods_nature'])">checked</if> ><label>韩国购</label>
+					<input name="goods_nature[]" type="checkbox" value="3" <if condition="!empty($info['goods_nature']) && in_array(3, $info['goods_nature'])">checked</if> ><label>供应链</label>
+					<input name="goods_nature[]" type="checkbox" value="4" <if condition="!empty($info['goods_nature']) && in_array(4, $info['goods_nature'])">checked</if> ><label>代理商</label>
+				</dd>
+			</dl>
+			<dl class="row">
+				<dt class="tit">
 					<label for="cat_ids">选择商品分类</label>
 				</dt>
 				<dd class="opt">
@@ -117,8 +129,6 @@
 						<if condition="count($info.category)-1 == $ck">
 							<a onclick="addCategory(this)" class="ncap-btn-mini ncap-btn-green">添加商品分类</a>
 						</if>
-
-
 						<span class="err" id="err_cat_id" style="color:#F00; display:none;"></span>
 					</dd>
 				</dl>
@@ -132,7 +142,6 @@
 					<input name="is_usual" type="radio" value="1" <if condition="$info['is_usual'] eq 1">checked</if> ><label>可以</label>
 				</dd>
 			</dl>
-
 			<hr>
 			<dl class="row">
 				<dt >
@@ -140,7 +149,6 @@
 				</dt>
 			</dl>
 			<hr>
-
 			<table class="reward_table" style="width: 80%; margin: 0 auto;" border="1">
 				<tr>
 					<th>序号</th>
@@ -149,7 +157,6 @@
 					<th>结算页提示</th>
 					<th>操作</th>
 				</tr>
-
 				<volist name="info.reward" id="item" key="k">
 					<tr>
 						<input type="hidden" name="reward[{$k}][reward_id]" value="{$item.reward_id}">
@@ -165,7 +172,6 @@
 					</tr>
 				</volist>
 				<span id="index" style="display: none;">{$info.reward|count}</span>
-
 			</table>
 			<div><a onclick="addSetting()" class="ncap-btn-big ncap-btn-blue">添加奖励设置</a></div>
 			<div class="bot"><a onclick="verifyForm()" class="ncap-btn-big ncap-btn-green">确认提交</a></div>
@@ -176,22 +182,50 @@
 
     var index = parseInt($('#index').text()) + 1;
 
-    $(function () {
-        // 自定义商品分类、全场
-        if($('#cat_ids').val() == 0){
-            $('.category').hide();
-        }else{
-            $('.category').show();
-        }
+	$(function () {
+		// 自定义商品分类、全场
+		if ($('#cat_ids').val() == 0) {
+			$('.category').hide();
+		} else if ($('.category').length > 0) {
+			$('.category').show();
+		} else {
 
-        $(document).on("change",'#cat_ids',function(){
-            if($(this).val() == 0){
-                $('.category').hide();
-            }else{
-                $('.category').show();
-            }
-        })
-    });
+		}
+		$(document).on("change", '#cat_ids', function () {
+			if ($(this).val() == 0) {
+				$('.category').hide();
+			} else if ($('.category').length > 0) {
+				$('.category').show();
+			} else {
+				var dl = '<dl class="row category">' +
+						'<dt class="tit">' +
+						'<label>商品分类</label>' +
+						'</dt>' +
+						'<dd class="opt">' +
+						'<select name="cat_id[]" id="cat_id_0" class="small form-control cat_id" data-index="0">' +
+						'<option value="0">请选择商品分类</option>' +
+						'<foreach name="cat_list" item="v" key="k" >' +
+						'<option value="{$v[\'id\']}">' +
+						'{$v[\'name\']}' +
+						'</option>' +
+						'</foreach>' +
+						'</select>' +
+						'<select name="cat_id_2[]" id="cat_id_2_0" onChange="get_category(this.value,\'cat_id_3_0\',\'0\');getCategoryBindList(this.value)" onclick="get_category(this.value,\'cat_id_3_0\',\'0\');getCategoryBindList(this.value)" class="small form-control">' +
+						'<option value="0">请选择商品分类</option>' +
+						'</select>' +
+						'<select name="cat_id_3[]" id="cat_id_3_0" class="small form-control" >' +
+						'<option value="0">请选择商品分类</option>' +
+						'</select>' +
+						'<a onclick="addCategory(this)" class="ncap-btn-mini ncap-btn-green">添加商品分类</a>' +
+						'<a href="javascript:;" class="ncap-btn-mini ncap-btn-red delete">删除</a>' +
+						'<span class="err" id="err_cat_id" style="color:#F00; display:none;"></span>' +
+						'</dd>' +
+						'</dl>';
+				$(this).parent().parent().after(dl);
+
+			}
+		})
+	});
     /** 以下是编辑时默认选中某个商品分类*/
     $(document).ready(function(){
 
@@ -225,6 +259,7 @@
     var indexs = parseInt($('#index1').val());
     function addCategory(btn)
     {
+    	if (indexs == 0) indexs = 1;
         var options = {$cat_list|json_encode};
         var vab = '';
         var option;
