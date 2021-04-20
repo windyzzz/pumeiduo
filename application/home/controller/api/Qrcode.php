@@ -7,6 +7,14 @@ use think\Exception;
 
 class Qrcode extends Base
 {
+    public function __construct()
+    {
+        parent::__construct();
+        if ($this->passAuth) {
+            die(json_encode(['status' => -999, 'msg' => '请先登录']));
+        }
+    }
+
     /**
      * 获取扫码信息
      * @return \think\response\Json
