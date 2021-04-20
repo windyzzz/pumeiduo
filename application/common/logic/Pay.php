@@ -316,7 +316,6 @@ class Pay
      */
     public function checkOrderSplitGoods($userAddress)
     {
-        return true;
         if (!empty($this->order2Goods)) {
             $province = M('region2')->where(['id' => $userAddress['province']])->value('ml_region_id');
             $city = M('region2')->where(['id' => $userAddress['city']])->value('ml_region_id');
