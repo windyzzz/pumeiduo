@@ -3020,7 +3020,7 @@ class Order extends Base
                         'exchange_price' => $orderGoods['member_goods_price'],
                         'original_img' => SITE_URL . $orderGoods['original_img'],
                         'original_img_new' => getFullPath($orderGoods['original_img']),
-                        'service_phone' => $express['result']['expPhone'],
+                        'service_phone' => $express['result']['expPhone'] ?? tpCache('shop_info.mobile'),
                         'province' => Db::name('region2')->where(['id' => $delivery['province']])->value('name'),
                         'city' => Db::name('region2')->where(['id' => $delivery['city']])->value('name'),
                         'district' => Db::name('region2')->where(['id' => $delivery['district']])->value('name'),
