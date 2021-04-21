@@ -311,7 +311,7 @@ class Community extends Base
                         case 1:
                             $updata['publish_time'] = NOW_TIME;
                             $content = '审核通过啦！';
-                            if (!M('goods')->where(['goods_id' => $articleInfo['goods_id'], 'is_on_sale' => 1])->value('goods_id')) {
+                            if ($articleInfo['goods_id'] > 0 && !M('goods')->where(['goods_id' => $articleInfo['goods_id'], 'is_on_sale' => 1])->value('goods_id')) {
                                 $this->ajaxReturn(['status' => 0, 'msg' => '商品已下架，不能审核通过']);
                             }
                             break;
