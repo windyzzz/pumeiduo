@@ -14,10 +14,7 @@ namespace app\common\logic;
 use app\common\util\ChineseSpell;
 use think\Model;
 
-/**
- * 秒杀逻辑定义
- * Class CatsLogic.
- */
+
 class SearchWordLogic extends Model
 {
     /**
