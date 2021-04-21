@@ -407,7 +407,7 @@ class Community extends Base
                                 'article_status' => $status . '',   // 文章审核状态
                                 'article_reward' => [
                                     'is_open' => $rewardStatus,     // 审核通过奖励是否开启
-                                    'type' => $rewardType ?? '0',   // 奖励类型
+                                    'reward_type' => $rewardType ?? '0',   // 奖励类型
                                     'coupon' => [
                                         'count' => isset($couponList) ? count($couponList) : 0,
                                         'list' => $couponList ?? []
