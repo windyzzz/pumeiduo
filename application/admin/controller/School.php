@@ -491,15 +491,17 @@ class School extends Base
         $return = ['status' => 0, 'course_num' => $userCourseNum];
         if ($isCheck) {
             $schoolStandard = cache('school_standard');
-            foreach ($schoolStandard as $v) {
-                if ($v['type'] == 2) {
-                    continue;
-                }
-                if ($user['user_level'] == $v['distribute_level']) {
-                    if ($userCourseNum >= $v['num']) {
-                        $return['status'] = 1;
+            if ($schoolStandard && is_array($schoolStandard)) {
+                foreach ($schoolStandard as $v) {
+                    if ($v['type'] == 2) {
+                        continue;
                     }
-                    break;
+                    if ($user['user_level'] == $v['distribute_level']) {
+                        if ($userCourseNum >= $v['num']) {
+                            $return['status'] = 1;
+                        }
+                        break;
+                    }
                 }
             }
         }
@@ -516,15 +518,17 @@ class School extends Base
         // 学习规则达标设置
         $return = ['status' => 0];
         $schoolStandard = cache('school_standard');
-        foreach ($schoolStandard as $v) {
-            if ($v['type'] == 1) {
-                continue;
-            }
-            if ($user['user_level'] == $v['distribute_level']) {
-                if ($user['school_credit'] >= $v['num']) {
-                    $return['status'] = 1;
+        if ($schoolStandard && is_array($schoolStandard)) {
+            foreach ($schoolStandard as $v) {
+                if ($v['type'] == 1) {
+                    continue;
                 }
-                break;
+                if ($user['user_level'] == $v['distribute_level']) {
+                    if ($user['school_credit'] >= $v['num']) {
+                        $return['status'] = 1;
+                    }
+                    break;
+                }
             }
         }
         return $return;
