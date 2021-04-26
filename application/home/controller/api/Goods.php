@@ -1164,9 +1164,9 @@ class Goods extends Base
             'buy_least' => $goods['least_buy_num'],
             'is_supply' => $goods['is_supply'],
         ];
-        if ($this->isApplet) {
-            $goodsInfo['exchange_integral'] = '0';
-        }
+//        if ($this->isApplet) {
+//            $goodsInfo['exchange_integral'] = '0';
+//        }
         if ($goods['is_agent'] == 1) {
             // 代理商商品基础价格设置
             $goodsInfo['shop_price'] = $goods['retail_price'];  // 零售价
