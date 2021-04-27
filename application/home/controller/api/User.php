@@ -3704,7 +3704,7 @@ class User extends Base
             return json(['status' => 0, 'msg' => '抱歉，SVIP才能进入']);
         }
         $sign = shopEncrypt(time(), $this->user['user_name']);
-        $url = C('SERVER_URL') . '/User/index/login_sign/shop/user_name/' . $this->user['user_name'] . '/time/' . time() . '/sign/' . $sign;
+        $url = C('SERVER_URL') . '/Index/index/login_sign/shop/user_name/' . $this->user['user_name'] . '/time/' . time() . '/sign/' . $sign;
         return json(['status' => 1, 'result' => ['url' => $url]]);
     }
 
