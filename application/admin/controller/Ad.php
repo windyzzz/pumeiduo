@@ -400,7 +400,7 @@ class Ad extends Base
                     // 商品
                     $goodsId = M('goods')->where(['goods_sn' => $data['goods_sn']])->value('goods_id');
                     if (empty($goodsId)) {
-                        $this->ajaxReturn(['status' => 0, 'msg' => '商品不存在']);
+                        $this->error('操作失败，' . '商品不存在');
                     }
                     $data['type_id'] = $goodsId;
                     $data['item_id'] = 0;
