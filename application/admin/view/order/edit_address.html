@@ -67,9 +67,22 @@
                     <label>地址-区</label>
                 </dt>
                 <dd class="opt">
-                    <select name="district" id="district" onchange="" class="valid">
+                    <select name="district" id="district" onchange="get_twon(this)" class="valid">
                         <volist name="district" id="v">
                             <option value="{$v.id}"<if condition="$v.id == $order.district">selected</if>>{$v.name}</option>
+                        </volist>
+                    </select>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>地址-街道</label>
+                </dt>
+                <dd class="opt">
+                    <select name="twon" id="twon" onchange="" class="valid">
+                        <option value="0">请选择</option>
+                        <volist name="twon" id="v">
+                            <option value="{$v.id}"<if condition="$v.id == $order.twon">selected</if>>{$v.name}</option>
                         </volist>
                     </select>
                 </dd>

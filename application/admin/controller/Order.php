@@ -2330,7 +2330,7 @@ class Order extends Base
             ->join('region2 r2', 'r2.id = o.city')
             ->join('region2 r3', 'r3.id = o.district')
             ->where(['order_id' => $orderId])
-            ->field('o.order_id, o.province, o.city, o.district, r1.name province_name, r2.name city_name, r3.name district_name, 
+            ->field('o.order_id, o.province, o.city, o.district, o.twon, r1.name province_name, r2.name city_name, r3.name district_name, 
             o.address, o.zipcode, o.mobile, o.consignee')
             ->find();
         // 省数据
@@ -2339,11 +2339,14 @@ class Order extends Base
         $city = M('region2')->where(['parent_id' => $orderAddress['province']])->select();
         // 区数据
         $district = M('region2')->where(['parent_id' => $orderAddress['city']])->select();
+        // 街道数据
+        $twon = M('region2')->where(['parent_id' => $orderAddress['district']])->select();
 
         $this->assign('order', $orderAddress);
         $this->assign('province', $province);
         $this->assign('city', $city);
         $this->assign('district', $district);
+        $this->assign('twon', $twon);
         return $this->fetch('edit_address');
     }
 
