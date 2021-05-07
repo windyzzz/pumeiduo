@@ -197,7 +197,6 @@ class Uploadify extends Base
                     'allowFiles' => $CONFIG2['scrawlAllowFiles'],
                     'oriName' => 'scrawl.png',];
                 $fieldName = $CONFIG2['scrawlFieldName'];
-                $base64 = 'base64';
                 $result = $this->upBase64($config, $fieldName);
                 break;
             /* 上传视频 */
@@ -232,12 +231,12 @@ class Uploadify extends Base
                     'pathFormat' => $CONFIG2['catcherPathFormat'],
                     'maxSize' => $CONFIG2['catcherMaxSize'],
                     'allowFiles' => $CONFIG2['catcherAllowFiles'],
-                    'oriName' => 'remote.png',];
+                    'oriName' => 'remote.png',
+                ];
                 $fieldName = $CONFIG2['catcherFieldName'];
                 /* 抓取远程图片 */
                 $list = [];
                 isset($_POST[$fieldName]) ? $source = $_POST[$fieldName] : $source = $_GET[$fieldName];
-
                 foreach ($source as $imgUrl) {
                     $info = json_decode($this->saveRemote($config, $imgUrl), true);
                     array_push($list, [
@@ -249,7 +248,6 @@ class Uploadify extends Base
                         'source' => htmlspecialchars($imgUrl),
                     ]);
                 }
-
                 $result = json_encode([
                     'state' => count($list) ? 'SUCCESS' : 'ERROR',
                     'list' => $list,

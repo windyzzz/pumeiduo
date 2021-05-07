@@ -12,7 +12,6 @@ switch ($action) {
     case 'config':
         $result =  json_encode($CONFIG);
         break;
-
     /* 上传图片 */
     case 'uploadimage':
     /* 上传涂鸦 */
@@ -23,7 +22,6 @@ switch ($action) {
     case 'uploadfile':
         $result = include("action_upload.php");
         break;
-
     /* 列出图片 */
     case 'listimage':
         $result = include("action_list.php");
@@ -32,19 +30,16 @@ switch ($action) {
     case 'listfile':
         $result = include("action_list.php");
         break;
-
     /* 抓取远程文件 */
     case 'catchimage':
         $result = include("action_crawler.php");
         break;
-
     default:
         $result = json_encode(array(
             'state'=> '请求地址出错'
         ));
         break;
 }
-
 /* 输出结果 */
 if (isset($_GET["callback"])) {
     if (preg_match("/^[\w_]+$/", $_GET["callback"])) {

@@ -108,19 +108,25 @@ class Ueditor extends Base
                 /* 抓取远程图片 */
                 $list = [];
                 isset($_POST[$fieldName]) ? $source = $_POST[$fieldName] : $source = $_GET[$fieldName];
-
                 foreach ($source as $imgUrl) {
-                    $info = json_decode($this->saveRemote($config, $imgUrl), true);
+//                    $info = json_decode($this->saveRemote($config, $imgUrl), true);
+//                    array_push($list, [
+//                        'state' => $info['state'],
+//                        'url' => $info['url'],
+//                        'size' => $info['size'],
+//                        'title' => htmlspecialchars($info['title']),
+//                        'original' => htmlspecialchars($info['original']),
+//                        'source' => htmlspecialchars($imgUrl),
+//                    ]);
                     array_push($list, [
-                        'state' => $info['state'],
-                        'url' => $info['url'],
-                        'size' => $info['size'],
-                        'title' => htmlspecialchars($info['title']),
-                        'original' => htmlspecialchars($info['original']),
-                        'source' => htmlspecialchars($imgUrl),
+                        'state' => 'SUCCESS',
+                        'url' => $imgUrl,
+                        'size' => '',
+                        'title' => '',
+                        'original' => '',
+                        'source' => $imgUrl,
                     ]);
                 }
-
                 $result = json_encode([
                     'state' => count($list) ? 'SUCCESS' : 'ERROR',
                     'list' => $list,
@@ -372,13 +378,11 @@ class Ueditor extends Base
             $data = [
                 'state' => '目录创建失败',
             ];
-
             return json_encode($data);
         } elseif (!is_writeable($dirname)) {
             $data = [
                 'state' => '目录没有写权限',
             ];
-
             return json_encode($data);
         }
 
@@ -387,12 +391,11 @@ class Ueditor extends Base
             $data = [
                 'state' => '写入文件内容错误',
             ];
-
             return json_encode($data);
         } //移动成功
         $data = [
             'state' => 'SUCCESS',
-            'url' => substr($file['fullName'], 1),
+            'url' => $file['fullName'],
             'title' => $file['name'],
             'original' => $file['oriName'],
             'type' => $file['ext'],
