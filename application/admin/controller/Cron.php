@@ -1781,4 +1781,13 @@ AND log_id NOT IN
             Db::commit();
         }
     }
+
+    /**
+     * 更新用户头像
+     */
+    public function updateUserHeadPic()
+    {
+        $userIds = M('users')->where(['head_pic' => ['LIKE', '%mall.pumeiduo.com/index.php%']])->getField('user_id', true);
+        M('users')->where(['user_id' => ['IN', $userIds]])->update(['head_pic' => 'https://mall.pumeiduo.com/public/images/default_head.png']);
+    }
 }
