@@ -102,14 +102,17 @@ class CartLogic extends Model
      */
     public function setSpecGoodsPriceModel($item_id)
     {
+        $specGoodsPriceModel = new SpecGoodsPrice();
         if ($item_id > 0) {
-            $specGoodsPriceModel = new SpecGoodsPrice();
             $this->specGoodsPrice = $specGoodsPriceModel::get($item_id);
             if ($this->specGoodsPrice['key'] == '') {
                 $this->specGoodsPrice = null;
             }
         } else {
-            $this->specGoodsPrice = null;
+            $this->specGoodsPrice = $specGoodsPriceModel->where(['goods_id' => $this->goods['goods_id']])->find();
+            if (!$this->specGoodsPrice || $this->specGoodsPrice['key'] == '') {
+                $this->specGoodsPrice = null;
+            }
         }
     }
 
