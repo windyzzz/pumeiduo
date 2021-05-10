@@ -631,7 +631,15 @@ class Order extends Base
             }
             $update['discount'] = I('post.discount');
             $update['shipping_price'] = I('post.shipping_price');
-            $update['order_amount'] = $order['order_amount'] + $update['shipping_price'] - $update['discount'] - $order['user_money'] - $order['integral_money'] - $order['coupon_price'] - $order['shipping_price'];
+//            $update['order_amount'] = $order['order_amount'] + $update['shipping_price'] - $update['discount'] - $order['user_money'] - $order['integral_money'] - $order['coupon_price'] - $order['shipping_price'];
+            $update['order_amount'] = $order['order_amount'] + $update['shipping_price'] - $update['discount'];
+            if ($order['pay_code'] != '' && $order['prepare_pay_time'] > 0) {
+                // 已经在支付系统生成订单，需要更改原来订单号
+                $update['old_order_sn'] = $order['old_order_sn'] . ',' . $order['order_sn'];
+                $update['old_order_sn'] = trim($update['old_order_sn'], ',');
+                $orderLogic = new \app\common\logic\OrderLogic();
+                $update['order_sn'] = $orderLogic->get_order_sn();
+            }
             $row = M('order')->where(['order_id' => $order_id])->save($update);
             if (!$row) {
                 $this->success('没有更新数据', U('Admin/Order/editprice', ['order_id' => $order_id]));
