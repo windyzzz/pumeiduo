@@ -447,6 +447,12 @@ class Order extends Base
                         $orderGoods[$key]['prom_value'] = '无';
                 }
             }
+            $isAbroad = M('goods')->where('goods_id', $val['goods_id'])->value('is_abroad');
+            if ($isAbroad == 1) {
+                $orderGoods[$key]['trade_type_desc'] = '韩国购';
+            } else {
+                $orderGoods[$key]['trade_type_desc'] = trade_type($val['trade_type']);
+            }
         }
         $this->assign('split', $split);
         $this->assign('express', $express);
@@ -1668,7 +1674,7 @@ class Order extends Base
                 // 订单商品
                 $orderGoods = D('order_goods og')->join('goods g', 'g.goods_id = og.goods_id')
                     ->where('og.order_id=' . $val['order_id'])
-                    ->field('og.trade_type, og.goods_num, og.spec_key_name, og.member_goods_price, og.use_integral, g.goods_sn, g.goods_name')->select();
+                    ->field('og.trade_type, og.goods_num, og.spec_key_name, og.member_goods_price, og.use_integral, g.goods_sn, g.goods_name, g.is_abroad')->select();
                 $orderGoodsNum = count($orderGoods);
                 // 支付时间
                 $val['pay_time_show'] = $val['pay_time'] ? date('Y-m-d H:i:s', $val['pay_time']) : '';
@@ -1678,14 +1684,6 @@ class Order extends Base
                 $level = $val['distribut_level'] ? $levelList[$val['distribut_level']] : '普通会员';
                 // 升级VIP时间
                 $levelUpTime = $distributeLog[$val['user_id']] ? date('Y-m-d H:i:s', $distributeLog[$val['user_id']]) : '';
-                // 交易方式
-                switch ($val['order_type']) {
-                    case 2:
-                        $tradeType = '韩国购';
-                        break;
-                    default:
-                        $tradeType = trade_type($orderGoods[0]['trade_type']);
-                }
                 $strTable .= '<tr>';
                 $strTable .= '<td style="text-align:center;font-size:12px;" rowspan="' . $orderGoodsNum . '">&nbsp;' . $val['order_sn'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['add_time'] . ' </td>';
@@ -1712,14 +1710,14 @@ class Order extends Base
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $this->pay_status[$val['pay_status']] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $this->shipping_status[$val['shipping_status']] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $orderSource[$val['source']] . '</td>';
-                // $strGoods = '';
                 $goods_num = 0;
                 foreach ($orderGoods as $goods) {
                     $goods_num = $goods_num + $goods['goods_num'];
-                    // $strGoods .= "商品编号：".$goods['goods_sn']. " 商品购买数量：".$goods['goods_num']." 商品名称：".$goods['goods_name'];
-                    // if ($goods['spec_key_name'] != '') $strGoods .= " 规格：".$goods['spec_key_name'];
-                    // $strGoods .= "<br />";
-                    // $strTradeType = $goods['trade_type'] == 1 ? '仓库自发'  : '一件代发';
+                }
+                if ($orderGoods[0]['is_abroad'] == 1) {
+                    $tradeType = '韩国购';
+                } else {
+                    $tradeType = trade_type($orderGoods[0]['trade_type']);
                 }
                 $strTable .= '<td style="text-align:left;font-size:12px;"    rowspan="' . $orderGoodsNum . '">' . $goods_num . ' </td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['goods_sn'] . ' </td>';
@@ -1730,15 +1728,19 @@ class Order extends Base
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $tradeType . ' </td>';
                 $strTable .= '</tr>';
                 unset($orderGoods[0]);
-
                 if ($orderGoods) {
                     foreach ($orderGoods as $goods) {
-                        switch ($val['order_type']) {
-                            case 2:
-                                $goodsTradeType = '韩国购';
-                                break;
-                            default:
-                                $goodsTradeType = trade_type($goods['trade_type']);
+//                        switch ($val['order_type']) {
+//                            case 2:
+//                                $goodsTradeType = '韩国购';
+//                                break;
+//                            default:
+//                                $goodsTradeType = trade_type($goods['trade_type']);
+//                        }
+                        if ($goods['is_abroad'] == 1) {
+                            $goodsTradeType = '韩国购';
+                        } else {
+                            $goodsTradeType = trade_type($goods['trade_type']);
                         }
                         $strTable .= '<tr>';
                         $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['goods_sn'] . ' </td>';
@@ -1750,15 +1752,6 @@ class Order extends Base
                         $strTable .= '</tr>';
                     }
                 }
-//                $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods_num . ' </td>';
-//                foreach ($orderGoods as $goods) {
-//                    $goods_num = $goods_num + $goods['goods_num'];
-//                }
-//                unset($orderGoods);
-//
-//                $strTable .= '<td style="text-align:left;font-size:12px;">' . $strGoods . ' </td>';
-//                $strTable .= '<td style="text-align:left;font-size:12px;">' . $strTradeType . ' </td>';
-//                $strTable .= '</tr>';
             }
         }
         $strTable .= '</table>';
@@ -1876,7 +1869,7 @@ class Order extends Base
             // 订单商品
             $orderGoods = D('order_goods og')->join('goods g', 'g.goods_id = og.goods_id')
                 ->where('og.order_id=' . $order['order_id'])
-                ->field('og.trade_type, og.goods_num, og.spec_key_name, og.member_goods_price, g.goods_sn, g.goods_name')->select();
+                ->field('og.trade_type, og.goods_num, og.spec_key_name, og.member_goods_price, g.goods_sn, g.goods_name, g.is_abroad')->select();
             $goods_amount = 0;
             $goods_sn = [];
             $goods_num = [];
@@ -1891,12 +1884,17 @@ class Order extends Base
                 $goods_name[] = $goods['goods_name'];
                 $goods_attr[] = $goods['spec_key_name'];
                 $goods_price[] = $goods['member_goods_price'];
-                switch ($order['order_type']) {
-                    case 2:
-                        $goodsTradeType = '韩国购';
-                        break;
-                    default:
-                        $goodsTradeType = trade_type($goods['trade_type']);
+//                switch ($order['order_type']) {
+//                    case 2:
+//                        $goodsTradeType = '韩国购';
+//                        break;
+//                    default:
+//                        $goodsTradeType = trade_type($goods['trade_type']);
+//                }
+                if ($goods['is_abroad'] == 1) {
+                    $goodsTradeType = '韩国购';
+                } else {
+                    $goodsTradeType = trade_type($goods['trade_type']);
                 }
                 $goods_trade[] = $goodsTradeType;
             }

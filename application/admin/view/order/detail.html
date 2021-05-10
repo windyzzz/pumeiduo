@@ -248,13 +248,7 @@
                                         </a>
                                     </td>
                                     <td class="w80">{$good.spec_key_name}</td>
-                                    <td class="w80">
-                                        <switch name="$good[trade_type]">
-                                            <case value="1">仓库自发</case>
-                                            <case value="2">一件代发</case>
-                                            <case value="3">供应链发货</case>
-                                        </switch>
-                                    </td>
+                                    <td class="w80">{$good.trade_type_desc}</td>
                                     <td class="w60">{$good.goods_num}</td>
                                     <if condition="$order[order_type] == 5">
                                         <td>{$good.school_credit}</td>
