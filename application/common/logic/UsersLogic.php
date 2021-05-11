@@ -1289,27 +1289,33 @@ class UsersLogic extends Model
         $isReg = false;
         Db::startTrans();
         if (check_mobile($username)) {
-            $userId = M('users')->where('mobile', $username)->where('is_cancel', 0)->value('user_id');
+            $userId = M('users')->where('mobile', $username)->where('is_lock', 0)->where('is_cancel', 0)->value('user_id');
             if ($userId) {
                 //--- 手机已有账号
                 if (M('oauth_users')->where(['user_id' => $userId])->find()) {
                     return ['status' => 0, 'msg' => '该手机号已绑定了微信号'];
                 }
                 if ($oauthUser['user_id'] != 0 && $oauthUser['user_id'] != $userId) {
-                    // 账号信息合并
-                    $level = M('users')->where(['user_id' => $userId])->field('distribut_level, is_zhixiao')->find();
-                    if ($level['distribut_level'] < 3 && $level['is_zhixiao'] == 0) {
-                        // 手机账号是普通账号
-                        // 查看手机账号与微信账号是否有推荐人
-                        $phoneUserInvite = M('users')->where(['user_id' => $userId])->value('invite_uid');
-                        $wechatUserInvite = M('users')->where(['user_id' => $oauthUser['user_id']])->value('invite_uid');
-                        if ($phoneUserInvite != 0 && $wechatUserInvite != 0) {
-                            return ['status' => 0, 'msg' => '手机绑定的账号与微信绑定的账号都已有推荐人，请联系后台管理员进行账号合并'];
+                    if (M('users')->where('user_id', $oauthUser['user_id'])->where('is_lock', 0)->where('is_cancel', 0)->find()) {
+                        // 微信绑定的账号合法
+                        // 账号信息合并
+                        $level = M('users')->where(['user_id' => $userId])->field('distribut_level, is_zhixiao')->find();
+                        if ($level['distribut_level'] < 3 && $level['is_zhixiao'] == 0) {
+                            // 手机账号是普通账号
+                            // 查看手机账号与微信账号是否有推荐人
+                            $phoneUserInvite = M('users')->where(['user_id' => $userId])->value('invite_uid');
+                            $wechatUserInvite = M('users')->where(['user_id' => $oauthUser['user_id']])->value('invite_uid');
+                            if ($phoneUserInvite != 0 && $wechatUserInvite != 0) {
+                                return ['status' => 0, 'msg' => '手机绑定的账号与微信绑定的账号都已有推荐人，请联系后台管理员进行账号合并'];
+                            }
                         }
-                    }
-                    $res = $this->bindUser($oauthUser['user_id'], 3, ['user_id' => $userId]);
-                    if ($res['status'] !== 1) {
-                        return $res;
+                        $res = $this->bindUser($oauthUser['user_id'], 3, ['user_id' => $userId]);
+                        if ($res['status'] !== 1) {
+                            return $res;
+                        }
+                    } else {
+                        // 微信绑定的账号不合法
+                        // 更改微信绑定账号（方法下面处理）
                     }
                 }
             } else {
