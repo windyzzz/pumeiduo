@@ -3417,7 +3417,7 @@ class UsersLogic extends Model
             return ['status' => -1, 'msg' => '老用户无法继续绑定'];
         }
         if ($currentUser['distribut_level'] >= 3) {
-            exit($this->error('直销商账号不能合并其他账号'));
+            return ['status' => -1, 'msg' => '直销商账号不能合并其他账号'];
         }
         if ($currentUser['bind_uid'] > 0) {
             return ['status' => -1, 'msg' => '您已经绑定过，不能再绑定其他旧账号了'];
