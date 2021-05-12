@@ -852,7 +852,7 @@ class Promotion extends Base
                         M('goods')->where(['prom_type' => 1, 'prom_id' => $data['id']])->save(['prom_id' => 0, 'prom_type' => 0]);
                         if ($data['item_id'] > 0) {
                             //设置商品一种规格为活动
-                            Db::name('spec_goods_price')->where(['prom_type' => 1, 'prom_id' => $data['item_id']])->update(['prom_id' => 0, 'prom_type' => 0]);
+                            Db::name('spec_goods_price')->where(['prom_type' => 1, 'prom_id' => $data['id']])->update(['prom_id' => 0, 'prom_type' => 0]);
                             Db::name('spec_goods_price')->where('item_id', $data['item_id'])->update(['prom_id' => $data['id'], 'prom_type' => 1]);
                             M('goods')->where('goods_id', $data['goods_id'])->save(['prom_id' => 0, 'prom_type' => 1]);
                         } else {
