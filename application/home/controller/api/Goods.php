@@ -1313,7 +1313,7 @@ class Goods extends Base
         $goodsSpecPrice2 = [];
         foreach ($goodsSpecPrice as $key => $item) {
             $goodsSpecPrice2[] = [
-                'item_key' => $key,
+                'item_key' => $key . '',
                 'item_id' => $item['item_id']
             ];
         }
