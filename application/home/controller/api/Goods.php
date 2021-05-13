@@ -1309,6 +1309,15 @@ class Goods extends Base
             'goods_spec' => $goodsSpec ?? [],
             'goods_spec_price' => (object)$goodsSpecPrice
         ];
+        // 规格格式特殊处理
+        $goodsSpecPrice2 = [];
+        foreach ($goodsSpecPrice as $key => $item) {
+            $goodsSpecPrice2[] = [
+                'item_key' => $key,
+                'item_id' => $item['item_id']
+            ];
+        }
+        $returnData['goods_spec_price2'] = $goodsSpecPrice2;
         return json(['status' => 1, 'result' => $returnData]);
     }
 
