@@ -1280,17 +1280,24 @@ class Goods extends Base
             // 处理输出数据
             unset($goodsInfo['original_img']);
             unset($goodsInfo['is_supply']);
-            foreach ($goodsSpecPrice as &$item) {
+            $goodsSpecPrice2 = [];
+            foreach ($goodsSpecPrice as $key => &$item) {
                 unset($item['key']);
                 unset($item['price']);
                 unset($item['store_count']);
                 unset($item['spec_img']);
+                // 特殊处理规格数据格式
+                $goodsSpecPrice2[] = [
+                    'item_key' => $key . '',
+                    'item_id' => $item['item_id']
+                ];
             }
         } catch (TpshopException $e) {
             $goodsInfo['store_count'] = '-1';   // 不显示库存
             $addressGoodsData = [];
             $goodsSpec = [];
             $goodsSpecPrice = [];
+            $goodsSpecPrice2 = [];
         }
         if (empty($addressGoodsData['user_address'])) {
             // 没有地址，不显示库存
@@ -1307,17 +1314,9 @@ class Goods extends Base
                 ['id' => 2, 'name' => '现金']
             ],
             'goods_spec' => $goodsSpec ?? [],
-            'goods_spec_price' => (object)$goodsSpecPrice
+            'goods_spec_price' => (object)$goodsSpecPrice,
+            'goods_spec_price2' => $goodsSpecPrice2,
         ];
-        // 规格格式特殊处理
-        $goodsSpecPrice2 = [];
-        foreach ($goodsSpecPrice as $key => $item) {
-            $goodsSpecPrice2[] = [
-                'item_key' => $key . '',
-                'item_id' => $item['item_id']
-            ];
-        }
-        $returnData['goods_spec_price2'] = $goodsSpecPrice2;
         return json(['status' => 1, 'result' => $returnData]);
     }
 
