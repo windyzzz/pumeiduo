@@ -543,7 +543,9 @@ class ActivityLogic extends Model
         // 活动商品
         $activityGoods = Db::name('cate_activity_goods ag')->join('goods g', 'g.goods_id = ag.goods_id')
             ->where(['g.is_on_sale' => 1])
-            ->field('ag.cate_act_id, ag.goods_id, ag.item_id, g.goods_name, goods_remark, shop_price, exchange_integral, original_img')->select();
+            ->field('ag.cate_act_id, ag.goods_id, ag.item_id, g.goods_name, goods_remark, shop_price, exchange_integral, original_img')
+            ->order(['g.sort' => 'desc', 'g.goods_id' => 'desc'])
+            ->select();
         $filter_goods_id = [];
         foreach ($activityGoods as $item) {
             $filter_goods_id[] = $item['goods_id'];
@@ -619,10 +621,16 @@ class ActivityLogic extends Model
     /**
      * 获取分类主题活动商品列表
      * @param $activityId
+     * @param $sort
      * @return array|false|\PDOStatement|string|Model
+     * @throws \think\exception\DbException
      */
-    public function getCateActGoodsList($activityId)
+    public function getCateActGoodsList($activityId, $sort = [])
     {
+        $sort['g.sort'] = 'desc';
+        if (!isset($sort['g.goods_id'])) {
+            $sort['g.goods_id'] = 'desc';
+        }
         $where = [
             'start_time' => ['<=', time()],
             'end_time' => ['>=', time()],
@@ -635,9 +643,23 @@ class ActivityLogic extends Model
         if (empty($activityInfo)) {
             return [];
         }
+        // banner处理
+        $bannerInfo = json_decode($activityInfo['banner'], true);
+        if ($bannerInfo) {
+            $activityInfo['banner'] = $bannerInfo['img'];
+            $bannerInfo['img'] = getFullPath($bannerInfo['img']);
+            $activityInfo['banner_info'] = $bannerInfo;
+        } else {
+            $activityInfo['banner_info'] = [
+                'img' => getFullPath($activityInfo['banner']),
+                'width' => 750,
+                'height' => 500,
+                'type' => 'jpeg'
+            ];
+        }
         $activityGoods = Db::name('cate_activity_goods ag')->join('goods g', 'g.goods_id = ag.goods_id')
             ->where(['ag.cate_act_id' => $activityId])
-            ->field('ag.cate_act_id, ag.goods_id, ag.item_id, g.goods_name, goods_remark, shop_price, exchange_integral, original_img')->select();
+            ->field('ag.cate_act_id, ag.goods_id, ag.item_id, g.goods_name, goods_remark, shop_price, exchange_integral, original_img')->order($sort)->select();
         $filter_goods_id = [];
         foreach ($activityGoods as $item) {
             $filter_goods_id[] = $item['goods_id'];
