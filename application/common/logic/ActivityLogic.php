@@ -683,6 +683,7 @@ class ActivityLogic extends Model
         $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->select();
         // 处理活动商品数据
         foreach ($activityGoods as $k => $v) {
+            $activityGoods[$k]['original_img_new'] = getFullPath($v['original_img']);
             // 商品属性
             if (isset($goodsItem[$v['item_id']])) {
                 $activityGoods[$k]['key_name'] = $goodsItem[$v['item_id']];
