@@ -248,6 +248,8 @@ class School
         if ($article['status'] != 1) {
             return ['status' => 0, 'msg' => '文章已失效'];
         }
+        // 点击量+1
+        M('school_article')->where(['id' => $article['id']])->setInc('click', 1);
         $user = M('users')->where(['user_id' => $user['user_id']])->find();
         // 等级权限
         if ($article['distribute_level'] != 0) {
@@ -274,7 +276,7 @@ class School
             }
         }
         // 是否已购买课程
-        if (!M('user_school_article')->where(['user_id' => $user['user_id'], 'article_id' => $article['id']])->find()) {
+        if (!M('user_school_article')->where(['user_id' => $user['user_id'], 'article_id' => $article['id']])->value('id')) {
             $preArticleIds = M('school_article')->where([
                 'class_id' => $article['class_id'], 'sort' => ['>', $article['sort']],
                 'learn_type' => 1, 'status' => 1
@@ -621,6 +623,7 @@ class School
                 'learn_type' => $item['learn_type'],
                 'learn' => $item['learn'],
                 'share' => $item['share'],
+                'click' => $item['click'],
                 'integral' => $item['integral'],
                 'distribute_level' => $item['distribute_level'][0] == 3 && count($item['distribute_level']) > 1 ? $item['distribute_level'][1] : $item['distribute_level'][0],
                 'publish_time' => format_time($item['publish_time']),
@@ -724,6 +727,7 @@ class School
             'learn_type' => $articleInfo['learn_type'],
             'learn' => $articleInfo['learn'],
             'share' => $articleInfo['share'],
+            'click' => $articleInfo['click'],
             'integral' => $articleInfo['integral'],
             'distribute_level' => $articleInfo['distribute_level'][0] == 3 && count($articleInfo['distribute_level']) > 1 ? $articleInfo['distribute_level'][1] : $articleInfo['distribute_level'][0],
             'show_goods' => $articleInfo['show_goods'] ? 1 : 0,
@@ -867,6 +871,8 @@ class School
                 'integral' => $item['use_integral'],    // 用户购买消费积分
                 'distribute_level' => $item['distribute_level'][0] == 3 && count($item['distribute_level']) > 1 ? $item['distribute_level'][1] : $item['distribute_level'][0],
                 'publish_time' => format_time($item['publish_time']),
+                'status' => $item['status'],
+                'times' => $item['times'],
             ];
         }
         return ['total' => $count, 'list' => $list];
@@ -895,6 +901,8 @@ class School
                 accountLog($user['user_id'], 0, 0, '课程学习完毕奖励学分', 0, 0, '', 0, 23, true, 0, $articleInfo['credit']);
             }
         }
+        // 学习次数+1
+        M('user_school_article')->where(['id' => $userSchoolArticle['id']])->setInc('times');
         return ['credit' => $articleInfo['credit']];
     }
 
