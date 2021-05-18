@@ -540,11 +540,15 @@ class ActivityLogic extends Model
         if (empty($activityList)) {
             return [];
         }
+        $activityIds = [];
+        foreach ($activityList as $item) {
+            $activityIds[] = $item['id'];
+        }
         // 活动商品
         $activityGoods = Db::name('cate_activity_goods ag')->join('goods g', 'g.goods_id = ag.goods_id')
-            ->where(['g.is_on_sale' => 1])
+            ->where(['g.is_on_sale' => 1, 'ag.cate_act_id' => ['IN', $activityIds]])
             ->field('ag.cate_act_id, ag.goods_id, ag.item_id, g.goods_name, goods_remark, shop_price, exchange_integral, original_img')
-            ->order(['g.sort' => 'desc', 'g.goods_id' => 'desc'])
+            ->order(['ag.cate_act_id' => 'desc', 'g.sort' => 'desc', 'g.goods_id' => 'desc'])
             ->select();
         $filter_goods_id = [];
         foreach ($activityGoods as $item) {
@@ -590,15 +594,24 @@ class ActivityLogic extends Model
         }
         // 组合数据
         foreach ($activityList as $key => $item) {
+            $activityList[$key]['more'] = 0;
+//            $activityList[$key]['more_count'] = '0';
             $count = 0;
+            $moreCount = 0;
             foreach ($activityGoods as $goods) {
                 if ($item['id'] == $goods['cate_act_id']) {
-                    $activityList[$key]['goods'][] = $goods;
-                    $count++;
+                    if ($count < 9) {
+                        $activityList[$key]['goods'][] = $goods;
+                        $count++;
+                    } else {
+                        $moreCount++;
+                        break;
+                    }
                 }
-                if ($count == 9) {
-                    break;
-                }
+            }
+            if ($moreCount > 0) {
+                $activityList[$key]['more'] = 1;
+//                $activityList[$key]['more_count'] = $moreCount . '';
             }
             // banner处理
             $bannerInfo = json_decode($item['banner'], true);
