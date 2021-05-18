@@ -312,6 +312,37 @@ class School extends Base
     }
 
     /**
+     * 用户学习课程文章列表
+     * @return mixed
+     */
+    public function userCourseArticleList()
+    {
+        $userId = I('user_id');
+        // 学习课程id
+        $courseIds = M('school_article')->where([
+            'learn_type' => ['IN', [1, 2]],
+            'status' => 1,
+        ])->getField('id', true);
+        $where = [
+            'usa.user_id' => $userId,
+            'usa.article_id' => ['IN', $courseIds],
+            'sa.status' => ['NEQ', -1]
+        ];
+        $count = M('user_school_article usa')->join('school_article sa', 'sa.id = usa.article_id')->where($where)->count();
+        $page = new Page($count, 10);
+        $list = M('user_school_article usa')->join('school_article sa', 'sa.id = usa.article_id')
+            ->join('school_class sc', 'sc.id = sa.class_id')
+            ->join('school s', 's.id = sc.module_id')
+            ->where($where)
+            ->field('usa.user_id, sa.title, sa.status, sa.publish_time, s.name module_name, sc.name class_name')
+            ->limit($page->firstRow . ',' . $page->listRows)
+            ->select();
+        $this->assign('page', $page);
+        $this->assign('list', $list);
+        return $this->fetch('user_course_article_list');
+    }
+
+    /**
      * 用户学习达标列表
      * @return mixed
      */
@@ -1100,7 +1131,7 @@ class School extends Base
                     if ($key == 0) continue;
                     $tempContent[] = [
                         'article_id' => $articleId,
-                        'local_path' => '/public/' .substr($value, 0, 61)
+                        'local_path' => '/public/' . substr($value, 0, 61)
                     ];
                 }
                 M('school_article_temp_resource')->where(['article_id' => $articleId])->delete();
