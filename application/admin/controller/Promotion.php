@@ -413,7 +413,7 @@ class Promotion extends Base
                 $goods = M('goods')->where(['goods_id' => $dfd[0]])->find();
                 if ($goods['is_agent'] == 1 || $goods['applet_on_sale'] == 1 || $goods['applet_on_sale2'] == 1) {
                     Db::rollback();
-                    $this->ajaxReturn(['status' => 1, 'msg' => '不能设置小程序上架的商品', 'result' => '']);
+                    $this->ajaxReturn(['status' => 0, 'msg' => '不能设置小程序上架的商品', 'result' => '']);
                 }
                 if (isset($goodsVal['item_id']) && is_array($goodsVal['item_id'])) {
                     foreach ($goodsVal['item_id'] as $itemId) {
@@ -603,7 +603,7 @@ class Promotion extends Base
         $data['end_time'] = strtotime($data['end_time']);
         $goods = M('goods')->where('goods_id', $data['goods_id'])->find();
         if ($goods['is_agent'] == 1 || $goods['applet_on_sale'] == 1 || $goods['applet_on_sale2'] == 1) {
-            $this->ajaxReturn(['status' => 1, 'msg' => '不能设置小程序上架的商品', 'result' => '']);
+            $this->ajaxReturn(['status' => 0, 'msg' => '不能设置小程序上架的商品', 'result' => '']);
         }
         if ($data['can_integral'] == 1) {
             // 验证秒杀积分
@@ -828,10 +828,10 @@ class Promotion extends Base
                         // 查看商品是否已设置活动
                         $goods = M('goods')->where(['goods_id' => $data['goods_id'], 'prom_type' => 0, 'prom_id' => 0])->find();
                         if (!$goods) {
-                            $this->ajaxReturn(['status' => 1, 'msg' => '该商品已设置了优惠活动', 'result' => '']);
+                            $this->ajaxReturn(['status' => 0, 'msg' => '该商品已设置了优惠活动', 'result' => '']);
                         }
                         if ($goods['is_agent'] == 1 || $goods['applet_on_sale'] == 1 || $goods['applet_on_sale2'] == 1) {
-                            $this->ajaxReturn(['status' => 1, 'msg' => '不能设置小程序上架的商品', 'result' => '']);
+                            $this->ajaxReturn(['status' => 0, 'msg' => '不能设置小程序上架的商品', 'result' => '']);
                         }
                         $flashSaleInsertId = Db::name('flash_sale')->insertGetId($data);
                         if ($data['item_id'] > 0) {
