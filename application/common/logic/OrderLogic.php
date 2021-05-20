@@ -82,17 +82,21 @@ class OrderLogic
                 include_once PLUGIN_PATH . 'payment/weixinJsApi/weixinJsApi.class.php';
                 $payment_obj = new \weixinJsApi();
                 $result = $payment_obj->refund1($order, $order['order_amount']);
-                $msg = $result['return_msg'];
                 if ('SUCCESS' == $result['return_code'] && 'SUCCESS' == $result['result_code']) {
                     $res = true;
+                    $msg = $result['return_msg'];
+                } else {
+                    $msg = $result['err_code_des'];
                 }
             } elseif ('weixin' == $order['pay_code']) {
                 include_once PLUGIN_PATH . 'payment/weixin/weixin.class.php';
                 $payment_obj = new \weixin();
                 $result = $payment_obj->refund1($order, $order['order_amount']);
-                $msg = $result['return_msg'];
                 if ('SUCCESS' == $result['return_code'] && 'SUCCESS' == $result['result_code']) {
                     $res = true;
+                    $msg = $result['return_msg'];
+                } else {
+                    $msg = $result['err_code_des'];
                 }
             } elseif ('alipayMobile' == $order['pay_code']) {
                 include_once PLUGIN_PATH . 'payment/alipayMobile/alipayMobile.class.php';
