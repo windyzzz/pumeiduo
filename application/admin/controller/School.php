@@ -325,12 +325,12 @@ class School extends Base
         $where = [
             'usa.user_id' => $userId,
             'usa.article_id' => ['IN', $courseIds],
-            'sa.status' => ['NEQ', -1]
+            'usa.status' => 1
         ];
         $count = M('user_school_article usa')->where($where)->join('school_article sa', 'sa.id = usa.article_id')->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')->count();
         $page = new Page($count, 10);
         $list = M('user_school_article usa')->where($where)->join('school_article sa', 'sa.id = usa.article_id')->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')
-            ->field('usa.user_id, sa.title, sa.status, sa.publish_time, s.name module_name, sc.name class_name')
+            ->field('usa.user_id, usa.article_id, sa.title, sa.status, sa.publish_time, s.name module_name, sc.name class_name')
             ->limit($page->firstRow . ',' . $page->listRows)
             ->order('sa.publish_time DESC, sa.sort DESC')
             ->select();
@@ -513,7 +513,7 @@ class School extends Base
             $where['finish_time'] = ['BETWEEN', [$timeFrom, $timeTo]];
         }
         // 用户学习课程记录总数
-        $userCourseNum = M('user_school_article')->where($where)->group('user_id')->getField('count(article_id) as count');
+        $userCourseNum = M('user_school_article')->where($where)->getField('count(article_id) as count');
         $userCourseNum = $userCourseNum ?? 0;
         // 学习规则达标设置
         $return = ['status' => 0, 'course_num' => $userCourseNum];
