@@ -843,13 +843,19 @@ class School
         // 搜索条件
         $where = $this->userArticleWhere($param);
         $where['usa.user_id'] = $user['user_id'];
-        $where['usa.integral'] = ['>', 0];
+//        $where['usa.integral'] = ['>', 0];
+        // 学习课程id
+        $courseIds = M('school_article')->where([
+            'learn_type' => ['IN', [1, 2]],
+            'status' => 1,
+        ])->getField('id', true);
+        $where['usa.article_id'] = ['IN', $courseIds];
         // 数据数量
         $count = M('user_school_article usa')->join('school_article sa', 'sa.id = usa.article_id')->where($where)->count();
         // 查询数据
         $page = new Page($count, $limit);
         $userArticle = M('user_school_article usa')->join('school_article sa', 'sa.id = usa.article_id')->where($where)
-            ->limit($page->firstRow . ',' . $page->listRows)->field('sa.*, usa.integral as use_integral, usa.credit')->select();
+            ->limit($page->firstRow . ',' . $page->listRows)->field('sa.*, usa.integral as use_integral, usa.credit, usa.status learn_status, usa.times')->select();
         $list = [];
         foreach ($userArticle as $item) {
             $cover = explode(',', $item['cover']);  // 封面图
@@ -871,7 +877,7 @@ class School
                 'integral' => $item['use_integral'],    // 用户购买消费积分
                 'distribute_level' => $item['distribute_level'][0] == 3 && count($item['distribute_level']) > 1 ? $item['distribute_level'][1] : $item['distribute_level'][0],
                 'publish_time' => format_time($item['publish_time']),
-                'status' => $item['status'],
+                'status' => $item['learn_status'],
                 'times' => $item['times'],
             ];
         }
