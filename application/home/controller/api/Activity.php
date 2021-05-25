@@ -258,8 +258,25 @@ class Activity extends Base
         if (!$activityId) {
             return json(['status' => 0, 'msg' => '请传入正确的活动ID']);
         }
+        $sort = I('get.sort', 'g.sort'); // 排序
+        $sort_asc = I('get.sort_asc', 'desc'); // 排序
+        switch ($sort) {
+            case 'sales_sum':
+                // 销量
+                $sort = 'g.sales_sum';
+                break;
+            case 'shop_price':
+                // 价格
+                $sort = 'g.shop_price - g.exchange_integral';
+                break;
+            case 'goods_id':
+                // 新品
+                $sort = 'g.is_new';
+                break;
+        }
+        $sortArr = [$sort => $sort_asc];
         $activityLogic = new ActivityLogic();
-        $res = $activityLogic->getCateActGoodsList($activityId);
+        $res = $activityLogic->getCateActGoodsList($activityId, $sortArr);
         if (empty($res)) {
             return json(['status' => 0, 'msg' => '活动已取消']);
         }
