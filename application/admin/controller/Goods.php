@@ -802,6 +802,7 @@ class Goods extends Base
 
         //ajax提交验证
         if ((1 == I('is_ajax')) && IS_POST) {
+            $goodsInfo = M('goods')->where(['goods_id' => $goods_id])->field('is_abroad, is_supply, video')->find();
             // 数据验证
             $is_distribut = input('is_distribut');
             $virtual_indate = input('post.virtual_indate'); //虚拟商品有效期
@@ -820,7 +821,6 @@ class Goods extends Base
                 $this->ajaxReturn($return_arr);
             }
             if ($data['is_agent'] == 1) {
-                $goodsInfo = M('goods')->where(['goods_id' => $goods_id])->field('is_abroad, is_supply')->find();
                 if ($goodsInfo['is_abroad'] == 1) {
                     $this->ajaxReturn(['status' => -1, 'msg' => '韩国购商品不能设为代理商商品']);
                 }
@@ -842,6 +842,17 @@ class Goods extends Base
                 $data['commission'] = tpCache('distribut.default_rate');
             } elseif (0 == $data['is_commission']) {
                 $data['commission'] = 0;
+            }
+
+            if (!empty($data['video_path'])) {
+                if ($goodsInfo['video'] != $data['video_path']) {
+                    // 处理视频封面图
+                    $data['video'] = $data['video_path'];
+                    $videoCover = getVideoCoverImages($data['video'], 'upload/goods/video_cover/temp/');
+                    $data['video_cover'] = $videoCover['path'];
+                    $data['video_axis'] = $videoCover['axis'];
+                    unset($data['video_path']);
+                }
             }
 
             $goods_item = I('item/a');

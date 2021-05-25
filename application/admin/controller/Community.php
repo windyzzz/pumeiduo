@@ -598,7 +598,7 @@ class Community extends Base
                                 $this->ajaxReturn(['status' => 0, 'msg' => '请上传视频']);
                             }
                             if (strstr($postData['video'], 'http')) {
-                                // 原本的图片
+                                // 原本的视频
                                 $postData['video'] = substr($postData['video'], strrpos($postData['video'], 'video'));
                                 continue;
                             } else {
