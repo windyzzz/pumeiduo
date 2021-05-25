@@ -123,11 +123,44 @@
             </td>
             <td align="center" axis="col0">
                 <div style="text-align: center; width: 100px;">
+                    <if condition='$list[is_on_sale2] eq 1'>
+                        <span class="yes" onClick="changeTableVal('goods','goods_id','{$list.goods_id}','is_on_sale2',this)"><i class="fa fa-check-circle"></i>是</span>
+                        <else/>
+                        <span class="no" onClick="changeTableVal('goods','goods_id','{$list.goods_id}','is_on_sale2',this)"><i class="fa fa-ban"></i>否</span>
+                    </if>
+                </div>
+            </td>
+            <td align="center" axis="col0">
+                <div style="text-align: center; width: 100px;">
                     <if condition='$list[applet_on_sale] eq 1'>
                         <span class="yes" onClick="appletOnSale(this, '{$list.goods_id}')"><i class="fa fa-check-circle"></i>是</span>
                         <else/>
                         <span class="no" onClick="appletOnSale(this, '{$list.goods_id}')"><i class="fa fa-ban"></i>否</span>
                     </if>
+                </div>
+            </td>
+            <td align="center" axis="col0">
+                <div style="text-align: center; width: 200px;">
+                    <if condition='$list[is_free_shipping] eq 1'>
+                        <span class="yes" onClick="freeShipping(this, '{$list.goods_id}')"><i class="fa fa-check-circle"></i>是</span>
+                        <else/>
+                        <span class="no" onClick="freeShipping(this, '{$list.goods_id}')"><i class="fa fa-ban"></i>否</span>
+                    </if>
+                    <div class="freight_template" style="<if condition='$list[is_free_shipping] == 1'>display: none;</if>">
+                        <span>运费模板</span>
+                        <select name="template_id">
+                            <option value="0">请选择运费模板</option>
+                            <volist name="freight_template" id="template">
+                                <option value="{$template.template_id}"
+                                <if condition="$template['template_id'] eq $list['template_id'] ">
+                                    selected="selected"
+                                </if>
+                                >{$template.template_name}</option>
+                            </volist>
+                        </select>
+                        <input type="hidden" name="goods_id" value="{$list.goods_id}">
+                        <empty name="freight_template"><span style="color: red;">没有可选的运费模板，请前去<a href="{:U('Freight/index')}" target="_blank">添加</a></span></empty>
+                    </div>
                 </div>
             </td>
             <td align="center" axis="col0">
@@ -224,4 +257,79 @@
             }
         });
     }
+
+    /**
+     * 免运费处理
+     * @param obj
+     * @param goods_id
+     */
+    function freeShipping(obj, goods_id) {
+        var value = 0;
+        if ($(obj).hasClass('no')) {
+            $(obj).removeClass('no').addClass('yes');
+            $(obj).html("<i class='fa fa-check-circle'></i>是");
+            value = 1;
+        } else if ($(obj).hasClass('yes')) {
+            $(obj).removeClass('yes').addClass('no');
+            $(obj).html("<i class='fa fa-ban'></i>否");
+            value = 0;
+        }
+        $.ajax({
+            type: 'POST',
+            url: "{:U('Admin/Goods/freeShipping')}",
+            data: {goods_id: goods_id, is_free_shipping : value},
+            dataType: 'json',
+            success: function (data) {
+                if (data.status === 2) {
+                    var div = '<span>运费模板</span>';
+                    div += data.res;
+                    $(obj).next().html(div);
+                    // 重新绑定事件
+                    $('select[name="template_id"]').live('change', function() {
+                        changeFreightTemplate(this, $(this).next().val());
+                    })
+                }
+            }
+        });
+        if (value === 0) {
+            $(obj).next().css('display', 'block');
+        } else {
+            $(obj).next().css('display', 'none');
+        }
+    }
+
+    /**
+     * 选择运费模板
+     */
+    $('select[name="template_id"]').change(function () {
+        changeFreightTemplate(this, $(this).next().val());
+    });
+
+    /**
+     * 运费模板选择处理
+     * @param obj
+     * @param goods_id
+     */
+    function changeFreightTemplate(obj, goods_id) {
+        $.ajax({
+            type: 'POST',
+            url: "{:U('Admin/Goods/changeFreightTemplate')}",
+            data: {goods_id: goods_id, template_id : obj.value},
+            dataType: 'json',
+            success: function (data) {
+                if (data.status === 1) {
+                    layer.msg(data.msg, {icon: 1});
+                } else {
+                    layer.msg(data.msg, {icon: 2});
+                }
+            }
+        });
+    }
 </script>
+<style>
+    .freight_template {
+        font-size: 14px;
+        display: inline-block;
+        padding: 0 10px;
+    }
+</style>
