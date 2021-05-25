@@ -206,16 +206,33 @@
                 <div class="fbutton">
                     <a href="javascript:exportReport()">
                         <div class="add" title="选定行数据导出excel文件，如果不选中行，将导出列表所有数据，如果导出失败，请筛选商品类型做导出">
-                            <span><i class="fa fa-plus"></i>导出数据（显示缩略图）</span>
+                            <span><i class="fa fa-file"></i>导出数据（显示缩略图）</span>
                         </div>
                     </a>
                 </div>
                 <div class="fbutton">
                     <a href="javascript:exportReport2()">
                         <div class="add" title="选定行数据导出excel文件，如果不选中行，将导出列表所有数据，如果导出失败，请筛选商品类型做导出">
-                            <span><i class="fa fa-plus"></i>导出数据（不显示缩略图）</span>
+                            <span><i class="fa fa-file"></i>导出数据（不显示缩略图）</span>
                         </div>
                     </a>
+                </div>
+                <div class="fbutton">
+                    <a href="/public/upload/goods/excel/商品信息导入修改模板.xls">
+                        <div class="add" title="">
+                            <span><i class="fa fa-download"></i>导出执行模板</span>
+                        </div>
+                    </a>
+                </div>
+                <div class="fbutton">
+                    <a href="javascript:uploadEditGoods()">
+                        <div class="add" title="">
+                            <span><i class="fa fa-upload"></i>上传并执行编辑商品信息文件(csv,xls,xlsx)</span>
+                        </div>
+                    </a>
+                    <form action="{:U('Admin/Goods/uploadEditGoods')}" method="post" enctype="multipart/form-data" id="upload-form">
+                        <input type="file" class="btn" name="goodsFile">
+                    </form>
                 </div>
             </div>
             <div style="clear:both"></div>
@@ -295,9 +312,10 @@
         $('#search-form').submit();
     }
 
-    function editGoodsFile() {
+    function uploadEditGoods() {
         $('#upload-form').submit();
     }
+
 
     // 点击排序
     function sort(field) {
