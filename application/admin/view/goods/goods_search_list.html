@@ -1,0 +1,124 @@
+<include file="public/layout" />
+<script type="text/javascript" src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
+<body style="background-color: rgb(255, 255, 255); overflow: auto; cursor: default; -moz-user-select: inherit;">
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+	<div class="fixed-bar">
+		<div class="item-title">
+			<div class="subject">
+				<h3>商品搜索词</h3>
+			</div>
+		</div>
+	</div>
+	<!-- 操作说明 -->
+	<div id="explanation" class="explanation" style="color: rgb(44, 188, 163); background-color: rgb(237, 251, 248); width: 99%; height: 100%;">
+		<div id="checkZoom" class="title"><i class="fa fa-lightbulb-o"></i>
+			<h4 title="提示相关设置操作时应注意的要点">操作提示</h4>
+			<span title="收起提示" id="explanationZoom" style="display: block;"></span>
+		</div>
+		<ul>
+			<li>商品搜索词列表</li>
+		</ul>
+	</div>
+	<div class="flexigrid">
+		<div class="mDiv">
+			<div class="ftitle">
+				<h3>商品搜索词列表</h3>
+				<h5>(共{$page->totalRows}条记录)</h5>
+			</div>
+			<div title="刷新数据" class="pReload"><i class="fa fa-refresh"></i></div>
+			<form id="search-form" class="navbar-form form-inline" action="{:U('Admin/GoodsSearch/index')}" method="get">
+				<div class="sDiv">
+					<div class="sDiv2">
+						<div class="sDiv2">
+							<input type="text" size="30" id="search_time_begin" name="search_time_begin" value="{$search_time_begin}"
+								   class="qsbox" placeholder="搜索时间开始" style="text-align: center;">
+						</div>
+						<div class="sDiv2">
+							<input type="text" size="30" id="search_time_end" name="search_time_end" value="{$search_time_end}"
+								   class="qsbox" placeholder="搜索时间结束" style="text-align: center;">
+						</div>
+						<input type="button" onClick="getList()" class="btn" value="搜索">
+					</div>
+				</div>
+			</form>
+		</div>
+		<div class="hDiv">
+			<div class="hDivBox">
+				<table cellspacing="0" cellpadding="0">
+					<thead>
+					<tr>
+						<th class="sign" axis="col0">
+							<div style="width: 24px;"><i class="ico-check"></i></div>
+						</th>
+						<th align="left" abbr="ac_id" axis="col4" class="">
+							<div style="text-align: center; width: 290px;" class="">关键词</div>
+						</th>
+						<th align="center" abbr="article_time" axis="col6" class="">
+							<div style="text-align: center; width: 150px;" class="">搜索次数</div>
+						</th>
+						<th align="left" axis="col1" class="handle">
+							<div style="text-align: center; width: 290px;">操作</div>
+						</th>
+						<th style="width:100%" axis="col7">
+							<div></div>
+						</th>
+					</tr>
+					</thead>
+				</table>
+			</div>
+		</div>
+		<div class="bDiv" style="height: auto;">
+			<div id="flexigrid" cellpadding="0" cellspacing="0" border="0">
+				<table>
+					<tbody>
+					<volist name="list" id="team">
+						<tr>
+							<td class="sign">
+								<div style="width: 24px;"><i class="ico-check"></i></div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 290px;">{$team.keyword}</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 150px;">{$team.search_num}</div>
+							</td>
+							<td align="left" class="handle">
+								<div style="text-align: center;">
+									<a class="btn blue" href="{:U('GoodsSearch/log',array('id'=>$team['id']))}"><i class="fa fa-pencil-square-o"></i>详情</a>
+								</div>
+							</td>
+							<td align="" class="" style="width: 100%;">
+								<div>&nbsp;</div>
+							</td>
+						</tr>
+					</volist>
+					</tbody>
+				</table>
+			</div>
+			<div class="iDiv" style="display: none;"></div>
+		</div>
+		<!--分页位置-->
+		{$page->show()}
+	</div>
+</div>
+<script>
+	$(document).ready(function () {
+		$('#search_time_begin').layDate();
+		$('#search_time_end').layDate();
+	})
+
+	// 点击刷新数据
+	$('.fa-refresh').click(function () {
+		$('#search_time_begin').val('');
+		$('#search_time_end').val('');
+		$('#search-form').submit();
+	});
+
+	function getList() {
+		$('#search-form').submit();
+	}
+</script>
+</body>
+</html>

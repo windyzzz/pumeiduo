@@ -17,7 +17,7 @@ use app\common\logic\FreightLogic;
 use app\common\logic\GoodsLogic;
 use app\common\logic\GoodsPromFactory;
 use app\common\logic\OssLogic;
-use app\common\logic\SearchWordLogic;
+use app\common\logic\GoodsSearchLogic;
 use app\common\logic\Pay as PayLogic;
 use app\common\logic\TaskLogic;
 use app\common\logic\UsersLogic;
@@ -1818,8 +1818,8 @@ class Goods extends Base
      */
     public function goodsListNew()
     {
-        $sort = I('get.sort', 'sort'); // 排序
-        $sort_asc = I('get.sort_asc', 'desc'); // 排序
+        $sort = I('get.sort', 'sort');          // 排序
+        $sort_asc = I('get.sort_asc', 'desc');  // 排序
         switch ($sort) {
             case 'sales_sum':
                 // 销量
@@ -1835,60 +1835,29 @@ class Goods extends Base
                 break;
         }
         $sortArr = [$sort => $sort_asc];
-        $id = I('get.id/d', 0); // 当前分类id
-        $couponId = I('get.coupon_id', 0); // 优惠券ID
-        $search = urldecode(trim(I('search', ''))); // 关键字搜索
-        if (!empty($search)) {
-            $SearchWordLogic = new SearchWordLogic();
-            $where = $SearchWordLogic->getSearchWordWhere($search);
+        $id = I('get.id/d', 0);                         // 当前分类id
+        $couponId = I('get.coupon_id', 0);              // 优惠券ID
+        $search = urldecode(trim(I('search', '')));     // 关键字搜索
+        if ($couponId != 0) {
+            $filter_goods_id = Db::name('goods_coupon')->where(['coupon_id' => $couponId])->getField('goods_id', true);
+        } else {
+            // 筛选
             $where['is_on_sale'] = 1;
             if ($this->isApplet) {
                 $where['applet_on_sale'] = 1;
             } else {
                 $where['is_agent'] = 0;
             }
-            // 搜索词被搜索数量+1
-            Db::name('search_word')->where('keywords', $search)->setInc('search_num');
-            // 搜索的商品数量
-            $goodsHaveSearchWord = Db::name('goods')->where($where)->count();
-            if ($goodsHaveSearchWord) {
-                $SearchWordIsHave = Db::name('search_word')->where('keywords', $search)->find();
-                if ($SearchWordIsHave) {
-                    Db::name('search_word')->where('id', $SearchWordIsHave['id'])->update(['goods_num' => $goodsHaveSearchWord]);
-                } else {
-                    $SearchWordData = [
-                        'keywords' => $search,
-                        'pinyin_full' => $SearchWordLogic->getPinyinFull($search),
-                        'pinyin_simple' => $SearchWordLogic->getPinyinSimple($search),
-                        'search_num' => 1,
-                        'goods_num' => $goodsHaveSearchWord,
-                    ];
-                    Db::name('search_word')->insert($SearchWordData);
-                }
-            }
             if ($id) {
                 $cat_id_arr = getCatGrandson($id);
                 $where['cat_id|extend_cat_id'] = ['in', $cat_id_arr];
             }
-            $search_goods = M('goods')->where($where)->getField('goods_id, cat_id');
-            $filter_goods_id = array_keys($search_goods);
-        } else {
-            // 筛选
-            $goods_where = ['is_on_sale' => 1];
-            if ($id) {
-                $cat_id_arr = getCatGrandson($id);
-                $goods_where['cat_id|extend_cat_id'] = ['in', $cat_id_arr];
+            if (!empty($search)) {
+                $where['goods_name|keywords'] = ['like', '%' . $search . '%'];
+                $goodsSearchLogic = new GoodsSearchLogic();
+                $goodsSearchLogic->searchLog($search, $this->user_id);
             }
-            if ($this->isApplet) {
-                $goods_where['applet_on_sale'] = 1;
-            } else {
-                $goods_where['is_agent'] = 0;
-            }
-            if ($couponId != 0) {
-                $filter_goods_id = Db::name('goods_coupon')->where(['coupon_id' => $couponId])->getField('goods_id', true);
-            } else {
-                $filter_goods_id = Db::name('goods')->where($goods_where)->getField('goods_id', true);
-            }
+            $filter_goods_id = M('goods')->where($where)->getField('goods_id', true);
         }
         // 数据
         $count = count($filter_goods_id);
@@ -2646,33 +2615,34 @@ class Goods extends Base
 //        $brand_id && ($filter_param['brand_id'] = $brand_id); //加入筛选条件中
 //        $price && ($filter_param['price'] = $price); //加入筛选条件中
         $q && ($_GET['q'] = $filter_param['q'] = $q); //加入筛选条件中
-        $SearchWordLogic = new SearchWordLogic();
-        $where = $SearchWordLogic->getSearchWordWhere($q);
+        $where['goods_name|keywords'] = ['like', '%' . $q . '%'];
         $where['is_on_sale'] = 1;
         if (!$this->isApp) {
             $where['is_abroad'] = 0;
             $where['is_supply'] = 0;
         }
+        $goodsSearchLogic = new GoodsSearchLogic();
+        $goodsSearchLogic->searchLog($q, $this->user_id);
         // $where['exchange_integral'] = 0;//不检索积分商品
-        // 搜索词被搜索数量+1
-        Db::name('search_word')->where('keywords', $q)->setInc('search_num');
-        // 搜索的商品数量
-        $goodsHaveSearchWord = Db::name('goods')->where($where)->count();
-        if ($goodsHaveSearchWord) {
-            $SearchWordIsHave = Db::name('search_word')->where('keywords', $q)->find();
-            if ($SearchWordIsHave) {
-                Db::name('search_word')->where('id', $SearchWordIsHave['id'])->update(['goods_num' => $goodsHaveSearchWord]);
-            } else {
-                $SearchWordData = [
-                    'keywords' => $q,
-                    'pinyin_full' => $SearchWordLogic->getPinyinFull($q),
-                    'pinyin_simple' => $SearchWordLogic->getPinyinSimple($q),
-                    'search_num' => 1,
-                    'goods_num' => $goodsHaveSearchWord,
-                ];
-                Db::name('search_word')->insert($SearchWordData);
-            }
-        }
+//        // 搜索词被搜索数量+1
+//        Db::name('search_word')->where('keywords', $q)->setInc('search_num');
+//        // 搜索的商品数量
+//        $goodsHaveSearchWord = Db::name('goods')->where($where)->count();
+//        if ($goodsHaveSearchWord) {
+//            $SearchWordIsHave = Db::name('search_word')->where('keywords', $q)->find();
+//            if ($SearchWordIsHave) {
+//                Db::name('search_word')->where('id', $SearchWordIsHave['id'])->update(['goods_num' => $goodsHaveSearchWord]);
+//            } else {
+//                $SearchWordData = [
+//                    'keywords' => $q,
+//                    'pinyin_full' => $SearchWordLogic->getPinyinFull($q),
+//                    'pinyin_simple' => $SearchWordLogic->getPinyinSimple($q),
+//                    'search_num' => 1,
+//                    'goods_num' => $goodsHaveSearchWord,
+//                ];
+//                Db::name('search_word')->insert($SearchWordData);
+//            }
+//        }
         if ($id) {
             $cat_id_arr = getCatGrandson($id);
             $where['cat_id'] = ['in', implode(',', $cat_id_arr)];
@@ -2734,9 +2704,8 @@ class Goods extends Base
         }
         $keyword = explode(' ', $keyword);
         $searchList = [];
-        $searchWordLogic = new SearchWordLogic();
         foreach ($keyword as $key) {
-            $where = $searchWordLogic->getSearchWordWhere($key, 3);
+            $where['goods_name|keywords'] = ['like', $key . '%'];
             $where['is_on_sale'] = 1;
             $searchGoods = M('goods')->where($where)->getField('goods_id, goods_name', true);
             foreach ($searchGoods as $goodsId => $goodsName) {

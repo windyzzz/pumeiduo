@@ -99,6 +99,7 @@ return [
             ['name' => '商品属性', 'act' => 'goodsAttributeList', 'op' => 'Goods'],
             ['name' => '评论列表', 'act' => 'index', 'op' => 'Comment'],
             ['name' => '搜索热词', 'act' => 'index', 'op' => 'KeyWord'],
+            ['name' => '商品搜索记录', 'act' => 'index', 'op' => 'GoodsSearch'],
             // array('name' => '商品咨询', 'act'=>'ask_list', 'op'=>'Comment'),
         ]],
         ['name' => '订单', 'child' => [
