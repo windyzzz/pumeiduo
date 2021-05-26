@@ -2369,7 +2369,7 @@ function create_qrcode($type, $user_id, $param = [], $logo = '')
             return false;
     }
     if (file_exists($filename)) {
-        return false;
+        return $filename;
     }
     if (!is_dir($dir)) {
         mkdir($dir, 0755, true);
