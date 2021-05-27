@@ -750,6 +750,10 @@ class Goods extends Base
 
         $catList = D('goods_category')->select();
         $catList = convert_arr_key($catList, 'id');
+
+        $freight_template = Db::name('freight_template')->where('')->select();
+
+        $this->assign('freight_template', $freight_template);
         $this->assign('catList', $catList);
         $this->assign('goodsList', $goodsList);
         $this->assign('page', $show); // 赋值分页输出
@@ -1836,5 +1840,49 @@ class Goods extends Base
         } else {
             $this->error($goodsFile->getError(), U('Admin/Goods/goodsList'));
         }
+    }
+
+    /**
+     * 免运费处理
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     */
+    public function freeShipping()
+    {
+        $goodsId = I('goods_id');
+        $isFreeShipping = I('is_free_shipping', 0);
+        M('goods')->where(['goods_id' => $goodsId])->update(['is_free_shipping' => $isFreeShipping]);
+        if ($isFreeShipping == 0) {
+            $freight_template = Db::name('freight_template')->where('')->select();
+            if (!empty($freight_template))
+                M('goods')->where(['goods_id' => $goodsId])->update(['template_id' => $freight_template[0]['template_id']]);
+            $select = '<select name="template_id"><option value="0">请选择运费模板</option>';
+            foreach ($freight_template as $k => $item) {
+                $select .= '<option value="' . $item['template_id'] . '"';
+                if ($k == 0) {
+                    $select .= ' selected="selected"';
+                }
+                $select .= '>' . $item['template_name'] . '</option>';
+            }
+            $select .= '</select><input type="hidden" value="' . $goodsId . '">';
+            $this->ajaxReturn(['status' => 2, 'msg' => '处理成功', 'res' => $select]);
+        } else {
+            $this->ajaxReturn(['status' => 1, 'msg' => '处理成功']);
+        }
+    }
+
+    /**
+     * 更改运费模板
+     */
+    public function changeFreightTemplate()
+    {
+        $goodsId = I('goods_id');
+        $templateId = I('template_id', 0);
+        if ($templateId == 0 && M('goods')->where(['goods_id' => $goodsId])->value('is_free_shipping') == 0) {
+            $this->ajaxReturn(['status' => 0, 'msg' => '请选择运费模板']);
+        }
+        M('goods')->where(['goods_id' => $goodsId])->update(['template_id' => $templateId]);
+        $this->ajaxReturn(['status' => 1, 'msg' => '修改运费模板成功']);
     }
 }
