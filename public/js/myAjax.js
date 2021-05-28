@@ -45,39 +45,36 @@ function del_fun(del_url)
 {
     if(confirm("确定要删除吗?"))
         location.href = del_url;
-}  
+}
 
 
 // 修改指定表的指定字段值
-function changeTableVal(table,id_name,id_value,field,obj)
-{
-		var src = "";
-		 if($(obj).attr('src').indexOf("cancel.png") > 0 )
-		 {          
-				src = '/public/images/yes.png';
-				var value = 1;
-				
-		 }else{                    
-				src = '/public/images/cancel.png';
-				var value = 0;
-		 }                                                 
-		$.ajax({
-				url:"/index.php?m=Admin&c=Index&a=changeTableVal&table="+table+"&id_name="+id_name+"&id_value="+id_value+"&field="+field+'&value='+value,			
-				success: function(data){									
-					$(obj).attr('src',src);           
-				}
-		});		
+function changeTableVal(table, id_name, id_value, field, obj) {
+    var src = "";
+    var value = "";
+    if ($(obj).attr('src').indexOf("cancel.png") > 0) {
+        src = '/public/images/yes.png';
+        value = 1;
+    } else {
+        src = '/public/images/cancel.png';
+        value = 0;
+    }
+    $.ajax({
+        url: "/index.php?m=Admin&c=Index&a=changeTableVal&table=" + table + "&id_name=" + id_name + "&id_value=" + id_value + "&field=" + field + '&value=' + value,
+        success: function (data) {
+            $(obj).attr('src', src);
+        }
+    });
 }
 
 // 修改指定表的排序字段
 function updateSort(table,id_name,id_value,field,obj)
-{		       
+{
  		var value = $(obj).val();
 		$.ajax({
-				url:"/index.php?m=Admin&c=Index&a=changeTableVal&table="+table+"&id_name="+id_name+"&id_value="+id_value+"&field="+field+'&value='+value,			
-				success: function(data){									
-					layer.msg('更新成功', {icon: 1});   
+				url:"/index.php?m=Admin&c=Index&a=changeTableVal&table="+table+"&id_name="+id_name+"&id_value="+id_value+"&field="+field+'&value='+value,
+				success: function(data){
+					layer.msg('更新成功', {icon: 1});
 				}
-		});		
+		});
 }
- 

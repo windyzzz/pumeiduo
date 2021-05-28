@@ -16,7 +16,10 @@ use app\admin\logic\PromotionLogic;
 use app\admin\model\FlashSale;
 use app\admin\model\Goods;
 use app\admin\model\GroupBuy;
+use app\admin\model\PromQrcode;
+use app\admin\model\PromQrcodeLog;
 use app\admin\validate\Gift as Giftvalidate;
+use app\common\logic\OssLogic;
 use app\common\model\OrderProm as OrderPromModel;
 use app\common\model\OrderPromGoods as OrderPromGoodsModel;
 use app\common\model\PromGoods;
@@ -413,7 +416,7 @@ class Promotion extends Base
                 $goods = M('goods')->where(['goods_id' => $dfd[0]])->find();
                 if ($goods['is_agent'] == 1 || $goods['applet_on_sale'] == 1 || $goods['applet_on_sale2'] == 1) {
                     Db::rollback();
-                    $this->ajaxReturn(['status' => 1, 'msg' => '不能设置小程序上架的商品', 'result' => '']);
+                    $this->ajaxReturn(['status' => 0, 'msg' => '不能设置小程序上架的商品', 'result' => '']);
                 }
                 if (isset($goodsVal['item_id']) && is_array($goodsVal['item_id'])) {
                     foreach ($goodsVal['item_id'] as $itemId) {
@@ -603,7 +606,7 @@ class Promotion extends Base
         $data['end_time'] = strtotime($data['end_time']);
         $goods = M('goods')->where('goods_id', $data['goods_id'])->find();
         if ($goods['is_agent'] == 1 || $goods['applet_on_sale'] == 1 || $goods['applet_on_sale2'] == 1) {
-            $this->ajaxReturn(['status' => 1, 'msg' => '不能设置小程序上架的商品', 'result' => '']);
+            $this->ajaxReturn(['status' => 0, 'msg' => '不能设置小程序上架的商品', 'result' => '']);
         }
         if ($data['can_integral'] == 1) {
             // 验证秒杀积分
@@ -828,10 +831,10 @@ class Promotion extends Base
                         // 查看商品是否已设置活动
                         $goods = M('goods')->where(['goods_id' => $data['goods_id'], 'prom_type' => 0, 'prom_id' => 0])->find();
                         if (!$goods) {
-                            $this->ajaxReturn(['status' => 1, 'msg' => '该商品已设置了优惠活动', 'result' => '']);
+                            $this->ajaxReturn(['status' => 0, 'msg' => '该商品已设置了优惠活动', 'result' => '']);
                         }
                         if ($goods['is_agent'] == 1 || $goods['applet_on_sale'] == 1 || $goods['applet_on_sale2'] == 1) {
-                            $this->ajaxReturn(['status' => 1, 'msg' => '不能设置小程序上架的商品', 'result' => '']);
+                            $this->ajaxReturn(['status' => 0, 'msg' => '不能设置小程序上架的商品', 'result' => '']);
                         }
                         $flashSaleInsertId = Db::name('flash_sale')->insertGetId($data);
                         if ($data['item_id'] > 0) {
@@ -939,8 +942,9 @@ class Promotion extends Base
                     Db::name('goods')->where(['goods_id' => $spec_goods['goods_id']])->save(['prom_id' => 0, 'prom_type' => 0]);
                 }
             } else {
+                $goodsId = Db::name('flash_sale')->where(['id' => $id])->value('goods_id');
                 //没有商品规格
-                Db::name('goods')->where(['prom_type' => 1, 'prom_id' => $id])->save(['prom_id' => 0, 'prom_type' => 0]);
+                Db::name('goods')->where(['goods_id' => $goodsId])->save(['prom_id' => 0, 'prom_type' => 0]);
             }
             M('flash_sale')->where(['id' => $id])->delete();
             exit(json_encode(1));
@@ -1193,5 +1197,211 @@ class Promotion extends Base
         Db::name('goods')->where(['goods_id' => ['in', $goodsIds]])->save(['prom_id' => 0, 'prom_type' => 0]);
 
         $this->ajaxReturn(['status' => 1, 'msg' => '删除活动成功']);
+    }
+
+    /**
+     * 扫码优惠活动列表
+     * @return mixed
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     */
+    public function qrCodeList()
+    {
+        $count = M('prom_qrcode')->where('is_del', 0)->count();
+        $page = new Page($count, 10);
+        $promQrcode = new PromQrcode();
+        $promList = $promQrcode->where('is_del', 0)->order('start_time DESC')->limit($page->firstRow . ',' . $page->listRows)->select();
+        $ossLogic = new OssLogic();
+        foreach ($promList as &$prom) {
+            // 赠送内容
+            switch ($prom['reward_type']) {
+                case 1:
+                    $rewardContent = [];
+                    $couponList = M('coupon')->where(['id' => ['IN', $prom['reward_content']]])->field('id, name')->select();
+                    foreach ($couponList as $coupon) {
+                        $rewardContent[] = [
+                            'coupon_id' => $coupon['id'],
+                            'content' => 'ID:' . $coupon['id'] . ' ' . $coupon['name']
+                        ];
+                    }
+                    $prom['reward_content'] = $rewardContent;
+                    break;
+                case 2:
+                    break;
+            }
+            // 兑换码二维码
+            $qrcode = explode(',', $prom['qrcode']);
+            $prom['qrcode'] = $ossLogic::url(substr($qrcode[0], strrpos($qrcode[0], 'img:') + 4));
+        }
+        $this->assign('page', $page);
+        $this->assign('prom_list', $promList);
+        return $this->fetch('prom_qrcode_list');
+    }
+
+    /**
+     * 扫码优惠活动详情
+     * @return mixed
+     */
+    public function qrCodeInfo()
+    {
+        $promId = I('id', '');
+        if ($promId) {
+            $prom = M('prom_qrcode')->where(['id' => $promId])->find();
+            // 赠送内容
+            switch ($prom['reward_type']) {
+                case 1:
+                    $prom['reward_coupon'] = explode(',', $prom['reward_content']);
+                    break;
+                case 2:
+                    $prom['reward_electronic'] = $prom['reward_content'];
+                    break;
+            }
+            // 兑换码二维码
+            $qrcode = explode(',', $prom['qrcode']);
+            $prom['qrcode'] = (new OssLogic())::url(substr($qrcode[0], strrpos($qrcode[0], 'img:') + 4));
+            $prom['act'] = 'edit';
+        } else {
+            $prom['reward_type'] = 1;
+            $prom['start_time'] = NOW_TIME;
+            $prom['end_time'] = NOW_TIME + 604800;
+            $prom['act'] = 'add';
+        }
+        $this->assign('prom', $prom);
+        return $this->fetch('prom_qrcode_info');
+    }
+
+    /**
+     * 扫码优惠活动处理
+     */
+    public function qrCodeAct()
+    {
+        $act = I('act');
+        $promId = I('id', '');
+        switch ($act) {
+            case 'add':
+                $param = I('post.');
+                $promData = [];
+                switch ($param['reward_type']) {
+                    case 1:
+                        if (!isset($param['reward_content']['coupon']) || empty($param['reward_content']['coupon'][0])) {
+                            $this->ajaxReturn(['status' => 0, 'msg' => '请填写优惠券ID']);
+                        }
+                        $promData['reward_content'] = implode(',', $param['reward_content']['coupon']);
+                        break;
+                    case 2:
+                        if (empty($param['reward_content']['electronic']) || $param['reward_content']['electronic'] < 0) {
+                            $this->ajaxReturn(['status' => 0, 'msg' => '请填写正确的电子币']);
+                        }
+                        $promData['reward_content'] = $param['reward_content']['electronic'];
+                        break;
+                }
+                // 生成兑换码
+                do {
+                    $code = 'PQ' . get_rand_str(8, 0, 2);  // 8位数字
+                    $check_exist = M('prom_qrcode')->where(['code' => $code])->value('id');
+                } while ($check_exist);
+                // 生成二维码
+                $promData['code'] = $code;
+                $qrPath = create_qrcode('prom_qrcode', 0, $promData);
+                if (!$qrPath) {
+                    $this->ajaxReturn(['status' => 0, 'msg' => '二维码生成失败']);
+                }
+                // 上传到oss服务器
+                $filePath = PUBLIC_PATH . substr($qrPath, strrpos($qrPath, 'public/') + 7);
+                $fileName = substr($qrPath, strrpos($qrPath, '/') + 1);
+                $object = 'image/' . date('Y/m/d/H/') . $fileName;
+                $ossLogic = new OssLogic();
+                $return_url = $ossLogic->uploadFile($filePath, $object);
+                if (!$return_url) {
+                    $this->ajaxReturn(['status' => 0, 'msg' => 'ERROR：' . $ossLogic->getError()]);
+                }
+                // 二维码信息
+                $imageInfo = getimagesize($filePath);
+                unlink($filePath);
+                $promData['qrcode'] = 'img:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ',type:' . substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1);
+                $promData['reward_type'] = $param['reward_type'];
+                $promData['start_time'] = strtotime($param['start_time']);
+                $promData['end_time'] = strtotime($param['end_time']);
+                $promData['add_time'] = NOW_TIME;
+                // 添加活动
+                M('prom_qrcode')->add($promData);
+                $this->ajaxReturn(['status' => 1, 'msg' => '添加成功']);
+                break;
+            case 'edit':
+                if (!$promId) {
+                    $this->ajaxReturn(['status' => 0, 'msg' => '缺少活动ID']);
+                }
+                $param = I('post.');
+                $promData = [];
+                switch ($param['reward_type']) {
+                    case 1:
+                        if (!isset($param['reward_content']['coupon']) || empty($param['reward_content']['coupon'][0])) {
+                            $this->ajaxReturn(['status' => 0, 'msg' => '请填写优惠券ID']);
+                        }
+                        $promData['reward_content'] = implode(',', $param['reward_content']['coupon']);
+                        break;
+                    case 2:
+                        if (empty($param['reward_content']['electronic']) || $param['reward_content']['electronic'] < 0) {
+                            $this->ajaxReturn(['status' => 0, 'msg' => '请填写正确的电子币']);
+                        }
+                        $promData['reward_content'] = $param['reward_content']['electronic'];
+                        break;
+                }
+                $promData['reward_type'] = $param['reward_type'];
+                $promData['start_time'] = strtotime($param['start_time']);
+                $promData['end_time'] = strtotime($param['end_time']);
+                $promData['is_open'] = 0;
+                // 更新活动
+                M('prom_qrcode')->where(['id' => $promId])->update($promData);
+                $this->ajaxReturn(['status' => 1, 'msg' => '编辑成功']);
+                break;
+            case 'del':
+                if (!$promId) {
+                    $this->error('缺少活动ID');
+                }
+                M('prom_qrcode')->where(['id' => $promId])->update(['is_del' => 1]);
+                $this->success('删除活动成功', U('Promotion/qrCodeList'));
+                break;
+        }
+    }
+
+    /**
+     * 扫码优惠活动领取记录
+     * @return mixed
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     */
+    public function qrCodeLog()
+    {
+        $promId = I('id', '');
+        $count = M('prom_qrcode_log')->where(['prom_id' => $promId])->count();
+        $page = new Page($count, 10);
+        $promQrcodeLog = new PromQrcodeLog();
+        $logList = $promQrcodeLog->alias('l')->join('users u', 'u.user_id = l.user_id')
+            ->where(['l.prom_id' => $promId])->field('l.*, u.nickname, u.user_name')
+            ->order('add_time DESC')->limit($page->firstRow . ',' . $page->listRows)->select();
+        foreach ($logList as &$log) {
+            // 赠送内容
+            switch ($log['reward_type']) {
+                case 1:
+                    $rewardContent = [];
+                    $couponList = M('coupon')->where(['id' => ['IN', $log['reward_content']]])->field('id, name')->select();
+                    foreach ($couponList as $coupon) {
+                        $rewardContent[] = [
+                            'coupon_id' => $coupon['id'],
+                            'content' => 'ID:' . $coupon['id'] . ' ' . $coupon['name']
+                        ];
+                    }
+                    $log['reward_content'] = $rewardContent;
+                    break;
+                case 2:
+                    break;
+            }
+        }
+        $this->assign('page', $page);
+        $this->assign('log_list', $logList);
+        return $this->fetch('prom_qrcode_log');
     }
 }

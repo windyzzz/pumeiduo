@@ -3,6 +3,7 @@
 namespace app\admin\controller;
 
 use app\admin\model\CommunityArticle;
+use app\common\logic\CouponLogic;
 use app\common\logic\MessageLogic;
 use app\common\logic\OssLogic;
 use app\common\logic\PushLogic;
@@ -29,9 +30,28 @@ class Community extends Base
             $param = I('post.');
             $keyword = $param['keyword'];
             unset($param['keyword']);
+            // 参数检验
+            if ($param['is_reward']['content'] == 1) {
+                if ($param['reward_type']['content'] == 0) {
+                    $this->error('请选择优惠奖励', U('Admin/Community/config'));
+                }
+            }
+            if (isset($param['reward_coupon']) && is_array($param['reward_coupon']['content'])) {
+                $param['reward_coupon']['content'] = implode(',', $param['reward_coupon']['content']);
+            }
             Db::startTrans();
             // 配置
             foreach ($param as $k => $v) {
+                if ($k == 'reward_type') {
+                    switch ($v['content']) {
+                        case 1:
+                            $v['name'] = '优惠券';
+                            break;
+                        case 2:
+                            $v['name'] = '电子币';
+                            break;
+                    }
+                }
                 $data = [
                     'type' => $k,
                     'name' => isset($v['name']) ? $v['name'] : '',
@@ -46,18 +66,20 @@ class Community extends Base
                 }
             }
             // 关键词
-            foreach ($keyword as $key) {
-                if ($key['id'] == 0) {
-                    if (M('community_article_keyword')->where(['name' => $key['name']])->value('id')) {
-                        continue;
+            if (!empty($keyword)) {
+                foreach ($keyword as $key) {
+                    if ($key['id'] == 0) {
+                        if (M('community_article_keyword')->where(['name' => $key['name']])->value('id')) {
+                            continue;
+                        } else {
+                            M('community_article_keyword')->add($key);
+                        }
                     } else {
-                        M('community_article_keyword')->add($key);
+                        if (empty($key['name'])) {
+                            continue;
+                        }
+                        M('community_article_keyword')->where(['id' => $key['id']])->update($key);
                     }
-                } else {
-                    if (empty($key['name'])) {
-                        continue;
-                    }
-                    M('community_article_keyword')->where(['id' => $key['id']])->update($key);
                 }
             }
             Db::commit();
@@ -70,7 +92,7 @@ class Community extends Base
             $config[$val['type']] = [
                 'name' => $val['name'],
                 'url' => $val['url'],
-                'content' => $val['content']
+                'content' => $val['type'] == 'reward_coupon' ? explode(',', $val['content']) : $val['content']
             ];
         }
         // 热门词
@@ -289,7 +311,7 @@ class Community extends Base
                         case 1:
                             $updata['publish_time'] = NOW_TIME;
                             $content = '审核通过啦！';
-                            if (!M('goods')->where(['goods_id' => $articleInfo['goods_id'], 'is_on_sale' => 1])->value('goods_id')) {
+                            if ($articleInfo['goods_id'] > 0 && !M('goods')->where(['goods_id' => $articleInfo['goods_id'], 'is_on_sale' => 1])->value('goods_id')) {
                                 $this->ajaxReturn(['status' => 0, 'msg' => '商品已下架，不能审核通过']);
                             }
                             break;
@@ -311,6 +333,59 @@ class Community extends Base
                     ];
                     M('community_article_verify_log')->add($logData);
                     if ($articleInfo['source'] == 1) {
+                        // 审核通过奖励
+                        $rewardStatus = 0;
+                        if ($status == 1) {
+                            $config = M('community_config')->where(['type' => 'is_reward'])->find();
+                            if ($config && $config['content'] == 1) {
+                                $rewardType = M('community_config')->where(['type' => 'reward_type'])->value('content');
+                                switch ($rewardType) {
+                                    case 1:
+                                        $couponIds = M('community_config')->where(['type' => 'reward_coupon'])->value('content');
+                                        if ($couponIds) {
+                                            $couponData = M('coupon')->where([
+                                                'id' => ['in', $couponIds],
+                                                'send_start_time' => ['elt', NOW_TIME],
+                                                'send_end_time' => ['egt', NOW_TIME],
+                                                'use_end_time' => ['egt', NOW_TIME],
+                                                'status' => 1,
+                                            ])->select();
+                                            // 组合数据
+                                            $couponIds = '';
+                                            $couponList = [];
+                                            $couponLogic = new CouponLogic();
+                                            foreach ($couponData as $k => $coupon) {
+                                                $couponIds .= $coupon['id'] . ',';
+                                                // 优惠券展示描述
+                                                $res = $couponLogic->couponTitleDesc($coupon);
+                                                if (empty($res)) {
+                                                    continue;
+                                                }
+                                                $couponList[] = [
+                                                    'coupon_id' => $coupon['id'],
+                                                    'use_type_desc' => $res['use_type_desc'],
+                                                    'money' => floatval($coupon['money']) . '',
+                                                    'title' => $coupon['name'],
+                                                    'use_start_time' => date('Y.m.d', $coupon['use_start_time']),
+                                                    'use_end_time' => date('Y.m.d', $coupon['use_end_time']),
+                                                ];
+                                            }
+                                            if (!empty($couponList)) {
+                                                $res = $couponLogic->receive(rtrim($couponIds, ','), $articleInfo['user_id'], true);
+                                                if ($res['status'] == 1) $rewardStatus = 1;
+                                            }
+                                        }
+                                        break;
+                                    case 2:
+                                        $electronic = M('community_config')->where(['type' => 'reward_electronic'])->value('content');
+                                        if ($electronic && $electronic > 0) {
+                                            $res = accountLog($articleInfo['user_id'], 0, 0, '社区文章审核通过奖励', 0, 0, '', $electronic, 25);
+                                            if ($res) $rewardStatus = 1;
+                                        }
+                                        break;
+                                }
+                            }
+                        }
                         // 消息通知
                         $messageLogic = new MessageLogic();
                         $messageLogic->addMessage(session('admin_id'), '社区文章审核结果', $content, 0, 0, 0, $articleInfo['user_id']);
@@ -323,13 +398,22 @@ class Community extends Base
                         $extraData = [
                             'type' => '14',
                             'value' => [
-                                'need_login' => 0,
+                                'need_login' => 1,
                                 'message_url' => '',
                                 'goods_id' => '',
                                 'item_id' => '',
                                 'cate_id' => '',
                                 'cate_name' => '',
-                                'article_status' => $status . ''
+                                'article_status' => $status . '',   // 文章审核状态
+                                'article_reward' => [
+                                    'is_open' => $rewardStatus,     // 审核通过奖励是否开启
+                                    'reward_type' => $rewardType ?? '0',   // 奖励类型
+                                    'coupon' => [
+                                        'count' => isset($couponList) ? count($couponList) : 0,
+                                        'list' => $couponList ?? []
+                                    ],
+                                    'electronic' => $electronic ?? '0'
+                                ]
                             ]
                         ];
                         $res = $pushLogic->push($contentData, $extraData, 0, [], [], $articleInfo['user_id'] . '');
@@ -514,7 +598,7 @@ class Community extends Base
                                 $this->ajaxReturn(['status' => 0, 'msg' => '请上传视频']);
                             }
                             if (strstr($postData['video'], 'http')) {
-                                // 原本的图片
+                                // 原本的视频
                                 $postData['video'] = substr($postData['video'], strrpos($postData['video'], 'video'));
                                 continue;
                             } else {

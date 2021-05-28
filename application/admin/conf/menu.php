@@ -99,6 +99,7 @@ return [
             ['name' => '商品属性', 'act' => 'goodsAttributeList', 'op' => 'Goods'],
             ['name' => '评论列表', 'act' => 'index', 'op' => 'Comment'],
             ['name' => '搜索热词', 'act' => 'index', 'op' => 'KeyWord'],
+            ['name' => '商品搜索记录', 'act' => 'index', 'op' => 'GoodsSearch'],
             // array('name' => '商品咨询', 'act'=>'ask_list', 'op'=>'Comment'),
         ]],
         ['name' => '订单', 'child' => [
@@ -123,6 +124,7 @@ return [
             ['name' => '满单赠品活动', 'act' => 'gift', 'op' => 'Promotion'],
             ['name' => '指定商品赠品活动', 'act' => 'gift2', 'op' => 'Promotion'],
             ['name' => '加价购', 'act' => 'index', 'op' => 'Extra'],
+            ['name' => '扫码优惠活动', 'act' => 'qrCodeList', 'op' => 'Promotion'],
             // array('name' => '预售管理','act'=>'pre_sell_list', 'op'=>'Promotion'),
             // array('name' => '拼团管理','act'=>'index', 'op'=>'Team'),
         ]],

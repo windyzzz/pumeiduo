@@ -49,7 +49,32 @@
         border-color: #398439 solid 1px;
     }
 
-    .btn {
+    /*.btn {*/
+        /*display: inline-block;*/
+        /*padding: 6px 12px;*/
+        /*margin-bottom: 0;*/
+        /*font-size: 14px;*/
+        /*font-weight: 400;*/
+        /*line-height: 1.42857143;*/
+        /*text-align: center;*/
+        /*white-space: nowrap;*/
+        /*vertical-align: middle;*/
+        /*-ms-touch-action: manipulation;*/
+        /*touch-action: manipulation;*/
+        /*cursor: pointer;*/
+        /*-webkit-user-select: none;*/
+        /*-moz-user-select: none;*/
+        /*-ms-user-select: none;*/
+        /*user-select: none;*/
+        /*background-image: none;*/
+        /*border: 1px solid transparent;*/
+        /*border-radius: 4px;*/
+    /*}*/
+
+    .btn-btn {
+        color: #fff;
+        background-color: red;
+        border-color: #2e6da4;
         display: inline-block;
         padding: 6px 12px;
         margin-bottom: 0;
@@ -58,6 +83,7 @@
         line-height: 1.42857143;
         text-align: center;
         white-space: nowrap;
+        text-decoration: none;
         vertical-align: middle;
         -ms-touch-action: manipulation;
         touch-action: manipulation;
@@ -813,7 +839,7 @@
         <!--通用信息-->
         <!--商品相册-->
 		<div class="ncap-form-default tab_div_2" style="display:none;">
-            <dl class="row" style="display: none;">
+            <dl class="row">
                 <input type="hidden" value="{$goodsInfo['video']}" name="video_path" id="video_input" />
                 <video style="" controls="controls" width="600" height="300" id="video_tag" src="{$video_url}"></video>
                 <div id="container">
@@ -821,8 +847,11 @@
                     <b style="font-size: 16px; display: none;" id="percent">上传进度:0%</b>
                 </div>
                 <dd class="opt">
-                    <p class="notic">上传视频大小不要超过30M</p>
+                    <p class="notic">上传视频大小不要超过100M</p>
                 </dd>
+                <div>
+                    <a href="javascript:del_video()" class='btn-btn'>删除视频</a>
+                </div>
             </dl>
             <dl class="row">
                 <div class="tab-pane" id="tab_goods_images">
@@ -1584,6 +1613,16 @@
                 break;
         }
     });
+
+    function del_video() {
+        layer.confirm('确认删除？', {
+            btn: ['确定', '取消'] //按钮
+        }, function (index) {
+            layer.close(index);
+            $('#video_input').val('');
+            $('#video_tag').attr('src', '');
+        });
+    }
 </script>
 
 <!-- oss直传  start-->
