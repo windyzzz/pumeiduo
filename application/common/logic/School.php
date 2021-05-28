@@ -248,8 +248,6 @@ class School
         if ($article['status'] != 1) {
             return ['status' => 0, 'msg' => '文章已失效'];
         }
-        // 点击量+1
-        M('school_article')->where(['id' => $article['id']])->setInc('click', 1);
         $user = M('users')->where(['user_id' => $user['user_id']])->find();
         // 等级权限
         if ($article['distribute_level'] != 0) {
@@ -329,7 +327,7 @@ class School
             // 课程学习数+1
             M('school_article')->where(['id' => $article['id']])->setInc('learn', 1);
         }
-        return ['status' => 1, 'msg' => 'ok'];
+        return ['status' => 1, 'msg' => 'ok', 'res' => M('school_article')->where(['id' => $article['id']])->find()];
     }
 
     /**
@@ -700,11 +698,14 @@ class School
         // 文章数据
         $articleInfo = M('school_article sa')->where($where)->find();
         if ($user) {
+            // 点击量+1
+            M('school_article')->where(['id' => $articleInfo['id']])->setInc('click', 1);
             // 查看阅览权限
             $res = $this->checkUserArticleLimit($articleInfo, $user, 1);
             if ($res['status'] != 1) {
                 return $res;
             }
+            $articleInfo = $res['res'];
         }
         Cache::set('school_article_content_' . $param['article_id'], $articleInfo['content'], 60);  // 文章内容
         $cover = explode(',', $articleInfo['cover']);  // 封面图
@@ -906,6 +907,8 @@ class School
             if ($articleInfo['credit'] > 0) {
                 accountLog($user['user_id'], 0, 0, '课程学习完毕奖励学分', 0, 0, '', 0, 23, true, 0, $articleInfo['credit']);
             }
+        } else {
+            $articleInfo['credit'] = '0.00';    // 学习完就不显示奖励
         }
         // 学习次数+1
         M('user_school_article')->where(['id' => $userSchoolArticle['id']])->setInc('times');
