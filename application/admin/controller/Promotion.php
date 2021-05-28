@@ -942,8 +942,9 @@ class Promotion extends Base
                     Db::name('goods')->where(['goods_id' => $spec_goods['goods_id']])->save(['prom_id' => 0, 'prom_type' => 0]);
                 }
             } else {
+                $goodsId = Db::name('flash_sale')->where(['id' => $id])->value('goods_id');
                 //没有商品规格
-                Db::name('goods')->where(['prom_type' => 1, 'prom_id' => $id])->save(['prom_id' => 0, 'prom_type' => 0]);
+                Db::name('goods')->where(['goods_id' => $goodsId])->save(['prom_id' => 0, 'prom_type' => 0]);
             }
             M('flash_sale')->where(['id' => $id])->delete();
             exit(json_encode(1));
