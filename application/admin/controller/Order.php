@@ -1202,7 +1202,7 @@ class Order extends Base
         $orderLogic = new OrderLogic();
         $return_goods['refund_money'] = $orderLogic->getRefundGoodsMoney($return_goods);
 
-        if ('weixinJsApi' == $order['pay_code'] || 'weixin' == $order['pay_code'] || 'alipay' == $order['pay_code'] || 'alipayMobile' == $order['pay_code'] || 'alipayApp' == $order['pay_code'] || 'weixinApp' == $order['pay_code']) {
+        if (in_array($order['pay_code'], ['weixinJsApi', 'weixin', 'alipay', 'alipayMobile', 'alipayApp', 'weixinApp', 'weixinApplet'])) {
             if ('weixinJsApi' == $order['pay_code']) {
                 include_once PLUGIN_PATH . 'payment/weixinJsApi/weixinJsApi.class.php';
                 $payment_obj = new \weixinJsApi();
