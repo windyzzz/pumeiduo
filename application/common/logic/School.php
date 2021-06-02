@@ -274,7 +274,7 @@ class School
             }
         }
         // 是否已购买课程
-        if (!M('user_school_article')->where(['user_id' => $user['user_id'], 'article_id' => $article['id']])->find()) {
+        if (!M('user_school_article')->where(['user_id' => $user['user_id'], 'article_id' => $article['id']])->value('id')) {
             $preArticleIds = M('school_article')->where([
                 'class_id' => $article['class_id'], 'sort' => ['>', $article['sort']],
                 'learn_type' => 1, 'status' => 1
@@ -327,7 +327,7 @@ class School
             // 课程学习数+1
             M('school_article')->where(['id' => $article['id']])->setInc('learn', 1);
         }
-        return ['status' => 1, 'msg' => 'ok'];
+        return ['status' => 1, 'msg' => 'ok', 'res' => M('school_article')->where(['id' => $article['id']])->find()];
     }
 
     /**
@@ -621,6 +621,7 @@ class School
                 'learn_type' => $item['learn_type'],
                 'learn' => $item['learn'],
                 'share' => $item['share'],
+                'click' => $item['click'],
                 'integral' => $item['integral'],
                 'distribute_level' => $item['distribute_level'][0] == 3 && count($item['distribute_level']) > 1 ? $item['distribute_level'][1] : $item['distribute_level'][0],
                 'publish_time' => format_time($item['publish_time']),
@@ -697,11 +698,14 @@ class School
         // 文章数据
         $articleInfo = M('school_article sa')->where($where)->find();
         if ($user) {
+            // 点击量+1
+            M('school_article')->where(['id' => $articleInfo['id']])->setInc('click', 1);
             // 查看阅览权限
             $res = $this->checkUserArticleLimit($articleInfo, $user, 1);
             if ($res['status'] != 1) {
                 return $res;
             }
+            $articleInfo = $res['res'];
         }
         Cache::set('school_article_content_' . $param['article_id'], $articleInfo['content'], 60);  // 文章内容
         $cover = explode(',', $articleInfo['cover']);  // 封面图
@@ -724,6 +728,7 @@ class School
             'learn_type' => $articleInfo['learn_type'],
             'learn' => $articleInfo['learn'],
             'share' => $articleInfo['share'],
+            'click' => $articleInfo['click'],
             'integral' => $articleInfo['integral'],
             'distribute_level' => $articleInfo['distribute_level'][0] == 3 && count($articleInfo['distribute_level']) > 1 ? $articleInfo['distribute_level'][1] : $articleInfo['distribute_level'][0],
             'show_goods' => $articleInfo['show_goods'] ? 1 : 0,
@@ -839,13 +844,19 @@ class School
         // 搜索条件
         $where = $this->userArticleWhere($param);
         $where['usa.user_id'] = $user['user_id'];
-        $where['usa.integral'] = ['>', 0];
+//        $where['usa.integral'] = ['>', 0];
+        // 学习课程id
+        $courseIds = M('school_article')->where([
+            'learn_type' => ['IN', [1, 2]],
+            'status' => 1,
+        ])->getField('id', true);
+        $where['usa.article_id'] = ['IN', $courseIds];
         // 数据数量
         $count = M('user_school_article usa')->join('school_article sa', 'sa.id = usa.article_id')->where($where)->count();
         // 查询数据
         $page = new Page($count, $limit);
         $userArticle = M('user_school_article usa')->join('school_article sa', 'sa.id = usa.article_id')->where($where)
-            ->limit($page->firstRow . ',' . $page->listRows)->field('sa.*, usa.integral as use_integral, usa.credit')->select();
+            ->limit($page->firstRow . ',' . $page->listRows)->field('sa.*, usa.integral as use_integral, usa.credit, usa.status learn_status, usa.times')->select();
         $list = [];
         foreach ($userArticle as $item) {
             $cover = explode(',', $item['cover']);  // 封面图
@@ -867,6 +878,8 @@ class School
                 'integral' => $item['use_integral'],    // 用户购买消费积分
                 'distribute_level' => $item['distribute_level'][0] == 3 && count($item['distribute_level']) > 1 ? $item['distribute_level'][1] : $item['distribute_level'][0],
                 'publish_time' => format_time($item['publish_time']),
+                'status' => $item['learn_status'],
+                'times' => $item['times'],
             ];
         }
         return ['total' => $count, 'list' => $list];
@@ -894,7 +907,11 @@ class School
             if ($articleInfo['credit'] > 0) {
                 accountLog($user['user_id'], 0, 0, '课程学习完毕奖励学分', 0, 0, '', 0, 23, true, 0, $articleInfo['credit']);
             }
+        } else {
+            $articleInfo['credit'] = '0.00';    // 学习完就不显示奖励
         }
+        // 学习次数+1
+        M('user_school_article')->where(['id' => $userSchoolArticle['id']])->setInc('times');
         return ['credit' => $articleInfo['credit']];
     }
 

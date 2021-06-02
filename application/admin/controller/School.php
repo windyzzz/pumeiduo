@@ -9,7 +9,6 @@ use app\admin\model\SchoolArticleTempResource;
 use app\admin\model\SchoolExchange;
 use app\admin\model\SchoolStandard;
 use app\common\logic\OssLogic;
-use app\common\logic\UsersLogic;
 use think\Db;
 use think\Page;
 
@@ -312,6 +311,35 @@ class School extends Base
     }
 
     /**
+     * 用户学习课程文章列表
+     * @return mixed
+     */
+    public function userCourseArticleList()
+    {
+        $userId = I('user_id');
+        // 学习课程id
+        $courseIds = M('school_article')->where([
+            'learn_type' => ['IN', [1, 2]],
+            'status' => 1,
+        ])->getField('id', true);
+        $where = [
+            'usa.user_id' => $userId,
+            'usa.article_id' => ['IN', $courseIds],
+            'usa.status' => 1
+        ];
+        $count = M('user_school_article usa')->where($where)->join('school_article sa', 'sa.id = usa.article_id')->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')->count();
+        $page = new Page($count, 10);
+        $list = M('user_school_article usa')->where($where)->join('school_article sa', 'sa.id = usa.article_id')->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')
+            ->field('usa.user_id, usa.article_id, sa.title, sa.status, sa.publish_time, s.name module_name, sc.name class_name')
+            ->limit($page->firstRow . ',' . $page->listRows)
+            ->order('sa.publish_time DESC, sa.sort DESC')
+            ->select();
+        $this->assign('page', $page);
+        $this->assign('list', $list);
+        return $this->fetch('user_course_article_list');
+    }
+
+    /**
      * 用户学习达标列表
      * @return mixed
      */
@@ -485,7 +513,7 @@ class School extends Base
             $where['finish_time'] = ['BETWEEN', [$timeFrom, $timeTo]];
         }
         // 用户学习课程记录总数
-        $userCourseNum = M('user_school_article')->where($where)->group('user_id')->getField('count(article_id) as count');
+        $userCourseNum = M('user_school_article')->where($where)->getField('count(article_id) as count');
         $userCourseNum = $userCourseNum ?? 0;
         // 学习规则达标设置
         $return = ['status' => 0, 'course_num' => $userCourseNum];
@@ -614,6 +642,16 @@ class School extends Base
         M('school_rotate')->where(['id' => $id])->delete();
         Db::commit();
         $this->ajaxReturn(['status' => 1, 'msg' => '删除成功']);
+    }
+
+    /**
+     * 获取分类
+     */
+    public function getClass()
+    {
+        $moduleId = I('module_id');
+        $class = M('school_class')->where('module_id', $moduleId)->field('id, name')->select();
+        $this->ajaxReturn(['status' => 1, 'res' => $class]);
     }
 
     public function module1()
@@ -1100,7 +1138,7 @@ class School extends Base
                     if ($key == 0) continue;
                     $tempContent[] = [
                         'article_id' => $articleId,
-                        'local_path' => '/public/' .substr($value, 0, 61)
+                        'local_path' => '/public/' . substr($value, 0, 61)
                     ];
                 }
                 M('school_article_temp_resource')->where(['article_id' => $articleId])->delete();
@@ -1467,5 +1505,55 @@ class School extends Base
         }
         Db::commit();
         $this->success('设置成功', U('Admin/School/module7'));
+    }
+
+    /**
+     * 课程列表
+     * @return mixed
+     */
+    public function courseList()
+    {
+        // 条件
+        $where = ['sa.learn_type' => ['IN', [1, 2]]];
+        $title = htmlspecialchars_decode(trim(I('title', '')));
+        $moduleId = I('module_id', '');
+        $classId = I('class_id', '');
+        if ($title) {
+            $where['sa.title'] = ['LIKE', '%' . $title . '%'];
+        }
+        if ($moduleId) {
+            $where['s.id'] = $moduleId;
+            $class = M('school_class')->where('module_id', $moduleId)->getField('id, name', true);
+        }
+        if ($classId) {
+            $where['sc.id'] = $classId;
+        }
+        // 排序
+        $order = 'sa.publish_time DESC, sa.sort DESC';
+        $sort = I('sort', '');
+        $sortBy = I('sort_by', '');
+        if ($sort && $sortBy) {
+            $order = 'sa.' . $sort . ' ' . $sortBy . ', ' . $order;
+        }
+        // 数据
+        $count = M('school_article sa')->where($where)->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')->count();
+        $page = new Page($count, 10);
+        $list = M('school_article sa')->where($where)->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')
+            ->field('sa.*, s.name module_name, sc.name class_name')
+            ->limit($page->firstRow . ',' . $page->listRows)
+            ->order($order)
+            ->select();
+        // 模块列表
+        $module = M('school')->where(['is_open' => 1])->getField('id, name', true);
+        $this->assign('title', $title);
+        $this->assign('module_id', $moduleId);
+        $this->assign('module', $module);
+        $this->assign('class_id', $classId);
+        $this->assign('class', $class ?? []);
+        $this->assign('sort', $sort);
+        $this->assign('sort_by', $sortBy);
+        $this->assign('page', $page);
+        $this->assign('list', $list);
+        return $this->fetch('course_list');
     }
 }
