@@ -931,7 +931,7 @@ class Goods extends Base
             }
         }
         if (in_array($goodsInfo['goods_type'], ['group_buy', 'flash_sale'])) {
-            $goodsInfo['shop_price'] = bcadd($goodsInfo['exchange_price'], $goods['exchange_integral'], 2);
+            $goodsInfo['shop_price'] = bcsub($goodsInfo['shop_price'], $goods['exchange_integral'], 2);
             $goodsInfo['buy_least'] = '0';
             $goodsInfo['integral_pv'] = '';
             $goodsInfo['commission'] = '';
