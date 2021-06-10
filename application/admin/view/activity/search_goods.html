@@ -122,7 +122,7 @@
                                 <td class="tl" colspan="5">
                                     <div style="height: auto;white-space:normal;">
                                         <volist name="list[specGoodsPrice]" id="spec">
-                                            <a class="<if condition='$spec[prom_id] eq 0'>ncap-btn specBtn<else>ncap-btn-dis</if>" data-item-id="{$spec.item_id}"
+                                            <a class="ncap-btn specBtn" data-item-id="{$spec.item_id}"
                                                data-key-name="{$spec.key_name}" data-store-count="{$spec.store_count}" data-price="{$spec.price}" data-spec-img="{$spec.spec_img}"
                                                title="{$spec.key_name}">{$spec.key_name}</a>
                                         </volist>
@@ -212,6 +212,13 @@
         this.goods_price = goods_price;
         this.goods_image = goods_image;
         this.spec = spec;
+        if (this.spec != null) {
+            $.each(this.spec, function (index, value) {
+                if (this.spec_img == '') {
+                    this.spec_img = goods_image;
+                }
+            });
+        }
     }
     //商品对象
     function GoodsSpecItem(item_id, key_name, store_count, price ,spec_img) {
