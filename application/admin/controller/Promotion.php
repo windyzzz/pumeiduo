@@ -118,10 +118,10 @@ class Promotion extends Base
         if ($prom_id) {
             M('gift2')->where(['id' => $prom_id])->save($data);
             $last_id = $prom_id;
-            adminLog("管理员修改了商品促销 " . $title);
+            adminLog("管理员修改了指定商品赠品活动 " . $title . '_' . $last_id);
         } else {
             $last_id = M('gift2')->add($data);
-            adminLog("管理员添加了商品促销 " . $title);
+            adminLog("管理员添加了指定商品赠品活动 " . $title . '_' . $last_id);
         }
 
         M('gift2_goods')->where(array('promo_id' => $last_id))->delete();
@@ -403,10 +403,10 @@ class Promotion extends Base
             M('spec_goods_price')->where(['prom_type' => 3, 'prom_id' => $prom_id])->save(['prom_id' => 0, 'prom_type' => 0]);
             M('prom_goods')->where(['id' => $prom_id])->save($data);
             $last_id = $prom_id;
-            adminLog("管理员修改了商品促销 " . $title . '_' . $last_id);
+            adminLog("管理员修改了商品优惠促销 " . $title . '_' . $last_id);
         } else {
             $last_id = M('prom_goods')->add($data);
-            adminLog("管理员添加了商品促销 " . $title . '_' . $last_id);
+            adminLog("管理员添加了商品优惠促销 " . $title . '_' . $last_id);
         }
 
         M('goods_tao_grade')->where(array('promo_id' => $last_id))->delete();
@@ -524,10 +524,10 @@ class Promotion extends Base
         $data['group'] = $data['group'] ? implode(',', $data['group']) : '';
         if ($prom_id) {
             M('prom_order')->where("id=$prom_id")->save($data);
-            adminLog('管理员修改了商品促销 ' . I('name'));
+            adminLog('管理员修改了商品促销 ' . I('name') . '_' . $prom_id);
         } else {
-            M('prom_order')->add($data);
-            adminLog('管理员添加了商品促销 ' . I('name'));
+            $prom_id = M('prom_order')->add($data);
+            adminLog('管理员添加了商品促销 ' . I('name') . '_' . $prom_id);
         }
         $this->success('编辑促销活动成功', U('Promotion/prom_order_list'));
     }
@@ -845,7 +845,7 @@ class Promotion extends Base
                         } else {
                             Db::name('goods')->where('goods_id', $data['goods_id'])->save(['prom_id' => $flashSaleInsertId, 'prom_type' => 1]);
                         }
-                        adminLog('管理员添加抢购活动 ' . $data['title']);
+                        adminLog('管理员添加抢购活动 ' . $data['title'] . '_' . $flashSaleInsertId);
                         if (false !== $flashSaleInsertId) {
                             Db::commit();
                             $this->ajaxReturn(['status' => 1, 'msg' => '添加抢购活动成功', 'result' => '']);
@@ -862,7 +862,7 @@ class Promotion extends Base
                         } else {
                             M('goods')->where('goods_id', $data['goods_id'])->save(['prom_id' => $data['id'], 'prom_type' => 1]);
                         }
-                        adminLog('管理员编辑抢购活动 ' . $data['title']);
+                        adminLog('管理员编辑抢购活动 ' . $data['title'] . '_' . $data['id']);
                         $r = M('flash_sale')->where('id=' . $data['id'])->save($data);
                         if (false !== $r) {
                             Db::commit();
@@ -882,7 +882,7 @@ class Promotion extends Base
                     } else {
                         Db::name('goods')->where('goods_id', $data['goods_id'])->save(['prom_id' => 0, 'prom_type' => 0]);
                     }
-                    adminLog('管理员紧急下架抢购活动 ' . $data['title']);
+                    adminLog('管理员紧急下架抢购活动 ' . $data['title'] . '_' . $data['id']);
                     Db::commit();
                     $this->ajaxReturn(['status' => 1, 'msg' => '编辑抢购活动成功', 'result' => '']);
                     break;
@@ -899,7 +899,7 @@ class Promotion extends Base
                     } else {
                         Db::name('goods')->where('goods_id', $data['goods_id'])->save(['prom_id' => $data['id'], 'prom_type' => 1]);
                     }
-                    adminLog('管理员继续上架抢购活动 ' . $data['title']);
+                    adminLog('管理员继续上架抢购活动 ' . $data['title'] . '_' . $data['id']);
                     Db::commit();
                     $this->ajaxReturn(['status' => 1, 'msg' => '编辑抢购活动成功', 'result' => '']);
             }
