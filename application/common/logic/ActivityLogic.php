@@ -525,9 +525,12 @@ class ActivityLogic extends Model
 
     /**
      * 获取分类主题列表
+     * @param $user
+     * @param int $source
      * @return array|false|\PDOStatement|string|\think\Collection
+     * @throws \think\exception\DbException
      */
-    public function getCateActList()
+    public function getCateActList($user, $source = 1)
     {
         $where = [
             'start_time' => ['<=', time()],
@@ -558,6 +561,25 @@ class ActivityLogic extends Model
         $goodsItem = Db::name('spec_goods_price')->where(['goods_id' => ['in', $filter_goods_id]])->getField('item_id, key_name');
         // 商品标签
         $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->select();
+        // 秒杀商品
+        $flashSale = Db::name('flash_sale fs')
+            ->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
+            ->where(['fs.goods_id' => ['IN', $filter_goods_id], 'fs.start_time' => ['<=', time()], 'fs.end_time' => ['>=', time()], 'fs.is_end' => 0])
+            ->where(['fs.source' => ['LIKE', '%' . $source . '%']])
+            ->field('fs.goods_id, sgp.key spec_key, fs.price, fs.goods_num, fs.buy_limit, fs.start_time, fs.end_time, fs.can_integral')->select();
+        // 团购商品
+        $groupBuy = Db::name('group_buy gb')
+            ->join('spec_goods_price sgp', 'sgp.item_id = gb.item_id', 'LEFT')
+            ->where(['gb.goods_id' => ['IN', $filter_goods_id], 'gb.start_time' => ['<=', time()], 'gb.end_time' => ['>=', time()], 'gb.is_end' => 0])
+            ->field('gb.goods_id, gb.price, sgp.key spec_key, gb.price, gb.group_goods_num, gb.goods_num, gb.buy_limit, gb.start_time, gb.end_time, gb.can_integral')->select();
+        // 促销商品
+        $promGoods = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
+            ->where(['gtg.goods_id' => ['IN', $filter_goods_id], 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
+            ->field('pg.id prom_id, pg.title, pg.type, pg.expression, gtg.goods_id')->order('expression desc');
+        if ($user) {
+            $promGoods = $promGoods->where(['pg.group' => ['LIKE', '%' . $user['distribut_level'] . '%']]);
+        }
+        $promGoods = $promGoods->select();
         // 处理活动商品数据
         foreach ($activityGoods as $k => $v) {
             // 缩略图
@@ -586,6 +608,56 @@ class ActivityLogic extends Model
                 $activityGoods[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);
             } else {
                 $activityGoods[$k]['exchange_price'] = $v['shop_price'];
+            }
+            if (!empty($groupBuy)) {
+                foreach ($groupBuy as $value) {
+                    if ($v['goods_id'] == $value['goods_id']) {
+                        $activityGoods[$k]['goods_type'] = 'group_buy';
+                        if ($value['can_integral'] == 0) {
+                            $activityGoods[$k]['exchange_integral'] = '0';    // 不能使用积分兑换
+                        }
+                        $activityGoods[$k]['exchange_price'] = bcsub($value['price'], $activityGoods[$k]['exchange_integral'], 2);
+                        $activityGoods[$k]['tags'][0]['type'] = 'activity';
+                        $activityGoods[$k]['tags'][0]['title'] = '团购';
+                        break;
+                    }
+                }
+            }
+            if (!empty($flashSale)) {
+                foreach ($flashSale as $value) {
+                    if ($v['goods_id'] == $value['goods_id']) {
+                        $activityGoods[$k]['goods_type'] = 'flash_sale';
+                        if ($value['can_integral'] == 0) {
+                            $activityGoods[$k]['exchange_integral'] = '0';    // 不能使用积分兑换
+                        }
+                        $activityGoods[$k]['exchange_price'] = bcsub($value['price'], $activityGoods[$k]['exchange_integral'], 2);
+                        $activityGoods[$k]['tags'][0]['type'] = 'activity';
+                        $activityGoods[$k]['tags'][0]['title'] = '秒杀';
+                        break;
+                    }
+                }
+            }
+            if (!empty($promGoods)) {
+                foreach ($promGoods as $value) {
+                    if ($v['goods_id'] == $value['goods_id']) {
+                        $activityGoods[$k]['goods_type'] = 'promotion';
+                        switch ($value['type']) {
+                            case 0:
+                                // 打折
+                                $activityGoods[$k]['exchange_price'] = bcdiv(bcmul($activityGoods[$k]['exchange_price'], $value['expression'], 2), 100, 2);
+                                break;
+                            case 1:
+                                // 减价
+                                $activityGoods[$k]['exchange_price'] = bcsub($activityGoods[$k]['exchange_price'], $value['expression'], 2);
+                                break;
+                        }
+                        $activityGoods[$k]['tags'][] = ['type' => 'promotion', 'title' => $value['title']];
+                        break;
+                    }
+                }
+                if (!isset($activityGoods[$k]['tags'][1]) && !empty($orderPromTitle)) {
+                    $activityGoods[$k]['tags'][] = ['type' => 'promotion', 'title' => $orderPromTitle];
+                }
             }
             // 优化价格显示
             if ($activityGoods[$k]['exchange_integral'] == 0) {
@@ -635,10 +707,12 @@ class ActivityLogic extends Model
      * 获取分类主题活动商品列表
      * @param $activityId
      * @param $sort
+     * @param $user
+     * @param $source
      * @return array|false|\PDOStatement|string|Model
      * @throws \think\exception\DbException
      */
-    public function getCateActGoodsList($activityId, $sort = [])
+    public function getCateActGoodsList($activityId, $sort = [], $user = null, $source = 1)
     {
         $sort['g.sort'] = 'desc';
         if (!isset($sort['g.goods_id'])) {
@@ -681,6 +755,25 @@ class ActivityLogic extends Model
         $goodsItem = Db::name('spec_goods_price')->where(['goods_id' => ['in', $filter_goods_id]])->getField('item_id, key_name');
         // 商品标签
         $goodsTab = M('GoodsTab')->where(['goods_id' => ['in', $filter_goods_id], 'status' => 1])->select();
+        // 秒杀商品
+        $flashSale = Db::name('flash_sale fs')
+            ->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
+            ->where(['fs.goods_id' => ['IN', $filter_goods_id], 'fs.start_time' => ['<=', time()], 'fs.end_time' => ['>=', time()], 'fs.is_end' => 0])
+            ->where(['fs.source' => ['LIKE', '%' . $source . '%']])
+            ->field('fs.goods_id, sgp.key spec_key, fs.price, fs.goods_num, fs.buy_limit, fs.start_time, fs.end_time, fs.can_integral')->select();
+        // 团购商品
+        $groupBuy = Db::name('group_buy gb')
+            ->join('spec_goods_price sgp', 'sgp.item_id = gb.item_id', 'LEFT')
+            ->where(['gb.goods_id' => ['IN', $filter_goods_id], 'gb.start_time' => ['<=', time()], 'gb.end_time' => ['>=', time()], 'gb.is_end' => 0])
+            ->field('gb.goods_id, gb.price, sgp.key spec_key, gb.price, gb.group_goods_num, gb.goods_num, gb.buy_limit, gb.start_time, gb.end_time, gb.can_integral')->select();
+        // 促销商品
+        $promGoods = Db::name('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
+            ->where(['gtg.goods_id' => ['IN', $filter_goods_id], 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
+            ->field('pg.id prom_id, pg.title, pg.type, pg.expression, gtg.goods_id')->order('expression desc');
+        if ($user) {
+            $promGoods = $promGoods->where(['pg.group' => ['LIKE', '%' . $user['distribut_level'] . '%']]);
+        }
+        $promGoods = $promGoods->select();
         // 处理活动商品数据
         foreach ($activityGoods as $k => $v) {
             $activityGoods[$k]['original_img_new'] = getFullPath($v['original_img']);
@@ -708,6 +801,60 @@ class ActivityLogic extends Model
                 $activityGoods[$k]['exchange_price'] = bcdiv(bcsub(bcmul($v['shop_price'], 100), bcmul($v['exchange_integral'], 100)), 100, 2);
             } else {
                 $activityGoods[$k]['exchange_price'] = $v['shop_price'];
+            }
+            if (!empty($groupBuy)) {
+                foreach ($groupBuy as $value) {
+                    if ($v['goods_id'] == $value['goods_id']) {
+                        $activityGoods[$k]['goods_type'] = 'group_buy';
+                        if ($value['can_integral'] == 0) {
+                            $activityGoods[$k]['exchange_integral'] = '0';    // 不能使用积分兑换
+                        }
+                        $activityGoods[$k]['exchange_price'] = bcsub($value['price'], $activityGoods[$k]['exchange_integral'], 2);
+                        $activityGoods[$k]['tags'][0]['type'] = 'activity';
+                        $activityGoods[$k]['tags'][0]['title'] = '团购';
+                        break;
+                    }
+                }
+            }
+            if (!empty($flashSale)) {
+                foreach ($flashSale as $value) {
+                    if ($v['goods_id'] == $value['goods_id']) {
+                        $activityGoods[$k]['goods_type'] = 'flash_sale';
+                        if ($value['can_integral'] == 0) {
+                            $activityGoods[$k]['exchange_integral'] = '0';    // 不能使用积分兑换
+                        }
+                        $activityGoods[$k]['exchange_price'] = bcsub($value['price'], $activityGoods[$k]['exchange_integral'], 2);
+                        $activityGoods[$k]['tags'][0]['type'] = 'activity';
+                        $activityGoods[$k]['tags'][0]['title'] = '秒杀';
+                        break;
+                    }
+                }
+            }
+            if (!empty($promGoods)) {
+                foreach ($promGoods as $value) {
+                    if ($v['goods_id'] == $value['goods_id']) {
+                        $activityGoods[$k]['goods_type'] = 'promotion';
+                        switch ($value['type']) {
+                            case 0:
+                                // 打折
+                                $activityGoods[$k]['exchange_price'] = bcdiv(bcmul($activityGoods[$k]['exchange_price'], $value['expression'], 2), 100, 2);
+                                break;
+                            case 1:
+                                // 减价
+                                $activityGoods[$k]['exchange_price'] = bcsub($activityGoods[$k]['exchange_price'], $value['expression'], 2);
+                                break;
+                        }
+                        $activityGoods[$k]['tags'][] = ['type' => 'promotion', 'title' => $value['title']];
+                        break;
+                    }
+                }
+                if (!isset($activityGoods[$k]['tags'][1]) && !empty($orderPromTitle)) {
+                    $activityGoods[$k]['tags'][] = ['type' => 'promotion', 'title' => $orderPromTitle];
+                }
+            }
+            // 优化价格显示
+            if ($activityGoods[$k]['exchange_integral'] == 0) {
+                $activityGoods[$k]['shop_price'] = $activityGoods[$k]['exchange_price'];
             }
         }
         $activityInfo['goods_list'] = $activityGoods;

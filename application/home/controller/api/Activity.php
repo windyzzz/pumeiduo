@@ -244,7 +244,8 @@ class Activity extends Base
     public function cateActList()
     {
         $activityLogic = new ActivityLogic();
-        $res = $activityLogic->getCateActList();
+        $source = $this->isApp ? 3 : ($this->isApplet ? 4 : 1);
+        $res = $activityLogic->getCateActList($this->user, $source);
         return json(['status' => 1, 'msg' => 'success', 'result' => $res]);
     }
 
@@ -276,7 +277,8 @@ class Activity extends Base
         }
         $sortArr = [$sort => $sort_asc];
         $activityLogic = new ActivityLogic();
-        $res = $activityLogic->getCateActGoodsList($activityId, $sortArr);
+        $source = $this->isApp ? 3 : ($this->isApplet ? 4 : 1);
+        $res = $activityLogic->getCateActGoodsList($activityId, $sortArr, $this->user, $source);
         if (empty($res)) {
             return json(['status' => 0, 'msg' => '活动已取消']);
         }

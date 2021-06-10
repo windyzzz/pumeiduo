@@ -1865,7 +1865,8 @@ class Goods extends Base
         if ($count > 0) {
             // 获取商品数据
             $goodsLogic = new GoodsLogic();
-            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user, $this->isApp);
+            $source = $this->isApp ? 3 : ($this->isApplet ? 4 : 1);
+            $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user, $source);
         }
         $return['goods_list'] = isset($goodsData) ? $goodsData['goods_list'] : [];
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);

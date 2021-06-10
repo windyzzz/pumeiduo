@@ -1178,10 +1178,10 @@ class GoodsLogic extends Model
      * @param $sort
      * @param $page
      * @param null $user
-     * @param bool $isApp
+     * @param $source
      * @return array
      */
-    public function getGoodsList($filter_goods_id, $sort, $page, $user = null, $isApp = false)
+    public function getGoodsList($filter_goods_id, $sort, $page, $user = null, $source = 1)
     {
         $sort['sort'] = 'desc';
         if (!isset($sort['goods_id'])) {
@@ -1206,7 +1206,7 @@ class GoodsLogic extends Model
         $flashSale = Db::name('flash_sale fs')
             ->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
             ->where(['fs.goods_id' => ['IN', $filter_goods_id], 'fs.start_time' => ['<=', time()], 'fs.end_time' => ['>=', time()], 'fs.is_end' => 0])
-            ->where(['fs.source' => ['LIKE', $isApp ? '%' . 3 . '%' : '%' . 1 . '%']])
+            ->where(['fs.source' => ['LIKE', '%' . $source . '%']])
             ->field('fs.goods_id, sgp.key spec_key, fs.price, fs.goods_num, fs.buy_limit, fs.start_time, fs.end_time, fs.can_integral')->select();
         // 团购商品
         $groupBuy = Db::name('group_buy gb')
