@@ -1497,6 +1497,7 @@ class Promotion extends Base
                             }
                             $promData['start_time'] = strtotime(gmdate('Y-m-d H:i:s', \PHPExcel_Shared_Date::ExcelToPHP(trim($v['G']))));
                             $promData['end_time'] = strtotime(gmdate('Y-m-d H:i:s', \PHPExcel_Shared_Date::ExcelToPHP(trim($v['H']))));
+                            if ($promData['start_time'] > $promData['end_time']) throw new Exception('活动开启时间不能大于结束时间');
                             $promId = M('prom_goods')->add($promData);
                         }
                         // 添加活动商品
@@ -1510,7 +1511,7 @@ class Promotion extends Base
                         M('spec_goods_price')->where(['item_id' => $itemId])->update(['prom_type' => 3, 'prom_id' => $promId]);
                     }
                     Db::commit();
-                    $this->success('导出处理成功', U('Admin/Promotion/prom_goods_list'));
+                    $this->success('导入处理成功', U('Admin/Promotion/prom_goods_list'));
                 } catch (Exception $e) {
                     Db::rollback();
                     $this->error('导入失败——' . $e->getMessage(), U('Admin/Promotion/prom_goods_list'));

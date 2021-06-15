@@ -78,13 +78,34 @@
         </div>
         <div class="tDiv">
             <div class="tDiv2">
-                <a href="{:U('Admin/Coupon/coupon_info')}">
-                    <div class="fbutton">
+                <div class="fbutton">
+                    <a href="{:U('Admin/Coupon/coupon_info')}">
                         <div title="添加优惠券" class="add">
                             <span><i class="fa fa-plus"></i>添加优惠券</span>
                         </div>
-                    </div>
-                </a>
+                    </a>
+                </div>
+            </div>
+            <div class="tDiv2">
+                <div class="fbutton">
+                    <a href="/public/upload/coupon/excel/优惠券导入模板.xls">
+                        <div class="add" title="">
+                            <span><i class="fa fa-download"></i>导出执行模板</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            <div class="tDiv2">
+                <div class="fbutton">
+                    <a href="javascript:uploadAddProm()">
+                        <div class="add" title="">
+                            <span><i class="fa fa-upload"></i>上传并执行添加优惠券信息文件(csv,xls,xlsx)</span>
+                        </div>
+                    </a>
+                    <form action="{:U('Admin/Coupon/uploadAddCoupon')}" method="post" enctype="multipart/form-data" id="upload-form">
+                        <input type="file" class="btn" name="prom_file">
+                    </form>
+                </div>
             </div>
             <div style="clear:both"></div>
         </div>
@@ -235,6 +256,10 @@
                     layer.close(index);
                 }
         );
+    }
+
+    function uploadAddProm() {
+        $('#upload-form').submit();
     }
 </script>
 </body>
