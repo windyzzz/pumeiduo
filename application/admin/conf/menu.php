@@ -181,7 +181,7 @@ return [
             ['name' => '公司简介', 'act' => 'module1', 'op' => 'School'],
             ['name' => '产品专区', 'act' => 'module2', 'op' => 'School'],
             ['name' => '社群营销', 'act' => 'module3', 'op' => 'School'],
-            ['name' => '阶段培训', 'act' => 'module4', 'op' => 'School'],
+            ['name' => '分阶培训', 'act' => 'module4', 'op' => 'School'],
             ['name' => '在线培训', 'act' => 'module5', 'op' => 'School'],
             ['name' => '当前热点', 'act' => 'module9', 'op' => 'School'],
             ['name' => '素材专区', 'act' => 'module6', 'op' => 'School'],

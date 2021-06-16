@@ -1544,7 +1544,8 @@ class School extends Base
             ->order($order)
             ->select();
         // 模块列表
-        $module = M('school')->where(['is_open' => 1])->getField('id, name', true);
+        $notModuleType = ['module6', 'module7', 'module8'];
+        $module = M('school')->where(['is_open' => 1, 'type' => ['NOT IN', $notModuleType]])->getField('id, name', true);
         $this->assign('title', $title);
         $this->assign('module_id', $moduleId);
         $this->assign('module', $module);
