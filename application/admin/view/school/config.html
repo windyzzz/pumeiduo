@@ -87,7 +87,7 @@
                 </dt>
                 <dd class="opt">
                     <table style="width: 50%;">
-                        <tr><th style="width:40%">词名</th><th style="text-align: center;" colspan="4">操作</th></tr>
+                        <tr><th style="width:80%" colspan="4">词名</th><th>操作</th></tr>
                         <tbody id="keywords">
                         <volist name="keyword" id="vo" key="k">
                             <tr>
@@ -113,7 +113,7 @@
                                     </div>
                                 </td>
                                 <td>排序<input name="keyword[{$k}][sort]" type="text" value="{$vo[sort]}" class="form-control" style="width:50px; text-align: center;"></td>
-                                <td style="text-align: center;"><a class="ncap-btn" onclick="delWord(2, this, {$vo[id]})">删除</a></td>
+                                <td><a class="ncap-btn" onclick="delWord(2, this, {$vo[id]})">删除</a></td>
                             </tr>
                         </volist>
                         </tbody>
