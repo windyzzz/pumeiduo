@@ -267,9 +267,9 @@ class Pay
         $promAmount = bcsub(bcadd($this->orderPromAmount, $this->couponPrice, 2), $this->goodsPromAmount, 2);
         // 优惠比例
         if ($source == 4) {
-            $promRate = $this->totalAmount != '0' ? bcsub(1, ($promAmount / bcsub($this->totalAmount, $exchangeIntegral2, 2)), 2) : '0';
+            $promRate = $this->totalAmount != '0' ? bcsub(1, ($promAmount / bcsub($this->totalAmount, $exchangeIntegral2, 2)), 2) : 0;
         } else {
-            $promRate = $this->totalAmount != '0' ? bcsub(1, ($promAmount / $this->totalAmount), 2) : '0';
+            $promRate = $this->totalAmount != '0' ? bcsub(1, ($promAmount / $this->totalAmount), 2) : 0;
         }
         $this->orderPv = $promRate < 1 ? bcmul($promRate, $this->goodsPv, 2) : $this->goodsPv;
     }
