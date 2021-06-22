@@ -78,7 +78,10 @@ class Share extends Base
         }
         // 用户头像
         $headPic = $this->user['head_pic'];
-        $headPicType = 'path';
+        if (strpos($headPic, 'mall.pumeiduo.com/index.php')) {
+            M('users')->where(['user_id' => $this->user_id])->update(['head_pic' => 'https://mall.pumeiduo.com/public/images/default_head.png']);
+            $headPic = 'https://mall.pumeiduo.com/public/images/default_head.png';
+        }
         if (!$headPic) {
             $headPicPath = 'public/images/default_head.png';
         } else {
