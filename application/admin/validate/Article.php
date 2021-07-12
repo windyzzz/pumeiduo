@@ -23,7 +23,7 @@ class Article extends Validate
     //验证规则
     protected $rule = [
         'title' => 'require|checkEmpty',
-        'cat_id' => 'require|checkEmpty',
+//        'cat_id' => 'require|checkEmpty',
         'content' => 'require|checkContent',
         'message' => 'require|checkContent',
         'link' => 'url',

@@ -69,13 +69,15 @@ class Article extends Base
     public function articleList()
     {
         $Article = M('Article');
-        $res = $list = [];
+        $list = [];
         $p = empty($_REQUEST['p']) ? 1 : $_REQUEST['p'];
         $size = empty($_REQUEST['size']) ? 20 : $_REQUEST['size'];
 
         $where = ' 1 = 1 ';
         $keywords = trim(I('keywords'));
         $keywords && $where .= " and title like '%$keywords%' ";
+        $nature = I('nature', 0);
+        $nature && $where .= " and nature = $nature ";
         $cat_id = I('cat_id', 0);
         $cat_id && $where .= " and cat_id = $cat_id ";
         $res = $Article->where($where)->order('article_id desc')->page("$p,$size")->select();
@@ -83,10 +85,12 @@ class Article extends Base
         $pager = new Page($count, $size); // 实例化分页类 传入总记录数和每页显示的记录数
         //$page = $pager->show();//分页显示输出
 
+        $natureArr = ['1' => '普通文章', '2' => '弹窗文章'];
         $ArticleCat = new ArticleCatLogic();
         $cats = $ArticleCat->article_cat_list(0, 0, false);
         if ($res) {
             foreach ($res as $val) {
+                $val['nature'] = $natureArr[$val['nature']];
                 $val['category'] = $cats[$val['cat_id']]['cat_name'];
                 $val['add_time'] = date('Y-m-d H:i:s', $val['add_time']);
                 $val['publish_time'] = date('Y-m-d H:i:s', $val['publish_time']);
@@ -94,6 +98,7 @@ class Article extends Base
             }
         }
         $this->assign('cats', $cats);
+        $this->assign('nature', $nature);
         $this->assign('cat_id', $cat_id);
         $this->assign('list', $list); // 赋值数据集
         $this->assign('pager', $pager); // 赋值分页输出
@@ -180,7 +185,12 @@ class Article extends Base
         if (true !== $result) {
             $this->ajaxReturn(['status' => 0, 'msg' => '参数错误', 'result' => $result]);
         }
-
+        // 弹窗文章处理
+        if ($data['nature'] == 2) {
+            if (M('article')->where(['nature' => 2, 'is_open' => 1])->value('article_id')) {
+                $this->ajaxReturn(['status' => 0, 'msg' => '已经有一篇发布中的弹窗文章', 'result' => $result]);
+            }
+        }
         if ('add' == $data['act']) {
             $data['click'] = mt_rand(1000, 1300);
             $data['add_time'] = time();
@@ -194,7 +204,6 @@ class Article extends Base
         if (!$r) {
             $this->ajaxReturn(['status' => -1, 'msg' => '操作失败']);
         }
-
         $this->ajaxReturn(['status' => 1, 'msg' => '操作成功']);
     }
 

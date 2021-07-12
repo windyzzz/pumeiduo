@@ -28,6 +28,19 @@
         <div class="ncap-form-default">
             <dl class="row">
                 <dt class="tit">
+                    <label for="cat_id"><em>*</em>文章种类</label>
+                </dt>
+                <dd class="opt">
+                    <select class="small form-control" name="nature" id="nature">
+                        <option value="1" <if condition="$info[nature] == 1">selected</if>>普通文章</option>
+                        <option value="2" <if condition="$info[nature] == 2">selected</if>>首页弹窗</option>
+                    </select>
+                    <span class="err" id="err_nature"></span>
+                    <p class="notic">当选择“首页弹窗”时：发布中的文章有且只有一个；对每个用户一天只弹出一次</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
                     <label><em>*</em>标题</label>
                 </dt>
                 <dd class="opt">
@@ -35,9 +48,8 @@
                     <span class="err" id="err_title"></span>
                     <p class="notic"></p>
                 </dd>
-
             </dl>
-            <dl class="row">
+            <dl class="row" id="cat_row">
                 <dt class="tit">
                     <label for="cat_id"><em>*</em>所属分类</label>
                 </dt>
@@ -50,7 +62,7 @@
                     <p class="notic">当选择发布"商城公告"时，还需要设置下面的"出现位置"项</p>
                 </dd>
             </dl>
-            <dl class="row">
+            <dl class="row" id="level_row">
                 <dt class="tit">
                     <label>会员等级</label>
                 </dt>
@@ -64,17 +76,7 @@
                     <p class="notic">用户能看到小于或等于自己等级的文章</p>
                 </dd>
             </dl>
-            <dl class="row" style="display: none;">
-                <dt class="tit">
-                    <label for="articleForm">seo关键字</label>
-                </dt>
-                <dd class="opt">
-                    <input type="text" name="keywords" value="{$info.keywords}" class="input-txt">
-                    <span class="err"></span>
-                    <p class="notic">用于seo 搜索引擎友好</p>
-                </dd>
-            </dl>
-            <dl class="row">
+            <dl class="row" id="author_row">
                 <dt class="tit">
                     <label for="articleForm">作者</label>
                 </dt>
@@ -84,7 +86,7 @@
                     <p class="notic"></p>
                 </dd>
             </dl>
-            <dl class="row">
+            <dl class="row" id="link_row">
                 <dt class="tit">
                     <label for="articleForm">链接</label>
                 </dt>
@@ -132,7 +134,7 @@
                     <p class="notic"></p>
                 </dd>
             </dl>
-            <dl class="row">
+            <dl class="row" id="description_row">
                 <dt class="tit">网页描述</dt>
                 <dd class="opt">
                     <textarea class="input-txt" id="post_description" name="description" title="">{$info.description}</textarea>
@@ -140,8 +142,8 @@
                     <p class="notic"></p>
                 </dd>
             </dl>
-            <dl class="row">
-                <dt class="tit">视频连接</dt>
+            <dl class="row" id="video_row">
+                <dt class="tit">视频链接</dt>
                 <dd class="opt">
                     <textarea class="input-txt" id="" name="video" title="">{$info.video}</textarea>
                     <span class="err"></span>
@@ -149,7 +151,7 @@
                 </dd>
             </dl>
             <if condition="in_array($info[article_id], [95, 104, 105, 106, 108])">
-                <dl class="row">
+                <dl class="row" id="appContent_row">
                     <dt class="tit">
                         <label><em>*</em>APP显示内容（与文章内容一致）</label>
                     </dt>
@@ -172,7 +174,7 @@
                     <p class="notic"></p>
                 </dd>
             </dl>
-            <dl class="row">
+            <dl class="row" id="thumb_row">
                 <dt class="tit">
                     <label>图片上传</label>
                 </dt>
@@ -219,6 +221,29 @@
         autoHeightEnabled: true,
     });
 
+    $('select[name="nature"]').change(function () {
+        switch (this.value) {
+            case '1':
+                $('#cat_row').css('display', 'block');
+                $('#level_row').css('display', 'block');
+                $('#author_row').css('display', 'block');
+                $('#link_row').css('display', 'block');
+                $('#description_row').css('display', 'block');
+                $('#video_row').css('display', 'block');
+                $('#thumb_row').css('display', 'block');
+                break;
+            case '2':
+                $('#cat_row').css('display', 'none');
+                $('#level_row').css('display', 'none');
+                $('#author_row').css('display', 'none');
+                $('#link_row').css('display', 'none');
+                $('#description_row').css('display', 'none');
+                $('#video_row').css('display', 'none');
+                $('#thumb_row').css('display', 'none');
+                break;
+        }
+    });
+
     $(document).on("click", '#submitBtn', function () {
         verifyForm();
     });
@@ -249,7 +274,6 @@
             }
         });
     }
-
 
     function img_call_back(fileurl_tmp) {
         $("#thumb").val(fileurl_tmp);
