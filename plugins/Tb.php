@@ -48,7 +48,7 @@ Class Tb
         );
         // 本地链接
         $local_url_arr = array(
-            3 => 'http://pumeiduo.erp/index.php/Tb/get_system'
+            3 => 'http://pumeiduo.erp.com/index.php/Tb/get_system'
         );
         switch ($_SERVER['SERVER_ADDR']) {
             case $test_ip:

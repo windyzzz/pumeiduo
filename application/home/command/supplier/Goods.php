@@ -140,7 +140,7 @@ class Goods extends Command
         );
         // 本地链接
         $local_url_arr = array(
-            3 => 'http://pumeiduo.erp/index.php/supplier.Sync/getSyncData'
+            3 => 'http://pumeiduo.erp.com/index.php/supplier.Sync/getSyncData'
         );
         switch (\think\Env::get('COMMAND.IP')) {
             case $test_ip:
