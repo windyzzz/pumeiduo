@@ -34,6 +34,7 @@ class UpdateArticle20210712 extends Migrator
 
         $this->table('user_article')
             ->addColumn('add_time', 'integer', ['default' => 0, 'after' => 'status'])
+            ->addColumn('up_time', 'integer', ['default' => 0, 'after' => 'add_time'])
             ->update();
     }
 }

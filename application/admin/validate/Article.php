@@ -23,7 +23,7 @@ class Article extends Validate
     //验证规则
     protected $rule = [
         'title' => 'require|checkEmpty',
-//        'cat_id' => 'require|checkEmpty',
+        'cat_id' => 'require|checkEmpty',
         'content' => 'require|checkContent',
         'message' => 'require|checkContent',
         'link' => 'url',
@@ -46,8 +46,8 @@ class Article extends Validate
 
     //验证场景
     protected $scene = [
-        'add' => ['title', 'cat_id', 'content', 'link'],
-        'edit' => ['title', 'cat_id', 'content', 'link'],
+        'add' => ['title', 'cat_id', 'content'],
+        'edit' => ['title', 'cat_id', 'content'],
         'del' => ['article_id'],
         'message' => ['title', 'message'],
         'push' => ['title', 'desc', 'push_time'],

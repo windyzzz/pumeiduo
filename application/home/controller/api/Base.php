@@ -138,6 +138,7 @@ class Base extends Controller
             'c=api.Goods&a=checkGoodsPassword',         // 根据口令获取商品数据
             'c=api.Adv&a=popup',                        // 活动弹窗
             'c=api.Article&a=articleDetail',            // 文章内容
+            'c=api.Article&a=userArticlePopup',         // 用户文章弹窗
             'c=api.Activity&a=promActivityModule1',     // 促销活动板块1
             'c=api.Activity&a=promActivityModule2',     // 促销活动板块2
             'c=api.Activity&a=promActivityModule3',     // 促销活动板块3

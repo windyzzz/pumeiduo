@@ -38,6 +38,7 @@ class ArticleLogic extends Model
         $user_system_article_no_read_where = [
             'um.user_id' => $userId,
             'um.status' => 0,
+            'm.nature' => 1,
             'm.is_open' => 1,
             'm.title' => ['neq', ''],
             'm.publish_time' => ['BETWEEN', [strtotime("-3 month"), time()]]  // 三个月内
@@ -111,6 +112,7 @@ class ArticleLogic extends Model
         $user_system_article_no_read_where = [
             'user_id' => $user_info['user_id'],
 //            'status' => ['in', [0, 1]],
+            'm.nature' => 1,
             'm.is_open' => 1,
             'm.title' => ['neq', ''],
 //            'm.publish_time' => ['BETWEEN', [strtotime("-3 month"), time()]]  // 三个月内

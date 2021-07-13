@@ -180,19 +180,28 @@ class Article extends Base
         $data['publish_time'] = strtotime($data['publish_time']);
         $data['finish_time'] = !empty($data['finish_time']) ? strtotime($data['finish_time']) : '';
         //$referurl = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : U('Admin/Article/articleList');
+        if (!$data['publish_time']) {
+            $this->ajaxReturn(['status' => 0, 'msg' => '参数错误', 'result' => ['publish_time' => '发布时间不能为空']]);
+        }
 
         $result = $this->validate($data, 'Article.' . $data['act'], [], true);
         if (true !== $result) {
             $this->ajaxReturn(['status' => 0, 'msg' => '参数错误', 'result' => $result]);
         }
+
         // 弹窗文章处理
         if ($data['nature'] == 2) {
             if (M('article')->where(['nature' => 2, 'is_open' => 1])->value('article_id')) {
                 $this->ajaxReturn(['status' => 0, 'msg' => '已经有一篇发布中的弹窗文章', 'result' => $result]);
             }
+            if (empty($data['finish_time'])) {
+                $this->ajaxReturn(['status' => 0, 'msg' => '请选择结束日期', 'result' => ['finish_time' => '结束日期不能为空']]);
+            }
+            $data['distribut_level'] = 3;
         }
+
         if ('add' == $data['act']) {
-            $data['click'] = mt_rand(1000, 1300);
+//            $data['click'] = mt_rand(1000, 1300);
             $data['add_time'] = time();
             $r = M('article')->add($data);
         } elseif ('edit' == $data['act']) {

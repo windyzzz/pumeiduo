@@ -192,4 +192,70 @@ class Article extends Base
         $return = $article;
         return json(['status' => 1, 'result' => $return]);
     }
+
+    /**
+     * 用户文章弹窗
+     * @return \think\response\Json
+     */
+    public function userArticlePopup()
+    {
+        $result = [
+            'is_open' => 0,
+            'is_force' => 0,
+            'article_id' => '',
+            'image' => '',
+            'article_url' => ''
+        ];
+        if ($this->user) {
+            $where = [
+                'nature' => 2,
+                'is_open' => 1,
+                'publish_time' => ['<', NOW_TIME],
+                'finish_time' => ['>', NOW_TIME]
+            ];
+            $article = M('article')->where($where)->find();
+            if (!empty($article)) {
+                // 查看用户弹窗文章记录
+                $userArticle = M('user_article')->where(['user_id' => $this->user_id, 'article_id' => $article['article_id']])->find();
+                if (empty($userArticle)) {
+                    $result['is_open'] = 1;
+                    $result['is_force'] = 1;
+                    $result['article_id'] = $article['article_id'];
+                    $result['image'] = SITE_URL . $article['thumb'];
+                    $result['article_url'] = SITE_URL . '/#/member/app_help_particulars?article_id=' . $article['article_id'];
+                } elseif (date('Y-m-d', $userArticle['up_time']) !== date('Y-m-d', NOW_TIME)) {
+                    $result['is_open'] = 1;
+                    $result['is_force'] = 0;
+                    $result['article_id'] = $article['article_id'];
+                    $result['image'] = SITE_URL . $article['thumb'];
+                    $result['article_url'] = SITE_URL . '/#/member/app_help_particulars?article_id=' . $article['article_id'];
+                }
+            }
+        }
+        return json(['status' => 1, 'result' => $result, 'msg' => '']);
+    }
+
+    /**
+     * 用户查看文章
+     * @return \think\response\Json
+     */
+    public function userCheckArticle()
+    {
+        $articleId = I('article_id', 0);
+        if (!$articleId) return json(['status' => 0, 'result' => '', 'msg' => '请传入文章ID']);
+        if (M('user_article')->where(['user_id' => $this->user_id, 'article_id' => $articleId])->value('rec_id')) {
+            M('user_article')->where(['user_id' => $this->user_id, 'article_id' => $articleId])->update([
+                'up_time' => NOW_TIME
+            ]);
+        } else {
+            M('user_article')->add([
+                'user_id' => $this->user_id,
+                'article_id' => $articleId,
+                'status' => 1,
+                'add_time' => NOW_TIME,
+                'up_time' => NOW_TIME,
+            ]);
+        }
+        return json(['status' => 1, 'result' => '', 'msg' => '处理成功']);
+    }
 }
