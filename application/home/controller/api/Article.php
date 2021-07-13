@@ -206,7 +206,7 @@ class Article extends Base
             'image' => '',
             'article_url' => ''
         ];
-        if ($this->user) {
+        if ($this->user && $this->user['distribut_level'] == 3) {
             $where = [
                 'nature' => 2,
                 'is_open' => 1,

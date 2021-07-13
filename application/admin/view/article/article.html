@@ -101,7 +101,7 @@
                     <label for="articleForm">发布时间</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" class="input-txt" id="publish_time" name="publish_time" value="{$info.publish_time|date=" Y-m-d H:i:s",###}">
+                    <input type="text" class="input-txt" id="publish_time" name="publish_time" value="{$info.publish_time|date='Y-m-d H:i:s',###}">
                     <span class="add-on input-group-addon">
                         <i class="glyphicon glyphicon-calendar fa fa-calendar"></i>
                     </span>
@@ -195,7 +195,8 @@
                     <p class="notic"></p>
                 </dd>
             </dl>
-            <div class="bot"><a href="JavaScript:void(0);" class="ncap-btn-big ncap-btn-green" id="submitBtn">确认提交</a>
+            <div class="bot">
+                <a href="JavaScript:void(0);" class="ncap-btn-big ncap-btn-green" id="submitBtn">确认提交</a>
             </div>
         </div>
         <input type="hidden" name="act" value="{$act}">
