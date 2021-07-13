@@ -49,7 +49,7 @@
                     <p class="notic"></p>
                 </dd>
             </dl>
-            <dl class="row" id="cat_row">
+            <dl class="row" id="cat_row" <if condition="$info[nature] == 2">style="display:none;"</if>>
                 <dt class="tit">
                     <label for="cat_id"><em>*</em>所属分类</label>
                 </dt>
@@ -62,7 +62,7 @@
                     <p class="notic">当选择发布"商城公告"时，还需要设置下面的"出现位置"项</p>
                 </dd>
             </dl>
-            <dl class="row" id="level_row">
+            <dl class="row" id="level_row" <if condition="$info[nature] == 2">style="display:none;"</if>>
                 <dt class="tit">
                     <label>会员等级</label>
                 </dt>
@@ -76,7 +76,7 @@
                     <p class="notic">用户能看到小于或等于自己等级的文章</p>
                 </dd>
             </dl>
-            <dl class="row" id="author_row">
+            <dl class="row" id="author_row" <if condition="$info[nature] == 2">style="display:none;"</if>>
                 <dt class="tit">
                     <label for="articleForm">作者</label>
                 </dt>
@@ -86,7 +86,7 @@
                     <p class="notic"></p>
                 </dd>
             </dl>
-            <dl class="row" id="link_row">
+            <dl class="row" id="link_row" <if condition="$info[nature] == 2">style="display:none;"</if>>
                 <dt class="tit">
                     <label for="articleForm">链接</label>
                 </dt>
@@ -134,7 +134,7 @@
                     <p class="notic"></p>
                 </dd>
             </dl>
-            <dl class="row" id="description_row">
+            <dl class="row" id="description_row" <if condition="$info[nature] == 2">style="display:none;"</if>>
                 <dt class="tit">网页描述</dt>
                 <dd class="opt">
                     <textarea class="input-txt" id="post_description" name="description" title="">{$info.description}</textarea>
@@ -142,7 +142,7 @@
                     <p class="notic"></p>
                 </dd>
             </dl>
-            <dl class="row" id="video_row">
+            <dl class="row" id="video_row" <if condition="$info[nature] == 2">style="display:none;"</if>>
                 <dt class="tit">视频链接</dt>
                 <dd class="opt">
                     <textarea class="input-txt" id="" name="video" title="">{$info.video}</textarea>
@@ -172,7 +172,7 @@
                 </dd>
             </dl>
             <if condition="in_array($info[article_id], [95, 104, 105, 106, 108])">
-                <dl class="row" id="appContent_row">
+                <dl class="row" id="appContent_row" <if condition="$info[nature] == 2">style="display:none;"</if>>
                     <dt class="tit">
                         <label><em>*</em>APP显示内容（与文章内容一致）</label>
                     </dt>

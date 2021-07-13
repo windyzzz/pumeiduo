@@ -190,7 +190,7 @@ class Article extends Base
         }
 
         // 弹窗文章处理
-        if ($data['nature'] == 2) {
+        if (!$data['article_id'] && $data['nature'] == 2) {
             if (M('article')->where(['nature' => 2, 'is_open' => 1])->value('article_id')) {
                 $this->ajaxReturn(['status' => 0, 'msg' => '已经有一篇发布中的弹窗文章', 'result' => $result]);
             }
@@ -206,6 +206,10 @@ class Article extends Base
             $r = M('article')->add($data);
         } elseif ('edit' == $data['act']) {
             $r = M('article')->where('article_id=' . $data['article_id'])->save($data);
+            if ($data['nature'] == 2) {
+                // 修改用户查看记录状态
+                M('user_article')->where('article_id=' . $data['article_id'])->update(['status' => 0]);
+            }
         } elseif ('del' == $data['act']) {
             $r = M('article')->where('article_id=' . $data['article_id'])->delete();
         }

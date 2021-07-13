@@ -216,7 +216,7 @@ class Article extends Base
             $article = M('article')->where($where)->find();
             if (!empty($article)) {
                 // 查看用户弹窗文章记录
-                $userArticle = M('user_article')->where(['user_id' => $this->user_id, 'article_id' => $article['article_id']])->find();
+                $userArticle = M('user_article')->where(['user_id' => $this->user_id, 'article_id' => $article['article_id'], 'status' => 1])->find();
                 if (empty($userArticle)) {
                     $result['is_open'] = 1;
                     $result['is_force'] = 1;
@@ -245,6 +245,7 @@ class Article extends Base
         if (!$articleId) return json(['status' => 0, 'result' => '', 'msg' => '请传入文章ID']);
         if (M('user_article')->where(['user_id' => $this->user_id, 'article_id' => $articleId])->value('rec_id')) {
             M('user_article')->where(['user_id' => $this->user_id, 'article_id' => $articleId])->update([
+                'status' => 1,
                 'up_time' => NOW_TIME
             ]);
         } else {
