@@ -556,6 +556,10 @@ class App
         $controller = strip_tags($result[1] ?: $config['default_controller']);
         $controller = $convert ? strtolower($controller) : $controller;
 
+        if (!preg_match('/^[A-Za-z](\w|\.)*$/', $controller)) {
+            throw new HttpException(404, 'controller not exists:' . $controller);
+        }
+
         // 获取操作名
         $actionName = strip_tags($result[2] ?: $config['default_action']);
         $actionName = $convert ? strtolower($actionName) : $actionName;
@@ -577,7 +581,7 @@ class App
                       if (is_null($instance) && $controller == 'Distribut') {
 			header("Content-type: text/html; charset=utf-8");
 			exit('要使用分销模块请联系TPshop官网客服,官网地址 www.tp-shop.cn');
-                       }   
+                       }
             throw new HttpException(404, 'controller not exists:' . $e->getClass());
         }
 
@@ -593,13 +597,13 @@ class App
             $call = [$instance, '_empty'];
             $vars = [$actionName];
         } else {
-			
+
 		//echo $instance.$actionName ;
         if ($actionName == 'pre_sell_list') {
 			header("Content-type: text/html; charset=utf-8");
 			exit('要使用预售功能请联系TPshop官网客服,官网地址 www.tp-shop.cn');
         }
-			
+
             // 操作不存在
             throw new HttpException(404, 'method not exists:' . get_class($instance) . '->' . $action . '()');
         }
@@ -660,7 +664,7 @@ class App
                 $result = ['type' => 'module', 'module' => [$m, $c, $a]];//兼容以前的版本
             }
             else
-	    {	
+	    {
             $result = Route::parseUrl($path, $depr, $config['controller_auto_search']);
 	    }
         }
