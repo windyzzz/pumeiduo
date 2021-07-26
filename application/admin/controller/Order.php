@@ -1667,6 +1667,8 @@ class Order extends Base
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">支付状态</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">发货状态</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">订单来源</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">订单总销售额</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">订单总去税</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品总数</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品编号</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品数量</td>';
@@ -1674,8 +1676,8 @@ class Order extends Base
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品规格</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品单价</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">交易条件</td>';
-        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">销售额</td>';
-        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">去税</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品销售额</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品去税</td>';
         $strTable .= '</tr>';
         // 表体数据
         if (is_array($orderList)) {
@@ -1722,21 +1724,23 @@ class Order extends Base
                 $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . $orderSource[$val['source']] . '</td>';
                 // 商品总数
                 $goods_num = 0;
-                // 销售额
-                $salesAmount = 0;
+                // 订单总销售额
+                $totalSalesAmount = 0;
                 foreach ($orderGoods as $goods) {
                     $goods_num = $goods_num + $goods['goods_num'];
-                    $salesAmount = bcadd($salesAmount, bcmul($goods['goods_num'], $goods['member_goods_price'], 2), 2);
+                    $totalSalesAmount = bcadd($totalSalesAmount, bcmul($goods['goods_num'], $goods['member_goods_price'], 2), 2);
                 }
-                // 去税
-                $taxOut = 0;
+                // 订单总去税
+                $totalTaxOut = 0;
                 if ($orderGoods[0]['is_abroad'] == 1) {
                     $tradeType = '韩国购';
-                    $taxOut = bcdiv(bcmul($salesAmount, 0.25, 2), 1.13, 2);
+                    $totalTaxOut = bcdiv(bcmul($totalSalesAmount, 0.25, 2), 1.13, 2);
                 } else {
                     $tradeType = trade_type($orderGoods[0]['trade_type']);
-                    $taxOut = bcdiv($salesAmount, 1.13, 2);
+                    $totalTaxOut = bcdiv($totalSalesAmount, 1.13, 2);
                 }
+                $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . $totalSalesAmount . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . $totalTaxOut . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . $goods_num . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['goods_sn'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['goods_num'] . '</td>';
@@ -1744,8 +1748,16 @@ class Order extends Base
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['spec_key_name'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['member_goods_price'] . '</td>';
                 $strTable .= '<td style="text-align:left;font-size:12px;">' . $tradeType . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . $salesAmount . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . $taxOut . '</td>';
+                // 商品销售额
+                $goodsSalesAmount = bcmul($orderGoods[0]['goods_num'], $orderGoods[0]['member_goods_price'], 2);
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $goodsSalesAmount . '</td>';
+                // 商品去税
+                if ($orderGoods[0]['is_abroad'] == 1) {
+                    $goodsTaxOut = bcdiv(bcmul($goodsSalesAmount, 0.25, 2), 1.13, 2);
+                } else {
+                    $goodsTaxOut = bcdiv($goodsSalesAmount, 1.13, 2);
+                }
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $goodsTaxOut . '</td>';
                 $strTable .= '</tr>';
                 unset($orderGoods[0]);
                 if ($orderGoods) {
@@ -1757,10 +1769,16 @@ class Order extends Base
 //                            default:
 //                                $goodsTradeType = trade_type($goods['trade_type']);
 //                        }
+                        // 商品销售额
+                        $goodsSalesAmount = bcmul($goods['goods_num'], $goods['member_goods_price'], 2);
                         if ($goods['is_abroad'] == 1) {
                             $goodsTradeType = '韩国购';
+                            // 商品去税
+                            $goodsTaxOut = bcdiv(bcmul($goodsSalesAmount, 0.25, 2), 1.13, 2);
                         } else {
                             $goodsTradeType = trade_type($goods['trade_type']);
+                            // 商品去税
+                            $goodsTaxOut = bcdiv($goodsSalesAmount, 1.13, 2);
                         }
                         $strTable .= '<tr>';
                         $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['goods_sn'] . ' </td>';
@@ -1769,6 +1787,8 @@ class Order extends Base
                         $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['spec_key_name'] . ' </td>';
                         $strTable .= '<td style="text-align:left;font-size:12px;">' . $goods['member_goods_price'] . ' </td>';
                         $strTable .= '<td style="text-align:left;font-size:12px;">' . $goodsTradeType . ' </td>';
+                        $strTable .= '<td style="text-align:left;font-size:12px;">' . $goodsSalesAmount . '</td>';
+                        $strTable .= '<td style="text-align:left;font-size:12px;">' . $goodsTaxOut . '</td>';
                         $strTable .= '</tr>';
                     }
                 }
@@ -1845,8 +1865,8 @@ class Order extends Base
         $headList = [
             '订单编号', '下单日期', '支付日期', '父级ID', '会员ID', '注册时间', '会员等级', '升级VIP时间', '收货人', '收货地址', '电话',
             '应付金额', '商品金额', '优惠券折扣', '积分折扣', '现金折扣', '优惠促销', '运费', '总pv值', '乐活豆',
-            '订单状态', '支付状态', '发货状态', '订单来源', '支付方式',
-            '商品总数', '商品编号', '商品数量', '商品名称', '商品规格', '商品单价', '交易条件', '销售额', '去税'
+            '订单状态', '支付状态', '发货状态', '订单来源', '支付方式', '订单总销售额', '订单总去税',
+            '商品总数', '商品编号', '商品数量', '商品名称', '商品规格', '商品单价', '交易条件', '商品销售额', '商品去税'
         ];
         // 表数据
         $dataList = [];
@@ -1897,8 +1917,10 @@ class Order extends Base
             $goods_attr = [];
             $goods_price = [];
             $goods_trade = [];
-            $salesAmount = 0;   // 销售额
-            $taxOut = 0;        // 去税
+            $totalSalesAmount = 0;      // 订单总销售额
+            $totalTaxOut = 0;           // 订单总去税
+            $goodsSalesAmount = [];     // 商品销售额
+            $goodsTaxOut = [];          // 商品去税
             foreach ($orderGoods as $goods) {
                 $goods_amount += $goods['goods_num'];
                 $goods_sn[] = $goods['goods_sn'];
@@ -1913,19 +1935,24 @@ class Order extends Base
 //                    default:
 //                        $goodsTradeType = trade_type($goods['trade_type']);
 //                }
+                $totalSalesAmount = bcadd($totalSalesAmount, bcmul($goods['goods_num'], $goods['member_goods_price'], 2), 2);
+                $goodsSalesAmount[] = bcmul($goods['goods_num'], $goods['member_goods_price'], 2);
                 if ($goods['is_abroad'] == 1) {
                     $goodsTradeType = '韩国购';
+                    $goodsTaxOut[] = bcdiv(bcmul(bcmul($goods['goods_num'], $goods['member_goods_price'], 2), 0.25, 2), 1.13, 2);
                 } else {
                     $goodsTradeType = trade_type($goods['trade_type']);
+                    $goodsTaxOut[] = bcdiv(bcmul($goods['goods_num'], $goods['member_goods_price'], 2), 1.13, 2);
                 }
                 $goods_trade[] = $goodsTradeType;
-                $salesAmount = bcadd($salesAmount, bcmul($goods['goods_num'], $goods['member_goods_price'], 2), 2);
             }
             if ($goodsTradeType == '韩国购') {
-                $taxOut = bcdiv(bcmul($salesAmount, 0.25, 2), 1.13, 2);
+                $totalTaxOut = bcdiv(bcmul($totalSalesAmount, 0.25, 2), 1.13, 2);
             } else {
-                $taxOut = bcdiv($salesAmount, 1.13, 2);
+                $totalTaxOut = bcdiv($totalSalesAmount, 1.13, 2);
             }
+            $dataList[$key][] = $totalSalesAmount;
+            $dataList[$key][] = $totalTaxOut;
             $dataList[$key][] = $goods_amount;
             $dataList[$key][] = $goods_sn;
             $dataList[$key][] = $goods_num;
@@ -1933,8 +1960,8 @@ class Order extends Base
             $dataList[$key][] = $goods_attr;
             $dataList[$key][] = $goods_price;
             $dataList[$key][] = $goods_trade;
-            $dataList[$key][] = $salesAmount;
-            $dataList[$key][] = $taxOut;
+            $dataList[$key][] = $goodsSalesAmount;
+            $dataList[$key][] = $goodsTaxOut;
         }
         toCsvExcel($dataList, $headList, 'order');
     }
