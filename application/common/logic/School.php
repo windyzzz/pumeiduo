@@ -355,6 +355,21 @@ class School
     }
 
     /**
+     * 用户初次访问商学院
+     * @param $userId
+     */
+    public function firstVisit($userId)
+    {
+        if (!M('user_school_config')->where(['type' => 'first_visit', 'user_id' => $userId])->find()) {
+            M('user_school_config')->add([
+                'type' => 'first_visit',
+                'user_id' => $userId,
+                'add_time' => NOW_TIME
+            ]);
+        }
+    }
+
+    /**
      * 获取弹窗通知
      * @return array
      */

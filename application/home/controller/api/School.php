@@ -52,6 +52,7 @@ class School extends Base
         if ($this->passAuth) {
             die(json_encode(['status' => -999, 'msg' => '请先登录']));
         }
+        $this->logic->firstVisit($this->user_id);
         $data = $this->logic->getModule();
         return json(['status' => 1, 'msg' => '', 'result' => $data]);
     }

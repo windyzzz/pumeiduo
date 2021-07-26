@@ -281,13 +281,17 @@ class School extends Base
             ];
             $res = $this->checkUserCourseNum(false, $userData, $courseIds, $timeFrom, $timeTo);
             $user['course_num'] = $res['course_num'];
+            // 用户首次进入商学院的时间
+            $firstVisit = M('user_school_config')->where(['type' => 'first_visit', 'user_id' => $user['user_id']])->value('add_time');
+            $user['first_visit'] = $firstVisit ? date('Y-m-d H:i:s', $firstVisit) : '';
             $dataList[] = [
                 $user['user_id'],
                 $user['nickname'],
                 $user['user_name'],
                 $user['level_name'],
                 $user['course_num'],
-                $user['school_credit']
+                $user['school_credit'],
+                $user['first_visit']
             ];
         }
         if (!$isExport) {
@@ -304,7 +308,7 @@ class School extends Base
         } else {
             // 表头
             $headList = [
-                '用户ID', '用户昵称', '用户名', '用户等级', '课程数量', '乐活豆数量'
+                '用户ID', '用户昵称', '用户名', '用户等级', '课程数量', '乐活豆数量', '首次进入商学院'
             ];
             toCsvExcel($dataList, $headList, 'user_course_list');
         }
@@ -316,6 +320,7 @@ class School extends Base
      */
     public function userCourseArticleList()
     {
+        $isExport = I('is_export', '');     // 是否导出
         $userId = I('user_id');
         // 学习课程id
         $courseIds = M('school_article')->where([
@@ -327,16 +332,50 @@ class School extends Base
             'usa.article_id' => ['IN', $courseIds],
             'usa.status' => 1
         ];
-        $count = M('user_school_article usa')->where($where)->join('school_article sa', 'sa.id = usa.article_id')->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')->count();
-        $page = new Page($count, 10);
-        $list = M('user_school_article usa')->where($where)->join('school_article sa', 'sa.id = usa.article_id')->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')
-            ->field('usa.user_id, usa.article_id, sa.title, sa.status, sa.publish_time, s.name module_name, sc.name class_name')
-            ->limit($page->firstRow . ',' . $page->listRows)
-            ->order('sa.publish_time DESC, sa.sort DESC')
-            ->select();
-        $this->assign('page', $page);
-        $this->assign('list', $list);
-        return $this->fetch('user_course_article_list');
+        $userArticle = M('user_school_article usa')->where($where)->join('school_article sa', 'sa.id = usa.article_id')->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')
+            ->field('usa.user_id, usa.article_id, sa.title, sa.status, sa.publish_time, s.name module_name, sc.name class_name');
+        if (!$isExport) {
+            // 总数
+            $count = M('user_school_article usa')->where($where)->join('school_article sa', 'sa.id = usa.article_id')->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')->count();
+            $page = new Page($count, 10);
+            // 列表
+            $userArticle = $userArticle->limit($page->firstRow . ',' . $page->listRows)->order('sa.publish_time DESC, sa.sort DESC');
+            $list = $userArticle->select();
+            $this->assign('user_id', $userId);
+            $this->assign('page', $page);
+            $this->assign('list', $list);
+            return $this->fetch('user_course_article_list');
+        } else {
+            $list = $userArticle->select();
+            $dataList = [];
+            foreach ($list as $item) {
+                switch ($item['status']) {
+                    case 1:
+                        $status = '已发布';
+                        break;
+                    case 2:
+                        $status = '预发布';
+                        break;
+                    case 3:
+                        $status = '不发布';
+                        break;
+                }
+                $dataList[] = [
+                    $item['user_id'],
+                    $item['article_id'],
+                    $item['title'],
+                    $item['module_name'],
+                    $item['class_name'],
+                    $status,
+                    date('Y-m-d H:i:s', $item['publish_time']),
+                ];
+            }
+            // 表头
+            $headList = [
+                '用户ID', '文章ID', '标题', '所属模块', '所属分类', '状态', '发布时间'
+            ];
+            toCsvExcel($dataList, $headList, 'user_course_article_list');
+        }
     }
 
     /**
