@@ -1557,6 +1557,9 @@ class School extends Base
         $title = htmlspecialchars_decode(trim(I('title', '')));
         $moduleId = I('module_id', '');
         $classId = I('class_id', '');
+        $timeFrom = I('time_from', '') ? strtotime(I('time_from')) : '';
+        $timeTo = I('time_to', '') ? strtotime(I('time_to')) : '';
+        $isExport = I('is_export', 0);
         if ($title) {
             $where['sa.title'] = ['LIKE', '%' . $title . '%'];
         }
@@ -1567,6 +1570,9 @@ class School extends Base
         if ($classId) {
             $where['sc.id'] = $classId;
         }
+        if ($timeFrom && $timeTo) {
+            $where['sa.publish_time'] = ['BETWEEN', [$timeFrom, $timeTo]];
+        }
         // 排序
         $order = 'sa.publish_time DESC, sa.sort DESC';
         $sort = I('sort', '');
@@ -1574,26 +1580,62 @@ class School extends Base
         if ($sort && $sortBy) {
             $order = 'sa.' . $sort . ' ' . $sortBy . ', ' . $order;
         }
-        // 数据
-        $count = M('school_article sa')->where($where)->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')->count();
-        $page = new Page($count, 10);
-        $list = M('school_article sa')->where($where)->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')
-            ->field('sa.*, s.name module_name, sc.name class_name')
-            ->limit($page->firstRow . ',' . $page->listRows)
-            ->order($order)
-            ->select();
-        // 模块列表
-        $notModuleType = ['module6', 'module7', 'module8'];
-        $module = M('school')->where(['is_open' => 1, 'type' => ['NOT IN', $notModuleType]])->getField('id, name', true);
-        $this->assign('title', $title);
-        $this->assign('module_id', $moduleId);
-        $this->assign('module', $module);
-        $this->assign('class_id', $classId);
-        $this->assign('class', $class ?? []);
-        $this->assign('sort', $sort);
-        $this->assign('sort_by', $sortBy);
-        $this->assign('page', $page);
-        $this->assign('list', $list);
-        return $this->fetch('course_list');
+        $schoolArticle = M('school_article sa')->where($where)->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')->field('sa.*, s.name module_name, sc.name class_name');
+        if (!$isExport) {
+            // 总数
+            $count = M('school_article sa')->where($where)->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')->count();
+            $page = new Page($count, 10);
+            // 列表
+            $schoolArticle = $schoolArticle->limit($page->firstRow . ',' . $page->listRows)->order($order);
+            // 数据
+            $list = $schoolArticle->select();
+            // 模块列表
+            $notModuleType = ['module6', 'module7', 'module8'];
+            $module = M('school')->where(['is_open' => 1, 'type' => ['NOT IN', $notModuleType]])->getField('id, name', true);
+            $this->assign('title', $title);
+            $this->assign('module_id', $moduleId);
+            $this->assign('module', $module);
+            $this->assign('class_id', $classId);
+            $this->assign('class', $class ?? []);
+            $this->assign('time_from', I('time_from', ''));
+            $this->assign('time_to', I('time_to', ''));
+            $this->assign('sort', $sort);
+            $this->assign('sort_by', $sortBy);
+            $this->assign('page', $page);
+            $this->assign('list', $list);
+            return $this->fetch('course_list');
+        } else {
+            $list = $schoolArticle->select();
+            $dataList = [];
+            foreach ($list as $item) {
+                switch ($item['status']) {
+                    case 1:
+                        $status = '已发布';
+                        break;
+                    case 2:
+                        $status = '预发布';
+                        break;
+                    case 3:
+                        $status = '不发布';
+                        break;
+                }
+                $dataList[] = [
+                    $item['id'],
+                    $item['title'],
+                    $item['module_name'],
+                    $item['class_name'],
+                    $item['learn'],
+                    $item['share'],
+                    $item['click'],
+                    $status,
+                    date('Y-m-d H:i:s', $item['publish_time']),
+                ];
+            }
+            // 表头
+            $headList = [
+                '文章ID', '标题', '所属模块', '所属分类', '学习人数', '分享人数', '点击数', '状态', '发布时间'
+            ];
+            toCsvExcel($dataList, $headList, 'course_list');
+        }
     }
 }
