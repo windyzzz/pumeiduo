@@ -1674,6 +1674,8 @@ class Order extends Base
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品规格</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">商品单价</td>';
         $strTable .= '<td style="text-align:center;font-size:12px;" width="*">交易条件</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">销售额</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="*">去税</td>';
         $strTable .= '</tr>';
         // 表体数据
         if (is_array($orderList)) {
@@ -1694,46 +1696,56 @@ class Order extends Base
                 $levelUpTime = $distributeLog[$val['user_id']] ? date('Y-m-d H:i:s', $distributeLog[$val['user_id']]) : '';
                 $strTable .= '<tr>';
                 $strTable .= '<td style="text-align:center;font-size:12px;" rowspan="' . $orderGoodsNum . '">&nbsp;' . $val['order_sn'] . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['add_time'] . ' </td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['pay_time_show'] . ' </td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['first_leader'] . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['user_id'] . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $regTime . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $level . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $levelUpTime . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['consignee'] . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . "{$region[$val['province']]},{$region[$val['city']]},{$region[$val['district']]},{$region[$val['twon']]}{$val['address']}" . ' </td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['mobile'] . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['order_amount'] . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['goods_price'] . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['coupon_price'] . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['integral_money'] . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['user_electronic'] . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['order_prom_amount'] . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['shipping_price'] . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['order_pv'] . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['school_credit'] . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . C('ORDER_STATUS')[$val['order_status']] . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $val['pay_name'] . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $this->pay_status[$val['pay_status']] . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $this->shipping_status[$val['shipping_status']] . '</td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;"   rowspan="' . $orderGoodsNum . '">' . $orderSource[$val['source']] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . $val['add_time'] . ' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . $val['pay_time_show'] . ' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . $val['first_leader'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . $val['user_id'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . $regTime . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . $level . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . $levelUpTime . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . $val['consignee'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . "{$region[$val['province']]},{$region[$val['city']]},{$region[$val['district']]},{$region[$val['twon']]}{$val['address']}" . ' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . $val['mobile'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . $val['order_amount'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . $val['goods_price'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . $val['coupon_price'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . $val['integral_money'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . $val['user_electronic'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . $val['order_prom_amount'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . $val['shipping_price'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . $val['order_pv'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . $val['school_credit'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . C('ORDER_STATUS')[$val['order_status']] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . $val['pay_name'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . $this->pay_status[$val['pay_status']] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . $this->shipping_status[$val['shipping_status']] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . $orderSource[$val['source']] . '</td>';
+                // 商品总数
                 $goods_num = 0;
+                // 销售额
+                $salesAmount = 0;
                 foreach ($orderGoods as $goods) {
                     $goods_num = $goods_num + $goods['goods_num'];
+                    $salesAmount = bcadd($salesAmount, bcmul($goods['goods_num'], $goods['member_goods_price'], 2), 2);
                 }
+                // 去税
+                $taxOut = 0;
                 if ($orderGoods[0]['is_abroad'] == 1) {
                     $tradeType = '韩国购';
+                    $taxOut = bcdiv(bcmul($salesAmount, 0.25, 2), 1.13, 2);
                 } else {
                     $tradeType = trade_type($orderGoods[0]['trade_type']);
+                    $taxOut = bcdiv($salesAmount, 1.13, 2);
                 }
-                $strTable .= '<td style="text-align:left;font-size:12px;"    rowspan="' . $orderGoodsNum . '">' . $goods_num . ' </td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['goods_sn'] . ' </td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['goods_num'] . ' </td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['goods_name'] . ' </td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['spec_key_name'] . ' </td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['member_goods_price'] . ' </td>';
-                $strTable .= '<td style="text-align:left;font-size:12px;">' . $tradeType . ' </td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . $goods_num . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['goods_sn'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['goods_num'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['goods_name'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['spec_key_name'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $orderGoods[0]['member_goods_price'] . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;">' . $tradeType . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . $salesAmount . '</td>';
+                $strTable .= '<td style="text-align:left;font-size:12px;" rowspan="' . $orderGoodsNum . '">' . $taxOut . '</td>';
                 $strTable .= '</tr>';
                 unset($orderGoods[0]);
                 if ($orderGoods) {
@@ -1834,7 +1846,7 @@ class Order extends Base
             '订单编号', '下单日期', '支付日期', '父级ID', '会员ID', '注册时间', '会员等级', '升级VIP时间', '收货人', '收货地址', '电话',
             '应付金额', '商品金额', '优惠券折扣', '积分折扣', '现金折扣', '优惠促销', '运费', '总pv值', '乐活豆',
             '订单状态', '支付状态', '发货状态', '订单来源', '支付方式',
-            '商品总数', '商品编号', '商品数量', '商品名称', '商品规格', '商品单价', '交易条件'
+            '商品总数', '商品编号', '商品数量', '商品名称', '商品规格', '商品单价', '交易条件', '销售额', '去税'
         ];
         // 表数据
         $dataList = [];
@@ -1885,6 +1897,8 @@ class Order extends Base
             $goods_attr = [];
             $goods_price = [];
             $goods_trade = [];
+            $salesAmount = 0;   // 销售额
+            $taxOut = 0;        // 去税
             foreach ($orderGoods as $goods) {
                 $goods_amount += $goods['goods_num'];
                 $goods_sn[] = $goods['goods_sn'];
@@ -1905,6 +1919,12 @@ class Order extends Base
                     $goodsTradeType = trade_type($goods['trade_type']);
                 }
                 $goods_trade[] = $goodsTradeType;
+                $salesAmount = bcadd($salesAmount, bcmul($goods['goods_num'], $goods['member_goods_price'], 2), 2);
+            }
+            if ($goodsTradeType == '韩国购') {
+                $taxOut = bcdiv(bcmul($salesAmount, 0.25, 2), 1.13, 2);
+            } else {
+                $taxOut = bcdiv($salesAmount, 1.13, 2);
             }
             $dataList[$key][] = $goods_amount;
             $dataList[$key][] = $goods_sn;
@@ -1913,6 +1933,8 @@ class Order extends Base
             $dataList[$key][] = $goods_attr;
             $dataList[$key][] = $goods_price;
             $dataList[$key][] = $goods_trade;
+            $dataList[$key][] = $salesAmount;
+            $dataList[$key][] = $taxOut;
         }
         toCsvExcel($dataList, $headList, 'order');
     }
