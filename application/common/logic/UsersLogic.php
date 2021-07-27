@@ -3681,11 +3681,11 @@ class UsersLogic extends Model
     }
 
     /**
-     * 获取代理商
+     * 获取代理商职级
      * @param $userName
      * @return array
      */
-    public function getAgentSvip($userName)
+    public function getAgentSvipLevel($userName)
     {
         $url = C('SERVER_URL') . '/index.php/Crond/get_user_grade/user_name/' . $userName;
         $res = httpRequest($url);

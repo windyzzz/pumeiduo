@@ -46,23 +46,35 @@
                     </dl>
                     <dl class="row">
                         <dt class="tit">
-                            <label>访问限制</label>
+                            <label>APP访问等级</label>
                         </dt>
                         <dd class="opt ctype">
-                            <input name="distribute_level[]" type="checkbox" value="-1"><label>禁止访问</label>
+                            <input name="app_grade[]" type="checkbox" value="0"><label>所有人</label>
+                            <foreach name="app_grade" item="v" key="k">
+                                <input name="app_grade[]" type="checkbox" value="{$v.level_id}"><label>{$v.level_name}</label>
+                            </foreach>
+                        </dd>
+                    </dl>
+                    <dl class="row">
+                        <dt class="tit">
+                            <label>代理商访问等级</label>
+                        </dt>
+                        <dd class="opt ctype">
+                            <input name="distribute_grade[]" type="checkbox" value="0"><label>所有人</label>
+                            <foreach name="svip_grade" item="v" key="k">
+                                <input name="distribute_grade[]" type="checkbox" value="{$v.app_level}"><label>{$v.name}</label>
+                            </foreach>
+                        </dd>
+                    </dl>
+                    <dl class="row">
+                        <dt class="tit">
+                            <label>代理商访问职级</label>
+                        </dt>
+                        <dd class="opt ctype">
                             <input name="distribute_level[]" type="checkbox" value="0"><label>所有人</label>
-                            <input name="distribute_level[]" type="checkbox" value="1"><label>普通会员</label>
-                            <input name="distribute_level[]" type="checkbox" value="2"><label>VIP</label>
-                            <input name="distribute_level[]" type="checkbox" value="3"><label>SVIP</label>
-                            <input name="distribute_level[]" type="checkbox" value="4"><label>主任</label>
-                            <input name="distribute_level[]" type="checkbox" value="5"><label>经理</label>
-                            <input name="distribute_level[]" type="checkbox" value="6"><label>高级经理</label>
-                            <input name="distribute_level[]" type="checkbox" value="7"><label>总监</label>
-                            <input name="distribute_level[]" type="checkbox" value="8"><label>高级总监</label>
-                            <input name="distribute_level[]" type="checkbox" value="9"><label>董事</label>
-                            <input name="distribute_level[]" type="checkbox" value="10"><label>一星董事</label>
-                            <input name="distribute_level[]" type="checkbox" value="11"><label>二星董事</label>
-                            <input name="distribute_level[]" type="checkbox" value="12"><label>三星董事</label>
+                            <foreach name="svip_level" item="v" key="k">
+                                <input name="distribute_level[]" type="checkbox" value="{$v.app_level}"><label>{$v.name}</label>
+                            </foreach>
                         </dd>
                     </dl>
                     <dl class="row">
