@@ -147,28 +147,38 @@ class School
         if ($module['is_allow'] == 0) {
             return ['status' => 0, 'msg' => '功能尚未开放'];
         }
-        // 等级权限
+        // APP等级权限
+        if ($module['app_grade'] != 0) {
+            $limitLevel = explode(',', $module['app_grade']);
+            if (!in_array($user['distribut_level'], $limitLevel)) {
+                switch ($limitLevel[0]) {
+                    case 2:
+                        $status = -2;   // VIP
+                        break;
+                    case 3:
+                        $status = -1;   // SVIP
+                        break;
+                    default:
+                        $status = 0;
+                }
+                $levelName = M('distribut_level')->where(['level_id' => $limitLevel[0]])->value('level_name');
+                return ['status' => $status, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
+            }
+        }
+        // 代理商等级权限
+        if ($module['distribute_grade'] != 0) {
+            $limitLevel = explode(',', $module['distribute_grade']);
+            if (!in_array($user['svip_grade'], $limitLevel)) {
+                $levelName = M('svip_grade')->where(['app_level' => $limitLevel[0]])->value('name');
+                return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
+            }
+        }
+        // 代理商职级权限
         if ($module['distribute_level'] != 0) {
             $limitLevel = explode(',', $module['distribute_level']);
-            $svipLevel = M('svip_level')->getField('app_level, name', true);
-            if (!in_array($user['distribut_level'], $limitLevel)) {
-                if ($user['svip_level'] == 3 && $limitLevel[0] < 4) {
-                    switch ($limitLevel[0]) {
-                        case 2:
-                            $status = -2;
-                            break;
-                        case 3:
-                            $status = -1;
-                            break;
-                        default:
-                            $status = 0;
-                    }
-                    $levelName = M('distribut_level')->where(['level_id' => $limitLevel[0]])->value('level_name');
-                    return ['status' => $status, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
-                } else if (!in_array($user['svip_level'], $limitLevel)) {
-                    $levelName = $svipLevel[$limitLevel[0]];
-                    return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
-                }
+            if (!in_array($user['svip_level'], $limitLevel)) {
+                $levelName = M('svip_level')->where(['app_level' => $limitLevel[0]])->value('name');
+                return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
             }
         }
         return ['status' => 1, 'msg' => 'ok'];
@@ -191,28 +201,38 @@ class School
         if ($moduleClass['is_allow'] == 0) {
             return ['status' => 0, 'msg' => '功能尚未开放'];
         }
-        // 等级权限
+        // APP等级权限
+        if ($moduleClass['app_grade'] != 0) {
+            $limitLevel = explode(',', $moduleClass['app_grade']);
+            if (!in_array($user['distribut_level'], $limitLevel)) {
+                switch ($limitLevel[0]) {
+                    case 2:
+                        $status = -2;   // VIP
+                        break;
+                    case 3:
+                        $status = -1;   // SVIP
+                        break;
+                    default:
+                        $status = 0;
+                }
+                $levelName = M('distribut_level')->where(['level_id' => $limitLevel[0]])->value('level_name');
+                return ['status' => $status, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
+            }
+        }
+        // 代理商等级权限
+        if ($moduleClass['distribute_grade'] != 0) {
+            $limitLevel = explode(',', $moduleClass['distribute_grade']);
+            if (!in_array($user['svip_grade'], $limitLevel)) {
+                $levelName = M('svip_grade')->where(['app_level' => $limitLevel[0]])->value('name');
+                return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
+            }
+        }
+        // 代理商职级权限
         if ($moduleClass['distribute_level'] != 0) {
             $limitLevel = explode(',', $moduleClass['distribute_level']);
-            $svipLevel = M('svip_level')->getField('app_level, name', true);
-            if (!in_array($user['distribut_level'], $limitLevel)) {
-                if ($user['svip_level'] == 3 && $limitLevel[0] < 4) {
-                    switch ($limitLevel[0]) {
-                        case 2:
-                            $status = -2;
-                            break;
-                        case 3:
-                            $status = -1;
-                            break;
-                        default:
-                            $status = 0;
-                    }
-                    $levelName = M('distribut_level')->where(['level_id' => $limitLevel[0]])->value('level_name');
-                    return ['status' => $status, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
-                } else if (!in_array($user['svip_level'], $limitLevel)) {
-                    $levelName = $svipLevel[$limitLevel[0]];
-                    return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
-                }
+            if (!in_array($user['svip_level'], $limitLevel)) {
+                $levelName = M('svip_level')->where(['app_level' => $limitLevel[0]])->value('name');
+                return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
             }
         }
         // 是否是学习课程
@@ -249,28 +269,38 @@ class School
             return ['status' => 0, 'msg' => '文章已失效'];
         }
         $user = M('users')->where(['user_id' => $user['user_id']])->find();
-        // 等级权限
+        // APP等级权限
+        if ($article['app_grade'] != 0) {
+            $limitLevel = explode(',', $article['app_grade']);
+            if (!in_array($user['distribut_level'], $limitLevel)) {
+                switch ($limitLevel[0]) {
+                    case 2:
+                        $status = -2;   // VIP
+                        break;
+                    case 3:
+                        $status = -1;   // SVIP
+                        break;
+                    default:
+                        $status = 0;
+                }
+                $levelName = M('distribut_level')->where(['level_id' => $limitLevel[0]])->value('level_name');
+                return ['status' => $status, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
+            }
+        }
+        // 代理商等级权限
+        if ($article['distribute_grade'] != 0) {
+            $limitLevel = explode(',', $article['distribute_grade']);
+            if (!in_array($user['svip_grade'], $limitLevel)) {
+                $levelName = M('svip_grade')->where(['app_level' => $limitLevel[0]])->value('name');
+                return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
+            }
+        }
+        // 代理商职级权限
         if ($article['distribute_level'] != 0) {
             $limitLevel = explode(',', $article['distribute_level']);
-            $svipLevel = M('svip_level')->getField('app_level, name', true);
-            if (!in_array($user['distribut_level'], $limitLevel)) {
-                if ($user['svip_level'] == 3 && $limitLevel[0] < 4) {
-                    switch ($limitLevel[0]) {
-                        case 2:
-                            $status = -2;
-                            break;
-                        case 3:
-                            $status = -1;
-                            break;
-                        default:
-                            $status = 0;
-                    }
-                    $levelName = M('distribut_level')->where(['level_id' => $limitLevel[0]])->value('level_name');
-                    return ['status' => $status, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
-                } else if (!in_array($user['svip_level'], $limitLevel)) {
-                    $levelName = $svipLevel[$limitLevel[0]];
-                    return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
-                }
+            if (!in_array($user['svip_level'], $limitLevel)) {
+                $levelName = M('svip_level')->where(['app_level' => $limitLevel[0]])->value('name');
+                return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
             }
         }
         // 是否已购买课程
