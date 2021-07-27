@@ -495,6 +495,7 @@ class School extends Base
                 }
             }
             $dataList[] = [
+                $log['user_id'],
                 $log['userName'],
                 $log['level_name'],
                 $log['course_num'],
@@ -526,7 +527,7 @@ class School extends Base
         } else {
             // 表头
             $headList = [
-                '用户', '用户等级', '课程数量', '乐活豆数量', '是否达标'
+                '用户ID', '用户昵称', '用户等级', '课程数量', '乐活豆数量', '是否达标'
             ];
             toCsvExcel($dataList, $headList, 'user_standard_list');
         }
