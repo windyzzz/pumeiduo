@@ -56,6 +56,30 @@
                     </select>
                 </div>
                 <div class="sDiv2">
+                    <select name="app_grade">
+                        <option value="">APP等级</option>
+                        <volist name="app_grade" id="vo" key="k">
+                            <option value="{$key}" <if condition="$select_app_grade == $key">selected</if>>{$vo}</option>
+                        </volist>
+                    </select>
+                </div>
+                <div class="sDiv2">
+                    <select name="svip_grade">
+                        <option value="">代理商职级</option>
+                        <volist name="svip_grade" id="vo" key="k">
+                            <option value="{$key}" <if condition="$select_svip_grade == $key">selected</if>>{$vo}</option>
+                        </volist>
+                    </select>
+                </div>
+                <div class="sDiv2">
+                    <select name="svip_level">
+                        <option value="">代理商职级</option>
+                        <volist name="svip_level" id="vo" key="k">
+                            <option value="{$key}" <if condition="$select_svip_level == $key">selected</if>>{$vo}</option>
+                        </volist>
+                    </select>
+                </div>
+                <div class="sDiv2">
                     <input type="text" size="30" id="time_from" name="time_from" value="{$time_from}" class="qsbox" placeholder="开始时间">
                 </div>
                 <div class="sDiv2">
@@ -93,11 +117,23 @@
                         <th align="left" abbr="article_title" axis="col3" class="">
                             <div style="text-align: center; width: 240px;" class="">标题</div>
                         </th>
+                        <th align="left" abbr="article_title" axis="col3" class="">
+                            <div style="text-align: center; width: 120px;" class="">学习类型</div>
+                        </th>
                         <th align="left" abbr="send_type" axis="col4" class="">
                             <div style="text-align: center; width: 120px;" class="">所属模块</div>
                         </th>
                         <th align="left" abbr="coupon_name" axis="col3" class="">
                             <div style="text-align: center; width: 120px;" class="">所属分类</div>
+                        </th>
+                        <th align="left" abbr="coupon_name" axis="col3" class="">
+                            <div style="text-align: center; width: 120px;" class="">APP等级限制</div>
+                        </th>
+                        <th align="left" abbr="coupon_name" axis="col3" class="">
+                            <div style="text-align: center; width: 120px;" class="">代理商等级限制</div>
+                        </th>
+                        <th align="left" abbr="coupon_name" axis="col3" class="">
+                            <div style="text-align: center; width: 120px;" class="">代理商职级限制</div>
                         </th>
                         <th align="left" abbr="coupon_name" axis="col3" class="">
                             <div style="text-align: center; width: 100px;" class="click" onclick="sort('learn')">
@@ -185,10 +221,34 @@
                                 </div>
                             </td>
                             <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">{$vo.learn_type_desc}</div>
+                            </td>
+                            <td align="left" class="">
                                 <div style="text-align: center; width: 120px;">{$vo.module_name}</div>
                             </td>
                             <td align="left" class="">
                                 <div style="text-align: center; width: 120px;">{$vo.class_name}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">
+                                    <foreach name="$vo[app_grade_list]" item="v" key="k">
+                                        {$v} <br/>
+                                    </foreach>
+                                </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">
+                                    <foreach name="$vo[distribute_grade_list]" item="v" key="k">
+                                        {$v} <br/>
+                                    </foreach>
+                                </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">
+                                    <foreach name="$vo[distribute_level_list]" item="v" key="k">
+                                        {$v} <br/>
+                                    </foreach>
+                                </div>
                             </td>
                             <td align="left" class="">
                                 <div style="text-align: center; width: 100px;">{$vo.learn}</div>
@@ -203,21 +263,19 @@
                                 <div style="text-align: center; width: 120px;" onClick="sort('learn');">
                                     <switch name='$vo[status]'>
                                         <case value='1'>
-                                            <span style="color: green;">已发布</span>
+                                            <span style="color: green;">{$vo.status_desc}</span>
                                         </case>
                                         <case value='2'>
-                                            <span style="color: blue;">预发布</span>
+                                            <span style="color: blue;">{$vo.status_desc}</span>
                                         </case>
                                         <case value='3'>
-                                            <span style="color: black;">不发布</span>
+                                            <span style="color: black;">{$vo.status_desc}</span>
                                         </case>
                                     </switch>
                                 </div>
                             </td>
                             <td align="left" class="">
-                                <div style="text-align: center; width: 150px;">
-                                    {$vo.publish_time|date='Y-m-d H:i:s', ###}
-                                </div>
+                                <div style="text-align: center; width: 150px;">{$vo.publish_time_desc}</div>
                             </td>
                             <td align="" class="" style="width: 100%;">
                                 <div>&nbsp</div>

@@ -60,6 +60,9 @@
                             <div style="text-align: center; width: 240px;" class="">标题</div>
                         </th>
                         <th align="left" abbr="send_type" axis="col4" class="">
+                            <div style="text-align: center; width: 120px;" class="">学习类型</div>
+                        </th>
+                        <th align="left" abbr="send_type" axis="col4" class="">
                             <div style="text-align: center; width: 120px;" class="">所属模块</div>
                         </th>
                         <th align="left" abbr="coupon_name" axis="col3" class="">
@@ -97,6 +100,18 @@
                             <td align="left" class="">
                                 <div style="text-align: center; width: 240px;">
                                     <textarea style="width: 80%; height: 100%; line-height: 150%;" rows="3" disabled>{$vo.title}</textarea>
+                                </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">
+                                    <switch name='$vo[learn_type]'>
+                                        <case value='1'>
+                                            必修
+                                        </case>
+                                        <case value='2'>
+                                            选修
+                                        </case>
+                                    </switch>
                                 </div>
                             </td>
                             <td align="left" class="">

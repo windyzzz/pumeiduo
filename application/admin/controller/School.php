@@ -340,7 +340,7 @@ class School extends Base
             'usa.status' => 1
         ];
         $userArticle = M('user_school_article usa')->where($where)->join('school_article sa', 'sa.id = usa.article_id')->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')
-            ->field('usa.user_id, usa.article_id, sa.title, sa.status, sa.publish_time, s.name module_name, sc.name class_name');
+            ->field('usa.user_id, usa.article_id, sa.title, sa.learn_type, sa.status, sa.publish_time, s.name module_name, sc.name class_name');
         if (!$isExport) {
             // 总数
             $count = M('user_school_article usa')->where($where)->join('school_article sa', 'sa.id = usa.article_id')->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')->count();
@@ -356,6 +356,14 @@ class School extends Base
             $list = $userArticle->select();
             $dataList = [];
             foreach ($list as $item) {
+                switch ($item['learn_type']) {
+                    case 1:
+                        $learnType = '必修';
+                        break;
+                    case 2:
+                        $learnType = '选修';
+                        break;
+                }
                 switch ($item['status']) {
                     case 1:
                         $status = '已发布';
@@ -371,6 +379,7 @@ class School extends Base
                     $item['user_id'],
                     $item['article_id'],
                     $item['title'],
+                    $learnType,
                     $item['module_name'],
                     $item['class_name'],
                     $status,
@@ -379,7 +388,7 @@ class School extends Base
             }
             // 表头
             $headList = [
-                '用户ID', '文章ID', '标题', '所属模块', '所属分类', '状态', '发布时间'
+                '用户ID', '文章ID', '标题', '学习类型', '所属模块', '所属分类', '状态', '发布时间'
             ];
             toCsvExcel($dataList, $headList, 'user_course_article_list');
         }
@@ -1814,6 +1823,15 @@ class School extends Base
         if ($classId) {
             $where['sc.id'] = $classId;
         }
+        if ($appGrade = I('app_grade', '')) {
+            $where['sa.app_grade'] = ['LIKE', '%' . $appGrade . '%'];
+        }
+        if ($svipGrade = I('svip_grade', '')) {
+            $where['sa.distribute_grade'] = ['LIKE', '%' . $svipGrade . '%'];
+        }
+        if ($svipLevel = I('svip_level', '')) {
+            $where['sa.distribute_level'] = ['LIKE', '%' . $svipLevel . '%'];
+        }
         if ($timeFrom && $timeTo) {
             $where['sa.publish_time'] = ['BETWEEN', [$timeFrom, $timeTo]];
         }
@@ -1831,8 +1849,73 @@ class School extends Base
             $page = new Page($count, 10);
             // 列表
             $schoolArticle = $schoolArticle->limit($page->firstRow . ',' . $page->listRows)->order($order);
-            // 数据
-            $list = $schoolArticle->select();
+
+        }
+        // 数据
+        $list = $schoolArticle->select();
+        $dataList = [];
+        foreach ($list as &$item) {
+            if ($item['app_grade'] == 0) {
+                $item['app_grade_list'] = ['所有人' . "\r\n"];
+            } else {
+                $appGradeArr = explode(',', $item['app_grade']);
+                foreach ($appGradeArr as $value) {
+                    $item['app_grade_list'][] = $this->appGrade[$value] . "\r\n";
+                }
+            }
+            if ($item['distribute_grade'] == 0) {
+                $item['distribute_grade_list'] = ['所有人' . "\r\n"];
+            } else {
+                $svipGradeArr = explode(',', $item['distribute_grade']);
+                foreach ($svipGradeArr as $value) {
+                    $item['distribute_grade_list'][] = $this->svipGrade[$value] . "\r\n";
+                }
+            }
+            if ($item['distribute_level'] == 0) {
+                $item['distribute_level_list'] = ['所有人' . "\r\n"];
+            } else {
+                $svipLevelArr = explode(',', $item['distribute_level']);
+                foreach ($svipLevelArr as $value) {
+                    $item['distribute_level_list'][] = $this->svipLevel[$value] . "\r\n";
+                }
+            }
+            switch ($item['learn_type']) {
+                case 1:
+                    $item['learn_type_desc'] = '必修';
+                    break;
+                case 2:
+                    $item['learn_type_desc'] = '选修';
+                    break;
+            }
+            switch ($item['status']) {
+                case 1:
+                    $item['status_desc'] = '已发布';
+                    break;
+                case 2:
+                    $item['status_desc'] = '预发布';
+                    break;
+                case 3:
+                    $item['status_desc'] = '不发布';
+                    break;
+            }
+            $item['publish_time_desc'] = date('Y-m-d H:i:s', $item['publish_time']);
+            $dataList[] = [
+                $item['id'],
+                $item['title'],
+                $item['learn_type_desc'],
+                $item['module_name'],
+                $item['class_name'],
+                "\r\n" . implode(' ', $item['app_grade_list']),
+                "\r\n" . implode(' ', $item['distribute_grade_list']),
+                "\r\n" . implode(' ', $item['distribute_level_list']),
+                $item['learn'],
+                $item['share'],
+                $item['click'],
+                $item['status_desc'],
+                $item['publish_time_desc'],
+            ];
+        }
+        if (!$isExport) {
             // 模块列表
             $notModuleType = ['module6', 'module7', 'module8'];
             $module = M('school')->where(['is_open' => 1, 'type' => ['NOT IN', $notModuleType]])->getField('id, name', true);
@@ -1841,6 +1924,12 @@ class School extends Base
             $this->assign('module', $module);
             $this->assign('class_id', $classId);
             $this->assign('class', $class ?? []);
+            $this->assign('app_grade', $this->appGrade);
+            $this->assign('svip_grade', $this->svipGrade);
+            $this->assign('svip_level', $this->svipLevel);
+            $this->assign('select_app_grade', $appGrade);
+            $this->assign('select_svip_grade', $svipGrade);
+            $this->assign('select_svip_level', $svipLevel);
             $this->assign('time_from', I('time_from', ''));
             $this->assign('time_to', I('time_to', ''));
             $this->assign('sort', $sort);
@@ -1849,35 +1938,9 @@ class School extends Base
             $this->assign('list', $list);
             return $this->fetch('course_list');
         } else {
-            $list = $schoolArticle->select();
-            $dataList = [];
-            foreach ($list as $item) {
-                switch ($item['status']) {
-                    case 1:
-                        $status = '已发布';
-                        break;
-                    case 2:
-                        $status = '预发布';
-                        break;
-                    case 3:
-                        $status = '不发布';
-                        break;
-                }
-                $dataList[] = [
-                    $item['id'],
-                    $item['title'],
-                    $item['module_name'],
-                    $item['class_name'],
-                    $item['learn'],
-                    $item['share'],
-                    $item['click'],
-                    $status,
-                    date('Y-m-d H:i:s', $item['publish_time']),
-                ];
-            }
             // 表头
             $headList = [
-                '文章ID', '标题', '所属模块', '所属分类', '学习人数', '分享人数', '点击数', '状态', '发布时间'
+                '文章ID', '标题', '学习类型', '所属模块', '所属分类', 'APP等级限制', '代理商等级限制', '代理商职级限制', '学习人数', '分享人数', '点击数', '状态', '发布时间'
             ];
             toCsvExcel($dataList, $headList, 'course_list');
         }
