@@ -51,7 +51,7 @@
                         <dd class="opt ctype">
                             <input name="app_grade[]" type="checkbox" value="0"><label>所有人</label>
                             <foreach name="app_grade" item="v" key="k">
-                                <input name="app_grade[]" type="checkbox" value="{$v.level_id}"><label>{$v.level_name}</label>
+                                <input name="app_grade[]" type="checkbox" value="{$k}"><label>{$v}</label>
                             </foreach>
                         </dd>
                     </dl>
@@ -62,7 +62,7 @@
                         <dd class="opt ctype">
                             <input name="distribute_grade[]" type="checkbox" value="0"><label>所有人</label>
                             <foreach name="svip_grade" item="v" key="k">
-                                <input name="distribute_grade[]" type="checkbox" value="{$v.app_level}"><label>{$v.name}</label>
+                                <input name="distribute_grade[]" type="checkbox" value="{$k}"><label>{$v}</label>
                             </foreach>
                         </dd>
                     </dl>
@@ -73,7 +73,7 @@
                         <dd class="opt ctype">
                             <input name="distribute_level[]" type="checkbox" value="0"><label>所有人</label>
                             <foreach name="svip_level" item="v" key="k">
-                                <input name="distribute_level[]" type="checkbox" value="{$v.app_level}"><label>{$v.name}</label>
+                                <input name="distribute_level[]" type="checkbox" value="{$k}"><label>{$v}</label>
                             </foreach>
                         </dd>
                     </dl>

@@ -141,7 +141,7 @@
                                 <td>
                                     <select name="standard[{$k}][app_grade]">
                                         <volist name="app_grade" id="vo2" key="k2">
-                                            <option value="{$vo2.level_id}" <if condition="$vo.app_grade == $vo2.level_id"> selected </if>>{$vo2.level_name}</option>
+                                            <option value="{$key}" <if condition="$vo.app_grade == $key"> selected </if>>{$vo2}</option>
                                         </volist>
                                     </select>
                                 </td>
@@ -149,7 +149,7 @@
                                     <select name="standard[{$k}][distribute_grade]">
                                         <option value="0" <if condition="$vo.distribute_grade == 0"> selected </if>>所有人</option>
                                         <volist name="svip_grade" id="vo2" key="k2">
-                                            <option value="{$vo2.app_level}" <if condition="$vo.distribute_grade == $vo2.app_level"> selected </if>>{$vo2.name}</option>
+                                            <option value="{$key}" <if condition="$vo.distribute_grade == $key"> selected </if>>{$vo2}</option>
                                         </volist>
                                     </select>
                                 </td>
@@ -157,7 +157,7 @@
                                     <select name="standard[{$k}][distribute_level]">
                                         <option value="0" <if condition="$vo.distribute_level == 0"> selected </if>>所有人</option>
                                         <volist name="svip_level" id="vo2" key="k2">
-                                            <option value="{$vo2.app_level}" <if condition="$vo.distribute_level == $vo2.app_level"> selected </if>>{$vo2.name}</option>
+                                            <option value="{$key}" <if condition="$vo.distribute_level == $key"> selected </if>>{$vo2}</option>
                                         </volist>
                                     </select>
                                 </td>
@@ -319,11 +319,25 @@
             '             </select>' +
             '         </td>' +
             '         <td>' +
+            '             <select name="standard[' + standard_count + '][app_grade]">' +
+            '                <volist name="app_grade" id="vo2" key="k2">' +
+            '                    <option value="{$key}">{$vo2}</option>' +
+            '                </volist>' +
+            '             </select>' +
+            '         </td>' +
+            '         <td>' +
+            '             <select name="standard[' + standard_count + '][distribute_grade]">' +
+            '                <option value="0">所有人</option>' +
+            '                <volist name="svip_grade" id="vo2" key="k2">' +
+            '                    <option value="{$key}">{$vo2}</option>' +
+            '                </volist>' +
+            '             </select>' +
+            '         </td>' +
+            '         <td>' +
             '             <select name="standard[' + standard_count + '][distribute_level]">' +
-            '                <option value="1">普通会员</option>' +
-            '                <option value="2">VIP</option>' +
+            '                <option value="0">所有人</option>' +
             '                <volist name="svip_level" id="vo2" key="k2">' +
-            '                    <option value="{$vo2.app_level}">{$vo2.name}</option>' +
+            '                    <option value="{$key}">{$vo2}</option>' +
             '                </volist>' +
             '             </select>' +
             '         </td>' +

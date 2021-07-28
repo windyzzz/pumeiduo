@@ -36,7 +36,7 @@
                 <dd class="opt ctype">
                     <input name="app_grade[]" type="checkbox" value="0" <if condition="!empty($info['app_grade']) && in_array(0, $info['app_grade'])">checked</if> ><label>所有人</label>
                     <foreach name="app_grade" item="v" key="k">
-                        <input name="app_grade[]" type="checkbox" value="{$v.level_id}" <if condition="!empty($info['app_grade']) && in_array($v[level_id], $info['app_grade'])">checked</if> ><label>{$v.level_name}</label>
+                        <input name="app_grade[]" type="checkbox" value="{$k}" <if condition="!empty($info['app_grade']) && in_array($k, $info['app_grade'])">checked</if> ><label>{$v}</label>
                     </foreach>
                 </dd>
             </dl>
@@ -47,7 +47,7 @@
                 <dd class="opt ctype">
                     <input name="distribute_grade[]" type="checkbox" value="0" <if condition="!empty($info['distribute_grade']) && in_array(0, $info['distribute_grade'])">checked</if> ><label>所有人</label>
                     <foreach name="svip_grade" item="v" key="k">
-                        <input name="distribute_grade[]" type="checkbox" value="{$v.app_level}" <if condition="!empty($info['distribute_grade']) && in_array($v[app_level], $info['distribute_grade'])">checked</if> ><label>{$v.name}</label>
+                        <input name="distribute_grade[]" type="checkbox" value="{$k}" <if condition="!empty($info['distribute_grade']) && in_array($k, $info['distribute_grade'])">checked</if> ><label>{$v}</label>
                     </foreach>
                 </dd>
             </dl>
@@ -58,7 +58,7 @@
                 <dd class="opt ctype">
                     <input name="distribute_level[]" type="checkbox" value="0" <if condition="!empty($info['distribute_level']) && in_array(0, $info['distribute_level'])">checked</if> ><label>所有人</label>
                     <foreach name="svip_level" item="v" key="k">
-                        <input name="distribute_level[]" type="checkbox" value="{$v.app_level}" <if condition="!empty($info['distribute_level']) && in_array($v[app_level], $info['distribute_level'])">checked</if> ><label>{$v.name}</label>
+                        <input name="distribute_level[]" type="checkbox" value="{$k}" <if condition="!empty($info['distribute_level']) && in_array($k, $info['distribute_level'])">checked</if> ><label>{$v}</label>
                     </foreach>
                 </dd>
             </dl>
