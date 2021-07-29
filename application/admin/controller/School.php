@@ -442,14 +442,6 @@ class School extends Base
         $userCourseLog = $userCourseLog->select();
         $dataList = [];     // 导出数据
         foreach ($userCourseLog as $k => &$log) {
-            // 用户名
-            if (!empty($log['nickname'])) {
-                $log['userName'] = $log['nickname'];
-            } elseif (!empty($log['user_name'])) {
-                $log['userName'] = $log['user_name'];
-            } else {
-                $log['userName'] = '用户：' . $log['user_id'];
-            }
             $log['is_reach'] = 0;       // 未达标
             $log['course_num'] = 0;     // 用户课程数量
             // APP等级
@@ -495,7 +487,8 @@ class School extends Base
             }
             $dataList[] = [
                 $log['user_id'],
-                $log['userName'],
+                $log['nickname'],
+                $log['user_name'],
                 $log['app_grade_name'],
                 $log['svip_grade_name'],
                 $log['svip_level_name'],
@@ -536,7 +529,7 @@ class School extends Base
         } else {
             // 表头
             $headList = [
-                '用户ID', '用户昵称', 'APP等级', '代理商等级', '代理商职级', '课程数量', '乐活豆数量', '是否达标'
+                '用户ID', '用户昵称', '用户名', 'APP等级', '代理商等级', '代理商职级', '课程数量', '乐活豆数量', '是否达标'
             ];
             toCsvExcel($dataList, $headList, 'user_standard_list');
         }
