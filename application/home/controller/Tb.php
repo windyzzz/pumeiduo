@@ -820,7 +820,7 @@ class Tb extends Controller
     {
         $data = $_POST['result'];
         if ($data) {
-            $logId = Db::name('svip_transfer_log')->add(['data' => $data, 'add_time' => NOW_TIME]);
+            $logId = Db::name('svip_transfer_log')->add(['type' => 1, 'data' => $data, 'add_time' => NOW_TIME]);
             $data = json_decode($data, true);
             if (empty($data['user_name']) || empty($data['station'])) {
                 return json_encode(['status' => 0, 'msg' => '请传入正确的参数']);
@@ -850,7 +850,7 @@ class Tb extends Controller
     {
         $data = $_POST['result'];
         if ($data) {
-            $logId = Db::name('svip_transfer_log')->add(['data' => $data, 'add_time' => NOW_TIME]);
+            $logId = Db::name('svip_transfer_log')->add(['type' => 2, 'data' => $data, 'add_time' => NOW_TIME]);
             $data = json_decode($data, true);
             if (empty($data['user_name']) || empty($data['station'])) {
                 return json_encode(['status' => 0, 'msg' => '请传入正确的参数']);
