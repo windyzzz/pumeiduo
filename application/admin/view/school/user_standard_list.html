@@ -45,7 +45,7 @@
                 </div>
                 <div class="sDiv2">
                     <select name="svip_grade">
-                        <option value="">代理商职级</option>
+                        <option value="">代理商等级</option>
                         <volist name="svip_grade" id="vo" key="k">
                             <option value="{$key}" <if condition="$select_svip_grade == $key">selected</if>>{$vo}</option>
                         </volist>
@@ -196,7 +196,7 @@
 
         // 点击刷新数据
         $('.fa-refresh').click(function () {
-            location.href = location.href;
+            location.href = "{:U('Admin/School/userStandardList')}";
         });
     });
 

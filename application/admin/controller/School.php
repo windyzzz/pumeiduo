@@ -234,9 +234,11 @@ class School extends Base
             $where['distribut_level'] = $appGrade;
         }
         if ($svipGrade = I('svip_grade', '')) {
+            $where['distribut_level'] = 3;
             $where['svip_grade'] = $svipGrade;
         }
         if ($svipLevel = I('svip_level', '')) {
+            $where['distribut_level'] = 3;
             $where['svip_level'] = $svipLevel;
         }
         if ($userId = I('user_id', '')) {
@@ -412,9 +414,11 @@ class School extends Base
             $where['u.distribut_level'] = $appGrade;
         }
         if ($svipGrade = I('svip_grade', '')) {
+            $where['u.distribut_level'] = 3;
             $where['u.svip_grade'] = $svipGrade;
         }
         if ($svipLevel = I('svip_level', '')) {
+            $where['u.distribut_level'] = 3;
             $where['u.svip_level'] = $svipLevel;
         }
         if ($userId = I('user_id', '')) {
@@ -434,7 +438,11 @@ class School extends Base
             ->field('u.user_id, u.nickname, u.user_name, u.school_credit, u.distribut_level, u.svip_grade, u.svip_level');
         if (!$isExport && $isReach === '') {
             // 用户学习课程记录总数
-            $count = M('user_school_article')->where(['article_id' => ['IN', $courseIds]])->group('user_id')->count();
+            $count = M('user_school_article usa')
+                ->join('users u', 'u.user_id = usa.user_id')
+                ->join('distribut_level dl', 'dl.level_id = u.distribut_level')
+                ->where($where)
+                ->group('usa.user_id')->count();
             // 用户课程学习记录
             $page = new Page($count, 10);
             $userCourseLog = $userCourseLog->limit($page->firstRow . ',' . $page->listRows);
@@ -1842,7 +1850,6 @@ class School extends Base
             $page = new Page($count, 10);
             // 列表
             $schoolArticle = $schoolArticle->limit($page->firstRow . ',' . $page->listRows)->order($order);
-
         }
         // 数据
         $list = $schoolArticle->select();
