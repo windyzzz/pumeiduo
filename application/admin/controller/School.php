@@ -143,18 +143,20 @@ class School extends Base
                 }
             }
             // 关键词
-            foreach ($keyword as $key) {
-                if ($key['id'] == 0) {
-                    if (M('school_article_keyword')->where(['name' => $key['name']])->value('id')) {
-                        continue;
+            if (isset($keyword) && is_array($keyword)) {
+                foreach ($keyword as $key) {
+                    if ($key['id'] == 0) {
+                        if (M('school_article_keyword')->where(['name' => $key['name']])->value('id')) {
+                            continue;
+                        } else {
+                            M('school_article_keyword')->add($key);
+                        }
                     } else {
-                        M('school_article_keyword')->add($key);
+                        if (empty($key['name'])) {
+                            continue;
+                        }
+                        M('school_article_keyword')->where(['id' => $key['id']])->update($key);
                     }
-                } else {
-                    if (empty($key['name'])) {
-                        continue;
-                    }
-                    M('school_article_keyword')->where(['id' => $key['id']])->update($key);
                 }
             }
             $this->success('操作成功', U('Admin/School/config'));
