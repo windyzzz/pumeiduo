@@ -37,11 +37,26 @@
         <form class="navbar-form form-inline" id="search-form" action="{:U('Admin/School/userCourseList')}" method="post">
             <div class="sDiv">
                 <div class="sDiv2">
-                    <select name="distribute_level">
-                        <option value="">用户等级</option>
-                        <option value="2" <if condition="$distribute_level == 2">selected</if> >VIP</option>
+                    <select name="app_grade">
+                        <option value="">APP等级</option>
+                        <volist name="app_grade" id="vo" key="k">
+                            <option value="{$key}" <if condition="$select_app_grade == $key">selected</if>>{$vo}</option>
+                        </volist>
+                    </select>
+                </div>
+                <div class="sDiv2">
+                    <select name="svip_grade">
+                        <option value="">代理商等级</option>
+                        <volist name="svip_grade" id="vo" key="k">
+                            <option value="{$key}" <if condition="$select_svip_grade == $key">selected</if>>{$vo}</option>
+                        </volist>
+                    </select>
+                </div>
+                <div class="sDiv2">
+                    <select name="svip_level">
+                        <option value="">代理商职级</option>
                         <volist name="svip_level" id="vo" key="k">
-                            <option value="{$key}" <if condition="$distribute_level == $key">selected</if>>{$vo}</option>
+                            <option value="{$key}" <if condition="$select_svip_level == $key">selected</if>>{$vo}</option>
                         </volist>
                     </select>
                 </div>
@@ -87,13 +102,22 @@
                             <div style="text-align: center; width: 150px;" class="">用户名</div>
                         </th>
                         <th align="left" abbr="send_type" axis="col4" class="">
-                            <div style="text-align: center; width: 120px;" class="">用户等级</div>
+                            <div style="text-align: center; width: 120px;" class="">APP等级</div>
+                        </th>
+                        <th align="left" abbr="send_type" axis="col4" class="">
+                            <div style="text-align: center; width: 120px;" class="">代理商等级</div>
+                        </th>
+                        <th align="left" abbr="send_type" axis="col4" class="">
+                            <div style="text-align: center; width: 120px;" class="">代理商职级</div>
                         </th>
                         <th align="left" abbr="send_type" axis="col4" class="">
                             <div style="text-align: center; width: 120px;" class="">课程数量</div>
                         </th>
                         <th align="left" abbr="send_type" axis="col4" class="">
                             <div style="text-align: center; width: 120px;" class="">乐活豆数量</div>
+                        </th>
+                        <th align="left" abbr="send_type" axis="col4" class="">
+                            <div style="text-align: center; width: 150px;" class="">首次进入商学院</div>
                         </th>
                         <th style="width:100%" axis="col7">
                             <div></div>
@@ -126,12 +150,18 @@
                                 <div style="text-align: center; width: 150px;">{$vo.user_name}</div>
                             </td>
                             <td align="left" class="">
-                                <div style="text-align: center; width: 120px;">{$vo.level_name}</div>
+                                <div style="text-align: center; width: 120px;">{$vo.app_grade_name}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">{$vo.svip_grade_name}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">{$vo.svip_level_name}</div>
                             </td>
                             <td align="left" class="">
                                 <div style="text-align: center; width: 120px;">
                                     <if condition="$vo[course_num] GT 0">
-                                        <a href="{:U('School/userCourseArticleList', array('user_id'=>$vo[user_id]))}">{$vo.course_num}</a>
+                                        <a href="{:U('School/userCourseArticleList', array('user_id'=>$vo[user_id]))}" style="text-decoration: underline; font-weight: bold;">{$vo.course_num}</a>
                                     <else/>
                                         {$vo.course_num}
                                     </if>
@@ -139,6 +169,9 @@
                             </td>
                             <td align="left" class="">
                                 <div style="text-align: center; width: 120px;">{$vo.school_credit}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 150px;">{$vo.first_visit}</div>
                             </td>
                             <td align="" class="" style="width: 100%;">
                                 <div>&nbsp</div>
@@ -166,7 +199,7 @@
 
         // 点击刷新数据
         $('.fa-refresh').click(function () {
-            location.href = location.href;
+            location.href = "{:U('Admin/School/userCourseList')}";
         });
     });
 

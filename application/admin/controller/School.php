@@ -15,11 +15,20 @@ use think\Page;
 class School extends Base
 {
     private $ossClient = null;
+    private $appGrade = [];
+    private $svipGrade = [];
+    private $svipLevel = [];
 
     public function __construct()
     {
         parent::__construct();
         $this->ossClient = new OssLogic();
+        // APP等级列表
+        $this->appGrade = M('distribut_level')->getField('level_id, level_name', true);
+        // 代理商等级列表
+        $this->svipGrade = M('svip_grade')->getField('app_level, name', true);
+        // 代理商职级列表
+        $this->svipLevel = M('svip_level')->getField('app_level, name', true);
     }
 
     /**
@@ -175,9 +184,8 @@ class School extends Base
             ];
         }
         // 学习达标设置
-        $standard = M('school_standard')->order('type ASC, num DESC')->select();
+        $standard = M('school_standard')->order('type ASC, num ASC')->select();
         $standardCount = count($standard);
-        $svipLevel = M('svip_level')->order('app_level ASC')->select();
         // 轮播图
         $count = M('school_rotate')->where(['module_id' => 0])->count();
         $page = new Page($count, 10);
@@ -202,7 +210,9 @@ class School extends Base
         $this->assign('config', $config);
         $this->assign('standard', $standard);
         $this->assign('standard_count', $standardCount);
-        $this->assign('svip_level', $svipLevel);
+        $this->assign('app_grade', $this->appGrade);
+        $this->assign('svip_grade', $this->svipGrade);
+        $this->assign('svip_level', $this->svipLevel);
         $this->assign('images', $images);
         $this->assign('page', $page);
         $this->assign('article_list', $articleList);
@@ -218,7 +228,19 @@ class School extends Base
     public function userCourseList()
     {
         $isExport = I('is_export', '');     // 是否导出
-        $where = ['distribut_level' => ['NEQ', 1]];
+//        $where = ['distribut_level' => ['NEQ', 1]];
+        $where = [];
+        if ($appGrade = I('app_grade', '')) {
+            $where['distribut_level'] = $appGrade;
+        }
+        if ($svipGrade = I('svip_grade', '')) {
+            $where['distribut_level'] = 3;
+            $where['svip_grade'] = $svipGrade;
+        }
+        if ($svipLevel = I('svip_level', '')) {
+            $where['distribut_level'] = 3;
+            $where['svip_level'] = $svipLevel;
+        }
         if ($userId = I('user_id', '')) {
             $where['user_id'] = $userId;
         }
@@ -228,21 +250,7 @@ class School extends Base
         if ($nickname = I('nickname', '')) {
             $where['nickname'] = $nickname;
         }
-        if ($distributeLevel = I('distribute_level')) {
-            switch ($distributeLevel) {
-                case 1:
-                case 2:
-                    $where['distribut_level'] = $distributeLevel;
-                    break;
-                case 3:
-                    $where['distribut_level'] = $distributeLevel;
-                    $where['svip_level'] = $distributeLevel;
-                    break;
-                default:
-                    $where['svip_level'] = $distributeLevel;
-            }
-        }
-        $userList = M('users')->where($where)->order('user_id DESC')->field('user_id, nickname, user_name, distribut_level, school_credit, svip_level');
+        $userList = M('users')->where($where)->order('user_id DESC')->field('user_id, nickname, user_name, school_credit, distribut_level, svip_grade, svip_level');
         if (!$isExport) {
             // 用户总数
             $count = M('users')->where($where)->count();
@@ -256,43 +264,48 @@ class School extends Base
             'learn_type' => ['IN', [1, 2]],
             'status' => 1,
         ])->getField('id', true);
-        // svip等级
-        if (cache('svip_level')) {
-            $svipLevel = cache('svip_level');
-        } else {
-            $svipLevel = M('svip_level')->getField('app_level, name', true);
-            cache('svip_level', $svipLevel, 0);
-        }
         $timeFrom = I('time_from', '') ? strtotime(I('time_from')) : '';
         $timeTo = I('time_to', '') ? strtotime(I('time_to')) : '';
         $dataList = [];     // 导出数据
         foreach ($userList as &$user) {
             $user['course_num'] = 0;    // 学习课程数量
-            if ($user['svip_level'] == 0 || $user['svip_level'] == 3) {
-                $userLevel = $user['distribut_level'];
-                $user['level_name'] = $userLevel < 3 ? 'VIP' : 'SVIP';
-            } else {
-                $userLevel = $user['svip_level'];
-                $user['level_name'] = $svipLevel[$userLevel];
-            }
+            // APP等级
+            $user['app_grade_name'] = $this->appGrade[$user['distribut_level']];
+            // 代理商等级
+            $user['svip_grade_name'] = $user['distribut_level'] == 3 ? $this->svipGrade[$user['svip_grade']] : '';
+            // 代理商等级
+            $user['svip_level_name'] = $user['distribut_level'] == 3 ? $this->svipLevel[$user['svip_level']] : '';
+            // 用户达标课程数量
             $userData = [
                 'user_id' => $user['user_id'],
-                'user_level' => $userLevel
+                'app_grade' => $user['distribut_level'],
+                'svip_grade' => $user['svip_grade'],
+                'svip_level' => $user['svip_level'],
             ];
             $res = $this->checkUserCourseNum(false, $userData, $courseIds, $timeFrom, $timeTo);
             $user['course_num'] = $res['course_num'];
+            // 用户首次进入商学院的时间
+            $firstVisit = M('user_school_config')->where(['type' => 'first_visit', 'user_id' => $user['user_id']])->value('add_time');
+            $user['first_visit'] = $firstVisit ? date('Y-m-d H:i:s', $firstVisit) : '';
             $dataList[] = [
                 $user['user_id'],
                 $user['nickname'],
                 $user['user_name'],
-                $user['level_name'],
+                $user['app_grade_name'],
+                $user['svip_grade_name'],
+                $user['svip_level_name'],
                 $user['course_num'],
-                $user['school_credit']
+                $user['school_credit'],
+                $user['first_visit']
             ];
         }
         if (!$isExport) {
-            $this->assign('svip_level', $svipLevel);
-            $this->assign('distribute_level', $distributeLevel);
+            $this->assign('app_grade', $this->appGrade);
+            $this->assign('svip_grade', $this->svipGrade);
+            $this->assign('svip_level', $this->svipLevel);
+            $this->assign('select_app_grade', $appGrade);
+            $this->assign('select_svip_grade', $svipGrade);
+            $this->assign('select_svip_level', $svipLevel);
             $this->assign('user_id', $userId);
             $this->assign('user_name', $username);
             $this->assign('nickname', $nickname);
@@ -304,7 +317,7 @@ class School extends Base
         } else {
             // 表头
             $headList = [
-                '用户ID', '用户昵称', '用户名', '用户等级', '课程数量', '乐活豆数量'
+                '用户ID', '用户昵称', '用户名', 'APP等级', '代理商等级', '代理商职级', '课程数量', '乐活豆数量', '首次进入商学院'
             ];
             toCsvExcel($dataList, $headList, 'user_course_list');
         }
@@ -316,6 +329,7 @@ class School extends Base
      */
     public function userCourseArticleList()
     {
+        $isExport = I('is_export', '');     // 是否导出
         $userId = I('user_id');
         // 学习课程id
         $courseIds = M('school_article')->where([
@@ -327,16 +341,59 @@ class School extends Base
             'usa.article_id' => ['IN', $courseIds],
             'usa.status' => 1
         ];
-        $count = M('user_school_article usa')->where($where)->join('school_article sa', 'sa.id = usa.article_id')->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')->count();
-        $page = new Page($count, 10);
-        $list = M('user_school_article usa')->where($where)->join('school_article sa', 'sa.id = usa.article_id')->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')
-            ->field('usa.user_id, usa.article_id, sa.title, sa.status, sa.publish_time, s.name module_name, sc.name class_name')
-            ->limit($page->firstRow . ',' . $page->listRows)
-            ->order('sa.publish_time DESC, sa.sort DESC')
-            ->select();
-        $this->assign('page', $page);
-        $this->assign('list', $list);
-        return $this->fetch('user_course_article_list');
+        $userArticle = M('user_school_article usa')->where($where)->join('school_article sa', 'sa.id = usa.article_id')->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')
+            ->field('usa.user_id, usa.article_id, sa.title, sa.learn_type, sa.status, sa.publish_time, s.name module_name, sc.name class_name');
+        if (!$isExport) {
+            // 总数
+            $count = M('user_school_article usa')->where($where)->join('school_article sa', 'sa.id = usa.article_id')->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')->count();
+            $page = new Page($count, 10);
+            // 列表
+            $userArticle = $userArticle->limit($page->firstRow . ',' . $page->listRows)->order('sa.publish_time DESC, sa.sort DESC');
+            $list = $userArticle->select();
+            $this->assign('user_id', $userId);
+            $this->assign('page', $page);
+            $this->assign('list', $list);
+            return $this->fetch('user_course_article_list');
+        } else {
+            $list = $userArticle->select();
+            $dataList = [];
+            foreach ($list as $item) {
+                switch ($item['learn_type']) {
+                    case 1:
+                        $learnType = '必修';
+                        break;
+                    case 2:
+                        $learnType = '选修';
+                        break;
+                }
+                switch ($item['status']) {
+                    case 1:
+                        $status = '已发布';
+                        break;
+                    case 2:
+                        $status = '预发布';
+                        break;
+                    case 3:
+                        $status = '不发布';
+                        break;
+                }
+                $dataList[] = [
+                    $item['user_id'],
+                    $item['article_id'],
+                    $item['title'],
+                    $learnType,
+                    $item['module_name'],
+                    $item['class_name'],
+                    $status,
+                    date('Y-m-d H:i:s', $item['publish_time']),
+                ];
+            }
+            // 表头
+            $headList = [
+                '用户ID', '文章ID', '标题', '学习类型', '所属模块', '所属分类', '状态', '发布时间'
+            ];
+            toCsvExcel($dataList, $headList, 'user_course_article_list');
+        }
     }
 
     /**
@@ -347,26 +404,22 @@ class School extends Base
     {
         $isExport = I('is_export', '');     // 是否导出
         $isReach = I('is_reach', '');       // 是否达标
-        $distributeLevel = I('distribute_level', '');
         // 学习课程id
         $courseIds = M('school_article')->where([
             'learn_type' => ['IN', [1, 2]],
             'status' => 1,
         ])->getField('id', true);
         $where = ['article_id' => ['IN', $courseIds]];
-        if ($distributeLevel) {
-            switch ($distributeLevel) {
-                case 1:
-                case 2:
-                    $where['distribut_level'] = $distributeLevel;
-                    break;
-                case 3:
-                    $where['distribut_level'] = $distributeLevel;
-                    $where['svip_level'] = $distributeLevel;
-                    break;
-                default:
-                    $where['svip_level'] = $distributeLevel;
-            }
+        if ($appGrade = I('app_grade', '')) {
+            $where['u.distribut_level'] = $appGrade;
+        }
+        if ($svipGrade = I('svip_grade', '')) {
+            $where['u.distribut_level'] = 3;
+            $where['u.svip_grade'] = $svipGrade;
+        }
+        if ($svipLevel = I('svip_level', '')) {
+            $where['u.distribut_level'] = 3;
+            $where['u.svip_level'] = $svipLevel;
         }
         if ($userId = I('user_id', '')) {
             $where['u.user_id'] = $userId;
@@ -377,60 +430,43 @@ class School extends Base
         if ($nickname = I('nickname', '')) {
             $where['nickname'] = $nickname;
         }
-        $userCourseLog = M('user_school_article usa')->join('users u', 'u.user_id = usa.user_id')
+        $userCourseLog = M('user_school_article usa')
+            ->join('users u', 'u.user_id = usa.user_id')
             ->join('distribut_level dl', 'dl.level_id = u.distribut_level')
-            ->where($where)->group('usa.user_id')
-            ->field('u.user_id, u.nickname, u.user_name, u.school_credit, u.distribut_level, u.svip_level');
+            ->where($where)
+            ->group('usa.user_id')
+            ->field('u.user_id, u.nickname, u.user_name, u.school_credit, u.distribut_level, u.svip_grade, u.svip_level');
         if (!$isExport && $isReach === '') {
             // 用户学习课程记录总数
-            $count = M('user_school_article')->where(['article_id' => ['IN', $courseIds]])->group('user_id')->count();
+            $count = M('user_school_article usa')
+                ->join('users u', 'u.user_id = usa.user_id')
+                ->join('distribut_level dl', 'dl.level_id = u.distribut_level')
+                ->where($where)
+                ->group('usa.user_id')->count();
             // 用户课程学习记录
             $page = new Page($count, 10);
             $userCourseLog = $userCourseLog->limit($page->firstRow . ',' . $page->listRows);
         }
         $userCourseLog = $userCourseLog->select();
-        // svip等级
-        if (cache('svip_level')) {
-            $svipLevel = cache('svip_level');
-        } else {
-            $svipLevel = M('svip_level')->getField('app_level, name', true);
-            cache('svip_level', $svipLevel, 0);
-        }
         $dataList = [];     // 导出数据
         foreach ($userCourseLog as $k => &$log) {
-            if (!empty($log['nickname'])) {
-                $log['userName'] = $log['nickname'];
-            } elseif (!empty($log['user_name'])) {
-                $log['userName'] = $log['user_name'];
-            } else {
-                $log['userName'] = '用户：' . $log['user_id'];
-            }
             $log['is_reach'] = 0;       // 未达标
             $log['course_num'] = 0;     // 用户课程数量
-            if ($log['svip_level'] == 0 || $log['svip_level'] == 3) {
-                $userLevel = $log['distribut_level'];
-                switch ($userLevel) {
-                    case 1:
-                        $log['level_name'] = '普通会员';
-                        break;
-                    case 2:
-                        $log['level_name'] = 'VIP';
-                        break;
-                    case 3:
-                        $log['level_name'] = 'SVIP';
-                        break;
-                }
-            } else {
-                $userLevel = $log['svip_level'];
-                $log['level_name'] = $svipLevel[$userLevel];
-            }
+            // APP等级
+            $log['app_grade_name'] = $this->appGrade[$log['distribut_level']];
+            // 代理商等级
+            $log['svip_grade_name'] = $log['distribut_level'] == 3 ? $this->svipGrade[$log['svip_grade']] : '';
+            // 代理商等级
+            $log['svip_level_name'] = $log['distribut_level'] == 3 ? $this->svipLevel[$log['svip_level']] : '';
             // 检查是否达标
             /*
              * 查看课程数量
              */
             $user = [
                 'user_id' => $log['user_id'],
-                'user_level' => $userLevel
+                'app_grade' => $log['distribut_level'],
+                'svip_grade' => $log['svip_grade'],
+                'svip_level' => $log['svip_level'],
             ];
             $res = $this->checkUserCourseNum(true, $user, $courseIds);
             $log['course_num'] = $res['course_num'];
@@ -442,7 +478,9 @@ class School extends Base
                  */
                 $user = [
                     'school_credit' => $log['school_credit'],
-                    'user_level' => $userLevel
+                    'app_grade' => $log['distribut_level'],
+                    'svip_grade' => $log['svip_grade'],
+                    'svip_level' => $log['svip_level'],
                 ];
                 $res = $this->checkUserSchoolCredit($user);
                 if ($res['status'] == 1) {
@@ -456,8 +494,12 @@ class School extends Base
                 }
             }
             $dataList[] = [
-                $log['userName'],
-                $log['level_name'],
+                $log['user_id'],
+                $log['nickname'],
+                $log['user_name'],
+                $log['app_grade_name'],
+                $log['svip_grade_name'],
+                $log['svip_level_name'],
                 $log['course_num'],
                 $log['school_credit'],
                 $log['is_reach'] == 1 ? '已达标' : '未达标'
@@ -465,8 +507,12 @@ class School extends Base
         }
         if (!$isExport) {
             if ($isReach === '') {
-                $this->assign('svip_level', $svipLevel);
-                $this->assign('distribute_level', $distributeLevel);
+                $this->assign('app_grade', $this->appGrade);
+                $this->assign('svip_grade', $this->svipGrade);
+                $this->assign('svip_level', $this->svipLevel);
+                $this->assign('select_app_grade', $appGrade);
+                $this->assign('select_svip_grade', $svipGrade);
+                $this->assign('select_svip_level', $svipLevel);
                 $this->assign('user_id', $userId);
                 $this->assign('user_name', $username);
                 $this->assign('nickname', $nickname);
@@ -475,8 +521,12 @@ class School extends Base
                 $this->assign('log', $userCourseLog);
                 return $this->fetch('user_standard_list');
             } else {
-                $this->assign('svip_level', $svipLevel);
-                $this->assign('distribute_level', $distributeLevel);
+                $this->assign('app_grade', $this->appGrade);
+                $this->assign('svip_grade', $this->svipGrade);
+                $this->assign('svip_level', $this->svipLevel);
+                $this->assign('select_app_grade', $appGrade);
+                $this->assign('select_svip_grade', $svipGrade);
+                $this->assign('select_svip_level', $svipLevel);
                 $this->assign('user_id', $userId);
                 $this->assign('user_name', $username);
                 $this->assign('nickname', $nickname);
@@ -487,7 +537,7 @@ class School extends Base
         } else {
             // 表头
             $headList = [
-                '用户', '用户等级', '课程数量', '乐活豆数量', '是否达标'
+                '用户ID', '用户昵称', '用户名', 'APP等级', '代理商等级', '代理商职级', '课程数量', '乐活豆数量', '是否达标'
             ];
             toCsvExcel($dataList, $headList, 'user_standard_list');
         }
@@ -524,7 +574,7 @@ class School extends Base
                     if ($v['type'] == 2) {
                         continue;
                     }
-                    if ($user['user_level'] == $v['distribute_level']) {
+                    if ($user['app_grade'] == $v['app_grade'] && $user['svip_grade'] == $v['distribute_grade'] && $user['svip_level'] == $v['distribute_level']) {
                         if ($userCourseNum >= $v['num']) {
                             $return['status'] = 1;
                         }
@@ -551,7 +601,7 @@ class School extends Base
                 if ($v['type'] == 1) {
                     continue;
                 }
-                if ($user['user_level'] == $v['distribute_level']) {
+                if ($user['app_grade'] == $v['app_grade'] && $user['svip_grade'] == $v['distribute_grade'] && $user['svip_level'] == $v['distribute_level']) {
                     if ($user['school_credit'] >= $v['num']) {
                         $return['status'] = 1;
                     }
@@ -742,6 +792,36 @@ class School extends Base
                     }
                 }
             }
+            if (empty($param['app_grade'])) {
+                $param['app_grade'] = '0';
+            } else {
+                if (in_array('-1', $param['app_grade'])) {
+                    $param['app_grade'] = '-1';
+                } elseif (in_array('0', $param['app_grade'])) {
+                    $param['app_grade'] = '0';
+                } else {
+                    $distributeLevel = '';
+                    foreach ($param['app_grade'] as $level) {
+                        $distributeLevel .= $level . ',';
+                    }
+                    $param['app_grade'] = rtrim($distributeLevel, ',');
+                }
+            }
+            if (empty($param['distribute_grade'])) {
+                $param['distribute_grade'] = '0';
+            } else {
+                if (in_array('-1', $param['distribute_grade'])) {
+                    $param['distribute_grade'] = '-1';
+                } elseif (in_array('0', $param['distribute_grade'])) {
+                    $param['distribute_grade'] = '0';
+                } else {
+                    $distributeLevel = '';
+                    foreach ($param['distribute_grade'] as $level) {
+                        $distributeLevel .= $level . ',';
+                    }
+                    $param['distribute_grade'] = rtrim($distributeLevel, ',');
+                }
+            }
             if (empty($param['distribute_level'])) {
                 $param['distribute_level'] = '0';
             } else {
@@ -764,7 +844,6 @@ class School extends Base
             }
             $this->success('操作成功', U('School/' . $type));
         }
-
         // 模块信息
         $module = M('school')->where(['type' => $type])->find();
         if (!empty($module['img'])) {
@@ -772,6 +851,8 @@ class School extends Base
             $module['img'] = $this->ossClient::url(substr($img[0], strrpos($img[0], 'img:') + 4));
         }
         if (!empty($module)) {
+            $module['app_grade'] = explode(',', $module['app_grade']);
+            $module['distribute_grade'] = explode(',', $module['distribute_grade']);
             $module['distribute_level'] = explode(',', $module['distribute_level']);
         }
         // 模块分类信息
@@ -780,11 +861,15 @@ class School extends Base
         if ($classId == '' && !empty($classList)) {
             $moduleClass = $classList[0];
             $classId = $moduleClass['id'];
+            $moduleClass['app_grade'] = explode(',', $moduleClass['app_grade']);
+            $moduleClass['distribute_grade'] = explode(',', $moduleClass['distribute_grade']);
             $moduleClass['distribute_level'] = explode(',', $moduleClass['distribute_level']);
         } else {
             foreach ($classList as $class) {
                 if ($classId == $class['id']) {
                     $moduleClass = $class;
+                    $moduleClass['app_grade'] = explode(',', $moduleClass['app_grade']);
+                    $moduleClass['distribute_grade'] = explode(',', $moduleClass['distribute_grade']);
                     $moduleClass['distribute_level'] = explode(',', $moduleClass['distribute_level']);
                     break;
                 }
@@ -798,6 +883,9 @@ class School extends Base
 
         $this->assign('type', $type);
         $this->assign('class_id', $classId);
+        $this->assign('app_grade', $this->appGrade);
+        $this->assign('svip_grade', $this->svipGrade);
+        $this->assign('svip_level', $this->svipLevel);
         $this->assign('module', $module);
         $this->assign('class_list', $classList);
         $this->assign('module_class', $moduleClass);
@@ -838,6 +926,36 @@ class School extends Base
                     }
                 }
             }
+            if (empty($param['app_grade'])) {
+                $param['app_grade'] = '0';
+            } else {
+                if (in_array('-1', $param['app_grade'])) {
+                    $param['app_grade'] = '-1';
+                } elseif (in_array('0', $param['app_grade'])) {
+                    $param['app_grade'] = '0';
+                } else {
+                    $distributeLevel = '';
+                    foreach ($param['app_grade'] as $level) {
+                        $distributeLevel .= $level . ',';
+                    }
+                    $param['app_grade'] = rtrim($distributeLevel, ',');
+                }
+            }
+            if (empty($param['distribute_grade'])) {
+                $param['distribute_grade'] = '0';
+            } else {
+                if (in_array('-1', $param['distribute_grade'])) {
+                    $param['distribute_grade'] = '-1';
+                } elseif (in_array('0', $param['distribute_grade'])) {
+                    $param['distribute_grade'] = '0';
+                } else {
+                    $distributeLevel = '';
+                    foreach ($param['distribute_grade'] as $level) {
+                        $distributeLevel .= $level . ',';
+                    }
+                    $param['distribute_grade'] = rtrim($distributeLevel, ',');
+                }
+            }
             if (empty($param['distribute_level'])) {
                 $param['distribute_level'] = '0';
             } else {
@@ -860,7 +978,6 @@ class School extends Base
             }
             $this->success('操作成功', U('School/' . $type));
         }
-
         // 模块信息
         $module = M('school')->where(['type' => $type])->find();
         if (!empty($module['img'])) {
@@ -868,6 +985,8 @@ class School extends Base
             $module['img'] = $this->ossClient::url(substr($img[0], strrpos($img[0], 'img:') + 4));
         }
         if (!empty($module)) {
+            $module['app_grade'] = explode(',', $module['app_grade']);
+            $module['distribute_grade'] = explode(',', $module['distribute_grade']);
             $module['distribute_level'] = explode(',', $module['distribute_level']);
         }
         // 兑换商品列表
@@ -886,6 +1005,9 @@ class School extends Base
 
         $this->assign('type', $type);
         $this->assign('class_id', $classId);
+        $this->assign('app_grade', $this->appGrade);
+        $this->assign('svip_grade', $this->svipGrade);
+        $this->assign('svip_level', $this->svipLevel);
         $this->assign('module', $module);
         $this->assign('exchange', $exchange);
         return $this->fetch('module_7');
@@ -919,6 +1041,36 @@ class School extends Base
                     }
                 }
             }
+            if (empty($param['app_grade'])) {
+                $param['app_grade'] = '0';
+            } else {
+                if (in_array('-1', $param['app_grade'])) {
+                    $param['app_grade'] = '-1';
+                } elseif (in_array('0', $param['app_grade'])) {
+                    $param['app_grade'] = '0';
+                } else {
+                    $distributeLevel = '';
+                    foreach ($param['app_grade'] as $level) {
+                        $distributeLevel .= $level . ',';
+                    }
+                    $param['app_grade'] = rtrim($distributeLevel, ',');
+                }
+            }
+            if (empty($param['distribute_grade'])) {
+                $param['distribute_grade'] = '0';
+            } else {
+                if (in_array('-1', $param['distribute_grade'])) {
+                    $param['distribute_grade'] = '-1';
+                } elseif (in_array('0', $param['distribute_grade'])) {
+                    $param['distribute_grade'] = '0';
+                } else {
+                    $distributeLevel = '';
+                    foreach ($param['distribute_grade'] as $level) {
+                        $distributeLevel .= $level . ',';
+                    }
+                    $param['distribute_grade'] = rtrim($distributeLevel, ',');
+                }
+            }
             if (empty($param['distribute_level'])) {
                 $param['distribute_level'] = '0';
             } else {
@@ -941,7 +1093,6 @@ class School extends Base
             }
             $this->success('操作成功', U('School/' . $type));
         }
-
         // 模块信息
         $module = M('school')->where(['type' => $type])->find();
         if (!empty($module['img'])) {
@@ -949,11 +1100,16 @@ class School extends Base
             $module['img'] = $this->ossClient::url(substr($img[0], strrpos($img[0], 'img:') + 4));
         }
         if (!empty($module)) {
+            $module['app_grade'] = explode(',', $module['app_grade']);
+            $module['distribute_grade'] = explode(',', $module['distribute_grade']);
             $module['distribute_level'] = explode(',', $module['distribute_level']);
         }
 
         $this->assign('type', $type);
         $this->assign('class_id', $classId);
+        $this->assign('app_grade', $this->appGrade);
+        $this->assign('svip_grade', $this->svipGrade);
+        $this->assign('svip_level', $this->svipLevel);
         $this->assign('module', $module);
         return $this->fetch('module_8');
     }
@@ -973,6 +1129,36 @@ class School extends Base
             $callback = $param['call_back'];
             unset($param['type']);
             unset($param['call_back']);
+            if (empty($param['app_grade'])) {
+                $param['app_grade'] = '0';
+            } else {
+                if (in_array('-1', $param['app_grade'])) {
+                    $param['app_grade'] = '-1';
+                } elseif (in_array('0', $param['app_grade'])) {
+                    $param['app_grade'] = '0';
+                } else {
+                    $distributeLevel = '';
+                    foreach ($param['app_grade'] as $level) {
+                        $distributeLevel .= $level . ',';
+                    }
+                    $param['app_grade'] = rtrim($distributeLevel, ',');
+                }
+            }
+            if (empty($param['distribute_grade'])) {
+                $param['distribute_grade'] = '0';
+            } else {
+                if (in_array('-1', $param['distribute_grade'])) {
+                    $param['distribute_grade'] = '-1';
+                } elseif (in_array('0', $param['distribute_grade'])) {
+                    $param['distribute_grade'] = '0';
+                } else {
+                    $distributeLevel = '';
+                    foreach ($param['distribute_grade'] as $level) {
+                        $distributeLevel .= $level . ',';
+                    }
+                    $param['distribute_grade'] = rtrim($distributeLevel, ',');
+                }
+            }
             if (empty($param['distribute_level'])) {
                 $param['distribute_level'] = '0';
             } else {
@@ -997,6 +1183,9 @@ class School extends Base
         $type = I('type', 'module1');
         $this->assign('module_id', $moduleId);
         $this->assign('module_type', $type);
+        $this->assign('app_grade', $this->appGrade);
+        $this->assign('svip_grade', $this->svipGrade);
+        $this->assign('svip_level', $this->svipLevel);
         return $this->fetch('add_module_class');
     }
 
@@ -1019,6 +1208,36 @@ class School extends Base
                 // 将分类下没有学习规定的文章设置为必修
                 M('school_article')->where(['class_id' => $classId, 'learn_type' => 0])->update(['learn_type' => 1]);
                 break;
+        }
+        if (empty($param['app_grade'])) {
+            $param['app_grade'] = '0';
+        } else {
+            if (in_array('-1', $param['app_grade'])) {
+                $param['app_grade'] = '-1';
+            } elseif (in_array('0', $param['app_grade'])) {
+                $param['app_grade'] = '0';
+            } else {
+                $distributeLevel = '';
+                foreach ($param['app_grade'] as $level) {
+                    $distributeLevel .= $level . ',';
+                }
+                $param['app_grade'] = rtrim($distributeLevel, ',');
+            }
+        }
+        if (empty($param['distribute_grade'])) {
+            $param['distribute_grade'] = '0';
+        } else {
+            if (in_array('-1', $param['distribute_grade'])) {
+                $param['distribute_grade'] = '-1';
+            } elseif (in_array('0', $param['distribute_grade'])) {
+                $param['distribute_grade'] = '0';
+            } else {
+                $distributeLevel = '';
+                foreach ($param['distribute_grade'] as $level) {
+                    $distributeLevel .= $level . ',';
+                }
+                $param['distribute_grade'] = rtrim($distributeLevel, ',');
+            }
         }
         if (empty($param['distribute_level'])) {
             $param['distribute_level'] = '0';
@@ -1081,7 +1300,39 @@ class School extends Base
                     return $this->ajaxReturn(['status' => 0, 'msg' => '学习课程分类下的文章需要选择必修或选修']);
                 }
             }
-            // 等级限制
+            // APP等级限制
+            if (empty($param['app_grade'])) {
+                $param['app_grade'] = '0';
+            } else {
+                if (in_array('-1', $param['app_grade'])) {
+                    $param['app_grade'] = '-1';
+                } elseif (in_array('0', $param['app_grade'])) {
+                    $param['app_grade'] = '0';
+                } else {
+                    $distributeLevel = '';
+                    foreach ($param['app_grade'] as $level) {
+                        $distributeLevel .= $level . ',';
+                    }
+                    $param['app_grade'] = rtrim($distributeLevel, ',');
+                }
+            }
+            // 代理商等级限制
+            if (empty($param['distribute_grade'])) {
+                $param['distribute_grade'] = '0';
+            } else {
+                if (in_array('-1', $param['distribute_grade'])) {
+                    $param['distribute_grade'] = '-1';
+                } elseif (in_array('0', $param['distribute_grade'])) {
+                    $param['distribute_grade'] = '0';
+                } else {
+                    $distributeLevel = '';
+                    foreach ($param['distribute_grade'] as $level) {
+                        $distributeLevel .= $level . ',';
+                    }
+                    $param['distribute_grade'] = rtrim($distributeLevel, ',');
+                }
+            }
+            // 代理商职级限制
             if (empty($param['distribute_level'])) {
                 $param['distribute_level'] = '0';
             } else {
@@ -1151,6 +1402,8 @@ class School extends Base
         }
         if ($articleId) {
             $articleInfo = M('school_article')->where(['id' => $articleId])->find();
+            $articleInfo['app_grade'] = explode(',', $articleInfo['app_grade']);
+            $articleInfo['distribute_grade'] = explode(',', $articleInfo['distribute_grade']);
             $articleInfo['distribute_level'] = explode(',', $articleInfo['distribute_level']);
             $cover = explode(',', $articleInfo['cover']);
             $articleInfo['cover'] = $this->ossClient::url(substr($cover[0], strrpos($cover[0], 'img:') + 4));
@@ -1165,6 +1418,9 @@ class School extends Base
         }
         $this->assign('type', $type);
         $this->assign('class_id', $classId);
+        $this->assign('app_grade', $this->appGrade);
+        $this->assign('svip_grade', $this->svipGrade);
+        $this->assign('svip_level', $this->svipLevel);
         $this->assign('info', $articleInfo);
         $this->assign('article_id', $articleId);
         return $this->fetch();
@@ -1216,7 +1472,39 @@ class School extends Base
                     }
                 }
             }
-            // 等级限制
+            // APP等级限制
+            if (empty($postData['app_grade'])) {
+                $articleParam['app_grade'] = '0';
+            } else {
+                if (in_array('-1', $postData['app_grade'])) {
+                    $articleParam['app_grade'] = '-1';
+                } elseif (in_array('0', $postData['app_grade'])) {
+                    $articleParam['app_grade'] = '0';
+                } else {
+                    $distributeLevel = '';
+                    foreach ($postData['app_grade'] as $level) {
+                        $distributeLevel .= $level . ',';
+                    }
+                    $articleParam['app_grade'] = rtrim($distributeLevel, ',');
+                }
+            }
+            // 代理商等级限制
+            if (empty($postData['distribute_grade'])) {
+                $articleParam['distribute_grade'] = '0';
+            } else {
+                if (in_array('-1', $postData['distribute_grade'])) {
+                    $articleParam['distribute_grade'] = '-1';
+                } elseif (in_array('0', $postData['distribute_grade'])) {
+                    $articleParam['distribute_grade'] = '0';
+                } else {
+                    $distributeLevel = '';
+                    foreach ($postData['distribute_grade'] as $level) {
+                        $distributeLevel .= $level . ',';
+                    }
+                    $articleParam['distribute_grade'] = rtrim($distributeLevel, ',');
+                }
+            }
+            // 代理商职级限制
             if (empty($postData['distribute_level'])) {
                 $articleParam['distribute_level'] = '0';
             } else {
@@ -1395,6 +1683,8 @@ class School extends Base
         }
         if ($articleId) {
             $articleInfo = M('school_article')->where(['id' => $articleId])->find();
+            $articleInfo['app_grade'] = explode(',', $articleInfo['app_grade']);
+            $articleInfo['distribute_grade'] = explode(',', $articleInfo['distribute_grade']);
             $articleInfo['distribute_level'] = explode(',', $articleInfo['distribute_level']);
             $articleInfo['publish_time'] = date('Y-m-d H:i:s', $articleInfo['publish_time']);
             // 文章素材信息
@@ -1425,6 +1715,9 @@ class School extends Base
         }
         $this->assign('type', $type);
         $this->assign('class_id', $classId);
+        $this->assign('app_grade', $this->appGrade);
+        $this->assign('svip_grade', $this->svipGrade);
+        $this->assign('svip_level', $this->svipLevel);
         $this->assign('info', $articleInfo);
         $this->assign('resource', $articleResource);
         $this->assign('article_id', $articleId);
@@ -1518,6 +1811,9 @@ class School extends Base
         $title = htmlspecialchars_decode(trim(I('title', '')));
         $moduleId = I('module_id', '');
         $classId = I('class_id', '');
+        $timeFrom = I('time_from', '') ? strtotime(I('time_from')) : '';
+        $timeTo = I('time_to', '') ? strtotime(I('time_to')) : '';
+        $isExport = I('is_export', 0);
         if ($title) {
             $where['sa.title'] = ['LIKE', '%' . $title . '%'];
         }
@@ -1528,6 +1824,18 @@ class School extends Base
         if ($classId) {
             $where['sc.id'] = $classId;
         }
+        if ($appGrade = I('app_grade', '')) {
+            $where['sa.app_grade'] = ['LIKE', '%' . $appGrade . '%'];
+        }
+        if ($svipGrade = I('svip_grade', '')) {
+            $where['sa.distribute_grade'] = ['LIKE', '%' . $svipGrade . '%'];
+        }
+        if ($svipLevel = I('svip_level', '')) {
+            $where['sa.distribute_level'] = ['LIKE', '%' . $svipLevel . '%'];
+        }
+        if ($timeFrom && $timeTo) {
+            $where['sa.publish_time'] = ['BETWEEN', [$timeFrom, $timeTo]];
+        }
         // 排序
         $order = 'sa.publish_time DESC, sa.sort DESC';
         $sort = I('sort', '');
@@ -1535,26 +1843,106 @@ class School extends Base
         if ($sort && $sortBy) {
             $order = 'sa.' . $sort . ' ' . $sortBy . ', ' . $order;
         }
+        $schoolArticle = M('school_article sa')->where($where)->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')->field('sa.*, s.name module_name, sc.name class_name');
+        if (!$isExport) {
+            // 总数
+            $count = M('school_article sa')->where($where)->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')->count();
+            $page = new Page($count, 10);
+            // 列表
+            $schoolArticle = $schoolArticle->limit($page->firstRow . ',' . $page->listRows)->order($order);
+        }
         // 数据
-        $count = M('school_article sa')->where($where)->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')->count();
-        $page = new Page($count, 10);
-        $list = M('school_article sa')->where($where)->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')
-            ->field('sa.*, s.name module_name, sc.name class_name')
-            ->limit($page->firstRow . ',' . $page->listRows)
-            ->order($order)
-            ->select();
-        // 模块列表
-        $notModuleType = ['module6', 'module7', 'module8'];
-        $module = M('school')->where(['is_open' => 1, 'type' => ['NOT IN', $notModuleType]])->getField('id, name', true);
-        $this->assign('title', $title);
-        $this->assign('module_id', $moduleId);
-        $this->assign('module', $module);
-        $this->assign('class_id', $classId);
-        $this->assign('class', $class ?? []);
-        $this->assign('sort', $sort);
-        $this->assign('sort_by', $sortBy);
-        $this->assign('page', $page);
-        $this->assign('list', $list);
-        return $this->fetch('course_list');
+        $list = $schoolArticle->select();
+        $dataList = [];
+        foreach ($list as &$item) {
+            if ($item['app_grade'] == 0) {
+                $item['app_grade_list'] = ['所有人' . "\r\n"];
+            } else {
+                $appGradeArr = explode(',', $item['app_grade']);
+                foreach ($appGradeArr as $value) {
+                    $item['app_grade_list'][] = $this->appGrade[$value] . "\r\n";
+                }
+            }
+            if ($item['distribute_grade'] == 0) {
+                $item['distribute_grade_list'] = ['所有人' . "\r\n"];
+            } else {
+                $svipGradeArr = explode(',', $item['distribute_grade']);
+                foreach ($svipGradeArr as $value) {
+                    $item['distribute_grade_list'][] = $this->svipGrade[$value] . "\r\n";
+                }
+            }
+            if ($item['distribute_level'] == 0) {
+                $item['distribute_level_list'] = ['所有人' . "\r\n"];
+            } else {
+                $svipLevelArr = explode(',', $item['distribute_level']);
+                foreach ($svipLevelArr as $value) {
+                    $item['distribute_level_list'][] = $this->svipLevel[$value] . "\r\n";
+                }
+            }
+            switch ($item['learn_type']) {
+                case 1:
+                    $item['learn_type_desc'] = '必修';
+                    break;
+                case 2:
+                    $item['learn_type_desc'] = '选修';
+                    break;
+            }
+            switch ($item['status']) {
+                case 1:
+                    $item['status_desc'] = '已发布';
+                    break;
+                case 2:
+                    $item['status_desc'] = '预发布';
+                    break;
+                case 3:
+                    $item['status_desc'] = '不发布';
+                    break;
+            }
+            $item['publish_time_desc'] = date('Y-m-d H:i:s', $item['publish_time']);
+            $dataList[] = [
+                $item['id'],
+                $item['title'],
+                $item['learn_type_desc'],
+                $item['module_name'],
+                $item['class_name'],
+                "\r\n" . implode(' ', $item['app_grade_list']),
+                "\r\n" . implode(' ', $item['distribute_grade_list']),
+                "\r\n" . implode(' ', $item['distribute_level_list']),
+                $item['learn'],
+                $item['share'],
+                $item['click'],
+                $item['status_desc'],
+                $item['publish_time_desc'],
+            ];
+        }
+        if (!$isExport) {
+            // 模块列表
+            $notModuleType = ['module6', 'module7', 'module8'];
+            $module = M('school')->where(['is_open' => 1, 'type' => ['NOT IN', $notModuleType]])->getField('id, name', true);
+            $this->assign('title', $title);
+            $this->assign('module_id', $moduleId);
+            $this->assign('module', $module);
+            $this->assign('class_id', $classId);
+            $this->assign('class', $class ?? []);
+            $this->assign('app_grade', $this->appGrade);
+            $this->assign('svip_grade', $this->svipGrade);
+            $this->assign('svip_level', $this->svipLevel);
+            $this->assign('select_app_grade', $appGrade);
+            $this->assign('select_svip_grade', $svipGrade);
+            $this->assign('select_svip_level', $svipLevel);
+            $this->assign('time_from', I('time_from', ''));
+            $this->assign('time_to', I('time_to', ''));
+            $this->assign('sort', $sort);
+            $this->assign('sort_by', $sortBy);
+            $this->assign('page', $page);
+            $this->assign('list', $list);
+            return $this->fetch('course_list');
+        } else {
+            // 表头
+            $headList = [
+                '文章ID', '标题', '学习类型', '所属模块', '所属分类', 'APP等级限制', '代理商等级限制', '代理商职级限制', '学习人数', '分享人数', '点击数', '状态', '发布时间'
+            ];
+            toCsvExcel($dataList, $headList, 'course_list');
+        }
     }
 }

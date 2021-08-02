@@ -33,6 +33,15 @@
             </div>
             <div title="刷新数据" class="pReload"><i class="fa fa-refresh"></i></div>
         </div>
+        <form class="navbar-form form-inline" id="search-form" action="{:U('Admin/School/userCourseArticleList')}" method="post">
+            <div class="sDiv">
+                <input type="hidden" name="user_id" value="{$user_id}">
+                <input type="hidden" name="is_export" value="0">
+                <div class="sDiv2">
+                    <input type="button" class="btn" onclick="export_list()" value="导出">
+                </div>
+            </div>
+        </form>
         <div class="hDiv">
             <div class="hDivBox">
                 <table cellspacing="0" cellpadding="0">
@@ -49,6 +58,9 @@
                         </th>
                         <th align="left" abbr="article_title" axis="col3" class="">
                             <div style="text-align: center; width: 240px;" class="">标题</div>
+                        </th>
+                        <th align="left" abbr="send_type" axis="col4" class="">
+                            <div style="text-align: center; width: 120px;" class="">学习类型</div>
                         </th>
                         <th align="left" abbr="send_type" axis="col4" class="">
                             <div style="text-align: center; width: 120px;" class="">所属模块</div>
@@ -88,6 +100,18 @@
                             <td align="left" class="">
                                 <div style="text-align: center; width: 240px;">
                                     <textarea style="width: 80%; height: 100%; line-height: 150%;" rows="3" disabled>{$vo.title}</textarea>
+                                </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">
+                                    <switch name='$vo[learn_type]'>
+                                        <case value='1'>
+                                            必修
+                                        </case>
+                                        <case value='2'>
+                                            选修
+                                        </case>
+                                    </switch>
                                 </div>
                             </td>
                             <td align="left" class="">
@@ -142,6 +166,12 @@
             location.href = location.href;
         });
     });
+
+    function export_list() {
+        $('input[name="is_export"]').val('1');
+        $('#search-form').submit();
+        $('input[name="is_export"]').val('0');
+    }
 </script>
 </body>
 </html>

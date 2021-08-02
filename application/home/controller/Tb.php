@@ -813,14 +813,14 @@ class Tb extends Controller
     }
 
     /**
-     * 更新用户代理商等级
+     * 更新用户代理商职级
      * @return false|string
      */
     function save_user_svip()
     {
         $data = $_POST['result'];
         if ($data) {
-            $logId = Db::name('svip_transfer_log')->add(['data' => $data, 'add_time' => NOW_TIME]);
+            $logId = Db::name('svip_transfer_log')->add(['type' => 1, 'data' => $data, 'add_time' => NOW_TIME]);
             $data = json_decode($data, true);
             if (empty($data['user_name']) || empty($data['station'])) {
                 return json_encode(['status' => 0, 'msg' => '请传入正确的参数']);
@@ -835,6 +835,32 @@ class Tb extends Controller
             }
             M('users')->where(['user_name' => $data['user_name']])->update([
                 'svip_level' => $svipLevel['app_level']
+            ]);
+            M('svip_transfer_log')->where(['id' => $logId])->update(['status' => 1]);
+            return json_encode(['status' => 1, 'msg' => '更新成功']);
+        }
+        return json_encode(['status' => 0, 'msg' => '参数不能为空']);
+    }
+
+    /**
+     * 更新用户代理商等级
+     * @return false|string
+     */
+    function save_user_svip_grade()
+    {
+        $data = $_POST['result'];
+        if ($data) {
+            $logId = Db::name('svip_transfer_log')->add(['type' => 2, 'data' => $data, 'add_time' => NOW_TIME]);
+            $data = json_decode($data, true);
+            if (empty($data['user_name']) || empty($data['station'])) {
+                return json_encode(['status' => 0, 'msg' => '请传入正确的参数']);
+            }
+            $user = M('users')->where(['user_name' => $data['user_name']])->find();
+            if (empty($user)) {
+                return json_encode(['status' => 0, 'msg' => '用户信息不存在']);
+            }
+            M('users')->where(['user_name' => $data['user_name']])->update([
+                'svip_grade' => $data['station']
             ]);
             M('svip_transfer_log')->where(['id' => $logId])->update(['status' => 1]);
             return json_encode(['status' => 1, 'msg' => '更新成功']);

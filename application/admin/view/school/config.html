@@ -127,8 +127,8 @@
                     <a class="ncap-btn" href="javascript:;" onclick="addStandard()">增加</a>
                 </dt>
                 <dd class="opt">
-                    <table style="width: 40%;">
-                        <tr><th>类型</th><th>等级</th><th>数量</th></tr>
+                    <table style="width: 60%;">
+                        <tr><th>类型</th><th>APP等级</th><th>代理商等级</th><th>代理商职级</th><th>数量</th></tr>
                         <tbody id="standard">
                         <volist name="standard" id="vo" key="k">
                             <tr>
@@ -139,11 +139,25 @@
                                     </select>
                                 </td>
                                 <td>
+                                    <select name="standard[{$k}][app_grade]">
+                                        <volist name="app_grade" id="vo2" key="k2">
+                                            <option value="{$key}" <if condition="$vo.app_grade == $key"> selected </if>>{$vo2}</option>
+                                        </volist>
+                                    </select>
+                                </td>
+                                <td>
+                                    <select name="standard[{$k}][distribute_grade]">
+                                        <option value="0" <if condition="$vo.distribute_grade == 0"> selected </if>>所有人</option>
+                                        <volist name="svip_grade" id="vo2" key="k2">
+                                            <option value="{$key}" <if condition="$vo.distribute_grade == $key"> selected </if>>{$vo2}</option>
+                                        </volist>
+                                    </select>
+                                </td>
+                                <td>
                                     <select name="standard[{$k}][distribute_level]">
-                                        <option value="1" <if condition="$vo.distribute_level == 1"> selected </if>>普通会员</option>
-                                        <option value="2" <if condition="$vo.distribute_level == 2"> selected </if>>VIP</option>
+                                        <option value="0" <if condition="$vo.distribute_level == 0"> selected </if>>所有人</option>
                                         <volist name="svip_level" id="vo2" key="k2">
-                                            <option value="{$vo2.app_level}" <if condition="$vo.distribute_level == $vo2.app_level"> selected </if>>{$vo2.name}</option>
+                                            <option value="{$key}" <if condition="$vo.distribute_level == $key"> selected </if>>{$vo2}</option>
                                         </volist>
                                     </select>
                                 </td>
@@ -305,11 +319,25 @@
             '             </select>' +
             '         </td>' +
             '         <td>' +
+            '             <select name="standard[' + standard_count + '][app_grade]">' +
+            '                <volist name="app_grade" id="vo2" key="k2">' +
+            '                    <option value="{$key}">{$vo2}</option>' +
+            '                </volist>' +
+            '             </select>' +
+            '         </td>' +
+            '         <td>' +
+            '             <select name="standard[' + standard_count + '][distribute_grade]">' +
+            '                <option value="0">所有人</option>' +
+            '                <volist name="svip_grade" id="vo2" key="k2">' +
+            '                    <option value="{$key}">{$vo2}</option>' +
+            '                </volist>' +
+            '             </select>' +
+            '         </td>' +
+            '         <td>' +
             '             <select name="standard[' + standard_count + '][distribute_level]">' +
-            '                <option value="1">普通会员</option>' +
-            '                <option value="2">VIP</option>' +
+            '                <option value="0">所有人</option>' +
             '                <volist name="svip_level" id="vo2" key="k2">' +
-            '                    <option value="{$vo2.app_level}">{$vo2.name}</option>' +
+            '                    <option value="{$key}">{$vo2}</option>' +
             '                </volist>' +
             '             </select>' +
             '         </td>' +
