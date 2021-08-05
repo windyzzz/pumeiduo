@@ -14,6 +14,7 @@ namespace app\admin\controller;
 use app\common\model\Coupon as CouponModel;
 use think\AjaxPage;
 use think\Db;
+use think\Exception;
 use think\Loader;
 use think\Page;
 
@@ -434,5 +435,142 @@ class Coupon extends Base
             $this->error('删除失败');
         }
         $this->success('删除成功');
+    }
+
+
+    public function uploadAddCoupon()
+    {
+        $goodsFile = request()->file('prom_file');
+        if (empty($goodsFile)) {
+            $this->error('请先上传文件', U('Admin/Coupon/index'));
+        }
+        // 移动到框架应用根目录/public/uploads/ 目录下
+        $path = ROOT_PATH . 'public/upload/coupon/excel';
+        $file_name = date('YmdHis');
+        $info = $goodsFile->validate(['size' => 200000000, 'ext' => 'csv,xls,xlsx'])->move($path, $file_name);
+        if ($info) {
+            //上传成功 获取上传文件信息
+            $file = $info->getPathName();
+            if (file_exists($file)) {
+                $goodsFile = iconv("utf-8", "gb2312", $file);   //转码
+                include_once "plugins/PHPExcel.php";
+                $objRead = new \PHPExcel_Reader_Excel2007();   //建立reader对象
+                if (!$objRead->canRead($goodsFile)) {
+                    $objRead = new \PHPExcel_Reader_Excel5();
+                    if (!$objRead->canRead($goodsFile)) {
+                        die('No Excel!');
+                    }
+                }
+
+                $cellName = array('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'AA', 'AB', 'AC', 'AD', 'AE', 'AF', 'AG', 'AH', 'AI', 'AJ', 'AK', 'AL', 'AM', 'AN', 'AO', 'AP', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AV', 'AW', 'AX', 'AY', 'AZ');
+                $obj = $objRead->load($file);  //建立excel对象
+                $currSheet = $obj->getSheet(0);   //获取指定的sheet表
+                $columnH = $currSheet->getHighestColumn();   //取得最大的列号
+                $columnCnt = array_search($columnH, $cellName);
+                $rowCnt = $currSheet->getHighestRow();   //获取总行数
+
+                $data = array();
+                for ($_row = 1; $_row <= $rowCnt; $_row++) {  //读取内容
+                    for ($_column = 0; $_column <= $columnCnt; $_column++) {
+                        $cellId = $cellName[$_column] . $_row;
+                        $cellValue = $currSheet->getCell($cellId)->getValue();
+                        //$cellValue = $currSheet->getCell($cellId)->getCalculatedValue();  #获取公式计算的值
+                        if ($cellValue instanceof \PHPExcel_RichText) {   //富文本转换字符串
+                            $cellValue = $cellValue->__toString();
+                        }
+                        $data[$_row][$cellName[$_column]] = $cellValue;
+                    }
+                }
+
+//                echo '<pre>';
+//                print_r($data);
+//                echo '</pre>';
+//                exit();
+
+                Db::startTrans();
+                try {
+                    $couponId = 0;
+                    foreach ($data as $k => $v) {
+                        if ($k == 1 || $k == 2) continue;
+                        if (!empty($v['A'])) {
+                            // 优惠券信息
+                            $couponData = [];
+                            $couponData['nature'] = trim($v['A']);
+                            $couponData['name'] = trim($v['B']);
+                            $couponData['type_value'] = trim($v['C']);
+                            switch ($v['D']) {
+                                case 0:
+                                    $couponData['use_type'] = 0;
+                                    break;
+                                case 1:
+                                    $couponData['use_type'] = 1;
+                                    break;
+                                case 2:
+                                    $couponData['use_type'] = 2;
+                                    break;
+                                case 3:
+                                    $couponData['use_type'] = 4;
+                                    break;
+                                case 4:
+                                    $couponData['use_type'] = 5;
+                                    break;
+                            }
+                            $couponData['money'] = trim($v['F']);
+                            $couponData['condition'] = trim($v['G']);
+                            $couponData['createnum'] = trim($v['H']);
+                            $couponData['send_start_time'] = strtotime(gmdate('Y-m-d H:i:s', \PHPExcel_Shared_Date::ExcelToPHP(trim($v['I']))));
+                            $couponData['send_end_time'] = strtotime(gmdate('Y-m-d H:i:s', \PHPExcel_Shared_Date::ExcelToPHP(trim($v['J']))));
+                            $couponData['use_start_time'] = strtotime(gmdate('Y-m-d H:i:s', \PHPExcel_Shared_Date::ExcelToPHP(trim($v['K']))));
+                            $couponData['use_end_time'] = strtotime(gmdate('Y-m-d H:i:s', \PHPExcel_Shared_Date::ExcelToPHP(trim($v['L']))));
+                            $couponData['add_time'] = NOW_TIME;
+                            $couponData['is_usual'] = trim($v['M']) == '不可以' ? 0 : 1;
+                            $couponData['status'] = 1;
+                            if ($couponData['send_start_time'] > $couponData['send_end_time']) throw new Exception('优惠券发放开始时间不能大于发放结束时间');
+                            if ($couponData['use_start_time'] > $couponData['use_end_time']) throw new Exception('优惠券使用开始时间不能大于使用结束时间');
+                            $couponId = M('coupon')->add($couponData);
+                            // 添加优惠券分类/商品
+                            if (!empty($v['E'])) {
+                                if ($v['D'] == 2) {
+                                    $categoryParam = explode('-', $v['E']);
+                                    if (empty($categoryParam[2])) throw new Exception('请填写商品第三级分类');
+                                    $categoryId = M('goods_category')->where(['name' => $categoryParam[2], 'level' => 3])->value('id');
+                                    if (!$categoryId) throw new Exception('商品分类：' . $categoryParam[2] . '不存在');
+                                    // 添加优惠券分类
+                                    M('goods_coupon')->add([
+                                        'coupon_id' => $couponId,
+                                        'goods_category_id' => $categoryId
+                                    ]);
+                                } else {
+                                    $goodsParam = explode('-', $v['E']);
+                                    $goodsId = M('goods')->where(['goods_sn' => trim($goodsParam[0])])->value('goods_id');
+                                    if (!$goodsId) throw new Exception('商品编号：' . $goodsParam[0] . '不存在');
+                                    // 添加优惠券商品
+                                    M('goods_coupon')->add([
+                                        'coupon_id' => $couponId,
+                                        'goods_id' => $goodsId,
+                                        'number' => $goodsParam[1] ?? 1
+                                    ]);
+                                }
+                            }
+                        } else {
+                            $goodsParam = explode('-', $v['E']);
+                            $goodsId = M('goods')->where(['goods_sn' => trim($goodsParam[0])])->value('goods_id');
+                            if (!$goodsId) throw new Exception('商品编号：' . $goodsParam[0] . '不存在');
+                            // 添加优惠券商品
+                            M('goods_coupon')->add([
+                                'coupon_id' => $couponId,
+                                'goods_id' => $goodsId,
+                                'number' => $goodsParam[1] ?? 1
+                            ]);
+                        }
+                    }
+                    Db::commit();
+                    $this->success('导入处理成功', U('Admin/Coupon/index'));
+                } catch (Exception $e) {
+                    Db::rollback();
+                    $this->error('导入失败——' . $e->getMessage(), U('Admin/Coupon/index'));
+                }
+            }
+        }
     }
 }

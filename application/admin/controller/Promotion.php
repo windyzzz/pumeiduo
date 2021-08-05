@@ -25,6 +25,7 @@ use app\common\model\OrderPromGoods as OrderPromGoodsModel;
 use app\common\model\PromGoods;
 use app\common\model\Gift2;
 use think\Db;
+use think\Exception;
 use think\Loader;
 use think\Page;
 
@@ -117,10 +118,10 @@ class Promotion extends Base
         if ($prom_id) {
             M('gift2')->where(['id' => $prom_id])->save($data);
             $last_id = $prom_id;
-            adminLog("管理员修改了商品促销 " . $title);
+            adminLog("管理员修改了指定商品赠品活动 " . $title . '_' . $last_id);
         } else {
             $last_id = M('gift2')->add($data);
-            adminLog("管理员添加了商品促销 " . $title);
+            adminLog("管理员添加了指定商品赠品活动 " . $title . '_' . $last_id);
         }
 
         M('gift2_goods')->where(array('promo_id' => $last_id))->delete();
@@ -402,10 +403,10 @@ class Promotion extends Base
             M('spec_goods_price')->where(['prom_type' => 3, 'prom_id' => $prom_id])->save(['prom_id' => 0, 'prom_type' => 0]);
             M('prom_goods')->where(['id' => $prom_id])->save($data);
             $last_id = $prom_id;
-            adminLog("管理员修改了商品促销 " . $title);
+            adminLog("管理员修改了商品优惠促销 " . $title . '_' . $last_id);
         } else {
             $last_id = M('prom_goods')->add($data);
-            adminLog("管理员添加了商品促销 " . $title);
+            adminLog("管理员添加了商品优惠促销 " . $title . '_' . $last_id);
         }
 
         M('goods_tao_grade')->where(array('promo_id' => $last_id))->delete();
@@ -523,10 +524,10 @@ class Promotion extends Base
         $data['group'] = $data['group'] ? implode(',', $data['group']) : '';
         if ($prom_id) {
             M('prom_order')->where("id=$prom_id")->save($data);
-            adminLog('管理员修改了商品促销 ' . I('name'));
+            adminLog('管理员修改了商品促销 ' . I('name') . '_' . $prom_id);
         } else {
-            M('prom_order')->add($data);
-            adminLog('管理员添加了商品促销 ' . I('name'));
+            $prom_id = M('prom_order')->add($data);
+            adminLog('管理员添加了商品促销 ' . I('name') . '_' . $prom_id);
         }
         $this->success('编辑促销活动成功', U('Promotion/prom_order_list'));
     }
@@ -844,7 +845,7 @@ class Promotion extends Base
                         } else {
                             Db::name('goods')->where('goods_id', $data['goods_id'])->save(['prom_id' => $flashSaleInsertId, 'prom_type' => 1]);
                         }
-                        adminLog('管理员添加抢购活动 ' . $data['title']);
+                        adminLog('管理员添加抢购活动 ' . $data['title'] . '_' . $flashSaleInsertId);
                         if (false !== $flashSaleInsertId) {
                             Db::commit();
                             $this->ajaxReturn(['status' => 1, 'msg' => '添加抢购活动成功', 'result' => '']);
@@ -861,7 +862,7 @@ class Promotion extends Base
                         } else {
                             M('goods')->where('goods_id', $data['goods_id'])->save(['prom_id' => $data['id'], 'prom_type' => 1]);
                         }
-                        adminLog('管理员编辑抢购活动 ' . $data['title']);
+                        adminLog('管理员编辑抢购活动 ' . $data['title'] . '_' . $data['id']);
                         $r = M('flash_sale')->where('id=' . $data['id'])->save($data);
                         if (false !== $r) {
                             Db::commit();
@@ -881,7 +882,7 @@ class Promotion extends Base
                     } else {
                         Db::name('goods')->where('goods_id', $data['goods_id'])->save(['prom_id' => 0, 'prom_type' => 0]);
                     }
-                    adminLog('管理员紧急下架抢购活动 ' . $data['title']);
+                    adminLog('管理员紧急下架抢购活动 ' . $data['title'] . '_' . $data['id']);
                     Db::commit();
                     $this->ajaxReturn(['status' => 1, 'msg' => '编辑抢购活动成功', 'result' => '']);
                     break;
@@ -898,7 +899,7 @@ class Promotion extends Base
                     } else {
                         Db::name('goods')->where('goods_id', $data['goods_id'])->save(['prom_id' => $data['id'], 'prom_type' => 1]);
                     }
-                    adminLog('管理员继续上架抢购活动 ' . $data['title']);
+                    adminLog('管理员继续上架抢购活动 ' . $data['title'] . '_' . $data['id']);
                     Db::commit();
                     $this->ajaxReturn(['status' => 1, 'msg' => '编辑抢购活动成功', 'result' => '']);
             }
@@ -1403,5 +1404,119 @@ class Promotion extends Base
         $this->assign('page', $page);
         $this->assign('log_list', $logList);
         return $this->fetch('prom_qrcode_log');
+    }
+
+    /**
+     * 导入excel创建商品优惠促销活动
+     * @throws \PHPExcel_Exception
+     * @throws \PHPExcel_Reader_Exception
+     */
+    public function uploadAddPromGoods()
+    {
+        $goodsFile = request()->file('prom_file');
+        if (empty($goodsFile)) {
+            $this->error('请先上传文件', U('Admin/Promotion/prom_goods_list'));
+        }
+        // 移动到框架应用根目录/public/uploads/ 目录下
+        $path = ROOT_PATH . 'public/upload/promotion/excel';
+        $file_name = date('YmdHis');
+        $info = $goodsFile->validate(['size' => 200000000, 'ext' => 'csv,xls,xlsx'])->move($path, $file_name);
+        if ($info) {
+            //上传成功 获取上传文件信息
+            $file = $info->getPathName();
+            if (file_exists($file)) {
+                $goodsFile = iconv("utf-8", "gb2312", $file);   //转码
+                include_once "plugins/PHPExcel.php";
+                $objRead = new \PHPExcel_Reader_Excel2007();   //建立reader对象
+                if (!$objRead->canRead($goodsFile)) {
+                    $objRead = new \PHPExcel_Reader_Excel5();
+                    if (!$objRead->canRead($goodsFile)) {
+                        die('No Excel!');
+                    }
+                }
+
+                $cellName = array('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'AA', 'AB', 'AC', 'AD', 'AE', 'AF', 'AG', 'AH', 'AI', 'AJ', 'AK', 'AL', 'AM', 'AN', 'AO', 'AP', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AV', 'AW', 'AX', 'AY', 'AZ');
+                $obj = $objRead->load($file);  //建立excel对象
+                $currSheet = $obj->getSheet(0);   //获取指定的sheet表
+                $columnH = $currSheet->getHighestColumn();   //取得最大的列号
+                $columnCnt = array_search($columnH, $cellName);
+                $rowCnt = $currSheet->getHighestRow();   //获取总行数
+
+                $data = array();
+                for ($_row = 1; $_row <= $rowCnt; $_row++) {  //读取内容
+                    for ($_column = 0; $_column <= $columnCnt; $_column++) {
+                        $cellId = $cellName[$_column] . $_row;
+                        $cellValue = $currSheet->getCell($cellId)->getValue();
+                        //$cellValue = $currSheet->getCell($cellId)->getCalculatedValue();  #获取公式计算的值
+                        if ($cellValue instanceof \PHPExcel_RichText) {   //富文本转换字符串
+                            $cellValue = $cellValue->__toString();
+                        }
+                        $data[$_row][$cellName[$_column]] = $cellValue;
+                    }
+                }
+
+                Db::startTrans();
+                try {
+                    $promId = 0;
+                    foreach ($data as $k => $v) {
+                        if ($k == 1 || $k == 2) continue;
+                        $goodsParam = explode('-', $v['I']);
+                        $goodsId = M('goods')->where(['goods_sn' => trim($goodsParam[0]), 'prom_type' => 0, 'prom_id' => 0])->value('goods_id');
+                        if (!$goodsId) throw new Exception('商品编号：' . $goodsParam[0] . '不存在或者该商品已设置了活动');
+                        $itemId = isset($goodsParam[1]) ? M('spec_goods_price')->where(['goods_id' => $goodsId, 'key' => $goodsParam[1], 'prom_type' => 0, 'prom_id' => 0])->value('item_id') : 0;
+                        if (!empty($v['A'])) {
+                            // 促销活动信息
+                            $promData = [];
+                            $promData['title'] = trim($v['A']);
+                            switch ($v['B']) {
+                                case 1:
+                                    $promData['type'] = 0;
+                                    $promData['expression'] = trim($v['C']);
+                                    break;
+                                case 2:
+                                    $promData['type'] = 1;
+                                    $promData['expression'] = trim($v['C']);
+                                    break;
+                                case 3:
+                                    $promData['type'] = 4;
+                                    $promData['goods_num'] = explode('/', trim($v['C']))[0];
+                                    $promData['expression'] = explode('/', trim($v['C']))[1];
+                                    break;
+                                case 4:
+                                    $promData['type'] = 5;
+                                    $promData['goods_price'] = explode('/', trim($v['C']))[0];
+                                    $promData['expression'] = explode('/', trim($v['C']))[1];
+                                    break;
+                            }
+                            $promData['buy_limit'] = trim($v['D']);
+                            $promData['min_num'] = trim($v['E']);
+                            if ($v['F']) {
+                                $promData['group'] = trim($v['F']);
+                            } else {
+                                $promData['group'] = 1;
+                            }
+                            $promData['start_time'] = strtotime(gmdate('Y-m-d H:i:s', \PHPExcel_Shared_Date::ExcelToPHP(trim($v['G']))));
+                            $promData['end_time'] = strtotime(gmdate('Y-m-d H:i:s', \PHPExcel_Shared_Date::ExcelToPHP(trim($v['H']))));
+                            if ($promData['start_time'] > $promData['end_time']) throw new Exception('活动开启时间不能大于结束时间');
+                            $promId = M('prom_goods')->add($promData);
+                        }
+                        // 添加活动商品
+                        M('goods_tao_grade')->add([
+                            'promo_id' => $promId,
+                            'goods_id' => $goodsId,
+                            'item_id' => $itemId
+                        ]);
+                        // 更新商品信息
+                        M('goods')->where(['goods_id' => $goodsId])->update(['prom_type' => 3, 'prom_id' => $promId]);
+                        M('spec_goods_price')->where(['item_id' => $itemId])->update(['prom_type' => 3, 'prom_id' => $promId]);
+                    }
+                    Db::commit();
+                    $this->success('导入处理成功', U('Admin/Promotion/prom_goods_list'));
+                } catch (Exception $e) {
+                    Db::rollback();
+                    $this->error('导入失败——' . $e->getMessage(), U('Admin/Promotion/prom_goods_list'));
+                }
+            }
+        }
     }
 }
