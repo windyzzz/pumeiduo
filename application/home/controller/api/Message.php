@@ -161,13 +161,13 @@ class Message extends Base
                 $message = [];
                 foreach ($questionCate as $cate) {
                     $questionList = M('article')->where(['cat_id' => 81, 'extend_cate_id' => $cate['id'], 'is_open' => 1])
-                        ->order('extend_sort')->field('article_id message_id, title, app_content content, relate_article_id')->select();
+                        ->order('extend_sort')->field('article_id message_id, title, content, relate_article_id')->select();
                     $dataList = [];
                     foreach ($questionList as $list) {
                         $dataList[] = [
                             'message_id' => $list['message_id'],
                             'title' => $list['title'],
-                            'content' => $list['content'],
+                            'content' => htmlspecialchars_decode($list['content']),
                             'relate_url' => !empty($list['relate_article_id']) ? SITE_URL . '/#/news/app_news_particulars?article_id=' . $list['relate_article_id'] : '',
                         ];
                     }
@@ -202,7 +202,8 @@ class Message extends Base
         $userLogic = new UsersLogic();
         $userLogic->setArticleForRead($messageId, $this->user);
         // 内容
-        $article = M('article')->where(['article_id' => $messageId, 'is_open' => 1])->field('article_id message_id, title, app_content')->find();
+        $article = M('article')->where(['article_id' => $messageId, 'is_open' => 1])->field('article_id message_id, title, content')->find();
+        $article['app_content'] = htmlspecialchars_decode($article['content']);
         $return = $article;
         return json(['status' => 1, 'result' => $return]);
     }

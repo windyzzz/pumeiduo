@@ -1,4 +1,7 @@
 <include file="public/layout"/>
+<load href="__ROOT__/public/plugins/Ueditor/ueditor.config.js"/>
+<load href="__ROOT__/public/plugins/Ueditor/ueditor.all.min.js"/>
+<script type="text/javascript" charset="utf-8" src="__ROOT__/public/plugins/Ueditor/lang/zh-cn/zh-cn.js"></script>
 <body style="background-color: #FFF; overflow: auto;">
 <div class="page">
     <div class="fixed-bar">
@@ -46,13 +49,16 @@
                     <p class="notic"></p>
                 </dd>
             </dl>
-            <dl class="row" style="height: 300px;">
+            <dl class="row">
                 <dt class="tit">
-                    <label>内容</label>
+                    <label><em>*</em>内容</label>
                 </dt>
-                <dd class="opt" style="height: 100%;">
-                    <textarea name="app_content" style="width: 50%; height: 100%; line-height: 200%;">{$article.content}</textarea>
+                <dd class="opt">
+                    <textarea class="span12 ckeditor" id="post_content" name="content" title="">
+                        {$article.content}
+                    </textarea>
                 </dd>
+            </dl>
             </dl>
             <dl class="row">
                 <dt class="tit">
@@ -72,6 +78,18 @@
     </form>
 </div>
 <script>
+
+    var url = "{:url('Ueditor/index',array('savePath'=>'article'))}";
+    var ue = UE.getEditor('post_content', {
+        serverUrl: url,
+        zIndex: 999,
+        initialFrameWidth: "80%", //初化宽度
+        initialFrameHeight: 300, //初化高度
+        focus: false, //初始化时，是否让编辑器获得焦点true或false
+        maximumWords: 99999, removeFormatAttributes: 'class,style,lang,width,height,align,hspace,valign',//允许的最大字符数 'fullscreen',
+        pasteplain: false, //是否默认为纯文本粘贴。false为不使用纯文本粘贴，true为使用纯文本粘贴
+        autoHeightEnabled: true,
+    });
 
 </script>
 </body>

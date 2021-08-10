@@ -10,8 +10,7 @@
     }
 </style>
 <body style="background-color: #FFF; overflow: auto;">
-<div id="toolTipLayer"
-     style="position: absolute; z-index: 9999; display: none; visibility: visible; left: 95px; top: 573px;"></div>
+<div id="toolTipLayer" style="position: absolute; z-index: 9999; display: none; visibility: visible; left: 95px; top: 573px;"></div>
 <div id="append_parent"></div>
 <div id="ajaxwaitid"></div>
 <div class="page">
@@ -171,18 +170,19 @@
                     <p class="notic">请上传图片格式文件；弹窗文章封面的规格是864 x 921</p>
                 </dd>
             </dl>
-            <if condition="in_array($info[article_id], [95, 104, 105, 106, 108])">
-                <dl class="row" id="appContent_row" <if condition="$info[nature] == 2">style="display:none;"</if>>
-                    <dt class="tit">
-                        <label><em>*</em>APP显示内容（与文章内容一致）</label>
-                    </dt>
-                    <dd class="opt">
-                        <textarea class="" style="width: 80%; height: 100%; line-height: 150%" rows="20" name="app_content" title="">{$info.app_content}</textarea>
-                        <span class="err" id="err_app_content"></span>
-                        <p class="notic"></p>
-                    </dd>
-                </dl>
-            </if>
+            <!--
+            95, 104, 105, 106, 108
+            <dl class="row" id="appContent_row" <if condition="$info[nature] == 2">style="display:none;"</if>>
+                <dt class="tit">
+                    <label><em>*</em>APP显示内容（与文章内容一致）</label>
+                </dt>
+                <dd class="opt">
+                    <textarea class="" style="width: 80%; height: 100%; line-height: 150%" rows="20" name="app_content" title="">{$info.app_content}</textarea>
+                    <span class="err" id="err_app_content"></span>
+                    <p class="notic"></p>
+                </dd>
+            </dl>
+            -->
             <dl class="row">
                 <dt class="tit">
                     <label><em>*</em>文章内容</label>

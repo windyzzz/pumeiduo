@@ -90,7 +90,7 @@ class Apply extends Base
                 'member_num' => 0,
                 'service_phone' => tpCache('shop_info.mobile'),
                 'card_num' => $this->user['user_name'],
-                'notice' => M('article')->where(['article_id' => 105])->value('app_content'),
+                'notice' => htmlspecialchars_decode(M('article')->where(['article_id' => 105])->value('content')),
                 'card_cover' => tpCache('basic.apply_card_cover') ?? '',
                 'tips' => $tips ?? ''
             ];

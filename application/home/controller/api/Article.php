@@ -188,7 +188,8 @@ class Article extends Base
 //                }
 //                break;
 //        }
-        $article = M('article')->where(['article_id' => $articleId, 'is_open' => 1])->field('article_id, title, app_content')->find();
+        $article = M('article')->where(['article_id' => $articleId, 'is_open' => 1])->field('article_id, title, content')->find();
+        $article['app_content'] = htmlspecialchars_decode($article['content']);
         $return = $article;
         return json(['status' => 1, 'result' => $return]);
     }
