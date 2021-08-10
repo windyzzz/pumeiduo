@@ -272,6 +272,6 @@ class Article extends Base
         if (M('article')->where(['article_id' => 97])->value('update_time') > 0) {
             $return['is_open'] = 1;
         }
-        return json(['status' => 1, 'result' => $return]);
+        return json(['status' => 1, 'result' => $return, 'msg' => '']);
     }
 }
