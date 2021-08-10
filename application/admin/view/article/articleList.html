@@ -43,7 +43,7 @@
                                 <option value="{$vo.cat_id}" <if condition="$vo[cat_id] eq $cat_id">selected</if>>{$vo.cat_name}</option>
                             </foreach>
                         </select>
-                        <input type="text" size="30" name="keywords" class="qsbox" placeholder="搜索相关数据...">
+                        <input type="text" size="30" name="keywords" class="qsbox" placeholder="搜索相关数据..." value="{$keywords}">
                         <input type="submit" class="btn" value="搜索">
                     </div>
                 </div>

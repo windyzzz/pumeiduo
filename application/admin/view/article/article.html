@@ -248,6 +248,20 @@
     });
 
     function verifyForm() {
+        if ($('input[name="article_id"]').val() == '97') {
+            layer.confirm('修改隐私协议APP会有提示，确定修改？', {
+                btn: ['确定']
+            }, function () {
+                articleHandle();
+            }, function () {
+                console.log("取消");
+            });
+        } else {
+            articleHandle()
+        }
+    }
+
+    function articleHandle() {
         $('span.err').hide();
         $.ajax({
             type: "POST",

@@ -259,4 +259,19 @@ class Article extends Base
         }
         return json(['status' => 1, 'result' => '', 'msg' => '处理成功']);
     }
+
+    /**
+     * 检查隐私条款更新情况
+     * @return \think\response\Json
+     */
+    public function checkPrivacy()
+    {
+        $return = [
+            'is_open' => 0
+        ];
+        if (M('article')->where(['article_id' => 97])->value('update_time') > 0) {
+            $return['is_open'] = 1;
+        }
+        return json(['status' => 1, 'result' => $return]);
+    }
 }

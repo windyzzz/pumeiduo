@@ -100,6 +100,7 @@ class Article extends Base
         $this->assign('cats', $cats);
         $this->assign('nature', $nature);
         $this->assign('cat_id', $cat_id);
+        $this->assign('keywords', $keywords);
         $this->assign('list', $list); // 赋值数据集
         $this->assign('pager', $pager); // 赋值分页输出
         return $this->fetch('articleList');
@@ -205,6 +206,7 @@ class Article extends Base
             $data['add_time'] = time();
             $r = M('article')->add($data);
         } elseif ('edit' == $data['act']) {
+            $data['update_time'] = NOW_TIME;
             $r = M('article')->where('article_id=' . $data['article_id'])->save($data);
             if ($data['nature'] == 2) {
                 // 修改用户查看记录状态

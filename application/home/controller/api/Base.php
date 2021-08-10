@@ -110,6 +110,7 @@ class Base extends Controller
             'c=api.Message&a=floatMessage',             // 浮窗消息列表
             'c=api.Article&a=articleCateList',          // 文章分类列表
             'c=api.Article&a=articleListNew',           // 文章列表
+            'c=api.Article&a=checkPrivacy',             // 检查隐私条款
             'c=api.Community&a=allCategory',            // 社区所有分类
             'c=api.Community&a=articleKeyword',         // 社区文章搜索热词
             'c=api.Community&a=article',                // 社区文章列表
