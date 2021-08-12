@@ -266,11 +266,21 @@ class Article extends Base
      */
     public function checkPrivacy()
     {
+        $equipId = I('equip_id', '');
         $return = [
             'is_open' => 0
         ];
-        if (M('article')->where(['article_id' => 97])->value('update_time') > 0) {
-            $return['is_open'] = 1;
+        if ($equipId) {
+            if (M('article')->where(['article_id' => 97])->value('update_time') > 0
+                && !M('user_popup_log')->where(['type' => 2, 'equip_id' => $equipId, 'popup_id' => 97])->find()) {
+                $return['is_open'] = 1;
+                M('user_popup_log')->add([
+                    'type' => 2,
+                    'equip_id' => $equipId,
+                    'popup_id' => 97,
+                    'log_time' => NOW_TIME
+                ]);
+            }
         }
         return json(['status' => 1, 'result' => $return, 'msg' => '']);
     }

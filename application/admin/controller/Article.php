@@ -212,6 +212,8 @@ class Article extends Base
                 // 修改用户查看记录状态
                 M('user_article')->where('article_id=' . $data['article_id'])->update(['status' => 0]);
             }
+            // 清空文章弹窗记录
+            M('user_popup_log')->where(['type' => 2, 'popup_id' => $data['article_id']])->delete();
         } elseif ('del' == $data['act']) {
             $r = M('article')->where('article_id=' . $data['article_id'])->delete();
         }

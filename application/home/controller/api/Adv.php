@@ -79,27 +79,4 @@ class Adv extends Base
         ];
         return json(['status' => 1, 'result' => $returnData]);
     }
-
-    /**
-     * 用户弹窗记录
-     * @return \think\response\Json
-     */
-    public function userPopupLog()
-    {
-        $popupIds = I('popup_ids', '');
-        if (empty($popupIds)) return json(['status' => 1]);
-        $popupIds = explode(',', $popupIds);
-        foreach ($popupIds as $popupId) {
-            if (M('user_popup_log')->where(['user_id' => $this->user_id, 'popup_id' => $popupId])->find()) {
-                M('user_popup_log')->where(['user_id' => $this->user_id, 'popup_id' => $popupId])->update(['log_time' => time()]);
-            } else {
-                M('user_popup_log')->add([
-                    'user_id' => $this->user_id,
-                    'popup_id' => $popupId,
-                    'log_time' => time()
-                ]);
-            }
-        }
-        return json(['status' => 1]);
-    }
 }
