@@ -260,4 +260,41 @@ class Article extends Base
         }
         return json(['status' => 1, 'result' => '', 'msg' => '处理成功']);
     }
+
+    /**
+     * 检查隐私条款更新情况
+     * @return \think\response\Json
+     */
+    public function checkPrivacy()
+    {
+        $equipId = I('equip_id', '');
+        $return = [
+            'is_open' => 0
+        ];
+        if ($equipId) {
+            if (M('article')->where(['article_id' => 97])->value('update_time') > 0 &&
+                !M('user_popup_log')->where(['type' => 2, 'equip_id' => $equipId, 'popup_id' => 97])->find()) {
+                $return['is_open'] = 1;
+            }
+        }
+        return json(['status' => 1, 'result' => $return, 'msg' => '']);
+    }
+
+    /**
+     * 更新检查隐私条款
+     * @return \think\response\Json
+     */
+    public function updateCheckPrivacy()
+    {
+        $equipId = I('equip_id', '');
+        if ($equipId) {
+            M('user_popup_log')->add([
+                'type' => 2,
+                'equip_id' => $equipId,
+                'popup_id' => 97,
+                'log_time' => NOW_TIME
+            ]);
+        }
+        return json(['status' => 1, 'msg' => 'ok']);
+    }
 }
