@@ -369,17 +369,17 @@ class School
                 return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
             }
         }
-        // 必修课程鉴权
-        $preArticleIds = M('school_article')->where([
-            'class_id' => $article['class_id'], 'sort' => ['>', $article['sort']],
-            'learn_type' => 1, 'status' => 1
-        ])->getField('id', true);   // 前面必修的课程文章
-        if (!empty($preArticleIds)) {
-            $userArticleCount = M('user_school_article')->where(['user_id' => $user['user_id'], 'article_id' => ['IN', $preArticleIds], 'status' => 1])->count();
-            if ($userArticleCount != count($preArticleIds)) {
-                return ['status' => 0, 'msg' => '请按顺序学习课程'];
-            }
-        }
+//        // 必修课程鉴权
+//        $preArticleIds = M('school_article')->where([
+//            'class_id' => $article['class_id'], 'sort' => ['>', $article['sort']],
+//            'learn_type' => 1, 'status' => 1
+//        ])->getField('id', true);   // 前面必修的课程文章
+//        if (!empty($preArticleIds)) {
+//            $userArticleCount = M('user_school_article')->where(['user_id' => $user['user_id'], 'article_id' => ['IN', $preArticleIds], 'status' => 1])->count();
+//            if ($userArticleCount != count($preArticleIds)) {
+//                return ['status' => 0, 'msg' => '请按顺序学习课程'];
+//            }
+//        }
         // 是否已购买课程
         if (!M('user_school_article')->where(['user_id' => $user['user_id'], 'article_id' => $article['id']])->value('id')) {
             // 课程消费积分
@@ -709,7 +709,9 @@ class School
                 $query->whereOr($whereOr);
             });
         }
-        $article = $article->order($sort)->limit($page->firstRow . ',' . $page->listRows)->select();
+        $article = $article->join('user_school_article usa', 'usa.article_id = sa.id', 'LEFT')
+            ->order($sort)->limit($page->firstRow . ',' . $page->listRows)
+            ->field('sa.*, usa.status learn_status, usa.times learn_times')->select();
         $list = [];
         $articleIds = [];
         $fileList = [];     // 附件列表
@@ -751,7 +753,9 @@ class School
                 'user' => [
                     'user_name' => '',
                     'head_pic' => '',
-                ]
+                ],
+                'learn_status' => $item['learn_status'] ?? '0',
+                'learn_times' => $item['learn_times'] ?? '0'
             ];
             if (!empty($item['file'])) {
                 $item['file'] = explode(',', $item['file']);
