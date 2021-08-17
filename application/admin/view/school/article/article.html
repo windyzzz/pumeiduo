@@ -20,7 +20,7 @@
             </div>
         </div>
     </div>
-    <form class="form-horizontal" action="{:U('School/article')}" id="add_post" method="post">
+    <form class="form-horizontal" action="{:U('school.article/article')}" id="add_post" method="post">
         <div class="ncap-form-default">
             <dl class="row">
                 <dt class="tit">
@@ -240,7 +240,7 @@
         $('span.err').hide();
         $.ajax({
             type: "POST",
-            url: "{:U('School/article')}",
+            url: "{:U('school.article/article')}",
             data: $('#add_post').serialize(),
             dataType: "json",
             error: function () {
@@ -265,7 +265,7 @@
         }, function () {
             $.ajax({
                 type: "POST",
-                url: "{:U('School/stopArticle')}",
+                url: "{:U('school.article/stopArticle')}",
                 data: $('#add_post').serialize(),
                 dataType: "json",
                 error: function () {

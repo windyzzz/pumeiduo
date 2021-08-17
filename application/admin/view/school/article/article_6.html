@@ -17,7 +17,7 @@
             </div>
         </div>
     </div>
-    <form class="form-horizontal" action="{:U('School/article_6')}" id="add_post" method="post" enctype="multipart/form-data">
+    <form class="form-horizontal" action="{:U('school.article/article_6')}" id="add_post" method="post" enctype="multipart/form-data">
         <div class="ncap-form-default">
             <dl class="row">
                 <dt class="tit">
@@ -261,7 +261,7 @@
         $('span.err').hide();
         $.ajax({
             type: "POST",
-            url: "{:U('School/article_6')}",
+            url: "{:U('school.article/article_6')}",
             data: $('#add_post').serialize(),
             dataType: "json",
             error: function () {
@@ -286,7 +286,7 @@
         }, function () {
             $.ajax({
                 type: "POST",
-                url: "{:U('School/stopArticle')}",
+                url: "{:U('school.article/stopArticle')}",
                 data: $('#add_post').serialize(),
                 dataType: "json",
                 error: function () {

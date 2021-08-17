@@ -16,7 +16,7 @@
             </div>
         </div>
     </div>
-    <form class="form-horizontal" action="{:U('School/rotate')}" id="add_post" method="post">
+    <form class="form-horizontal" action="{:U('school.module/rotate')}" id="add_post" method="post">
         <div class="ncap-form-default">
             <dl class="row">
                 <dt class="tit">
@@ -107,7 +107,7 @@
         if (this.value != '' && this.value != 'module6' && this.value != 'module7' && this.value != 'module8') {
             $.ajax({
                 type: "GET",
-                url: "{:U('School/ajaxGetArticle')}",
+                url: "{:U('school.article/ajaxGetArticle')}",
                 data: {'module_type': this.value},
                 dataType: "json",
                 error: function () {
@@ -136,7 +136,7 @@
         $('span.err').hide();
         $.ajax({
             type: "POST",
-            url: "{:U('School/rotate')}",
+            url: "{:U('school.module/rotate')}",
             data: $('#add_post').serialize(),
             dataType: "json",
             error: function () {
@@ -145,7 +145,7 @@
             success: function (data) {
                 if (data.status === 1) {
                     layer.msg(data.msg, {icon: 1, time: 1000}, function () {
-                        location.href = "{:U('Admin/School/config')}";
+                        location.href = "{:U('school.module/config')}";
                     });
                 } else if (data.status === 0) {
                     layer.msg(data.msg, {icon: 2, time: 1000});

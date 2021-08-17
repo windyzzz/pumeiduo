@@ -29,11 +29,10 @@
         <div class="mDiv">
             <div class="ftitle">
                 <h3>记录列表</h3>
-                <h5>(共{$page->totalRows}条记录)</h5>
             </div>
             <div title="刷新数据" class="pReload"><i class="fa fa-refresh"></i></div>
         </div>
-        <form class="navbar-form form-inline" id="search-form" action="{:U('Admin/School/userStandardList')}" method="post">
+        <form class="navbar-form form-inline" id="search-form" action="{:U('school.article/userStandardList')}" method="post">
             <div class="sDiv">
                 <div class="sDiv2">
                     <select name="app_grade">
@@ -183,8 +182,6 @@
             </div>
             <div class="iDiv" style="display: none;"></div>
         </div>
-        <!--分页位置-->
-        {$page->show()}
     </div>
 </div>
 <script>
@@ -196,7 +193,7 @@
 
         // 点击刷新数据
         $('.fa-refresh').click(function () {
-            location.href = "{:U('Admin/School/userStandardList')}";
+            location.href = "{:U('school.article/userStandardList')}";
         });
     });
 

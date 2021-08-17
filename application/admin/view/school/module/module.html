@@ -8,7 +8,7 @@
             </div>
         </div>
     </div>
-    <form method="post" id="datapost1" action="/index.php/admin/School/{$type}" enctype="multipart/form-data" name="form">
+    <form method="post" id="datapost1" action="/index.php/admin/school.module/{$type}" enctype="multipart/form-data" name="form">
         <div class="ncap-form-default">
             <dl class="row">
                 <dt class="tit">
@@ -32,14 +32,20 @@
                 </dt>
                 <dd class="opt">
                     <div class="goods-thumb">
-                        <img class="module_img" style="width: 90px;height: 90px" src="{$module[img]}"/>
+                        <img class="module_img" style="<if condition='$module[type] == module9'>width: 195px;height: 120px<else/>width: 90px;height: 90px</if>" src="{$module[img]}"/>
                     </div>
                     <div style="margin-bottom: 10px;">
                         <input type="hidden" id="module_img" name="img" value="{$module[img]}" class="type-file-text">
                         <input style="cursor: pointer;" type="button" name="button" value="选择上传..." class="type-file-button" onClick="GetUploadify(1,'module_img','school','img_call_back')">
                         <div style="clear: both;"></div>
                     </div>
-                    <p class="notic">长150px，宽150px</p>
+                    <p class="notic">
+                        <if condition="$module[type] == 'module9'">
+                            长498px，宽306px
+                        <else/>
+                            长150px，宽150px
+                        </if>
+                    </p>
                 </dd>
             </dl>
             <dl class="row">
@@ -130,7 +136,7 @@
         </ul>
     </div>
     <if condition="!empty($module_class)">
-        <form method="post" id="datapost2" action="{:U('School/updateModuleClass')}" enctype="multipart/form-data" name="form">
+        <form method="post" id="datapost2" action="{:U('school.module/updateModuleClass')}" enctype="multipart/form-data" name="form">
             <div class="ncap-form-default">
                 <dl class="row">
                     <dt class="tit">
@@ -194,6 +200,17 @@
                         </foreach>
                     </dd>
                 </dl>
+                <dl class="row">
+                    <dt class="tit">
+                        <label>是否是学习课程分类</label>
+                    </dt>
+                    <dd class="opt onoff">
+                        <label for="class_is_learn1" class="cb-enable <if condition='$module_class[is_learn] eq 1'>selected</if>">是</label>
+                        <label for="class_is_learn0" class="cb-disable <if condition='$module_class[is_learn] eq 0'>selected</if>">不是</label>
+                        <input id="class_is_learn1" name="is_learn" <if condition='$module_class[is_learn] eq 1'>checked</if> value="1" type="radio">
+                        <input id="class_is_learn0" name="is_learn" <if condition='$module_class[is_learn] eq 0'>checked</if> value="0" type="radio">
+                    </dd>
+                </dl>
                 <div class="bot">
                     <input type="hidden" name="type" value="{$type}">
                     <input type="hidden" name="class_id" value="{$module_class[id]}">
@@ -223,10 +240,25 @@
                             <div style="text-align: center; width: 50px;" class="">ID</div>
                         </th>
                         <th align="left" abbr="article_title" axis="col3" class="">
-                            <div style="text-align: center; width: 300px;" class="">内容</div>
+                            <div style="text-align: center; width: 240px;" class="">标题</div>
+                        </th>
+                        <th align="left" abbr="ac_id" axis="col4" class="">
+                            <div style="text-align: center; width: 240px;" class="">副标题</div>
+                        </th>
+                        <th align="center" abbr="article_show" axis="col5" class="">
+                            <div style="text-align: center; width: 80px;" class="">学习人数</div>
+                        </th>
+                        <th align="center" abbr="article_time" axis="col6" class="">
+                            <div style="text-align: center; width: 80px;" class="">分享人数</div>
                         </th>
                         <th align="center" abbr="article_time" axis="col6" class="">
                             <div style="text-align: center; width: 80px;" class="">排序</div>
+                        </th>
+                        <th align="center" abbr="article_time" axis="col6" class="">
+                            <div style="text-align: center; width: 80px;" class="">推荐文章</div>
+                        </th>
+                        <th align="center" abbr="article_time" axis="col6" class="">
+                            <div style="text-align: center; width: 120px;" class="">学习类型</div>
                         </th>
                         <th align="center" abbr="article_time" axis="col6" class="">
                             <div style="text-align: center; width: 120px;" class="">状态</div>
@@ -253,7 +285,7 @@
         </div>
         <div class="tDiv">
             <div class="tDiv2">
-                <a href="{:U('School/article_6')}/type/{$type}/class_id/{$module_class[id]}">
+                <a href="{:U('school.article/article')}/type/{$type}/class_id/{$module_class[id]}">
                     <div class="fbutton">
                         <div title="添加文章" class="add">
                             <span><i class="fa fa-plus"></i>添加文章</span>
@@ -276,9 +308,20 @@
                                 <div style="text-align: center; width: 50px;">{$vo.id}</div>
                             </td>
                             <td align="left" class="">
-                                <div style="text-align: center; width: 300px;">
-                                    <textarea class="" style="width: 90%; height: 50%; line-height: 150%" rows="5" name="content" title="">{$vo.content}</textarea>
+                                <div style="text-align: center; width: 240px;">
+                                    <textarea style="width: 80%; height: 100%; line-height: 150%;" rows="3" disabled>{$vo.title}</textarea>
                                 </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 240px;">
+                                    <textarea style="width: 80%; height: 100%; line-height: 150%;" rows="3" disabled>{$vo.subtitle}</textarea>
+                                </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 80px;">{$vo.learn}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 80px;">{$vo.share}</div>
                             </td>
                             <td align="left" class="">
                                 <div style="text-align: center; width: 80px;">
@@ -287,6 +330,22 @@
                                            onblur="changeTableVal('school_article','id','{$vo.id}','sort',this)"
                                            size="4" value="{$vo.sort}" style="text-align: center;"/>
                                 </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 80px;">
+                                    <if condition='$vo[is_recommend] eq 1'>
+                                        <span class="yes"
+                                              onClick="changeTableVal('school_article','id','{$vo.id}','is_recommend',this)"><i
+                                                class="fa fa-check-circle"></i>是</span>
+                                        <else/>
+                                        <span class="no"
+                                              onClick="changeTableVal('school_article','id','{$vo.id}','is_recommend',this)"><i
+                                                class="fa fa-ban"></i>否</span>
+                                    </if>
+                                </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">{$vo.learn_type_desc}</div>
                             </td>
                             <td align="left" class="">
                                 <div style="text-align: center; width: 120px;
@@ -308,7 +367,7 @@
                             </td>
                             <td align="left" class="">
                                 <div style="text-align: center; width: 120px;">
-                                        {$vo.publish_time|date='Y-m-d H:i:s', ###}
+                                    {$vo.publish_time|date='Y-m-d H:i:s', ###}
                                 </div>
                             </td>
                             <td align="left" class="">
@@ -320,7 +379,7 @@
                             </td>
                             <td align="left" class="handle">
                                 <div style="text-align: left; width: 150px; max-width:150px;">
-                                    <a class="btn blue" href="{:U('School/article_6')}/type/{$type}/class_id/{$module_class[id]}/article_id/{$vo[id]}"><i class="fa fa-pencil-square-o"></i>编辑</a>
+                                    <a class="btn blue" href="{:U('school.article/article')}/type/{$type}/class_id/{$module_class[id]}/article_id/{$vo[id]}"><i class="fa fa-pencil-square-o"></i>编辑</a>
                                     <a class="btn red del" onclick="delArticle('{$type}', '{$module_class[id]}', '{$vo[id]}')"><i class="fa fa-trash-o"></i>删除</a>
                                 </div>
                             </td>
@@ -355,7 +414,8 @@
     }
 
     function addModuleClass(module_id, module_type) {
-        var url = "{:U('Admin/School/addModuleClass')}/module_id/" + module_id + "/type/" + module_type;
+        if (module_id == '') module_id = 0;
+        var url = "{:U('school.module/addModuleClass')}/module_id/" + module_id + "/type/" + module_type;
         layer.open({
             type: 2,
             title: '站内信',
@@ -367,7 +427,7 @@
     }
 
     function addModuleClassCallback(module_type) {
-        window.location.href = "{:U('Admin/School/')}" + module_type;
+        window.location.href = "{:U('school.module/')}" + module_type;
     }
 
     function delModuleClass(type, class_id) {
@@ -376,7 +436,7 @@
         }, function () {
             $.ajax({
                 type: "POST",
-                url: "{:U('Admin/School/delModuleClass')}",
+                url: "{:U('school.module/delModuleClass')}",
                 data: {'class_id': class_id},
                 dataType: 'json',
                 error: function (request) {
@@ -385,7 +445,7 @@
                 success: function (data) {
                     if (data.status == 1) {
                         layer.msg(data.msg, {icon: 1, time: 2000}, function () {
-                            window.location.href = "{:U('Admin/School/')}" + type;
+                            window.location.href = "{:U('school.module/')}" + type;
                         });
                     } else {
                         layer.msg(data.msg, {icon: 2, time: 2000});
@@ -403,7 +463,7 @@
         }, function () {
             $.ajax({
                 type: "POST",
-                url: "{:U('School/delArticle')}",
+                url: "{:U('school.article/delArticle')}",
                 data: {'type': type, 'class_id': class_id, 'article_id': article_id},
                 dataType: "json",
                 error: function () {
@@ -413,7 +473,7 @@
                     if (data.status === 1) {
                         var result = data.result;
                         layer.msg(data.msg, {icon: 1, time: 1000}, function () {
-                            location.href = "{:U('Admin/School/')}" + result.type + "/class_id/" + result.class_id;
+                            location.href = "{:U('school.module/')}" + result.type + "/class_id/" + result.class_id;
                         });
                     } else if (data.status === 0) {
                         layer.msg(data.msg, {icon: 2, time: 1000});

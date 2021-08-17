@@ -1,0 +1,123 @@
+<include file="public/layout"/>
+<script src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
+<body style="background-color: rgb(255, 255, 255); overflow: auto; cursor: default; -moz-user-select: inherit;">
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title">
+            <div class="subject">
+                <h3>配置</h3>
+            </div>
+        </div>
+    </div>
+    <form method="post" id="datapost" action="{:U('school.questionnaire/config')}" enctype="multipart/form-data" name="form">
+        <div class="ncap-form-default">
+            <dl class="row">
+                <dt class="tit">
+                    <label>开启状态</label>
+                </dt>
+                <dd class="opt">
+                    <select name="status">
+                        <option value="1" <if condition="$config[status] === 1">selected</if>>开启</option>
+                        <option value="0" <if condition="$config[status] === 0">selected</if>>关闭</option>
+                    </select>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>开始时间</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text"  class="input-txt" name="start_time" id="start_time" value="{$config.start_time}">
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>结束时间</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text"  class="input-txt" name="end_time" id="end_time" value="{$config.end_time}">
+                </dd>
+            </dl>
+            <div class="bot">
+                <input type="hidden" name="config_id" value="{$config.id}">
+                <a class="ncap-btn-big ncap-btn-green" onclick="updateConfig('datapost')">确认提交</a>
+            </div>
+        </div>
+    </form>
+</div>
+<div class="page">
+    <div class="flexigrid">
+        <div class="mDiv">
+            <div class="ftitle">
+                <h3>调查项目列表</h3>
+            </div>
+        </div>
+        <div class="hDiv">
+            <div class="hDivBox">
+                <table cellspacing="0" cellpadding="0">
+                    <thead>
+                    <tr>
+                        <th class="sign" axis="col0">
+                            <div style="width: 24px;"><i class="ico-check"></i></div>
+                        </th>
+
+                        <th style="width:100%" axis="col7">
+                            <div></div>
+                        </th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+        <div class="tDiv">
+            <div class="tDiv2">
+                <a href="{:U('school.questionnaire/addCaption')}">
+                    <div class="fbutton">
+                        <div title="添加项目" class="add">
+                            <span><i class="fa fa-plus"></i>添加项目</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div style="clear:both"></div>
+        </div>
+        <div class="bDiv" style="height: auto;">
+            <div id="flexigrid" cellpadding="0" cellspacing="0" border="0">
+                <table>
+                    <tbody>
+                    <foreach name="caption" item="vo" key="k" >
+                        <tr>
+                            <td class="sign">
+                                <div style="width: 24px;"><i class="ico-check"></i></div>
+                            </td>
+
+                            <td align="" class="" style="width: 100%;">
+                                <div>&nbsp;</div>
+                            </td>
+                        </tr>
+                    </foreach>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#start_time').layDate();
+        $('#end_time').layDate();
+
+        // 点击刷新数据
+        $('.fa-refresh').click(function () {
+            location.href = location.href;
+        });
+    });
+
+    function updateConfig(postId) {
+        $('#' + postId).submit();
+    }
+</script>
+</body>
+</html>

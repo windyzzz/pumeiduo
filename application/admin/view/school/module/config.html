@@ -8,7 +8,7 @@
             </div>
         </div>
     </div>
-    <form method="post" id="datapost" action="{:U('School/config')}" enctype="multipart/form-data" name="form">
+    <form method="post" id="datapost" action="{:U('school.module/config')}" enctype="multipart/form-data" name="form">
         <div class="ncap-form-default">
             <dl class="row">
                 <dt class="tit">
@@ -171,8 +171,8 @@
                     </table>
                     <p class="notic">课程：设置了必修/选修，且发布中的文章</p>
                     <br/>
-                    <a class="ncap-btn-big ncap-btn-orange" href="{:U('School/userCourseList')}"><span>用户学习课程列表</span></a>
-                    <a class="ncap-btn-big ncap-btn-blue" href="{:U('School/userStandardList')}"><span>用户学习达标列表</span></a>
+                    <a class="ncap-btn-big ncap-btn-orange" href="{:U('school.article/userCourseList')}"><span>用户学习课程列表</span></a>
+                    <a class="ncap-btn-big ncap-btn-blue" href="{:U('school.article/userStandardList')}"><span>用户学习达标列表</span></a>
                 </dd>
             </dl>
             <div class="bot">
@@ -221,7 +221,7 @@
         </div>
         <div class="tDiv">
             <div class="tDiv2">
-                <a href="{:U('School/rotate')}">
+                <a href="{:U('school.module/rotate')}">
                     <div class="fbutton">
                         <div title="添加缩略图" class="add">
                             <span><i class="fa fa-plus"></i>添加缩略图</span>
@@ -273,7 +273,7 @@
                             </td>
                             <td align="left" class="handle">
                                 <div style="text-align: left; width: 150px; max-width:150px;">
-                                    <a class="btn blue" href="{:U('School/rotate', array('id'=>$vo[id]))}"><i class="fa fa-pencil-square-o"></i>编辑</a>
+                                    <a class="btn blue" href="{:U('school.module/rotate', array('id'=>$vo[id]))}"><i class="fa fa-pencil-square-o"></i>编辑</a>
                                     <a class="btn red del" onclick="delRotate('{$vo[id]}')"><i class="fa fa-trash-o"></i>删除</a>
                                 </div>
                             </td>
@@ -418,7 +418,7 @@
                     layer.close(index);
                     $.ajax({
                         type: 'POST',
-                        url: "{:U('Admin/Community/delKeyword')}",
+                        url: "{:U('school.module/delKeyword')}",
                         data: {id:id},
                         success: function () {
                             $(obj).parent().parent().remove();
@@ -442,7 +442,7 @@
         }, function () {
             $.ajax({
                 type: "POST",
-                url: "{:U('School/delRotate')}",
+                url: "{:U('school.module/delRotate')}",
                 data: {'id': id},
                 dataType: "json",
                 error: function () {
@@ -452,7 +452,7 @@
                     if (data.status === 1) {
                         var result = data.result;
                         layer.msg(data.msg, {icon: 1, time: 1000}, function () {
-                            location.href = "{:U('Admin/School/config')}";
+                            location.href = "{:U('school.module/config')}";
                         });
                     } else if (data.status === 0) {
                         layer.msg(data.msg, {icon: 2, time: 1000});
