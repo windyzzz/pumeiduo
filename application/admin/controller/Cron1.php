@@ -9030,4 +9030,36 @@ class Cron1 extends Controller
         M('order')->where(['order_id' => ['IN', $orderIds]])->update(['order_type' => 3]);
         var_dump('ok');
     }
+
+    public function updateGoodsPrice()
+    {
+        $goodsInfo = M('goods')->where('exchange_integral', '>', 0)->field('goods_id, shop_price, exchange_integral')->select();
+        Db::startTrans();
+        foreach ($goodsInfo as $goods) {
+            $newShopPrice = bcsub($goods['shop_price'], $goods['exchange_integral'], 2);
+            // 更新售价 积分备份 积分归零
+            M('goods')->where(['goods_id' => $goods['goods_id']])->update([
+                'shop_price' => $newShopPrice,
+                'exchange_integral' => 0,
+                'exchange_integral_bak' => $goods['exchange_integral']
+            ]);
+        }
+        Db::commit();
+        var_dump('ok');
+    }
+
+    public function updateCartIntegral()
+    {
+        $cartInfo = M('cart')->where('use_integral', '>', 0)->field('id cart_id, use_integral')->select();
+        Db::startTrans();
+        foreach ($cartInfo as $goods) {
+            // 积分备份 积分归零
+            M('cart')->where(['id' => $goods['cart_id']])->update([
+                'use_integral' => 0,
+                'use_integral_bak' => $goods['use_integral']
+            ]);
+        }
+        Db::commit();
+        var_dump('ok');
+    }
 }
