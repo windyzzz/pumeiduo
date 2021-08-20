@@ -9048,6 +9048,23 @@ class Cron1 extends Controller
         var_dump('ok');
     }
 
+    public function updateGoodsPv20210820()
+    {
+        $goodsInfo = M('goods')->field('goods_id, retail_pv, integral_pv')->select();
+        Db::startTrans();
+        foreach ($goodsInfo as $goods) {
+            // pv备份 积分价pv->零售价pv 积分价pv归零
+            M('goods')->where(['goods_id' => $goods['goods_id']])->update([
+                'retail_pv_bak' => $goods['retail_pv'],
+                'integral_pv_bak' => $goods['integral_pv'],
+                'retail_pv' => $goods['integral_pv'],
+                'integral_pv' => 0,
+            ]);
+        }
+        Db::commit();
+        var_dump('ok');
+    }
+
     public function updateCartIntegral()
     {
         $cartInfo = M('cart')->where('use_integral', '>', 0)->field('id cart_id, use_integral')->select();
