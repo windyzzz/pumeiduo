@@ -872,6 +872,21 @@ class Article extends Base
     }
 
     /**
+     * 重新发布文章
+     */
+    public function startArticle()
+    {
+        $type = I('type');
+        $classId = I('class_id');
+        $articleId = I('article_id', 0);
+        M('school_article')->where(['id' => $articleId])->update([
+            'status' => 1,
+            'up_time' => NOW_TIME
+        ]);
+        $this->ajaxReturn(['status' => 1, 'msg' => '处理成功', 'result' => ['type' => $type, 'class_id' => $classId]]);
+    }
+
+    /**
      * 删除文章
      */
     public function delArticle()

@@ -16,9 +16,9 @@
                     <label>开启状态</label>
                 </dt>
                 <dd class="opt">
-                    <select name="status">
-                        <option value="1" <if condition="$config[status] === 1">selected</if>>开启</option>
-                        <option value="0" <if condition="$config[status] === 0">selected</if>>关闭</option>
+                    <select name="is_open">
+                        <option value="1" <if condition="$config[is_open] === 1">selected</if>>开启</option>
+                        <option value="0" <if condition="$config[is_open] === 0">selected</if>>关闭</option>
                     </select>
                 </dd>
             </dl>
@@ -60,7 +60,21 @@
                         <th class="sign" axis="col0">
                             <div style="width: 24px;"><i class="ico-check"></i></div>
                         </th>
-
+                        <th align="left" abbr="article_title" axis="col3" class="">
+                            <div style="text-align: center; width: 300px;" class="">标题</div>
+                        </th>
+                        <th align="left" abbr="article_title" axis="col3" class="">
+                            <div style="text-align: center; width: 80px;" class="">类型</div>
+                        </th>
+                        <th align="left" abbr="article_title" axis="col3" class="">
+                            <div style="text-align: center; width: 80px;" class="">排序</div>
+                        </th>
+                        <th align="center" abbr="article_time" axis="col6" class="">
+                            <div style="text-align: center; width: 80px;" class="">是否开启</div>
+                        </th>
+                        <th align="center" axis="col1" class="handle">
+                            <div style="text-align: center; width: 150px;">操作</div>
+                        </th>
                         <th style="width:100%" axis="col7">
                             <div></div>
                         </th>
@@ -71,7 +85,7 @@
         </div>
         <div class="tDiv">
             <div class="tDiv2">
-                <a href="{:U('school.questionnaire/addCaption')}">
+                <a href="{:U('school.questionnaire/addEditCaption')}">
                     <div class="fbutton">
                         <div title="添加项目" class="add">
                             <span><i class="fa fa-plus"></i>添加项目</span>
@@ -90,7 +104,56 @@
                             <td class="sign">
                                 <div style="width: 24px;"><i class="ico-check"></i></div>
                             </td>
-
+                            <td align="center" class="">
+                                <div style="text-align: center; width: 300px;">
+                                    {$vo.title}
+                                </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 80px;">
+                                    <switch name='$vo[type]'>
+                                        <case value='1'>
+                                            评分
+                                        </case>
+                                        <case value='2'>
+                                            评价
+                                        </case>
+                                        <case value='3'>
+                                            单选
+                                        </case>
+                                        <case value='4'>
+                                            多选
+                                        </case>
+                                    </switch>
+                                </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 80px;">
+                                    <input type="text" onKeyUp="this.value=this.value.replace(/[^\d]/g,'')"
+                                           onpaste="this.value=this.value.replace(/[^\d]/g,'')"
+                                           onblur="changeTableVal('school_article_questionnaire_caption','id','{$vo.id}','sort',this)"
+                                           size="4" value="{$vo.sort}" style="text-align: center;"/>
+                                </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 80px;">
+                                    <if condition='$vo[is_open] eq 1'>
+                                        <span class="yes"
+                                              onClick="changeTableVal('school_article_questionnaire_caption','id','{$vo.id}','is_open',this)"><i
+                                                class="fa fa-check-circle"></i>是</span>
+                                        <else/>
+                                        <span class="no"
+                                              onClick="changeTableVal('school_article_questionnaire_caption','id','{$vo.id}','is_open',this)"><i
+                                                class="fa fa-ban"></i>否</span>
+                                    </if>
+                                </div>
+                            </td>
+                            <td align="left" class="handle">
+                                <div style="text-align: left; width: 150px; max-width:150px;">
+                                    <a class="btn blue" href="{:U('school.questionnaire/addEditCaption', array('caption_id'=>$vo[id]))}"><i class="fa fa-pencil-square-o"></i>编辑</a>
+                                    <a class="btn red del" onclick="delCaption('{$vo[id]}')"><i class="fa fa-trash-o"></i>删除</a>
+                                </div>
+                            </td>
                             <td align="" class="" style="width: 100%;">
                                 <div>&nbsp;</div>
                             </td>
@@ -100,7 +163,7 @@
                 </table>
             </div>
         </div>
-
+        {$page->show()}
     </div>
 </div>
 
@@ -117,6 +180,34 @@
 
     function updateConfig(postId) {
         $('#' + postId).submit();
+    }
+
+    function delCaption(id) {
+        layer.confirm('确认删除？', {
+            btn: ['确定', '取消']
+        }, function () {
+            $.ajax({
+                type: "POST",
+                url: "{:U('school.questionnaire/delCaption')}",
+                data: {'id': id},
+                dataType: "json",
+                error: function () {
+                    layer.alert("服务器繁忙, 请联系管理员!");
+                },
+                success: function (data) {
+                    if (data.status === 1) {
+                        var result = data.result;
+                        layer.msg(data.msg, {icon: 1, time: 1000}, function () {
+                            location.href = "{:U('school.questionnaire/config')}";
+                        });
+                    } else if (data.status === 0) {
+                        layer.msg(data.msg, {icon: 2, time: 1000});
+                    }
+                }
+            });
+        }, function () {
+            console.log("取消");
+        });
     }
 </script>
 </body>

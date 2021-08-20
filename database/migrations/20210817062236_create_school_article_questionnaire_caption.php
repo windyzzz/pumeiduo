@@ -31,6 +31,9 @@ class CreateSchoolArticleQuestionnaireCaption extends Migrator
         $this->table('school_article_questionnaire_caption', ['comment' => '商学院文章问卷调查主体表'])
             ->addColumn('title', 'string', ['comment' => '标题'])
             ->addColumn('type', 'integer', ['default' => 1, 'comment' => '类型：1评分 2评价 3单选 4多选'])
+            ->addColumn('is_open', 'integer', ['default' => 1, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
+                'comment' => '是否开启'])
+            ->addColumn('sort', 'integer', ['default' => 0, 'comment' => '排序'])
             ->create();
     }
 }

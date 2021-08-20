@@ -195,8 +195,11 @@
             </dl>
             <div class="bot">
                 <a href="JavaScript:void(0);" class="ncap-btn-big ncap-btn-green" id="submitBtn">确认提交</a>
-                <if condition="$article_id != 0">
+                <if condition="$article_id != 0 && isset($info[status]) && $info[status] == 1">
                     <a href="JavaScript:void(0);" class="ncap-btn-big ncap-btn-red" id="stopBtn">停止发布</a>
+                </if>
+                <if condition="$article_id != 0 && isset($info[status]) && $info[status] == 3">
+                    <a href="JavaScript:void(0);" class="ncap-btn-big ncap-btn-blue" id="startBtn">重新发布</a>
                 </if>
             </div>
         </div>
@@ -236,6 +239,10 @@
         stopForm();
     });
 
+    $(document).on("click", '#startBtn', function () {
+        startForm();
+    });
+
     function verifyForm() {
         $('span.err').hide();
         $.ajax({
@@ -250,7 +257,7 @@
                 if (data.status === 1) {
                     var result = data.result;
                     layer.msg(data.msg, {icon: 1, time: 1000}, function () {
-                        location.href = "{:U('Admin/School/')}" + result.type + "/class_id/" + result.class_id;
+                        location.href = "{:U('school.module/')}" + result.type + "/class_id/" + result.class_id;
                     });
                 } else if (data.status === 0) {
                     layer.msg(data.msg, {icon: 2, time: 1000});
@@ -275,7 +282,35 @@
                     if (data.status === 1) {
                         var result = data.result;
                         layer.msg(data.msg, {icon: 1, time: 1000}, function () {
-                            location.href = "{:U('Admin/School/')}" + result.type + "/class_id/" + result.class_id;
+                            location.href = "{:U('school.module/')}" + result.type + "/class_id/" + result.class_id;
+                        });
+                    } else if (data.status === 0) {
+                        layer.msg(data.msg, {icon: 2, time: 1000});
+                    }
+                }
+            });
+        }, function () {
+            console.log("取消");
+        });
+    }
+
+    function startForm() {
+        layer.confirm('确认重新发布文章？', {
+            btn: ['确定', '取消']
+        }, function () {
+            $.ajax({
+                type: "POST",
+                url: "{:U('school.article/startArticle')}",
+                data: $('#add_post').serialize(),
+                dataType: "json",
+                error: function () {
+                    layer.alert("服务器繁忙, 请联系管理员!");
+                },
+                success: function (data) {
+                    if (data.status === 1) {
+                        var result = data.result;
+                        layer.msg(data.msg, {icon: 1, time: 1000}, function () {
+                            location.href = "{:U('school.module/')}" + result.type + "/class_id/" + result.class_id;
                         });
                     } else if (data.status === 0) {
                         layer.msg(data.msg, {icon: 2, time: 1000});

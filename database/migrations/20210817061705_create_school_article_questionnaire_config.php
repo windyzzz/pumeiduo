@@ -33,7 +33,8 @@ class CreateSchoolArticleQuestionnaireConfig extends Migrator
             ->addColumn('direction', 'string', ['default' => '', 'comment' => '说明'])
             ->addColumn('start_time', 'integer', ['default' => 0, 'comment' => '开始时间'])
             ->addColumn('end_time', 'integer', ['default' => 0, 'comment' => '结束时间'])
-            ->addColumn('status', 'integer', ['default' => 1, 'comment' => '状态：0关闭 1开启'])
+            ->addColumn('is_open', 'integer', ['default' => 1, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY,
+                'comment' => '是否开启'])
             ->addColumn('add_time', 'integer')
             ->create();
     }
