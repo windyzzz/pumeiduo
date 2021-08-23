@@ -1,20 +1,5 @@
 <include file="public/layout" />
 <style>
-    .ys-btn-close {
-        position: relative;
-        top: -12px;
-        left: -16px;
-        width: 18px;
-        height: 18px;
-        border: 1px solid #ccc;
-        line-height: 18px;
-        text-align: center;
-        display: inline-block;
-        border-radius: 50%;
-        z-index: 1;
-        background-color: #fff;
-        cursor: pointer;
-    }
     .selected-group-goods {
         background-color: #FFF;
         width: 162px;
@@ -67,6 +52,16 @@
                                     <input type="text" name="index_icon[icon{$k}][name]" value="{$item[name]}" style="text-align: center;">
                                 </div>
                                 <div style="margin-top: 10px;">
+                                    <span>关联商品分类</span>
+                                    <br/>
+                                    <select name="index_icon[icon{$k}][cate_id]">
+                                        <option value="0">未选择</option>
+                                        <volist name="$goods_category" id="category">
+                                            <option value="{$category.id}" <if condition="$item[cate_id] == $category[id]">selected</if>>{$category.name}</option>
+                                        </volist>
+                                    </select>
+                                </div>
+                                <div style="margin-top: 10px;">
                                     <span>排序</span>
                                     <input type="text" name="index_icon[icon{$k}][sort]" value="{$item[sort]}" style="text-align: center;"
                                            onKeyUp="this.value=this.value.replace(/[^\d]/g,'')"
@@ -111,6 +106,22 @@
 <script type="text/javascript">
     $(function () {
         index_icon_count = {$index_icon_count};
+        option = '<option value="0">未选择</option>';
+        // 获取商品分类
+        $.ajax({
+            type: "POST",
+            url: "{:U('Goods/ajaxGetCategory')}",
+            data: {level: 1},
+            dataType: 'json',
+            success: function (data) {
+                if (data.status === 1) {
+                    var arr = data.res;
+                    for (var i = 0; i < arr.length; i++) {
+                        option += '<option value="' + arr[i]["id"] + '">' + arr[i]["name"] + '</option>';
+                    }
+                }
+            }
+        });
     });
 
     function img_call_back(fileurl_tmp, elementid) {
@@ -131,6 +142,13 @@
             '                   <div style="clear: both;"></div>' +
             '               </div>' +
             '               <div><span>名字</span><input type="text" name="index_icon[icon' + index_icon_count + '][name]" value="" style="text-align: center;"></div>' +
+            '               <div style="margin-top: 10px;">' +
+            '                   <span>关联商品分类</span><br/>' +
+            '                       <select name="index_icon[icon' + index_icon_count + '][cate_id]">';
+        div += option;
+        div +=
+            '                       </select>' +
+            '               </div>' +
             '               <div style="margin-top: 10px;">' +
             '                   <span>排序</span>' +
             '                   <input type="text" name="index_icon[icon' + index_icon_count + '][sort]" value="" style="text-align: center;"' +

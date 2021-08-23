@@ -1886,4 +1886,18 @@ class Goods extends Base
         M('goods')->where(['goods_id' => $goodsId])->update(['template_id' => $templateId]);
         $this->ajaxReturn(['status' => 1, 'msg' => '修改运费模板成功']);
     }
+
+    /**
+     * ajax获取商品分类
+     */
+    public function ajaxGetCategory()
+    {
+        $level = I('level', 0);
+        $where = [];
+        if ($level) {
+            $where['level'] = $level;
+        }
+        $category = M('goods_category')->where($where)->select();
+        $this->ajaxReturn(['status' => 1, 'res' => $category]);
+    }
 }

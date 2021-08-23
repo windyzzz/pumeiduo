@@ -666,6 +666,7 @@ class System extends Base
                         'height' => $imgInfo[1],
                         'type' => substr($imgInfo['mime'], strrpos($imgInfo['mime'], '/') + 1),
                     ]),
+                    'cate_id' => $icon['cate_id'],
                     'is_open' => $icon['is_open'],
                     'is_allow' => $icon['is_allow'],
                     'sort' => $icon['sort'],
@@ -685,9 +686,12 @@ class System extends Base
             $iconImg = json_decode($icon['img'], true);
             $icon['img'] = $iconImg['img'];
         }
+        // 商品第三级分类列表
+        $goodsCategory = M('goods_category')->where(['level' => 1])->field('id, name')->select();
         $this->assign('index_icon_config', $indexIconConfig);
         $this->assign('index_icon_count', count($indexIcon));
         $this->assign('index_icon', $indexIcon);
+        $this->assign('goods_category', $goodsCategory);
         return $this->fetch('app_index');
     }
 

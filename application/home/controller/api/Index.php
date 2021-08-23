@@ -290,6 +290,7 @@ class Index
                     'applet_type' => '',
                     'applet_id' => '',
                     'applet_path' => '',
+                    'cate_id' => $icon['cate_id']
                 ]
             ];
             switch ($icon['code']) {
@@ -306,6 +307,10 @@ class Index
                     $iconList[$key]['target_param']['applet_type'] = '0';
                     $iconList[$key]['target_param']['applet_id'] = 'gh_916703245d1e';
                     $iconList[$key]['target_param']['applet_path'] = 'pages/index/index';
+                    break;
+                case 'icon14':
+                    // 优选品牌
+                    $iconList[$key]['target_param']['cate_id'] = '1';
                     break;
             }
         }
