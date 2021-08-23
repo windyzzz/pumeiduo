@@ -40,21 +40,21 @@
                         <div style="float: left; margin-right: 20px;">
                             <div class="selected-group-goods">
                                 <div class="goods-thumb">
-                                    <img class="index_icon{$k}" style="width: 162px;height: 162px" src="{$item[img]}"/>
+                                    <img class="index_{$item[code]}" style="width: 162px;height: 162px" src="{$item[img]}"/>
                                 </div>
                                 <div style="margin-bottom: 10px;">
-                                    <input type="hidden" id="index_icon{$k}" name="index_icon[icon{$k}][img]" value="{$item[img]}" class="type-file-text">
-                                    <input style="cursor: pointer;" type="button" name="button" value="选择上传..." class="type-file-button" onClick="GetUploadify(1,'index_icon{$k}','index','img_call_back')">
+                                    <input type="hidden" id="index_{$item[code]}" name="index_icon[{$item[code]}][img]" value="{$item[img]}" class="type-file-text">
+                                    <input style="cursor: pointer;" type="button" name="button" value="选择上传..." class="type-file-button" onClick="GetUploadify(1,'index_{$item[code]}','index','img_call_back')">
                                     <div style="clear: both;"></div>
                                 </div>
                                 <div>
                                     <span>名字</span>
-                                    <input type="text" name="index_icon[icon{$k}][name]" value="{$item[name]}" style="text-align: center;">
+                                    <input type="text" name="index_icon[{$item[code]}][name]" value="{$item[name]}" style="text-align: center;">
                                 </div>
                                 <div style="margin-top: 10px;">
                                     <span>关联商品分类</span>
                                     <br/>
-                                    <select name="index_icon[icon{$k}][cate_id]">
+                                    <select name="index_icon[{$item[code]}][cate_id]">
                                         <option value="0">未选择</option>
                                         <volist name="$goods_category" id="category">
                                             <option value="{$category.id}" <if condition="$item[cate_id] == $category[id]">selected</if>>{$category.name}</option>
@@ -63,23 +63,23 @@
                                 </div>
                                 <div style="margin-top: 10px;">
                                     <span>排序</span>
-                                    <input type="text" name="index_icon[icon{$k}][sort]" value="{$item[sort]}" style="text-align: center;"
+                                    <input type="text" name="index_icon[{$item[code]}][sort]" value="{$item[sort]}" style="text-align: center;"
                                            onKeyUp="this.value=this.value.replace(/[^\d]/g,'')"
                                            onpaste="this.value=this.value.replace(/[^\d]/g,'')"/>
                                 </div>
                                 <div class="onoff" style="margin-top: 10px;">
-                                    <label for="index_icon[icon{$k}]_is_open1" class="cb-enable <if condition='$item[is_open] eq 1'>selected</if>">开启</label>
-                                    <label for="index_icon[icon{$k}]_is_open0" class="cb-disable <if condition='$item[is_open] eq 0'>selected</if>">隐藏</label>
-                                    <input id="index_icon[icon{$k}]_is_open1" name="index_icon[icon{$k}][is_open]" <if condition='$item[is_open] eq 1'>checked</if> value="1" type="radio">
-                                    <input id="index_icon[icon{$k}]_is_open0" name="index_icon[icon{$k}][is_open]" <if condition='$item[is_open] eq 0'>checked</if> value="0" type="radio">
+                                    <label for="index_icon[{$item[code]}]_is_open1" class="cb-enable <if condition='$item[is_open] eq 1'>selected</if>">开启</label>
+                                    <label for="index_icon[{$item[code]}]_is_open0" class="cb-disable <if condition='$item[is_open] eq 0'>selected</if>">隐藏</label>
+                                    <input id="index_icon[{$item[code]}]_is_open1" name="index_icon[{$item[code]}][is_open]" <if condition='$item[is_open] eq 1'>checked</if> value="1" type="radio">
+                                    <input id="index_icon[{$item[code]}]_is_open0" name="index_icon[{$item[code]}][is_open]" <if condition='$item[is_open] eq 0'>checked</if> value="0" type="radio">
                                 </div>
                                 <div class="onoff" style="margin-top: 10px;">
-                                    <label for="index_icon[icon{$k}]_is_allow1" class="cb-enable <if condition='$item[is_allow] eq 1'>selected</if>">允许访问</label>
-                                    <label for="index_icon[icon{$k}]_is_allow0" class="cb-disable <if condition='$item[is_allow] eq 0'>selected</if>">不允许</label>
-                                    <input id="index_icon[icon{$k}]_is_allow1" name="index_icon[icon{$k}][is_allow]" <if condition='$item[is_allow] eq 1'>checked</if> value="1" type="radio">
-                                    <input id="index_icon[icon{$k}]_is_allow0" name="index_icon[icon{$k}][is_allow]" <if condition='$item[is_allow] eq 0'>checked</if> value="0" type="radio">
+                                    <label for="index_icon[{$item[code]}]_is_allow1" class="cb-enable <if condition='$item[is_allow] eq 1'>selected</if>">允许访问</label>
+                                    <label for="index_icon[{$item[code]}]_is_allow0" class="cb-disable <if condition='$item[is_allow] eq 0'>selected</if>">不允许</label>
+                                    <input id="index_icon[{$item[code]}]_is_allow1" name="index_icon[{$item[code]}][is_allow]" <if condition='$item[is_allow] eq 1'>checked</if> value="1" type="radio">
+                                    <input id="index_icon[{$item[code]}]_is_allow0" name="index_icon[{$item[code]}][is_allow]" <if condition='$item[is_allow] eq 0'>checked</if> value="0" type="radio">
                                 </div>
-                                <input type="hidden" name="index_icon[icon{$k}][type]" value="index">
+                                <input type="hidden" name="index_icon[{$item[code]}][type]" value="index">
                             </div>
                         </div>
                         <if condition="$k % 4 == 0">

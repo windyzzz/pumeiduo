@@ -3552,4 +3552,62 @@ class Goods extends Base
         $this->assign('content', htmlspecialchars_decode($goodsContent));
         return $this->fetch('content');
     }
+
+    /**
+     * 获取金刚区设置的商品分类列表
+     * @return \think\response\Json
+     */
+    public function iconCate()
+    {
+        $cateId = I('cate_id', 0);
+        // 一级分类列表
+        $categoryList = M('app_icon ai')->join('goods_category gc', 'gc.id = ai.cate_id')
+            ->where('ai.cate_id', 'neq', 0)
+            ->field('gc.id cate_id, gc.name, gc.image banner')
+            ->order('ai.sort DESC')
+            ->select();
+        $cateItem = [
+            'cate_id' => '-1',
+            'name' => '优选品牌',
+            'banner' => '',
+        ];
+        array_push($categoryList, $cateItem);
+        foreach ($categoryList as $k => &$cate) {
+            if ($cateId == 0 && $k == 0) {
+                $cate['is_selected'] = 1;
+            } elseif ($cateId == $cate['cate_id']) {
+                $cate['is_selected'] = 1;
+            } else {
+                $cate['is_selected'] = 0;
+            }
+            $cate['banner'] = getFullPath($cate['banner']);
+            // 三级分类列表
+            $cate['child_list'] = $cate['cate_id'] != -1 ? M('goods_category')->where([
+                'parent_id_path' => ['LIKE', '%' . $cate['cate_id'] . '%'],
+                'level' => 3
+            ])->field('id cate_id, name')->select() : [];
+        }
+        return json(['status' => 1, 'result' => $categoryList, 'msg' => '']);
+    }
+
+    /**
+     * 获取金刚区设置的商品列表
+     * @return \think\response\Json
+     */
+    public function iconGoods()
+    {
+        $cateId = I('cate_id', 0);
+        $sortArr = [];
+        $where = [
+            'is_on_sale' => 1,
+        ];
+        $where['cat_id'] = $cateId;
+        $goodsIds = M('goods')->where($where)->getField('goods_id', true);
+        $count = count($goodsIds);
+        $page = new Page($count, 10);
+        // 获取商品数据
+        $goodsLogic = new GoodsLogic();
+        $goodsList = $goodsLogic->getGoodsList($goodsIds, $sortArr, $page, null, $this->isApp)['goods_list'];
+        return json(['status' => 1, 'result' => ['goods_list' => $goodsList]]);
+    }
 }

@@ -310,7 +310,7 @@ class Index
                     break;
                 case 'icon14':
                     // 优选品牌
-                    $iconList[$key]['target_param']['cate_id'] = '1';
+                    $iconList[$key]['target_param']['cate_id'] = '-1';
                     break;
             }
         }
