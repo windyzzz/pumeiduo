@@ -3,6 +3,7 @@
 namespace app\common\logic;
 
 
+use app\common\model\SchoolArticleQuestionnaireAnswer;
 use app\common\util\TpshopException;
 use think\Cache;
 use think\Db;
@@ -848,6 +849,7 @@ class School
             'integral' => $articleInfo['integral'],
             'distribute_level' => $articleInfo['distribute_level'][0] == 3 && count($articleInfo['distribute_level']) > 1 ? $articleInfo['distribute_level'][1] : $articleInfo['distribute_level'][0],
             'show_goods' => $articleInfo['show_goods'] ? 1 : 0,
+            'show_questionnaire' => $articleInfo['show_questionnaire'] ? 1 : 0,
         ];
         if ($user) {
             // 查看用户是否已购买学习课程
@@ -1276,5 +1278,67 @@ class School
             ];
         }
         return ['total' => $count, 'list' => $list];
+    }
+
+    /**
+     * 获取问卷调查内容
+     * @param $articleId
+     * @param $user
+     * @return array
+     */
+    public function getQuestionnaire($articleId, $user)
+    {
+        $data = [
+            'is_open' => 0,
+            'article' => [
+                'title' => '',
+                'publish_time' => ''
+            ],
+            'user' => [
+                'name' => $user['nickname'] ?? $user['user_name'],
+                'level' => M('distribut_level')->where(['level_id' => $user['distribut_level']])->value('level_name')
+            ],
+            'list' => []
+        ];
+        $config = M('school_article_questionnaire_config')->find();
+        if ($config['is_open'] == 0 || $config['start_time'] > NOW_TIME || $config['end_time'] < NOW_TIME) {
+            return $data;
+        }
+        $article = M('school_article')->where(['id' => $articleId])->find();
+        if ($article['show_questionnaire'] == 0) {
+            return $data;
+        }
+        // 项目列表
+        $caption = M('school_article_questionnaire_caption')->where(['is_open' => 1])->order('sort DESC')->select();
+        if (empty($caption)) {
+            return $data;
+        }
+        $data['list'] = $caption;
+        return $data;
+    }
+
+    /**
+     * 回答问卷调查
+     * @param $articleId
+     * @param $user
+     * @param $captionData
+     * @throws \Exception
+     */
+    public function answerQuestionnaire($articleId, $user, $captionData)
+    {
+        $answerData = [];
+        foreach ($captionData as $data) {
+            $answerData[] = [
+                'article_id' => $articleId,
+                'user_id' => $user['user_id'],
+                'caption_id' => $data['id'],
+                'score' => $data['score'] ?? 0,
+                'content' => $data['content'],
+                'add_time' => NOW_TIME
+            ];
+        }
+        if (!empty($answerData)) {
+            (new SchoolArticleQuestionnaireAnswer())->saveAll($answerData);
+        }
     }
 }

@@ -419,4 +419,28 @@ class School extends Base
         $data = $this->logic->getExchangeLog($limit, $this->user);
         return json(['status' => 1, 'msg' => '', 'result' => $data]);
     }
+
+    /**
+     * 获取问卷调查内容
+     * @return \think\response\Json
+     */
+    public function getQuestionnaire()
+    {
+        $articleId = I('article_id', 0);
+        $data = $this->logic->getQuestionnaire($articleId, $this->user);
+        return json(['status' => 1, 'msg' => '', 'result' => $data]);
+    }
+
+    /**
+     * 回答问卷调查
+     * @return \think\response\Json
+     * @throws \Exception
+     */
+    public function answerQuestionnaire()
+    {
+        $articleId = I('article_id', 0);
+        $captionData = isset(I('post.')['caption']) ? I('post.')['caption'] : [];
+        $this->logic->answerQuestionnaire($articleId, $this->user, $captionData);
+        return json(['status' => 1, 'msg' => '', 'result' => '']);
+    }
 }

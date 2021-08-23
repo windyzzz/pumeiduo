@@ -43,7 +43,7 @@ class Questionnaire extends Base
         // 调查项目
         $count = $caption = M('school_article_questionnaire_caption')->count();
         $page = new Page($count, 10);
-        $caption = M('school_article_questionnaire_caption')->limit($page->firstRow . ',' . $page->listRows)->select();
+        $caption = M('school_article_questionnaire_caption')->limit($page->firstRow . ',' . $page->listRows)->order('sort DESC')->select();
 
         $this->assign('config', $config);
         $this->assign('caption', $caption);
