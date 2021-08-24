@@ -1517,6 +1517,11 @@ class Goods extends Base
             } else {
                 Db::name('Brand')->insert($data);
             }
+            // 发送到仓储系统
+            include_once "plugins/Tb.php";
+            $TbLogic = new \Tb();
+            $TbLogic->add_tb(3, 2, 0, 0);
+
             $this->ajaxReturn(['status' => 1, 'msg' => '操作成功', 'result' => '']);
         }
         $brand = M('Brand')->find($id);
@@ -1547,6 +1552,11 @@ class Goods extends Base
         }
         $res = Db::name('Brand')->where('id', $id)->delete();
         if ($res) {
+            // 发送到仓储系统
+            include_once "plugins/Tb.php";
+            $TbLogic = new \Tb();
+            $TbLogic->add_tb(3, 2, 0, 0);
+
             $this->ajaxReturn(['status' => 1, 'msg' => '操作成功']);
         }
         $this->ajaxReturn(['status' => -1, 'msg' => '操作失败', 'data' => '']);

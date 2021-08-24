@@ -36,6 +36,9 @@ class Tb extends Controller
                 $tb_data['system'] = $v['from_system'];
                 $tb_data['tb_sn'] = $v['tb_sn'];
                 switch ($v['type']) {
+                    case 2:
+                        $tb_data['data'] = $this->send_brand();
+                        break;
                     case 6:
                         // 订单
                         $order_add_time = M('order')->where(array('order_id' => $v['from_id']))->getField('add_time');
@@ -256,6 +259,16 @@ class Tb extends Controller
         // 记录同步时间
         M('order')->where(['order_id' => $orderId])->update(['pv_send_time' => NOW_TIME]);
         return $orderData;
+    }
+
+    /**
+     * 商品品牌信息
+     * @return mixed
+     */
+    function send_brand()
+    {
+        $brand = M('brand')->field('id,name')->select();
+        return $brand;
     }
 
     /**
@@ -612,12 +625,17 @@ class Tb extends Controller
         return true;
     }
 
+    /**
+     * 更新商品品牌
+     * @param $brand
+     * @return bool
+     */
     function save_brand($brand)
     {
         $brand_old = M('brand')->getField('id,name,cat_id');
         foreach ($brand as $k => $v) {
             if (isset($brand_old[$v['id']])) {
-                unset($brand_old[$v['id']]);//
+                unset($brand_old[$v['id']]);
                 M('brand')->where(array('id' => $v['id']))->data(array('name' => $v['name']))->save(); //更新
             } else {
                 M('brand')->data(array('name' => $v['name'], 'id' => $v['id']))->add();//新增
