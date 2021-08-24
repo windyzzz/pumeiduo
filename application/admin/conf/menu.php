@@ -26,7 +26,6 @@ return [
             ['name' => '节日设置', 'act' => 'icon', 'op' => 'System'],
             ['name' => '银行列表', 'act' => 'bankList', 'op' => 'System'],
             ['name' => '清除缓存', 'act' => 'cleanCache', 'op' => 'System'],
-            ['name' => 'APP首页', 'act' => 'appIndex', 'op' => 'System'],
         ]],
         ['name' => '会员', 'child' => [
             ['name' => '会员列表', 'act' => 'index', 'op' => 'User'],
@@ -70,6 +69,12 @@ return [
             ['name' => '权限资源列表', 'act' => 'right_list', 'op' => 'System'],
             ['name' => '管理员日志', 'act' => 'log', 'op' => 'Admin'],
             ['name' => '供应商列表', 'act' => 'supplier', 'op' => 'Admin'],
+        ]],
+        ['name' => 'APP首页', 'child' => [
+            ['name' => '金刚区', 'act' => 'appIndex', 'op' => 'System'],
+            ['name' => '小程序', 'act' => 'config', 'op' => 'Applet'],
+            ['name' => '商学院', 'act' => 'config2', 'op' => 'School'],
+            ['name' => 'SVIP', 'act' => 'svipConfig', 'op' => 'Distribut'],
         ]],
 
         /*array('name' => '模板','child'=>array(

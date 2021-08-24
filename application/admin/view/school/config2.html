@@ -1,0 +1,52 @@
+<include file="public/layout"/>
+<body style="background-color: rgb(255, 255, 255); overflow: auto; cursor: default; -moz-user-select: inherit;">
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title">
+            <div class="subject">
+                <h3>设置</h3>
+            </div>
+        </div>
+    </div>
+    <form method="post" id="datapost" action="{:U('School/config2')}" enctype="multipart/form-data" name="form">
+        <div class="ncap-form-default">
+            <dl class="row">
+                <dt class="tit">
+                    <label>APP首页宣传图</label>
+                </dt>
+                <dd class="opt">
+                    <div class="input-file-show">
+                        <span class="show">
+                            <a id="publicize_img_a" target="_blank" class="nyroModal" rel="gal" href="{$config.publicize.url}">
+                                <i id="publicize_img_i" class="fa fa-picture-o" onmouseover="layer.tips('<img src={$config.publicize.url}>',this,{tips: [1, '#fff']});" onmouseout="layer.closeAll();"></i>
+                            </a>
+                        </span>
+                        <span class="type-file-box">
+                            <input type="text" id="publicize_img" name="publicize[url]" value="{$config.publicize.url}" class="type-file-text">
+                            <input type="button" value="选择上传..." class="type-file-button">
+                            <input class="type-file-file" onClick="GetUploadify(1,'publicize_img','school','img_call_back')" size="30" hidefocus="true" nc_type="change_site_logo" title="点击前方预览图可查看大图，点击按钮选择文件并提交表单后上传生效">
+                        </span>
+                    </div>
+                    <p class="notic">504px x 258px</p>
+                </dd>
+            </dl>
+            <div class="bot">
+                <a class="ncap-btn-big ncap-btn-green" onclick="updateConfig('datapost')">确认提交</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script type="text/javascript">
+    function img_call_back(fileurl_tmp, elementid) {
+        $("#" + elementid).val(fileurl_tmp);
+        $("#" + elementid + '_a').attr('href', fileurl_tmp);
+        $("#" + elementid + '_i').attr('onmouseover', "layer.tips('<img src=" + fileurl_tmp + ">',this,{tips: [1, '#fff']});");
+    }
+
+    function updateConfig(postId) {
+        $('#' + postId).submit();
+    }
+</script>
+</body>
+</html>
