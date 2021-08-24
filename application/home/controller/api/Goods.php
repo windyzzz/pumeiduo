@@ -1838,6 +1838,7 @@ class Goods extends Base
         $id = I('get.id/d', 0);                         // 当前分类id
         $couponId = I('get.coupon_id', 0);              // 优惠券ID
         $search = urldecode(trim(I('search', '')));     // 关键字搜索
+        $brandId = I('brand_id', 0);                    // 品牌ID
         if ($couponId != 0) {
             $filter_goods_id = Db::name('goods_coupon')->where(['coupon_id' => $couponId])->getField('goods_id', true);
         } else {
@@ -1856,6 +1857,9 @@ class Goods extends Base
                 $where['goods_name|keywords'] = ['like', '%' . $search . '%'];
                 $goodsSearchLogic = new GoodsSearchLogic();
                 $goodsSearchLogic->searchLog($search, $this->user_id);
+            }
+            if ($brandId) {
+                $where['brand_id'] = $brandId;
             }
             $filter_goods_id = M('goods')->where($where)->getField('goods_id', true);
         }
@@ -3566,10 +3570,16 @@ class Goods extends Base
             ->field('gc.id cate_id, gc.name, gc.image banner')
             ->order('ai.sort DESC')
             ->select();
+        // 优选品牌
+        $brandBanner = M('brand_config')->where(['type' => 'banner'])->value('url');
+        if ($brandBanner) {
+            $brandBanner = explode(',', $brandBanner);
+            $brandBanner = (new OssLogic())::url(substr($brandBanner[0], strrpos($brandBanner[0], 'img:') + 4));
+        }
         $cateItem = [
             'cate_id' => '-1',
             'name' => '优选品牌',
-            'banner' => '',
+            'banner' => $brandBanner ?? '',
         ];
         array_push($categoryList, $cateItem);
         foreach ($categoryList as $k => &$cate) {
@@ -3608,6 +3618,42 @@ class Goods extends Base
         // 获取商品数据
         $goodsLogic = new GoodsLogic();
         $goodsList = $goodsLogic->getGoodsList($goodsIds, $sortArr, $page, null, $this->isApp)['goods_list'];
-        return json(['status' => 1, 'result' => ['goods_list' => $goodsList]]);
+        return json(['status' => 1, 'result' => ['goods_list' => $goodsList], 'msg' => '']);
+    }
+
+    /**
+     * 优选品牌商品列表
+     * @return \think\response\Json
+     */
+    public function brandGoods()
+    {
+        // 品牌列表
+        $brandList = M('brand')->where(['is_hot' => 1])->order('sort DESC')->getField('id brand_id, banner, desc', true);
+        if (empty($brandList)) {
+            return json(['status' => 1, 'result' => [], 'msg' => '']);
+        }
+        $brandIds = [];
+        foreach ($brandList as $key => &$brand) {
+            $brandIds[] = $key;
+            if (!empty($brand['banner'])) {
+                $brand['banner'] = explode(',', $brand['banner']);
+                $brand['banner'] = (new OssLogic())::url(substr($brand['banner'][0], strrpos($brand['banner'][0], 'img:') + 4));
+            }
+            $brand['goods_list'] = [];
+        }
+        // 品牌商品列表
+        $brandGoods = M('goods')->where(['brand_id' => ['IN', $brandIds], 'is_on_sale' => 1])
+            ->order('sort DESC, goods_id DESC')
+            ->field('brand_id, goods_id, goods_name, shop_price, exchange_integral, original_img')
+            ->select();
+        foreach ($brandGoods as &$goods) {
+            if (count($brandList[$goods['brand_id']]['goods_list']) == 4) {
+                continue;
+            }
+            $goods['exchange_price'] = bcsub($goods['shop_price'], $goods['exchange_integral'], 2);
+            $goods['original_img_new'] = getFullPath($goods['original_img']);
+            $brandList[$goods['brand_id']]['goods_list'][] = $goods;
+        }
+        return json(['status' => 1, 'result' => array_values($brandList), 'msg' => '']);
     }
 }
