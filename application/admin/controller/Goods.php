@@ -14,6 +14,7 @@ namespace app\admin\controller;
 use app\admin\logic\GoodsLogic;
 use app\admin\logic\SearchWordLogic;
 use app\admin\model\Goods as GoodsModel;
+use app\common\logic\OssLogic;
 use think\AjaxPage;
 use think\Db;
 use think\Exception;
@@ -1378,19 +1379,82 @@ class Goods extends Base
      */
     public function brandList()
     {
-        $where = '';
+        $ossLogic = new OssLogic();
+        if (IS_POST) {
+            $param = I('post.');
+            // 配置
+            foreach ($param as $k => $v) {
+                switch ($k) {
+                    case 'banner':
+                        if (strstr($v['url'], 'aliyuncs.com')) {
+                            // 原图
+                            $v['url'] = M('brand_config')->where(['type' => 'official'])->value('url');
+                        } else {
+                            // 新图
+                            $filePath = PUBLIC_PATH . substr($v['url'], strrpos($v['url'], '/public/') + 8);
+                            $fileName = substr($v['url'], strrpos($v['url'], '/') + 1);
+                            $object = 'image/' . date('Y/m/d/H/') . $fileName;
+                            $return_url = $ossLogic->uploadFile($filePath, $object);
+                            if (!$return_url) {
+                                $this->error('图片上传错误');
+                            } else {
+                                // 图片信息
+                                $imageInfo = getimagesize($filePath);
+                                $v['url'] = 'img:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ',type:' . substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1);
+                                unlink($filePath);
+                            }
+                        }
+                        $data = [
+                            'type' => $k,
+                            'name' => isset($v['name']) ? $v['name'] : '',
+                            'url' => isset($v['url']) ? $v['url'] : '',
+                            'content' => isset($v['content']) ? $v['content'] : '',
+                        ];
+                        $config = M('brand_config')->where(['type' => $k])->find();
+                        if (!empty($config)) {
+                            M('brand_config')->where(['id' => $config['id']])->update($data);
+                        } else {
+                            M('brand_config')->add($data);
+                        }
+                        break;
+                }
+            }
+            $this->success('操作成功', U('Goods/brandList'));
+        }
+        // 配置
+        $brandConfig = M('brand_config')->select();
+        $config = [];
+        foreach ($brandConfig as $val) {
+            if ($val['type'] == 'banner' && !empty($val['url'])) {
+                $url = explode(',', $val['url']);
+                $val['url'] = $ossLogic::url(substr($url[0], strrpos($url[0], 'img:') + 4));
+            }
+            $config[$val['type']] = [
+                'name' => $val['name'],
+                'url' => $val['url'],
+                'content' => $val['content']
+            ];
+        }
+        // 品牌列表
         $keyword = I('keyword');
         $where = $keyword ? " name like '%$keyword%' " : '';
         $count = Db::name('Brand')->where($where)->count();
-        $Page = $pager = new Page($count, 10);
+        $Page = new Page($count, 10);
         $brandList = Db::name('Brand')->where($where)->order('sort desc')->limit($Page->firstRow . ',' . $Page->listRows)->select();
-        $show = $Page->show();
-        $cat_list = M('goods_category')->where('parent_id = 0')->getField('id,name'); // 已经改成联动菜单
-        $this->assign('cat_list', $cat_list);
-        $this->assign('pager', $pager);
-        $this->assign('show', $show);
-        $this->assign('brandList', $brandList);
+        foreach ($brandList as &$brand) {
+            if (!empty($brand['logo'])) {
+                $logo = explode(',', $brand['logo']);
+                $brand['logo'] = $ossLogic::url(substr($logo[0], strrpos($logo[0], 'img:') + 4));
+            }
+            if (!empty($brand['banner'])) {
+                $banner = explode(',', $brand['banner']);
+                $brand['banner'] = $ossLogic::url(substr($banner[0], strrpos($banner[0], 'img:') + 4));
+            }
+        }
 
+        $this->assign('config', $config);
+        $this->assign('page', $Page);
+        $this->assign('brandList', $brandList);
         return $this->fetch('brandList');
     }
 
@@ -1399,26 +1463,73 @@ class Goods extends Base
      */
     public function addEditBrand()
     {
+        $ossLogic = new OssLogic();
         $id = I('id');
         if (IS_POST) {
             $data = I('post.');
-            $brandVilidate = Loader::validate('Brand');
-            if (!$brandVilidate->batch()->check($data)) {
-                $return = ['status' => 0, 'msg' => '操作失败', 'result' => $brandVilidate->getError()];
+            $brandValidate = Loader::validate('Brand');
+            if (!$brandValidate->batch()->check($data)) {
+                $return = ['status' => 0, 'msg' => '操作失败', 'result' => $brandValidate->getError()];
                 $this->ajaxReturn($return);
             }
+            if (!empty($data['logo'])) {
+                if (strstr($data['logo'], 'aliyuncs.com')) {
+                    // 原图
+                    $data['logo'] = M('brand')->where(['id' => $id])->value('logo');
+                } else {
+                    // 新图
+                    $filePath = PUBLIC_PATH . substr($data['logo'], strrpos($data['logo'], '/public/') + 8);
+                    $fileName = substr($data['logo'], strrpos($data['logo'], '/') + 1);
+                    $object = 'image/' . date('Y/m/d/H/') . $fileName;
+                    $return_url = $ossLogic->uploadFile($filePath, $object);
+                    if (!$return_url) {
+                        $this->error('图片上传错误');
+                    } else {
+                        // 图片信息
+                        $imageInfo = getimagesize($filePath);
+                        $data['logo'] = 'img:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ',type:' . substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1);
+                        unlink($filePath);
+                    }
+                }
+            }
+            if (!empty($data['banner'])) {
+                if (strstr($data['banner'], 'aliyuncs.com')) {
+                    // 原图
+                    $data['banner'] = M('brand')->where(['id' => $id])->value('banner');
+                } else {
+                    // 新图
+                    $filePath = PUBLIC_PATH . substr($data['banner'], strrpos($data['banner'], '/public/') + 8);
+                    $fileName = substr($data['banner'], strrpos($data['banner'], '/') + 1);
+                    $object = 'image/' . date('Y/m/d/H/') . $fileName;
+                    $return_url = $ossLogic->uploadFile($filePath, $object);
+                    if (!$return_url) {
+                        $this->error('图片上传错误');
+                    } else {
+                        // 图片信息
+                        $imageInfo = getimagesize($filePath);
+                        $data['banner'] = 'img:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ',type:' . substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1);
+                        unlink($filePath);
+                    }
+                }
+            }
             if ($id) {
-                Db::name('Brand')->update($data);
+                Db::name('Brand')->where('id', $id)->update($data);
             } else {
                 Db::name('Brand')->insert($data);
             }
             $this->ajaxReturn(['status' => 1, 'msg' => '操作成功', 'result' => '']);
         }
-        $cat_list = M('goods_category')->where('parent_id = 0')->select(); // 已经改成联动菜单
-        $this->assign('cat_list', $cat_list);
         $brand = M('Brand')->find($id);
-        $this->assign('brand', $brand);
+        if (!empty($brand['logo'])) {
+            $logo = explode(',', $brand['logo']);
+            $brand['logo'] = $ossLogic::url(substr($logo[0], strrpos($logo[0], 'img:') + 4));
+        }
+        if (!empty($brand['banner'])) {
+            $banner = explode(',', $brand['banner']);
+            $brand['banner'] = $ossLogic::url(substr($banner[0], strrpos($banner[0], 'img:') + 4));
+        }
 
+        $this->assign('brand', $brand);
         return $this->fetch('_brand');
     }
 
@@ -1427,18 +1538,16 @@ class Goods extends Base
      */
     public function delBrand()
     {
-        $ids = I('post.ids', '');
-        empty($ids) && $this->ajaxReturn(['status' => -1, 'msg' => '非法操作！']);
-        $brind_ids = rtrim($ids, ',');
+        $id = I('id', '');
+        empty($id) && $this->ajaxReturn(['status' => -1, 'msg' => '非法操作！']);
         // 判断此品牌是否有商品在使用
-        $goods_count = Db::name('Goods')->whereIn('brand_id', $brind_ids)->group('brand_id')->getField('brand_id', true);
-        $use_brind_ids = implode(',', $goods_count);
+        $goods_count = Db::name('Goods')->where('brand_id', $id)->group('brand_id')->count();
         if ($goods_count) {
-            $this->ajaxReturn(['status' => -1, 'msg' => 'ID为【' . $use_brind_ids . '】的品牌有商品在用不得删除!', 'data' => '']);
+            $this->ajaxReturn(['status' => -1, 'msg' => '该品牌有商品在用不得删除!', 'data' => '']);
         }
-        $res = Db::name('Brand')->whereIn('id', $brind_ids)->delete();
+        $res = Db::name('Brand')->where('id', $id)->delete();
         if ($res) {
-            $this->ajaxReturn(['status' => 1, 'msg' => '操作成功', 'url' => U('Admin/goods/brandList')]);
+            $this->ajaxReturn(['status' => 1, 'msg' => '操作成功']);
         }
         $this->ajaxReturn(['status' => -1, 'msg' => '操作失败', 'data' => '']);
     }
