@@ -444,17 +444,18 @@ class Distribut extends Base
     }
 
     /**
-     * 升级介绍设置
+     * 升级设置
      * @return mixed
      * @throws \Exception
      */
-    public function config()
+    public function upgradeConfig()
     {
         if (IS_POST) {
             $param = I('post.');
-            $configData = [];
+            M('distribute_config')->where(['type' => 'svip_benefit'])->delete();
             foreach ($param as $key => $value) {
                 if ($key == 'svip_benefit') {
+                    $data = [];
                     if (count($value['name']) > 4) {
                         $this->error('SVIP专属权益配置数量不能超过4个', U('Admin/Distribut/config'));
                     }
@@ -462,17 +463,16 @@ class Distribut extends Base
                         if (empty($v)) {
                             continue;
                         }
-                        $configData[] = [
+                        $data[] = [
                             'type' => $key,
                             'name' => $v,
                             'url' => $value['url'][$k]
                         ];
                     }
+                    $distributeConfig = new DistributeConfig();
+                    $distributeConfig->saveAll($data);
                 }
             }
-            M('distribute_config')->where('1=1')->delete();
-            $distributeConfig = new DistributeConfig();
-            $distributeConfig->saveAll($configData);
             $this->success('操作成功', U('Admin/Distribut/config'));
         }
         $distributeConfig = M('distribute_config')->select();
@@ -491,49 +491,49 @@ class Distribut extends Base
         }
         $this->assign('svip_key', $svipKey);
         $this->assign('config', $config);
-        return $this->fetch();
+        return $this->fetch('upgrade_config');
     }
 
-    public function svipConfig()
+    /**
+     * 代理商等级设置
+     * @return mixed
+     */
+    public function levelConfig()
     {
         $ossLogic = new OssLogic();
         if (IS_POST) {
             $param = I('post.');
             // 配置
             foreach ($param as $k => $v) {
-                switch ($k) {
-                    case 'svip_publicize':
-                        if (strstr($v['url'], 'aliyuncs.com')) {
-                            // 原图
-                            $v['url'] = M('distribute_config')->where(['type' => 'svip_publicize'])->value('url');
-                        } else {
-                            // 新图
-                            $filePath = PUBLIC_PATH . substr($v['url'], strrpos($v['url'], '/public/') + 8);
-                            $fileName = substr($v['url'], strrpos($v['url'], '/') + 1);
-                            $object = 'image/' . date('Y/m/d/H/') . $fileName;
-                            $return_url = $ossLogic->uploadFile($filePath, $object);
-                            if (!$return_url) {
-                                $this->error('图片上传错误');
-                            } else {
-                                // 图片信息
-                                $imageInfo = getimagesize($filePath);
-                                $v['url'] = 'img:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ',type:' . substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1);
-                                unlink($filePath);
-                            }
-                        }
-                        $data = [
-                            'type' => $k,
-                            'name' => isset($v['name']) ? $v['name'] : '',
-                            'url' => isset($v['url']) ? $v['url'] : '',
-                            'content' => isset($v['content']) ? $v['content'] : '',
-                        ];
-                        $config = M('distribute_config')->where(['type' => $k])->find();
-                        if (!empty($config)) {
-                            M('distribute_config')->where(['id' => $config['id']])->update($data);
-                        } else {
-                            M('distribute_config')->add($data);
-                        }
-                        break;
+                if (strstr($v['url'], 'aliyuncs.com')) {
+                    // 原图
+                    $v['url'] = M('distribute_config')->where(['type' => $k])->value('url');
+                } else {
+                    // 新图
+                    $filePath = PUBLIC_PATH . substr($v['url'], strrpos($v['url'], '/public/') + 8);
+                    $fileName = substr($v['url'], strrpos($v['url'], '/') + 1);
+                    $object = 'image/' . date('Y/m/d/H/') . $fileName;
+                    $return_url = $ossLogic->uploadFile($filePath, $object);
+                    if (!$return_url) {
+                        $this->error('图片上传错误');
+                    } else {
+                        // 图片信息
+                        $imageInfo = getimagesize($filePath);
+                        $v['url'] = 'img:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ',type:' . substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1);
+                        unlink($filePath);
+                    }
+                }
+                $data = [
+                    'type' => $k,
+                    'name' => isset($v['name']) ? $v['name'] : '',
+                    'url' => isset($v['url']) ? $v['url'] : '',
+                    'content' => isset($v['content']) ? $v['content'] : '',
+                ];
+                $config = M('distribute_config')->where(['type' => $k])->find();
+                if (!empty($config)) {
+                    M('distribute_config')->where(['id' => $config['id']])->update($data);
+                } else {
+                    M('distribute_config')->add($data);
                 }
             }
             $this->success('操作成功', U('Distribut/svipConfig'));
@@ -542,7 +542,7 @@ class Distribut extends Base
         $brandConfig = M('distribute_config')->select();
         $config = [];
         foreach ($brandConfig as $val) {
-            if ($val['type'] == 'svip_publicize' && !empty($val['url'])) {
+            if (!empty($val['url'])) {
                 $url = explode(',', $val['url']);
                 $val['url'] = $ossLogic::url(substr($url[0], strrpos($url[0], 'img:') + 4));
             }
@@ -554,6 +554,6 @@ class Distribut extends Base
         }
 
         $this->assign('config', $config);
-        return $this->fetch('svip_config');
+        return $this->fetch('level_config');
     }
 }

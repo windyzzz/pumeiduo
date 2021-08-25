@@ -3,7 +3,7 @@
 use think\migration\Migrator;
 use think\migration\db\Column;
 
-class CreataAppletConfig extends Migrator
+class CreateAppletConfig extends Migrator
 {
     /**
      * Change Method.

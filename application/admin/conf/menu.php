@@ -42,7 +42,7 @@ return [
             ['name' => '金卡资格', 'act' => 'jinka', 'op' => 'User'],
             ['name' => '会员信息修改记录', 'act' => 'usersEditLog', 'op' => 'User'],
             ['name' => 'APP登陆会员', 'act' => 'appLoginStatistics', 'op' => 'User'],
-            ['name' => '会员升级设置', 'act' => 'config', 'op' => 'Distribut'],
+            ['name' => '会员升级设置', 'act' => 'upgradeConfig', 'op' => 'Distribut'],
             ['name' => 'VIP升级记录', 'act' => 'distributeLogVip', 'op' => 'Distribut'],
             ['name' => 'SVIP升级记录', 'act' => 'distributeLogSvip', 'op' => 'Distribut'],
         ]],
@@ -74,7 +74,8 @@ return [
             ['name' => '金刚区', 'act' => 'appIndex', 'op' => 'System'],
             ['name' => '小程序', 'act' => 'config', 'op' => 'Applet'],
             ['name' => '商学院', 'act' => 'config2', 'op' => 'School'],
-            ['name' => 'SVIP', 'act' => 'svipConfig', 'op' => 'Distribut'],
+            ['name' => '代理商等级', 'act' => 'levelConfig', 'op' => 'Distribut'],
+            ['name' => '主推产品', 'act' => 'recommendGoodsList', 'op' => 'Goods'],
         ]],
 
         /*array('name' => '模板','child'=>array(

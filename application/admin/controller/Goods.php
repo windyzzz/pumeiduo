@@ -2019,4 +2019,102 @@ class Goods extends Base
         $category = M('goods_category')->where($where)->select();
         $this->ajaxReturn(['status' => 1, 'res' => $category]);
     }
+
+    /**
+     * 主推产品列表
+     * @return mixed
+     */
+    public function recommendGoodsList()
+    {
+        $ossLogic = new OssLogic();
+        $count = M('goods_recommend')->count();
+        $page = new Page($count, 10);
+        $goodsList = M('goods_recommend gr')->join('goods g', 'g.goods_id = gr.goods_id')
+            ->order('gr.sort DESC')->field('gr.*, g.goods_name, g.shop_price, g.exchange_integral')->select();
+        foreach ($goodsList as &$goods) {
+            if (!empty($goods['image'])) {
+                $image = explode(',', $goods['image']);
+                $goods['image'] = $ossLogic::url(substr($image[0], strrpos($image[0], 'img:') + 4));
+            }
+            if (!empty($goods['video'])) {
+                $goods['video'] = $ossLogic::url($goods['video']);
+            }
+            $goods['exchange_price'] = bcsub($goods['shop_price'], $goods['exchange_integral'], 2);
+        }
+        $this->assign('page', $page);
+        $this->assign('goods_list', $goodsList);
+        return $this->fetch('recommend_goods_list');
+    }
+
+    /**
+     * 添加编辑主推产品
+     * @return mixed
+     */
+    public function addEditRecommendGoods()
+    {
+        $ossLogic = new OssLogic();
+        $id = I('id');
+        if (IS_POST) {
+            $param = I('post.', []);
+            if (empty($param['image']) && empty($param['video'])) {
+                $this->ajaxReturn(['status' => 0, 'msg' => '请上传主推图或者主推视频']);
+            }
+            // 主推图
+            if (!empty($param['image'])) {
+                if (strstr($param['image'], 'aliyuncs.com')) {
+                    // 原图
+                    $param['image'] = M('goods_recommend')->where(['id' => $id])->value('image');
+                } else {
+                    // 新图
+                    $filePath = PUBLIC_PATH . substr($param['image'], strrpos($param['image'], '/public/') + 8);
+                    $fileName = substr($param['image'], strrpos($param['image'], '/') + 1);
+                    $object = 'image/' . date('Y/m/d/H/') . $fileName;
+                    $return_url = $ossLogic->uploadFile($filePath, $object);
+                    if (!$return_url) {
+                        $this->error('图片上传错误');
+                    } else {
+                        // 图片信息
+                        $imageInfo = getimagesize($filePath);
+                        $param['image'] = 'img:' . $object . ',width:' . $imageInfo[0] . ',height:' . $imageInfo[1] . ',type:' . substr($imageInfo['mime'], strrpos($imageInfo['mime'], '/') + 1);
+                        unlink($filePath);
+                    }
+                }
+                $param['video'] = '';
+                $param['video_cover'] = '';
+                $param['video_axis'] = 1;
+            }
+            // 主推视频
+            if (!empty($param['video'])) {
+                if (strstr($param['video'], 'aliyuncs.com')) {
+                    // 原本的视频
+                    $param['video'] = substr($param['video'], strrpos($param['video'], 'video'));
+                } else {
+                    // 处理视频封面图
+                    $videoCover = getVideoCoverImages($param['video'], 'upload/goods/video_cover/temp/');
+                    $param['video_cover'] = $videoCover['path'];
+                    $param['video_axis'] = $videoCover['axis'];
+                }
+                $param['image'] = '';
+            }
+            if ($id) {
+                M('goods_recommend')->where(['id' => $id])->update($param);
+            } else {
+                M('goods_recommend')->add($param);
+            }
+            $this->ajaxReturn(['status' => 1, 'msg' => '处理成功']);
+        }
+        if ($id) {
+            $goods = M('goods_recommend')->where(['id' => $id])->find();
+            if (!empty($goods['image'])) {
+                $image = explode(',', $goods['image']);
+                $goods['image'] = $ossLogic::url(substr($image[0], strrpos($image[0], 'img:') + 4));
+            }
+            if (!empty($goods['video'])) {
+                $goods['video'] = $ossLogic::url($goods['video']);
+            }
+            $goods['goods_name'] = M('goods')->where(['goods_id' => $goods['goods_id']])->value('goods_name');
+            $this->assign('goods', $goods);
+        }
+        return $this->fetch('recommend_goods_addEdit');
+    }
 }
