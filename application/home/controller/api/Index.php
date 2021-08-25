@@ -324,7 +324,10 @@ class Index
         return json(['status' => 1, 'result' => $return]);
     }
 
-
+    /**
+     * 首页数据（新）
+     * @return \think\response\Json
+     */
     public function indexData()
     {
         $ossLogic = new OssLogic();
@@ -341,15 +344,6 @@ class Index
             $schoolPublicize = explode(',', $schoolPublicize);
             $schoolPublicize = $ossLogic::url(substr($schoolPublicize[0], strrpos($schoolPublicize[0], 'img:') + 4));
         }
-        $part1 = [
-            'applet' => [
-                'image' => $appletPublicize ?? '',
-                'applet_type' => C('APPLET_TYPE'),
-                'applet_id' => C('APPLET_ID'),
-                'applet_path' => C('APPLET_PATH')
-            ],
-            'school' => $schoolPublicize ?? '',
-        ];
         /*
          * part2：韩国购 SVIP宣传 促销商品 新品
          */
@@ -370,12 +364,6 @@ class Index
             $svipPublicize = explode(',', $svipPublicize);
             $svipPublicize = $ossLogic::url(substr($svipPublicize[0], strrpos($svipPublicize[0], 'img:') + 4));
         }
-        $part2 = [
-            'abroad_goods' => $abroadGoods ?? [],
-            'recommend_goods' => $recommendGoods ?? [],
-            'new_goods' => $newGoods ?? [],
-            'svip' => $svipPublicize ?? '',
-        ];
         /*
          * part3：VIP商品 主推商品
          */
@@ -416,17 +404,25 @@ class Index
                 }
             }
         }
-        $part3 = [
+        $return = [
+            'applet' => [
+                'image' => $appletPublicize ?? '',
+                'applet_type' => C('APPLET_TYPE'),
+                'applet_id' => C('APPLET_ID'),
+                'applet_path' => C('APPLET_PATH')
+            ],
+            'school' => [
+                'image' => $schoolPublicize ?? ''
+            ],
+            'abroad' => ['goods_list' => $abroadGoods ?? []],
+            'recommend' => ['goods_list' => $recommendGoods ?? []],
+            'new' => ['goods_list' => $newGoods ?? []],
+            'svip' => ['image' => $svipPublicize ?? ''],
             'vip' => [
                 'image' => $vipPublicize ?? '',
                 'goods_list' => $vipGoods ?? []
             ],
-            'main_goods' => $mainGoods ?? []
-        ];
-        $return = [
-            'part_1' => $part1,
-            'part_2' => $part2,
-            'part_3' => $part3,
+            'main' => ['goods_list' => $mainGoods ?? []]
         ];
         return json(['status' => 1, 'result' => $return, 'msg' => '']);
     }
