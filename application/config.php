@@ -551,4 +551,11 @@ return [
     'OSS_CHILD_ACCESSKEY_ID' => \think\Env::get('OSS.CHLID.ACCESSKEY.ID'),
     'OSS_CHILD_ACCESSKEY_SECRET' => \think\Env::get('OSS.CHILD.ACCESSKEY.SECRET'),
     'OSS_CHILD_ROLE_ARN' => \think\Env::get('OSS.CHILD.ROLE.ARN'),
+
+    /*
+     * 小程序
+     */
+    'APPLET_TYPE' => \think\Env::get('APPLET.TYPE'),
+    'APPLET_ID' => \think\Env::get('APPLET.ID'),
+    'APPLET_PATH' => \think\Env::get('APPLET.PATH'),
 ];

@@ -26,7 +26,7 @@
                     </select>
                 </dd>
             </dl>
-            <dl class="row" style="<if condition='empty($goods[image])'>display: none;</if>" id="image">
+            <dl class="row" style="<if condition='empty($goods)'>display: block;<elseif condition='empty($goods[image])'/>display: none;</if>" id="image">
                 <dt class="tit">
                     <label>主推图片</label>
                 </dt>

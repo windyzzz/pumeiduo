@@ -11,6 +11,7 @@
 
 namespace app\home\controller\api;
 
+use app\common\logic\OssLogic;
 use app\common\logic\TaskLogic;
 use app\common\model\FlashSale;
 use app\common\model\GroupBuy;
@@ -304,9 +305,9 @@ class Index
                     break;
                 case 'icon9':
                     // 小程序
-                    $iconList[$key]['target_param']['applet_type'] = '0';
-                    $iconList[$key]['target_param']['applet_id'] = 'gh_916703245d1e';
-                    $iconList[$key]['target_param']['applet_path'] = 'pages/index/index';
+                    $iconList[$key]['target_param']['applet_type'] = C('APPLET_TYPE');
+                    $iconList[$key]['target_param']['applet_id'] = C('APPLET_ID');
+                    $iconList[$key]['target_param']['applet_path'] = C('APPLET_PATH');
                     break;
                 case 'icon14':
                     // 优选品牌
@@ -321,5 +322,112 @@ class Index
             'list' => $iconList
         ];
         return json(['status' => 1, 'result' => $return]);
+    }
+
+
+    public function indexData()
+    {
+        $ossLogic = new OssLogic();
+        /*
+         * part1：小程序宣传 商学院宣传
+         */
+        $appletPublicize = M('applet_config')->where(['type' => 'publicize'])->value('url');
+        if (!empty($appletPublicize)) {
+            $appletPublicize = explode(',', $appletPublicize);
+            $appletPublicize = $ossLogic::url(substr($appletPublicize[0], strrpos($appletPublicize[0], 'img:') + 4));
+        }
+        $schoolPublicize = M('school_config')->where(['type' => 'publicize'])->value('url');
+        if (!empty($schoolPublicize)) {
+            $schoolPublicize = explode(',', $schoolPublicize);
+            $schoolPublicize = $ossLogic::url(substr($schoolPublicize[0], strrpos($schoolPublicize[0], 'img:') + 4));
+        }
+        $part1 = [
+            'applet' => [
+                'image' => $appletPublicize ?? '',
+                'applet_type' => C('APPLET_TYPE'),
+                'applet_id' => C('APPLET_ID'),
+                'applet_path' => C('APPLET_PATH')
+            ],
+            'school' => $schoolPublicize ?? '',
+        ];
+        /*
+         * part2：韩国购 SVIP宣传 促销商品 新品
+         */
+        $abroadGoods = M('goods')->where(['is_on_sale' => 1, 'is_abroad' => 1, 'is_agent' => 0, 'applet_on_sale' => 0])->order('sort DESC, goods_id DESC')->field('goods_id, original_img, shop_price exchange_price')->limit(0, 2)->select();
+        foreach ($abroadGoods as &$goods) {
+            $goods['original_img_new'] = getFullPath($goods['original_img']);
+        }
+        $recommendGoods = M('goods')->where(['is_on_sale' => 1, 'is_recommend' => 1, 'is_agent' => 0, 'applet_on_sale' => 0])->order('sort DESC, goods_id DESC')->field('goods_id, original_img, shop_price exchange_price')->limit(0, 2)->select();
+        foreach ($recommendGoods as &$goods) {
+            $goods['original_img_new'] = getFullPath($goods['original_img']);
+        }
+        $newGoods = M('goods')->where(['is_on_sale' => 1, 'is_new' => 1, 'is_agent' => 0, 'applet_on_sale' => 0])->order('sort DESC, goods_id DESC')->field('goods_id, original_img, shop_price exchange_price')->limit(0, 2)->select();
+        foreach ($newGoods as &$goods) {
+            $goods['original_img_new'] = getFullPath($goods['original_img']);
+        }
+        $svipPublicize = M('distribute_config')->where(['type' => 'svip_publicize'])->value('url');
+        if (!empty($svipPublicize)) {
+            $svipPublicize = explode(',', $svipPublicize);
+            $svipPublicize = $ossLogic::url(substr($svipPublicize[0], strrpos($svipPublicize[0], 'img:') + 4));
+        }
+        $part2 = [
+            'abroad_goods' => $abroadGoods ?? [],
+            'recommend_goods' => $recommendGoods ?? [],
+            'new_goods' => $newGoods ?? [],
+            'svip' => $svipPublicize ?? '',
+        ];
+        /*
+         * part3：VIP商品 主推商品
+         */
+        $vipPublicize = M('distribute_config')->where(['type' => 'vip_publicize'])->value('url');
+        if (!empty($vipPublicize)) {
+            $vipPublicize = explode(',', $vipPublicize);
+            $vipPublicize = $ossLogic::url(substr($vipPublicize[0], strrpos($vipPublicize[0], 'img:') + 4));
+        }
+        $vipGoods = M('goods')->where(['is_on_sale' => 1, 'zone' => 3, 'distribut_id' => 2, 'is_agent' => 0, 'applet_on_sale' => 0])->order('sort DESC, goods_id DESC')->field('goods_id, original_img, shop_price exchange_price')->limit(0, 10)->select();
+        foreach ($vipGoods as &$goods) {
+            $goods['original_img_new'] = getFullPath($goods['original_img']);
+        }
+        $mainGoods = M('goods_recommend gr')->join('goods g', 'g.goods_id = gr.goods_id')
+            ->where(['gr.is_open' => 1, 'g.is_on_sale' => 1, 'g.is_agent' => 0, 'g.applet_on_sale' => 0])
+            ->order('gr.sort DESC, g.sort DESC, g.goods_id DESC')
+            ->field('gr.goods_id, gr.image, gr.video, gr.video_cover, gr.video_axis, g.goods_name, g.shop_price, g.exchange_integral')->select();
+        $mainGoodsIds = [];
+        foreach ($mainGoods as &$goods) {
+            $mainGoodsIds[] = $goods['goods_id'];
+        }
+        $mainGoodsTabs = M('goods_tab')->where(['goods_id' => ['IN', $mainGoodsIds], 'status' => 1])->field('goods_id, title')->select();
+        foreach ($mainGoods as &$goods) {
+            $goods['exchange_price'] = bcsub($goods['shop_price'], $goods['exchange_integral'], 2);
+            $goods['tabs'] = [];
+            if (!empty($goods['image'])) {
+                $image = explode(',', $goods['image']);
+                $goods['image'] = $ossLogic::url(substr($image[0], strrpos($image[0], 'url:') + 4));
+            }
+            if (!empty($goods['video'])) {
+                $goods['video'] = $ossLogic::url($goods['video']);
+                $goods['video_cover'] = $ossLogic::url($goods['video_cover']);
+            }
+            foreach ($mainGoodsTabs as $value) {
+                if ($goods['goods_id'] == $value['goods_id']) {
+                    $goods['tabs'][] = [
+                        'title' => $value['title']
+                    ];
+                }
+            }
+        }
+        $part3 = [
+            'vip' => [
+                'image' => $vipPublicize ?? '',
+                'goods_list' => $vipGoods ?? []
+            ],
+            'main_goods' => $mainGoods ?? []
+        ];
+        $return = [
+            'part_1' => $part1,
+            'part_2' => $part2,
+            'part_3' => $part3,
+        ];
+        return json(['status' => 1, 'result' => $return, 'msg' => '']);
     }
 }

@@ -3597,7 +3597,7 @@ class Goods extends Base
                 'level' => 3
             ])->field('id cate_id, name')->select() : [];
         }
-        return json(['status' => 1, 'result' => $categoryList, 'msg' => '']);
+        return json(['status' => 1, 'result' => ['list' => $categoryList], 'msg' => '']);
     }
 
     /**
@@ -3654,6 +3654,6 @@ class Goods extends Base
             $goods['original_img_new'] = getFullPath($goods['original_img']);
             $brandList[$goods['brand_id']]['goods_list'][] = $goods;
         }
-        return json(['status' => 1, 'result' => array_values($brandList), 'msg' => '']);
+        return json(['status' => 1, 'result' => ['list' => array_values($brandList)], 'msg' => '']);
     }
 }
