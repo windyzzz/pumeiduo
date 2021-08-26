@@ -710,9 +710,7 @@ class School
                 $query->whereOr($whereOr);
             });
         }
-        $article = $article->join('user_school_article usa', 'usa.article_id = sa.id', 'LEFT')
-            ->order($sort)->limit($page->firstRow . ',' . $page->listRows)
-            ->field('sa.*, usa.status learn_status, usa.times learn_times')->select();
+        $article = $article->order($sort)->limit($page->firstRow . ',' . $page->listRows)->field('sa.*')->select();
         $list = [];
         $articleIds = [];
         $fileList = [];     // 附件列表
@@ -754,9 +752,7 @@ class School
                 'user' => [
                     'user_name' => '',
                     'head_pic' => '',
-                ],
-                'learn_status' => $item['learn_status'] ?? '0',
-                'learn_times' => $item['learn_times'] ?? '0'
+                ]
             ];
             if (!empty($item['file'])) {
                 $item['file'] = explode(',', $item['file']);
