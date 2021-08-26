@@ -1300,6 +1300,9 @@ class School
             ],
             'list' => []
         ];
+        if (M('school_article_questionnaire_answer')->where(['article_id' => $articleId, 'user_id' => $user['user_id']])->find()) {
+            return $data;
+        }
         $config = M('school_article_questionnaire_config')->find();
         if ($config['is_open'] == 0 || $config['start_time'] > NOW_TIME || $config['end_time'] < NOW_TIME) {
             return $data;
@@ -1313,6 +1316,9 @@ class School
         if (empty($caption)) {
             return $data;
         }
+        $data['is_open'] = 1;
+        $data['article']['title'] = $article['title'];
+        $data['article']['publish_time'] = $article['publish_time'];
         $data['list'] = $caption;
         return $data;
     }
@@ -1323,9 +1329,13 @@ class School
      * @param $user
      * @param $captionData
      * @throws \Exception
+     * @return bool
      */
     public function answerQuestionnaire($articleId, $user, $captionData)
     {
+        if (M('school_article_questionnaire_answer')->where(['article_id' => $articleId, 'user_id' => $user['user_id']])->find()) {
+            return true;
+        }
         $answerData = [];
         foreach ($captionData as $data) {
             $answerData[] = [
@@ -1340,5 +1350,6 @@ class School
         if (!empty($answerData)) {
             (new SchoolArticleQuestionnaireAnswer())->saveAll($answerData);
         }
+        return true;
     }
 }
