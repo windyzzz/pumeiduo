@@ -76,6 +76,7 @@ return [
             ['name' => '商学院', 'act' => 'config2', 'op' => 'School'],
             ['name' => '代理商等级', 'act' => 'levelConfig', 'op' => 'Distribut'],
             ['name' => '主推产品', 'act' => 'recommendGoodsList', 'op' => 'Goods'],
+            ['name' => '促销/新品', 'act' => 'goodsConfig', 'op' => 'Goods'],
         ]],
 
         /*array('name' => '模板','child'=>array(

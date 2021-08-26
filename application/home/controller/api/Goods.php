@@ -3656,4 +3656,79 @@ class Goods extends Base
         }
         return json(['status' => 1, 'result' => ['list' => array_values($brandList)], 'msg' => '']);
     }
+
+    /**
+     * 主页展示不同类型商品
+     * @return \think\response\Json
+     */
+    public function indexGoods2()
+    {
+        $type = I('type', '');
+
+        $seriesGoods = [];
+        $groupBuyGoods = [];
+        $newGoods = [];
+        $recommendGoods = [];
+        $hotGoods = [];
+        $typeArr = explode(',', $type);
+        foreach ($typeArr as $type) {
+            switch ($type) {
+                case 'series':
+                    // 超值套装列表
+                    $seriesGoods = $this->getSeriesGoodsList(10, 'array');
+                    break;
+                case 'groupBuy':
+                    // 团购商品列表
+                    $groupBuyGoods = $this->getGroupBuyGoodsListNew(10, 'array');
+                    break;
+                case 'new':
+                    // 新品列表
+                    $newPublicize = M('goods_config')->where(['type' => 'new_publicize'])->value('url');
+                    if ($newPublicize) {
+                        $newPublicize = explode(',', $newPublicize);
+                        $newPublicize = (new OssLogic())::url(substr($newPublicize[0], strrpos($newPublicize[0], 'img:') + 4));
+                    }
+                    $newGoods = $this->getNewGoodsList(10, 'array');
+                    break;
+                case 'recommend':
+                    // 促销商品
+                    $recommendPublicize = M('goods_config')->where(['type' => 'recommend_publicize'])->value('url');
+                    if ($recommendPublicize) {
+                        $recommendPublicize = explode(',', $recommendPublicize);
+                        $recommendPublicize = (new OssLogic())::url(substr($recommendPublicize[0], strrpos($recommendPublicize[0], 'img:') + 4));
+                    }
+                    $recommendGoods = $this->getRecommendGoodsList(10, 'array', 1);
+                    break;
+                case 'hot':
+                    // 热销商品
+                    $hotGoods = $this->getHotGoodsList(10, 'array');
+                    break;
+                default:
+                    return json(['status' => 0, 'msg' => 'fail']);
+            }
+        }
+        $return = [
+            'series' => [
+                'image' => '',
+                'goods_list' => $seriesGoods
+            ],
+            'groupBuy' => [
+                'image' => '',
+                'goods_list' => $groupBuyGoods
+            ],
+            'new' => [
+                'image' => $newPublicize ?? '',
+                'goods_list' => $newGoods
+            ],
+            'recommend' => [
+                'image' => $recommendPublicize ?? '',
+                'goods_list' => $recommendGoods
+            ],
+            'hot' => [
+                'image' => '',
+                'goods_list' => $hotGoods
+            ]
+        ];
+        return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
+    }
 }

@@ -539,9 +539,9 @@ class Distribut extends Base
             $this->success('操作成功', U('Distribut/svipConfig'));
         }
         // 配置
-        $brandConfig = M('distribute_config')->select();
+        $distributeConfig = M('distribute_config')->select();
         $config = [];
-        foreach ($brandConfig as $val) {
+        foreach ($distributeConfig as $val) {
             if (!empty($val['url'])) {
                 $url = explode(',', $val['url']);
                 $val['url'] = $ossLogic::url(substr($url[0], strrpos($url[0], 'img:') + 4));
