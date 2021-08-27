@@ -929,8 +929,10 @@ class Article extends Base
         $title = htmlspecialchars_decode(trim(I('title', '')));
         $moduleId = I('module_id', '');
         $classId = I('class_id', '');
-        $timeFrom = I('time_from', '') ? strtotime(I('time_from')) : '';
-        $timeTo = I('time_to', '') ? strtotime(I('time_to')) : '';
+        $publishTimeFrom = I('publish_time_from', '') ? strtotime(I('publish_time_from')) : '';
+        $publishTimeTo = I('publish_time_to', '') ? strtotime(I('publish_time_to')) : '';
+        $learnTimeFrom = I('learn_time_from', '') ? strtotime(I('learn_time_from')) : '';
+        $learnTimeTo = I('learn_time_to', '') ? strtotime(I('learn_time_to')) : '';
         $isExport = I('is_export', 0);
         if ($title) {
             $where['sa.title'] = ['LIKE', '%' . $title . '%'];
@@ -951,8 +953,8 @@ class Article extends Base
         if ($svipLevel = I('svip_level', '')) {
             $where['sa.distribute_level'] = ['LIKE', '%' . $svipLevel . '%'];
         }
-        if ($timeFrom && $timeTo) {
-            $where['sa.publish_time'] = ['BETWEEN', [$timeFrom, $timeTo]];
+        if ($publishTimeFrom && $publishTimeTo) {
+            $where['sa.publish_time'] = ['BETWEEN', [$publishTimeFrom, $publishTimeTo]];
         }
         // 排序
         $order = 'sa.publish_time DESC, sa.sort DESC';
@@ -961,13 +963,17 @@ class Article extends Base
         if ($sort && $sortBy) {
             $order = 'sa.' . $sort . ' ' . $sortBy . ', ' . $order;
         }
-        $schoolArticle = M('school_article sa')->where($where)->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')->field('sa.*, s.name module_name, sc.name class_name');
+        $schoolArticle = M('school_article sa')
+            ->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')
+            ->where($where)
+            ->order($order)
+            ->field('sa.*, s.name module_name, sc.name class_name');
         if (!$isExport) {
             // 总数
             $count = M('school_article sa')->where($where)->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')->count();
             $page = new Page($count, 10);
             // 列表
-            $schoolArticle = $schoolArticle->limit($page->firstRow . ',' . $page->listRows)->order($order);
+            $schoolArticle = $schoolArticle->limit($page->firstRow . ',' . $page->listRows);
         }
         // 数据
         $list = $schoolArticle->select();
@@ -1017,6 +1023,15 @@ class Article extends Base
                     break;
             }
             $item['publish_time_desc'] = date('Y-m-d H:i:s', $item['publish_time']);
+            if ($learnTimeFrom && $learnTimeTo) {
+                // 根据学习时间统计学习人数
+                $learnCount = M('user_school_article')->where([
+                    'article_id' => $item['id'],
+                    'is_learn' => 1,
+                    'finish_time' => ['BETWEEN', [$learnTimeFrom, $learnTimeTo]]
+                ])->count('user_id');
+                $item['learn'] = $learnCount ?? 0;
+            }
             $dataList[] = [
                 $item['id'],
                 $item['title'],
@@ -1048,8 +1063,10 @@ class Article extends Base
             $this->assign('select_app_grade', $appGrade);
             $this->assign('select_svip_grade', $svipGrade);
             $this->assign('select_svip_level', $svipLevel);
-            $this->assign('time_from', I('time_from', ''));
-            $this->assign('time_to', I('time_to', ''));
+            $this->assign('publish_time_from', I('publish_time_from', ''));
+            $this->assign('publish_time_to', I('publish_time_to', ''));
+            $this->assign('learn_time_from', I('learn_time_from', ''));
+            $this->assign('learn_time_to', I('learn_time_to', ''));
             $this->assign('sort', $sort);
             $this->assign('sort_by', $sortBy);
             $this->assign('page', $page);
@@ -1061,6 +1078,106 @@ class Article extends Base
                 '文章ID', '标题', '学习类型', '所属模块', '所属分类', 'APP等级限制', '代理商等级限制', '代理商职级限制', '学习人数', '分享人数', '点击数', '状态', '发布时间'
             ];
             toCsvExcel($dataList, $headList, 'course_list');
+        }
+    }
+
+    /**
+     * 课程用户列表
+     * @return mixed
+     */
+    public function courseUserList()
+    {
+        $isExport = I('is_export', '');     // 是否导出
+        $where = ['usa.article_id' => I('article_id', 0)];
+        if ($appGrade = I('app_grade', '')) {
+            $where['u.distribut_level'] = $appGrade;
+        }
+        if ($svipGrade = I('svip_grade', '')) {
+            $where['u.distribut_level'] = 3;
+            $where['u.svip_grade'] = $svipGrade;
+        }
+        if ($svipLevel = I('svip_level', '')) {
+            $where['u.distribut_level'] = 3;
+            $where['u.svip_level'] = $svipLevel;
+        }
+        if ($userId = I('user_id', '')) {
+            $where['u.user_id'] = $userId;
+        }
+        if ($username = I('user_name', '')) {
+            $where['u.user_name'] = $username;
+        }
+        if ($nickname = I('nickname', '')) {
+            $where['u.nickname'] = $nickname;
+        }
+        if ($timeFrom = I('time_from', '') && $timeTo = I('time_to', '')) {
+            $where['usa.finish_time'] = ['BETWEEN', [$timeFrom, $timeTo]];
+        }
+        $userList = M('user_school_article usa')
+            ->join('users u', 'u.user_id = usa.user_id')
+            ->where($where)
+            ->order('u.user_id DESC')
+            ->field('u.user_id, u.nickname, u.user_name, u.school_credit, u.distribut_level, u.svip_grade, u.svip_level, usa.status, usa.add_time, usa.finish_time');
+        if (!$isExport) {
+            // 用户总数
+            $count = M('user_school_article usa')->join('users u', 'u.user_id = usa.user_id')->where($where)->count();
+            $page = new Page($count, 10);
+            // 用户列表
+            $userList = $userList->limit($page->firstRow . ',' . $page->listRows);
+        }
+        $userList = $userList->select();
+        $dataList = [];
+        foreach ($userList as &$user) {
+            // APP等级
+            $user['app_grade_name'] = $this->appGrade[$user['distribut_level']];
+            // 代理商等级
+            $user['svip_grade_name'] = $user['distribut_level'] == 3 ? $this->svipGrade[$user['svip_grade']] : '';
+            // 代理商等级
+            $user['svip_level_name'] = $user['distribut_level'] == 3 ? $this->svipLevel[$user['svip_level']] : '';
+            switch ($user['status']) {
+                case 0:
+                    $user['status_desc'] = '未完成';
+                    break;
+                case 1:
+                    $user['status_desc'] = '已完成';
+                    break;
+            }
+            $user['add_time_desc'] = date('Y-m-d H:i:s', $user['add_time']);
+            $user['finish_time_desc'] = $user['finish_time'] != 0 ? date('Y-m-d H:i:s', $user['finish_time']) : '';
+            $dataList[] = [
+                $user['user_id'],
+                $user['nickname'],
+                $user['user_name'],
+                $user['app_grade_name'],
+                $user['svip_grade_name'],
+                $user['svip_level_name'],
+                $user['school_credit'],
+                $user['status_desc'],
+                $user['add_time_desc'],
+                $user['finish_time_desc'],
+            ];
+        }
+        if (!$isExport) {
+            $this->assign('article_id', I('article_id', 0));
+            $this->assign('app_grade', $this->appGrade);
+            $this->assign('svip_grade', $this->svipGrade);
+            $this->assign('svip_level', $this->svipLevel);
+            $this->assign('select_app_grade', $appGrade);
+            $this->assign('select_svip_grade', $svipGrade);
+            $this->assign('select_svip_level', $svipLevel);
+            $this->assign('user_id', $userId);
+            $this->assign('user_name', $username);
+            $this->assign('nickname', $nickname);
+            $this->assign('time_from', I('time_from', ''));
+            $this->assign('time_to', I('time_to', ''));
+            $this->assign('page', $page);
+            $this->assign('list', $userList);
+            return $this->fetch('course_user_list');
+        } else {
+            // 表头
+            $headList = [
+                '用户ID', '用户昵称', '用户名', 'APP等级', '代理商等级', '代理商职级', '乐活豆数量', '学习状态', '开始学习时间', '学习完成时间'
+            ];
+            toCsvExcel($dataList, $headList, 'course_user_list');
         }
     }
 }

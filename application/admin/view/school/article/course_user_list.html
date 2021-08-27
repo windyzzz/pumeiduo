@@ -8,7 +8,7 @@
         <div class="item-title">
             <a class="back" href="javascript:history.back();" title="返回列表"><i class="fa fa-arrow-circle-o-left"></i></a>
             <div class="subject">
-                <h3>用户学习课程列表</h3>
+                <h3>课程用户列表</h3>
             </div>
         </div>
     </div>
@@ -20,9 +20,7 @@
         </div>
         <ul>
             <li>
-                <!--说明：-->
-                <!--<br/>-->
-                <!--<p style="color: red;">“达标等级”不能进行搜索（因为技术上涉及到列表分页，达标等级是动态生成），只能进行导出</p>-->
+
             </li>
         </ul>
     </div>
@@ -33,7 +31,7 @@
             </div>
             <div title="刷新数据" class="pReload"><i class="fa fa-refresh"></i></div>
         </div>
-        <form class="navbar-form form-inline" id="search-form" action="{:U('school.article/userCourseList')}" method="post">
+        <form class="navbar-form form-inline" id="search-form" action="{:U('school.article/courseUserList')}" method="post">
             <div class="sDiv">
                 <div class="sDiv2">
                     <select name="app_grade">
@@ -74,6 +72,7 @@
                 <div class="sDiv2">
                     <input type="text" size="30" id="time_to" name="time_to" value="{$time_to}" class="qsbox" placeholder="学习时间-结束">
                 </div>
+                <input type="hidden" name="article_id" value="{$article_id}">
                 <input type="hidden" name="is_export" value="0">
                 <div class="sDiv2">
                     <input type="submit" class="btn" value="搜索">
@@ -110,13 +109,16 @@
                             <div style="text-align: center; width: 120px;" class="">代理商职级</div>
                         </th>
                         <th align="left" abbr="send_type" axis="col4" class="">
-                            <div style="text-align: center; width: 120px;" class="">课程数量</div>
-                        </th>
-                        <th align="left" abbr="send_type" axis="col4" class="">
                             <div style="text-align: center; width: 120px;" class="">乐活豆数量</div>
                         </th>
-                        <th align="left" abbr="send_type" axis="col4" class="">
-                            <div style="text-align: center; width: 150px;" class="">首次进入商学院</div>
+                        <th align="center" abbr="article_time" axis="col6" class="">
+                            <div style="text-align: center; width: 120px;" class="">学习状态</div>
+                        </th>
+                        <th align="center" abbr="article_time" axis="col6" class="">
+                            <div style="text-align: center; width: 120px;" class="">开始学习时间</div>
+                        </th>
+                        <th align="center" abbr="article_time" axis="col6" class="">
+                            <div style="text-align: center; width: 120px;" class="">学习完成时间</div>
                         </th>
                         <th style="width:100%" axis="col7">
                             <div></div>
@@ -158,19 +160,25 @@
                                 <div style="text-align: center; width: 120px;">{$vo.svip_level_name}</div>
                             </td>
                             <td align="left" class="">
-                                <div style="text-align: center; width: 120px;">
-                                    <if condition="$vo[course_num] GT 0">
-                                        <a href="{:U('school.article.article/userCourseArticleList', array('user_id'=>$vo[user_id]))}" style="text-decoration: underline; font-weight: bold;">{$vo.course_num}</a>
-                                    <else/>
-                                        {$vo.course_num}
-                                    </if>
-                                </div>
-                            </td>
-                            <td align="left" class="">
                                 <div style="text-align: center; width: 120px;">{$vo.school_credit}</div>
                             </td>
                             <td align="left" class="">
-                                <div style="text-align: center; width: 150px;">{$vo.first_visit}</div>
+                                <div style="text-align: center; width: 120px;
+                                    <switch name='$vo[status]'>
+                                        <case value='0'>
+                                            color: black;
+                                        </case>
+                                        <case value='1'>
+                                            color: green;
+                                        </case>
+                                    </switch>
+                                ">{$vo.status_desc}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">{$vo.add_time_desc}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">{$vo.finish_time_desc}</div>
                             </td>
                             <td align="" class="" style="width: 100%;">
                                 <div>&nbsp</div>
@@ -198,7 +206,9 @@
 
         // 点击刷新数据
         $('.fa-refresh').click(function () {
-            location.href = "{:U('school.article/userCourseList')}";
+            var article_id = $('input[name="article_id"]').val();
+            // location.href = "{:U('school.article/courseUserList')}";
+            location.href = '/index.php/Admin/school.article/courseUserList/article_id/' + article_id;
         });
     });
 

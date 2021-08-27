@@ -4,6 +4,9 @@
     .click {
         cursor: pointer;
     }
+    .sDiv2 input{
+        text-align: center;
+    }
 </style>
 <body style="background-color: rgb(255, 255, 255); overflow: auto; cursor: default; -moz-user-select: inherit;">
 <div id="append_parent"></div>
@@ -79,12 +82,24 @@
                         </volist>
                     </select>
                 </div>
+            </div>
+            <div class="sDiv">
                 <div class="sDiv2">
-                    <input type="text" size="30" id="time_from" name="time_from" value="{$time_from}" class="qsbox" placeholder="开始时间">
+                    <input type="text" size="30" id="publish_time_from" name="publish_time_from" value="{$publish_time_from}" class="qsbox" placeholder="文章发布时间-开始" style="width: 150px;">
                 </div>
                 <div class="sDiv2">
-                    <input type="text" size="30" id="time_to" name="time_to" value="{$time_to}" class="qsbox" placeholder="开始时间">
+                    <input type="text" size="30" id="publish_time_to" name="publish_time_to" value="{$publish_time_to}" class="qsbox" placeholder="文章发布时间-结束" style="width: 150px;">
                 </div>
+            </div>
+            <div class="sDiv">
+                <div class="sDiv2">
+                    <input type="text" size="30" id="learn_time_from" name="learn_time_from" value="{$learn_time_from}" class="qsbox" placeholder="用户学习时间-开始" style="width: 150px;">
+                </div>
+                <div class="sDiv2">
+                    <input type="text" size="30" id="learn_time_to" name="learn_time_to" value="{$learn_time_to}" class="qsbox" placeholder="用户学习时间-结束" style="width: 150px;">
+                </div>
+            </div>
+            <div class="sDiv">
                 <input type="hidden" name="sort" value="{$sort}">
                 <input type="hidden" name="sort_by" value="{$sort_by}">
                 <input type="hidden" name="is_export" value="0">
@@ -251,7 +266,11 @@
                                 </div>
                             </td>
                             <td align="left" class="">
-                                <div style="text-align: center; width: 100px;">{$vo.learn}</div>
+                                <div style="text-align: center; width: 100px;">
+                                    <a target="_blank" href="{:U('school.article/courseUserList',array('article_id'=>$vo['id']))}">
+                                        {$vo.learn}
+                                    </a>
+                                </div>
                             </td>
                             <td align="left" class="">
                                 <div style="text-align: center; width: 100px;">{$vo.share}</div>
@@ -293,8 +312,10 @@
 </div>
 <script>
     $(document).ready(function () {
-        $('#time_from').layDate();
-        $('#time_to').layDate();
+        $('#publish_time_from').layDate();
+        $('#publish_time_to').layDate();
+        $('#learn_time_from').layDate();
+        $('#learn_time_to').layDate();
 
         // 表格行点击选中切换
         $('#flexigrid > table>tbody >tr').click(function () {
