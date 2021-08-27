@@ -1113,10 +1113,13 @@ class Article extends Base
             $where['usa.finish_time'] = ['BETWEEN', [$timeFrom, $timeTo]];
         }
         $userList = M('user_school_article usa')
+            ->join('school_article sa', 'sa.id = usa.article_id')
+            ->join('school_class sc', 'sc.id = sa.class_id')
+            ->join('school s', 's.id = sc.module_id')
             ->join('users u', 'u.user_id = usa.user_id')
             ->where($where)
             ->order('u.user_id DESC')
-            ->field('u.user_id, u.nickname, u.user_name, u.school_credit, u.distribut_level, u.svip_grade, u.svip_level, usa.status, usa.add_time, usa.finish_time');
+            ->field('sa.*, s.name module_name, sc.name class_name, u.user_id, u.nickname, u.user_name, u.school_credit, u.distribut_level, u.svip_grade, u.svip_level, usa.status, usa.add_time, usa.finish_time');
         if (!$isExport) {
             // 用户总数
             $count = M('user_school_article usa')->join('users u', 'u.user_id = usa.user_id')->where($where)->count();
@@ -1133,6 +1136,14 @@ class Article extends Base
             $user['svip_grade_name'] = $user['distribut_level'] == 3 ? $this->svipGrade[$user['svip_grade']] : '';
             // 代理商等级
             $user['svip_level_name'] = $user['distribut_level'] == 3 ? $this->svipLevel[$user['svip_level']] : '';
+            switch ($user['learn_type']) {
+                case 1:
+                    $user['learn_type_desc'] = '必修';
+                    break;
+                case 2:
+                    $user['learn_type_desc'] = '选修';
+                    break;
+            }
             switch ($user['status']) {
                 case 0:
                     $user['status_desc'] = '未完成';
@@ -1144,6 +1155,11 @@ class Article extends Base
             $user['add_time_desc'] = date('Y-m-d H:i:s', $user['add_time']);
             $user['finish_time_desc'] = $user['finish_time'] != 0 ? date('Y-m-d H:i:s', $user['finish_time']) : '';
             $dataList[] = [
+                $user['id'],
+                $user['title'],
+                $user['learn_type_desc'],
+                $user['module_name'],
+                $user['class_name'],
                 $user['user_id'],
                 $user['nickname'],
                 $user['user_name'],
@@ -1175,7 +1191,7 @@ class Article extends Base
         } else {
             // 表头
             $headList = [
-                '用户ID', '用户昵称', '用户名', 'APP等级', '代理商等级', '代理商职级', '乐活豆数量', '学习状态', '开始学习时间', '学习完成时间'
+                '文章ID', '标题', '学习类型', '所属模块', '所属分类', '用户ID', '用户昵称', '用户名', 'APP等级', '代理商等级', '代理商职级', '乐活豆数量', '学习状态', '开始学习时间', '学习完成时间'
             ];
             toCsvExcel($dataList, $headList, 'course_user_list');
         }

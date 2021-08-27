@@ -160,7 +160,7 @@
                             <td align="left" class="">
                                 <div style="text-align: center; width: 120px;">
                                     <if condition="$vo[course_num] GT 0">
-                                        <a href="{:U('school.article.article/userCourseArticleList', array('user_id'=>$vo[user_id]))}" style="text-decoration: underline; font-weight: bold;">{$vo.course_num}</a>
+                                        <a href="{:U('school.article/userCourseArticleList', array('user_id'=>$vo[user_id]))}" style="text-decoration: underline; font-weight: bold;">{$vo.course_num}</a>
                                     <else/>
                                         {$vo.course_num}
                                     </if>

@@ -267,9 +267,13 @@
                             </td>
                             <td align="left" class="">
                                 <div style="text-align: center; width: 100px;">
-                                    <a target="_blank" href="{:U('school.article/courseUserList',array('article_id'=>$vo['id']))}">
+                                    <if condition="$vo[learn] GT 0">
+                                        <a href="{:U('school.article/courseUserList',array('article_id'=>$vo['id']))}" style="text-decoration: underline; font-weight: bold;">
+                                            {$vo.learn}
+                                        </a>
+                                    <else/>
                                         {$vo.learn}
-                                    </a>
+                                    </if>
                                 </div>
                             </td>
                             <td align="left" class="">
