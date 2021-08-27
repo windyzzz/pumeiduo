@@ -1872,6 +1872,14 @@ class Goods extends Base
             $source = $this->isApp ? 3 : ($this->isApplet ? 4 : 1);
             $goodsData = $goodsLogic->getGoodsList($filter_goods_id, $sortArr, $page, $this->user, $source);
         }
+        $return['brand_image'] = '';
+        if ($brandId) {
+            $brandImage = M('brand')->where(['id' => $brandId])->value('banner');
+            if (!empty($brandImage)) {
+                $brandImage = explode(',', $brandImage);
+                $return['brand_image'] = (new OssLogic())::url(substr($brandImage[0], strrpos($brandImage[0], 'img:') + 4));
+            }
+        }
         $return['goods_list'] = isset($goodsData) ? $goodsData['goods_list'] : [];
         return json(['status' => 1, 'msg' => 'success', 'result' => $return]);
     }
