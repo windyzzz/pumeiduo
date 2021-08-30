@@ -3724,7 +3724,7 @@ class Goods extends Base
                 'image' => '',
                 'goods_list' => $groupBuyGoods
             ],
-            'new' => [
+            'new_' => [
                 'image' => $newPublicize ?? '',
                 'goods_list' => $newGoods
             ],
