@@ -1346,6 +1346,7 @@ class School
         if (!empty($answerData)) {
             (new SchoolArticleQuestionnaireAnswer())->saveAll($answerData);
         }
+        M('user_school_article')->where(['article_id' => $articleId, 'user_id' => $user['user_id']])->update(['is_questionnaire' => 1]);
         return true;
     }
 }

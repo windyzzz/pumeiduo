@@ -198,7 +198,7 @@
                                 <div style="text-align: center; width: 120px;
                                     <switch name='$vo[status]'>
                                         <case value='0'>
-                                            color: black;
+                                            color: red;
                                         </case>
                                         <case value='1'>
                                             color: green;
@@ -239,7 +239,6 @@
         // 点击刷新数据
         $('.fa-refresh').click(function () {
             var article_id = $('input[name="article_id"]').val();
-            // location.href = "{:U('school.article/courseUserList')}";
             location.href = '/index.php/Admin/school.article/courseUserList/article_id/' + article_id;
         });
     });

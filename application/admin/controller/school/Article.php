@@ -124,6 +124,9 @@ class Article extends Base
     {
         $isExport = I('is_export', '');     // 是否导出
         $userId = I('user_id');
+        $title = I('title');
+        $learnStatus = I('learn_status', '');
+        $questionnaireStatus = I('questionnaire_status', '');
         // 学习课程id
         $courseIds = M('school_article')->where([
             'learn_type' => ['IN', [1, 2]],
@@ -132,10 +135,18 @@ class Article extends Base
         $where = [
             'usa.user_id' => $userId,
             'usa.article_id' => ['IN', $courseIds],
-            'usa.status' => 1
         ];
+        if (trim($title)) {
+            $where['sa.title'] = ['LIKE', '%' . htmlspecialchars_decode(trim($title)) . '%'];
+        }
+        if ($learnStatus !== '') {
+            $where['usa.status'] = $learnStatus;
+        }
+        if ($questionnaireStatus !== '') {
+            $where['usa.is_questionnaire'] = $questionnaireStatus;
+        }
         $userArticle = M('user_school_article usa')->where($where)->join('school_article sa', 'sa.id = usa.article_id')->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')
-            ->field('usa.user_id, usa.article_id, sa.title, sa.learn_type, sa.status, sa.publish_time, s.name module_name, sc.name class_name');
+            ->field('usa.user_id, usa.article_id, usa.status learn_status, usa.is_questionnaire, sa.title, sa.learn_type, sa.status, sa.publish_time, s.name module_name, sc.name class_name');
         if (!$isExport) {
             // 总数
             $count = M('user_school_article usa')->where($where)->join('school_article sa', 'sa.id = usa.article_id')->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')->count();
@@ -144,6 +155,9 @@ class Article extends Base
             $userArticle = $userArticle->limit($page->firstRow . ',' . $page->listRows)->order('sa.publish_time DESC, sa.sort DESC');
             $list = $userArticle->select();
             $this->assign('user_id', $userId);
+            $this->assign('title', $title);
+            $this->assign('learn_status', $learnStatus !== '' ? (int)$learnStatus : '');
+            $this->assign('questionnaire_status', $questionnaireStatus !== '' ? (int)$questionnaireStatus : '');
             $this->assign('page', $page);
             $this->assign('list', $list);
             return $this->fetch('user_course_article_list');
@@ -170,6 +184,22 @@ class Article extends Base
                         $status = '不发布';
                         break;
                 }
+                switch ($item['learn_status']) {
+                    case 0:
+                        $learnStatusDesc = '未完成';
+                        break;
+                    case 1:
+                        $learnStatusDesc = '已完成';
+                        break;
+                }
+                switch ($item['is_questionnaire']) {
+                    case 0:
+                        $questionnaireStatusDesc = '未完成';
+                        break;
+                    case 1:
+                        $questionnaireStatusDesc = '已完成';
+                        break;
+                }
                 $dataList[] = [
                     $item['user_id'],
                     $item['article_id'],
@@ -179,11 +209,13 @@ class Article extends Base
                     $item['class_name'],
                     $status,
                     date('Y-m-d H:i:s', $item['publish_time']),
+                    $learnStatusDesc,
+                    $questionnaireStatusDesc
                 ];
             }
             // 表头
             $headList = [
-                '用户ID', '文章ID', '标题', '学习类型', '所属模块', '所属分类', '状态', '发布时间'
+                '用户ID', '文章ID', '标题', '学习类型', '所属模块', '所属分类', '发布状态', '发布时间', '学习状态', '是否完成调查问卷'
             ];
             toCsvExcel($dataList, $headList, 'user_course_article_list');
         }
@@ -350,8 +382,8 @@ class Article extends Base
         $where = [
             'user_id' => $user['user_id'],
             'article_id' => ['IN', $courseIds],
-            'status' => 1,
         ];
+        if ($isCheck) $where['status'] = 1;
         if ($timeFrom && $timeTo) {
             $where['finish_time'] = ['BETWEEN', [$timeFrom, $timeTo]];
         }
