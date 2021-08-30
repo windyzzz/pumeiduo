@@ -1073,7 +1073,7 @@ class Goods extends Base
                             $goodsInfo['integral_pv'] = bcmul($goods['buying_price_pv'], $prop, 2); // 进货价pv
                         }
                         if ($goods['retail_price_pv'] == 0) {
-                            $goodsInfo['retail_pv'] = '0.00';
+                            $goodsInfo['retail_pv'] = '0';
                         } else {
                             $goodsInfo['retail_pv'] = bcmul($goods['retail_price_pv'], $prop, 2); // 零售价pv
                         }
@@ -2180,7 +2180,7 @@ class Goods extends Base
 
                 // 价格判断
                 if ($v['group_buy']['can_integral'] == 0) {
-                    $goods_list[$k]['exchange_integral'] = '0.00';
+                    $goods_list[$k]['exchange_integral'] = '0';
                     $goods_list[$k]['shop_price'] = $v['group_buy_detail']['price'];
                     $goods_list[$k]['exchange_price'] = $v['group_buy_detail']['price'];
                 } else {
