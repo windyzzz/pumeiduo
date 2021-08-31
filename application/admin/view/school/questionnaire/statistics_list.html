@@ -1,0 +1,282 @@
+<include file="public/layout" />
+<style>
+    .click {
+        cursor: pointer;
+    }
+    .sDiv2 input{
+        text-align: center;
+    }
+</style>
+<body style="background-color: rgb(255, 255, 255); overflow: auto; cursor: default; -moz-user-select: inherit;">
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title">
+            <div class="subject">
+                <h3>课程满意度统计</h3>
+            </div>
+        </div>
+    </div>
+    <!-- 操作说明 -->
+    <div id="explanation" class="explanation" style="color: rgb(44, 188, 163); background-color: rgb(237, 251, 248); width: 99%; height: 100%;">
+        <div id="checkZoom" class="title"><i class="fa fa-lightbulb-o"></i>
+            <h4 title="提示相关设置操作时应注意的要点">操作提示</h4>
+            <span title="收起提示" id="explanationZoom" style="display: block;"></span>
+        </div>
+        <ul>
+            <li>
+                <!--说明：-->
+                <!--<br/>-->
+                <!--<p style="color: red;">“达标等级”不能进行搜索（因为技术上涉及到列表分页，达标等级是动态生成），只能进行导出</p>-->
+            </li>
+        </ul>
+    </div>
+    <div class="flexigrid">
+        <form class="navbar-form form-inline" id="search-form" action="{:U('school.questionnaire/statistics')}" method="post">
+            <div class="sDiv">
+                <div class="sDiv2">
+                    <input type="text" size="30" name="title" value="{$title}" class="qsbox" placeholder="请输入文章标题">
+                </div>
+                <div class="sDiv2">
+                    <select name="module_id">
+                        <option value="">所属模块</option>
+                        <volist name="module" id="vo" key="k">
+                            <option value="{$key}" <if condition="$module_id == $key">selected</if>>{$vo}</option>
+                        </volist>
+                    </select>
+                </div>
+                <div class="sDiv2">
+                    <select name="class_id">
+                        <option value="">所属分类</option>
+                        <if condition="!empty($class)">
+                            <volist name="class" id="vo" key="k">
+                                <option value="{$key}" <if condition="$class_id == $key">selected</if>>{$vo}</option>
+                            </volist>
+                        </if>
+                    </select>
+                </div>
+                <input type="hidden" name="is_export" value="0">
+                <div class="sDiv2">
+                    <input type="submit" class="btn" value="搜索">
+                </div>
+                <div class="sDiv2">
+                    <input type="button" class="btn" onclick="export_list()" value="导出">
+                </div>
+            </div>
+        </form>
+        <div class="mDiv" style="margin-top: 10px; margin-bottom: 0;">
+            <div class="ftitle">
+                <h5>共（{$page->totalRows}）条记录</h5>
+            </div>
+            <div title="刷新数据" class="pReload"><i class="fa fa-refresh"></i></div>
+        </div>
+        <div class="hDiv">
+            <div class="hDivBox">
+                <table cellspacing="0" cellpadding="0">
+                    <thead>
+                    <tr>
+                        <th class="sign" axis="col0">
+                            <div style="width: 24px;"><i class="ico-check"></i></div>
+                        </th>
+                        <th align="left" axis="col3" class="">
+                            <div style="text-align: center; width: 50px;" class="">课程ID</div>
+                        </th>
+                        <th align="left" axis="col3" class="">
+                            <div style="text-align: center; width: 240px;" class="">课程标题</div>
+                        </th>
+                        <th align="left" axis="col4" class="">
+                            <div style="text-align: center; width: 120px;" class="">所属模块</div>
+                        </th>
+                        <th align="left" axis="col3" class="">
+                            <div style="text-align: center; width: 120px;" class="">所属分类</div>
+                        </th>
+                        <th align="left" axis="col4" class="">
+                            <div style="text-align: center; width: 240px;" class="">问卷题目标题</div>
+                        </th>
+                        <th align="left" axis="col4" class="">
+                            <div style="text-align: center; width: 100px;" class="">问卷题目类型</div>
+                        </th>
+                        <th align="left" axis="col4" class="">
+                            <div style="text-align: center; width: 100px;" class="">问卷题目总分</div>
+                        </th>
+                        <th align="left" axis="col4" class="">
+                            <div style="text-align: center; width: 100px;" class="">问卷题目平均分</div>
+                        </th>
+                        <th align="left" axis="col4" class="">
+                            <div style="text-align: center; width: 100px;" class="">问卷总分</div>
+                        </th>
+                        <th align="left" axis="col4" class="">
+                            <div style="text-align: center; width: 100px;" class="">问卷平均分</div>
+                        </th>
+                        <th align="left" axis="col4" class="">
+                            <div style="text-align: center; width: 100px;" class="">总人数</div>
+                        </th>
+                        <th align="left" axis="col4" class="">
+                            <div style="text-align: center; width: 100px;" class="">完成问卷人数</div>
+                        </th>
+                        <th style="width:100%" axis="col7">
+                            <div></div>
+                        </th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+        <div class="bDiv" style="height: auto;">
+            <div id="flexigrid" cellpadding="0" cellspacing="0" border="0">
+                <table>
+                    <tbody>
+                    <foreach name="list" item="vo" key="key" >
+                        <tr>
+                            <td class="sign" rowspan="{$vo.caption_list_count}">
+                                <div style="width: 24px;"><i class="ico-check"></i></div>
+                            </td>
+                            <td align="left" class="" rowspan="{$vo.caption_list_count}">
+                                <div style="text-align: center; width: 50px;">{$vo.id}</div>
+                            </td>
+                            <td align="left" class="" rowspan="{$vo.caption_list_count}">
+                                <div style="text-align: center; width: 240px;">
+                                    <textarea style="width: 80%; height: 100%; line-height: 150%;" rows="3" disabled>{$vo.title}</textarea>
+                                </div>
+                            </td>
+                            <td align="left" class="" rowspan="{$vo.caption_list_count}">
+                                <div style="text-align: center; width: 120px;">{$vo.module_name}</div>
+                            </td>
+                            <td align="left" class="" rowspan="{$vo.caption_list_count}">
+                                <div style="text-align: center; width: 120px;">{$vo.class_name}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 240px;">
+                                    <textarea style="width: 80%; height: 100%; line-height: 150%;" rows="3" disabled>{$vo.caption_list.0.title}</textarea>
+                                </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 100px;">
+                                    <switch name='$vo[caption_list][0][type]'>
+                                        <case value='1'>
+                                            <p style="color: green">评分</p>
+                                        </case>
+                                        <case value='2'>
+                                            <p style="color: blue">评价</p>
+                                        </case>
+                                        <case value='3'>
+                                            <p style="color: orange">单选</p>
+                                        </case>
+                                        <case value='4'>
+                                            <p style="color: deeppink">多选</p>
+                                        </case>
+                                    </switch>
+                                </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 100px;">{$vo.caption_list.0.max_score}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 100px;">{$vo.caption_list.0.avg_score}</div>
+                            </td>
+                            <td align="left" class="" rowspan="{$vo.caption_list_count}">
+                                <div style="text-align: center; width: 100px;">{$vo.caption_sum}</div>
+                            </td>
+                            <td align="left" class="" rowspan="{$vo.caption_list_count}">
+                                <div style="text-align: center; width: 100px;">{$vo.caption_avg}</div>
+                            </td>
+                            <td align="left" class="" rowspan="{$vo.caption_list_count}">
+                                <div style="text-align: center; width: 100px;">{$vo.user_count}</div>
+                            </td>
+                            <td align="left" class="" rowspan="{$vo.caption_list_count}">
+                                <div style="text-align: center; width: 100px;">{$vo.finish_count}</div>
+                            </td>
+                            <td align="" class="" style="width: 100%;" rowspan="{$vo.caption_list_count}">
+                                <div>&nbsp;</div>
+                            </td>
+                        </tr>
+                        <foreach name="$vo.caption_list" item="v" key="k" >
+                            <if condition="$k != 0">
+                                <tr>
+                                    <td align="left" class="">
+                                        <div style="text-align: center; width: 240px;">
+                                            <textarea style="width: 80%; height: 100%; line-height: 150%;" rows="3" disabled>{$v.title}</textarea>
+                                        </div>
+                                    </td>
+                                    <td align="left" class="">
+                                        <div style="text-align: center; width: 100px;">
+                                            <switch name='$v[type]'>
+                                                <case value='1'>
+                                                    <p style="color: green">评分</p>
+                                                </case>
+                                                <case value='2'>
+                                                    <p style="color: blue">评价</p>
+                                                </case>
+                                                <case value='3'>
+                                                    <p style="color: orange">单选</p>
+                                                </case>
+                                                <case value='4'>
+                                                    <p style="color: deeppink">多选</p>
+                                                </case>
+                                            </switch>
+                                        </div>
+                                    </td>
+                                    <td align="left" class="">
+                                        <div style="text-align: center; width: 100px;">{$v.max_score}</div>
+                                    </td>
+                                    <td align="left" class="">
+                                        <div style="text-align: center; width: 100px;">{$v.avg_score}</div>
+                                    </td>
+                                </tr>
+                            </if>
+                        </foreach>
+                    </foreach>
+                    </tbody>
+                </table>
+            </div>
+            <div class="iDiv" style="display: none;"></div>
+        </div>
+        <!--分页位置-->
+        {$page->show()}
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        // 表格行点击选中切换
+        $('#flexigrid > table>tbody >tr').click(function () {
+            $(this).toggleClass('trSelected');
+        });
+
+        // 点击刷新数据
+        $('.fa-refresh').click(function () {
+            location.href = location.href;
+        });
+    });
+
+    $('select[name="module_id"]').change(function () {
+        if (this.value === '') {
+            $('select[name="class_id"]').html('<option value="">所属分类</option>');
+        } else {
+            $.ajax({
+                type: "GET",
+                url: "{:U('school.module/getClass')}",
+                data: {module_id: this.value},
+                dataType: 'json',
+                success: function (data) {
+                    option = '<option value="">所属分类</option>';
+                    $.each(data.res, function (index, item) {
+                        option = option + '<option value="' + item.id + '">' + item.name + '</option>';
+                    });
+                    $('select[name="class_id"]').html(option);
+                },
+                error: function (request) {
+                    layer.msg("服务器繁忙, 请联系管理员!", {icon: 1, time: 2000});
+                }
+            });
+        }
+    });
+
+    function export_list() {
+        $('input[name="is_export"]').val('1');
+        $('#search-form').submit();
+        $('input[name="is_export"]').val('0');
+    }
+</script>
+</body>
+</html>

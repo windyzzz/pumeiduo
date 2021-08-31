@@ -67,6 +67,9 @@
                             <div style="text-align: center; width: 80px;" class="">类型</div>
                         </th>
                         <th align="left" abbr="article_title" axis="col3" class="">
+                            <div style="text-align: center; width: 100px;" class="">分数</div>
+                        </th>
+                        <th align="left" abbr="article_title" axis="col3" class="">
                             <div style="text-align: center; width: 80px;" class="">排序</div>
                         </th>
                         <th align="center" abbr="article_time" axis="col6" class="">
@@ -113,18 +116,23 @@
                                 <div style="text-align: center; width: 80px;">
                                     <switch name='$vo[type]'>
                                         <case value='1'>
-                                            评分
+                                            <p style="color: green">评分</p>
                                         </case>
                                         <case value='2'>
-                                            评价
+                                            <p style="color: blue">评价</p>
                                         </case>
                                         <case value='3'>
-                                            单选
+                                            <p style="color: orange">单选</p>
                                         </case>
                                         <case value='4'>
-                                            多选
+                                            <p style="color: deeppink">多选</p>
                                         </case>
                                     </switch>
+                                </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 100px;">
+                                    {$vo.score_list}
                                 </div>
                             </td>
                             <td align="left" class="">

@@ -50,6 +50,18 @@
                     <p class="notic"></p>
                 </dd>
             </dl>
+            <dl class="row" id="max_score" style="<if condition='!empty($caption) && $caption[type] neq 1'>display: none;</if>">
+                <dt class="tit">
+                    <label>评分最高分</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" value="{$caption.max_score}" name="max_score" class="input-txt"
+                           onKeyUp="this.value=this.value.replace(/[^\d]/g,'')"
+                           onpaste="this.value=this.value.replace(/[^\d]/g,'')"/>
+                    <span class="err" id="err_max_score"></span>
+                    <p class="notic">分数列表会以最高分-1直至0列出</p>
+                </dd>
+            </dl>
             <dl class="row">
                 <dt class="tit">
                     <label>标题</label>
@@ -82,6 +94,17 @@
 <script type="text/javascript">
     $(document).on("click", '#submitBtn', function () {
         verifyForm();
+    });
+
+    $('select[name="type"]').change(function () {
+        switch (this.value) {
+            case '1':
+                $('#max_score').show();
+                break;
+            case '2':
+                $('#max_score').hide();
+                break;
+        }
     });
 
     function verifyForm() {

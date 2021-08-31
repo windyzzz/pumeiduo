@@ -14,7 +14,6 @@
 <div class="page">
     <div class="fixed-bar">
         <div class="item-title">
-            <a class="back" href="javascript:history.back();" title="返回列表"><i class="fa fa-arrow-circle-o-left"></i></a>
             <div class="subject">
                 <h3>课程文章列表</h3>
             </div>
@@ -338,7 +337,7 @@
         } else {
             $.ajax({
                 type: "GET",
-                url: "{:U('Admin/School/getClass')}",
+                url: "{:U('school.module/getClass')}",
                 data: {module_id: this.value},
                 dataType: 'json',
                 success: function (data) {

@@ -188,6 +188,7 @@ return [
             ['name' => '兑换专区', 'act' => 'module7', 'op' => 'school.module'],
             ['name' => '我的课程', 'act' => 'module8', 'op' => 'school.module'],
             ['name' => '问卷调查', 'act' => 'config', 'op' => 'school.questionnaire'],
+            ['name' => '课程满意度', 'act' => 'statistics', 'op' => 'school.questionnaire'],
         ]],
 
         // array('name' => '统计','child' => array(

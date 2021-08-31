@@ -60,6 +60,19 @@ class Questionnaire extends Base
         $captionId = I('caption_id', 0);
         if (IS_POST) {
             $data = I('post.');
+            $data['score_list'] = '';
+            switch ($data['type']) {
+                case 1:
+                    if (!$data['max_score']) {
+                        $data['score_list'] = '1';
+                    } else {
+                        for ($i = 1; $i <= $data['max_score']; $i++) {
+                            $data['score_list'] .= $i . ',';
+                        }
+                        $data['score_list'] = rtrim($data['score_list'], ',');
+                    }
+                    break;
+            }
             if ($captionId) {
                 M('school_article_questionnaire_caption')->where(['id' => $captionId])->update($data);
             } else {
@@ -71,10 +84,8 @@ class Questionnaire extends Base
             $caption = M('school_article_questionnaire_caption')->where(['id' => $captionId])->find();
             $this->assign('caption', $caption);
         }
-
         return $this->fetch('add_edit_caption');
     }
-
 
     /**
      * 删除项目
@@ -86,5 +97,126 @@ class Questionnaire extends Base
         M('school_article_questionnaire_caption')->where(['id' => $id])->delete();
         Db::commit();
         $this->ajaxReturn(['status' => 1, 'msg' => '删除成功']);
+    }
+
+    /**
+     * 问卷调查数据统计
+     * @return mixed
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     */
+    public function statistics()
+    {
+        $isExport = I('is_export', 0);
+        $where = [
+            'show_questionnaire' => 1
+        ];
+        $title = htmlspecialchars_decode(trim(I('title', '')));
+        $moduleId = I('module_id', '');
+        $classId = I('class_id', '');
+        if ($title) {
+            $where['sa.title'] = ['LIKE', '%' . $title . '%'];
+        }
+        // 模块列表
+        $notModuleType = ['module6', 'module7', 'module8'];
+        $module = M('school')->where(['is_open' => 1, 'type' => ['NOT IN', $notModuleType]])->getField('id, name', true);
+        if ($moduleId) {
+            $where['s.id'] = $moduleId;
+            $class = M('school_class')->where('module_id', $moduleId)->getField('id, name', true);
+        }
+        if ($classId) {
+            $where['sc.id'] = $classId;
+        }
+        // 问卷调查主体内容
+        $caption = Db::name('school_article_questionnaire_caption')->where(['is_open' => 1])->order('sort DESC')->field('id, title, type, max_score')->select();
+        if ($caption) {
+            // 总人数
+            $userCount = Db::name('users')->count('user_id');
+            // 文章列表
+            $order = 'sa.publish_time DESC, sa.sort DESC';
+            $articleList = Db::name('school_article sa')
+                ->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')
+                ->where($where)
+                ->order($order)
+                ->field('sa.id, sa.title, s.name module_name, sc.name class_name');
+            if (!$isExport) {
+                $count = Db::name('school_article sa')->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')->where($where)->count('sa.id');
+                $page = new Page($count, 10);
+                $articleList = $articleList->limit($page->firstRow . ',' . $page->listRows);
+            }
+            $articleList = $articleList->select();
+            $dataList = [];
+            foreach ($articleList as &$article) {
+                // 文章调查问卷回答
+                $answer = Db::name('school_article_questionnaire_answer')->where(['article_id' => $article['id']])->field('caption_id, score, content')->select();
+                // 文章调查问卷人数
+                $finishCount = Db::name('school_article_questionnaire_answer')->where(['article_id' => $article['id']])->group('user_id')->count('user_id');
+                $articleCaption = [];
+                $captionSum = 0;
+                $captionAvg = 0;
+                foreach ($caption as $key => $item) {
+                    switch ($item['type']) {
+                        case 1:
+                            $typeDesc = '评分';
+                            break;
+                        case 2:
+                            $typeDesc = '评价';
+                            break;
+                        case 3:
+                            $typeDesc = '单选';
+                            break;
+                        case 4:
+                            $typeDesc = '多选';
+                            break;
+                    }
+                    $answerCount = 0;
+                    $answerSum = 0;
+                    foreach ($answer as $value) {
+                        if ($value['caption_id'] == $item['id']) {
+                            $answerCount += 1;
+                            $answerSum += $value['score'];
+                        }
+                    }
+                    // 文章问卷调查主体数据
+                    $articleCaption[$key] = [
+                        'title' => $item['title'],
+                        'type' => $item['type'],
+                        'max_score' => $item['max_score'],
+                        'avg_score' => $answerCount != 0 ? bcdiv($answerSum, $answerCount, 1) : '0.0',
+                    ];
+                    // 问卷总分
+                    $captionSum += $item['max_score'];
+                    // 问卷平均分
+                    $captionAvg += $articleCaption[$key]['avg_score'];
+                }
+                $article['caption_list'] = $articleCaption;
+                $article['caption_list_count'] = count($articleCaption);
+                $article['caption_sum'] = $captionSum . '';
+                $article['caption_avg'] = $captionAvg . '';
+                $article['user_count'] = $userCount;
+                $article['finish_count'] = $finishCount;
+            }
+        } else {
+            $page = new Page(0, 10);
+            $articleList = [];
+            $dataList = [];
+        }
+        if (!$isExport) {
+            $this->assign('title', $title);
+            $this->assign('module_id', $moduleId);
+            $this->assign('module', $module);
+            $this->assign('class_id', $classId);
+            $this->assign('class', $class ?? []);
+            $this->assign('page', $page);
+            $this->assign('list', $articleList);
+            return $this->fetch('statistics_list');
+        } else {
+            // 表头
+            $headList = [
+
+            ];
+            toCsvExcel($dataList, $headList, 'questionnaire_statistics_list');
+        }
     }
 }
