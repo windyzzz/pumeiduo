@@ -416,7 +416,7 @@ class Index
             ],
             'abroad' => ['goods_list' => $abroadGoods ?? []],
             'recommend' => ['goods_list' => $recommendGoods ?? []],
-            'new' => ['goods_list' => $newGoods ?? []],
+            'new_' => ['goods_list' => $newGoods ?? []],
             'svip' => ['image' => $svipPublicize ?? ''],
             'vip' => [
                 'image' => $vipPublicize ?? '',
