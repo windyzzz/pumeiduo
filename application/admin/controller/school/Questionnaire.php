@@ -182,6 +182,7 @@ class Questionnaire extends Base
                     $articleCaption[$key] = [
                         'title' => $item['title'],
                         'type' => $item['type'],
+                        'type_desc' => $typeDesc,
                         'max_score' => $item['max_score'],
                         'avg_score' => $answerCount != 0 ? bcdiv($answerSum, $answerCount, 1) : '0.0',
                     ];
@@ -196,6 +197,32 @@ class Questionnaire extends Base
                 $article['caption_avg'] = $captionAvg . '';
                 $article['user_count'] = $userCount;
                 $article['finish_count'] = $finishCount;
+                if ($isExport) {
+                    $captionTitle = '';
+                    $captionType = '';
+                    $captionMax = '';
+                    $captionAvg = '';
+                    foreach ($articleCaption as $key => $item) {
+                        $captionTitle .= ($key + 1) . '、' . $item['title'] . "\n\r";
+                        $captionType .= $item['type_desc'] . "\n\r";
+                        $captionMax .= $item['max_score'] . "\n\r";
+                        $captionAvg .= $item['avg_score'] . "\n\r";
+                    }
+                    $dataList[] = [
+                        $article['id'],
+                        $article['title'],
+                        $article['module_name'],
+                        $article['class_name'],
+                        $captionTitle,
+                        $captionType,
+                        $captionMax,
+                        $captionAvg,
+                        $article['caption_sum'],
+                        $article['caption_avg'],
+                        $article['user_count'],
+                        $article['finish_count'],
+                    ];
+                }
             }
         } else {
             $page = new Page(0, 10);
@@ -214,7 +241,8 @@ class Questionnaire extends Base
         } else {
             // 表头
             $headList = [
-
+                '课程ID', '课程标题', '所属模块', '所属分类', '问卷题目标题', '问卷题目类型', '问卷题目总分', '问卷题目平均分',
+                '问卷总分', '问卷平均分', '总人数', '完成问卷人数'
             ];
             toCsvExcel($dataList, $headList, 'questionnaire_statistics_list');
         }

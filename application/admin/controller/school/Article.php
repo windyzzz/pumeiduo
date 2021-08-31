@@ -1064,21 +1064,23 @@ class Article extends Base
                 ])->count('user_id');
                 $item['learn'] = $learnCount ?? 0;
             }
-            $dataList[] = [
-                $item['id'],
-                $item['title'],
-                $item['learn_type_desc'],
-                $item['module_name'],
-                $item['class_name'],
-                "\r\n" . implode(' ', $item['app_grade_list']),
-                "\r\n" . implode(' ', $item['distribute_grade_list']),
-                "\r\n" . implode(' ', $item['distribute_level_list']),
-                $item['learn'],
-                $item['share'],
-                $item['click'],
-                $item['status_desc'],
-                $item['publish_time_desc'],
-            ];
+            if ($isExport) {
+                $dataList[] = [
+                    $item['id'],
+                    $item['title'],
+                    $item['learn_type_desc'],
+                    $item['module_name'],
+                    $item['class_name'],
+                    "\r\n" . implode(' ', $item['app_grade_list']),
+                    "\r\n" . implode(' ', $item['distribute_grade_list']),
+                    "\r\n" . implode(' ', $item['distribute_level_list']),
+                    $item['learn'],
+                    $item['share'],
+                    $item['click'],
+                    $item['status_desc'],
+                    $item['publish_time_desc'],
+                ];
+            }
         }
         if (!$isExport) {
             // 模块列表
