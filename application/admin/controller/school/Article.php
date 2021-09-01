@@ -1230,4 +1230,44 @@ class Article extends Base
             toCsvExcel($dataList, $headList, 'course_user_list');
         }
     }
+
+    /**
+     * 迁移文章
+     * @return mixed
+     */
+    public function transferArticle()
+    {
+        if (IS_POST) {
+            $param = I('post.');
+            if (empty($param['module_id'])) {
+                $this->error('请先选择模块');
+            }
+            if (empty($param['class_id'])) {
+                $this->error('请先选择分类');
+            }
+            if (empty($param['old_class_id']) && empty($param['article_ids'])) {
+                $this->error('请先选择文章');
+            }
+            if (!empty($param['old_class_id'])) {
+                M('school_article')->where(['class_id' => $param['old_class_id']])->update(['class_id' => $param['class_id']]);
+            } elseif (!empty($param['article_ids'])) {
+                M('school_article')->where(['id' => ['IN', $param['article_ids']]])->update(['class_id' => $param['class_id']]);
+            }
+            $callback = $param['call_back'];
+            $type = M('school s')->join('school_class sc', 'sc.module_id = s.id')->where(['sc.id' => $param['jump_class_id']])->value('s.type');
+            echo "<script>parent.{$callback}('{$type}');</script>";
+            exit();
+        }
+        $jumpClass_id = I('jump_class_id', '');
+        $oldClassId = I('old_class_id', '');
+        $articleIds = I('article_ids', '');
+        // 模块列表
+        $notModuleType = ['module6', 'module7', 'module8'];
+        $module = M('school')->where(['is_open' => 1, 'type' => ['NOT IN', $notModuleType]])->getField('id, name', true);
+        $this->assign('module', $module);
+        $this->assign('jump_class_id', $jumpClass_id);
+        $this->assign('old_class_id', $oldClassId);
+        $this->assign('article_ids', $articleIds);
+        return $this->fetch('transfer_article');
+    }
 }

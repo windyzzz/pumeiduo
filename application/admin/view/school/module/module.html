@@ -121,7 +121,7 @@
         <ul class="tab-base nc-row">
             <foreach name="class_list" item="v" key="k">
                 <li>
-                    <a href="/index.php/admin/School/{$type}/class_id/{$v[id]}"
+                    <a href="/index.php/admin/school.module/{$type}/class_id/{$v[id]}"
                         <if condition="empty($class_id) && $k==0">
                             class="current"
                         <elseif condition="$v['id']==$class_id"/>
@@ -216,6 +216,7 @@
                     <input type="hidden" name="class_id" value="{$module_class[id]}">
                     <a class="ncap-btn-big ncap-btn-green" onclick="updateModule('datapost2')">确认提交</a>
                     <a class="ncap-btn-big ncap-btn-red" onclick="delModuleClass('{$type}', '{$module_class[id]}')">删除分类</a>
+                    <a class="ncap-btn-big ncap-btn-orange" onclick="transfer_article('{$module_class[id]}')">迁移分类文章</a>
                 </div>
             </div>
         </form>
@@ -293,6 +294,15 @@
                     </div>
                 </a>
             </div>
+            <div class="tDiv2">
+                <a href="javascript:transfer_article()">
+                    <div class="fbutton">
+                        <div title="迁移文章" class="add">
+                            <span><i class="fa fa-send"></i>迁移文章</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
             <div style="clear:both"></div>
         </div>
         <div class="bDiv" style="height: auto;">
@@ -300,7 +310,7 @@
                 <table>
                     <tbody>
                     <foreach name="article_list" item="vo" key="k" >
-                        <tr>
+                        <tr data-article-id="{$vo.id}">
                             <td class="sign">
                                 <div style="width: 24px;"><i class="ico-check"></i></div>
                             </td>
@@ -398,6 +408,11 @@
 
 <script type="text/javascript">
     $(document).ready(function () {
+        // 表格行点击选中切换
+        $('#flexigrid > table>tbody >tr').click(function () {
+            $(this).toggleClass('trSelected');
+        });
+
         // 点击刷新数据
         $('.fa-refresh').click(function () {
             location.href = location.href;
@@ -418,7 +433,7 @@
         var url = "{:U('school.module/addModuleClass')}/module_id/" + module_id + "/type/" + module_type;
         layer.open({
             type: 2,
-            title: '站内信',
+            title: '添加分类',
             shadeClose: true,
             shade: 0.8,
             area: ['800px', '500px'],
@@ -482,6 +497,34 @@
             });
         }, function () {
             console.log("取消");
+        });
+    }
+
+    function transfer_article(old_class_id = '') {
+        layer.confirm('确认迁移文章？', {
+            btn: ['确定', '取消'] //按钮
+        }, function () {
+            var jump_class_id = $('input[name="class_id"]').val();
+            var article_ids = '';
+            if (old_class_id !== '') {
+                var url = "/index.php/Admin/school.article/transferArticle/jump_class_id/" + jump_class_id + "/old_class_id/" + old_class_id;
+            } else {
+                $('.trSelected', '#flexigrid').each(function (i) {
+                    article_ids += $(this).data('article-id') + ',';
+                });
+                if (article_ids == '' || article_ids == ',') {
+                    layer.msg('请选择文章', {icon: 2, time: 2000});
+                }
+                var url = "/index.php/Admin/school.article/transferArticle/jump_class_id/" + jump_class_id + "/article_ids/" + article_ids;
+            }
+            layer.open({
+                type: 2,
+                title: '迁移文章',
+                shadeClose: true,
+                shade: 0.8,
+                area: ['600px', '400px'],
+                content: url
+            });
         });
     }
 </script>

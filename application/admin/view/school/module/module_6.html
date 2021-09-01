@@ -115,7 +115,7 @@
         <ul class="tab-base nc-row">
             <foreach name="class_list" item="v" key="k">
                 <li>
-                    <a href="/index.php/admin/School/{$type}/class_id/{$v[id]}"
+                    <a href="/index.php/admin/school.module/{$type}/class_id/{$v[id]}"
                         <if condition="empty($class_id) && $k==0">
                             class="current"
                         <elseif condition="$v['id']==$class_id"/>
@@ -320,7 +320,7 @@
                             </td>
                             <td align="left" class="handle">
                                 <div style="text-align: left; width: 150px; max-width:150px;">
-                                    <a class="btn blue" href="{:U('school.module/article_6')}/type/{$type}/class_id/{$module_class[id]}/article_id/{$vo[id]}"><i class="fa fa-pencil-square-o"></i>编辑</a>
+                                    <a class="btn blue" href="{:U('school.article/article_6')}/type/{$type}/class_id/{$module_class[id]}/article_id/{$vo[id]}"><i class="fa fa-pencil-square-o"></i>编辑</a>
                                     <a class="btn red del" onclick="delArticle('{$type}', '{$module_class[id]}', '{$vo[id]}')"><i class="fa fa-trash-o"></i>删除</a>
                                 </div>
                             </td>
@@ -358,7 +358,7 @@
         var url = "{:U('school.module/addModuleClass')}/module_id/" + module_id + "/type/" + module_type;
         layer.open({
             type: 2,
-            title: '站内信',
+            title: '添加分类',
             shadeClose: true,
             shade: 0.8,
             area: ['800px', '500px'],
@@ -403,7 +403,7 @@
         }, function () {
             $.ajax({
                 type: "POST",
-                url: "{:U('school.module/delArticle')}",
+                url: "{:U('school.article/delArticle')}",
                 data: {'type': type, 'class_id': class_id, 'article_id': article_id},
                 dataType: "json",
                 error: function () {
