@@ -69,6 +69,16 @@ class School extends Base
     }
 
     /**
+     * 模块分类列表总数据
+     * @return \think\response\Json
+     */
+    public function moduleClassList()
+    {
+        $data = $this->logic->getModuleClassList();
+        return json(['status' => 1, 'msg' => '', 'result' => $data]);
+    }
+
+    /**
      * 用户模块权限检查
      * @return \think\response\Json
      */

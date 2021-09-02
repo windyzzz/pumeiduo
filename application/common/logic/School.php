@@ -303,6 +303,7 @@ class School
      * @param $article
      * @param $user
      * @param int $type 1普通文章 2素材文章
+     * @throws \think\Exception
      * @return array
      */
     private function checkUserArticleLimit($article, $user, $type = 1)
@@ -637,6 +638,23 @@ class School
             ];
         }
         return ['list' => $list];
+    }
+
+    /**
+     * 获取模块分类列表总数据
+     * @return array
+     */
+    public function getModuleClassList()
+    {
+        // 模块列表
+        $notModuleType = ['module6', 'module7', 'module8'];
+        $moduleList = M('school')->where(['type' => ['NOT IN', $notModuleType]])->field('id module_id, name module_name')->order('sort DESC')->select();
+        // 模块分类列表
+        foreach ($moduleList as &$list) {
+            $classList = M('school_class')->where(['module_id' => $list['module_id']])->field('id class_id, name class_name')->order('sort DESC')->select();
+            $list['class'] = $classList ?? [];
+        }
+        return ['list' => $moduleList];
     }
 
     /**

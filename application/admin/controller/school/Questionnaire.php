@@ -120,7 +120,7 @@ class Questionnaire extends Base
         }
         // 模块列表
         $notModuleType = ['module6', 'module7', 'module8'];
-        $module = M('school')->where(['is_open' => 1, 'type' => ['NOT IN', $notModuleType]])->getField('id, name', true);
+        $module = M('school')->where(['type' => ['NOT IN', $notModuleType]])->getField('id, name', true);
         if ($moduleId) {
             $where['s.id'] = $moduleId;
             $class = M('school_class')->where('module_id', $moduleId)->getField('id, name', true);

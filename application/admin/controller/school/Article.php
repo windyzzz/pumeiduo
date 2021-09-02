@@ -1085,7 +1085,7 @@ class Article extends Base
         if (!$isExport) {
             // 模块列表
             $notModuleType = ['module6', 'module7', 'module8'];
-            $module = M('school')->where(['is_open' => 1, 'type' => ['NOT IN', $notModuleType]])->getField('id, name', true);
+            $module = M('school')->where(['type' => ['NOT IN', $notModuleType]])->getField('id, name', true);
             $this->assign('title', $title);
             $this->assign('module_id', $moduleId);
             $this->assign('module', $module);
@@ -1263,7 +1263,7 @@ class Article extends Base
         $articleIds = I('article_ids', '');
         // 模块列表
         $notModuleType = ['module6', 'module7', 'module8'];
-        $module = M('school')->where(['is_open' => 1, 'type' => ['NOT IN', $notModuleType]])->getField('id, name', true);
+        $module = M('school')->where(['type' => ['NOT IN', $notModuleType]])->getField('id, name', true);
         $this->assign('module', $module);
         $this->assign('jump_class_id', $jumpClass_id);
         $this->assign('old_class_id', $oldClassId);
