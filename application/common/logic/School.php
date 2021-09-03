@@ -98,6 +98,10 @@ class School
         if (!empty($param['status'])) {
             $where['usa.status'] = $param['status'];
         }
+        // 文章分类
+        if (!empty($param['class_id'])) {
+            $where['sa.class_id'] = $param['class_id'];
+        }
         $where['usa.type'] = 1;
         return $where;
     }

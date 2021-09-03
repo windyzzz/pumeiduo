@@ -226,6 +226,7 @@ class School extends Base
         $limit = I('limit', 10);
         $param = [
             'status' => I('status', ''),
+            'class_id' => I('class_id', '')
         ];
         $data = $this->logic->getUserArticle($limit, $param, $this->user);
         if (isset($data['status']) && $data['status'] != 1) {
