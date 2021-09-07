@@ -379,11 +379,34 @@ class Index
         $mainGoods = M('goods_recommend gr')->join('goods g', 'g.goods_id = gr.goods_id')
             ->where(['gr.is_open' => 1, 'g.is_on_sale' => 1, 'g.is_agent' => 0, 'g.applet_on_sale' => 0])
             ->order('gr.sort DESC, g.sort DESC, g.goods_id DESC')
-            ->field('gr.goods_id, gr.image, gr.video, gr.video_cover, gr.video_axis, g.goods_name, g.shop_price, g.exchange_integral')->select();
+            ->field('gr.goods_id, gr.image, gr.video, gr.video_cover, gr.video_axis, g.goods_name, g.shop_price, g.exchange_integral, g.sale_type')->select();
         $mainGoodsIds = [];
         foreach ($mainGoods as &$goods) {
             $mainGoodsIds[] = $goods['goods_id'];
         }
+        // 秒杀
+        $flashSale = M('flash_sale fs')
+            ->join('spec_goods_price sgp', 'sgp.item_id = fs.item_id', 'LEFT')
+            ->where(['fs.goods_id' => ['IN', $mainGoodsIds], 'fs.start_time' => ['<=', time()], 'fs.end_time' => ['>=', time()], 'fs.is_end' => 0])
+            ->where(['fs.source' => ['LIKE', '%' . 3 . '%']])
+            ->field('fs.goods_id, sgp.key spec_key, fs.price, fs.goods_num, fs.buy_limit, fs.start_time, fs.end_time, fs.can_integral')->select();
+        // 团购
+        $groupBuy = M('group_buy gb')
+            ->join('spec_goods_price sgp', 'sgp.item_id = gb.item_id', 'LEFT')
+            ->where(['gb.goods_id' => ['IN', $mainGoodsIds], 'gb.start_time' => ['<=', time()], 'gb.end_time' => ['>=', time()], 'gb.is_end' => 0])
+            ->field('gb.goods_id, gb.price, sgp.key spec_key, gb.price, gb.group_goods_num, gb.goods_num, gb.buy_limit, gb.start_time, gb.end_time, gb.can_integral')->select();
+        // 促销
+        $promGoods = M('prom_goods')->alias('pg')->join('goods_tao_grade gtg', 'gtg.promo_id = pg.id')
+            ->where(['gtg.goods_id' => ['IN', $mainGoodsIds], 'pg.is_end' => 0, 'pg.is_open' => 1, 'pg.start_time' => ['<=', time()], 'pg.end_time' => ['>=', time()]])
+            ->field('pg.id prom_id, pg.title, pg.type, pg.expression, gtg.goods_id')->order('expression desc');
+        if ($this->user) {
+            $promGoods = $promGoods->where(['pg.group' => ['LIKE', '%' . $this->user['distribut_level'] . '%']]);
+        }
+        $promGoods = $promGoods->select();
+        // 订单满减优惠
+        $orderPromTitle = M('order_prom')
+            ->where(['type' => ['in', '0, 1'], 'is_open' => 1, 'is_end' => 0, 'start_time' => ['<=', time()], 'end_time' => ['>=', time()]])
+            ->order('discount_price desc')->value('title');
         $mainGoodsTabs = M('goods_tab')->where(['goods_id' => ['IN', $mainGoodsIds], 'status' => 1])->field('goods_id, title')->select();
         foreach ($mainGoods as &$goods) {
             $goods['exchange_price'] = bcsub($goods['shop_price'], $goods['exchange_integral'], 2);
@@ -401,6 +424,59 @@ class Index
                     $goods['tabs'][] = [
                         'title' => $value['title']
                     ];
+                }
+            }
+            $goods['tags'] = [];
+            if ($goods['sale_type'] == 2) {
+                $goods['tags'][0] = ['type' => 'activity', 'title' => '套组'];
+            }
+            if (!empty($groupBuy)) {
+                foreach ($groupBuy as $value) {
+                    if ($goods['goods_id'] == $value['goods_id']) {
+                        if ($value['can_integral'] == 0) {
+                            $goods['exchange_integral'] = '0';    // 不能使用积分兑换
+                        }
+                        $goods['exchange_price'] = bcsub($value['price'], $goods['exchange_integral'], 2);
+                        $goods['tags'][0]['type'] = 'activity';
+                        $goods['tags'][0]['title'] = '团购';
+                        break;
+                    }
+                }
+            }
+            if (!empty($flashSale)) {
+                foreach ($flashSale as $value) {
+                    if ($goods['goods_id'] == $value['goods_id']) {
+                        if ($value['can_integral'] == 0) {
+                            $goods['exchange_integral'] = '0';    // 不能使用积分兑换
+                        }
+                        $goods['exchange_price'] = bcsub($value['price'], $goods['exchange_integral'], 2);
+                        $goods['tags'][0]['type'] = 'activity';
+                        $goods['tags'][0]['title'] = '秒杀';
+                        break;
+                    }
+                }
+            }
+            // 第二类，促销类
+            if (!empty($promGoods)) {
+                foreach ($promGoods as $value) {
+                    if ($goods['goods_id'] == $value['goods_id']) {
+                        $goods['goods_type'] = 'promotion';
+                        switch ($value['type']) {
+                            case 0:
+                                // 打折
+                                $goods['exchange_price'] = bcdiv(bcmul($goods['exchange_price'], $value['expression'], 2), 100, 2);
+                                break;
+                            case 1:
+                                // 减价
+                                $goods['exchange_price'] = bcsub($goods['exchange_price'], $value['expression'], 2);
+                                break;
+                        }
+                        $goods['tags'][] = ['type' => 'promotion', 'title' => $value['title']];
+                        break;
+                    }
+                }
+                if (!isset($goods['tags'][1]) && !empty($orderPromTitle)) {
+                    $goods['tags'][] = ['type' => 'promotion', 'title' => $orderPromTitle];
                 }
             }
         }
