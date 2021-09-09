@@ -379,7 +379,9 @@ class Index
         $mainGoods = M('goods_recommend gr')->join('goods g', 'g.goods_id = gr.goods_id')
             ->where(['gr.is_open' => 1, 'g.is_on_sale' => 1, 'g.is_agent' => 0, 'g.applet_on_sale' => 0])
             ->order('gr.sort DESC, g.sort DESC, g.goods_id DESC')
-            ->field('gr.goods_id, gr.image, gr.video, gr.video_cover, gr.video_axis, g.goods_name, g.shop_price, g.exchange_integral, g.sale_type')->select();
+            ->field('gr.goods_id, gr.image, gr.video, gr.video_cover, gr.video_axis, g.goods_name, g.shop_price, g.exchange_integral, g.sale_type')
+            ->limit(0, 5)
+            ->select();
         $mainGoodsIds = [];
         foreach ($mainGoods as &$goods) {
             $mainGoodsIds[] = $goods['goods_id'];
