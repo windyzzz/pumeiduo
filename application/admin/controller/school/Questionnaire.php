@@ -3,6 +3,7 @@
 namespace app\admin\controller\school;
 
 
+use app\common\model\SchoolArticleQuestionnaireOption;
 use think\Db;
 use think\Page;
 
@@ -72,18 +73,37 @@ class Questionnaire extends Base
                         $data['score_list'] = rtrim($data['score_list'], ',');
                     }
                     break;
+                case 3:
+                case 4:
+                    if (empty($data['option'])) {
+                        $this->ajaxReturn(['status' => 0, 'msg' => '请添加选项内容', 'result' => '']);
+                    }
             }
             if ($captionId) {
                 M('school_article_questionnaire_caption')->where(['id' => $captionId])->update($data);
             } else {
-                M('school_article_questionnaire_caption')->add($data);
+                $captionId = M('school_article_questionnaire_caption')->add($data);
+            }
+            if (in_array($data['type'], [3, 4])) {
+                M('school_article_questionnaire_option')->where(['caption_id' => $captionId])->delete();
+                $optionData = [];
+                foreach ($data['option'] as $op) {
+                    $optionData[] = [
+                        'caption_id' => $captionId,
+                        'content' => $op
+                    ];
+                }
+                (new SchoolArticleQuestionnaireOption())->saveAll($optionData);
             }
             $this->ajaxReturn(['status' => 1, 'msg' => '处理成功', 'result' => '']);
         }
         if ($captionId) {
             $caption = M('school_article_questionnaire_caption')->where(['id' => $captionId])->find();
+            $option = M('school_article_questionnaire_option')->where(['caption_id' => $captionId])->select();
             $this->assign('caption', $caption);
+            $this->assign('option', $option);
         }
+        $this->assign('option_count', !empty($option) ? count($option) : 0);
         return $this->fetch('add_edit_caption');
     }
 

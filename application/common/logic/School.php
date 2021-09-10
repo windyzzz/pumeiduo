@@ -1308,14 +1308,6 @@ class School
     {
         $data = [
             'is_open' => 0,
-            'article' => [
-                'title' => '',
-                'publish_time' => ''
-            ],
-            'user' => [
-                'name' => $user['nickname'] ?? $user['user_name'],
-                'level' => M('distribut_level')->where(['level_id' => $user['distribut_level']])->value('level_name')
-            ],
             'list' => []
         ];
         if (M('school_article_questionnaire_answer')->where(['article_id' => $articleId, 'user_id' => $user['user_id']])->find()) {
@@ -1334,9 +1326,25 @@ class School
         if (empty($caption)) {
             return $data;
         }
+        foreach ($caption as &$item) {
+            $item['option_list'] = [];
+            switch ($item['type']) {
+                case 1:
+                    $scoreList = explode(',', $item['score_list']);
+                    foreach ($scoreList as $value) {
+                        $item['option_list'][] = [
+                            'id' => $value,
+                            'value' => $value
+                        ];
+                    }
+                    break;
+                case 3:
+                case 4:
+                    $item['option_list'] = M('school_article_questionnaire_option')->where(['caption_id' => $item['id']])->field('id, content value')->select();
+                    break;
+            }
+        }
         $data['is_open'] = 1;
-        $data['article']['title'] = $article['title'];
-        $data['article']['publish_time'] = $article['publish_time'];
         $data['list'] = $caption;
         return $data;
     }

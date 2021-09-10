@@ -42,10 +42,8 @@
                     <select name="type">
                         <option value="1" <if condition="$caption['type'] eq 1 ">selected="selected"</if> >评分</option>
                         <option value="2" <if condition="$caption['type'] eq 2 ">selected="selected"</if> >评价</option>
-                        <!--
                         <option value="3" <if condition="$caption['type'] eq 3 ">selected="selected"</if> >单选</option>
-                        <option value="3" <if condition="$caption['type'] eq 3 ">selected="selected"</if> >多选</option>
-                        -->
+                        <option value="4" <if condition="$caption['type'] eq 4 ">selected="selected"</if> >多选</option>
                     </select>
                     <p class="notic"></p>
                 </dd>
@@ -60,6 +58,27 @@
                            onpaste="this.value=this.value.replace(/[^\d]/g,'')"/>
                     <span class="err" id="err_max_score"></span>
                     <p class="notic">分数列表会以最高分-1直至0列出</p>
+                </dd>
+            </dl>
+            <dl class="row" id="option_content" style="<if condition='empty($caption) || (!empty($caption) && !in_array($caption[type], [3, 4]))'>display: none;</if>">
+                <dt class="tit">
+                    <label>选项内容</label>
+                    <br/>
+                    <a class="ncap-btn" href="javascript:;" onclick="addOption()">增加</a>
+                </dt>
+                <dd class="opt">
+                    <table style="width: 60%;">
+                        <tbody id="option">
+                        <volist name="option" id="vo" key="k">
+                            <tr>
+                                <td>
+                                    <input type="text" name="option[{$k}]" value="{$vo.content}" class="input-txt">
+                                </td>
+                                <td style="text-align: center;"><a class="ncap-btn" onclick="delOption(this)">删除</a></td>
+                            </tr>
+                        </volist>
+                        </tbody>
+                    </table>
                 </dd>
             </dl>
             <dl class="row">
@@ -92,19 +111,45 @@
     </form>
 </div>
 <script type="text/javascript">
-    $(document).on("click", '#submitBtn', function () {
-        verifyForm();
+    $(document).ready(function () {
+        option_count = {$option_count};
     });
+
+    function addOption() {
+        option_count += 1;
+        var tr = '<tr>' +
+            '         <td>' +
+            '             <input type="text" name="option[' + option_count + ']" value="" class="input-txt">' +
+            '         </td>' +
+            '         <td style="text-align: center;"><a class="ncap-btn" onclick="delOption(this)">删除</a></td>' +
+            '</tr>';
+        $('#option').append(tr);
+    }
+
+    function delOption(obj) {
+        $(obj).parent().parent().remove();
+    }
 
     $('select[name="type"]').change(function () {
         switch (this.value) {
             case '1':
                 $('#max_score').show();
+                $('#option_content').hide();
                 break;
             case '2':
                 $('#max_score').hide();
+                $('#option_content').hide();
+                break;
+            case '3':
+            case '4':
+                $('#max_score').hide();
+                $('#option_content').show();
                 break;
         }
+    });
+
+    $(document).on("click", '#submitBtn', function () {
+        verifyForm();
     });
 
     function verifyForm() {
