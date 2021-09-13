@@ -1363,15 +1363,25 @@ class School
             return true;
         }
         $answerData = [];
-        foreach ($captionData as $data) {
-            $answerData[] = [
+        foreach ($captionData as $key => $caption) {
+            $answerData[$key] = [
                 'article_id' => $articleId,
                 'user_id' => $user['user_id'],
-                'caption_id' => $data['id'],
-                'score' => $data['score'] ?? 0,
-                'content' => $data['content'],
+                'caption_id' => $caption['id'],
                 'add_time' => NOW_TIME
             ];
+            switch ($caption['type']) {
+                case 1:
+                    $answerData[$key]['score'] = $caption['option'][0];
+                    break;
+                case 2:
+                    $answerData[$key]['content'] = $caption['content'];
+                    break;
+                case 3:
+                case 4:
+                    $answerData[$key]['option_ids'] = implode(',', $caption['option']);
+                    break;
+            }
         }
         if (!empty($answerData)) {
             (new SchoolArticleQuestionnaireAnswer())->saveAll($answerData);
