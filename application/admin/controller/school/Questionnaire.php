@@ -267,4 +267,74 @@ class Questionnaire extends Base
             toCsvExcel($dataList, $headList, 'questionnaire_statistics_list');
         }
     }
+
+    /**
+     * 参与问卷调查的用户列表
+     * @return mixed
+     */
+    public function contentList()
+    {
+        $articleId = I('article_id');
+        $where = ['saa.article_id' => $articleId];
+        if ($appGrade = I('app_grade', '')) {
+            $where['u.distribut_level'] = $appGrade;
+        }
+        if ($svipGrade = I('svip_grade', '')) {
+            $where['u.distribut_level'] = 3;
+            $where['u.svip_grade'] = $svipGrade;
+        }
+        if ($svipLevel = I('svip_level', '')) {
+            $where['u.distribut_level'] = 3;
+            $where['u.svip_level'] = $svipLevel;
+        }
+        if ($userId = I('user_id', '')) {
+            $where['u.user_id'] = $userId;
+        }
+        if ($username = I('user_name', '')) {
+            $where['u.user_name'] = $username;
+        }
+        if ($nickname = I('nickname', '')) {
+            $where['u.nickname'] = $nickname;
+        }
+        $count = M('school_article_questionnaire_answer saa')->join('users u', 'u.user_id = saa.user_id')->where($where)->group('saa.user_id')->count();
+        $page = new Page($count, 10);
+        $contentList = M('school_article_questionnaire_answer saa')
+            ->join('users u', 'u.user_id = saa.user_id')
+            ->where($where)
+            ->group('saa.user_id')
+            ->order('add_time DESC')
+            ->field('u.user_id, u.user_name, u.nickname, u.distribut_level, u.svip_grade, u.svip_level, saa.add_time')
+            ->limit($page->firstRow . ',' . $page->listRows)
+            ->select();
+        foreach ($contentList as &$list) {
+            // APP等级
+            $list['app_grade_name'] = $this->appGrade[$list['distribut_level']];
+            // 代理商等级
+            $list['svip_grade_name'] = $list['distribut_level'] == 3 ? $this->svipGrade[$list['svip_grade']] : '';
+            // 代理商等级
+            $list['svip_level_name'] = $list['distribut_level'] == 3 ? $this->svipLevel[$list['svip_level']] : '';
+
+        }
+        $this->assign('app_grade', $this->appGrade);
+        $this->assign('svip_grade', $this->svipGrade);
+        $this->assign('svip_level', $this->svipLevel);
+        $this->assign('select_app_grade', $appGrade);
+        $this->assign('select_svip_grade', $svipGrade);
+        $this->assign('select_svip_level', $svipLevel);
+        $this->assign('user_id', $userId);
+        $this->assign('user_name', $username);
+        $this->assign('nickname', $nickname);
+        $this->assign('article_id', $articleId);
+        $this->assign('page', $page);
+        $this->assign('list', $contentList);
+        return $this->fetch('content_list');
+    }
+
+
+    public function contentDetail()
+    {
+        $articleId = I('article_id');
+        $userId = I('user_id');
+        
+    }
 }

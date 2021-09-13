@@ -387,10 +387,13 @@
                                     </if>
                                 </div>
                             </td>
-                            <td align="left" class="handle">
-                                <div style="text-align: left; width: 150px; max-width:150px;">
-                                    <a class="btn blue" href="{:U('school.article/article')}/type/{$type}/class_id/{$module_class[id]}/article_id/{$vo[id]}"><i class="fa fa-pencil-square-o"></i>编辑</a>
-                                    <a class="btn red del" onclick="delArticle('{$type}', '{$module_class[id]}', '{$vo[id]}')"><i class="fa fa-trash-o"></i>删除</a>
+                            <td align="left" class="">
+                                <div style="text-align: center;">
+                                    <a class="btn" href="{:U('school.article/article')}/type/{$type}/class_id/{$module_class[id]}/article_id/{$vo[id]}"><i class="fa fa-pencil-square-o"></i>编辑</a>
+                                    <a class="btn" onclick="delArticle('{$type}', '{$module_class[id]}', '{$vo[id]}')"><i class="fa fa-trash-o"></i>删除</a>
+                                    <if condition="$vo[show_questionnaire] == 1">
+                                        <a class="btn" href="{:U('school.questionnaire/contentList')}/article_id/{$vo[id]}"><i class="fa fa-list-alt"></i>问卷调查</a>
+                                    </if>
                                 </div>
                             </td>
                             <td align="" class="" style="width: 100%;">
