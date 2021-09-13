@@ -654,11 +654,15 @@ class School
         $notModuleType = ['module6', 'module7', 'module8'];
         $moduleList = M('school')->where(['type' => ['NOT IN', $notModuleType]])->field('id module_id, name module_name')->order('sort DESC')->select();
         // 模块分类列表
-        foreach ($moduleList as &$list) {
+        foreach ($moduleList as $key => &$list) {
             $classList = M('school_class')->where(['module_id' => $list['module_id']])->field('id class_id, name class_name')->order('sort DESC')->select();
-            $list['class'] = $classList ?? [];
+            if (!$classList) {
+                unset($moduleList[$key]);
+                continue;
+            }
+            $list['class'] = $classList;
         }
-        return ['list' => $moduleList];
+        return ['list' => array_values($moduleList)];
     }
 
     /**
@@ -1308,7 +1312,7 @@ class School
     {
         $data = [
             'is_open' => 0,
-            'list' => []
+            'caption_list' => []
         ];
         if (M('school_article_questionnaire_answer')->where(['article_id' => $articleId, 'user_id' => $user['user_id']])->find()) {
             return $data;
@@ -1345,7 +1349,7 @@ class School
             }
         }
         $data['is_open'] = 1;
-        $data['list'] = $caption;
+        $data['caption_list'] = $caption;
         return $data;
     }
 
