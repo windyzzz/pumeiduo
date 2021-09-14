@@ -632,7 +632,7 @@ class Order extends Base
             $update['discount'] = I('post.discount');
             $update['shipping_price'] = I('post.shipping_price');
 //            $update['order_amount'] = $order['order_amount'] + $update['shipping_price'] - $update['discount'] - $order['user_money'] - $order['integral_money'] - $order['coupon_price'] - $order['shipping_price'];
-            $update['order_amount'] = $order['order_amount'] + $update['shipping_price'] - $update['discount'];
+            $update['order_amount'] = bcsub($order['order_amount'], $update['discount'], 2);
             if ($order['pay_code'] != '' && $order['prepare_pay_time'] > 0) {
                 // 已经在支付系统生成订单，需要更改原来订单号
                 $update['old_order_sn'] = $order['old_order_sn'] . ',' . $order['order_sn'];
