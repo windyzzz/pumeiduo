@@ -296,9 +296,9 @@ class Questionnaire extends Base
         if ($nickname = I('nickname', '')) {
             $where['u.nickname'] = $nickname;
         }
-        $count = M('school_article_questionnaire_answer saa')->join('users u', 'u.user_id = saa.user_id')->where($where)->group('saa.user_id')->count();
+        $count = Db::name('school_article_questionnaire_answer saa')->join('users u', 'u.user_id = saa.user_id')->where($where)->group('saa.user_id')->count();
         $page = new Page($count, 10);
-        $contentList = M('school_article_questionnaire_answer saa')
+        $contentList = Db::name('school_article_questionnaire_answer saa')
             ->join('users u', 'u.user_id = saa.user_id')
             ->where($where)
             ->group('saa.user_id')
@@ -335,6 +335,36 @@ class Questionnaire extends Base
     {
         $articleId = I('article_id');
         $userId = I('user_id');
-        
+        // 用户回答
+        $schoolAnswer = Db::name('school_article_questionnaire_answer saa')
+            ->join('school_article_questionnaire_caption sac', 'sac.id = saa.caption_id')
+            ->where(['saa.article_id' => $articleId, 'saa.user_id' => $userId])
+            ->order('sac.sort DESC')
+            ->field('sac.title, sac.type, saa.score, saa.option_ids, saa.content, saa.add_time')
+            ->select();
+        foreach ($schoolAnswer as &$answer) {
+            switch ($answer['type']) {
+                case 1:
+                    $answer['answer'] = $answer['score'];
+                    break;
+                case 2:
+                    $answer['answer'] = $answer['content'];
+                    break;
+                case 3:
+                    $answer['answer'] = Db::name('school_article_questionnaire_option')->where(['id' => $answer['option_ids']])->value('content');
+                    break;
+                case 4:
+                    $answer['answer'] = '';
+                    $answerContent = Db::name('school_article_questionnaire_option')->where(['id' => ['IN', $answer['option_ids']]])->column('content');
+                    foreach ($answerContent as $content) {
+                        $answer['answer'] .= $content . '<br/>';
+                    }
+                    break;
+            }
+        }
+        $this->assign('article_id', $articleId);
+        $this->assign('user_id', $userId);
+        $this->assign('answer', $schoolAnswer);
+        return $this->fetch('content_detail');
     }
 }
