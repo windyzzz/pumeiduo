@@ -660,7 +660,7 @@ class School
                 unset($moduleList[$key]);
                 continue;
             }
-            $list['class'] = $classList;
+            $list['class_'] = $classList;
         }
         return ['list' => array_values($moduleList)];
     }
