@@ -458,6 +458,26 @@ class School
     }
 
     /**
+     * 查看用户是否已经做完问卷调查
+     * @param $articleList
+     * @param $articleIds
+     * @param $user
+     * @return mixed
+     */
+    private function checkUserQuestionnaireAnswer($articleList, $articleIds, $user)
+    {
+        // 用户问卷调查回答记录
+        $userAnswer = M('school_article_questionnaire_answer')->where(['user_id' => $user['user_id'], 'article_id' => ['IN', $articleIds]])->group('user_id')->getField('article_id, user_id', true);
+        // 更新数据
+        foreach ($articleList as &$article) {
+            if (isset($userAnswer[$article['article_id']])) {
+                $article['show_questionnaire'] = 0;
+            }
+        }
+        return $articleList;
+    }
+
+    /**
      * 用户初次访问商学院
      * @param $userId
      */
@@ -876,6 +896,10 @@ class School
         if ($user) {
             // 查看用户是否已购买学习课程
             $info = $this->checkUserArticle([$info], [$articleInfo['id']], $user)[0];
+            // 查看用户是否已完成问卷调查
+            if ($info['show_questionnaire'] == 1) {
+                $info = $this->checkUserQuestionnaireAnswer([$info], [$articleInfo['id']], $user)[0];
+            }
         }
         return $info;
     }
