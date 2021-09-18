@@ -2064,9 +2064,9 @@ class Order extends Base
         if ($exportFile['status'] == 2) {
             $this->ajaxReturn(['status' => 0, 'msg' => '文件正在导出，不能删除']);
         }
-//        M('export_file')->where(['id' => $fileId])->delete();
+        M('export_file')->where(['id' => $fileId])->delete();
         $file = PUBLIC_PATH . substr($exportFile['path'], strrpos($exportFile['path'], 'public/') + 7) . $exportFile['name'];
-        unset($file);
+        unlink($file);
         $this->ajaxReturn(['status' => 1, 'msg' => '删除成功']);
     }
 
