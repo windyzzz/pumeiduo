@@ -43,7 +43,7 @@ class Article extends Base
         if ($nickname = I('nickname', '')) {
             $where['nickname'] = $nickname;
         }
-        $userList = M('users')->where($where)->order('user_id DESC')->field('user_id, nickname, user_name, school_credit, distribut_level, svip_grade, svip_level');
+        $userList = M('users')->where($where)->order('user_id DESC');
         if (!$isExport) {
             // 用户总数
             $count = M('users')->where($where)->count();
@@ -89,7 +89,14 @@ class Article extends Base
                 $user['svip_level_name'],
                 $user['course_num'],
                 $user['school_credit'],
-                $user['first_visit']
+                $user['first_visit'],
+                $user['svip_activate_time'] != 0 ? date('Y-m-d H:i:s', $user['svip_activate_time']) : '',
+                $user['svip_upgrade_time'] != 0 ? date('Y-m-d H:i:s', $user['svip_upgrade_time']) : '',
+                $user['svip_referee_number'],
+                $user['grade_referee_num1'],
+                $user['grade_referee_num2'],
+                $user['grade_referee_num3'],
+                $user['grade_referee_num4'],
             ];
         }
         if (!$isExport) {
@@ -110,7 +117,8 @@ class Article extends Base
         } else {
             // 表头
             $headList = [
-                '用户ID', '用户昵称', '用户名', 'APP等级', '代理商等级', '代理商职级', '课程数量', '乐活豆数量', '首次进入商学院'
+                '用户ID', '用户昵称', '用户名', 'APP等级', '代理商等级', '代理商职级', '课程数量', '乐活豆数量', '首次进入商学院',
+                '211系统激活时间', '211系统升级代理商时间', '推荐总人数', '推荐游客人数', '推荐优享会员人数', '推荐尊享会员人数', '推荐代理商人数'
             ];
             toCsvExcel($dataList, $headList, 'user_course_list');
         }

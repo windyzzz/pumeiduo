@@ -466,6 +466,13 @@ class School
      */
     private function checkUserQuestionnaireAnswer($articleList, $articleIds, $user)
     {
+        // 问卷调查开启状态
+        $config = M('school_article_questionnaire_config')->find();
+        if ($config['is_open'] == 0 || $config['start_time'] > NOW_TIME || $config['end_time'] < NOW_TIME) {
+            foreach ($articleList as &$article) {
+                $article['show_questionnaire'] = 0;
+            }
+        }
         // 用户问卷调查回答记录
         $userAnswer = M('school_article_questionnaire_answer')->where(['user_id' => $user['user_id'], 'article_id' => ['IN', $articleIds]])->group('user_id')->getField('article_id, user_id', true);
         // 更新数据

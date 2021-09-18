@@ -118,6 +118,27 @@
                         <th align="left" abbr="send_type" axis="col4" class="">
                             <div style="text-align: center; width: 150px;" class="">首次进入商学院</div>
                         </th>
+                        <th align="left" abbr="send_type" axis="col4" class="">
+                            <div style="text-align: center; width: 150px;" class="">211系统激活时间</div>
+                        </th>
+                        <th align="left" abbr="send_type" axis="col4" class="">
+                            <div style="text-align: center; width: 150px;" class="">211系统升级代理商时间</div>
+                        </th>
+                        <th align="left" abbr="send_type" axis="col4" class="">
+                            <div style="text-align: center; width: 100px;" class="">推荐总人数</div>
+                        </th>
+                        <th align="left" abbr="send_type" axis="col4" class="">
+                            <div style="text-align: center; width: 100px;" class="">推荐游客人数</div>
+                        </th>
+                        <th align="left" abbr="send_type" axis="col4" class="">
+                            <div style="text-align: center; width: 100px;" class="">推荐优享会员人数</div>
+                        </th>
+                        <th align="left" abbr="send_type" axis="col4" class="">
+                            <div style="text-align: center; width: 100px;" class="">推荐尊享会员人数</div>
+                        </th>
+                        <th align="left" abbr="send_type" axis="col4" class="">
+                            <div style="text-align: center; width: 100px;" class="">推荐代理商人数</div>
+                        </th>
                         <th style="width:100%" axis="col7">
                             <div></div>
                         </th>
@@ -171,6 +192,35 @@
                             </td>
                             <td align="left" class="">
                                 <div style="text-align: center; width: 150px;">{$vo.first_visit}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 150px;">
+                                    <if condition="$vo[svip_activate_time] != 0">
+                                        {$vo.svip_activate_time|date='Y-m-d H:i:s', ###}
+                                    </if>
+                                </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 150px;">
+                                    <if condition="$vo[svip_upgrade_time] != 0">
+                                        {$vo.svip_upgrade_time|date='Y-m-d H:i:s', ###}
+                                    </if>
+                                </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 100px;">{$vo.svip_referee_number}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 100px;">{$vo.grade_referee_num1}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 100px;">{$vo.grade_referee_num2}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 100px;">{$vo.grade_referee_num3}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 100px;">{$vo.grade_referee_num4}</div>
                             </td>
                             <td align="" class="" style="width: 100%;">
                                 <div>&nbsp</div>
