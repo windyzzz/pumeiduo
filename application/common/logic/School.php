@@ -174,7 +174,7 @@ class School
         if ($module['distribute_grade'] != 0) {
             $limitLevel = explode(',', $module['distribute_grade']);
             $levelName = M('svip_grade')->where(['app_level' => $limitLevel[0]])->value('name');
-            if ($user['distribut_level'] != 3) {
+            if ($user['svip_grade'] != 3) {
                 return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
             } else {
                 // 获取代理商等级
@@ -193,7 +193,7 @@ class School
         if ($module['distribute_level'] != 0) {
             $limitLevel = explode(',', $module['distribute_level']);
             $levelName = M('svip_level')->where(['app_level' => $limitLevel[0]])->value('name');
-            if ($user['distribut_level'] != 3) {
+            if ($user['svip_level'] != 3) {
                 return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
             } else {
                 // 获取代理商等级
@@ -250,7 +250,7 @@ class School
         if ($moduleClass['distribute_grade'] != 0) {
             $limitLevel = explode(',', $moduleClass['distribute_grade']);
             $levelName = M('svip_grade')->where(['app_level' => $limitLevel[0]])->value('name');
-            if ($user['distribut_level'] != 3) {
+            if ($user['svip_grade'] != 3) {
                 return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
             } else {
                 // 获取代理商等级
@@ -269,7 +269,7 @@ class School
         if ($moduleClass['distribute_level'] != 0) {
             $limitLevel = explode(',', $moduleClass['distribute_level']);
             $levelName = M('svip_level')->where(['app_level' => $limitLevel[0]])->value('name');
-            if ($user['distribut_level'] != 3) {
+            if ($user['svip_level'] != 3) {
                 return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
             } else {
                 // 获取代理商等级
