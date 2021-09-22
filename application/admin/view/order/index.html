@@ -233,6 +233,20 @@
                     </a>
                 </div>
                 <div class="fbutton">
+                    <a href="javascript:exportReport3()">
+                        <div class="add" title="后台处理导出csv文件">
+                            <span><i class="fa fa-plus"></i>后台导出数据（csv）</span>
+                        </div>
+                    </a>
+                </div>
+                <div class="fbutton">
+                    <a href="javascript:exportList()">
+                        <div class="add" title="后台导出文件列表">
+                            <span><i class="fa fa-file"></i>后台导出文件列表</span>
+                        </div>
+                    </a>
+                </div>
+                <div class="fbutton">
                     <!--<a href="/index.php?m=Admin&c=Order&a=add_order">
                           <div class="add" title="添加订单">
                             <span><i class="fa fa-plus"></i>添加订单</span>
@@ -331,6 +345,31 @@
         }
         $('#search-form2').attr('action', "{:U('Admin/order/export_order_v2')}");
         $('#search-form2').submit();
+    }
+
+    function exportReport3()
+    {
+        $.ajax({
+            type: "POST",
+            url: "/index.php/Admin/order/export_order_v3",
+            data: $('#search-form2').serialize(),
+            dataType: 'json',
+            success: function (data) {
+                layer.alert(data.msg, {icon: 1, time: 2000});
+            }
+        });
+    }
+
+    function exportList() {
+        var url = "{:U('Order/exportFileList')}/type/order";
+        layer.open({
+            type: 2,
+            title: '订到导出列表',
+            shadeClose: true,
+            shade: 0.8,
+            area: ['800px', '600px'],
+            content: url
+        });
     }
 
     $('.qsbox').keydown(function (e) {

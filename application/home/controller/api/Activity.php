@@ -435,7 +435,8 @@ class Activity extends Base
             if ($count > 0) {
                 // 获取商品数据
                 $goodsLogic = new GoodsLogic();
-                $goodsData = $goodsLogic->getGoodsList($goodsIds, $sortArr, $page, null, $this->isApp);
+                $source = $this->isApp ? 3 : ($this->isApplet ? 4 : 1);
+                $goodsData = $goodsLogic->getGoodsList($goodsIds, $sortArr, $page, null, $source);
                 $goodsList = $goodsData['goods_list'];
             }
             $activity['list'] = $goodsList;
@@ -467,7 +468,8 @@ class Activity extends Base
             if ($count > 0) {
                 // 获取商品数据
                 $goodsLogic = new GoodsLogic();
-                $goodsData = $goodsLogic->getGoodsList($goodsIds, $sortArr, $page, null, $this->isApp);
+                $source = $this->isApp ? 3 : ($this->isApplet ? 4 : 1);
+                $goodsData = $goodsLogic->getGoodsList($goodsIds, $sortArr, $page, null, $source);
                 $goodsList = $goodsData['goods_list'];
             }
             $activity['list'] = $goodsList;

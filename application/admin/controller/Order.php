@@ -632,7 +632,7 @@ class Order extends Base
             $update['discount'] = I('post.discount');
             $update['shipping_price'] = I('post.shipping_price');
 //            $update['order_amount'] = $order['order_amount'] + $update['shipping_price'] - $update['discount'] - $order['user_money'] - $order['integral_money'] - $order['coupon_price'] - $order['shipping_price'];
-            $update['order_amount'] = $order['order_amount'] + $update['shipping_price'] - $update['discount'];
+            $update['order_amount'] = bcsub($order['order_amount'], $update['discount'], 2);
             if ($order['pay_code'] != '' && $order['prepare_pay_time'] > 0) {
                 // 已经在支付系统生成订单，需要更改原来订单号
                 $update['old_order_sn'] = $order['old_order_sn'] . ',' . $order['order_sn'];
@@ -1921,6 +1921,7 @@ class Order extends Base
             $totalTaxOut = 0;           // 订单总去税
             $goodsSalesAmount = [];     // 商品销售额
             $goodsTaxOut = [];          // 商品去税
+            $goodsTradeType = '';
             foreach ($orderGoods as $goods) {
                 $goods_amount += $goods['goods_num'];
                 $goods_sn[] = $goods['goods_sn'];
@@ -1964,6 +1965,109 @@ class Order extends Base
             $dataList[$key][] = $goodsTaxOut;
         }
         toCsvExcel($dataList, $headList, 'order');
+    }
+
+    /**
+     * 订单数据导出csv（后台导出）
+     */
+    public function export_order_v3()
+    {
+        $condition = ['parent_id' => 0];
+        // 下单时间
+        $begin = $this->begin;
+        $end = $this->end;
+        if ($begin && $end) {
+            $condition['o.add_time'] = ['between', "$begin,$end"];
+        }
+        // 支付时间
+        if (I('pay_start_time')) {
+            $pay_begin = I('pay_start_time');
+            $pay_end = I('pay_end_time');
+        }
+        $pay_begin = strtotime($pay_begin);
+        $pay_end = strtotime($pay_end) + 86399;
+        if ($pay_begin && $pay_end) {
+            $condition['o.pay_time'] = ['between', "$pay_begin,$pay_end"];
+        }
+        // 关键字
+        $keyType = I('keytype');
+        $keywords = I('keywords', '', 'trim');
+        $user_id = I('user_id', '', 'trim');
+        $consignee = ($keyType && 'consignee' == $keyType) ? $keywords : I('consignee', '', 'trim');
+        $consignee ? $condition['o.consignee'] = trim($consignee) : false;
+        // $condition['prom_type'] = array('lt',5);
+        if ('' != $user_id) {
+            $condition['o.user_id'] = ['eq', $user_id];
+        }
+        $order_sn = ($keyType && 'order_sn' == $keyType) ? $keywords : I('order_sn');
+        $order_sn ? $condition['o.order_sn'] = trim($order_sn) : false;
+
+        '' != I('order_status') ? $condition['o.order_status'] = I('order_status') : false;
+        '' != I('pay_status') ? $condition['o.pay_status'] = I('pay_status') : false;
+        '' != I('pay_code') ? $condition['o.pay_code'] = I('pay_code') : false;
+        '' != I('shipping_status') ? $condition['o.shipping_status'] = I('shipping_status') : false;
+        '' != I('prom_type') ? $condition['o.prom_type'] = I('prom_type') : false;
+        '' != I('order_type') ? $condition['order_type'] = I('order_type') : false;
+
+        // 数据表
+        $table = 'order o';
+        // join连接
+        $join = [
+            ['users u', 'u.user_id = o.user_id', 'LEFT']
+        ];
+        // 排序
+        $order = I('order_by', '') ? ['o.' . I('order_by') => I('sort')] : [];
+        // 字段
+        $field = "o.*, FROM_UNIXTIME(o.add_time,'%Y-%m-%d %H:%i:%s') as add_time, u.user_id, u.reg_time, u.distribut_level";
+        $path = UPLOAD_PATH . 'order/excel/' . date('Y-m-d') . '/';
+        $name = 'orderList_' . date('Y-m-d_H-i-s') . '.csv';
+        // 导出记录
+        M('export_file')->add([
+            'type' => 'order',
+            'path' => $path,
+            'name' => $name,
+            'table' => $table,
+            'join' => json_encode($join),
+            'condition' => json_encode($condition),
+            'order' => json_encode($order),
+            'field' => $field,
+            'add_time' => NOW_TIME
+        ]);
+        $this->ajaxReturn(['status' => 1, 'msg' => '添加导出队列成功，请耐心等待后台导出']);
+    }
+
+    /**
+     * 订单导出列表
+     * @return mixed
+     */
+    public function exportFileList()
+    {
+        $type = I('type');
+        $count = M('export_file')->where(['type' => $type])->count();
+        $page = new Page($count, 10);
+        $list = M('export_file')->where(['type' => $type])->order('add_time DESC')->limit($page->firstRow . ',' . $page->listRows)->select();
+        $this->assign('page', $page);
+        $this->assign('export_list', $list);
+        return $this->fetch('export_file_list');
+    }
+
+    /**
+     * 删除订单导出文件
+     */
+    public function deleteExportFile()
+    {
+        $fileId = I('file_id');
+        $exportFile = M('export_file')->where(['id' => $fileId])->find();
+        if (!$exportFile) {
+            $this->ajaxReturn(['status' => 1, 'msg' => '删除成功']);
+        }
+        if ($exportFile['status'] == 2) {
+            $this->ajaxReturn(['status' => 0, 'msg' => '文件正在导出，不能删除']);
+        }
+        M('export_file')->where(['id' => $fileId])->delete();
+        $file = PUBLIC_PATH . substr($exportFile['path'], strrpos($exportFile['path'], 'public/') + 7) . $exportFile['name'];
+        unlink($file);
+        $this->ajaxReturn(['status' => 1, 'msg' => '删除成功']);
     }
 
     /**

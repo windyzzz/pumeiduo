@@ -1047,7 +1047,8 @@ class Goods extends Base
         $level_cat = $GoodsLogic->find_parent_cat($goodsInfo['cat_id']); // 获取分类默认选中的下拉框
         $level_cat2 = $GoodsLogic->find_parent_cat($goodsInfo['extend_cat_id']); // 获取分类默认选中的下拉框
         $cat_list = Db::name('goods_category')->where('parent_id = 0')->select(); // 已经改成联动菜单
-        $brandList = $GoodsLogic->getSortBrands($goodsInfo['cat_id']);   //获取三级分类下的全部品牌
+//        $brandList = $GoodsLogic->getSortBrands($goodsInfo['cat_id']);   //获取三级分类下的全部品牌
+        $brandList = $GoodsLogic->getSortBrands();
         $goodsType = Db::name('GoodsType')->select();
         $suppliersList = Db::name('suppliers')->select();
         $tabsList = Db::name('tabs')->getField('id,name,color');
