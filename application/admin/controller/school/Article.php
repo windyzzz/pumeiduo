@@ -1151,7 +1151,9 @@ class Article extends Base
         if ($nickname = I('nickname', '')) {
             $where['u.nickname'] = $nickname;
         }
-        if ($timeFrom = I('time_from', '') && $timeTo = I('time_to', '')) {
+        $timeFrom = I('time_from', '') ? strtotime(I('time_from')) : '';
+        $timeTo = I('time_to', '') ? strtotime(I('time_to')) : '';
+        if ($timeFrom && $timeTo) {
             $where['usa.finish_time'] = ['BETWEEN', [$timeFrom, $timeTo]];
         }
         $userList = M('user_school_article usa')
