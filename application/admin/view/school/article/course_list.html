@@ -267,7 +267,7 @@
                             <td align="left" class="">
                                 <div style="text-align: center; width: 100px;">
                                     <if condition="$vo[learn] GT 0">
-                                        <a href="{:U('school.article/courseUserList',array('article_id'=>$vo['id']))}" style="text-decoration: underline; font-weight: bold;">
+                                        <a href="/index.php/Admin/school.article/courseUserList/article_id/{$vo.id}/time_from/{$learn_time_from}/time_to/{$learn_time_to}" style="text-decoration: underline; font-weight: bold;">
                                             {$vo.learn}
                                         </a>
                                     <else/>

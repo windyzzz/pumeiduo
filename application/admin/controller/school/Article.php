@@ -1078,7 +1078,7 @@ class Article extends Base
                     $item['status_desc'] = '不发布';
                     break;
             }
-            $item['publish_time_desc'] = date('Y-m-d H:i:s', $item['publish_time']);
+            $item['publish_time_desc'] = $item['publish_time'] > 0 ? date('Y-m-d H:i:s', $item['publish_time']) : '';
             if ($learnTimeFrom && $learnTimeTo) {
                 // 根据学习时间统计学习人数
                 $learnCount = M('user_school_article')->where([
