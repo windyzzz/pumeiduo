@@ -450,11 +450,11 @@ class School extends Base
     public function answerQuestionnaire()
     {
         $articleId = I('article_id', 0);
-        $captionData = isset(I('post.')['caption']) ? json_decode(htmlspecialchars_decode(I('post.')['caption']), true) : [];
+        $captionData = I('caption') ? json_decode(htmlspecialchars_decode(I('caption')), true) : [];
         if (!$articleId || empty($captionData)) {
             return json(['status' => 0, 'msg' => '请传入正确的参数', 'result' => '']);
         }
         $this->logic->answerQuestionnaire($articleId, $this->user, $captionData);
-        return json(['status' => 1, 'msg' => '', 'result' => '']);
+        return json(['status' => 1, 'msg' => '填写成功', 'result' => '']);
     }
 }
