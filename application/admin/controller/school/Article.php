@@ -112,7 +112,8 @@ class Article extends Base
         // 排序
         $order = ['user_id' => 'DESC'];
         // 字段
-        $field = '*';
+        $field = 'user_id, nickname, user_name, distribut_level, svip_grade, svip_level, school_credit, 
+        svip_activate_time, svip_upgrade_time, svip_referee_number, grade_referee_num1, grade_referee_num2, grade_referee_num3, grade_referee_num4';
         $path = UPLOAD_PATH . 'order/excel/' . date('Y-m-d') . '/';
         $name = 'orderList_' . date('Y-m-d_H-i-s') . '.csv';
         // 导出记录
@@ -160,8 +161,13 @@ class Article extends Base
         if ($questionnaireStatus !== '') {
             $where['usa.is_questionnaire'] = $questionnaireStatus;
         }
+        $timeFrom = I('time_from', '') ? strtotime(I('time_from')) : '';
+        $timeTo = I('time_to', '') ? strtotime(I('time_to')) : '';
+        if ($timeFrom && $timeTo) {
+            $where['usa.finish_time'] = ['BETWEEN', [$timeFrom, $timeTo]];
+        }
         $userArticle = M('user_school_article usa')->where($where)->join('school_article sa', 'sa.id = usa.article_id')->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')
-            ->field('usa.user_id, usa.article_id, usa.status learn_status, usa.is_questionnaire, sa.title, sa.learn_type, sa.status, sa.publish_time, s.name module_name, sc.name class_name');
+            ->field('usa.user_id, usa.article_id, usa.status learn_status, usa.finish_time, usa.is_questionnaire, sa.title, sa.learn_type, sa.status, sa.publish_time, s.name module_name, sc.name class_name');
         if (!$isExport) {
             // 总数
             $count = M('user_school_article usa')->where($where)->join('school_article sa', 'sa.id = usa.article_id')->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')->count();
@@ -173,6 +179,8 @@ class Article extends Base
             $this->assign('title', $title);
             $this->assign('learn_status', $learnStatus !== '' ? (int)$learnStatus : '');
             $this->assign('questionnaire_status', $questionnaireStatus !== '' ? (int)$questionnaireStatus : '');
+            $this->assign('time_from', I('time_from', '') != 'time_to' ? I('time_from') : '');
+            $this->assign('time_to', I('time_to', ''));
             $this->assign('page', $page);
             $this->assign('list', $list);
             return $this->fetch('user_course_article_list');
@@ -224,13 +232,14 @@ class Article extends Base
                     $item['class_name'],
                     $status,
                     date('Y-m-d H:i:s', $item['publish_time']),
+                    $item['finish_time'] ? date('Y-m-d H:i:s', $item['finish_time']) : '',
                     $learnStatusDesc,
                     $questionnaireStatusDesc
                 ];
             }
             // 表头
             $headList = [
-                '用户ID', '文章ID', '标题', '学习类型', '所属模块', '所属分类', '发布状态', '发布时间', '学习状态', '是否完成调查问卷'
+                '用户ID', '文章ID', '标题', '学习类型', '所属模块', '所属分类', '发布状态', '发布时间', '学习完成时间', '学习状态', '是否完成调查问卷'
             ];
             toCsvExcel($dataList, $headList, 'user_course_article_list');
         }
@@ -392,7 +401,7 @@ class Article extends Base
      * @param string $timeTo 学习时间结束
      * @return array
      */
-    public function checkUserCourseNum($isCheck, $user, $courseIds, $timeFrom = '', $timeTo = '')
+    private function checkUserCourseNum($isCheck, $user, $courseIds, $timeFrom = '', $timeTo = '')
     {
         $where = [
             'user_id' => $user['user_id'],
@@ -431,7 +440,7 @@ class Article extends Base
      * @param $user
      * @return array
      */
-    public function checkUserSchoolCredit($user)
+    private function checkUserSchoolCredit($user)
     {
         // 学习规则达标设置
         $return = ['status' => 0];

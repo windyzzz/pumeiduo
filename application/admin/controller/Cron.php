@@ -1798,7 +1798,7 @@ AND log_id NOT IN
     {
         $exportFile = M('export_file')->where(['status' => 0])->find();
         if ($exportFile) {
-//            M('export_file')->where(['id' => $exportFile['id']])->update(['status' => 2]);
+            M('export_file')->where(['id' => $exportFile['id']])->update(['status' => 2]);
         } else {
             exit();
         }
@@ -1977,7 +1977,6 @@ AND log_id NOT IN
         $svipLevel = M('svip_level')->getField('app_level, name', true);
         $timeFrom = $ext['time_from'];
         $timeTo = $ext['time_to'];
-        $schoolArticle = new \app\admin\controller\school\Article();
         foreach ($userList as &$user) {
             $user['course_num'] = 0;    // 学习课程数量
             // APP等级
@@ -1993,7 +1992,7 @@ AND log_id NOT IN
                 'svip_grade' => $user['svip_grade'],
                 'svip_level' => $user['svip_level'],
             ];
-            $res = $schoolArticle->checkUserCourseNum(false, $userData, $courseIds, $timeFrom, $timeTo);
+            $res = $this->checkUserCourseNum(false, $userData, $courseIds, $timeFrom, $timeTo);
             $user['course_num'] = $res['course_num'];
             // 用户首次进入商学院的时间
             $firstVisit = M('user_school_config')->where(['type' => 'first_visit', 'user_id' => $user['user_id']])->value('add_time');
@@ -2027,5 +2026,48 @@ AND log_id NOT IN
             'status' => 1,
             'url' => SITE_URL . '/' . $exportFilePath . $exportFileName
         ]);
+    }
+
+    /**
+     * 检查用户是否满足课程数量达标
+     * @param $isCheck
+     * @param $user
+     * @param $courseIds
+     * @param string $timeFrom
+     * @param string $timeTo
+     * @return array
+     */
+    private function checkUserCourseNum($isCheck, $user, $courseIds, $timeFrom = '', $timeTo = '')
+    {
+        $where = [
+            'user_id' => $user['user_id'],
+            'article_id' => ['IN', $courseIds],
+        ];
+        if ($isCheck) $where['status'] = 1;
+        if ($timeFrom && $timeTo) {
+            $where['finish_time'] = ['BETWEEN', [$timeFrom, $timeTo]];
+        }
+        // 用户学习课程记录总数
+        $userCourseNum = M('user_school_article')->where($where)->getField('count(article_id) as count');
+        $userCourseNum = $userCourseNum ?? 0;
+        // 学习规则达标设置
+        $return = ['status' => 0, 'course_num' => $userCourseNum];
+        if ($isCheck) {
+            $schoolStandard = cache('school_standard');
+            if ($schoolStandard && is_array($schoolStandard)) {
+                foreach ($schoolStandard as $v) {
+                    if ($v['type'] == 2) {
+                        continue;
+                    }
+                    if ($user['app_grade'] == $v['app_grade'] && $user['svip_grade'] == $v['distribute_grade'] && $user['svip_level'] == $v['distribute_level']) {
+                        if ($userCourseNum >= $v['num']) {
+                            $return['status'] = 1;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        return $return;
     }
 }
