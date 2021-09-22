@@ -103,22 +103,22 @@ class Page{
         $this->config['last'] = '尾页';
         //上一页
         $up_row  = $this->nowPage - 1;
-        $up_page = $up_row > 0 ? '<li id="example1_previous" class="paginate_button previous disabled"><a class="prev" href="' . $this->url($up_row) . '">' . $this->config['prev'] . '</a></li>' : '';
+        $up_page = $up_row > 0 ? '<li id="example1_previous" class="paginate_button previous disabled"><a class="prev" href="' . strtolower($this->url($up_row)) . '">' . $this->config['prev'] . '</a></li>' : '';
 
         //下一页
         $down_row  = $this->nowPage + 1;
-        $down_page = ($down_row <= $this->totalPages) ? '<li id="example1_next" class="paginate_button next"><a class="next" href="' . $this->url($down_row) . '">' . $this->config['next'] . '</a></li>' : '';
+        $down_page = ($down_row <= $this->totalPages) ? '<li id="example1_next" class="paginate_button next"><a class="next" href="' . strtolower($this->url($down_row)) . '">' . $this->config['next'] . '</a></li>' : '';
 
         //第一页
         $the_first = '';
         if($this->totalPages > $this->rollPage && ($this->nowPage - $now_cool_page) >= 1){
-            $the_first = '<li id="example1_previous" class="paginate_button previous disabled"><a class="first" href="' . $this->url(1) . '">' . $this->config['first'] . '</a></li>';
+            $the_first = '<li id="example1_previous" class="paginate_button previous disabled"><a class="first" href="' . strtolower($this->url(1)) . '">' . $this->config['first'] . '</a></li>';
         }
 
         //最后一页
         $the_end = '';
         if($this->totalPages > $this->rollPage && ($this->nowPage + $now_cool_page) < $this->totalPages){
-            $the_end = '<li id="example1_previous" class="paginate_button previous disabled"><a class="end" href="' . $this->url($this->totalPages) . '">' . $this->config['last'] . '</a></li>';
+            $the_end = '<li id="example1_previous" class="paginate_button previous disabled"><a class="end" href="' . strtolower($this->url($this->totalPages)) . '">' . $this->config['last'] . '</a></li>';
         }
 
         //数字连接
@@ -134,7 +134,7 @@ class Page{
             if($page > 0 && $page != $this->nowPage){
 
                 if($page <= $this->totalPages){
-                    $link_page .= '<li class="paginate_button"><a class="num" href="' . $this->url($page) . '">' . $page . '</a></li>';
+                    $link_page .= '<li class="paginate_button"><a class="num" href="' . strtolower($this->url($page)) . '">' . $page . '</a></li>';
                 }else{
                     break;
                 }

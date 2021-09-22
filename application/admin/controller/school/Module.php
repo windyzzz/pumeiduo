@@ -481,7 +481,7 @@ class Module extends Base
             }
         }
         // 模块分类文章列表
-        $count = M('school_article')->where(['class_id' => $classId])->count();
+        $count = M('school_article')->where(['class_id' => $classId, 'status' => ['NEQ', -1]])->count();
         $page = new Page($count, 10);
         $schoolArticle = new SchoolArticle();
         $articleList = $schoolArticle->where(['class_id' => $classId, 'status' => ['NEQ', -1]])->limit($page->firstRow . ',' . $page->listRows)->order('sort DESC')->select();
