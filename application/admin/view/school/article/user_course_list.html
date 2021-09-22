@@ -79,7 +79,10 @@
                     <input type="submit" class="btn" value="搜索">
                 </div>
                 <div class="sDiv2">
-                    <input type="button" class="btn" onclick="export_list()" value="导出">
+                    <input type="button" class="btn" onclick="listExport()" value="后台导出">
+                </div>
+                <div class="sDiv2">
+                    <input type="button" class="btn" onclick="exportList()" value="后台导出文件列表">
                 </div>
             </div>
         </form>
@@ -252,10 +255,36 @@
         });
     });
 
-    function export_list() {
-        $('input[name="is_export"]').val('1');
-        $('#search-form').submit();
-        $('input[name="is_export"]').val('0');
+    function listExport() {
+        layer.confirm('确定导出？', {
+            btn: ['确定', '取消'] //按钮
+        }, function () {
+            $('input[name="is_export"]').val('1');
+            $.ajax({
+                type: "POST",
+                url: "{:U('school.article/userCourseList')}",
+                data: $('#search-form').serialize(),
+                dataType: 'json',
+                success: function (data) {
+                    layer.alert(data.msg, {icon: 1, time: 2000});
+                }
+            });
+            $('input[name="is_export"]').val('0');
+        }, function () {
+            console.log("取消");
+        });
+    }
+
+    function exportList() {
+        var url = "{:U('Export/fileList')}/type/school_user_course";
+        layer.open({
+            type: 2,
+            title: '导出列表',
+            shadeClose: true,
+            shade: 0.8,
+            area: ['800px', '600px'],
+            content: url
+        });
     }
 </script>
 </body>

@@ -1798,20 +1798,10 @@ AND log_id NOT IN
     {
         $exportFile = M('export_file')->where(['status' => 0])->find();
         if ($exportFile) {
-            M('export_file')->where(['id' => $exportFile['id']])->update(['status' => 2]);
+//            M('export_file')->where(['id' => $exportFile['id']])->update(['status' => 2]);
         } else {
             exit();
         }
-        switch ($exportFile['type']) {
-            case 'order':
-                $this->exportOrder($exportFile);
-                break;
-        }
-        exit();
-    }
-
-    private function exportOrder($exportFile)
-    {
         $table = $exportFile['table'];
         $join = $exportFile['join'] ? json_decode($exportFile['join'], true) : [];
         $condition = $exportFile['condition'] ? json_decode($exportFile['condition'], true) : [];
@@ -1823,6 +1813,8 @@ AND log_id NOT IN
         }
         $order = rtrim($order, ',');
         $limitArr = $exportFile['limit'] ? json_decode($exportFile['limit'], true) : [];
+        $offset = 0;
+        $length = '';
         foreach ($limitArr as $k => $v) {
             switch ($k) {
                 case 'offset':
@@ -1834,8 +1826,22 @@ AND log_id NOT IN
             }
         }
         $field = $exportFile['field'];
+        $ext = $exportFile['ext'] ? json_decode($exportFile['ext'], true) : [];
+        switch ($exportFile['type']) {
+            case 'order':
+                $this->exportOrder($table, $join, $condition, $field, $group, $order, $offset, $length, $exportFile['id'], $exportFile['name'], $exportFile['path']);
+                break;
+            case 'school_user_course':
+                $this->exportSchoolUserCourse($table, $join, $condition, $field, $group, $order, $offset, $length, $ext, $exportFile['id'], $exportFile['name'], $exportFile['path']);
+                break;
+        }
+        exit();
+    }
+
+    private function exportOrder($table, $join, $condition, $field, $group, $order, $offset, $length, $exportFileId, $exportFileName, $exportFilePath)
+    {
         // 订单数据
-        $orderList = M($table)->join($join)->where($condition)->field($field)->group($group)->order($order)->limit($offset ?? 0, $length ?? '')->select();
+        $orderList = M($table)->join($join)->where($condition)->field($field)->group($group)->order($order)->limit($offset, $length)->select();
         // 等级列表
         $levelList = M('distribut_level')->getField('level_id, level_name');
         // 会员升级记录
@@ -1947,10 +1953,79 @@ AND log_id NOT IN
             $dataList[$key][] = $goodsSalesAmount;
             $dataList[$key][] = $goodsTaxOut;
         }
-        toCsvExcel($dataList, $headList, $exportFile['name'], $exportFile['path']);
-        M('export_file')->where(['id' => $exportFile['id']])->update([
+        toCsvExcel($dataList, $headList, $exportFileName, $exportFilePath);
+        M('export_file')->where(['id' => $exportFileId])->update([
             'status' => 1,
-            'url' => SITE_URL . '/' . $exportFile['path'] . $exportFile['name']
+            'url' => SITE_URL . '/' . $exportFilePath . $exportFileName
+        ]);
+    }
+
+    private function exportSchoolUserCourse($table, $join, $condition, $field, $group, $order, $offset, $length, $ext, $exportFileId, $exportFileName, $exportFilePath)
+    {
+        // 用户数据
+        $userList = M($table)->join($join)->where($condition)->field($field)->group($group)->order($order)->limit($offset, $length)->select();
+        // 学习课程id
+        $courseIds = M('school_article')->where([
+            'learn_type' => ['IN', [1, 2]],
+            'status' => 1,
+        ])->getField('id', true);
+        // APP等级列表
+        $appGrade = M('distribut_level')->getField('level_id, level_name', true);
+        // 代理商等级列表
+        $svipGrade = M('svip_grade')->getField('app_level, name', true);
+        // 代理商职级列表
+        $svipLevel = M('svip_level')->getField('app_level, name', true);
+        $timeFrom = $ext['time_from'];
+        $timeTo = $ext['time_to'];
+        $schoolArticle = new \app\admin\controller\school\Article();
+        foreach ($userList as &$user) {
+            $user['course_num'] = 0;    // 学习课程数量
+            // APP等级
+            $user['app_grade_name'] = $appGrade[$user['distribut_level']];
+            // 代理商等级
+            $user['svip_grade_name'] = $user['distribut_level'] == 3 ? $svipGrade[$user['svip_grade']] : '';
+            // 代理商等级
+            $user['svip_level_name'] = $user['distribut_level'] == 3 ? $svipLevel[$user['svip_level']] : '';
+            // 用户达标课程数量
+            $userData = [
+                'user_id' => $user['user_id'],
+                'app_grade' => $user['distribut_level'],
+                'svip_grade' => $user['svip_grade'],
+                'svip_level' => $user['svip_level'],
+            ];
+            $res = $schoolArticle->checkUserCourseNum(false, $userData, $courseIds, $timeFrom, $timeTo);
+            $user['course_num'] = $res['course_num'];
+            // 用户首次进入商学院的时间
+            $firstVisit = M('user_school_config')->where(['type' => 'first_visit', 'user_id' => $user['user_id']])->value('add_time');
+            $user['first_visit'] = $firstVisit ? date('Y-m-d H:i:s', $firstVisit) : '';
+            $dataList[] = [
+                $user['user_id'],
+                $user['nickname'],
+                $user['user_name'],
+                $user['app_grade_name'],
+                $user['svip_grade_name'],
+                $user['svip_level_name'],
+                $user['course_num'],
+                $user['school_credit'],
+                $user['first_visit'],
+                $user['svip_activate_time'] != 0 ? date('Y-m-d H:i:s', $user['svip_activate_time']) : '',
+                $user['svip_upgrade_time'] != 0 ? date('Y-m-d H:i:s', $user['svip_upgrade_time']) : '',
+                $user['svip_referee_number'],
+                $user['grade_referee_num1'],
+                $user['grade_referee_num2'],
+                $user['grade_referee_num3'],
+                $user['grade_referee_num4'],
+            ];
+        }
+        // 表头
+        $headList = [
+            '用户ID', '用户昵称', '用户名', 'APP等级', '代理商等级', '代理商职级', '课程数量', '乐活豆数量', '首次进入商学院',
+            '211系统激活时间', '211系统升级代理商时间', '推荐总人数', '推荐游客人数', '推荐优享会员人数', '推荐尊享会员人数', '推荐代理商人数'
+        ];
+        toCsvExcel($dataList, $headList, $exportFileName, $exportFilePath);
+        M('export_file')->where(['id' => $exportFileId])->update([
+            'status' => 1,
+            'url' => SITE_URL . '/' . $exportFilePath . $exportFileName
         ]);
     }
 }

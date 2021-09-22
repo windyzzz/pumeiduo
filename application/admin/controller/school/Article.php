@@ -43,8 +43,12 @@ class Article extends Base
         if ($nickname = I('nickname', '')) {
             $where['nickname'] = $nickname;
         }
+        $timeFrom = I('time_from', '') ? strtotime(I('time_from')) : '';
+        $timeTo = I('time_to', '') ? strtotime(I('time_to')) : '';
         $userList = M('users')->where($where)->order('user_id DESC');
-        if (!$isExport) {
+        if ($isExport) {
+            $this->exportUserCourseList($where, ['time_from' => $timeFrom, 'time_to' => $timeTo]);
+        } else {
             // 用户总数
             $count = M('users')->where($where)->count();
             $page = new Page($count, 10);
@@ -57,9 +61,6 @@ class Article extends Base
             'learn_type' => ['IN', [1, 2]],
             'status' => 1,
         ])->getField('id', true);
-        $timeFrom = I('time_from', '') ? strtotime(I('time_from')) : '';
-        $timeTo = I('time_to', '') ? strtotime(I('time_to')) : '';
-        $dataList = [];     // 导出数据
         foreach ($userList as &$user) {
             $user['course_num'] = 0;    // 学习课程数量
             // APP等级
@@ -80,48 +81,54 @@ class Article extends Base
             // 用户首次进入商学院的时间
             $firstVisit = M('user_school_config')->where(['type' => 'first_visit', 'user_id' => $user['user_id']])->value('add_time');
             $user['first_visit'] = $firstVisit ? date('Y-m-d H:i:s', $firstVisit) : '';
-            $dataList[] = [
-                $user['user_id'],
-                $user['nickname'],
-                $user['user_name'],
-                $user['app_grade_name'],
-                $user['svip_grade_name'],
-                $user['svip_level_name'],
-                $user['course_num'],
-                $user['school_credit'],
-                $user['first_visit'],
-                $user['svip_activate_time'] != 0 ? date('Y-m-d H:i:s', $user['svip_activate_time']) : '',
-                $user['svip_upgrade_time'] != 0 ? date('Y-m-d H:i:s', $user['svip_upgrade_time']) : '',
-                $user['svip_referee_number'],
-                $user['grade_referee_num1'],
-                $user['grade_referee_num2'],
-                $user['grade_referee_num3'],
-                $user['grade_referee_num4'],
-            ];
         }
-        if (!$isExport) {
-            $this->assign('app_grade', $this->appGrade);
-            $this->assign('svip_grade', $this->svipGrade);
-            $this->assign('svip_level', $this->svipLevel);
-            $this->assign('select_app_grade', $appGrade);
-            $this->assign('select_svip_grade', $svipGrade);
-            $this->assign('select_svip_level', $svipLevel);
-            $this->assign('user_id', $userId);
-            $this->assign('user_name', $username);
-            $this->assign('nickname', $nickname);
-            $this->assign('time_from', I('time_from', ''));
-            $this->assign('time_to', I('time_to', ''));
-            $this->assign('page', $page);
-            $this->assign('list', $userList);
-            return $this->fetch('user_course_list');
-        } else {
-            // 表头
-            $headList = [
-                '用户ID', '用户昵称', '用户名', 'APP等级', '代理商等级', '代理商职级', '课程数量', '乐活豆数量', '首次进入商学院',
-                '211系统激活时间', '211系统升级代理商时间', '推荐总人数', '推荐游客人数', '推荐优享会员人数', '推荐尊享会员人数', '推荐代理商人数'
-            ];
-            toCsvExcel($dataList, $headList, 'user_course_list');
-        }
+        $this->assign('app_grade', $this->appGrade);
+        $this->assign('svip_grade', $this->svipGrade);
+        $this->assign('svip_level', $this->svipLevel);
+        $this->assign('select_app_grade', $appGrade);
+        $this->assign('select_svip_grade', $svipGrade);
+        $this->assign('select_svip_level', $svipLevel);
+        $this->assign('user_id', $userId);
+        $this->assign('user_name', $username);
+        $this->assign('nickname', $nickname);
+        $this->assign('time_from', I('time_from', ''));
+        $this->assign('time_to', I('time_to', ''));
+        $this->assign('page', $page);
+        $this->assign('list', $userList);
+        return $this->fetch('user_course_list');
+    }
+
+    /**
+     * 导出用户学习课程列表
+     * @param array $where
+     * @param array $ext
+     */
+    private function exportUserCourseList($where = [], $ext = [])
+    {
+        // 数据表
+        $table = 'users';
+        // join连接
+        $join = [];
+        // 排序
+        $order = ['user_id' => 'DESC'];
+        // 字段
+        $field = '*';
+        $path = UPLOAD_PATH . 'order/excel/' . date('Y-m-d') . '/';
+        $name = 'orderList_' . date('Y-m-d_H-i-s') . '.csv';
+        // 导出记录
+        M('export_file')->add([
+            'type' => 'school_user_course',
+            'path' => $path,
+            'name' => $name,
+            'table' => $table,
+            'join' => json_encode($join),
+            'condition' => json_encode($where),
+            'order' => json_encode($order),
+            'field' => $field,
+            'ext' => json_encode($ext),
+            'add_time' => NOW_TIME
+        ]);
+        $this->ajaxReturn(['status' => 1, 'msg' => '添加导出队列成功，请耐心等待后台导出']);
     }
 
     /**
@@ -385,7 +392,7 @@ class Article extends Base
      * @param string $timeTo 学习时间结束
      * @return array
      */
-    private function checkUserCourseNum($isCheck, $user, $courseIds, $timeFrom = '', $timeTo = '')
+    public function checkUserCourseNum($isCheck, $user, $courseIds, $timeFrom = '', $timeTo = '')
     {
         $where = [
             'user_id' => $user['user_id'],
@@ -424,7 +431,7 @@ class Article extends Base
      * @param $user
      * @return array
      */
-    private function checkUserSchoolCredit($user)
+    public function checkUserSchoolCredit($user)
     {
         // 学习规则达标设置
         $return = ['status' => 0];
