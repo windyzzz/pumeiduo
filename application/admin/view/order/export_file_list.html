@@ -1,0 +1,126 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <script src="__PUBLIC__/js/jquery-1.10.2.min.js"></script>
+    <script src="__PUBLIC__/js/layer/layer-min.js"></script>
+    <script src="__PUBLIC__/js/global.js"></script>
+</head>
+<include file="public/layout"/>
+<body>
+<div class="adderss-add">
+    <div class="ner-reac ol_box_4" style="visibility: visible; position: fixed; z-index: 500; width: 100%; height:100%">
+        <div class="flexigrid">
+            <div class="mDiv">
+                <div title="刷新数据" class="pReload"><i class="fa fa-refresh"></i></div>
+            </div>
+            <div class="hDiv">
+                <div class="hDivBox">
+                    <table cellspacing="0" cellpadding="0">
+                        <thead>
+                        <tr>
+                            <th align="left" abbr="article_title" axis="col3" class="">
+                                <div style="text-align: center; width: 300px;" class="">文件名</div>
+                            </th>
+                            <th align="center" abbr="article_time" axis="col6" class="">
+                                <div style="text-align: center; width: 100px;" class="">导出状态</div>
+                            </th>
+                            <th align="center" abbr="article_time" axis="col6" class="">
+                                <div style="text-align: center; width: 120px;" class="">添加时间</div>
+                            </th>
+                            <th align="center" axis="col1" class="handle">
+                                <div style="text-align: center; width: 150px;">操作</div>
+                            </th>
+                            <th style="width:100%" axis="col7">
+                                <div></div>
+                            </th>
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+            <div class="bDiv" style="height: auto;">
+                <div id="flexigrid" cellpadding="0" cellspacing="0" border="0">
+                    <table>
+                        <tbody>
+                        <foreach name="export_list" item="vo" key="k" >
+                            <tr>
+                                <td align="left" class="">
+                                    <div style="text-align: center; width: 300px;">{$vo.name}</div>
+                                </td>
+                                <td align="left" class="">
+                                    <div style="text-align: center; width: 100px;">
+                                        <switch name='$vo[status]'>
+                                            <case value='0'>
+                                                <p style="color: black">未开始</p>
+                                            </case>
+                                            <case value='1'>
+                                                <p style="color: green">已完成</p>
+                                            </case>
+                                            <case value='2'>
+                                                <p style="color: orange">正在导出</p>
+                                            </case>
+                                            <case value='-1'>
+                                                <p style="color: red">导出失败</p>
+                                            </case>
+                                        </switch>
+                                    </div>
+                                </td>
+                                <td align="left" class="">
+                                    <div style="text-align: center; width: 120px;">
+                                        {$vo.add_time|date='Y-m-d H:i:s', ###}
+                                    </div>
+                                </td>
+                                <td align="left" class="handle">
+                                    <div style="text-align: left; width: 150px; max-width:150px;">
+                                        <if condition="$vo[status] == 1">
+                                            <a class="btn blue" href="{$vo.url}"><i class="fa fa-pencil-square-o"></i>下载</a>
+                                            <a class="btn red" href="javascript:void(0)" data-url="{:U('Order/deleteExportFile')}" data-id="{$vo.id}" onClick="deleteExport(this)"><i class="fa fa-pencil-square-o"></i>删除</a>
+                                        </if>
+                                    </div>
+                                </td>
+                                <td align="" class="" style="width: 100%;">
+                                    <div>&nbsp;</div>
+                                </td>
+                            </tr>
+                        </foreach>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {$page->show()}
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        // 点击刷新数据
+        $('.fa-refresh').click(function () {
+            location.href = location.href;
+        });
+    });
+
+    function deleteExport(obj) {
+        layer.confirm('确认删除文件？', {
+            btn: ['确定', '取消'] //按钮
+        }, function () {
+            $.ajax({
+                url: $(obj).attr('data-url'),
+                data: {file_id: $(obj).attr('data-id')},
+                dataType: 'json',
+                success: function (data) {
+                    layer.closeAll();
+                    if (data.status === 1) {
+                        layer.alert(data.msg, {icon: 1, time: 2000});
+                        $(obj).parent().parent().parent().remove();
+                    } else {
+                        layer.alert(data.msg, {icon: 2, time: 3000});
+                    }
+                }
+            })
+        }, function () {
+        });
+    }
+</script>
+</body>
+</html>

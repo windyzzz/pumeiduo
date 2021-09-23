@@ -1790,4 +1790,167 @@ AND log_id NOT IN
 //        $userIds = M('users')->where(['head_pic' => ['LIKE', '%mall.pumeiduo.com/index.php%']])->getField('user_id', true);
 //        M('users')->where(['user_id' => ['IN', $userIds]])->update(['head_pic' => 'https://mall.pumeiduo.com/public/images/default_head.png']);
 //    }
+
+    /**
+     * 文件导出
+     */
+    public function exportFile()
+    {
+        $exportFile = M('export_file')->where(['status' => 0])->find();
+        if ($exportFile) {
+            M('export_file')->where(['id' => $exportFile['id']])->update(['status' => 2]);
+        } else {
+            exit();
+        }
+        switch ($exportFile['type']) {
+            case 'order':
+                $this->exportOrder($exportFile);
+                break;
+        }
+        exit();
+    }
+
+    private function exportOrder($exportFile)
+    {
+        $table = $exportFile['table'];
+        $join = $exportFile['join'] ? json_decode($exportFile['join'], true) : [];
+        $condition = $exportFile['condition'] ? json_decode($exportFile['condition'], true) : [];
+        $group = $exportFile['group'];
+        $orderArr = $exportFile['order'] ? json_decode($exportFile['order'], true) : [];
+        $order = '';
+        foreach ($orderArr as $k => $v) {
+            $order .= $k . ' ' . $v . ',';
+        }
+        $order = rtrim($order, ',');
+        $limitArr = $exportFile['limit'] ? json_decode($exportFile['limit'], true) : [];
+        foreach ($limitArr as $k => $v) {
+            switch ($k) {
+                case 'offset':
+                    $offset = $v;
+                    break;
+                case 'length':
+                    $length = $v;
+                    break;
+            }
+        }
+        $field = $exportFile['field'];
+        // 订单数据
+        $orderList = M($table)->join($join)->where($condition)->field($field)->group($group)->order($order)->limit($offset ?? 0, $length ?? '')->select();
+        // 等级列表
+        $levelList = M('distribut_level')->getField('level_id, level_name');
+        // 会员升级记录
+        $distributeLog = M('distribut_log')->where(['new_level' => 2])->group('user_id')->getField('user_id, add_time');
+        // 订单来源
+        $orderSource = ['1' => '微信', '2' => 'PC', '3' => 'APP', '4' => '管理后台'];
+        // 地区数据
+        $region = get_region_list();
+        // 表头
+        $headList = [
+            '订单编号', '下单日期', '支付日期', '父级ID', '会员ID', '注册时间', '会员等级', '升级VIP时间', '收货人', '收货地址', '电话',
+            '应付金额', '商品金额', '优惠券折扣', '积分折扣', '现金折扣', '优惠促销', '运费', '总pv值', '乐活豆',
+            '订单状态', '支付状态', '发货状态', '订单来源', '支付方式', '订单总销售额', '订单总去税',
+            '商品总数', '商品编号', '商品数量', '商品名称', '商品规格', '商品单价', '交易条件', '商品销售额', '商品去税'
+        ];
+        // 表数据
+        $dataList = [];
+        foreach ($orderList as $key => $order) {
+            // 支付时间
+            $payTime = $order['pay_time'] ? date('Y-m-d H:i:s', $order['pay_time']) : '';
+            // 用户注册时间
+            $regTime = $order['reg_time'] ? date('Y-m-d H:i:s', $order['reg_time']) : '';
+            // 用户等级
+            $level = $order['distribut_level'] ? $levelList[$order['distribut_level']] : '普通会员';
+            // 升级VIP时间
+            $levelUpTime = $distributeLog[$order['user_id']] ? date('Y-m-d H:i:s', $distributeLog[$order['user_id']]) : '';
+            $dataList[$key] = [
+                "\t" . $order['order_sn'],
+                $order['add_time'],
+                $payTime,
+                $order['first_leader'],
+                $order['user_id'],
+                $regTime,
+                $level,
+                $levelUpTime,
+                $order['consignee'],
+                "{$region[$order['province']]},{$region[$order['city']]},{$region[$order['district']]},{$region[$order['twon']]}{$order['address']}",
+                "\t" . $order['mobile'],
+                $order['order_amount'],
+                $order['goods_price'],
+                $order['coupon_price'],
+                $order['integral_money'],
+                $order['user_electronic'],
+                $order['order_prom_amount'],
+                $order['shipping_price'],
+                $order['order_pv'],
+                $order['school_credit'],
+                C('ORDER_STATUS')[$order['order_status']],
+                $this->pay_status[$order['pay_status']],
+                $this->shipping_status[$order['shipping_status']],
+                $orderSource[$order['source']],
+                $order['pay_name'],
+            ];
+            // 订单商品
+            $orderGoods = D('order_goods og')->join('goods g', 'g.goods_id = og.goods_id')
+                ->where('og.order_id=' . $order['order_id'])
+                ->field('og.trade_type, og.goods_num, og.spec_key_name, og.member_goods_price, g.goods_sn, g.goods_name, g.is_abroad')->select();
+            $goods_amount = 0;
+            $goods_sn = [];
+            $goods_num = [];
+            $goods_name = [];
+            $goods_attr = [];
+            $goods_price = [];
+            $goods_trade = [];
+            $totalSalesAmount = 0;      // 订单总销售额
+            $totalTaxOut = 0;           // 订单总去税
+            $goodsSalesAmount = [];     // 商品销售额
+            $goodsTaxOut = [];          // 商品去税
+            $goodsTradeType = '';
+            foreach ($orderGoods as $goods) {
+                $goods_amount += $goods['goods_num'];
+                $goods_sn[] = $goods['goods_sn'];
+                $goods_num[] = $goods['goods_num'];
+                $goods_name[] = $goods['goods_name'];
+                $goods_attr[] = $goods['spec_key_name'];
+                $goods_price[] = $goods['member_goods_price'];
+//                switch ($order['order_type']) {
+//                    case 2:
+//                        $goodsTradeType = '韩国购';
+//                        break;
+//                    default:
+//                        $goodsTradeType = trade_type($goods['trade_type']);
+//                }
+                $totalSalesAmount = bcadd($totalSalesAmount, bcmul($goods['goods_num'], $goods['member_goods_price'], 2), 2);
+                $goodsSalesAmount[] = bcmul($goods['goods_num'], $goods['member_goods_price'], 2);
+                if ($goods['is_abroad'] == 1) {
+                    $goodsTradeType = '韩国购';
+                    $goodsTaxOut[] = bcdiv(bcmul(bcmul($goods['goods_num'], $goods['member_goods_price'], 2), 0.25, 2), 1.13, 2);
+                } else {
+                    $goodsTradeType = trade_type($goods['trade_type']);
+                    $goodsTaxOut[] = bcdiv(bcmul($goods['goods_num'], $goods['member_goods_price'], 2), 1.13, 2);
+                }
+                $goods_trade[] = $goodsTradeType;
+            }
+            if ($goodsTradeType == '韩国购') {
+                $totalTaxOut = bcdiv(bcmul($totalSalesAmount, 0.25, 2), 1.13, 2);
+            } else {
+                $totalTaxOut = bcdiv($totalSalesAmount, 1.13, 2);
+            }
+            $dataList[$key][] = $totalSalesAmount;
+            $dataList[$key][] = $totalTaxOut;
+            $dataList[$key][] = $goods_amount;
+            $dataList[$key][] = $goods_sn;
+            $dataList[$key][] = $goods_num;
+            $dataList[$key][] = $goods_name;
+            $dataList[$key][] = $goods_attr;
+            $dataList[$key][] = $goods_price;
+            $dataList[$key][] = $goods_trade;
+            $dataList[$key][] = $goodsSalesAmount;
+            $dataList[$key][] = $goodsTaxOut;
+        }
+        toCsvExcel($dataList, $headList, $exportFile['name'], $exportFile['path']);
+        M('export_file')->where(['id' => $exportFile['id']])->update([
+            'status' => 1,
+            'url' => SITE_URL . '/' . $exportFile['path'] . $exportFile['name']
+        ]);
+    }
 }

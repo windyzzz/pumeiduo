@@ -227,7 +227,13 @@ function toCsvExcel($dataList, $headList, $fileName, $exportUrl = 'php://output'
     header('Content-Disposition: attachment;filename="' . $fileName . '_' . date('Y-m-d') . '.csv"');
     header('Cache-Control: max-age=0');
     //打开PHP文件句柄,php://output 表示直接输出到浏览器,$exportUrl表示输出到指定路径文件下
-    $fp = fopen($exportUrl, 'a');
+    if ($exportUrl != 'php://output') {
+        if (!is_dir($exportUrl)) {
+            mkdir($exportUrl, 0755, true);
+        }
+        $exportUrl .= '/' . $fileName;
+    }
+    $fp = fopen($exportUrl, 'w');
 
     //输出Excel列名信息
     foreach ($headList as $key => $value) {
