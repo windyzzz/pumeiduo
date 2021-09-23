@@ -345,10 +345,14 @@ class Index
             $schoolPublicize = $ossLogic::url(substr($schoolPublicize[0], strrpos($schoolPublicize[0], 'img:') + 4));
         }
         /*
-         * part2：韩国购 SVIP宣传 促销商品 新品
+         * part2：韩国购 海外购 SVIP宣传 促销商品 新品
          */
-        $abroadGoods = M('goods')->where(['is_on_sale' => 1, 'is_abroad' => 1, 'is_agent' => 0, 'applet_on_sale' => 0])->order('sort DESC, goods_id DESC')->field('goods_id, original_img, shop_price exchange_price')->limit(0, 2)->select();
-        foreach ($abroadGoods as &$goods) {
+//        $abroadGoods = M('goods')->where(['is_on_sale' => 1, 'is_abroad' => 1, 'is_agent' => 0, 'applet_on_sale' => 0])->order('sort DESC, goods_id DESC')->field('goods_id, original_img, shop_price exchange_price')->limit(0, 2)->select();
+//        foreach ($abroadGoods as &$goods) {
+//            $goods['original_img_new'] = getFullPath($goods['original_img']);
+//        }
+        $abroad2Goods = M('goods')->where(['is_on_sale' => 1, 'is_abroad2' => 1, 'is_agent' => 0, 'applet_on_sale' => 0])->order('sort DESC, goods_id DESC')->field('goods_id, original_img, shop_price exchange_price')->limit(0, 2)->select();
+        foreach ($abroad2Goods as &$goods) {
             $goods['original_img_new'] = getFullPath($goods['original_img']);
         }
         $recommendGoods = M('goods')->where(['is_on_sale' => 1, 'is_recommend' => 1, 'is_agent' => 0, 'applet_on_sale' => 0])->order('sort DESC, goods_id DESC')->field('goods_id, original_img, shop_price exchange_price')->limit(0, 2)->select();
@@ -493,6 +497,7 @@ class Index
                 'image' => $schoolPublicize ?? ''
             ],
             'abroad' => ['goods_list' => $abroadGoods ?? []],
+            'abroad2' => ['goods_list' => $abroad2Goods ?? []],
             'recommend' => ['goods_list' => $recommendGoods ?? []],
             'new_' => ['goods_list' => $newGoods ?? []],
             'svip' => ['image' => $svipPublicize ?? ''],
