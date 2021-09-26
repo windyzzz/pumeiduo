@@ -304,8 +304,12 @@ class Module extends Base
      */
     public function getClass()
     {
-        $moduleId = I('module_id');
-        $class = M('school_class')->where('module_id', $moduleId)->field('id, name')->select();
+        $where = ['module_id' => I('module_id')];
+        $isLearn = I('is_learn', 0);
+        if ($isLearn) {
+            $where['is_learn'] = $isLearn;
+        }
+        $class = M('school_class')->where($where)->field('id, name')->select();
         $this->ajaxReturn(['status' => 1, 'res' => $class]);
     }
 

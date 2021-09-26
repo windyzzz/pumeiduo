@@ -8,7 +8,7 @@
         <div class="item-title">
             <a class="back" href="javascript:history.back();" title="返回列表"><i class="fa fa-arrow-circle-o-left"></i></a>
             <div class="subject">
-                <h3>用户学习课程列表</h3>
+                <h3>用户结业情况</h3>
             </div>
         </div>
     </div>
@@ -33,7 +33,27 @@
             </div>
             <div title="刷新数据" class="pReload"><i class="fa fa-refresh"></i></div>
         </div>
-        <form class="navbar-form form-inline" id="search-form" action="{:U('school.article/userCourseList')}" method="post">
+        <form class="navbar-form form-inline" id="search-form" action="{:U('school.article/userGraduateList')}" method="post">
+            <div class="sDiv">
+                <div class="sDiv2">
+                    <select name="module_id">
+                        <option value="">所属模块</option>
+                        <volist name="module_list" id="vo" key="k">
+                            <option value="{$key}" <if condition="$module_id == $key">selected</if>>{$vo}</option>
+                        </volist>
+                    </select>
+                </div>
+                <div class="sDiv2">
+                    <select name="class_id">
+                        <option value="">所属分类</option>
+                        <if condition="!empty($class_list)">
+                            <volist name="class_list" id="vo" key="k">
+                                <option value="{$key}" <if condition="$class_id == $key">selected</if>>{$vo}</option>
+                            </volist>
+                        </if>
+                    </select>
+                </div>
+            </div>
             <div class="sDiv">
                 <div class="sDiv2">
                     <select name="app_grade">
@@ -127,28 +147,13 @@
                             <div style="text-align: center; width: 120px;" class="">乐活豆数量</div>
                         </th>
                         <th align="left" abbr="send_type" axis="col4" class="">
-                            <div style="text-align: center; width: 150px;" class="">首次进入商学院</div>
+                            <div style="text-align: center; width: 80px;" class="">是否已结业</div>
                         </th>
                         <th align="left" abbr="send_type" axis="col4" class="">
                             <div style="text-align: center; width: 150px;" class="">211系统激活时间</div>
                         </th>
                         <th align="left" abbr="send_type" axis="col4" class="">
                             <div style="text-align: center; width: 150px;" class="">211系统升级代理商时间</div>
-                        </th>
-                        <th align="left" abbr="send_type" axis="col4" class="">
-                            <div style="text-align: center; width: 100px;" class="">推荐总人数</div>
-                        </th>
-                        <th align="left" abbr="send_type" axis="col4" class="">
-                            <div style="text-align: center; width: 100px;" class="">推荐游客人数</div>
-                        </th>
-                        <th align="left" abbr="send_type" axis="col4" class="">
-                            <div style="text-align: center; width: 100px;" class="">推荐优享会员人数</div>
-                        </th>
-                        <th align="left" abbr="send_type" axis="col4" class="">
-                            <div style="text-align: center; width: 100px;" class="">推荐尊享会员人数</div>
-                        </th>
-                        <th align="left" abbr="send_type" axis="col4" class="">
-                            <div style="text-align: center; width: 100px;" class="">推荐代理商人数</div>
                         </th>
                         <th style="width:100%" axis="col7">
                             <div></div>
@@ -202,7 +207,13 @@
                                 <div style="text-align: center; width: 120px;">{$vo.school_credit}</div>
                             </td>
                             <td align="left" class="">
-                                <div style="text-align: center; width: 150px;">{$vo.first_visit}</div>
+                                <div style="text-align: center; width: 80px;">
+                                    <if condition="$vo[is_graduate] == 1">
+                                        <span style="color: green">已结业</span>
+                                    <else/>
+                                        <span style="color: red">未结业</span>
+                                    </if>
+                                </div>
                             </td>
                             <td align="left" class="">
                                 <div style="text-align: center; width: 150px;">
@@ -217,21 +228,6 @@
                                         {$vo.svip_upgrade_time|date='Y-m-d H:i:s', ###}
                                     </if>
                                 </div>
-                            </td>
-                            <td align="left" class="">
-                                <div style="text-align: center; width: 100px;">{$vo.svip_referee_number}</div>
-                            </td>
-                            <td align="left" class="">
-                                <div style="text-align: center; width: 100px;">{$vo.grade_referee_num1}</div>
-                            </td>
-                            <td align="left" class="">
-                                <div style="text-align: center; width: 100px;">{$vo.grade_referee_num2}</div>
-                            </td>
-                            <td align="left" class="">
-                                <div style="text-align: center; width: 100px;">{$vo.grade_referee_num3}</div>
-                            </td>
-                            <td align="left" class="">
-                                <div style="text-align: center; width: 100px;">{$vo.grade_referee_num4}</div>
                             </td>
                             <td align="" class="" style="width: 100%;">
                                 <div>&nbsp</div>
@@ -261,8 +257,31 @@
 
         // 点击刷新数据
         $('.fa-refresh').click(function () {
-            location.href = "{:U('school.article/userCourseList')}";
+            location.href = "{:U('school.article/userGraduateList')}";
         });
+    });
+
+    $('select[name="module_id"]').change(function () {
+        if (this.value === '') {
+            $('select[name="class_id"]').html('<option value="">所属分类</option>');
+        } else {
+            $.ajax({
+                type: "GET",
+                url: "{:U('school.module/getClass')}",
+                data: {module_id: this.value, is_learn: 1},
+                dataType: 'json',
+                success: function (data) {
+                    option = '<option value="">所属分类</option>';
+                    $.each(data.res, function (index, item) {
+                        option = option + '<option value="' + item.id + '">' + item.name + '</option>';
+                    });
+                    $('select[name="class_id"]').html(option);
+                },
+                error: function (request) {
+                    layer.msg("服务器繁忙, 请联系管理员!", {icon: 1, time: 2000});
+                }
+            });
+        }
     });
 
     function listExport() {

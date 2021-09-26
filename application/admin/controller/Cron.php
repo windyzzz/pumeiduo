@@ -1975,8 +1975,8 @@ AND log_id NOT IN
         $svipGrade = M('svip_grade')->getField('app_level, name', true);
         // 代理商职级列表
         $svipLevel = M('svip_level')->getField('app_level, name', true);
-        $timeFrom = $ext['time_from'];
-        $timeTo = $ext['time_to'];
+        $timeFrom = $ext['time_from'] ?? '';
+        $timeTo = $ext['time_to'] ?? '';
         foreach ($userList as &$user) {
             $user['course_num'] = 0;    // 学习课程数量
             // APP等级

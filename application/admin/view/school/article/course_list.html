@@ -42,7 +42,7 @@
                 <div class="sDiv2">
                     <select name="module_id">
                         <option value="">所属模块</option>
-                        <volist name="module" id="vo" key="k">
+                        <volist name="module_list" id="vo" key="k">
                             <option value="{$key}" <if condition="$module_id == $key">selected</if>>{$vo}</option>
                         </volist>
                     </select>
@@ -50,8 +50,8 @@
                 <div class="sDiv2">
                     <select name="class_id">
                         <option value="">所属分类</option>
-                        <if condition="!empty($class)">
-                            <volist name="class" id="vo" key="k">
+                        <if condition="!empty($class_list)">
+                            <volist name="class_list" id="vo" key="k">
                                 <option value="{$key}" <if condition="$class_id == $key">selected</if>>{$vo}</option>
                             </volist>
                         </if>
