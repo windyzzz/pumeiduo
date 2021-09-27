@@ -1834,6 +1834,9 @@ AND log_id NOT IN
             case 'school_user_course':
                 $this->exportSchoolUserCourse($table, $join, $condition, $field, $group, $order, $offset, $length, $ext, $exportFile['id'], $exportFile['name'], $exportFile['path']);
                 break;
+            case 'school_user_graduate':
+                $this->exportSchoolUserGraduate($table, $join, $condition, $field, $group, $order, $offset, $length, $ext, $exportFile['id'], $exportFile['name'], $exportFile['path']);
+                break;
         }
         exit();
     }
@@ -1977,6 +1980,7 @@ AND log_id NOT IN
         $svipLevel = M('svip_level')->getField('app_level, name', true);
         $timeFrom = $ext['time_from'] ?? '';
         $timeTo = $ext['time_to'] ?? '';
+        $dataList = [];
         foreach ($userList as &$user) {
             $user['course_num'] = 0;    // 学习课程数量
             // APP等级
@@ -1992,7 +1996,7 @@ AND log_id NOT IN
                 'svip_grade' => $user['svip_grade'],
                 'svip_level' => $user['svip_level'],
             ];
-            $res = $this->checkUserCourseNum(false, $userData, $courseIds, $timeFrom, $timeTo);
+            $res = $this->checkUserCourseNum($userData, $courseIds, false, false, $timeFrom, $timeTo);
             $user['course_num'] = $res['course_num'];
             // 用户首次进入商学院的时间
             $firstVisit = M('user_school_config')->where(['type' => 'first_visit', 'user_id' => $user['user_id']])->value('add_time');
@@ -2028,25 +2032,92 @@ AND log_id NOT IN
         ]);
     }
 
+    private function exportSchoolUserGraduate($table, $join, $condition, $field, $group, $order, $offset, $length, $ext, $exportFileId, $exportFileName, $exportFilePath)
+    {
+        $moduleName = M('school')->where(['id' => $ext['module_id']])->value('name');
+        $className = M('school_class')->where(['id' => $ext['class_id']])->value('name');
+        // 模块分类下的课程列表
+        $courseIds = M('school_article')->where(['class_id' => $ext['class_id'], 'learn_type' => ['IN', [1, 2]], 'status' => 1])->getField('id', true);
+        // APP等级列表
+        $appGrade = M('distribut_level')->getField('level_id, level_name', true);
+        // 代理商等级列表
+        $svipGrade = M('svip_grade')->getField('app_level, name', true);
+        // 代理商职级列表
+        $svipLevel = M('svip_level')->getField('app_level, name', true);
+        // 用户数据
+        $userList = M($table)->join($join)->where($condition)->field($field)->group($group)->order($order)->limit($offset, $length)->select();
+        $dataList = [];
+        foreach ($userList as &$user) {
+            $user['course_num'] = 0;        // 学习课程数量
+            $user['is_graduate'] = 0;       // 是否已结业
+            // APP等级
+            $user['app_grade_name'] = $appGrade[$user['distribut_level']];
+            // 代理商等级
+            $user['svip_grade_name'] = $user['distribut_level'] == 3 ? $svipGrade[$user['svip_grade']] : '';
+            // 代理商等级
+            $user['svip_level_name'] = $user['distribut_level'] == 3 ? $svipLevel[$user['svip_level']] : '';
+            // 用户达标课程数量
+            $userData = [
+                'user_id' => $user['user_id'],
+                'app_grade' => $user['distribut_level'],
+                'svip_grade' => $user['svip_grade'],
+                'svip_level' => $user['svip_level'],
+            ];
+            $res = $this->checkUserCourseNum($userData, $courseIds, false);
+            $user['course_num'] = $res['course_num'];
+            // 是否已结业
+            $res = $this->checkUserCourseNum($userData, $courseIds, false, true);
+            $userLearnedCourseNum = $res['course_num'];
+            if ($userLearnedCourseNum == count($courseIds)) {
+                $user['is_graduate'] = 1;
+            }
+            $dataList[] = [
+                $user['user_id'],
+                $user['nickname'],
+                $user['user_name'],
+                $user['app_grade_name'],
+                $user['svip_grade_name'],
+                $user['svip_level_name'],
+                $user['course_num'],
+                $user['school_credit'],
+                $moduleName,
+                $className,
+                $user['is_graduate'] == 0 ? '未结业' : '已结业',
+                $user['svip_activate_time'] != 0 ? date('Y-m-d H:i:s', $user['svip_activate_time']) : '',
+                $user['svip_upgrade_time'] != 0 ? date('Y-m-d H:i:s', $user['svip_upgrade_time']) : '',
+            ];
+        }
+        // 表头
+        $headList = [
+            '用户ID', '用户昵称', '用户名', 'APP等级', '代理商等级', '代理商职级', '课程数量', '乐活豆数量',
+            '所属模块', '所属分类', '是否已结业', '211系统激活时间', '211系统升级代理商时间'
+        ];
+        toCsvExcel($dataList, $headList, $exportFileName, $exportFilePath);
+        M('export_file')->where(['id' => $exportFileId])->update([
+            'status' => 1,
+            'url' => SITE_URL . '/' . $exportFilePath . $exportFileName
+        ]);
+    }
+
     /**
      * 检查用户是否满足课程数量达标
-     * @param $isCheck
-     * @param $user
-     * @param $courseIds
-     * @param string $timeFrom
-     * @param string $timeTo
+     * @param array $user 用户信息
+     * @param array $courseIds 学习课程IDs
+     * @param bool $isCheck 是否检查达标
+     * @param bool $isLearned 是否已经学习完成
+     * @param string $timeFrom 学习时间开始
+     * @param string $timeTo 学习时间结束
      * @return array
      */
-    private function checkUserCourseNum($isCheck, $user, $courseIds, $timeFrom = '', $timeTo = '')
+    private function checkUserCourseNum($user, $courseIds, $isCheck = false, $isLearned = false, $timeFrom = '', $timeTo = '')
     {
         $where = [
             'user_id' => $user['user_id'],
             'article_id' => ['IN', $courseIds],
         ];
         if ($isCheck) $where['status'] = 1;
-        if ($timeFrom && $timeTo) {
-            $where['finish_time'] = ['BETWEEN', [$timeFrom, $timeTo]];
-        }
+        if ($isLearned) $where['status'] = 1;
+        if ($timeFrom && $timeTo) $where['finish_time'] = ['BETWEEN', [$timeFrom, $timeTo]];
         // 用户学习课程记录总数
         $userCourseNum = M('user_school_article')->where($where)->getField('count(article_id) as count');
         $userCourseNum = $userCourseNum ?? 0;

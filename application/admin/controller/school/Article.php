@@ -99,11 +99,44 @@ class Article extends Base
         // 字段
         $field = 'user_id, nickname, user_name, distribut_level, svip_grade, svip_level, school_credit, 
         svip_activate_time, svip_upgrade_time, svip_referee_number, grade_referee_num1, grade_referee_num2, grade_referee_num3, grade_referee_num4';
-        $path = UPLOAD_PATH . 'order/excel/' . date('Y-m-d') . '/';
-        $name = 'orderList_' . date('Y-m-d_H-i-s') . '.csv';
+        $path = UPLOAD_PATH . 'school/excel/' . date('Y-m-d') . '/';
+        $name = 'userCourseList_' . date('Y-m-d_H-i-s') . '.csv';
         // 导出记录
         M('export_file')->add([
             'type' => 'school_user_course',
+            'path' => $path,
+            'name' => $name,
+            'table' => $table,
+            'join' => json_encode($join),
+            'condition' => json_encode($where),
+            'order' => json_encode($order),
+            'field' => $field,
+            'ext' => json_encode($ext),
+            'add_time' => NOW_TIME
+        ]);
+        $this->ajaxReturn(['status' => 1, 'msg' => '添加导出队列成功，请耐心等待后台导出']);
+    }
+
+    /**
+     * 导出用户结业情况列表
+     * @param array $where
+     * @param array $ext
+     */
+    private function exportUserGraduateList($where = [], $ext = [])
+    {
+        // 数据表
+        $table = 'users';
+        // join连接
+        $join = [];
+        // 排序
+        $order = ['user_id' => 'DESC'];
+        // 字段
+        $field = 'user_id, nickname, user_name, distribut_level, svip_grade, svip_level, school_credit, svip_activate_time, svip_upgrade_time';
+        $path = UPLOAD_PATH . 'school/excel/' . date('Y-m-d') . '/';
+        $name = 'userGraduateList_' . date('Y-m-d_H-i-s') . '.csv';
+        // 导出记录
+        M('export_file')->add([
+            'type' => 'school_user_graduate',
             'path' => $path,
             'name' => $name,
             'table' => $table,
@@ -218,15 +251,29 @@ class Article extends Base
     public function userCourseArticleList()
     {
         $isExport = I('is_export', '');     // 是否导出
+        $moduleId = I('module_id', 0);
+        $classId = I('class_id', 0);
         $userId = I('user_id');
         $title = I('title');
         $learnStatus = I('learn_status', '');
         $questionnaireStatus = I('questionnaire_status', '');
-        // 学习课程id
-        $courseIds = M('school_article')->where([
+        $articleWhere = [
             'learn_type' => ['IN', [1, 2]],
             'status' => 1,
-        ])->getField('id', true);
+        ];
+        // 模块列表
+        $notModuleType = ['module6', 'module7', 'module8'];
+        $moduleList = M('school')->where(['type' => ['NOT IN', $notModuleType]])->getField('id, name', true);
+        // 模块分类列表
+        if ($moduleId) {
+            $classList = M('school_class')->where(['module_id' => $moduleId, 'is_learn' => 1])->getField('id, name', true);
+        }
+        // 模块分类
+        if ($classId) {
+            $articleWhere['class_id'] = $classId;
+        }
+        // 学习课程id
+        $courseIds = M('school_article')->where($articleWhere)->getField('id', true);
         $where = [
             'usa.user_id' => $userId,
             'usa.article_id' => ['IN', $courseIds],
@@ -254,6 +301,10 @@ class Article extends Base
             // 列表
             $userArticle = $userArticle->limit($page->firstRow . ',' . $page->listRows)->order('sa.publish_time DESC, sa.sort DESC');
             $list = $userArticle->select();
+            $this->assign('module_id', $moduleId);
+            $this->assign('module_list', $moduleList);
+            $this->assign('class_id', $classId);
+            $this->assign('class_list', $classList ?? []);
             $this->assign('user_id', $userId);
             $this->assign('title', $title);
             $this->assign('learn_status', $learnStatus !== '' ? (int)$learnStatus : '');
@@ -471,7 +522,10 @@ class Article extends Base
         }
     }
 
-
+    /**
+     * 用户结业情况列表
+     * @return mixed
+     */
     public function userGraduateList()
     {
         $isExport = I('is_export', '');     // 是否导出
@@ -499,8 +553,7 @@ class Article extends Base
             $this->error('请先设置分类：' . $className . ' 下的文章为学习课程', U('school.module/config'));
         }
         // 用户列表
-//        $where = ['distribut_level' => ['NEQ', 1]];
-        $where = ['user_id' => 39730];
+        $where = [];
         if ($appGrade = I('app_grade', '')) {
             $where['distribut_level'] = $appGrade;
         }
@@ -533,7 +586,8 @@ class Article extends Base
         }
         $userList = M('users')->where($where)->order('user_id DESC');
         if ($isExport) {
-
+            $ext = ['module_id' => $moduleId, 'class_id' => $classId];
+            $this->exportUserGraduateList($where, $ext);
         } else {
             // 用户总数
             $count = M('users')->where($where)->count();
@@ -1242,7 +1296,7 @@ class Article extends Base
             $this->assign('module_id', $moduleId);
             $this->assign('module_list', $moduleList);
             $this->assign('class_id', $classId);
-            $this->assign('class_list', $class ?? []);
+            $this->assign('class_list', $classList ?? []);
             $this->assign('app_grade', $this->appGrade);
             $this->assign('svip_grade', $this->svipGrade);
             $this->assign('svip_level', $this->svipLevel);
