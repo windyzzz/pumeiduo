@@ -30,8 +30,7 @@ class Article extends Base
             'user_id' => $user['user_id'],
             'article_id' => ['IN', $courseIds],
         ];
-        if ($isCheck) $where['status'] = 1;
-        if ($isLearned) $where['status'] = 1;
+        if ($isCheck || $isLearned) $where['status'] = 1;
         if ($timeFrom && $timeTo) $where['finish_time'] = ['BETWEEN', [$timeFrom, $timeTo]];
         // 用户学习课程记录总数
         $userCourseNum = M('user_school_article')->where($where)->getField('count(article_id) as count');
@@ -179,15 +178,19 @@ class Article extends Base
         if ($nickname = I('nickname', '')) {
             $where['nickname'] = $nickname;
         }
-        $activateTimeFrom = I('activate_time_from', '') ? strtotime(I('activate_time_from')) : '';
-        $activateTimeTo = I('activate_time_to', '') ? strtotime(I('activate_time_to')) : '';
+        $activateTimeFrom = I('activate_time_from', '') ? htmlspecialchars_decode(I('activate_time_from')) : '';
+        if (strpos($activateTimeFrom, '+')) $activateTimeFrom = str_replace('+', ' ', $activateTimeFrom);
+        $activateTimeTo = I('activate_time_to', '') ? htmlspecialchars_decode(I('activate_time_to')) : '';
+        if (strpos($activateTimeTo, '+')) $activateTimeTo = str_replace('+', ' ', $activateTimeTo);
         if ($activateTimeFrom && $activateTimeTo) {
-            $where['svip_activate_time'] = ['BETWEEN', [$activateTimeFrom, $activateTimeTo]];
+            $where['svip_activate_time'] = ['BETWEEN', [strtotime($activateTimeFrom), strtotime($activateTimeTo)]];
         }
-        $upgradeTimeFrom = I('upgrade_time_from', '') ? strtotime(I('upgrade_time_from')) : '';
-        $upgradeTimeTo = I('upgrade_time_to', '') ? strtotime(I('upgrade_time_to')) : '';
+        $upgradeTimeFrom = I('upgrade_time_from', '') ? htmlspecialchars_decode(I('upgrade_time_from')) : '';
+        if (strpos($upgradeTimeFrom, '+')) $upgradeTimeFrom = str_replace('+', ' ', $upgradeTimeFrom);
+        $upgradeTimeTo = I('upgrade_time_to', '') ? htmlspecialchars_decode(I('upgrade_time_to')) : '';
+        if (strpos($upgradeTimeTo, '+')) $upgradeTimeTo = str_replace('+', ' ', $upgradeTimeTo);
         if ($upgradeTimeFrom && $upgradeTimeTo) {
-            $where['svip_upgrade_time'] = ['BETWEEN', [$upgradeTimeFrom, $upgradeTimeTo]];
+            $where['svip_upgrade_time'] = ['BETWEEN', [strtotime($upgradeTimeFrom), strtotime($upgradeTimeTo)]];
         }
         $userList = M('users')->where($where)->order('user_id DESC');
         if ($isExport) {
@@ -235,10 +238,10 @@ class Article extends Base
         $this->assign('user_id', $userId);
         $this->assign('user_name', $username);
         $this->assign('nickname', $nickname);
-        $this->assign('activate_time_from', I('activate_time_from', ''));
-        $this->assign('activate_time_to', I('activate_time_to', ''));
-        $this->assign('upgrade_time_from', I('upgrade_time_from', ''));
-        $this->assign('upgrade_time_to', I('upgrade_time_to', ''));
+        $this->assign('activate_time_from', $activateTimeFrom);
+        $this->assign('activate_time_to', $activateTimeTo);
+        $this->assign('upgrade_time_from', $upgradeTimeFrom);
+        $this->assign('upgrade_time_to', $upgradeTimeTo);
         $this->assign('page', $page);
         $this->assign('list', $userList);
         return $this->fetch('user_course_list');
@@ -287,10 +290,12 @@ class Article extends Base
         if ($questionnaireStatus !== '') {
             $where['usa.is_questionnaire'] = $questionnaireStatus;
         }
-        $timeFrom = I('time_from', '') ? strtotime(I('time_from')) : '';
-        $timeTo = I('time_to', '') ? strtotime(I('time_to')) : '';
+        $timeFrom = I('time_from', '') ? htmlspecialchars_decode(I('time_from')) : '';
+        if (strpos($timeFrom, '+')) $timeFrom = str_replace('+', ' ', $timeFrom);
+        $timeTo = I('time_to', '') ? htmlspecialchars_decode(I('time_to')) : '';
+        if (strpos($timeTo, '+')) $timeTo = str_replace('+', ' ', $timeTo);
         if ($timeFrom && $timeTo) {
-            $where['usa.finish_time'] = ['BETWEEN', [$timeFrom, $timeTo]];
+            $where['usa.finish_time'] = ['BETWEEN', [strtotime($timeFrom), strtotime($timeTo)]];
         }
         $userArticle = M('user_school_article usa')->where($where)->join('school_article sa', 'sa.id = usa.article_id')->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')
             ->field('usa.user_id, usa.article_id, usa.status learn_status, usa.finish_time, usa.is_questionnaire, sa.title, sa.learn_type, sa.status, sa.publish_time, s.name module_name, sc.name class_name');
@@ -309,8 +314,8 @@ class Article extends Base
             $this->assign('title', $title);
             $this->assign('learn_status', $learnStatus !== '' ? (int)$learnStatus : '');
             $this->assign('questionnaire_status', $questionnaireStatus !== '' ? (int)$questionnaireStatus : '');
-            $this->assign('time_from', I('time_from', '') != 'time_to' ? I('time_from') : '');
-            $this->assign('time_to', I('time_to', ''));
+            $this->assign('time_from', $timeFrom);
+            $this->assign('time_to', $timeTo);
             $this->assign('page', $page);
             $this->assign('list', $list);
             return $this->fetch('user_course_article_list');
@@ -574,15 +579,19 @@ class Article extends Base
         if ($nickname = I('nickname', '')) {
             $where['nickname'] = $nickname;
         }
-        $activateTimeFrom = I('activate_time_from', '') ? strtotime(I('activate_time_from')) : '';
-        $activateTimeTo = I('activate_time_to', '') ? strtotime(I('activate_time_to')) : '';
+        $activateTimeFrom = I('activate_time_from', '') ? htmlspecialchars_decode(I('activate_time_from')) : '';
+        if (strpos($activateTimeFrom, '+')) $activateTimeFrom = str_replace('+', ' ', $activateTimeFrom);
+        $activateTimeTo = I('activate_time_to', '') ? htmlspecialchars_decode(I('activate_time_to')) : '';
+        if (strpos($activateTimeTo, '+')) $activateTimeTo = str_replace('+', ' ', $activateTimeTo);
         if ($activateTimeFrom && $activateTimeTo) {
-            $where['svip_activate_time'] = ['BETWEEN', [$activateTimeFrom, $activateTimeTo]];
+            $where['svip_activate_time'] = ['BETWEEN', [strtotime($activateTimeFrom), strtotime($activateTimeTo)]];
         }
-        $upgradeTimeFrom = I('upgrade_time_from', '') ? strtotime(I('upgrade_time_from')) : '';
-        $upgradeTimeTo = I('upgrade_time_to', '') ? strtotime(I('upgrade_time_to')) : '';
+        $upgradeTimeFrom = I('upgrade_time_from', '') ? htmlspecialchars_decode(I('upgrade_time_from')) : '';
+        if (strpos($upgradeTimeFrom, '+')) $upgradeTimeFrom = str_replace('+', ' ', $upgradeTimeFrom);
+        $upgradeTimeTo = I('upgrade_time_to', '') ? htmlspecialchars_decode(I('upgrade_time_to')) : '';
+        if (strpos($upgradeTimeTo, '+')) $upgradeTimeTo = str_replace('+', ' ', $upgradeTimeTo);
         if ($upgradeTimeFrom && $upgradeTimeTo) {
-            $where['svip_upgrade_time'] = ['BETWEEN', [$upgradeTimeFrom, $upgradeTimeTo]];
+            $where['svip_upgrade_time'] = ['BETWEEN', [strtotime($upgradeTimeFrom), strtotime($upgradeTimeTo)]];
         }
         $userList = M('users')->where($where)->order('user_id DESC');
         if ($isExport) {
@@ -597,6 +606,7 @@ class Article extends Base
         }
         $userList = $userList->select();
         foreach ($userList as &$user) {
+            $user['total_course_num'] = count($courseIds);
             $user['course_num'] = 0;        // 学习课程数量
             $user['is_graduate'] = 0;       // 是否已结业
             // APP等级
@@ -605,14 +615,14 @@ class Article extends Base
             $user['svip_grade_name'] = $user['distribut_level'] == 3 ? $this->svipGrade[$user['svip_grade']] : '';
             // 代理商等级
             $user['svip_level_name'] = $user['distribut_level'] == 3 ? $this->svipLevel[$user['svip_level']] : '';
-            // 用户达标课程数量
+            // 用户已学习完成课程数量
             $userData = [
                 'user_id' => $user['user_id'],
                 'app_grade' => $user['distribut_level'],
                 'svip_grade' => $user['svip_grade'],
                 'svip_level' => $user['svip_level'],
             ];
-            $res = $this->checkUserCourseNum($userData, $courseIds, false);
+            $res = $this->checkUserCourseNum($userData, $courseIds, false, true);
             $user['course_num'] = $res['course_num'];
             // 是否已结业
             $res = $this->checkUserCourseNum($userData, $courseIds, false, true);
@@ -1167,10 +1177,14 @@ class Article extends Base
         $title = htmlspecialchars_decode(trim(I('title', '')));
         $moduleId = I('module_id', '');
         $classId = I('class_id', '');
-        $publishTimeFrom = I('publish_time_from', '') ? strtotime(I('publish_time_from')) : '';
-        $publishTimeTo = I('publish_time_to', '') ? strtotime(I('publish_time_to')) : '';
-        $learnTimeFrom = I('learn_time_from', '') ? strtotime(I('learn_time_from')) : '';
-        $learnTimeTo = I('learn_time_to', '') ? strtotime(I('learn_time_to')) : '';
+        $publishTimeFrom = I('publish_time_from', '') ? htmlspecialchars_decode(I('publish_time_from')) : '';
+        if (strpos($publishTimeFrom, '+')) $publishTimeFrom = str_replace('+', ' ', $publishTimeFrom);
+        $publishTimeTo = I('publish_time_to', '') ? htmlspecialchars_decode(I('publish_time_to')) : '';
+        if (strpos($publishTimeTo, '+')) $publishTimeTo = str_replace('+', ' ', $publishTimeTo);
+        $learnTimeFrom = I('learn_time_from', '') ? htmlspecialchars_decode(I('learn_time_from')) : '';
+        if (strpos($learnTimeFrom, '+')) $learnTimeFrom = str_replace('+', ' ', $learnTimeFrom);
+        $learnTimeTo = I('learn_time_to', '') ? htmlspecialchars_decode(I('learn_time_to')) : '';
+        if (strpos($learnTimeTo, '+')) $learnTimeTo = str_replace('+', ' ', $learnTimeTo);
         $isExport = I('is_export', 0);
         if ($title) {
             $where['sa.title'] = ['LIKE', '%' . $title . '%'];
@@ -1192,7 +1206,7 @@ class Article extends Base
             $where['sa.distribute_level'] = ['LIKE', '%' . $svipLevel . '%'];
         }
         if ($publishTimeFrom && $publishTimeTo) {
-            $where['sa.publish_time'] = ['BETWEEN', [$publishTimeFrom, $publishTimeTo]];
+            $where['sa.publish_time'] = ['BETWEEN', [strtotime($publishTimeFrom), strtotime($publishTimeTo)]];
         }
         // 排序
         $order = 'sa.publish_time DESC, sa.sort DESC';
@@ -1209,7 +1223,7 @@ class Article extends Base
         if (!$isExport) {
             // 总数
             $count = M('school_article sa')->where($where)->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')->count();
-            $page = new Page($count, 10);
+            $page = new Page($count, 1);
             // 列表
             $schoolArticle = $schoolArticle->limit($page->firstRow . ',' . $page->listRows);
         }
@@ -1266,7 +1280,7 @@ class Article extends Base
                 $learnCount = M('user_school_article')->where([
                     'article_id' => $item['id'],
                     'is_learn' => 1,
-                    'finish_time' => ['BETWEEN', [$learnTimeFrom, $learnTimeTo]]
+                    'finish_time' => ['BETWEEN', [strtotime($learnTimeFrom), strtotime($learnTimeTo)]]
                 ])->count('user_id');
                 $item['learn'] = $learnCount ?? 0;
             }
@@ -1303,10 +1317,10 @@ class Article extends Base
             $this->assign('select_app_grade', $appGrade);
             $this->assign('select_svip_grade', $svipGrade);
             $this->assign('select_svip_level', $svipLevel);
-            $this->assign('publish_time_from', I('publish_time_from', ''));
-            $this->assign('publish_time_to', I('publish_time_to', ''));
-            $this->assign('learn_time_from', I('learn_time_from', ''));
-            $this->assign('learn_time_to', I('learn_time_to', ''));
+            $this->assign('publish_time_from', $publishTimeFrom);
+            $this->assign('publish_time_to', $publishTimeTo);
+            $this->assign('learn_time_from', $learnTimeFrom);
+            $this->assign('learn_time_to', $learnTimeTo);
             $this->assign('sort', $sort);
             $this->assign('sort_by', $sortBy);
             $this->assign('page', $page);
@@ -1349,10 +1363,12 @@ class Article extends Base
         if ($nickname = I('nickname', '')) {
             $where['u.nickname'] = $nickname;
         }
-        $timeFrom = I('time_from', '') ? strtotime(I('time_from')) : '';
-        $timeTo = I('time_to', '') ? strtotime(I('time_to')) : '';
+        $timeFrom = I('time_from', '') ? htmlspecialchars_decode(I('time_from')) : '';
+        if (strpos($timeFrom, '+')) $timeFrom = str_replace('+', ' ', $timeFrom);
+        $timeTo = I('time_to', '') ? htmlspecialchars_decode(I('time_to')) : '';
+        if (strpos($timeTo, '+')) $timeTo = str_replace('+', ' ', $timeTo);
         if ($timeFrom && $timeTo) {
-            $where['usa.finish_time'] = ['BETWEEN', [$timeFrom, $timeTo]];
+            $where['usa.finish_time'] = ['BETWEEN', [strtotime($timeFrom), strtotime($timeTo)]];
         }
         $userList = M('user_school_article usa')
             ->join('school_article sa', 'sa.id = usa.article_id')
@@ -1425,8 +1441,8 @@ class Article extends Base
             $this->assign('user_id', $userId);
             $this->assign('user_name', $username);
             $this->assign('nickname', $nickname);
-            $this->assign('time_from', I('time_from', ''));
-            $this->assign('time_to', I('time_to', ''));
+            $this->assign('time_from', $timeFrom);
+            $this->assign('time_to', $timeTo);
             $this->assign('page', $page);
             $this->assign('list', $userList);
             return $this->fetch('course_user_list');

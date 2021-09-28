@@ -141,7 +141,10 @@
                             <div style="text-align: center; width: 120px;" class="">代理商职级</div>
                         </th>
                         <th align="left" abbr="send_type" axis="col4" class="">
-                            <div style="text-align: center; width: 120px;" class="">课程数量</div>
+                            <div style="text-align: center; width: 120px;" class="">总课程数量</div>
+                        </th>
+                        <th align="left" abbr="send_type" axis="col4" class="">
+                            <div style="text-align: center; width: 120px;" class="">已学习完成课程数量</div>
                         </th>
                         <th align="left" abbr="send_type" axis="col4" class="">
                             <div style="text-align: center; width: 120px;" class="">乐活豆数量</div>
@@ -196,8 +199,13 @@
                             </td>
                             <td align="left" class="">
                                 <div style="text-align: center; width: 120px;">
+                                    {$vo.total_course_num}
+                                </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">
                                     <if condition="$vo[course_num] GT 0">
-                                        <a href="/index.php/Admin/school.article/userCourseArticleList/user_id/{$vo.user_id}/module_id/{$module_id}/class_id/{$class_id}" style="text-decoration: underline; font-weight: bold;">{$vo.course_num}</a>
+                                        <a href="/index.php/Admin/school.article/userCourseArticleList/user_id/{$vo.user_id}/module_id/{$module_id}/class_id/{$class_id}/learn_status/1" style="text-decoration: underline; font-weight: bold;">{$vo.course_num}</a>
                                     <else/>
                                         {$vo.course_num}
                                     </if>

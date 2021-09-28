@@ -330,7 +330,10 @@ class Questionnaire extends Base
         return $this->fetch('content_list');
     }
 
-
+    /**
+     * 用户问卷调查内容详情
+     * @return mixed
+     */
     public function contentDetail()
     {
         $articleId = I('article_id');
