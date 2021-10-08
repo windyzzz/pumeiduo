@@ -73,7 +73,7 @@ return [
         ['name' => 'APP首页', 'child' => [
             ['name' => '金刚区', 'act' => 'appIndex', 'op' => 'System'],
             ['name' => '小程序', 'act' => 'config', 'op' => 'Applet'],
-            ['name' => '商学院', 'act' => 'config2', 'op' => 'School'],
+            ['name' => '商学院', 'act' => 'config2', 'op' => 'school.module'],
             ['name' => '代理商等级', 'act' => 'levelConfig', 'op' => 'Distribut'],
             ['name' => '主推产品', 'act' => 'recommendGoodsList', 'op' => 'Goods'],
             ['name' => '促销/新品', 'act' => 'goodsConfig', 'op' => 'Goods'],

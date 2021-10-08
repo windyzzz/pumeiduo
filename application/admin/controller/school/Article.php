@@ -1223,7 +1223,7 @@ class Article extends Base
         if (!$isExport) {
             // 总数
             $count = M('school_article sa')->where($where)->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')->count();
-            $page = new Page($count, 1);
+            $page = new Page($count, 10);
             // 列表
             $schoolArticle = $schoolArticle->limit($page->firstRow . ',' . $page->listRows);
         }

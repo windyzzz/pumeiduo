@@ -536,7 +536,7 @@ class Distribut extends Base
                     M('distribute_config')->add($data);
                 }
             }
-            $this->success('操作成功', U('Distribut/svipConfig'));
+            $this->success('操作成功', U('Distribut/levelConfig'));
         }
         // 配置
         $distributeConfig = M('distribute_config')->select();
