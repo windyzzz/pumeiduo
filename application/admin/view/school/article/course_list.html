@@ -4,6 +4,9 @@
     .click {
         cursor: pointer;
     }
+    .sDiv2 input{
+        text-align: center;
+    }
 </style>
 <body style="background-color: rgb(255, 255, 255); overflow: auto; cursor: default; -moz-user-select: inherit;">
 <div id="append_parent"></div>
@@ -11,7 +14,6 @@
 <div class="page">
     <div class="fixed-bar">
         <div class="item-title">
-            <a class="back" href="javascript:history.back();" title="返回列表"><i class="fa fa-arrow-circle-o-left"></i></a>
             <div class="subject">
                 <h3>课程文章列表</h3>
             </div>
@@ -32,7 +34,7 @@
         </ul>
     </div>
     <div class="flexigrid">
-        <form class="navbar-form form-inline" id="search-form" action="{:U('Admin/School/courseList')}" method="post">
+        <form class="navbar-form form-inline" id="search-form" action="{:U('school.article/courseList')}" method="post">
             <div class="sDiv">
                 <div class="sDiv2">
                     <input type="text" size="30" name="title" value="{$title}" class="qsbox" placeholder="请输入文章标题">
@@ -40,7 +42,7 @@
                 <div class="sDiv2">
                     <select name="module_id">
                         <option value="">所属模块</option>
-                        <volist name="module" id="vo" key="k">
+                        <volist name="module_list" id="vo" key="k">
                             <option value="{$key}" <if condition="$module_id == $key">selected</if>>{$vo}</option>
                         </volist>
                     </select>
@@ -48,8 +50,8 @@
                 <div class="sDiv2">
                     <select name="class_id">
                         <option value="">所属分类</option>
-                        <if condition="!empty($class)">
-                            <volist name="class" id="vo" key="k">
+                        <if condition="!empty($class_list)">
+                            <volist name="class_list" id="vo" key="k">
                                 <option value="{$key}" <if condition="$class_id == $key">selected</if>>{$vo}</option>
                             </volist>
                         </if>
@@ -79,12 +81,24 @@
                         </volist>
                     </select>
                 </div>
+            </div>
+            <div class="sDiv">
                 <div class="sDiv2">
-                    <input type="text" size="30" id="time_from" name="time_from" value="{$time_from}" class="qsbox" placeholder="开始时间">
+                    <input type="text" size="30" id="publish_time_from" name="publish_time_from" value="{$publish_time_from}" class="qsbox" placeholder="文章发布时间-开始" style="width: 150px;">
                 </div>
                 <div class="sDiv2">
-                    <input type="text" size="30" id="time_to" name="time_to" value="{$time_to}" class="qsbox" placeholder="开始时间">
+                    <input type="text" size="30" id="publish_time_to" name="publish_time_to" value="{$publish_time_to}" class="qsbox" placeholder="文章发布时间-结束" style="width: 150px;">
                 </div>
+            </div>
+            <div class="sDiv">
+                <div class="sDiv2">
+                    <input type="text" size="30" id="learn_time_from" name="learn_time_from" value="{$learn_time_from}" class="qsbox" placeholder="用户学习时间-开始" style="width: 150px;">
+                </div>
+                <div class="sDiv2">
+                    <input type="text" size="30" id="learn_time_to" name="learn_time_to" value="{$learn_time_to}" class="qsbox" placeholder="用户学习时间-结束" style="width: 150px;">
+                </div>
+            </div>
+            <div class="sDiv">
                 <input type="hidden" name="sort" value="{$sort}">
                 <input type="hidden" name="sort_by" value="{$sort_by}">
                 <input type="hidden" name="is_export" value="0">
@@ -251,7 +265,15 @@
                                 </div>
                             </td>
                             <td align="left" class="">
-                                <div style="text-align: center; width: 100px;">{$vo.learn}</div>
+                                <div style="text-align: center; width: 100px;">
+                                    <if condition="$vo[learn] GT 0">
+                                        <a href="/index.php/Admin/school.article/courseUserList/article_id/{$vo.id}/time_from/{$learn_time_from}/time_to/{$learn_time_to}" style="text-decoration: underline; font-weight: bold;">
+                                            {$vo.learn}
+                                        </a>
+                                    <else/>
+                                        {$vo.learn}
+                                    </if>
+                                </div>
                             </td>
                             <td align="left" class="">
                                 <div style="text-align: center; width: 100px;">{$vo.share}</div>
@@ -293,8 +315,10 @@
 </div>
 <script>
     $(document).ready(function () {
-        $('#time_from').layDate();
-        $('#time_to').layDate();
+        $('#publish_time_from').layDate();
+        $('#publish_time_to').layDate();
+        $('#learn_time_from').layDate();
+        $('#learn_time_to').layDate();
 
         // 表格行点击选中切换
         $('#flexigrid > table>tbody >tr').click(function () {
@@ -313,7 +337,7 @@
         } else {
             $.ajax({
                 type: "GET",
-                url: "{:U('Admin/School/getClass')}",
+                url: "{:U('school.module/getClass')}",
                 data: {module_id: this.value},
                 dataType: 'json',
                 success: function (data) {

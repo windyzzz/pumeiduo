@@ -3,6 +3,7 @@
 namespace app\common\logic;
 
 
+use app\common\model\SchoolArticleQuestionnaireAnswer;
 use app\common\util\TpshopException;
 use think\Cache;
 use think\Db;
@@ -97,6 +98,10 @@ class School
         if (!empty($param['status'])) {
             $where['usa.status'] = $param['status'];
         }
+        // 文章分类
+        if (!empty($param['class_id'])) {
+            $where['sa.class_id'] = $param['class_id'];
+        }
         $where['usa.type'] = 1;
         return $where;
     }
@@ -169,7 +174,7 @@ class School
         if ($module['distribute_grade'] != 0) {
             $limitLevel = explode(',', $module['distribute_grade']);
             $levelName = M('svip_grade')->where(['app_level' => $limitLevel[0]])->value('name');
-            if ($user['distribut_level'] != 3) {
+            if ($user['svip_grade'] != 3) {
                 return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
             } else {
                 // 获取代理商等级
@@ -188,7 +193,7 @@ class School
         if ($module['distribute_level'] != 0) {
             $limitLevel = explode(',', $module['distribute_level']);
             $levelName = M('svip_level')->where(['app_level' => $limitLevel[0]])->value('name');
-            if ($user['distribut_level'] != 3) {
+            if ($user['svip_level'] != 3) {
                 return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
             } else {
                 // 获取代理商等级
@@ -245,7 +250,7 @@ class School
         if ($moduleClass['distribute_grade'] != 0) {
             $limitLevel = explode(',', $moduleClass['distribute_grade']);
             $levelName = M('svip_grade')->where(['app_level' => $limitLevel[0]])->value('name');
-            if ($user['distribut_level'] != 3) {
+            if ($user['svip_grade'] != 3) {
                 return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
             } else {
                 // 获取代理商等级
@@ -264,7 +269,7 @@ class School
         if ($moduleClass['distribute_level'] != 0) {
             $limitLevel = explode(',', $moduleClass['distribute_level']);
             $levelName = M('svip_level')->where(['app_level' => $limitLevel[0]])->value('name');
-            if ($user['distribut_level'] != 3) {
+            if ($user['svip_level'] != 3) {
                 return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
             } else {
                 // 获取代理商等级
@@ -302,6 +307,7 @@ class School
      * @param $article
      * @param $user
      * @param int $type 1普通文章 2素材文章
+     * @throws \think\Exception
      * @return array
      */
     private function checkUserArticleLimit($article, $user, $type = 1)
@@ -369,17 +375,17 @@ class School
                 return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
             }
         }
-        // 必修课程鉴权
-        $preArticleIds = M('school_article')->where([
-            'class_id' => $article['class_id'], 'sort' => ['>', $article['sort']],
-            'learn_type' => 1, 'status' => 1
-        ])->getField('id', true);   // 前面必修的课程文章
-        if (!empty($preArticleIds)) {
-            $userArticleCount = M('user_school_article')->where(['user_id' => $user['user_id'], 'article_id' => ['IN', $preArticleIds], 'status' => 1])->count();
-            if ($userArticleCount != count($preArticleIds)) {
-                return ['status' => 0, 'msg' => '请按顺序学习课程'];
-            }
-        }
+//        // 必修课程鉴权
+//        $preArticleIds = M('school_article')->where([
+//            'class_id' => $article['class_id'], 'sort' => ['>', $article['sort']],
+//            'learn_type' => 1, 'status' => 1
+//        ])->getField('id', true);   // 前面必修的课程文章
+//        if (!empty($preArticleIds)) {
+//            $userArticleCount = M('user_school_article')->where(['user_id' => $user['user_id'], 'article_id' => ['IN', $preArticleIds], 'status' => 1])->count();
+//            if ($userArticleCount != count($preArticleIds)) {
+//                return ['status' => 0, 'msg' => '请按顺序学习课程'];
+//            }
+//        }
         // 是否已购买课程
         if (!M('user_school_article')->where(['user_id' => $user['user_id'], 'article_id' => $article['id']])->value('id')) {
             // 课程消费积分
@@ -446,6 +452,33 @@ class School
             } else {
                 $article['is_buy'] = 0;
                 $article['is_learn'] = 0;
+            }
+        }
+        return $articleList;
+    }
+
+    /**
+     * 查看用户是否已经做完问卷调查
+     * @param $articleList
+     * @param $articleIds
+     * @param $user
+     * @return mixed
+     */
+    private function checkUserQuestionnaireAnswer($articleList, $articleIds, $user)
+    {
+        // 问卷调查开启状态
+        $config = M('school_article_questionnaire_config')->find();
+        if ($config['is_open'] == 0 || $config['start_time'] > NOW_TIME || $config['end_time'] < NOW_TIME) {
+            foreach ($articleList as &$article) {
+                $article['show_questionnaire'] = 0;
+            }
+        }
+        // 用户问卷调查回答记录
+        $userAnswer = M('school_article_questionnaire_answer')->where(['user_id' => $user['user_id'], 'article_id' => ['IN', $articleIds]])->group('user_id')->getField('article_id, user_id', true);
+        // 更新数据
+        foreach ($articleList as &$article) {
+            if (isset($userAnswer[$article['article_id']])) {
+                $article['show_questionnaire'] = 0;
             }
         }
         return $articleList;
@@ -639,6 +672,27 @@ class School
     }
 
     /**
+     * 获取模块分类列表总数据
+     * @return array
+     */
+    public function getModuleClassList()
+    {
+        // 模块列表
+        $notModuleType = ['module6', 'module7', 'module8'];
+        $moduleList = M('school')->where(['type' => ['NOT IN', $notModuleType]])->field('id module_id, name module_name')->order('sort DESC')->select();
+        // 模块分类列表
+        foreach ($moduleList as $key => &$list) {
+            $classList = M('school_class')->where(['module_id' => $list['module_id']])->field('id class_id, name class_name')->order('sort DESC')->select();
+            if (!$classList) {
+                unset($moduleList[$key]);
+                continue;
+            }
+            $list['class_'] = $classList;
+        }
+        return ['list' => array_values($moduleList)];
+    }
+
+    /**
      * 用户模块权限检查
      * @param $moduleId
      * @param $user
@@ -709,7 +763,7 @@ class School
                 $query->whereOr($whereOr);
             });
         }
-        $article = $article->order($sort)->limit($page->firstRow . ',' . $page->listRows)->select();
+        $article = $article->order($sort)->limit($page->firstRow . ',' . $page->listRows)->field('sa.*')->select();
         $list = [];
         $articleIds = [];
         $fileList = [];     // 附件列表
@@ -844,10 +898,15 @@ class School
             'integral' => $articleInfo['integral'],
             'distribute_level' => $articleInfo['distribute_level'][0] == 3 && count($articleInfo['distribute_level']) > 1 ? $articleInfo['distribute_level'][1] : $articleInfo['distribute_level'][0],
             'show_goods' => $articleInfo['show_goods'] ? 1 : 0,
+            'show_questionnaire' => $articleInfo['show_questionnaire'] ? 1 : 0,
         ];
         if ($user) {
             // 查看用户是否已购买学习课程
             $info = $this->checkUserArticle([$info], [$articleInfo['id']], $user)[0];
+            // 查看用户是否已完成问卷调查
+            if ($info['show_questionnaire'] == 1) {
+                $info = $this->checkUserQuestionnaireAnswer([$info], [$articleInfo['id']], $user)[0];
+            }
         }
         return $info;
     }
@@ -1272,5 +1331,97 @@ class School
             ];
         }
         return ['total' => $count, 'list' => $list];
+    }
+
+    /**
+     * 获取问卷调查内容
+     * @param $articleId
+     * @param $user
+     * @return array
+     */
+    public function getQuestionnaire($articleId, $user)
+    {
+        $data = [
+            'is_open' => 0,
+            'caption_list' => []
+        ];
+        if (M('school_article_questionnaire_answer')->where(['article_id' => $articleId, 'user_id' => $user['user_id']])->find()) {
+            return $data;
+        }
+        $config = M('school_article_questionnaire_config')->find();
+        if ($config['is_open'] == 0 || $config['start_time'] > NOW_TIME || $config['end_time'] < NOW_TIME) {
+            return $data;
+        }
+        $article = M('school_article')->where(['id' => $articleId])->find();
+        if ($article['show_questionnaire'] == 0) {
+            return $data;
+        }
+        // 项目列表
+        $caption = M('school_article_questionnaire_caption')->where(['is_open' => 1])->order('sort DESC')->select();
+        if (empty($caption)) {
+            return $data;
+        }
+        foreach ($caption as &$item) {
+            $item['option_list'] = [];
+            switch ($item['type']) {
+                case 1:
+                    $scoreList = explode(',', $item['score_list']);
+                    foreach ($scoreList as $value) {
+                        $item['option_list'][] = [
+                            'id' => $value,
+                            'value' => $value
+                        ];
+                    }
+                    break;
+                case 3:
+                case 4:
+                    $item['option_list'] = M('school_article_questionnaire_option')->where(['caption_id' => $item['id']])->field('id, content value')->select();
+                    break;
+            }
+        }
+        $data['is_open'] = 1;
+        $data['caption_list'] = $caption;
+        return $data;
+    }
+
+    /**
+     * 回答问卷调查
+     * @param $articleId
+     * @param $user
+     * @param $captionData
+     * @throws \Exception
+     * @return bool
+     */
+    public function answerQuestionnaire($articleId, $user, $captionData)
+    {
+        if (M('school_article_questionnaire_answer')->where(['article_id' => $articleId, 'user_id' => $user['user_id']])->find()) {
+            return true;
+        }
+        $answerData = [];
+        foreach ($captionData as $key => $caption) {
+            $answerData[$key] = [
+                'article_id' => $articleId,
+                'user_id' => $user['user_id'],
+                'caption_id' => $caption['id'],
+                'add_time' => NOW_TIME
+            ];
+            switch ($caption['type']) {
+                case 1:
+                    $answerData[$key]['score'] = $caption['option'][0];
+                    break;
+                case 2:
+                    $answerData[$key]['content'] = $caption['content'];
+                    break;
+                case 3:
+                case 4:
+                    $answerData[$key]['option_ids'] = implode(',', $caption['option']);
+                    break;
+            }
+        }
+        if (!empty($answerData)) {
+            (new SchoolArticleQuestionnaireAnswer())->saveAll($answerData);
+        }
+        M('user_school_article')->where(['article_id' => $articleId, 'user_id' => $user['user_id']])->update(['is_questionnaire' => 1]);
+        return true;
     }
 }

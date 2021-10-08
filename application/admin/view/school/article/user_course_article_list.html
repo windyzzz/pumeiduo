@@ -1,4 +1,5 @@
 <include file="public/layout" />
+<script type="text/javascript" src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
 <body style="background-color: rgb(255, 255, 255); overflow: auto; cursor: default; -moz-user-select: inherit;">
 <div id="append_parent"></div>
 <div id="ajaxwaitid"></div>
@@ -33,10 +34,54 @@
             </div>
             <div title="刷新数据" class="pReload"><i class="fa fa-refresh"></i></div>
         </div>
-        <form class="navbar-form form-inline" id="search-form" action="{:U('Admin/School/userCourseArticleList')}" method="post">
+        <form class="navbar-form form-inline" id="search-form" action="{:U('school.article/userCourseArticleList')}" method="post">
             <div class="sDiv">
+                <div class="sDiv2">
+                    <select name="module_id">
+                        <option value="">所属模块</option>
+                        <volist name="module_list" id="vo" key="k">
+                            <option value="{$key}" <if condition="$module_id == $key">selected</if>>{$vo}</option>
+                        </volist>
+                    </select>
+                </div>
+                <div class="sDiv2">
+                    <select name="class_id">
+                        <option value="">所属分类</option>
+                        <if condition="!empty($class_list)">
+                            <volist name="class_list" id="vo" key="k">
+                                <option value="{$key}" <if condition="$class_id == $key">selected</if>>{$vo}</option>
+                            </volist>
+                        </if>
+                    </select>
+                </div>
+                <div class="sDiv2">
+                    <input type="text" size="30" name="title" value="{$title}" class="qsbox" placeholder="文章标题">
+                </div>
+                <div class="sDiv2">
+                    <select name="learn_status">
+                        <option value="">是否完成学习</option>
+                        <option value="0" <if condition="$learn_status === 0">selected</if>>未完成</option>
+                        <option value="1" <if condition="$learn_status === 1">selected</if>>已完成</option>
+                    </select>
+                </div>
+                <div class="sDiv2">
+                    <select name="questionnaire_status">
+                        <option value="">是否完成调查问卷</option>
+                        <option value="0" <if condition="$questionnaire_status === 0">selected</if>>未完成</option>
+                        <option value="1" <if condition="$questionnaire_status === 1">selected</if>>已完成</option>
+                    </select>
+                </div>
+                <div class="sDiv2">
+                    <input type="text" size="30" id="time_from" name="time_from" value="{$time_from}" class="qsbox" placeholder="学习时间-开始">
+                </div>
+                <div class="sDiv2">
+                    <input type="text" size="30" id="time_to" name="time_to" value="{$time_to}" class="qsbox" placeholder="学习时间-结束">
+                </div>
                 <input type="hidden" name="user_id" value="{$user_id}">
                 <input type="hidden" name="is_export" value="0">
+                <div class="sDiv2">
+                    <input type="submit" class="btn" value="搜索">
+                </div>
                 <div class="sDiv2">
                     <input type="button" class="btn" onclick="export_list()" value="导出">
                 </div>
@@ -69,10 +114,19 @@
                             <div style="text-align: center; width: 120px;" class="">所属分类</div>
                         </th>
                         <th align="left" abbr="send_type" axis="col4" class="">
-                            <div style="text-align: center; width: 120px;" class="">状态</div>
+                            <div style="text-align: center; width: 120px;" class="">发布状态</div>
                         </th>
                         <th align="left" abbr="send_type" axis="col4" class="">
                             <div style="text-align: center; width: 120px;" class="">发布时间</div>
+                        </th>
+                        <th align="left" abbr="send_type" axis="col4" class="">
+                            <div style="text-align: center; width: 120px;" class="">学习完成时间</div>
+                        </th>
+                        <th align="left" abbr="send_type" axis="col4" class="">
+                            <div style="text-align: center; width: 120px;" class="">学习状态</div>
+                        </th>
+                        <th align="left" abbr="send_type" axis="col4" class="">
+                            <div style="text-align: center; width: 120px;" class="">是否完成问卷调查</div>
                         </th>
                         <th style="width:100%" axis="col7">
                             <div></div>
@@ -140,6 +194,37 @@
                                     {$vo.publish_time|date='Y-m-d H:i:s', ###}
                                 </div>
                             </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">
+                                    <if condition="$vo[finish_time] gt 0">
+                                        {$vo.finish_time|date='Y-m-d H:i:s', ###}
+                                    </if>
+                                </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">
+                                    <switch name='$vo[learn_status]'>
+                                        <case value='0'>
+                                            <span style="color: red;">未完成</span>
+                                        </case>
+                                        <case value='1'>
+                                            <span style="color: green;">已完成</span>
+                                        </case>
+                                    </switch>
+                                </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">
+                                    <switch name='$vo[is_questionnaire]'>
+                                        <case value='0'>
+                                            <span style="color: red;">未完成</span>
+                                        </case>
+                                        <case value='1'>
+                                            <span style="color: green;">已完成</span>
+                                        </case>
+                                    </switch>
+                                </div>
+                            </td>
                             <td align="" class="" style="width: 100%;">
                                 <div>&nbsp</div>
                             </td>
@@ -156,6 +241,9 @@
 </div>
 <script>
     $(document).ready(function () {
+        $('#time_from').layDate();
+        $('#time_to').layDate();
+
         // 表格行点击选中切换
         $('#flexigrid > table>tbody >tr').click(function () {
             $(this).toggleClass('trSelected');
@@ -163,8 +251,32 @@
 
         // 点击刷新数据
         $('.fa-refresh').click(function () {
-            location.href = location.href;
+            var user_id = $('input[name="user_id"]').val();
+            location.href = '/index.php/Admin/school.article/userCourseArticleList/user_id/' + user_id ;
         });
+    });
+
+    $('select[name="module_id"]').change(function () {
+        if (this.value === '') {
+            $('select[name="class_id"]').html('<option value="">所属分类</option>');
+        } else {
+            $.ajax({
+                type: "GET",
+                url: "{:U('school.module/getClass')}",
+                data: {module_id: this.value},
+                dataType: 'json',
+                success: function (data) {
+                    option = '<option value="">所属分类</option>';
+                    $.each(data.res, function (index, item) {
+                        option = option + '<option value="' + item.id + '">' + item.name + '</option>';
+                    });
+                    $('select[name="class_id"]').html(option);
+                },
+                error: function (request) {
+                    layer.msg("服务器繁忙, 请联系管理员!", {icon: 1, time: 2000});
+                }
+            });
+        }
     });
 
     function export_list() {

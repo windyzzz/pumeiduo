@@ -1,5 +1,4 @@
 <include file="public/layout" />
-<script type="text/javascript" src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
 <body style="background-color: rgb(255, 255, 255); overflow: auto; cursor: default; -moz-user-select: inherit;">
 <div id="append_parent"></div>
 <div id="ajaxwaitid"></div>
@@ -8,7 +7,7 @@
         <div class="item-title">
             <a class="back" href="javascript:history.back();" title="返回列表"><i class="fa fa-arrow-circle-o-left"></i></a>
             <div class="subject">
-                <h3>用户学习课程列表</h3>
+                <h3>参与问卷调查的用户列表</h3>
             </div>
         </div>
     </div>
@@ -29,12 +28,11 @@
     <div class="flexigrid">
         <div class="mDiv">
             <div class="ftitle">
-                <h3>记录列表</h3>
                 <h5>(共{$page->totalRows}条记录)</h5>
             </div>
             <div title="刷新数据" class="pReload"><i class="fa fa-refresh"></i></div>
         </div>
-        <form class="navbar-form form-inline" id="search-form" action="{:U('Admin/School/userCourseList')}" method="post">
+        <form class="navbar-form form-inline" id="search-form" action="{:U('school.questionnaire/contentList')}" method="post">
             <div class="sDiv">
                 <div class="sDiv2">
                     <select name="app_grade">
@@ -70,17 +68,8 @@
                     <input type="text" size="30" name="nickname" value="{$nickname}" class="qsbox" placeholder="用户昵称">
                 </div>
                 <div class="sDiv2">
-                    <input type="text" size="30" id="time_from" name="time_from" value="{$time_from}" class="qsbox" placeholder="开始时间">
-                </div>
-                <div class="sDiv2">
-                    <input type="text" size="30" id="time_to" name="time_to" value="{$time_to}" class="qsbox" placeholder="开始时间">
-                </div>
-                <input type="hidden" name="is_export" value="0">
-                <div class="sDiv2">
+                    <input type="hidden" name="article_id" value="{$article_id}">
                     <input type="submit" class="btn" value="搜索">
-                </div>
-                <div class="sDiv2">
-                    <input type="button" class="btn" onclick="export_list()" value="导出">
                 </div>
             </div>
         </form>
@@ -111,13 +100,10 @@
                             <div style="text-align: center; width: 120px;" class="">代理商职级</div>
                         </th>
                         <th align="left" abbr="send_type" axis="col4" class="">
-                            <div style="text-align: center; width: 120px;" class="">课程数量</div>
+                            <div style="text-align: center; width: 150px;" class="">填写时间</div>
                         </th>
                         <th align="left" abbr="send_type" axis="col4" class="">
-                            <div style="text-align: center; width: 120px;" class="">乐活豆数量</div>
-                        </th>
-                        <th align="left" abbr="send_type" axis="col4" class="">
-                            <div style="text-align: center; width: 150px;" class="">首次进入商学院</div>
+                            <div style="text-align: center; width: 150px;" class="">操作</div>
                         </th>
                         <th style="width:100%" axis="col7">
                             <div></div>
@@ -159,19 +145,12 @@
                                 <div style="text-align: center; width: 120px;">{$vo.svip_level_name}</div>
                             </td>
                             <td align="left" class="">
-                                <div style="text-align: center; width: 120px;">
-                                    <if condition="$vo[course_num] GT 0">
-                                        <a href="{:U('School/userCourseArticleList', array('user_id'=>$vo[user_id]))}" style="text-decoration: underline; font-weight: bold;">{$vo.course_num}</a>
-                                    <else/>
-                                        {$vo.course_num}
-                                    </if>
+                                <div style="text-align: center; width: 150px;">{$vo.add_time|date='Y-m-d H:i:s', ###}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 150px;">
+                                    <a class="btn" href="{:U('school.questionnaire/contentDetail')}/article_id/{$article_id}/user_id/{$vo[user_id]}"><i class="fa fa-list-alt"></i>详情</a>
                                 </div>
-                            </td>
-                            <td align="left" class="">
-                                <div style="text-align: center; width: 120px;">{$vo.school_credit}</div>
-                            </td>
-                            <td align="left" class="">
-                                <div style="text-align: center; width: 150px;">{$vo.first_visit}</div>
                             </td>
                             <td align="" class="" style="width: 100%;">
                                 <div>&nbsp</div>
@@ -189,8 +168,6 @@
 </div>
 <script>
     $(document).ready(function () {
-        $('#time_from').layDate();
-        $('#time_to').layDate();
 
         // 表格行点击选中切换
         $('#flexigrid > table>tbody >tr').click(function () {
@@ -199,26 +176,10 @@
 
         // 点击刷新数据
         $('.fa-refresh').click(function () {
-            location.href = "{:U('Admin/School/userCourseList')}";
+            var article_id = $('input[name="article_id"]').val();
+            location.href = '/index.php/Admin/school.questionnaire/contentList/article_id/' + article_id ;
         });
     });
-
-    $('select[name="source"]').change(function () {
-        switch (this.value) {
-            case '1':
-                $('.time_').hide();
-                break;
-            case '2':
-                $('.time_').show();
-                break;
-        }
-    });
-
-    function export_list() {
-        $('input[name="is_export"]').val('1');
-        $('#search-form').submit();
-        $('input[name="is_export"]').val('0');
-    }
 </script>
 </body>
 </html>

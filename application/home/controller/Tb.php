@@ -885,4 +885,37 @@ class Tb extends Controller
         }
         return json_encode(['status' => 0, 'msg' => '参数不能为空']);
     }
+
+    /**
+     * 更新用户代理商信息
+     * @return false|string
+     */
+    function save_user_svip_info()
+    {
+        $data = $_POST['result'];
+        if ($data) {
+            $logId = Db::name('svip_transfer_log')->add(['type' => 3, 'data' => $data, 'add_time' => NOW_TIME]);
+            $data = json_decode($data, true);
+            if (empty($data['user_name']) || empty($data['info_data'])) {
+                return json_encode(['status' => 0, 'msg' => '请传入正确的参数']);
+            }
+            $user = M('users')->where(['user_name' => $data['user_name']])->find();
+            if (empty($user)) {
+                return json_encode(['status' => 0, 'msg' => '用户信息不存在']);
+            }
+            $infoData = json_decode($data['info_data'], true);
+            M('users')->where(['user_name' => $data['user_name']])->update([
+                'svip_activate_time' => $infoData['activate_time'],
+                'svip_upgrade_time' => $infoData['upgrade_time'],
+                'svip_referee_number' => $infoData['referee_number'],
+                'grade_referee_num1' => $infoData['grade_referee_num1'],
+                'grade_referee_num2' => $infoData['grade_referee_num2'],
+                'grade_referee_num3' => $infoData['grade_referee_num3'],
+                'grade_referee_num4' => $infoData['grade_referee_num4'],
+            ]);
+            M('svip_transfer_log')->where(['id' => $logId])->update(['status' => 1]);
+            return json_encode(['status' => 1, 'msg' => '更新成功']);
+        }
+        return json_encode(['status' => 0, 'msg' => '参数不能为空']);
+    }
 }

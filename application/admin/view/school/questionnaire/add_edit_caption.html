@@ -1,0 +1,178 @@
+<include file="public/layout"/>
+<load href="__ROOT__/public/plugins/Ueditor/ueditor.config.js"/>
+<load href="__ROOT__/public/plugins/Ueditor/ueditor.all2.js"/>
+<script type="text/javascript" charset="utf-8" src="__ROOT__/public/plugins/Ueditor/lang/zh-cn/zh-cn.js"></script>
+<script src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
+<style type="text/css">
+    html, body {
+        overflow: visible;
+    }
+</style>
+<body style="background-color: #FFF; overflow: auto;">
+<div id="toolTipLayer" style="position: absolute; z-index: 9999; display: none; visibility: visible; left: 95px; top: 573px;"></div>
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title"><a class="back" href="javascript:history.back();" title="返回列表"><i class="fa fa-arrow-circle-o-left"></i></a>
+            <div class="subject">
+                <h3>项目内容</h3>
+            </div>
+        </div>
+    </div>
+    <form class="form-horizontal" action="" id="add_post" method="post">
+        <div class="ncap-form-default">
+            <dl class="row">
+                <dt class="tit">
+                    <label>状态</label>
+                </dt>
+                <dd class="opt">
+                    <select name="is_open">
+                        <option value="1" <if condition="$caption['is_open'] === 1 ">selected="selected"</if> >开启</option>
+                        <option value="0" <if condition="$caption['is_open'] === 0 ">selected="selected"</if> >关闭</option>
+                    </select>
+                    <p class="notic"></p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>类型</label>
+                </dt>
+                <dd class="opt">
+                    <select name="type">
+                        <option value="1" <if condition="$caption['type'] eq 1 ">selected="selected"</if> >评分</option>
+                        <option value="2" <if condition="$caption['type'] eq 2 ">selected="selected"</if> >评价</option>
+                        <option value="3" <if condition="$caption['type'] eq 3 ">selected="selected"</if> >单选</option>
+                        <option value="4" <if condition="$caption['type'] eq 4 ">selected="selected"</if> >多选</option>
+                    </select>
+                    <p class="notic"></p>
+                </dd>
+            </dl>
+            <dl class="row" id="max_score" style="<if condition='!empty($caption) && $caption[type] neq 1'>display: none;</if>">
+                <dt class="tit">
+                    <label>评分最高分</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" value="{$caption.max_score}" name="max_score" class="input-txt"
+                           onKeyUp="this.value=this.value.replace(/[^\d]/g,'')"
+                           onpaste="this.value=this.value.replace(/[^\d]/g,'')"/>
+                    <span class="err" id="err_max_score"></span>
+                    <p class="notic">分数列表会以最高分-1直至0列出</p>
+                </dd>
+            </dl>
+            <dl class="row" id="option_content" style="<if condition='empty($caption) || (!empty($caption) && !in_array($caption[type], [3, 4]))'>display: none;</if>">
+                <dt class="tit">
+                    <label>选项内容</label>
+                    <br/>
+                    <a class="ncap-btn" href="javascript:;" onclick="addOption()">增加</a>
+                </dt>
+                <dd class="opt">
+                    <table style="width: 60%;">
+                        <tbody id="option">
+                        <volist name="option" id="vo" key="k">
+                            <tr>
+                                <td>
+                                    <input type="text" name="option[{$k}]" value="{$vo.content}" class="input-txt">
+                                </td>
+                                <td style="text-align: center;"><a class="ncap-btn" onclick="delOption(this)">删除</a></td>
+                            </tr>
+                        </volist>
+                        </tbody>
+                    </table>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>标题</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" value="{$caption.title}" name="title" class="input-txt">
+                    <span class="err" id="err_title"></span>
+                    <p class="notic"></p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>排序</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" value="{$caption.sort}" name="sort" class="input-txt"
+                           onKeyUp="this.value=this.value.replace(/[^\d]/g,'')"
+                           onpaste="this.value=this.value.replace(/[^\d]/g,'')"/>
+                    <span class="err" id="err_sort"></span>
+                    <p class="notic"></p>
+                </dd>
+            </dl>
+            <div class="bot">
+                <a href="JavaScript:void(0);" class="ncap-btn-big ncap-btn-green" id="submitBtn">确认提交</a>
+            </div>
+        </div>
+        <input type="hidden" name="caption_id" value="{$caption.id}">
+    </form>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        option_count = {$option_count};
+    });
+
+    function addOption() {
+        option_count += 1;
+        var tr = '<tr>' +
+            '         <td>' +
+            '             <input type="text" name="option[' + option_count + ']" value="" class="input-txt">' +
+            '         </td>' +
+            '         <td style="text-align: center;"><a class="ncap-btn" onclick="delOption(this)">删除</a></td>' +
+            '</tr>';
+        $('#option').append(tr);
+    }
+
+    function delOption(obj) {
+        $(obj).parent().parent().remove();
+    }
+
+    $('select[name="type"]').change(function () {
+        switch (this.value) {
+            case '1':
+                $('#max_score').show();
+                $('#option_content').hide();
+                break;
+            case '2':
+                $('#max_score').hide();
+                $('#option_content').hide();
+                break;
+            case '3':
+            case '4':
+                $('#max_score').hide();
+                $('#option_content').show();
+                break;
+        }
+    });
+
+    $(document).on("click", '#submitBtn', function () {
+        verifyForm();
+    });
+
+    function verifyForm() {
+        $('span.err').hide();
+        $.ajax({
+            type: "POST",
+            url: "{:U('school.questionnaire/addEditCaption')}",
+            data: $('#add_post').serialize(),
+            dataType: "json",
+            error: function () {
+                layer.alert("服务器繁忙, 请联系管理员!");
+            },
+            success: function (data) {
+                if (data.status === 1) {
+                    layer.msg(data.msg, {icon: 1, time: 1000}, function () {
+                        location.href = "{:U('school.questionnaire/config')}";
+                    });
+                } else if (data.status === 0) {
+                    layer.msg(data.msg, {icon: 2, time: 1000});
+                }
+            }
+        });
+    }
+</script>
+</body>
+</html>

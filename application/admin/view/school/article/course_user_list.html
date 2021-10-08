@@ -1,0 +1,264 @@
+<include file="public/layout" />
+<script type="text/javascript" src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
+<body style="background-color: rgb(255, 255, 255); overflow: auto; cursor: default; -moz-user-select: inherit;">
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title">
+            <a class="back" href="javascript:history.back();" title="返回列表"><i class="fa fa-arrow-circle-o-left"></i></a>
+            <div class="subject">
+                <h3>课程用户列表</h3>
+            </div>
+        </div>
+    </div>
+    <!-- 操作说明 -->
+    <div id="explanation" class="explanation" style="color: rgb(44, 188, 163); background-color: rgb(237, 251, 248); width: 99%; height: 100%;">
+        <div id="checkZoom" class="title"><i class="fa fa-lightbulb-o"></i>
+            <h4 title="提示相关设置操作时应注意的要点">操作提示</h4>
+            <span title="收起提示" id="explanationZoom" style="display: block;"></span>
+        </div>
+        <ul>
+            <li>
+
+            </li>
+        </ul>
+    </div>
+    <div class="flexigrid">
+        <div class="mDiv">
+            <div class="ftitle">
+                <h5>(共{$page->totalRows}条记录)</h5>
+            </div>
+            <div title="刷新数据" class="pReload"><i class="fa fa-refresh"></i></div>
+        </div>
+        <form class="navbar-form form-inline" id="search-form" action="{:U('school.article/courseUserList')}" method="post">
+            <div class="sDiv">
+                <div class="sDiv2">
+                    <select name="app_grade">
+                        <option value="">APP等级</option>
+                        <volist name="app_grade" id="vo" key="k">
+                            <option value="{$key}" <if condition="$select_app_grade == $key">selected</if>>{$vo}</option>
+                        </volist>
+                    </select>
+                </div>
+                <div class="sDiv2">
+                    <select name="svip_grade">
+                        <option value="">代理商等级</option>
+                        <volist name="svip_grade" id="vo" key="k">
+                            <option value="{$key}" <if condition="$select_svip_grade == $key">selected</if>>{$vo}</option>
+                        </volist>
+                    </select>
+                </div>
+                <div class="sDiv2">
+                    <select name="svip_level">
+                        <option value="">代理商职级</option>
+                        <volist name="svip_level" id="vo" key="k">
+                            <option value="{$key}" <if condition="$select_svip_level == $key">selected</if>>{$vo}</option>
+                        </volist>
+                    </select>
+                </div>
+                <div class="sDiv2">
+                    <input type="text" size="30" name="user_id" value="{$user_id}" class="qsbox" placeholder="用户ID">
+                </div>
+                <div class="sDiv2">
+                    <input type="text" size="30" name="user_name" value="{$user_name}" class="qsbox" placeholder="用户名">
+                </div>
+                <div class="sDiv2">
+                    <input type="text" size="30" name="nickname" value="{$nickname}" class="qsbox" placeholder="用户昵称">
+                </div>
+                <div class="sDiv2">
+                    <input type="text" size="30" id="time_from" name="time_from" value="{$time_from}" class="qsbox" placeholder="学习时间-开始">
+                </div>
+                <div class="sDiv2">
+                    <input type="text" size="30" id="time_to" name="time_to" value="{$time_to}" class="qsbox" placeholder="学习时间-结束">
+                </div>
+                <input type="hidden" name="article_id" value="{$article_id}">
+                <input type="hidden" name="is_export" value="0">
+                <div class="sDiv2">
+                    <input type="submit" class="btn" value="搜索">
+                </div>
+                <div class="sDiv2">
+                    <input type="button" class="btn" onclick="export_list()" value="导出">
+                </div>
+            </div>
+        </form>
+        <div class="hDiv">
+            <div class="hDivBox">
+                <table cellspacing="0" cellpadding="0">
+                    <thead>
+                    <tr>
+                        <th class="sign" axis="col0">
+                            <div style="width: 24px;"><i class="ico-check"></i></div>
+                        </th>
+                        <th align="left" abbr="coupon_name" axis="col3" class="">
+                            <div style="text-align: center; width: 80px;" class="">文章ID</div>
+                        </th>
+                        <th align="left" abbr="article_title" axis="col3" class="">
+                            <div style="text-align: center; width: 240px;" class="">标题</div>
+                        </th>
+                        <th align="left" abbr="article_title" axis="col3" class="">
+                            <div style="text-align: center; width: 120px;" class="">学习类型</div>
+                        </th>
+                        <th align="left" abbr="send_type" axis="col4" class="">
+                            <div style="text-align: center; width: 120px;" class="">所属模块</div>
+                        </th>
+                        <th align="left" abbr="coupon_name" axis="col3" class="">
+                            <div style="text-align: center; width: 120px;" class="">所属分类</div>
+                        </th>
+                        <th align="left" abbr="coupon_name" axis="col3" class="">
+                            <div style="text-align: center; width: 80px;" class="">用户ID</div>
+                        </th>
+                        <th align="left" abbr="coupon_name" axis="col3" class="">
+                            <div style="text-align: center; width: 150px;" class="">用户昵称</div>
+                        </th>
+                        <th align="left" abbr="coupon_name" axis="col3" class="">
+                            <div style="text-align: center; width: 150px;" class="">用户名</div>
+                        </th>
+                        <th align="left" abbr="send_type" axis="col4" class="">
+                            <div style="text-align: center; width: 120px;" class="">APP等级</div>
+                        </th>
+                        <th align="left" abbr="send_type" axis="col4" class="">
+                            <div style="text-align: center; width: 120px;" class="">代理商等级</div>
+                        </th>
+                        <th align="left" abbr="send_type" axis="col4" class="">
+                            <div style="text-align: center; width: 120px;" class="">代理商职级</div>
+                        </th>
+                        <th align="left" abbr="send_type" axis="col4" class="">
+                            <div style="text-align: center; width: 120px;" class="">乐活豆数量</div>
+                        </th>
+                        <th align="center" abbr="article_time" axis="col6" class="">
+                            <div style="text-align: center; width: 120px;" class="">学习状态</div>
+                        </th>
+                        <th align="center" abbr="article_time" axis="col6" class="">
+                            <div style="text-align: center; width: 120px;" class="">开始学习时间</div>
+                        </th>
+                        <th align="center" abbr="article_time" axis="col6" class="">
+                            <div style="text-align: center; width: 120px;" class="">学习完成时间</div>
+                        </th>
+                        <th style="width:100%" axis="col7">
+                            <div></div>
+                        </th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+        <div class="bDiv" style="height: auto;">
+            <div id="flexigrid" cellpadding="0" cellspacing="0" border="0">
+                <table>
+                    <tbody>
+                    <foreach name="list" item="vo" key="k" >
+                        <tr>
+                            <td class="sign">
+                                <div style="width: 24px;"><i class="ico-check"></i></div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 80px;">{$vo.id}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 240px;">
+                                    <textarea style="width: 80%; height: 100%; line-height: 150%;" rows="3" disabled>{$vo.title}</textarea>
+                                </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">{$vo.learn_type_desc}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">{$vo.module_name}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">{$vo.class_name}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 80px;">
+                                    <a target="_blank" href="{:U('Admin/User/detail',array('id'=>$vo['user_id']))}">
+                                        {$vo.user_id}
+                                    </a>
+                                </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 150px;">{$vo.nickname}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 150px;">{$vo.user_name}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">{$vo.app_grade_name}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">{$vo.svip_grade_name}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">{$vo.svip_level_name}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">{$vo.school_credit}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;
+                                    <switch name='$vo[status]'>
+                                        <case value='0'>
+                                            color: red;
+                                        </case>
+                                        <case value='1'>
+                                            color: green;
+                                        </case>
+                                    </switch>
+                                ">{$vo.status_desc}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">{$vo.add_time_desc}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 120px;">{$vo.finish_time_desc}</div>
+                            </td>
+                            <td align="" class="" style="width: 100%;">
+                                <div>&nbsp</div>
+                            </td>
+                        </tr>
+                    </foreach>
+                    </tbody>
+                </table>
+            </div>
+            <div class="iDiv" style="display: none;"></div>
+        </div>
+        <!--分页位置-->
+        {$page->show()}
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        $('#time_from').layDate();
+        $('#time_to').layDate();
+
+        // 表格行点击选中切换
+        $('#flexigrid > table>tbody >tr').click(function () {
+            $(this).toggleClass('trSelected');
+        });
+
+        // 点击刷新数据
+        $('.fa-refresh').click(function () {
+            var article_id = $('input[name="article_id"]').val();
+            location.href = '/index.php/Admin/school.article/courseUserList/article_id/' + article_id;
+        });
+    });
+
+    $('select[name="source"]').change(function () {
+        switch (this.value) {
+            case '1':
+                $('.time_').hide();
+                break;
+            case '2':
+                $('.time_').show();
+                break;
+        }
+    });
+
+    function export_list() {
+        $('input[name="is_export"]').val('1');
+        $('#search-form').submit();
+        $('input[name="is_export"]').val('0');
+    }
+</script>
+</body>
+</html>

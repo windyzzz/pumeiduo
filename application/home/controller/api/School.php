@@ -69,6 +69,16 @@ class School extends Base
     }
 
     /**
+     * 模块分类列表总数据
+     * @return \think\response\Json
+     */
+    public function moduleClassList()
+    {
+        $data = $this->logic->getModuleClassList();
+        return json(['status' => 1, 'msg' => '', 'result' => $data]);
+    }
+
+    /**
      * 用户模块权限检查
      * @return \think\response\Json
      */
@@ -216,6 +226,7 @@ class School extends Base
         $limit = I('limit', 10);
         $param = [
             'status' => I('status', ''),
+            'class_id' => I('class_id', '')
         ];
         $data = $this->logic->getUserArticle($limit, $param, $this->user);
         if (isset($data['status']) && $data['status'] != 1) {
@@ -418,5 +429,32 @@ class School extends Base
         $limit = I('limit', 10);
         $data = $this->logic->getExchangeLog($limit, $this->user);
         return json(['status' => 1, 'msg' => '', 'result' => $data]);
+    }
+
+    /**
+     * 获取问卷调查内容
+     * @return \think\response\Json
+     */
+    public function getQuestionnaire()
+    {
+        $articleId = I('article_id', 0);
+        $data = $this->logic->getQuestionnaire($articleId, $this->user);
+        return json(['status' => 1, 'msg' => '', 'result' => $data]);
+    }
+
+    /**
+     * 回答问卷调查
+     * @return \think\response\Json
+     * @throws \Exception
+     */
+    public function answerQuestionnaire()
+    {
+        $articleId = I('article_id', 0);
+        $captionData = I('caption') ? json_decode(htmlspecialchars_decode(I('caption')), true) : [];
+        if (!$articleId || empty($captionData)) {
+            return json(['status' => 0, 'msg' => '请传入正确的参数', 'result' => '']);
+        }
+        $this->logic->answerQuestionnaire($articleId, $this->user, $captionData);
+        return json(['status' => 1, 'msg' => '填写成功', 'result' => '']);
     }
 }
