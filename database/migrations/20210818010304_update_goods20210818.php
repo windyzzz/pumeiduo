@@ -29,7 +29,7 @@ class UpdateGoods20210818 extends Migrator
     public function change()
     {
         $this->table('goods')
-            ->addColumn('exchange_integral_bak', 'int', ['default' => '0', 'comment' => '积分兑换备份字段', 'after' => 'exchange_integral'])
+            ->addColumn('exchange_integral_bak', 'integer', ['default' => '0', 'comment' => '积分兑换备份字段', 'after' => 'exchange_integral'])
             ->update();
     }
 }
