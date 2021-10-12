@@ -2021,6 +2021,19 @@ class Goods extends Base
     }
 
     /**
+     * 删除主推商品
+     */
+    public function delRecommendGoods(){
+        $id = I('id', '');
+        empty($id) && $this->ajaxReturn(['status' => -1, 'msg' => '非法操作！']);
+        $res = Db::name('goods_recommend')->where('id', $id)->delete();
+        if ($res) {
+            $this->ajaxReturn(['status' => 1, 'msg' => '操作成功']);
+        }
+        $this->ajaxReturn(['status' => -1, 'msg' => '操作失败', 'data' => '']);
+    }
+
+    /**
      * 主推产品列表
      * @return mixed
      */
