@@ -293,9 +293,10 @@ class Goods extends Base
         } else {
             if ($this->user) {
                 // 商品pv
+                $goods['integral_pv'] = $goods['retail_pv']; // 【1.3.0】取消积分，积分价pv采用零售价pv
                 if ($this->user['distribut_level'] < 3) {
                     $goods['integral_pv'] = '';
-                } elseif ($goods['integral_pv'] == 0) {
+                } elseif ($goods['retail_pv'] == 0) {
                     $goods['integral_pv'] = '';
                 }
                 // 商品佣金
@@ -488,9 +489,10 @@ class Goods extends Base
         } else {
             if ($this->user) {
                 // 商品pv
+                $goods['integral_pv'] = $goods['retail_pv'];    // 【1.3.0】取消积分，积分价pv采用零售价pv
                 if ($this->user['distribut_level'] < 3) {
                     $goods['integral_pv'] = '';
-                } elseif ($goods['integral_pv'] == 0) {
+                } elseif ($goods['retail_pv'] == 0) {
                     $goods['integral_pv'] = '';
                 }
                 // 商品佣金
@@ -1084,10 +1086,10 @@ class Goods extends Base
                     // 商品pv
                     switch ($this->user['distribut_level']) {
                         case 3:
-                            if ($goods['integral_pv'] == 0) {
+                            if ($goods['retail_pv'] == 0) { // 【1.3.0】取消积分，积分价pv采用零售价pv
                                 $goodsInfo['integral_pv'] = '';
                             } else {
-                                $goodsInfo['integral_pv'] = $goods['integral_pv'];
+                                $goodsInfo['integral_pv'] = $goods['retail_pv'];
                             }
                             break;
                     }
@@ -1107,10 +1109,10 @@ class Goods extends Base
                             }
                             break;
                         case 3:
-                            if ($goods['integral_pv'] == 0) {
+                            if ($goods['retail_pv'] == 0) {  // 【1.3.0】取消积分，积分价pv采用零售价pv
                                 $goodsInfo['integral_pv'] = '';
                             } else {
-                                $goodsInfo['integral_pv'] = $goods['shop_price'] == 0 ? $goods['integral_pv'] : bcmul($goods['integral_pv'], ($goodsInfo['exchange_price'] / ($goods['shop_price'] - $goods['exchange_integral'])), 2);
+                                $goodsInfo['integral_pv'] = $goods['shop_price'] == 0 ? $goods['retail_pv'] : bcmul($goods['retail_pv'], ($goodsInfo['exchange_price'] / ($goods['shop_price'] - $goods['exchange_integral'])), 2);
                             }
                             if ($goods['commission'] == 0) {
                                 $goodsInfo['commission'] = '';

@@ -9079,4 +9079,18 @@ class Cron1 extends Controller
         Db::commit();
         var_dump('ok');
     }
+
+    public function updateGoodsSpecPrice()
+    {
+        $goodsList = M('goods')->where('exchange_integral_bak', 'gt', 0)->field('goods_id, exchange_integral_bak')->select();
+        Db::startTrans();
+        foreach ($goodsList as $goods) {
+            if (!M('spec_goods_price')->where(['goods_id' => $goods['goods_id']])->value('item_id')) {
+                continue;
+            }
+            M('spec_goods_price')->where(['goods_id' => $goods['goods_id']])->setDec('price', $goods['exchange_integral_bak']);
+        }
+        Db::commit();
+        var_dump('ok');
+    }
 }
