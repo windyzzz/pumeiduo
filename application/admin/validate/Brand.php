@@ -11,10 +11,10 @@
 
 namespace app\admin\validate;
 
-use think\validate;
+use think\Validate;
 
 //品牌验证器
-class Brand extends validate
+class Brand extends Validate
 {
     protected $rule = [
         ['name', 'require|checkName'],
