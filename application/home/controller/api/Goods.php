@@ -3584,6 +3584,7 @@ class Goods extends Base
         // 一级分类列表
         $categoryList = M('app_icon ai')->join('goods_category gc', 'gc.id = ai.cate_id')
             ->where('ai.cate_id', 'neq', 0)
+            ->where('gc.is_show', 1)
             ->field('gc.id cate_id, gc.name, gc.image banner')
             ->order('ai.sort DESC')
             ->select();
@@ -3611,7 +3612,8 @@ class Goods extends Base
             // 三级分类列表
             $cate['child_list'] = $cate['cate_id'] != -1 ? M('goods_category')->where([
                 'parent_id_path' => ['LIKE', '%' . $cate['cate_id'] . '%'],
-                'level' => 3
+                'level' => 3,
+                'is_show' => 1
             ])->field('id cate_id, name')->select() : [];
         }
         return json(['status' => 1, 'result' => ['list' => $categoryList], 'msg' => '']);
