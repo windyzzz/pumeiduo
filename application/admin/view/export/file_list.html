@@ -75,7 +75,7 @@
                                     <div style="text-align: left; width: 150px; max-width:150px;">
                                         <if condition="$vo[status] == 1">
                                             <a class="btn blue" href="{$vo.url}"><i class="fa fa-pencil-square-o"></i>下载</a>
-                                            <a class="btn red" href="javascript:void(0)" data-url="{:U('Order/deleteExportFile')}" data-id="{$vo.id}" onClick="deleteExport(this)"><i class="fa fa-pencil-square-o"></i>删除</a>
+                                            <a class="btn red" href="javascript:void(0)" data-url="{:U('Export/deleteExportFile')}" data-id="{$vo.id}" onClick="deleteExport(this)"><i class="fa fa-pencil-square-o"></i>删除</a>
                                         </if>
                                     </div>
                                 </td>

@@ -174,7 +174,7 @@ class School
         if ($module['distribute_grade'] != 0) {
             $limitLevel = explode(',', $module['distribute_grade']);
             $levelName = M('svip_grade')->where(['app_level' => $limitLevel[0]])->value('name');
-            if ($user['svip_grade'] != 3) {
+            if ($user['distribut_level'] != 3) {
                 return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
             } else {
                 // 获取代理商等级
@@ -193,7 +193,7 @@ class School
         if ($module['distribute_level'] != 0) {
             $limitLevel = explode(',', $module['distribute_level']);
             $levelName = M('svip_level')->where(['app_level' => $limitLevel[0]])->value('name');
-            if ($user['svip_level'] != 3) {
+            if ($user['distribut_level'] != 3) {
                 return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
             } else {
                 // 获取代理商等级
@@ -250,7 +250,7 @@ class School
         if ($moduleClass['distribute_grade'] != 0) {
             $limitLevel = explode(',', $moduleClass['distribute_grade']);
             $levelName = M('svip_grade')->where(['app_level' => $limitLevel[0]])->value('name');
-            if ($user['svip_grade'] != 3) {
+            if ($user['distribut_level'] != 3) {
                 return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
             } else {
                 // 获取代理商等级
@@ -269,7 +269,7 @@ class School
         if ($moduleClass['distribute_level'] != 0) {
             $limitLevel = explode(',', $moduleClass['distribute_level']);
             $levelName = M('svip_level')->where(['app_level' => $limitLevel[0]])->value('name');
-            if ($user['svip_level'] != 3) {
+            if ($user['distribut_level'] != 3) {
                 return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
             } else {
                 // 获取代理商等级
@@ -284,21 +284,21 @@ class School
                 return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
             }
         }
-        // 是否是学习课程
-        if ($moduleClass['is_learn'] == 1) {
-            $preClass = M('school_class')->where([
-                'module_id' => $moduleClass['module_id'], 'sort' => ['>', $moduleClass['sort']],
-                'is_open' => 1, 'is_allow' => 1
-            ])->order('sort ASC')->find();    // 上一个课程
-            if (!empty($preClass) && $preClass['is_learn'] == 1) {
-                // 查看是否将上一个课程都学习完
-                $articleIds = M('school_article')->where(['class_id' => $preClass['id'], 'learn_type' => 1])->getField('id', true);
-                $userArticleCount = M('user_school_article')->where(['user_id' => $user['user_id'], 'article_id' => ['IN', $articleIds], 'status' => 1])->count();
-                if ($userArticleCount != count($articleIds)) {
-                    return ['status' => 0, 'msg' => '请先学习完' . $preClass['name'] . '的课程'];
-                }
-            }
-        }
+//        // 分类顺序学习课程
+//        if ($moduleClass['is_learn'] == 1) {
+//            $preClass = M('school_class')->where([
+//                'module_id' => $moduleClass['module_id'], 'sort' => ['>', $moduleClass['sort']],
+//                'is_open' => 1, 'is_allow' => 1
+//            ])->order('sort ASC')->find();    // 上一个课程
+//            if (!empty($preClass) && $preClass['is_learn'] == 1) {
+//                // 查看是否将上一个课程都学习完
+//                $articleIds = M('school_article')->where(['class_id' => $preClass['id'], 'learn_type' => 1])->getField('id', true);
+//                $userArticleCount = M('user_school_article')->where(['user_id' => $user['user_id'], 'article_id' => ['IN', $articleIds], 'status' => 1])->count();
+//                if ($userArticleCount != count($articleIds)) {
+//                    return ['status' => 0, 'msg' => '请先学习完' . $preClass['name'] . '的课程'];
+//                }
+//            }
+//        }
         return ['status' => 1, 'msg' => 'ok'];
     }
 

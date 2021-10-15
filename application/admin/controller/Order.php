@@ -2037,25 +2037,6 @@ class Order extends Base
     }
 
     /**
-     * 删除订单导出文件
-     */
-    public function deleteExportFile()
-    {
-        $fileId = I('file_id');
-        $exportFile = M('export_file')->where(['id' => $fileId])->find();
-        if (!$exportFile) {
-            $this->ajaxReturn(['status' => 1, 'msg' => '删除成功']);
-        }
-        if ($exportFile['status'] == 2) {
-            $this->ajaxReturn(['status' => 0, 'msg' => '文件正在导出，不能删除']);
-        }
-        M('export_file')->where(['id' => $fileId])->delete();
-        $file = PUBLIC_PATH . substr($exportFile['path'], strrpos($exportFile['path'], 'public/') + 7) . $exportFile['name'];
-        unlink($file);
-        $this->ajaxReturn(['status' => 1, 'msg' => '删除成功']);
-    }
-
-    /**
      * 退货单列表.
      */
     public function return_list()
