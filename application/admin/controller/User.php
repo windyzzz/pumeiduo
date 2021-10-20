@@ -1054,7 +1054,7 @@ class User extends Base
     {
         $user_id = I('get.id');
         //获取类型
-        $type = I('get.type');
+//        $type = I('get.type');
         //获取记录总数
         $count = M('account_log')->where(['user_id' => $user_id])->count();
         $page = new Page($count);
@@ -1076,7 +1076,7 @@ class User extends Base
         if (!$user_id > 0) {
             $this->ajaxReturn(['status' => 0, 'msg' => '参数有误']);
         }
-        $user = M('users')->field('user_id,user_money,frozen_money,pay_points,is_lock')->where('user_id', $user_id)->find();
+        $user = M('users')->where('user_id', $user_id)->find();
         if (IS_POST) {
             $desc = I('post.desc');
             if (!$desc) {
@@ -1096,6 +1096,7 @@ class User extends Base
             $p_op_type = I('post.point_act_type');
             $pay_points = I('post.pay_points/d');
             $pay_points = $p_op_type ? $pay_points : 0 - $pay_points;
+
             //加减冻结资金
             $f_op_type = I('post.frozen_act_type');
             $revision_frozen_money = I('post.frozen_money/f');
@@ -1111,7 +1112,13 @@ class User extends Base
                 $user_money = $f_op_type ? 0 - $revision_frozen_money : $revision_frozen_money;    //计算用户剩余资金
                 M('users')->where('user_id', $user_id)->update(['frozen_money' => $frozen_money]);
             }
-            if (accountLog($user_id, $user_money, $pay_points, $desc, 0, 0, '', $user_electronic, 0)) {
+
+            //加减乐活豆
+            $c_op_type = I('post.credit_act_type');
+            $school_credit = I('post.school_credit/d');
+            $school_credit = $c_op_type ? $school_credit : 0 - $school_credit;
+
+            if (accountLog($user_id, $user_money, $pay_points, $desc, 0, 0, '', $user_electronic, 0, true, 0, $school_credit)) {
                 $this->ajaxReturn(['status' => 1, 'msg' => '操作成功', 'url' => U('Admin/User/account_log', ['id' => $user_id])]);
             } else {
                 $this->ajaxReturn(['status' => -1, 'msg' => '操作失败']);
