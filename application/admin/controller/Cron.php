@@ -2038,6 +2038,7 @@ AND log_id NOT IN
         $className = M('school_class')->where(['id' => $ext['class_id']])->value('name');
         // 模块分类下的课程列表
         $courseIds = M('school_article')->where(['class_id' => $ext['class_id'], 'learn_type' => ['IN', [1, 2]], 'status' => 1])->getField('id', true);
+        $totalCourseNum = count($courseIds);
         // APP等级列表
         $appGrade = M('distribut_level')->getField('level_id, level_name', true);
         // 代理商等级列表
@@ -2056,32 +2057,31 @@ AND log_id NOT IN
             $user['svip_grade_name'] = $user['distribut_level'] == 3 ? $svipGrade[$user['svip_grade']] : '';
             // 代理商等级
             $user['svip_level_name'] = $user['distribut_level'] == 3 ? $svipLevel[$user['svip_level']] : '';
-            // 用户达标课程数量
+            // 用户已学习完成课程数量
             $userData = [
                 'user_id' => $user['user_id'],
                 'app_grade' => $user['distribut_level'],
                 'svip_grade' => $user['svip_grade'],
                 'svip_level' => $user['svip_level'],
             ];
-            $res = $this->checkUserCourseNum($userData, $courseIds, false);
-            $user['course_num'] = $res['course_num'];
-            // 是否已结业
             $res = $this->checkUserCourseNum($userData, $courseIds, false, true);
-            $userLearnedCourseNum = $res['course_num'];
-            if ($userLearnedCourseNum == count($courseIds)) {
+            $userLearnedCourseNum = $user['course_num'] = $res['course_num'];
+            // 是否已结业
+            if ($userLearnedCourseNum == $totalCourseNum) {
                 $user['is_graduate'] = 1;
             }
             $dataList[] = [
+                $moduleName,
+                $className,
                 $user['user_id'],
                 $user['nickname'],
                 $user['user_name'],
                 $user['app_grade_name'],
                 $user['svip_grade_name'],
                 $user['svip_level_name'],
+                $totalCourseNum,
                 $user['course_num'],
                 $user['school_credit'],
-                $moduleName,
-                $className,
                 $user['is_graduate'] == 0 ? '未结业' : '已结业',
                 $user['svip_activate_time'] != 0 ? date('Y-m-d H:i:s', $user['svip_activate_time']) : '',
                 $user['svip_upgrade_time'] != 0 ? date('Y-m-d H:i:s', $user['svip_upgrade_time']) : '',
@@ -2089,8 +2089,8 @@ AND log_id NOT IN
         }
         // 表头
         $headList = [
-            '用户ID', '用户昵称', '用户名', 'APP等级', '代理商等级', '代理商职级', '课程数量', '乐活豆数量',
-            '所属模块', '所属分类', '是否已结业', '211系统激活时间', '211系统升级代理商时间'
+            '所属模块', '所属分类', '用户ID', '用户昵称', '用户名', 'APP等级', '代理商等级', '代理商职级', '总课程数量', '已学习完成课程数量',
+            '乐活豆数量', '是否已结业', '211系统激活时间', '211系统升级代理商时间'
         ];
         toCsvExcel($dataList, $headList, $exportFileName, $exportFilePath);
         M('export_file')->where(['id' => $exportFileId])->update([

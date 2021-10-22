@@ -1,5 +1,4 @@
 <include file="public/layout" />
-<script type="text/javascript" src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
 <body style="background-color: rgb(255, 255, 255); overflow: auto; cursor: default; -moz-user-select: inherit;">
 <div id="append_parent"></div>
 <div id="ajaxwaitid"></div>
@@ -8,7 +7,7 @@
         <div class="item-title">
             <a class="back" href="javascript:history.back();" title="返回列表"><i class="fa fa-arrow-circle-o-left"></i></a>
             <div class="subject">
-                <h3>学习课程用户列表</h3>
+                <h3>模块学习用户列表</h3>
             </div>
         </div>
     </div>
@@ -20,9 +19,7 @@
         </div>
         <ul>
             <li>
-                <!--说明：-->
-                <!--<br/>-->
-                <!--<p style="color: red;">“达标等级”不能进行搜索（因为技术上涉及到列表分页，达标等级是动态生成），只能进行导出</p>-->
+
             </li>
         </ul>
     </div>
@@ -33,8 +30,21 @@
             </div>
             <div title="刷新数据" class="pReload"><i class="fa fa-refresh"></i></div>
         </div>
-        <form class="navbar-form form-inline" id="search-form" action="{:U('school.article/userCourseList')}" method="post">
+        <form class="navbar-form form-inline" id="search-form" action="{:U('school.article/moduleUserList')}" method="post">
             <div class="sDiv">
+                板块：
+                <div class="sDiv2">
+                    <select name="module_id">
+                        <volist name="module_list" id="vo" key="k">
+                            <option value="{$key}" <if condition="$module_id == $key">selected</if>>{$vo}</option>
+                        </volist>
+                    </select>
+                </div>
+                课程总数量：
+                {$total_course_num}
+            </div>
+            <div class="sDiv">
+                用户：
                 <div class="sDiv2">
                     <select name="app_grade">
                         <option value="">APP等级</option>
@@ -68,29 +78,12 @@
                 <div class="sDiv2">
                     <input type="text" size="30" name="nickname" value="{$nickname}" class="qsbox" placeholder="用户昵称">
                 </div>
-                <div class="sDiv2">
-                    <input type="text" size="30" id="activate_time_from" name="activate_time_from" value="{$activate_time_from}" class="qsbox" placeholder="激活时间段-开始">
-                </div>
-                <div class="sDiv2">
-                    <input type="text" size="30" id="activate_time_to" name="activate_time_to" value="{$activate_time_to}" class="qsbox" placeholder="激活时间段-结束">
-                </div>
-                <div class="sDiv2">
-                    <input type="text" size="30" id="upgrade_time_from" name="upgrade_time_from" value="{$upgrade_time_from}" class="qsbox" placeholder="升级时间段-开始">
-                </div>
-                <div class="sDiv2">
-                    <input type="text" size="30" id="upgrade_time_to" name="upgrade_time_to" value="{$upgrade_time_to}" class="qsbox" placeholder="升级时间段-结束">
-                </div>
-            </div>
-            <div class="sDiv">
                 <input type="hidden" name="is_export" value="0">
                 <div class="sDiv2">
                     <input type="submit" class="btn" value="搜索">
                 </div>
                 <div class="sDiv2">
-                    <input type="button" class="btn" onclick="listExport()" value="后台导出">
-                </div>
-                <div class="sDiv2">
-                    <input type="button" class="btn" onclick="exportList()" value="后台导出文件列表">
+                    <input type="button" class="btn" onclick="export_list()" value="导出">
                 </div>
             </div>
         </form>
@@ -121,34 +114,13 @@
                             <div style="text-align: center; width: 120px;" class="">代理商职级</div>
                         </th>
                         <th align="left" abbr="send_type" axis="col4" class="">
-                            <div style="text-align: center; width: 120px;" class="">课程数量</div>
-                        </th>
-                        <th align="left" abbr="send_type" axis="col4" class="">
                             <div style="text-align: center; width: 120px;" class="">乐活豆数量</div>
                         </th>
                         <th align="left" abbr="send_type" axis="col4" class="">
-                            <div style="text-align: center; width: 150px;" class="">首次进入商学院</div>
+                            <div style="text-align: center; width: 120px;" class="">已学习完成课程数量</div>
                         </th>
                         <th align="left" abbr="send_type" axis="col4" class="">
-                            <div style="text-align: center; width: 150px;" class="">211系统激活时间</div>
-                        </th>
-                        <th align="left" abbr="send_type" axis="col4" class="">
-                            <div style="text-align: center; width: 150px;" class="">211系统升级代理商时间</div>
-                        </th>
-                        <th align="left" abbr="send_type" axis="col4" class="">
-                            <div style="text-align: center; width: 100px;" class="">推荐总人数</div>
-                        </th>
-                        <th align="left" abbr="send_type" axis="col4" class="">
-                            <div style="text-align: center; width: 100px;" class="">推荐游客人数</div>
-                        </th>
-                        <th align="left" abbr="send_type" axis="col4" class="">
-                            <div style="text-align: center; width: 100px;" class="">推荐优享会员人数</div>
-                        </th>
-                        <th align="left" abbr="send_type" axis="col4" class="">
-                            <div style="text-align: center; width: 100px;" class="">推荐尊享会员人数</div>
-                        </th>
-                        <th align="left" abbr="send_type" axis="col4" class="">
-                            <div style="text-align: center; width: 100px;" class="">推荐代理商人数</div>
+                            <div style="text-align: center; width: 80px;" class="">是否已结业</div>
                         </th>
                         <th style="width:100%" axis="col7">
                             <div></div>
@@ -190,48 +162,19 @@
                                 <div style="text-align: center; width: 120px;">{$vo.svip_level_name}</div>
                             </td>
                             <td align="left" class="">
-                                <div style="text-align: center; width: 120px;">
-                                    <if condition="$vo[course_num] GT 0">
-                                        <a href="/index.php/Admin/school.article/userCourseArticleList/user_id/{$vo.user_id}" style="text-decoration: underline; font-weight: bold;">{$vo.course_num}</a>
-                                    <else/>
-                                        {$vo.course_num}
-                                    </if>
-                                </div>
-                            </td>
-                            <td align="left" class="">
                                 <div style="text-align: center; width: 120px;">{$vo.school_credit}</div>
                             </td>
                             <td align="left" class="">
-                                <div style="text-align: center; width: 150px;">{$vo.first_visit}</div>
+                                <div style="text-align: center; width: 120px;">{$vo.course_num}</div>
                             </td>
                             <td align="left" class="">
-                                <div style="text-align: center; width: 150px;">
-                                    <if condition="$vo[svip_activate_time] != 0">
-                                        {$vo.svip_activate_time|date='Y-m-d H:i:s', ###}
+                                <div style="text-align: center; width: 80px;">
+                                    <if condition="$vo[is_graduate] == 1">
+                                        <span style="color: green">已结业</span>
+                                        <else/>
+                                        <span style="color: red">未结业</span>
                                     </if>
                                 </div>
-                            </td>
-                            <td align="left" class="">
-                                <div style="text-align: center; width: 150px;">
-                                    <if condition="$vo[svip_upgrade_time] != 0">
-                                        {$vo.svip_upgrade_time|date='Y-m-d H:i:s', ###}
-                                    </if>
-                                </div>
-                            </td>
-                            <td align="left" class="">
-                                <div style="text-align: center; width: 100px;">{$vo.svip_referee_number}</div>
-                            </td>
-                            <td align="left" class="">
-                                <div style="text-align: center; width: 100px;">{$vo.grade_referee_num1}</div>
-                            </td>
-                            <td align="left" class="">
-                                <div style="text-align: center; width: 100px;">{$vo.grade_referee_num2}</div>
-                            </td>
-                            <td align="left" class="">
-                                <div style="text-align: center; width: 100px;">{$vo.grade_referee_num3}</div>
-                            </td>
-                            <td align="left" class="">
-                                <div style="text-align: center; width: 100px;">{$vo.grade_referee_num4}</div>
                             </td>
                             <td align="" class="" style="width: 100%;">
                                 <div>&nbsp</div>
@@ -249,11 +192,6 @@
 </div>
 <script>
     $(document).ready(function () {
-        $('#activate_time_from').layDate();
-        $('#activate_time_to').layDate();
-        $('#upgrade_time_from').layDate();
-        $('#upgrade_time_to').layDate();
-
         // 表格行点击选中切换
         $('#flexigrid > table>tbody >tr').click(function () {
             $(this).toggleClass('trSelected');
@@ -261,40 +199,15 @@
 
         // 点击刷新数据
         $('.fa-refresh').click(function () {
-            location.href = "{:U('school.article/userCourseList')}";
+            var module_id = {$module_id};
+            location.href = '/index.php/Admin/school.article/moduleUserList/module_id/' + module_id;
         });
     });
 
-    function listExport() {
-        layer.confirm('确定导出？', {
-            btn: ['确定', '取消'] //按钮
-        }, function () {
-            $('input[name="is_export"]').val('1');
-            $.ajax({
-                type: "POST",
-                url: "{:U('school.article/userCourseList')}",
-                data: $('#search-form').serialize(),
-                dataType: 'json',
-                success: function (data) {
-                    layer.alert(data.msg, {icon: 1, time: 2000});
-                }
-            });
-            $('input[name="is_export"]').val('0');
-        }, function () {
-            console.log("取消");
-        });
-    }
-
-    function exportList() {
-        var url = "{:U('Export/fileList')}/type/school_user_course";
-        layer.open({
-            type: 2,
-            title: '导出列表',
-            shadeClose: true,
-            shade: 0.8,
-            area: ['800px', '600px'],
-            content: url
-        });
+    function export_list() {
+        $('input[name="is_export"]').val('1');
+        $('#search-form').submit();
+        $('input[name="is_export"]').val('0');
     }
 </script>
 </body>
