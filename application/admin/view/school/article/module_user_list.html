@@ -32,9 +32,10 @@
         </div>
         <form class="navbar-form form-inline" id="search-form" action="{:U('school.article/moduleUserList')}" method="post">
             <div class="sDiv">
-                板块：
+                模块：
                 <div class="sDiv2">
                     <select name="module_id">
+                        <option value="-1">所有模块</option>
                         <volist name="module_list" id="vo" key="k">
                             <option value="{$key}" <if condition="$module_id == $key">selected</if>>{$vo}</option>
                         </volist>

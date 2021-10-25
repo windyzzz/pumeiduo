@@ -1506,14 +1506,21 @@ class Article extends Base
     public function moduleUserList()
     {
         $isExport = I('is_export', 0);
-        $moduleId = I('module_id', 0);
-        $moduleName = M('school')->where(['id' => $moduleId])->value('name');
-        // 分类列表
-        $classIds = M('school_class')->where(['module_id' => $moduleId])->getField('id', true);
-        // 模块下的课程列表
-        $courseIds = M('school_article')->where(['class_id' => ['IN', $classIds], 'learn_type' => ['IN', [1, 2]], 'status' => 1])->getField('id', true);
-        $totalCourseNum = count($courseIds);
-        $where = ['s.id' => $moduleId, 'sa.delete_time' => 0];
+        $where = ['sa.delete_time' => 0];
+        $moduleId = I('module_id', -1);
+        if ($moduleId != -1) {
+            $moduleName = M('school')->where(['id' => $moduleId])->value('name');
+            // 分类列表
+            $classIds = M('school_class')->where(['module_id' => $moduleId])->getField('id', true);
+            // 模块下的课程列表
+            $courseIds = M('school_article')->where(['class_id' => ['IN', $classIds], 'learn_type' => ['IN', [1, 2]], 'status' => 1])->getField('id', true);
+            $totalCourseNum = count($courseIds);
+            $where['s.id'] = $moduleId;
+        } else {
+            // 所有模块的课程列表
+            $courseIds = M('school_article')->where(['learn_type' => ['IN', [1, 2]], 'status' => 1])->getField('id', true);
+            $totalCourseNum = count($courseIds);
+        }
         if ($appGrade = I('app_grade', '')) {
             $where['u.distribut_level'] = $appGrade;
         }
@@ -1551,7 +1558,9 @@ class Article extends Base
                 ->join('school_class sc', 'sc.id = sa.class_id')
                 ->join('school s', 's.id = sc.module_id')
                 ->join('users u', 'u.user_id = usa.user_id')
-                ->where($where)->count();
+                ->where($where)
+                ->group('usa.user_id')
+                ->count();
             $page = new Page($count, 10);
             // 用户列表
             $userList = $userList->limit($page->firstRow . ',' . $page->listRows);
@@ -1581,7 +1590,7 @@ class Article extends Base
                 $user['is_graduate'] = 1;
             }
             $dataList[] = [
-                $moduleName,
+                $moduleName ?? '所有模块',
                 $totalCourseNum,
                 $user['user_id'],
                 $user['nickname'],
