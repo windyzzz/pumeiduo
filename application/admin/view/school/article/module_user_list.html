@@ -123,6 +123,11 @@
                         <th align="left" abbr="send_type" axis="col4" class="">
                             <div style="text-align: center; width: 80px;" class="">是否已结业</div>
                         </th>
+                        <if condition="$module_id == -1">
+                            <th align="left" abbr="send_type" axis="col4" class="">
+                                <div style="text-align: center; width: 120px;" class="">参与学习的模块数量</div>
+                            </th>
+                        </if>
                         <th style="width:100%" axis="col7">
                             <div></div>
                         </th>
@@ -177,6 +182,11 @@
                                     </if>
                                 </div>
                             </td>
+                            <if condition="$module_id == -1">
+                                <td align="left" class="">
+                                    <div style="text-align: center; width: 120px;">{$vo.module_num}</div>
+                                </td>
+                            </if>
                             <td align="" class="" style="width: 100%;">
                                 <div>&nbsp</div>
                             </td>
