@@ -1269,8 +1269,12 @@ AND log_id NOT IN
                         'type' => 2
                     ];
                     if ($buttdata['referee_user_name']) {
-                        $referee_users = M('users')->where(['user_name' => $buttdata['referee_user_name']])->field('user_id,first_leader,second_leader')->find();
+                        $referee_users = M('users')->where(['user_name' => $buttdata['referee_user_name']])->field('user_id,first_leader,second_leader,is_lock,is_cancel')->find();
                         if ($referee_users) {
+                            if ($referee_users['is_lock'] == 1 || $referee_users['is_cancel'] == 1) {
+                                Db::rollback();
+                                continue;
+                            }
                             $data['first_leader'] = $referee_users['user_id'];
                             $data['second_leader'] = $referee_users['first_leader'];
                             $data['third_leader'] = $referee_users['second_leader'];
