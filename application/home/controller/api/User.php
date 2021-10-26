@@ -735,7 +735,12 @@ class User extends Base
             if (empty($userInfo)) {
                 return json(['status' => 0, 'msg' => '推荐人ID有误', 'result' => null]);
             }
-
+            if ($userInfo['is_lock'] == 1) {
+                return json(['status' => 0, 'msg' => '推荐人账号已经冻结了', 'result' => null]);
+            }
+            if ($userInfo['is_cancel'] == 1) {
+                return json(['status' => 0, 'msg' => '推荐人账号已经注销了', 'result' => null]);
+            }
             if ($this->_hasRelationship($id)) {
                 return json(['status' => 0, 'msg' => '不能绑定和自己有关系的普通会员', 'result' => null]);
             }
@@ -1425,6 +1430,15 @@ class User extends Base
 
             if ($will_invite_uid > 0) {
                 $first_leader = Db::name('users')->where("user_id = {$will_invite_uid}")->find();
+                if ($first_leader['is_lock'] == 1) {
+                    return json(['status' => -1, 'msg' => '推荐人账号已经冻结了', 'result' => null]);
+                }
+                if ($first_leader['is_cancel'] == 1) {
+                    return json(['status' => -1, 'msg' => '推荐人账号已经注销了', 'result' => null]);
+                }
+                if ($this->_hasRelationship($will_invite_uid)) {
+                    return json(['status' => -1, 'msg' => '不能绑定和自己有关系的普通会员', 'result' => null]);
+                }
 
                 $data['first_leader'] = $first_leader['user_id'];
                 $data['second_leader'] = $first_leader['first_leader']; //  第一级推荐人

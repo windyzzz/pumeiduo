@@ -1183,6 +1183,14 @@ class UsersLogic extends Model
                 // 根据openid获取用户ID
                 $invite = M('user')->where(['openid' => $inviteOpenid, 'is_lock' => 0, 'is_cancel' => 0])->order('user_id DESC')->value('user_id');
             }
+            $inviteUser = M('user')->where(['user_id' => $invite])->find();
+            if ($inviteUser['is_lock'] == 1) {
+                return ['status' => -1, 'msg' => '推荐人账号已经冻结了', 'result' => ''];
+            }
+            if ($inviteUser['is_cancel'] == 1) {
+                return ['status' => -1, 'msg' => '推荐人账号已经注销了', 'result' => ''];
+            }
+
             $map['will_invite_uid'] = $invite;
             // 如果找到他老爸还要找他爷爷他祖父等
             // $first_leader = M('users')->where("user_id = {$map['first_leader']}")->find();
