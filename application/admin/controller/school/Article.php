@@ -1539,7 +1539,7 @@ class Article extends Base
         foreach ($userList as &$user) {
             $user['course_num'] = 0;        // 学习课程数量
             $user['is_graduate'] = 0;       // 是否已结业
-            $user['module_num'] = 0;        // 学习模块数量
+            $user['module_num'] = 1;        // 学习模块数量
             // APP等级
             $user['app_grade_name'] = $this->appGrade[$user['distribut_level']];
             // 代理商等级
@@ -1601,7 +1601,7 @@ class Article extends Base
         } else {
             // 表头
             $headList = [
-                '模块', '课程总数', '用户ID', '用户昵称', '用户名', 'APP等级', '代理商等级', '代理商职级', '乐活豆数量', '已学习完成课程数量', '是否已结业' , '参与学习的模块数量'
+                '模块', '课程总数', '用户ID', '用户昵称', '用户名', 'APP等级', '代理商等级', '代理商职级', '乐活豆数量', '已学习完成课程数量', '是否已结业', '参与学习的模块数量'
             ];
             toCsvExcel($dataList, $headList, 'module_user_list');
         }
@@ -1646,7 +1646,8 @@ class Article extends Base
                     INNER JOIN `tp_users` `u` ON `u`.`user_id` = `usa`.`user_id` 
                 WHERE
                     `sa`.`delete_time` = 0 
-                    AND `sa`.`status` = 1";
+                    AND `sa`.`status` = 1
+                    AND `usa`.`status` = 1";
         $moduleId = I('module_id', -1);
         if ($moduleId != -1) {
             $moduleName = M('school')->where(['id' => $moduleId])->value('name');
@@ -1660,6 +1661,9 @@ class Article extends Base
             // 所有模块的课程列表
             $courseIds = M('school_article')->where(['learn_type' => ['IN', [1, 2]], 'status' => 1])->getField('id', true);
             $totalCourseNum = count($courseIds);
+        }
+        if ($totalCourseNum > 0) {
+            $sql .= " AND `usa`.`article_id` IN (" . implode(',', $courseIds) . ")";
         }
         if ($appGrade = I('app_grade', '')) {
             $sql .= " AND `u`.`distribut_level` = $appGrade";
