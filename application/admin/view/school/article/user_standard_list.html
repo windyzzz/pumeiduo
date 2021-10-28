@@ -1,4 +1,5 @@
 <include file="public/layout" />
+<script type="text/javascript" src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
 <body style="background-color: rgb(255, 255, 255); overflow: auto; cursor: default; -moz-user-select: inherit;">
 <div id="append_parent"></div>
 <div id="ajaxwaitid"></div>
@@ -74,6 +75,12 @@
                         <option value="1" <if condition="$is_reach == 1">selected</if> >是</option>
                         <option value="0" <if condition="$is_reach === 0">selected</if> >否</option>
                     </select>
+                </div>
+                <div class="sDiv2">
+                    <input type="text" size="30" id="learn_time_from" name="learn_time_from" value="{$learn_time_from}" class="qsbox" placeholder="学习时间段-开始">
+                </div>
+                <div class="sDiv2">
+                    <input type="text" size="30" id="learn_time_to" name="learn_time_to" value="{$learn_time_to}" class="qsbox" placeholder="学习时间段-结束">
                 </div>
                 <input type="hidden" name="is_export" value="0">
                 <div class="sDiv2">
@@ -189,6 +196,9 @@
 </div>
 <script>
     $(document).ready(function () {
+        $('#learn_time_from').layDate();
+        $('#learn_time_to').layDate();
+
         // 表格行点击选中切换
         $('#flexigrid > table>tbody >tr').click(function () {
             $(this).toggleClass('trSelected');

@@ -460,6 +460,10 @@ class Article extends Base
         if ($nickname = I('nickname', '')) {
             $where['u.nickname'] = $nickname;
         }
+        $learnTimeFrom = I('learn_time_from', '') ? htmlspecialchars_decode(I('learn_time_from')) : '';
+        if (strpos($learnTimeFrom, '+')) $learnTimeFrom = str_replace('+', ' ', $learnTimeFrom);
+        $learnTimeTo = I('learn_time_to', '') ? htmlspecialchars_decode(I('learn_time_to')) : '';
+        if (strpos($learnTimeTo, '+')) $learnTimeTo = str_replace('+', ' ', $learnTimeTo);
         $userCourseLog = M('user_school_article usa')
             ->join('users u', 'u.user_id = usa.user_id')
             ->join('distribut_level dl', 'dl.level_id = u.distribut_level')
@@ -498,7 +502,7 @@ class Article extends Base
                 'svip_grade' => $log['svip_grade'],
                 'svip_level' => $log['svip_level'],
             ];
-            $res = $this->checkUserCourseNum($user, $courseIds, true);
+            $res = $this->checkUserCourseNum($user, $courseIds, true, false, $learnTimeFrom ? strtotime($learnTimeFrom) : '', $learnTimeTo ? strtotime($learnTimeTo) : '');
             $log['course_num'] = $res['course_num'];
             if ($res['status'] == 1) {
                 $log['is_reach'] = 1;
@@ -547,6 +551,8 @@ class Article extends Base
                 $this->assign('user_name', $username);
                 $this->assign('nickname', $nickname);
                 $this->assign('is_reach', $isReach);
+                $this->assign('learn_time_from', $learnTimeFrom);
+                $this->assign('learn_time_to', $learnTimeTo);
                 $this->assign('page', $page);
                 $this->assign('log', $userCourseLog);
                 return $this->fetch('user_standard_list');
@@ -561,6 +567,8 @@ class Article extends Base
                 $this->assign('user_name', $username);
                 $this->assign('nickname', $nickname);
                 $this->assign('is_reach', (int)$isReach);
+                $this->assign('learn_time_from', $learnTimeFrom);
+                $this->assign('learn_time_to', $learnTimeTo);
                 $this->assign('log', $userCourseLog);
                 return $this->fetch('user_standard_list_2');
             }
