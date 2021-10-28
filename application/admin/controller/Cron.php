@@ -2056,7 +2056,7 @@ AND log_id NOT IN
         $learnTimeTo = $ext['learn_time_to'] ?? '';
         $dataList = [];
         foreach ($userList as $user) {
-            if ($learnTimeFrom && $learnTimeTo && $user['add_time'] && ($user['add_time'] < $learnTimeFrom || $user['add_time'] > $learnTimeTo)) {
+            if ($learnTimeFrom && $learnTimeTo && $user['finish_time'] && ($user['finish_time'] < $learnTimeFrom || $user['finish_time'] > $learnTimeTo)) {
                 continue;
             }
             $user['course_num'] = 0;    // 学习课程数量
@@ -2177,6 +2177,8 @@ AND log_id NOT IN
         $svipLevel = M('svip_level')->getField('app_level, name', true);
         // 用户数据
         $userList = M($table)->join($join)->where($condition)->field($field)->group($group)->order($order)->limit($offset, $length)->select();
+        $learnTimeFrom = $ext['learn_time_from'] ?? '';
+        $learnTimeTo = $ext['learn_time_to'] ?? '';
         $dataList = [];
         foreach ($userList as &$user) {
             $user['course_num'] = 0;        // 学习课程数量
@@ -2194,7 +2196,7 @@ AND log_id NOT IN
                 'svip_grade' => $user['svip_grade'],
                 'svip_level' => $user['svip_level'],
             ];
-            $res = $this->checkUserCourseNum($userData, $courseIds, false, true);
+            $res = $this->checkUserCourseNum($userData, $courseIds, false, true, $learnTimeFrom, $learnTimeTo);
             $userLearnedCourseNum = $user['course_num'] = $res['course_num'];
             // 是否已结业
             if ($userLearnedCourseNum == $totalCourseNum) {
@@ -2244,8 +2246,7 @@ AND log_id NOT IN
         ];
         if ($isCheck) $where['status'] = 1;
         if ($isLearned) $where['status'] = 1;
-        if (($isCheck || $isLearned) && $timeFrom && $timeTo) $where['finish_time'] = ['BETWEEN', [$timeFrom, $timeTo]];
-        if (!$isCheck && !$isLearned && $timeFrom && $timeTo) $where['add_time'] = ['BETWEEN', [$timeFrom, $timeTo]];
+        if ($timeFrom && $timeTo) $where['finish_time'] = ['BETWEEN', [$timeFrom, $timeTo]];
         // 用户学习课程记录总数
         $userCourseNum = M('user_school_article')->where($where)->getField('count(article_id) as count');
         $userCourseNum = $userCourseNum ?? 0;
