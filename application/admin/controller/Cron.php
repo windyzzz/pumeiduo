@@ -1798,7 +1798,7 @@ AND log_id NOT IN
     {
         $exportFile = M('export_file')->where(['status' => 0])->find();
         if ($exportFile) {
-            M('export_file')->where(['id' => $exportFile['id']])->update(['status' => 2]);
+//            M('export_file')->where(['id' => $exportFile['id']])->update(['status' => 2]);
         } else {
             exit();
         }
@@ -1842,10 +1842,10 @@ AND log_id NOT IN
                 break;
         }
         if (isset($res) && $res === true) {
-            M('export_file')->where(['id' => $exportFile['id']])->update([
-                'status' => 1,
-                'url' => SITE_URL . '/' . $exportFile['path'] . $exportFile['name']
-            ]);
+//            M('export_file')->where(['id' => $exportFile['id']])->update([
+//                'status' => 1,
+//                'url' => SITE_URL . '/' . $exportFile['path'] . $exportFile['name']
+//            ]);
         }
         exit();
     }
@@ -1984,8 +1984,8 @@ AND log_id NOT IN
         $svipGrade = M('svip_grade')->getField('app_level, name', true);
         // 代理商职级列表
         $svipLevel = M('svip_level')->getField('app_level, name', true);
-        $timeFrom = $ext['time_from'] ?? '';
-        $timeTo = $ext['time_to'] ?? '';
+        $learnTimeFrom = $ext['learn_time_from'] ?? '';
+        $learnTimeTo = $ext['learn_time_to'] ?? '';
         $dataList = [];
         foreach ($userList as &$user) {
             $user['course_num'] = 0;    // 学习课程数量
@@ -2002,7 +2002,7 @@ AND log_id NOT IN
                 'svip_grade' => $user['svip_grade'],
                 'svip_level' => $user['svip_level'],
             ];
-            $res = $this->checkUserCourseNum($userData, $courseIds, false, false, $timeFrom, $timeTo);
+            $res = $this->checkUserCourseNum($userData, $courseIds, false, false, $learnTimeFrom, $learnTimeTo);
             $user['course_num'] = $res['course_num'];
             // 用户首次进入商学院的时间
             $firstVisit = M('user_school_config')->where(['type' => 'first_visit', 'user_id' => $user['user_id']])->value('add_time');
@@ -2052,8 +2052,13 @@ AND log_id NOT IN
         $svipLevel = M('svip_level')->getField('app_level, name', true);
         // 商学院模块分类信息
         $schoolModuleClass = M('school_class sc')->join('school s', 's.id = sc.module_id')->getField('sc.id, sc.name class_name, s.name module_name', true);
+        $learnTimeFrom = $ext['learn_time_from'] ?? '';
+        $learnTimeTo = $ext['learn_time_to'] ?? '';
         $dataList = [];
         foreach ($userList as $user) {
+            if ($learnTimeFrom && $learnTimeTo && $user['add_time'] && ($user['add_time'] < $learnTimeFrom || $user['add_time'] > $learnTimeTo)) {
+                continue;
+            }
             $user['course_num'] = 0;    // 学习课程数量
             // APP等级
             $user['app_grade_name'] = $appGrade[$user['distribut_level']];
@@ -2141,6 +2146,7 @@ AND log_id NOT IN
                 $user['class_id'] ? $schoolModuleClass[$user['class_id']]['class_name'] : '',
                 $status,
                 $user['publish_time'] ? date('Y-m-d H:i:s', $user['publish_time']) : '',
+                $user['add_time'] ? date('Y-m-d H:i:s', $user['add_time']) : '',
                 $user['finish_time'] ? date('Y-m-d H:i:s', $user['finish_time']) : '',
                 $learnStatusDesc,
                 $questionnaireStatusDesc
@@ -2150,7 +2156,7 @@ AND log_id NOT IN
         $headList = [
             '用户ID', '用户昵称', '用户名', 'APP等级', '代理商等级', '代理商职级', '课程数量', '乐活豆数量', '首次进入商学院',
             '211系统激活时间', '211系统升级代理商时间', '推荐总人数', '推荐游客人数', '推荐优享会员人数', '推荐尊享会员人数', '推荐代理商人数',
-            '文章ID', '标题', '学习类型', '所属模块', '所属分类', '发布状态', '发布时间', '学习完成时间', '学习状态', '是否完成调查问卷'
+            '文章ID', '标题', '学习类型', '所属模块', '所属分类', '发布状态', '发布时间', '学习开始时间', '学习完成时间', '学习状态', '是否完成调查问卷'
         ];
         toCsvExcel($dataList, $headList, $exportFileName, $exportFilePath);
         return true;
@@ -2238,7 +2244,8 @@ AND log_id NOT IN
         ];
         if ($isCheck) $where['status'] = 1;
         if ($isLearned) $where['status'] = 1;
-        if ($timeFrom && $timeTo) $where['finish_time'] = ['BETWEEN', [$timeFrom, $timeTo]];
+        if (($isCheck || $isLearned) && $timeFrom && $timeTo) $where['finish_time'] = ['BETWEEN', [$timeFrom, $timeTo]];
+        if (!$isCheck && !$isLearned && $timeFrom && $timeTo) $where['add_time'] = ['BETWEEN', [$timeFrom, $timeTo]];
         // 用户学习课程记录总数
         $userCourseNum = M('user_school_article')->where($where)->getField('count(article_id) as count');
         $userCourseNum = $userCourseNum ?? 0;

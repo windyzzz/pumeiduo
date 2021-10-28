@@ -31,7 +31,8 @@ class Article extends Base
             'article_id' => ['IN', $courseIds],
         ];
         if ($isCheck || $isLearned) $where['status'] = 1;
-        if ($timeFrom && $timeTo) $where['finish_time'] = ['BETWEEN', [$timeFrom, $timeTo]];
+        if (($isCheck || $isLearned) && $timeFrom && $timeTo) $where['finish_time'] = ['BETWEEN', [$timeFrom, $timeTo]];
+        if (!$isCheck && !$isLearned && $timeFrom && $timeTo) $where['add_time'] = ['BETWEEN', [$timeFrom, $timeTo]];
         // 用户学习课程记录总数
         $userCourseNum = M('user_school_article')->where($where)->getField('count(article_id) as count');
         $userCourseNum = $userCourseNum ?? 0;
@@ -134,7 +135,7 @@ class Article extends Base
         // 字段
         $field = 'u.user_id, nickname, user_name, distribut_level, svip_grade, svip_level, school_credit, 
         svip_activate_time, svip_upgrade_time, svip_referee_number, grade_referee_num1, grade_referee_num2, grade_referee_num3, grade_referee_num4,
-        usa.article_id, usa.status learn_status, usa.finish_time, usa.is_questionnaire, sa.class_id, sa.title, sa.learn_type, sa.status, sa.publish_time';
+        usa.article_id, usa.status learn_status, usa.add_time, usa.finish_time, usa.is_questionnaire, sa.class_id, sa.title, sa.learn_type, sa.status, sa.publish_time';
         $path = UPLOAD_PATH . 'school/excel/' . date('Y-m-d') . '/';
         $name = 'userCourseList_ext_' . date('Y-m-d_H-i-s') . '.csv';
         // 导出记录
@@ -227,10 +228,15 @@ class Article extends Base
         if ($upgradeTimeFrom && $upgradeTimeTo) {
             $where['u.svip_upgrade_time'] = ['BETWEEN', [strtotime($upgradeTimeFrom), strtotime($upgradeTimeTo)]];
         }
+        $learnTimeFrom = I('learn_time_from', '') ? htmlspecialchars_decode(I('learn_time_from')) : '';
+        if (strpos($learnTimeFrom, '+')) $learnTimeFrom = str_replace('+', ' ', $learnTimeFrom);
+        $learnTimeTo = I('learn_time_to', '') ? htmlspecialchars_decode(I('learn_time_to')) : '';
+        if (strpos($learnTimeTo, '+')) $learnTimeTo = str_replace('+', ' ', $learnTimeTo);
+        $ext = ['learn_time_from' => strtotime($learnTimeFrom), 'learn_time_to' => strtotime($learnTimeTo)];
         $userList = M('users u')->where($where)->order('user_id DESC');
         if ($isExport) {
-//            $this->exportUserCourseList($where);
-            $this->exportUserCourseListExt($where);
+            $this->exportUserCourseList($where, $ext);
+            $this->exportUserCourseListExt($where, $ext);
             $this->ajaxReturn(['status' => 1, 'msg' => '添加导出队列成功，请耐心等待后台导出']);
         } else {
             // 用户总数
@@ -260,7 +266,7 @@ class Article extends Base
                 'svip_grade' => $user['svip_grade'],
                 'svip_level' => $user['svip_level'],
             ];
-            $res = $this->checkUserCourseNum($userData, $courseIds, false);
+            $res = $this->checkUserCourseNum($userData, $courseIds, false, false, strtotime($learnTimeFrom), strtotime($learnTimeTo));
             $user['course_num'] = $res['course_num'];
             // 用户首次进入商学院的时间
             $firstVisit = M('user_school_config')->where(['type' => 'first_visit', 'user_id' => $user['user_id']])->value('add_time');
@@ -279,6 +285,8 @@ class Article extends Base
         $this->assign('activate_time_to', $activateTimeTo);
         $this->assign('upgrade_time_from', $upgradeTimeFrom);
         $this->assign('upgrade_time_to', $upgradeTimeTo);
+        $this->assign('learn_time_from', $learnTimeFrom);
+        $this->assign('learn_time_to', $learnTimeTo);
         $this->assign('page', $page);
         $this->assign('list', $userList);
         return $this->fetch('user_course_list');
@@ -327,15 +335,15 @@ class Article extends Base
         if ($questionnaireStatus !== '') {
             $where['usa.is_questionnaire'] = $questionnaireStatus;
         }
-        $timeFrom = I('time_from', '') ? htmlspecialchars_decode(I('time_from')) : '';
+        $timeFrom = I('time_from', '') && I('time_from') !== 'time_to' ? htmlspecialchars_decode(I('time_from')) : '';
         if (strpos($timeFrom, '+')) $timeFrom = str_replace('+', ' ', $timeFrom);
         $timeTo = I('time_to', '') ? htmlspecialchars_decode(I('time_to')) : '';
         if (strpos($timeTo, '+')) $timeTo = str_replace('+', ' ', $timeTo);
         if ($timeFrom && $timeTo) {
-            $where['usa.finish_time'] = ['BETWEEN', [strtotime($timeFrom), strtotime($timeTo)]];
+            $where['usa.add_time'] = ['BETWEEN', [strtotime($timeFrom), strtotime($timeTo)]];
         }
         $userArticle = M('user_school_article usa')->where($where)->join('school_article sa', 'sa.id = usa.article_id')->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')
-            ->field('usa.user_id, usa.article_id, usa.status learn_status, usa.finish_time, usa.is_questionnaire, sa.title, sa.learn_type, sa.status, sa.publish_time, s.name module_name, sc.name class_name');
+            ->field('usa.user_id, usa.article_id, usa.status learn_status, usa.add_time, usa.finish_time, usa.is_questionnaire, sa.title, sa.learn_type, sa.status, sa.publish_time, s.name module_name, sc.name class_name');
         if (!$isExport) {
             // 总数
             $count = M('user_school_article usa')->where($where)->join('school_article sa', 'sa.id = usa.article_id')->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')->count();
@@ -404,6 +412,7 @@ class Article extends Base
                     $item['class_name'],
                     $status,
                     date('Y-m-d H:i:s', $item['publish_time']),
+                    date('Y-m-d H:i:s', $item['add_time']),
                     $item['finish_time'] ? date('Y-m-d H:i:s', $item['finish_time']) : '',
                     $learnStatusDesc,
                     $questionnaireStatusDesc
@@ -411,7 +420,7 @@ class Article extends Base
             }
             // 表头
             $headList = [
-                '用户ID', '文章ID', '标题', '学习类型', '所属模块', '所属分类', '发布状态', '发布时间', '学习完成时间', '学习状态', '是否完成调查问卷'
+                '用户ID', '文章ID', '标题', '学习类型', '所属模块', '所属分类', '发布状态', '发布时间', '学习开始时间', '学习完成时间', '学习状态', '是否完成调查问卷'
             ];
             toCsvExcel($dataList, $headList, 'user_course_article_list');
         }

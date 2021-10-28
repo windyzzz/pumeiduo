@@ -80,6 +80,12 @@
                 <div class="sDiv2">
                     <input type="text" size="30" id="upgrade_time_to" name="upgrade_time_to" value="{$upgrade_time_to}" class="qsbox" placeholder="升级时间段-结束">
                 </div>
+                <div class="sDiv2">
+                    <input type="text" size="30" id="learn_time_from" name="learn_time_from" value="{$learn_time_from}" class="qsbox" placeholder="学习时间段-开始">
+                </div>
+                <div class="sDiv2">
+                    <input type="text" size="30" id="learn_time_to" name="learn_time_to" value="{$learn_time_to}" class="qsbox" placeholder="学习时间段-结束">
+                </div>
             </div>
             <div class="sDiv">
                 <input type="hidden" name="is_export" value="0">
@@ -192,7 +198,7 @@
                             <td align="left" class="">
                                 <div style="text-align: center; width: 120px;">
                                     <if condition="$vo[course_num] GT 0">
-                                        <a href="/index.php/Admin/school.article/userCourseArticleList/user_id/{$vo.user_id}" style="text-decoration: underline; font-weight: bold;">{$vo.course_num}</a>
+                                        <a href="/index.php/Admin/school.article/userCourseArticleList/user_id/{$vo.user_id}/time_from/{$learn_time_from}/time_to/{$learn_time_to}" style="text-decoration: underline; font-weight: bold;">{$vo.course_num}</a>
                                     <else/>
                                         {$vo.course_num}
                                     </if>
@@ -253,6 +259,8 @@
         $('#activate_time_to').layDate();
         $('#upgrade_time_from').layDate();
         $('#upgrade_time_to').layDate();
+        $('#learn_time_from').layDate();
+        $('#learn_time_to').layDate();
 
         // 表格行点击选中切换
         $('#flexigrid > table>tbody >tr').click(function () {
