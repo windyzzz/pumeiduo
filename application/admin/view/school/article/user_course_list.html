@@ -286,7 +286,7 @@
     }
 
     function exportList() {
-        var url = "{:U('Export/fileList')}/type/school_user_course";
+        var url = "{:U('Export/fileList', array('type'=>'school_user_course,school_user_course_ext'))}";
         layer.open({
             type: 2,
             title: '导出列表',

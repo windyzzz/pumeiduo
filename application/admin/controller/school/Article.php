@@ -90,7 +90,7 @@ class Article extends Base
     private function exportUserCourseList($where = [], $ext = [])
     {
         // 数据表
-        $table = 'users';
+        $table = 'users u';
         // join连接
         $join = [];
         // 排序
@@ -113,7 +113,43 @@ class Article extends Base
             'ext' => json_encode($ext),
             'add_time' => NOW_TIME
         ]);
-        $this->ajaxReturn(['status' => 1, 'msg' => '添加导出队列成功，请耐心等待后台导出']);
+    }
+
+    /**
+     * 导出用户学习课程额外数据列表
+     * @param array $where
+     * @param array $ext
+     */
+    private function exportUserCourseListExt($where = [], $ext = [])
+    {
+        // 数据表
+        $table = 'users u';
+        // join连接
+        $join = [
+            ['user_school_article usa', 'u.user_id = usa.user_id', 'LEFT'],
+            ['school_article sa', 'sa.id = usa.article_id', 'LEFT']
+        ];
+        // 排序
+        $order = ['user_id' => 'DESC'];
+        // 字段
+        $field = 'u.user_id, nickname, user_name, distribut_level, svip_grade, svip_level, school_credit, 
+        svip_activate_time, svip_upgrade_time, svip_referee_number, grade_referee_num1, grade_referee_num2, grade_referee_num3, grade_referee_num4,
+        usa.article_id, usa.status learn_status, usa.finish_time, usa.is_questionnaire, sa.class_id, sa.title, sa.learn_type, sa.status, sa.publish_time';
+        $path = UPLOAD_PATH . 'school/excel/' . date('Y-m-d') . '/';
+        $name = 'userCourseList_ext_' . date('Y-m-d_H-i-s') . '.csv';
+        // 导出记录
+        M('export_file')->add([
+            'type' => 'school_user_course_ext',
+            'path' => $path,
+            'name' => $name,
+            'table' => $table,
+            'join' => json_encode($join),
+            'condition' => json_encode($where),
+            'order' => json_encode($order),
+            'field' => $field,
+            'ext' => json_encode($ext),
+            'add_time' => NOW_TIME
+        ]);
     }
 
     /**
@@ -146,7 +182,6 @@ class Article extends Base
             'ext' => json_encode($ext),
             'add_time' => NOW_TIME
         ]);
-        $this->ajaxReturn(['status' => 1, 'msg' => '添加导出队列成功，请耐心等待后台导出']);
     }
 
     /**
@@ -159,45 +194,47 @@ class Article extends Base
 //        $where = ['distribut_level' => ['NEQ', 1]];
         $where = [];
         if ($appGrade = I('app_grade', '')) {
-            $where['distribut_level'] = $appGrade;
+            $where['u.distribut_level'] = $appGrade;
         }
         if ($svipGrade = I('svip_grade', '')) {
-            $where['distribut_level'] = 3;
-            $where['svip_grade'] = $svipGrade;
+            $where['u.distribut_level'] = 3;
+            $where['u.svip_grade'] = $svipGrade;
         }
         if ($svipLevel = I('svip_level', '')) {
-            $where['distribut_level'] = 3;
-            $where['svip_level'] = $svipLevel;
+            $where['u.distribut_level'] = 3;
+            $where['u.svip_level'] = $svipLevel;
         }
         if ($userId = I('user_id', '')) {
-            $where['user_id'] = $userId;
+            $where['u.user_id'] = $userId;
         }
         if ($username = I('user_name', '')) {
-            $where['user_name'] = $username;
+            $where['u.user_name'] = $username;
         }
         if ($nickname = I('nickname', '')) {
-            $where['nickname'] = $nickname;
+            $where['u.nickname'] = $nickname;
         }
         $activateTimeFrom = I('activate_time_from', '') ? htmlspecialchars_decode(I('activate_time_from')) : '';
         if (strpos($activateTimeFrom, '+')) $activateTimeFrom = str_replace('+', ' ', $activateTimeFrom);
         $activateTimeTo = I('activate_time_to', '') ? htmlspecialchars_decode(I('activate_time_to')) : '';
         if (strpos($activateTimeTo, '+')) $activateTimeTo = str_replace('+', ' ', $activateTimeTo);
         if ($activateTimeFrom && $activateTimeTo) {
-            $where['svip_activate_time'] = ['BETWEEN', [strtotime($activateTimeFrom), strtotime($activateTimeTo)]];
+            $where['u.svip_activate_time'] = ['BETWEEN', [strtotime($activateTimeFrom), strtotime($activateTimeTo)]];
         }
         $upgradeTimeFrom = I('upgrade_time_from', '') ? htmlspecialchars_decode(I('upgrade_time_from')) : '';
         if (strpos($upgradeTimeFrom, '+')) $upgradeTimeFrom = str_replace('+', ' ', $upgradeTimeFrom);
         $upgradeTimeTo = I('upgrade_time_to', '') ? htmlspecialchars_decode(I('upgrade_time_to')) : '';
         if (strpos($upgradeTimeTo, '+')) $upgradeTimeTo = str_replace('+', ' ', $upgradeTimeTo);
         if ($upgradeTimeFrom && $upgradeTimeTo) {
-            $where['svip_upgrade_time'] = ['BETWEEN', [strtotime($upgradeTimeFrom), strtotime($upgradeTimeTo)]];
+            $where['u.svip_upgrade_time'] = ['BETWEEN', [strtotime($upgradeTimeFrom), strtotime($upgradeTimeTo)]];
         }
-        $userList = M('users')->where($where)->order('user_id DESC');
+        $userList = M('users u')->where($where)->order('user_id DESC');
         if ($isExport) {
-            $this->exportUserCourseList($where);
+//            $this->exportUserCourseList($where);
+            $this->exportUserCourseListExt($where);
+            $this->ajaxReturn(['status' => 1, 'msg' => '添加导出队列成功，请耐心等待后台导出']);
         } else {
             // 用户总数
-            $count = M('users')->where($where)->count();
+            $count = M('users u')->where($where)->count();
             $page = new Page($count, 10);
             // 用户列表
             $userList = $userList->limit($page->firstRow . ',' . $page->listRows);
@@ -598,6 +635,7 @@ class Article extends Base
         if ($isExport) {
             $ext = ['module_id' => $moduleId, 'class_id' => $classId];
             $this->exportUserGraduateList($where, $ext);
+            $this->ajaxReturn(['status' => 1, 'msg' => '添加导出队列成功，请耐心等待后台导出']);
         } else {
             // 用户总数
             $count = M('users')->where($where)->count();
