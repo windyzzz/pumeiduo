@@ -84,7 +84,10 @@
                     <input type="submit" class="btn" value="搜索">
                 </div>
                 <div class="sDiv2">
-                    <input type="button" class="btn" onclick="export_list()" value="导出">
+                    <input type="button" class="btn" onclick="listExport()" value="后台导出">
+                </div>
+                <div class="sDiv2">
+                    <input type="button" class="btn" onclick="exportList()" value="后台导出文件列表">
                 </div>
             </div>
         </form>
@@ -120,9 +123,11 @@
                         <th align="left" abbr="send_type" axis="col4" class="">
                             <div style="text-align: center; width: 120px;" class="">已学习完成课程数量</div>
                         </th>
-                        <th align="left" abbr="send_type" axis="col4" class="">
-                            <div style="text-align: center; width: 80px;" class="">是否已结业</div>
-                        </th>
+                        <if condition="$module_id != -1">
+                            <th align="left" abbr="send_type" axis="col4" class="">
+                                <div style="text-align: center; width: 80px;" class="">是否已结业</div>
+                            </th>
+                        </if>
                         <if condition="$module_id == -1">
                             <th align="left" abbr="send_type" axis="col4" class="">
                                 <div style="text-align: center; width: 120px;" class="">参与学习的模块数量</div>
@@ -173,16 +178,17 @@
                             <td align="left" class="">
                                 <div style="text-align: center; width: 120px;">{$vo.course_num}</div>
                             </td>
-                            <td align="left" class="">
-                                <div style="text-align: center; width: 80px;">
-                                    <if condition="$vo[is_graduate] == 1">
-                                        <span style="color: green">已结业</span>
-                                        <else/>
-                                        <span style="color: red">未结业</span>
-                                    </if>
-                                </div>
-                            </td>
-                            <if condition="$module_id == -1">
+                            <if condition="$module_id != -1">
+                                <td align="left" class="">
+                                    <div style="text-align: center; width: 80px;">
+                                        <if condition="$vo[is_graduate] == 1">
+                                            <span style="color: green">已结业</span>
+                                            <else/>
+                                            <span style="color: red">未结业</span>
+                                        </if>
+                                    </div>
+                                </td>
+                            <else/>
                                 <td align="left" class="">
                                     <div style="text-align: center; width: 120px;">{$vo.module_num}</div>
                                 </td>
@@ -215,10 +221,36 @@
         });
     });
 
-    function export_list() {
-        $('input[name="is_export"]').val('1');
-        $('#search-form').submit();
-        $('input[name="is_export"]').val('0');
+    function listExport() {
+        layer.confirm('确定导出？', {
+            btn: ['确定', '取消'] //按钮
+        }, function () {
+            $('input[name="is_export"]').val('1');
+            $.ajax({
+                type: "POST",
+                url: "{:U('school.article/moduleUserList')}",
+                data: $('#search-form').serialize(),
+                dataType: 'json',
+                success: function (data) {
+                    layer.alert(data.msg, {icon: 1, time: 2000});
+                }
+            });
+            $('input[name="is_export"]').val('0');
+        }, function () {
+            console.log("取消");
+        });
+    }
+
+    function exportList() {
+        var url = "{:U('Export/fileList')}/type/module_user_list";
+        layer.open({
+            type: 2,
+            title: '导出列表',
+            shadeClose: true,
+            shade: 0.8,
+            area: ['800px', '800px'],
+            content: url
+        });
     }
 </script>
 </body>

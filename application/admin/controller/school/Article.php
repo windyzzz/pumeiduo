@@ -1584,19 +1584,19 @@ class Article extends Base
         $isExport = I('is_export', 0);
         if (!$isExport) {
             // 用户总数
-            $sqlContent = $this->moduleUserSqlContent(true);
+            $sqlContent = $this->moduleUserSqlContent(false, true);
             $count = DB::query($sqlContent['sql'])[0]['user_count'];
             $page = new Page($count, 10);
             // 用户列表（分页）
-            $sqlContent = $this->moduleUserSqlContent(false, $page->firstRow, $page->listRows);
+            $sqlContent = $this->moduleUserSqlContent(false, false, $page->firstRow, $page->listRows);
             $userList = DB::query($sqlContent['sql']);
         } else {
             // 用户列表
-            $sqlContent = $this->moduleUserSqlContent();
-            $userList = DB::query($sqlContent['sql']);
+            $this->moduleUserSqlContent(true);
+            $this->ajaxReturn(['status' => 1, 'msg' => '添加导出队列成功，请耐心等待后台导出']);
         }
         $dataList = [];
-        foreach ($userList as &$user) {
+        foreach ($userList as $key => &$user) {
             $user['course_num'] = 0;        // 学习课程数量
             $user['is_graduate'] = 0;       // 是否已结业
             $user['module_num'] = 1;        // 学习模块数量
@@ -1624,7 +1624,7 @@ class Article extends Base
                 $res = $this->checkUserModuleNum($userData);
                 $user['module_num'] = $res['module_num'];
             }
-            $dataList[] = [
+            $dataList[$key] = [
                 $sqlContent['module_name'],
                 $sqlContent['total_course_num'],
                 $user['user_id'],
@@ -1634,47 +1634,43 @@ class Article extends Base
                 $user['svip_grade_name'],
                 $user['svip_level_name'],
                 $user['school_credit'],
-                $user['course_num'],
-                $user['is_graduate'] == 1 ? '已结业' : '未结业',
-                $user['module_num']
+                $user['course_num']
             ];
+            if ($sqlContent['module_id'] != -1) {
+                $dataList[$key][] = $user['is_graduate'] == 1 ? '已结业' : '未结业';
+            } else {
+                $dataList[$key][] = $user['module_num'];
+            }
         }
-        if (!$isExport) {
-            // 模块列表
-            $notModuleType = ['module6', 'module7', 'module8'];
-            $moduleList = M('school')->where(['type' => ['NOT IN', $notModuleType]])->getField('id, name', true);
-            $this->assign('module_id', I('module_id', -1));
-            $this->assign('module_list', $moduleList);
-            $this->assign('total_course_num', $sqlContent['total_course_num']);
-            $this->assign('app_grade', $this->appGrade);
-            $this->assign('svip_grade', $this->svipGrade);
-            $this->assign('svip_level', $this->svipLevel);
-            $this->assign('select_app_grade', I('app_grade', ''));
-            $this->assign('select_svip_grade', I('svip_grade', ''));
-            $this->assign('select_svip_level', I('svip_level', ''));
-            $this->assign('user_id', I('user_id', ''));
-            $this->assign('user_name', I('user_name', ''));
-            $this->assign('nickname', I('nickname', ''));
-            $this->assign('page', $page);
-            $this->assign('list', $userList);
-            return $this->fetch('module_user_list');
-        } else {
-            // 表头
-            $headList = [
-                '模块', '课程总数', '用户ID', '用户昵称', '用户名', 'APP等级', '代理商等级', '代理商职级', '乐活豆数量', '已学习完成课程数量', '是否已结业', '参与学习的模块数量'
-            ];
-            toCsvExcel($dataList, $headList, 'module_user_list');
-        }
+        // 模块列表
+        $notModuleType = ['module6', 'module7', 'module8'];
+        $moduleList = M('school')->where(['type' => ['NOT IN', $notModuleType]])->getField('id, name', true);
+        $this->assign('module_id', I('module_id', -1));
+        $this->assign('module_list', $moduleList);
+        $this->assign('total_course_num', $sqlContent['total_course_num']);
+        $this->assign('app_grade', $this->appGrade);
+        $this->assign('svip_grade', $this->svipGrade);
+        $this->assign('svip_level', $this->svipLevel);
+        $this->assign('select_app_grade', I('app_grade', ''));
+        $this->assign('select_svip_grade', I('svip_grade', ''));
+        $this->assign('select_svip_level', I('svip_level', ''));
+        $this->assign('user_id', I('user_id', ''));
+        $this->assign('user_name', I('user_name', ''));
+        $this->assign('nickname', I('nickname', ''));
+        $this->assign('page', $page);
+        $this->assign('list', $userList);
+        return $this->fetch('module_user_list');
     }
 
     /**
      * 模块学习用户构建sql
+     * @param bool $isExport
      * @param bool $isPage
      * @param int $offset
      * @param int $length
      * @return array
      */
-    private function moduleUserSqlContent($isPage = false, $offset = 0, $length = 0)
+    private function moduleUserSqlContent($isExport = false, $isPage = false, $offset = 0, $length = 0)
     {
         if ($isPage) {
             $content = 'count(user_article.article_count) user_count';
@@ -1706,8 +1702,7 @@ class Article extends Base
                     INNER JOIN `tp_users` `u` ON `u`.`user_id` = `usa`.`user_id` 
                 WHERE
                     `sa`.`delete_time` = 0 
-                    AND `sa`.`status` = 1
-                    AND `usa`.`status` = 1";
+                    AND `sa`.`status` = 1";
         $moduleId = I('module_id', -1);
         if ($moduleId != -1) {
             $moduleName = M('school')->where(['id' => $moduleId])->value('name');
@@ -1747,8 +1742,23 @@ class Article extends Base
         if (!$isPage && $length > 0) {
             $sql .= " LIMIT $offset, $length";
         }
-        $sql .= " ) user_article WHERE user_article.article_count = $totalCourseNum";
-        return ['sql' => $sql, 'module_name' => $moduleName ?? '所有模块', 'course_ids' => $courseIds, 'total_course_num' => $totalCourseNum];
+        $sql .= " ) user_article";
+        $return = ['sql' => $sql, 'module_id' => $moduleId, 'module_name' => $moduleName ?? '所有模块', 'course_ids' => $courseIds, 'total_course_num' => $totalCourseNum];
+        if (!$isExport) {
+            return $return;
+        } else {
+            $path = UPLOAD_PATH . 'school/excel/' . date('Y-m-d') . '/';
+            $name = 'moduleUserList_' . date('Y-m-d_H-i-s') . '.csv';
+            // 导出记录
+            M('export_file')->add([
+                'type' => 'module_user_list',
+                'path' => $path,
+                'name' => $name,
+                'table' => '',
+                'field' => json_encode($return),
+                'add_time' => NOW_TIME
+            ]);
+        }
     }
 
     /**
