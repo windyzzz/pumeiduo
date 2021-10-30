@@ -1796,59 +1796,59 @@ AND log_id NOT IN
      */
     public function exportFile()
     {
-        $exportFile = M('export_file')->where(['status' => 0])->find();
-        if ($exportFile) {
-            M('export_file')->where(['id' => $exportFile['id']])->update(['status' => 2]);
-        } else {
-            exit();
-        }
-        $table = $exportFile['table'];
-        $join = $exportFile['join'] ? json_decode($exportFile['join'], true) : [];
-        $condition = $exportFile['condition'] ? json_decode($exportFile['condition'], true) : [];
-        $group = $exportFile['group'];
-        $orderArr = $exportFile['order'] ? json_decode($exportFile['order'], true) : [];
-        $order = '';
-        foreach ($orderArr as $k => $v) {
-            $order .= $k . ' ' . $v . ',';
-        }
-        $order = rtrim($order, ',');
-        $limitArr = $exportFile['limit'] ? json_decode($exportFile['limit'], true) : [];
-        $offset = 0;
-        $length = '';
-        foreach ($limitArr as $k => $v) {
-            switch ($k) {
-                case 'offset':
-                    $offset = $v;
-                    break;
-                case 'length':
-                    $length = $v;
-                    break;
+        $exportFileList = M('export_file')->where(['status' => 0])->limit(0, 2)->select();
+        if (!empty($exportFileList)) {
+            foreach ($exportFileList as $exportFile) {
+                M('export_file')->where(['id' => $exportFile['id']])->update(['status' => 2]);
+                $table = $exportFile['table'];
+                $join = $exportFile['join'] ? json_decode($exportFile['join'], true) : [];
+                $condition = $exportFile['condition'] ? json_decode($exportFile['condition'], true) : [];
+                $group = $exportFile['group'];
+                $orderArr = $exportFile['order'] ? json_decode($exportFile['order'], true) : [];
+                $order = '';
+                foreach ($orderArr as $k => $v) {
+                    $order .= $k . ' ' . $v . ',';
+                }
+                $order = rtrim($order, ',');
+                $limitArr = $exportFile['limit'] ? json_decode($exportFile['limit'], true) : [];
+                $offset = 0;
+                $length = '';
+                foreach ($limitArr as $k => $v) {
+                    switch ($k) {
+                        case 'offset':
+                            $offset = $v;
+                            break;
+                        case 'length':
+                            $length = $v;
+                            break;
+                    }
+                }
+                $field = $exportFile['field'];
+                $ext = $exportFile['ext'] ? json_decode($exportFile['ext'], true) : [];
+                switch ($exportFile['type']) {
+                    case 'order':
+                        $res = $this->exportOrder($table, $join, $condition, $field, $group, $order, $offset, $length, $exportFile['name'], $exportFile['path']);
+                        break;
+                    case 'school_user_course':
+                        $res = $this->exportSchoolUserCourse($table, $join, $condition, $field, $group, $order, $offset, $length, $ext, $exportFile['name'], $exportFile['path']);
+                        break;
+                    case 'school_user_course_ext':
+                        $res = $this->exportSchoolUserCourseExt($table, $join, $condition, $field, $group, $order, $offset, $length, $ext, $exportFile['name'], $exportFile['path']);
+                        break;
+                    case 'school_user_graduate':
+                        $res = $this->exportSchoolUserGraduate($table, $join, $condition, $field, $group, $order, $offset, $length, $ext, $exportFile['name'], $exportFile['path']);
+                        break;
+                    case 'module_user_list':
+                        $res = $this->exportModuleUserList($field, $exportFile['name'], $exportFile['path']);
+                        break;
+                }
+                if (isset($res) && $res === true) {
+                    M('export_file')->where(['id' => $exportFile['id']])->update([
+                        'status' => 1,
+                        'url' => SITE_URL . '/' . $exportFile['path'] . $exportFile['name']
+                    ]);
+                }
             }
-        }
-        $field = $exportFile['field'];
-        $ext = $exportFile['ext'] ? json_decode($exportFile['ext'], true) : [];
-        switch ($exportFile['type']) {
-            case 'order':
-                $res = $this->exportOrder($table, $join, $condition, $field, $group, $order, $offset, $length, $exportFile['name'], $exportFile['path']);
-                break;
-            case 'school_user_course':
-                $res = $this->exportSchoolUserCourse($table, $join, $condition, $field, $group, $order, $offset, $length, $ext, $exportFile['name'], $exportFile['path']);
-                break;
-            case 'school_user_course_ext':
-                $res = $this->exportSchoolUserCourseExt($table, $join, $condition, $field, $group, $order, $offset, $length, $ext, $exportFile['name'], $exportFile['path']);
-                break;
-            case 'school_user_graduate':
-                $res = $this->exportSchoolUserGraduate($table, $join, $condition, $field, $group, $order, $offset, $length, $ext, $exportFile['name'], $exportFile['path']);
-                break;
-            case 'module_user_list':
-                $res = $this->exportModuleUserList($field, $exportFile['name'], $exportFile['path']);
-                break;
-        }
-        if (isset($res) && $res === true) {
-            M('export_file')->where(['id' => $exportFile['id']])->update([
-                'status' => 1,
-                'url' => SITE_URL . '/' . $exportFile['path'] . $exportFile['name']
-            ]);
         }
         exit();
     }
