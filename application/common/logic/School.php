@@ -208,6 +208,20 @@ class School
                 return ['status' => 0, 'msg' => '您当前不是' . $levelName . '，没有访问权限'];
             }
         }
+        // 上一个模块是否需要学习完必修课程
+        $preModule = M('school')->where([
+            'sort' => ['>', $module['sort']],
+            'is_open' => 1, 'is_allow' => 1
+        ])->order('sort ASC')->field('id, name, check_type')->find();
+        if ($preModule && $preModule['check_type'] == 1) {
+            // 查看是否将上一个课程都学习完
+            $articleIds = M('school_article sa')->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')
+                ->where(['s.id' => $preModule['id'], 'sa.learn_type' => 1])->getField('sa.id', true);
+            $userArticleCount = M('user_school_article')->where(['user_id' => $user['user_id'], 'article_id' => ['IN', $articleIds], 'status' => 1])->count();
+            if ($userArticleCount != count($articleIds)) {
+                return ['status' => 0, 'msg' => '请先学习完' . $preModule['name'] . '的必修课程'];
+            }
+        }
         return ['status' => 1, 'msg' => 'ok'];
     }
 
@@ -295,7 +309,7 @@ class School
 //                $articleIds = M('school_article')->where(['class_id' => $preClass['id'], 'learn_type' => 1])->getField('id', true);
 //                $userArticleCount = M('user_school_article')->where(['user_id' => $user['user_id'], 'article_id' => ['IN', $articleIds], 'status' => 1])->count();
 //                if ($userArticleCount != count($articleIds)) {
-//                    return ['status' => 0, 'msg' => '请先学习完' . $preClass['name'] . '的课程'];
+//                    return ['status' => 0, 'msg' => '请先学习完' . $preClass['name'] . '的必修课程'];
 //                }
 //            }
 //        }

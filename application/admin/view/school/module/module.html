@@ -56,6 +56,9 @@
                     <input type="text" name="sort" value="{$module['sort']}" style="text-align: center; width: 10%;"
                            onKeyUp="this.value=this.value.replace(/[^\d]/g,'')"
                            onpaste="this.value=this.value.replace(/[^\d]/g,'')"/>
+                    <p class="notic">
+                        数字大的在前面
+                    </p>
                 </dd>
             </dl>
             <dl class="row">
@@ -67,6 +70,20 @@
                     <label for="module_is_open0" class="cb-disable <if condition='$module[is_open] eq 0'>selected</if>">隐藏</label>
                     <input id="module_is_open1" name="is_open" <if condition='$module[is_open] eq 1'>checked</if> value="1" type="radio">
                     <input id="module_is_open0" name="is_open" <if condition='$module[is_open] eq 0'>checked</if> value="0" type="radio">
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>查看类型</label>
+                </dt>
+                <dd class="opt onoff">
+                    <label for="module_check_type1" class="cb-enable <if condition='$module[check_type] eq 1'>selected</if>">必修</label>
+                    <label for="module_check_type0" class="cb-disable <if condition='$module[check_type] eq 0'>selected</if>">不要求</label>
+                    <input id="module_check_type1" name="check_type" <if condition='$module[check_type] eq 1'>checked</if> value="1" type="radio">
+                    <input id="module_check_type0" name="check_type" <if condition='$module[check_type] eq 0'>checked</if> value="0" type="radio">
+                    <p class="notic">
+                        必修查看类型：需要学习完本模块的必修课程才能查看下个课程（按照排序设置）
+                    </p>
                 </dd>
             </dl>
             <dl class="row">
@@ -155,6 +172,9 @@
                         <input type="text" name="sort" value="{$module_class['sort']}" style="text-align: center; width: 10%;"
                                onKeyUp="this.value=this.value.replace(/[^\d]/g,'')"
                                onpaste="this.value=this.value.replace(/[^\d]/g,'')"/>
+                        <p class="notic">
+                            数字大的在前面
+                        </p>
                     </dd>
                 </dl>
                 <dl class="row">
