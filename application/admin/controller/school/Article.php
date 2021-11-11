@@ -1892,4 +1892,24 @@ class Article extends Base
             toCsvExcel($dataList, $headList, 'module_user_list');
         }
     }
+
+    /**
+     * 导出素材文章
+     */
+    public function exportResourceArticle()
+    {
+        // 数据表
+        $table = '';
+        $path = UPLOAD_PATH . 'school/excel/' . date('Y-m-d') . '/';
+        $name = 'resourceArticle_' . date('Y-m-d_H-i-s') . '.csv';
+        // 导出记录
+        M('export_file')->add([
+            'type' => 'school_resource_article',
+            'path' => $path,
+            'name' => $name,
+            'table' => $table,
+            'add_time' => NOW_TIME
+        ]);
+        $this->ajaxReturn(['status' => 1, 'msg' => '添加导出队列成功，请耐心等待后台导出']);
+    }
 }

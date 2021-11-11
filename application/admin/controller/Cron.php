@@ -1841,6 +1841,9 @@ AND log_id NOT IN
                     case 'module_user_list':
                         $res = $this->exportModuleUserList($field, $exportFile['name'], $exportFile['path']);
                         break;
+                    case 'school_resource_article':
+                        $res = $this->exportSchoolResourceArticle($exportFile['name'], $exportFile['path']);
+                        break;
                 }
                 if (isset($res) && $res === true) {
                     M('export_file')->where(['id' => $exportFile['id']])->update([
@@ -2243,7 +2246,7 @@ AND log_id NOT IN
         $field = json_decode($field, true);
         $userList = DB::query($field['sql']);
         $dataList = [];
-        foreach ($userList as $key => &$user) {
+        foreach ($userList as $key => $user) {
             $user['course_num'] = 0;        // 学习课程数量
             $user['is_graduate'] = 0;       // 是否已结业
             $user['module_num'] = 1;        // 学习模块数量
@@ -2298,6 +2301,156 @@ AND log_id NOT IN
         } else {
             $headList[] = '参与学习的模块数量';
         }
+        toCsvExcel($dataList, $headList, $exportFileName, $exportFilePath);
+        return true;
+    }
+
+    private function exportSchoolResourceArticle($exportFileName, $exportFilePath)
+    {
+        $ossLogic = new OssLogic();
+        // APP等级列表
+        $appGrade = M('distribut_level')->getField('level_id, level_name', true);
+        // 代理商等级列表
+        $svipGrade = M('svip_grade')->getField('app_level, name', true);
+        // 代理商职级列表
+        $svipLevel = M('svip_level')->getField('app_level, name', true);
+        // 文章列表
+        $articleList = M('school_article sa')->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')
+            ->where(['s.type' => 'module6', 'sa.delete_time' => 0])->order('sc.sort DESC')
+            ->field('sc.name class_name, sa.*')
+            ->select();
+        $articleIds = [];
+        foreach ($articleList as $article) {
+            $articleIds[] = $article['id'];
+        }
+        // 素材列表
+        $resourceList = M('school_article_resource')->where(['article_id' => ['IN', $articleIds]])->field('article_id, image, video')->select();
+        $markClassIds = [];
+        $markArticleIds = [];
+        $dataList = [];
+        foreach ($articleList as $article) {
+            // 分类归类
+            if (!in_array($article['class_id'], $markClassIds)) {
+                $dataList[] = [
+                    '素材专区',
+                    $article['class_name']
+                ];
+                $markClassIds[] = $article['class_id'];
+            }
+            // 文章状态
+            $articleStatus = '';
+            switch ($article['status']) {
+                case 1:
+                    $articleStatus = '发布中';
+                    break;
+                case 2:
+                    $articleStatus = '预发布';
+                    break;
+                case 3:
+                    $articleStatus = '不发布';
+                    break;
+            }
+            // APP访问等级
+            if ($article['app_grade'] == 0) {
+                $articleAppGrade = '所有人';
+            } else {
+                $article['app_grade'] = explode(',', $article['app_grade']);
+                $articleAppGrade = '';
+                foreach ($article['app_grade'] as $item) {
+                    $articleAppGrade .= $appGrade[$item] . ',';
+                }
+                $articleAppGrade = rtrim($articleAppGrade, ',');
+            }
+            // 代理商访问等级
+            if ($article['distribute_grade'] == 0) {
+                $articleDistributeGrade = '所有人';
+            } else {
+                $article['distribute_grade'] = explode(',', $article['distribute_grade']);
+                $articleDistributeGrade = '';
+                foreach ($article['distribute_grade'] as $item) {
+                    $articleDistributeGrade .= $svipGrade[$item] . ',';
+                }
+                $articleDistributeGrade = rtrim($articleDistributeGrade, ',');
+            }
+            // 代理商访问职级
+            if ($article['distribute_level'] == 0) {
+                $articleDistributeLevel = '所有人';
+            } else {
+                $article['distribute_level'] = explode(',', $article['distribute_level']);
+                $articleDistributeLevel = '';
+                foreach ($article['distribute_level'] as $item) {
+                    $articleDistributeLevel .= $svipLevel[$item] . ',';
+                }
+                $articleDistributeLevel = rtrim($articleDistributeLevel, ',');
+            }
+            // 附件
+            $resourceFile = '';
+            if (!empty($article['file'])) {
+                $file = explode(',', $article['file']);
+                $resourceFile = $ossLogic::url(substr($file[0], strrpos($file[0], 'url:') + 4));
+            }
+            // 素材下载人数
+            $downloadNum = M('user_school_article')->where(['article_id' => $article['id']])->count('user_id');
+            // 素材列表处理
+            foreach ($resourceList as $resource) {
+                if ($resource['article_id'] == $article['id']) {
+                    $resourceImage = '';
+                    $resourceVideo = '';
+                    if (!empty($resource['image'])) {
+                        $image = explode(',', $resource['image']);
+                        $resourceImage = $ossLogic::url(substr($image[0], strrpos($image[0], 'img:') + 4));
+                    } elseif (!empty($resource['video'])) {
+                        $resourceVideo = $ossLogic::url($resource['video']);
+                    }
+                    if (!in_array($resource['article_id'], $markArticleIds)) {
+                        $dataList[] = [
+                            '',
+                            '',
+                            $article['id'],
+                            $article['content'],
+                            $articleAppGrade,
+                            $articleDistributeGrade,
+                            $articleDistributeLevel,
+                            $article['sort'],
+                            $articleStatus,
+                            date('Y-m-d H:i:s', $article['add_time']),
+                            date('Y-m-d H:i:s', $article['publish_time']),
+                            $article['up_time'] ? date('Y-m-d H:i:s', $article['up_time']) : '',
+                            $article['integral'],
+                            $downloadNum,
+                            $resourceFile,
+                            $resourceImage,
+                            $resourceVideo,
+                        ];
+                        $markArticleIds[] = $resource['article_id'];
+                    } else {
+                        $dataList[] = [
+                            '',
+                            '',
+                            '',
+                            '',
+                            '',
+                            '',
+                            '',
+                            '',
+                            '',
+                            '',
+                            '',
+                            '',
+                            '',
+                            '',
+                            '',
+                            $resourceImage,
+                            $resourceVideo,
+                        ];
+                    }
+                }
+            }
+        }
+        // 表头
+        $headList = [
+            '模块', '分类', '素材文章ID', '内容', 'APP访问等级', '代理商访问等级', '代理商访问职级', '排序', '状态', '添加时间', '发布时间', '更新时间', '下载需要的积分', '下载人数', '附件', '图片素材', '视频素材'
+        ];
         toCsvExcel($dataList, $headList, $exportFileName, $exportFilePath);
         return true;
     }

@@ -102,6 +102,8 @@
             <div class="bot">
                 <input type="hidden" name="type" value="{$type}">
                 <a class="ncap-btn-big ncap-btn-green" onclick="updateModule('datapost1')">确认提交</a>
+                <a class="ncap-btn-big ncap-btn-orange" onclick="listExport()">一键导出</a>
+                <a class="ncap-btn-big ncap-btn-blue" onclick="exportList()">导出列表</a>
             </div>
         </div>
     </form>
@@ -428,6 +430,36 @@
             });
         }, function () {
             console.log("取消");
+        });
+    }
+
+    function listExport() {
+        layer.confirm('确定导出？', {
+            btn: ['确定', '取消'] //按钮
+        }, function () {
+            $.ajax({
+                type: "POST",
+                url: "{:U('school.article/exportResourceArticle')}",
+                data: "",
+                dataType: 'json',
+                success: function (data) {
+                    layer.alert(data.msg, {icon: 1, time: 2000});
+                }
+            });
+        }, function () {
+            console.log("取消");
+        });
+    }
+
+    function exportList() {
+        var url = "{:U('Export/fileList')}/type/school_resource_article";
+        layer.open({
+            type: 2,
+            title: '导出列表',
+            shadeClose: true,
+            shade: 0.8,
+            area: ['800px', '800px'],
+            content: url
         });
     }
 </script>
