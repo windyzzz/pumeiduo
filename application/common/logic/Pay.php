@@ -1510,13 +1510,14 @@ class Pay
                             $promAmount = bcsub($prom['goods_price'], $promAmount, 2);
                             // 优惠设置的商品
                             $promGoods = M('goods_tao_grade')->where(['promo_id' => $promId])->field('goods_id, item_id')->select();
+                            $expression = $promInfo['expression'];
                             foreach ($pay_list as $k => $v) {
                                 $oldMGoodsPrice = $v['member_goods_price'];
                                 foreach ($promGoods as $goods) {
                                     if ($v['goods_id'] == $goods['goods_id'] && $v['item_id'] == $goods['item_id']) {
-                                        $pay_list[$k]['member_goods_price'] = bcdiv(bcmul($oldMGoodsPrice, $promInfo['expression'], 2), 100, 2);
+                                        $pay_list[$k]['member_goods_price'] = bcdiv(bcmul($oldMGoodsPrice, $expression, 2), 100, 2);
                                         if (isset($v['goods_pv'])) {
-                                            $this->payList[$k]['goods_pv'] = bcdiv(bcmul($v['goods_pv'], $promInfo['expression'], 2), 100, 2);
+                                            $this->payList[$k]['goods_pv'] = bcdiv(bcmul($v['goods_pv'], $expression, 2), 100, 2);
                                         }
                                     }
                                 }
@@ -1528,11 +1529,12 @@ class Pay
                             $promAmount = $promInfo['expression'];
                             // 优惠设置的商品
                             $promGoods = M('goods_tao_grade')->where(['promo_id' => $promId])->field('goods_id, item_id')->select();
+                            $expression = bcdiv($promInfo['expression'], count($pay_list), 2);
                             foreach ($pay_list as $k => $v) {
                                 $oldMGoodsPrice = $v['member_goods_price'];
                                 foreach ($promGoods as $goods) {
                                     if ($v['goods_id'] == $goods['goods_id'] && $v['item_id'] == $goods['item_id']) {
-                                        $pay_list[$k]['member_goods_price'] = bcsub($oldMGoodsPrice, $promInfo['expression'], 2);
+                                        $pay_list[$k]['member_goods_price'] = bcsub($oldMGoodsPrice, $expression, 2);
                                         if (isset($v['goods_pv'])) {
                                             $this->payList[$k]['goods_pv'] = bcmul($v['goods_pv'], ($pay_list[$k]['member_goods_price'] / $oldMGoodsPrice), 2);
                                         }
