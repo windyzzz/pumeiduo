@@ -508,6 +508,13 @@ class Module extends Base
                     $param['distribute_level'] = rtrim($distributeLevel, ',');
                 }
             }
+            if (isset($param['is_top'])) {
+                if ($param['is_top'] == 0) {
+                    $param['top_btn'] = '';
+                } elseif (M('school')->where(['type' => ['NEQ', 'module9'], 'is_top' => 1])->count('id') == 2) {
+                    $this->error('已经有2个模块置顶了');
+                }
+            }
             if (M('school')->where(['type' => $type])->find()) {
                 M('school')->where(['type' => $type])->update($param);
             } else {

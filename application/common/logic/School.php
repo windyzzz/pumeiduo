@@ -589,7 +589,7 @@ class School
      */
     public function getModule()
     {
-        $module1 = M('school')->where(['type' => ['IN', ['module9', 'module1', 'module2']]])->select();
+        $module1 = M('school')->where(['is_open' => 1, 'is_top' => 1])->order('sort DESC')->select();
         $list = [];
         foreach ($module1 as $item) {
             $img = explode(',', $item['img']);
@@ -608,6 +608,7 @@ class School
                     'is_allow' => (int)$item['is_allow'],
                     'tips' => '功能尚未开放',
                     'need_login' => 1,
+                    'top_btn' => ''
                 ];
                 array_unshift($list, $temp);
             } else {
@@ -625,10 +626,11 @@ class School
                     'is_allow' => (int)$item['is_allow'],
                     'tips' => '功能尚未开放',
                     'need_login' => 1,
+                    'top_btn' => $item['top_btn']
                 ];
             }
         }
-        $module2 = M('school')->where(['is_open' => 1, 'type' => ['NOT IN', ['module9', 'module1', 'module2']]])->order('sort DESC')->select();
+        $module2 = M('school')->where(['is_open' => 1, 'is_top' => 1])->order('sort DESC')->select();
         foreach ($module2 as $item) {
             $img = explode(',', $item['img']);
             $list[] = [
@@ -645,6 +647,7 @@ class School
                 'is_allow' => (int)$item['is_allow'],
                 'tips' => '功能尚未开放',
                 'need_login' => 1,
+                'top_btn' => $item['top_btn']
             ];
         }
         return ['config' => ['row_num' => 2], 'list' => $list];
