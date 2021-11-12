@@ -90,6 +90,31 @@
             </dl>
             <dl class="row">
                 <dt class="tit">
+                    <label>是否置顶</label>
+                </dt>
+                <dd class="opt onoff">
+                    <label for="module_is_top1" class="cb-enable <if condition='$module[is_top] eq 1'>selected</if>">是</label>
+                    <label for="module_is_top0" class="cb-disable <if condition='$module[is_top] eq 0'>selected</if>">否</label>
+                    <input id="module_is_top1" name="is_top" <if condition='$module[is_top] eq 1'>checked</if> value="1" type="radio">
+                    <input id="module_is_top0" name="is_top" <if condition='$module[is_top] eq 0'>checked</if> value="0" type="radio">
+                    <p class="notic">
+                        商学院首页右上角显示的2个模块之一
+                    </p>
+                </dd>
+            </dl>
+            <dl class="row" id="top_btn" style="<if condition='$module[is_top] == 0'>display: none;</if>">
+                <dt class="tit">
+                    <label>置顶按钮标语</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="top_btn" value="{$module['top_btn']}" style="text-align: center; width: 10%;"/>
+                    <p class="notic">
+                        最好不超过4个中文字
+                    </p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
                     <label>APP访问等级</label>
                 </dt>
                 <dd class="opt ctype">
@@ -142,6 +167,17 @@
     function updateModule(postId) {
         $('#' + postId).submit();
     }
+
+    $('input[name="is_top"]').change(function() {
+        switch (this.value) {
+            case '0':
+                $('#top_btn').hide();
+                break;
+            case '1':
+                $('#top_btn').show();
+                break;
+        }
+    });
 </script>
 </body>
 </html>
