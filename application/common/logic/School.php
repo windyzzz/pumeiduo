@@ -630,7 +630,7 @@ class School
                 ];
             }
         }
-        $module2 = M('school')->where(['is_open' => 1, 'is_top' => 1])->order('sort DESC')->select();
+        $module2 = M('school')->where(['is_open' => 1, 'is_top' => 0])->order('sort DESC')->select();
         foreach ($module2 as $item) {
             $img = explode(',', $item['img']);
             $list[] = [
