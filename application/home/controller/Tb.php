@@ -841,14 +841,17 @@ class Tb extends Controller
             $logId = Db::name('svip_transfer_log')->add(['type' => 1, 'data' => $data, 'add_time' => NOW_TIME]);
             $data = json_decode($data, true);
             if (empty($data['user_name']) || empty($data['station'])) {
+                M('svip_transfer_log')->where(['id' => $logId])->update(['status' => -1]);
                 return json_encode(['status' => 0, 'msg' => '请传入正确的参数']);
             }
             $svipLevel = M('svip_level')->where(['agent_level' => $data['station']])->find();
             if (empty($svipLevel)) {
+                M('svip_transfer_log')->where(['id' => $logId])->update(['status' => -1]);
                 return json_encode(['status' => 0, 'msg' => '等级ID错误']);
             }
             $user = M('users')->where(['user_name' => $data['user_name']])->find();
             if (empty($user)) {
+                M('svip_transfer_log')->where(['id' => $logId])->update(['status' => -1]);
                 return json_encode(['status' => 0, 'msg' => '用户信息不存在']);
             }
             M('users')->where(['user_name' => $data['user_name']])->update([
@@ -871,10 +874,12 @@ class Tb extends Controller
             $logId = Db::name('svip_transfer_log')->add(['type' => 2, 'data' => $data, 'add_time' => NOW_TIME]);
             $data = json_decode($data, true);
             if (empty($data['user_name']) || empty($data['station'])) {
+                M('svip_transfer_log')->where(['id' => $logId])->update(['status' => -1]);
                 return json_encode(['status' => 0, 'msg' => '请传入正确的参数']);
             }
             $user = M('users')->where(['user_name' => $data['user_name']])->find();
             if (empty($user)) {
+                M('svip_transfer_log')->where(['id' => $logId])->update(['status' => -1]);
                 return json_encode(['status' => 0, 'msg' => '用户信息不存在']);
             }
             M('users')->where(['user_name' => $data['user_name']])->update([
@@ -897,10 +902,12 @@ class Tb extends Controller
             $logId = Db::name('svip_transfer_log')->add(['type' => 3, 'data' => $data, 'add_time' => NOW_TIME]);
             $data = json_decode($data, true);
             if (empty($data['user_name']) || empty($data['info_data'])) {
+                M('svip_transfer_log')->where(['id' => $logId])->update(['status' => -1]);
                 return json_encode(['status' => 0, 'msg' => '请传入正确的参数']);
             }
             $user = M('users')->where(['user_name' => $data['user_name']])->find();
             if (empty($user)) {
+                M('svip_transfer_log')->where(['id' => $logId])->update(['status' => -1]);
                 return json_encode(['status' => 0, 'msg' => '用户信息不存在']);
             }
             $infoData = json_decode($data['info_data'], true);
