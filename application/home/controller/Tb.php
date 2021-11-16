@@ -928,8 +928,9 @@ class Tb extends Controller
                     'customs_real_name' => $infoData['customs_real_name'],
                 ]);
             } else {
-                M('users')->where(['user_name' => $data['user_name']])->add([
+                M('svip_info')->add([
                     'user_id' => $userId,
+                    'user_name' => $data['user_name'],
                     'real_name' => $infoData['true_name'],
                     'svip_activate_time' => $infoData['activate_time'],
                     'svip_upgrade_time' => $infoData['upgrade_time'],
