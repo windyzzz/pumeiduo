@@ -2,7 +2,6 @@
 
 namespace app\home\controller;
 
-use app\admin\model\PromQrcodeLog;
 use app\common\model\DeliveryDoc;
 use app\common\model\HtnsDeliveryLog;
 use app\common\model\GoodsImages;

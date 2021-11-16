@@ -79,6 +79,9 @@
                 <div class="sDiv2">
                     <input type="text" size="30" name="nickname" value="{$nickname}" class="qsbox" placeholder="用户昵称">
                 </div>
+                <div class="sDiv2">
+                    <input type="text" size="30" name="real_name" value="{$real_name}" class="qsbox" placeholder="真实姓名">
+                </div>
                 <input type="hidden" name="is_export" value="0">
                 <div class="sDiv2">
                     <input type="submit" class="btn" value="搜索">
@@ -107,6 +110,9 @@
                         </th>
                         <th align="left" abbr="coupon_name" axis="col3" class="">
                             <div style="text-align: center; width: 150px;" class="">用户名</div>
+                        </th>
+                        <th align="left" abbr="coupon_name" axis="col3" class="">
+                            <div style="text-align: center; width: 150px;" class="">真实姓名</div>
                         </th>
                         <th align="left" abbr="send_type" axis="col4" class="">
                             <div style="text-align: center; width: 120px;" class="">APP等级</div>
@@ -162,6 +168,15 @@
                             </td>
                             <td align="left" class="">
                                 <div style="text-align: center; width: 150px;">{$vo.user_name}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 150px;">
+                                    <if condition="$vo[svip_real_name]">
+                                        {$vo.svip_real_name}
+                                        <else/>
+                                        {$vo.real_name}
+                                    </if>
+                                </div>
                             </td>
                             <td align="left" class="">
                                 <div style="text-align: center; width: 120px;">{$vo.app_grade_name}</div>

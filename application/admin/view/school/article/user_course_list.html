@@ -69,6 +69,9 @@
                     <input type="text" size="30" name="nickname" value="{$nickname}" class="qsbox" placeholder="用户昵称">
                 </div>
                 <div class="sDiv2">
+                    <input type="text" size="30" name="real_name" value="{$real_name}" class="qsbox" placeholder="真实姓名">
+                </div>
+                <div class="sDiv2">
                     <input type="text" size="30" id="activate_time_from" name="activate_time_from" value="{$activate_time_from}" class="qsbox" placeholder="激活时间段-开始">
                 </div>
                 <div class="sDiv2">
@@ -117,6 +120,9 @@
                         <th align="left" abbr="coupon_name" axis="col3" class="">
                             <div style="text-align: center; width: 150px;" class="">用户名</div>
                         </th>
+                        <th align="left" abbr="coupon_name" axis="col3" class="">
+                            <div style="text-align: center; width: 150px;" class="">真实姓名</div>
+                        </th>
                         <th align="left" abbr="send_type" axis="col4" class="">
                             <div style="text-align: center; width: 120px;" class="">APP等级</div>
                         </th>
@@ -156,6 +162,18 @@
                         <th align="left" abbr="send_type" axis="col4" class="">
                             <div style="text-align: center; width: 100px;" class="">推荐代理商人数</div>
                         </th>
+                        <th align="left" abbr="coupon_name" axis="col3" class="">
+                            <div style="text-align: center; width: 150px;" class="">服务人用户名</div>
+                        </th>
+                        <th align="left" abbr="coupon_name" axis="col3" class="">
+                            <div style="text-align: center; width: 150px;" class="">服务人真实姓名</div>
+                        </th>
+                        <th align="left" abbr="coupon_name" axis="col3" class="">
+                            <div style="text-align: center; width: 150px;" class="">服务中心用户名</div>
+                        </th>
+                        <th align="left" abbr="coupon_name" axis="col3" class="">
+                            <div style="text-align: center; width: 150px;" class="">服务中心真实姓名</div>
+                        </th>
                         <th style="width:100%" axis="col7">
                             <div></div>
                         </th>
@@ -185,6 +203,15 @@
                             </td>
                             <td align="left" class="">
                                 <div style="text-align: center; width: 150px;">{$vo.user_name}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 150px;">
+                                    <if condition="$vo[svip_real_name]">
+                                        {$vo.svip_real_name}
+                                        <else/>
+                                        {$vo.real_name}
+                                    </if>
+                                </div>
                             </td>
                             <td align="left" class="">
                                 <div style="text-align: center; width: 120px;">{$vo.app_grade_name}</div>
@@ -225,19 +252,31 @@
                                 </div>
                             </td>
                             <td align="left" class="">
-                                <div style="text-align: center; width: 100px;">{$vo.svip_referee_number}</div>
+                                <div style="text-align: center; width: 100px;">{$vo.svip_referee_number ?? 0}</div>
                             </td>
                             <td align="left" class="">
-                                <div style="text-align: center; width: 100px;">{$vo.grade_referee_num1}</div>
+                                <div style="text-align: center; width: 100px;">{$vo.grade_referee_num1 ?? 0}</div>
                             </td>
                             <td align="left" class="">
-                                <div style="text-align: center; width: 100px;">{$vo.grade_referee_num2}</div>
+                                <div style="text-align: center; width: 100px;">{$vo.grade_referee_num2 ?? 0}</div>
                             </td>
                             <td align="left" class="">
-                                <div style="text-align: center; width: 100px;">{$vo.grade_referee_num3}</div>
+                                <div style="text-align: center; width: 100px;">{$vo.grade_referee_num3 ?? 0}</div>
                             </td>
                             <td align="left" class="">
-                                <div style="text-align: center; width: 100px;">{$vo.grade_referee_num4}</div>
+                                <div style="text-align: center; width: 100px;">{$vo.grade_referee_num4 ?? 0}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 150px;">{$vo.network_parent_user_name ?? ''}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 150px;">{$vo.network_parent_real_name ?? ''}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 150px;">{$vo.customs_user_name ?? ''}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 150px;">{$vo.customs_real_name ?? ''}</div>
                             </td>
                             <td align="" class="" style="width: 100%;">
                                 <div>&nbsp</div>

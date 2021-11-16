@@ -14,6 +14,44 @@ class Article extends Base
         parent::__construct();
     }
 
+    private function articleWhere()
+    {
+        $where = [];
+        if ($appGrade = I('app_grade', '')) {
+            $where['u.distribut_level'] = $appGrade;
+        }
+        if ($svipGrade = I('svip_grade', '')) {
+            $where['u.distribut_level'] = 3;
+            $where['u.svip_grade'] = $svipGrade;
+        }
+        if ($svipLevel = I('svip_level', '')) {
+            $where['u.distribut_level'] = 3;
+            $where['u.svip_level'] = $svipLevel;
+        }
+        if ($userId = I('user_id', '')) {
+            $where['u.user_id'] = $userId;
+        }
+        if ($username = I('user_name', '')) {
+            $where['u.user_name'] = $username;
+        }
+        if ($nickname = I('nickname', '')) {
+            $where['u.nickname'] = $nickname;
+        }
+        return $where;
+    }
+
+    private function articleWhereOr()
+    {
+        $whereOr = [];
+        $realName = I('real_name', '');
+        if (!empty($realName)) {
+            $param['real_name'] = htmlspecialchars_decode($realName);
+            $whereOr['u.real_name'] = ['LIKE', '%' . $realName . '%'];
+            $whereOr['si.real_name'] = ['LIKE', '%' . $realName . '%'];
+        }
+        return $whereOr;
+    }
+
     /**
      * 获取用户学习的模块数量
      * @param $user
@@ -108,12 +146,13 @@ class Article extends Base
         // 数据表
         $table = 'users u';
         // join连接
-        $join = [];
+        $join = [
+            ['svip_info si', 'si.user_id = u.user_id', 'LEFT'],
+        ];
         // 排序
-        $order = ['user_id' => 'DESC'];
+        $order = ['u.user_id' => 'DESC'];
         // 字段
-        $field = 'user_id, nickname, user_name, distribut_level, svip_grade, svip_level, school_credit, 
-        svip_activate_time, svip_upgrade_time, svip_referee_number, grade_referee_num1, grade_referee_num2, grade_referee_num3, grade_referee_num4';
+        $field = 'u.*, si.real_name svip_real_name, si.svip_activate_time, si.svip_upgrade_time, si.svip_referee_number, si.grade_referee_num1, si.grade_referee_num2, si.grade_referee_num3, si.grade_referee_num4, si.network_parent_user_name, si.network_parent_real_name, si.customs_user_name, si.customs_real_name';
         $path = UPLOAD_PATH . 'school/excel/' . date('Y-m-d') . '/';
         $name = 'userCourseList_' . date('Y-m-d_H-i-s') . '.csv';
         // 导出记录
@@ -142,14 +181,14 @@ class Article extends Base
         $table = 'users u';
         // join连接
         $join = [
+            ['svip_info si', 'si.user_id = u.user_id', 'LEFT'],
             ['user_school_article usa', 'u.user_id = usa.user_id', 'LEFT'],
             ['school_article sa', 'sa.id = usa.article_id', 'LEFT']
         ];
         // 排序
-        $order = ['user_id' => 'DESC'];
+        $order = ['u.user_id' => 'DESC'];
         // 字段
-        $field = 'u.user_id, nickname, user_name, distribut_level, svip_grade, svip_level, school_credit, 
-        svip_activate_time, svip_upgrade_time, svip_referee_number, grade_referee_num1, grade_referee_num2, grade_referee_num3, grade_referee_num4,
+        $field = 'u.*, si.real_name svip_real_name, si.svip_activate_time, si.svip_upgrade_time, si.svip_referee_number, si.grade_referee_num1, si.grade_referee_num2, si.grade_referee_num3, si.grade_referee_num4, si.network_parent_user_name, si.network_parent_real_name, si.customs_user_name, si.customs_real_name,
         usa.article_id, usa.status learn_status, usa.add_time, usa.finish_time, usa.is_questionnaire, sa.class_id, sa.title, sa.learn_type, sa.status, sa.publish_time';
         $path = UPLOAD_PATH . 'school/excel/' . date('Y-m-d') . '/';
         $name = 'userCourseList_ext_' . date('Y-m-d_H-i-s') . '.csv';
@@ -176,13 +215,15 @@ class Article extends Base
     private function exportUserGraduateList($where = [], $ext = [])
     {
         // 数据表
-        $table = 'users';
+        $table = 'users u';
         // join连接
-        $join = [];
+        $join = [
+            ['svip_info si', 'si.user_id = u.user_id', 'LEFT'],
+        ];
         // 排序
-        $order = ['user_id' => 'DESC'];
+        $order = ['u.user_id' => 'DESC'];
         // 字段
-        $field = 'user_id, nickname, user_name, distribut_level, svip_grade, svip_level, school_credit, svip_activate_time, svip_upgrade_time';
+        $field = 'u.*, si.real_name svip_real_name, si.svip_activate_time, si.svip_upgrade_time, si.svip_referee_number, si.grade_referee_num1, si.grade_referee_num2, si.grade_referee_num3, si.grade_referee_num4, si.network_parent_user_name, si.network_parent_real_name, si.customs_user_name, si.customs_real_name';
         $path = UPLOAD_PATH . 'school/excel/' . date('Y-m-d') . '/';
         $name = 'userGraduateList_' . date('Y-m-d_H-i-s') . '.csv';
         // 导出记录
@@ -207,58 +248,56 @@ class Article extends Base
     public function userCourseList()
     {
         $isExport = I('is_export', '');     // 是否导出
-//        $where = ['distribut_level' => ['NEQ', 1]];
-        $where = [];
-        if ($appGrade = I('app_grade', '')) {
-            $where['u.distribut_level'] = $appGrade;
-        }
-        if ($svipGrade = I('svip_grade', '')) {
-            $where['u.distribut_level'] = 3;
-            $where['u.svip_grade'] = $svipGrade;
-        }
-        if ($svipLevel = I('svip_level', '')) {
-            $where['u.distribut_level'] = 3;
-            $where['u.svip_level'] = $svipLevel;
-        }
-        if ($userId = I('user_id', '')) {
-            $where['u.user_id'] = $userId;
-        }
-        if ($username = I('user_name', '')) {
-            $where['u.user_name'] = $username;
-        }
-        if ($nickname = I('nickname', '')) {
-            $where['u.nickname'] = $nickname;
-        }
+        // 基础where
+        $where = $this->articleWhere();
+//        $where['u.distribut_level'] = ['NEQ', 1];
+        // 基础whereOr
+        $whereOr = $this->articleWhereOr();
+        // 时间where
         $activateTimeFrom = I('activate_time_from', '') ? htmlspecialchars_decode(I('activate_time_from')) : '';
         if (strpos($activateTimeFrom, '+')) $activateTimeFrom = str_replace('+', ' ', $activateTimeFrom);
         $activateTimeTo = I('activate_time_to', '') ? htmlspecialchars_decode(I('activate_time_to')) : '';
         if (strpos($activateTimeTo, '+')) $activateTimeTo = str_replace('+', ' ', $activateTimeTo);
         if ($activateTimeFrom && $activateTimeTo) {
-            $where['u.svip_activate_time'] = ['BETWEEN', [strtotime($activateTimeFrom), strtotime($activateTimeTo)]];
+            $where['si.svip_activate_time'] = ['BETWEEN', [strtotime($activateTimeFrom), strtotime($activateTimeTo)]];
         }
         $upgradeTimeFrom = I('upgrade_time_from', '') ? htmlspecialchars_decode(I('upgrade_time_from')) : '';
         if (strpos($upgradeTimeFrom, '+')) $upgradeTimeFrom = str_replace('+', ' ', $upgradeTimeFrom);
         $upgradeTimeTo = I('upgrade_time_to', '') ? htmlspecialchars_decode(I('upgrade_time_to')) : '';
         if (strpos($upgradeTimeTo, '+')) $upgradeTimeTo = str_replace('+', ' ', $upgradeTimeTo);
         if ($upgradeTimeFrom && $upgradeTimeTo) {
-            $where['u.svip_upgrade_time'] = ['BETWEEN', [strtotime($upgradeTimeFrom), strtotime($upgradeTimeTo)]];
+            $where['si.svip_upgrade_time'] = ['BETWEEN', [strtotime($upgradeTimeFrom), strtotime($upgradeTimeTo)]];
         }
+        // 学习时间
         $learnTimeFrom = I('learn_time_from', '') ? htmlspecialchars_decode(I('learn_time_from')) : '';
         if (strpos($learnTimeFrom, '+')) $learnTimeFrom = str_replace('+', ' ', $learnTimeFrom);
         $learnTimeTo = I('learn_time_to', '') ? htmlspecialchars_decode(I('learn_time_to')) : '';
         if (strpos($learnTimeTo, '+')) $learnTimeTo = str_replace('+', ' ', $learnTimeTo);
-        $ext = ['learn_time_from' => strtotime($learnTimeFrom), 'learn_time_to' => strtotime($learnTimeTo)];
-        $userList = M('users u')->where($where)->order('user_id DESC');
+        $ext = ['learn_time_from' => strtotime($learnTimeFrom), 'learn_time_to' => strtotime($learnTimeTo), 'where_or' => $whereOr];
+        // 列表数据
+        $userList = M('users u')->join('svip_info si', 'si.user_id = u.user_id', 'LEFT')->where($where)->order('u.user_id DESC')
+            ->field('u.*, si.real_name svip_real_name, si.svip_activate_time, si.svip_upgrade_time, si.svip_referee_number, si.grade_referee_num1, si.grade_referee_num2, si.grade_referee_num3, si.grade_referee_num4, si.network_parent_user_name, si.network_parent_real_name, si.customs_user_name, si.customs_real_name');
         if ($isExport) {
             $this->exportUserCourseList($where, $ext);
             $this->exportUserCourseListExt($where, $ext);
             $this->ajaxReturn(['status' => 1, 'msg' => '添加导出队列成功，请耐心等待后台导出']);
         } else {
             // 用户总数
-            $count = M('users u')->where($where)->count();
+            $count = M('users u')->join('svip_info si', 'si.user_id = u.user_id', 'LEFT')->where($where);
+            if (!empty($whereOr)) {
+                $count = $count->where(function ($query) use ($whereOr) {
+                    $query->whereOr($whereOr);
+                });
+            }
+            $count = $count->count();
             $page = new Page($count, 10);
             // 用户列表
             $userList = $userList->limit($page->firstRow . ',' . $page->listRows);
+        }
+        if (!empty($whereOr)) {
+            $userList = $userList->where(function ($query) use ($whereOr) {
+                $query->whereOr($whereOr);
+            });
         }
         $userList = $userList->select();
         // 学习课程id
@@ -290,12 +329,13 @@ class Article extends Base
         $this->assign('app_grade', $this->appGrade);
         $this->assign('svip_grade', $this->svipGrade);
         $this->assign('svip_level', $this->svipLevel);
-        $this->assign('select_app_grade', $appGrade);
-        $this->assign('select_svip_grade', $svipGrade);
-        $this->assign('select_svip_level', $svipLevel);
-        $this->assign('user_id', $userId);
-        $this->assign('user_name', $username);
-        $this->assign('nickname', $nickname);
+        $this->assign('select_app_grade', I('app_grade', ''));
+        $this->assign('select_svip_grade', I('svip_grade', ''));
+        $this->assign('select_svip_level', I('svip_level', ''));
+        $this->assign('user_id', I('user_id'));
+        $this->assign('user_name', I('user_name'));
+        $this->assign('nickname', I('nickname'));
+        $this->assign('real_name', I('real_name'));
         $this->assign('activate_time_from', $activateTimeFrom);
         $this->assign('activate_time_to', $activateTimeTo);
         $this->assign('upgrade_time_from', $upgradeTimeFrom);
@@ -449,52 +489,51 @@ class Article extends Base
     {
         $isExport = I('is_export', '');     // 是否导出
         $isReach = I('is_reach', '');       // 是否达标
+        // 基础where
+        $where = $this->articleWhere();
+        // 基础whereOr
+        $whereOr = $this->articleWhereOr();
         // 学习课程id
         $courseIds = M('school_article')->where([
             'learn_type' => ['IN', [1, 2]],
             'status' => 1,
         ])->getField('id', true);
-        $where = ['article_id' => ['IN', $courseIds]];
-        if ($appGrade = I('app_grade', '')) {
-            $where['u.distribut_level'] = $appGrade;
-        }
-        if ($svipGrade = I('svip_grade', '')) {
-            $where['u.distribut_level'] = 3;
-            $where['u.svip_grade'] = $svipGrade;
-        }
-        if ($svipLevel = I('svip_level', '')) {
-            $where['u.distribut_level'] = 3;
-            $where['u.svip_level'] = $svipLevel;
-        }
-        if ($userId = I('user_id', '')) {
-            $where['u.user_id'] = $userId;
-        }
-        if ($username = I('user_name', '')) {
-            $where['u.user_name'] = $username;
-        }
-        if ($nickname = I('nickname', '')) {
-            $where['u.nickname'] = $nickname;
-        }
+        $where['article_id'] = ['IN', $courseIds];
+        // 学习时间
         $learnTimeFrom = I('learn_time_from', '') ? htmlspecialchars_decode(I('learn_time_from')) : '';
         if (strpos($learnTimeFrom, '+')) $learnTimeFrom = str_replace('+', ' ', $learnTimeFrom);
         $learnTimeTo = I('learn_time_to', '') ? htmlspecialchars_decode(I('learn_time_to')) : '';
         if (strpos($learnTimeTo, '+')) $learnTimeTo = str_replace('+', ' ', $learnTimeTo);
+        // 列表数据
         $userCourseLog = M('user_school_article usa')
             ->join('users u', 'u.user_id = usa.user_id')
+            ->join('svip_info si', 'si.user_id = u.user_id', 'LEFT')
             ->join('distribut_level dl', 'dl.level_id = u.distribut_level')
             ->where($where)
             ->group('usa.user_id')
-            ->field('u.user_id, u.nickname, u.user_name, u.school_credit, u.distribut_level, u.svip_grade, u.svip_level');
+            ->field('u.user_id, u.nickname, u.user_name, u.school_credit, u.distribut_level, u.svip_grade, u.svip_level, u.real_name, si.real_name svip_real_name');
         if (!$isExport && $isReach === '') {
             // 用户学习课程记录总数
             $count = M('user_school_article usa')
                 ->join('users u', 'u.user_id = usa.user_id')
+                ->join('svip_info si', 'si.user_id = u.user_id', 'LEFT')
                 ->join('distribut_level dl', 'dl.level_id = u.distribut_level')
                 ->where($where)
-                ->group('usa.user_id')->count();
+                ->group('usa.user_id');
+            if (!empty($whereOr)) {
+                $count = $count->where(function ($query) use ($whereOr) {
+                    $query->whereOr($whereOr);
+                });
+            }
+            $count = $count->count();
             // 用户课程学习记录
             $page = new Page($count, 10);
             $userCourseLog = $userCourseLog->limit($page->firstRow . ',' . $page->listRows);
+        }
+        if (!empty($whereOr)) {
+            $userCourseLog = $userCourseLog->where(function ($query) use ($whereOr) {
+                $query->whereOr($whereOr);
+            });
         }
         $userCourseLog = $userCourseLog->select();
         $dataList = [];     // 导出数据
@@ -546,6 +585,7 @@ class Article extends Base
                 $log['user_id'],
                 $log['nickname'],
                 $log['user_name'],
+                $log['svip_real_name'] ?? $log['real_name'],
                 $log['app_grade_name'],
                 $log['svip_grade_name'],
                 $log['svip_level_name'],
@@ -559,12 +599,13 @@ class Article extends Base
                 $this->assign('app_grade', $this->appGrade);
                 $this->assign('svip_grade', $this->svipGrade);
                 $this->assign('svip_level', $this->svipLevel);
-                $this->assign('select_app_grade', $appGrade);
-                $this->assign('select_svip_grade', $svipGrade);
-                $this->assign('select_svip_level', $svipLevel);
-                $this->assign('user_id', $userId);
-                $this->assign('user_name', $username);
-                $this->assign('nickname', $nickname);
+                $this->assign('select_app_grade', I('app_grade', ''));
+                $this->assign('select_svip_grade', I('svip_grade', ''));
+                $this->assign('select_svip_level', I('svip_level', ''));
+                $this->assign('user_id', I('user_id'));
+                $this->assign('user_name', I('user_name'));
+                $this->assign('nickname', I('nickname'));
+                $this->assign('real_name', I('real_name'));
                 $this->assign('is_reach', $isReach);
                 $this->assign('learn_time_from', $learnTimeFrom);
                 $this->assign('learn_time_to', $learnTimeTo);
@@ -575,12 +616,13 @@ class Article extends Base
                 $this->assign('app_grade', $this->appGrade);
                 $this->assign('svip_grade', $this->svipGrade);
                 $this->assign('svip_level', $this->svipLevel);
-                $this->assign('select_app_grade', $appGrade);
-                $this->assign('select_svip_grade', $svipGrade);
-                $this->assign('select_svip_level', $svipLevel);
-                $this->assign('user_id', $userId);
-                $this->assign('user_name', $username);
-                $this->assign('nickname', $nickname);
+                $this->assign('select_app_grade', I('app_grade', ''));
+                $this->assign('select_svip_grade', I('svip_grade', ''));
+                $this->assign('select_svip_level', I('svip_level', ''));
+                $this->assign('user_id', I('user_id'));
+                $this->assign('user_name', I('user_name'));
+                $this->assign('nickname', I('nickname'));
+                $this->assign('real_name', I('real_name'));
                 $this->assign('is_reach', (int)$isReach);
                 $this->assign('learn_time_from', $learnTimeFrom);
                 $this->assign('learn_time_to', $learnTimeTo);
@@ -590,7 +632,7 @@ class Article extends Base
         } else {
             // 表头
             $headList = [
-                '用户ID', '用户昵称', '用户名', 'APP等级', '代理商等级', '代理商职级', '课程数量', '乐活豆数量', '是否达标'
+                '用户ID', '用户昵称', '用户名', '真实姓名', 'APP等级', '代理商等级', '代理商职级', '课程数量', '乐活豆数量', '是否达标'
             ];
             toCsvExcel($dataList, $headList, 'user_standard_list');
         }
@@ -627,57 +669,54 @@ class Article extends Base
             $this->error('请先设置分类：' . $className . ' 下的文章为学习课程', U('school.module/config'));
         }
         $totalCourseNum = count($courseIds);
-        // 用户列表
-        $where = [];
-        if ($appGrade = I('app_grade', '')) {
-            $where['distribut_level'] = $appGrade;
-        }
-        if ($svipGrade = I('svip_grade', '')) {
-            $where['distribut_level'] = 3;
-            $where['svip_grade'] = $svipGrade;
-        }
-        if ($svipLevel = I('svip_level', '')) {
-            $where['distribut_level'] = 3;
-            $where['svip_level'] = $svipLevel;
-        }
-        if ($userId = I('user_id', '')) {
-            $where['user_id'] = $userId;
-        }
-        if ($username = I('user_name', '')) {
-            $where['user_name'] = $username;
-        }
-        if ($nickname = I('nickname', '')) {
-            $where['nickname'] = $nickname;
-        }
+        // 基础where
+        $where = $this->articleWhere();
+        // 基础whereOr
+        $whereOr = $this->articleWhereOr();
+        // 时间where
         $activateTimeFrom = I('activate_time_from', '') ? htmlspecialchars_decode(I('activate_time_from')) : '';
         if (strpos($activateTimeFrom, '+')) $activateTimeFrom = str_replace('+', ' ', $activateTimeFrom);
         $activateTimeTo = I('activate_time_to', '') ? htmlspecialchars_decode(I('activate_time_to')) : '';
         if (strpos($activateTimeTo, '+')) $activateTimeTo = str_replace('+', ' ', $activateTimeTo);
         if ($activateTimeFrom && $activateTimeTo) {
-            $where['svip_activate_time'] = ['BETWEEN', [strtotime($activateTimeFrom), strtotime($activateTimeTo)]];
+            $where['si.svip_activate_time'] = ['BETWEEN', [strtotime($activateTimeFrom), strtotime($activateTimeTo)]];
         }
         $upgradeTimeFrom = I('upgrade_time_from', '') ? htmlspecialchars_decode(I('upgrade_time_from')) : '';
         if (strpos($upgradeTimeFrom, '+')) $upgradeTimeFrom = str_replace('+', ' ', $upgradeTimeFrom);
         $upgradeTimeTo = I('upgrade_time_to', '') ? htmlspecialchars_decode(I('upgrade_time_to')) : '';
         if (strpos($upgradeTimeTo, '+')) $upgradeTimeTo = str_replace('+', ' ', $upgradeTimeTo);
         if ($upgradeTimeFrom && $upgradeTimeTo) {
-            $where['svip_upgrade_time'] = ['BETWEEN', [strtotime($upgradeTimeFrom), strtotime($upgradeTimeTo)]];
+            $where['si.svip_upgrade_time'] = ['BETWEEN', [strtotime($upgradeTimeFrom), strtotime($upgradeTimeTo)]];
         }
+        // 学习时间
         $learnTimeFrom = I('learn_time_from', '') ? htmlspecialchars_decode(I('learn_time_from')) : '';
         if (strpos($learnTimeFrom, '+')) $learnTimeFrom = str_replace('+', ' ', $learnTimeFrom);
         $learnTimeTo = I('learn_time_to', '') ? htmlspecialchars_decode(I('learn_time_to')) : '';
         if (strpos($learnTimeTo, '+')) $learnTimeTo = str_replace('+', ' ', $learnTimeTo);
-        $userList = M('users')->where($where)->order('user_id DESC');
+        // 列表数据
+        $userList = M('users u')->join('svip_info si', 'si.user_id = u.user_id', 'LEFT')->where($where)->order('u.user_id DESC')
+            ->field('u.*, si.real_name svip_real_name, si.svip_activate_time, si.svip_upgrade_time, si.svip_referee_number, si.grade_referee_num1, si.grade_referee_num2, si.grade_referee_num3, si.grade_referee_num4, si.network_parent_user_name, si.network_parent_real_name, si.customs_user_name, si.customs_real_name');
         if ($isExport) {
-            $ext = ['module_id' => $moduleId, 'class_id' => $classId, 'learn_time_from' => strtotime($learnTimeFrom), 'learn_time_to' => strtotime($learnTimeTo)];
+            $ext = ['module_id' => $moduleId, 'class_id' => $classId, 'learn_time_from' => strtotime($learnTimeFrom), 'learn_time_to' => strtotime($learnTimeTo), 'where_or' => $whereOr];
             $this->exportUserGraduateList($where, $ext);
             $this->ajaxReturn(['status' => 1, 'msg' => '添加导出队列成功，请耐心等待后台导出']);
         } else {
             // 用户总数
-            $count = M('users')->where($where)->count();
+            $count = M('users u')->join('svip_info si', 'si.user_id = u.user_id', 'LEFT')->where($where);
+            if (!empty($whereOr)) {
+                $count = $count->where(function ($query) use ($whereOr) {
+                    $query->whereOr($whereOr);
+                });
+            }
+            $count = $count->count();
             $page = new Page($count, 10);
             // 用户列表
             $userList = $userList->limit($page->firstRow . ',' . $page->listRows);
+        }
+        if (!empty($whereOr)) {
+            $userList = $userList->where(function ($query) use ($whereOr) {
+                $query->whereOr($whereOr);
+            });
         }
         $userList = $userList->select();
         foreach ($userList as &$user) {
@@ -711,12 +750,13 @@ class Article extends Base
         $this->assign('app_grade', $this->appGrade);
         $this->assign('svip_grade', $this->svipGrade);
         $this->assign('svip_level', $this->svipLevel);
-        $this->assign('select_app_grade', $appGrade);
-        $this->assign('select_svip_grade', $svipGrade);
-        $this->assign('select_svip_level', $svipLevel);
-        $this->assign('user_id', $userId);
-        $this->assign('user_name', $username);
-        $this->assign('nickname', $nickname);
+        $this->assign('select_app_grade', I('app_grade', ''));
+        $this->assign('select_svip_grade', I('svip_grade', ''));
+        $this->assign('select_svip_level', I('svip_level', ''));
+        $this->assign('user_id', I('user_id'));
+        $this->assign('user_name', I('user_name'));
+        $this->assign('nickname', I('nickname'));
+        $this->assign('real_name', I('real_name'));
         $this->assign('activate_time_from', $activateTimeTo);
         $this->assign('activate_time_to', $activateTimeFrom);
         $this->assign('upgrade_time_from', $upgradeTimeFrom);
@@ -1417,27 +1457,12 @@ class Article extends Base
     public function courseUserList()
     {
         $isExport = I('is_export', '');     // 是否导出
-        $where = ['usa.article_id' => I('article_id', 0)];
-        if ($appGrade = I('app_grade', '')) {
-            $where['u.distribut_level'] = $appGrade;
-        }
-        if ($svipGrade = I('svip_grade', '')) {
-            $where['u.distribut_level'] = 3;
-            $where['u.svip_grade'] = $svipGrade;
-        }
-        if ($svipLevel = I('svip_level', '')) {
-            $where['u.distribut_level'] = 3;
-            $where['u.svip_level'] = $svipLevel;
-        }
-        if ($userId = I('user_id', '')) {
-            $where['u.user_id'] = $userId;
-        }
-        if ($username = I('user_name', '')) {
-            $where['u.user_name'] = $username;
-        }
-        if ($nickname = I('nickname', '')) {
-            $where['u.nickname'] = $nickname;
-        }
+        // 基础where
+        $where = $this->articleWhere();
+        $where['usa.article_id'] = I('article_id', 0);
+        // 基础whereOr
+        $whereOr = $this->articleWhereOr();
+        // 学习时间
         $timeFrom = I('time_from', '') && I('time_from') !== 'time_to' ? htmlspecialchars_decode(I('time_from')) : '';
         if (strpos($timeFrom, '+')) $timeFrom = str_replace('+', ' ', $timeFrom);
         $timeTo = I('time_to', '') ? htmlspecialchars_decode(I('time_to')) : '';
@@ -1450,9 +1475,10 @@ class Article extends Base
             ->join('school_class sc', 'sc.id = sa.class_id')
             ->join('school s', 's.id = sc.module_id')
             ->join('users u', 'u.user_id = usa.user_id')
+            ->join('svip_info si', 'si.user_id = u.user_id', 'LEFT')
             ->where($where)
             ->order('u.user_id DESC')
-            ->field('sa.*, s.name module_name, sc.name class_name, u.user_id, u.nickname, u.user_name, u.school_credit, u.distribut_level, u.svip_grade, u.svip_level, usa.status, usa.add_time, usa.finish_time');
+            ->field('sa.*, s.name module_name, sc.name class_name, u.user_id, u.nickname, u.user_name, u.real_name, u.school_credit, u.distribut_level, u.svip_grade, u.svip_level, si.real_name svip_real_name, usa.status, usa.add_time, usa.finish_time');
         if (!$isExport) {
             // 用户总数
             $count = M('user_school_article usa')
@@ -1460,10 +1486,22 @@ class Article extends Base
                 ->join('school_class sc', 'sc.id = sa.class_id')
                 ->join('school s', 's.id = sc.module_id')
                 ->join('users u', 'u.user_id = usa.user_id')
-                ->where($where)->count();
+                ->join('svip_info si', 'si.user_id = u.user_id', 'LEFT')
+                ->where($where);
+            if (!empty($whereOr)) {
+                $count = $count->where(function ($query) use ($whereOr) {
+                    $query->whereOr($whereOr);
+                });
+            }
+            $count = $count->count();
             $page = new Page($count, 10);
             // 用户列表
             $userList = $userList->limit($page->firstRow . ',' . $page->listRows);
+        }
+        if (!empty($whereOr)) {
+            $userList = $userList->where(function ($query) use ($whereOr) {
+                $query->whereOr($whereOr);
+            });
         }
         $userList = $userList->select();
         $dataList = [];
@@ -1501,6 +1539,7 @@ class Article extends Base
                 $user['user_id'],
                 $user['nickname'],
                 $user['user_name'],
+                $user['svip_real_name'] ?? $user['real_name'],
                 $user['app_grade_name'],
                 $user['svip_grade_name'],
                 $user['svip_level_name'],
@@ -1515,12 +1554,13 @@ class Article extends Base
             $this->assign('app_grade', $this->appGrade);
             $this->assign('svip_grade', $this->svipGrade);
             $this->assign('svip_level', $this->svipLevel);
-            $this->assign('select_app_grade', $appGrade);
-            $this->assign('select_svip_grade', $svipGrade);
-            $this->assign('select_svip_level', $svipLevel);
-            $this->assign('user_id', $userId);
-            $this->assign('user_name', $username);
-            $this->assign('nickname', $nickname);
+            $this->assign('select_app_grade', I('app_grade', ''));
+            $this->assign('select_svip_grade', I('svip_grade', ''));
+            $this->assign('select_svip_level', I('svip_level', ''));
+            $this->assign('user_id', I('user_id'));
+            $this->assign('user_name', I('user_name'));
+            $this->assign('nickname', I('nickname'));
+            $this->assign('real_name', I('real_name'));
             $this->assign('time_from', $timeFrom);
             $this->assign('time_to', $timeTo);
             $this->assign('page', $page);
@@ -1529,7 +1569,7 @@ class Article extends Base
         } else {
             // 表头
             $headList = [
-                '文章ID', '标题', '学习类型', '所属模块', '所属分类', '用户ID', '用户昵称', '用户名', 'APP等级', '代理商等级', '代理商职级', '乐活豆数量', '学习状态', '学习开始时间', '学习完成时间'
+                '文章ID', '标题', '学习类型', '所属模块', '所属分类', '用户ID', '用户昵称', '用户名', '真实姓名', 'APP等级', '代理商等级', '代理商职级', '乐活豆数量', '学习状态', '学习开始时间', '学习完成时间'
             ];
             toCsvExcel($dataList, $headList, 'course_user_list');
         }
@@ -1657,6 +1697,7 @@ class Article extends Base
         $this->assign('user_id', I('user_id', ''));
         $this->assign('user_name', I('user_name', ''));
         $this->assign('nickname', I('nickname', ''));
+        $this->assign('real_name', I('real_name', ''));
         $this->assign('page', $page);
         $this->assign('list', $userList);
         return $this->fetch('module_user_list');
@@ -1687,19 +1728,22 @@ class Article extends Base
                     `u`.`user_id`,
                     `u`.`nickname`,
                     `u`.`user_name`,
+                    `u`.`real_name`,
                     `u`.`school_credit`,
                     `u`.`distribut_level`,
                     `u`.`svip_grade`,
                     `u`.`svip_level`,
                     `usa`.`status`,
                     `usa`.`add_time`,
-                    `usa`.`finish_time` 
+                    `usa`.`finish_time`,
+                    `si`.`real_name` AS `svip_real_name`
                 FROM
                     tp_user_school_article usa
                     INNER JOIN `tp_school_article` `sa` ON `sa`.`id` = `usa`.`article_id`
                     INNER JOIN `tp_school_class` `sc` ON `sc`.`id` = `sa`.`class_id`
                     INNER JOIN `tp_school` `s` ON `s`.`id` = `sc`.`module_id`
                     INNER JOIN `tp_users` `u` ON `u`.`user_id` = `usa`.`user_id` 
+                    LEFT JOIN `tp_svip_info` `si` ON `si`.`user_id` = `u`.`user_id` 
                 WHERE
                     `sa`.`delete_time` = 0 
                     AND `sa`.`status` = 1";
@@ -1737,6 +1781,9 @@ class Article extends Base
         }
         if ($nickname = I('nickname', '')) {
             $sql .= " AND `u`.`nickname` = $nickname";
+        }
+        if ($trueName = I('real_name', '')) {
+            $sql .= " AND ( `u`.`real_name` LIKE '%$trueName%' OR `si`.`real_name` LIKE '%$trueName%' )";
         }
         $sql .= " GROUP BY `usa`.`user_id` ORDER BY u.user_id DESC";
         if (!$isPage && $length > 0) {
