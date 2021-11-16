@@ -274,7 +274,7 @@
                             <div style="text-align: center; width: 120px;" class="">更新时间</div>
                         </th>
                         <th align="center" axis="col1" class="handle">
-                            <div style="text-align: center; width: 150px;">操作</div>
+                            <div style="text-align: center; width: 300px;">操作</div>
                         </th>
                         <th style="width:100%" axis="col7">
                             <div></div>
@@ -352,9 +352,10 @@
                                 </div>
                             </td>
                             <td align="left" class="handle">
-                                <div style="text-align: left; width: 150px; max-width:150px;">
+                                <div style="text-align: left; width: 300px; max-width:150px;">
                                     <a class="btn blue" href="{:U('school.article/article_6')}/type/{$type}/class_id/{$module_class[id]}/article_id/{$vo[id]}"><i class="fa fa-pencil-square-o"></i>编辑</a>
                                     <a class="btn red del" onclick="delArticle('{$type}', '{$module_class[id]}', '{$vo[id]}')"><i class="fa fa-trash-o"></i>删除</a>
+                                    <a class="btn blue" href="{:U('school.article/resourceDownloadList')}/article_id/{$vo[id]}"><i class="fa fa-download"></i>下载记录</a>
                                 </div>
                             </td>
                             <td align="" class="" style="width: 100%;">

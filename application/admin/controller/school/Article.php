@@ -1959,4 +1959,110 @@ class Article extends Base
         ]);
         $this->ajaxReturn(['status' => 1, 'msg' => '添加导出队列成功，请耐心等待后台导出']);
     }
+
+    /**
+     * 素材下载记录
+     * @return mixed
+     */
+    public function resourceDownloadList()
+    {
+        $isExport = I('is_export', 0);
+        // 基础where
+        $where = $this->articleWhere();
+        $articleId = I('article_id');
+        $where['usa.article_id'] = $articleId;
+        // 文章属性
+        $articleInfo = M('school_article sa')->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')
+            ->where(['sa.id' => $articleId])->field('s.name module_name, sc.name class_name, sa.id article_id')->find();
+        // 基础whereOr
+        $whereOr = $this->articleWhereOr();
+        // 列表数据
+        $userList = M('user_school_article usa')
+            ->join('users u', 'u.user_id = usa.user_id')
+            ->join('svip_info si', 'si.user_id = u.user_id', 'LEFT')
+            ->where($where)
+            ->order('usa.add_time DESC')
+            ->field('u.*, si.real_name svip_real_name, si.svip_activate_time, si.svip_upgrade_time, si.svip_referee_number, si.grade_referee_num1, si.grade_referee_num2, si.grade_referee_num3, si.grade_referee_num4, si.network_parent_user_name, si.network_parent_real_name, si.customs_user_name, si.customs_real_name, usa.add_time');
+        if (!$isExport) {
+            // 用户学习课程记录总数
+            $count = M('user_school_article usa')
+                ->join('users u', 'u.user_id = usa.user_id')
+                ->join('svip_info si', 'si.user_id = u.user_id', 'LEFT')
+                ->where($where);
+            if (!empty($whereOr)) {
+                $count = $count->where(function ($query) use ($whereOr) {
+                    $query->whereOr($whereOr);
+                });
+            }
+            $count = $count->count();
+            // 用户课程学习记录
+            $page = new Page($count, 10);
+            $userList = $userList->limit($page->firstRow . ',' . $page->listRows);
+        }
+        if (!empty($whereOr)) {
+            $userList = $userList->where(function ($query) use ($whereOr) {
+                $query->whereOr($whereOr);
+            });
+        }
+        $userList = $userList->select();
+        $dataList[] = [
+            $articleInfo['module_name'] . ' - ' . $articleInfo['class_name'] . ' - ' . $articleInfo['article_id'], '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
+        ];     // 导出数据
+        foreach ($userList as $k => &$user) {
+            // APP等级
+            $user['app_grade_name'] = $this->appGrade[$user['distribut_level']];
+            // 代理商等级
+            $user['svip_grade_name'] = $user['distribut_level'] == 3 ? $this->svipGrade[$user['svip_grade']] : '';
+            // 代理商等级
+            $user['svip_level_name'] = $user['distribut_level'] == 3 ? $this->svipLevel[$user['svip_level']] : '';
+            $dataList[] = [
+                '',
+                $user['user_id'],
+                $user['nickname'],
+                $user['user_name'],
+                $user['svip_real_name'] ?? $user['real_name'],
+                date('Y-m-d H:i:s', $user['add_time']),
+                $user['app_grade_name'],
+                $user['svip_grade_name'],
+                $user['svip_level_name'],
+                $user['svip_activate_time'] != 0 ? date('Y-m-d H:i:s', $user['svip_activate_time']) : '',
+                $user['svip_upgrade_time'] != 0 ? date('Y-m-d H:i:s', $user['svip_upgrade_time']) : '',
+                $user['svip_referee_number'] ?? 0,
+                $user['grade_referee_num1'] ?? 0,
+                $user['grade_referee_num2'] ?? 0,
+                $user['grade_referee_num3'] ?? 0,
+                $user['grade_referee_num4'] ?? 0,
+                $user['network_parent_user_name'] ?? '',
+                $user['network_parent_real_name'] ?? '',
+                $user['customs_user_name'] ?? '',
+                $user['customs_real_name'] ?? '',
+            ];
+        }
+        if (!$isExport) {
+            $this->assign('article_id', $articleId);
+            $this->assign('article_info', $articleInfo);
+            $this->assign('app_grade', $this->appGrade);
+            $this->assign('svip_grade', $this->svipGrade);
+            $this->assign('svip_level', $this->svipLevel);
+            $this->assign('select_app_grade', I('app_grade', ''));
+            $this->assign('select_svip_grade', I('svip_grade', ''));
+            $this->assign('select_svip_level', I('svip_level', ''));
+            $this->assign('user_id', I('user_id', ''));
+            $this->assign('user_name', I('user_name', ''));
+            $this->assign('nickname', I('nickname', ''));
+            $this->assign('real_name', I('real_name', ''));
+            $this->assign('page', $page);
+            $this->assign('list', $userList);
+            return $this->fetch('resource_download_list');
+        } else {
+            // 表头
+            $headList = [
+                '素材文章',
+                '用户ID', '用户昵称', '用户名', '真实姓名', '下载时间', 'APP等级', '代理商等级', '代理商职级',
+                '211系统激活时间', '211系统升级代理商时间', '推荐总人数', '推荐游客人数', '推荐优享会员人数', '推荐尊享会员人数', '推荐代理商人数',
+                '服务人用户名', '服务人真实姓名', '服务中心用户名', '服务中心真实姓名',
+            ];
+            toCsvExcel($dataList, $headList, 'resource_download_list');
+        }
+    }
 }

@@ -1,4 +1,5 @@
-<include file="public/layout" />
+<include file="public/layout"/>
+<script type="text/javascript" src="__ROOT__/public/static/js/layer/laydate/laydate.js"></script>
 <body style="background-color: rgb(255, 255, 255); overflow: auto; cursor: default; -moz-user-select: inherit;">
 <div id="append_parent"></div>
 <div id="ajaxwaitid"></div>
@@ -7,12 +8,13 @@
         <div class="item-title">
             <a class="back" href="javascript:history.back();" title="返回列表"><i class="fa fa-arrow-circle-o-left"></i></a>
             <div class="subject">
-                <h3>用户学习达标列表</h3>
+                <h3>素材下载记录</h3>
             </div>
         </div>
     </div>
     <!-- 操作说明 -->
-    <div id="explanation" class="explanation" style="color: rgb(44, 188, 163); background-color: rgb(237, 251, 248); width: 99%; height: 100%;">
+    <div id="explanation" class="explanation"
+         style="color: rgb(44, 188, 163); background-color: rgb(237, 251, 248); width: 99%; height: 100%;">
         <div id="checkZoom" class="title"><i class="fa fa-lightbulb-o"></i>
             <h4 title="提示相关设置操作时应注意的要点">操作提示</h4>
             <span title="收起提示" id="explanationZoom" style="display: block;"></span>
@@ -28,17 +30,21 @@
     <div class="flexigrid">
         <div class="mDiv">
             <div class="ftitle">
-                <h3>记录列表</h3>
+                <h5>(共{$page->totalRows}条记录)</h5>
             </div>
             <div title="刷新数据" class="pReload"><i class="fa fa-refresh"></i></div>
         </div>
-        <form class="navbar-form form-inline" id="search-form" action="{:U('school.article/userStandardList')}" method="post">
+        {$article_info.module_name} - {$article_info.class_name} - {$article_info.article_id}
+        <form class="navbar-form form-inline" id="search-form" action="{:U('school.article/resourceDownloadList')}"
+              method="post">
             <div class="sDiv">
                 <div class="sDiv2">
                     <select name="app_grade">
                         <option value="">APP等级</option>
                         <volist name="app_grade" id="vo" key="k">
-                            <option value="{$key}" <if condition="$select_app_grade == $key">selected</if>>{$vo}</option>
+                            <option value="{$key}"
+                            <if condition="$select_app_grade == $key">selected</if>
+                            >{$vo}</option>
                         </volist>
                     </select>
                 </div>
@@ -46,7 +52,9 @@
                     <select name="svip_grade">
                         <option value="">代理商等级</option>
                         <volist name="svip_grade" id="vo" key="k">
-                            <option value="{$key}" <if condition="$select_svip_grade == $key">selected</if>>{$vo}</option>
+                            <option value="{$key}"
+                            <if condition="$select_svip_grade == $key">selected</if>
+                            >{$vo}</option>
                         </volist>
                     </select>
                 </div>
@@ -54,7 +62,9 @@
                     <select name="svip_level">
                         <option value="">代理商职级</option>
                         <volist name="svip_level" id="vo" key="k">
-                            <option value="{$key}" <if condition="$select_svip_level == $key">selected</if>>{$vo}</option>
+                            <option value="{$key}"
+                            <if condition="$select_svip_level == $key">selected</if>
+                            >{$vo}</option>
                         </volist>
                     </select>
                 </div>
@@ -70,19 +80,15 @@
                 <div class="sDiv2">
                     <input type="text" size="30" name="real_name" value="{$real_name}" class="qsbox" placeholder="真实姓名">
                 </div>
-                <div class="sDiv2">
-                    <select name="is_reach">
-                        <option value="">是否达标</option>
-                        <option value="1" <if condition="$is_reach == 1">selected</if> >是</option>
-                        <option value="0" <if condition="$is_reach === 0">selected</if> >否</option>
-                    </select>
-                </div>
+            </div>
+            <div class="sDiv">
                 <input type="hidden" name="is_export" value="0">
+                <input type="hidden" name="article_id" value="{$article_info.article_id}">
                 <div class="sDiv2">
                     <input type="submit" class="btn" value="搜索">
                 </div>
                 <div class="sDiv2">
-                    <input type="button" class="btn" onclick="export_list()" value="导出">
+                    <input type="button" class="btn" onclick="listExport()" value="导出">
                 </div>
             </div>
         </form>
@@ -107,6 +113,9 @@
                             <div style="text-align: center; width: 150px;" class="">真实姓名</div>
                         </th>
                         <th align="left" abbr="send_type" axis="col4" class="">
+                            <div style="text-align: center; width: 150px;" class="">下载时间</div>
+                        </th>
+                        <th align="left" abbr="send_type" axis="col4" class="">
                             <div style="text-align: center; width: 120px;" class="">APP等级</div>
                         </th>
                         <th align="left" abbr="send_type" axis="col4" class="">
@@ -116,13 +125,37 @@
                             <div style="text-align: center; width: 120px;" class="">代理商职级</div>
                         </th>
                         <th align="left" abbr="send_type" axis="col4" class="">
-                            <div style="text-align: center; width: 120px;" class="">课程数量</div>
+                            <div style="text-align: center; width: 150px;" class="">211系统激活时间</div>
                         </th>
                         <th align="left" abbr="send_type" axis="col4" class="">
-                            <div style="text-align: center; width: 120px;" class="">乐活豆数量</div>
+                            <div style="text-align: center; width: 150px;" class="">211系统升级代理商时间</div>
                         </th>
                         <th align="left" abbr="send_type" axis="col4" class="">
-                            <div style="text-align: center; width: 80px;" class="">是否达标</div>
+                            <div style="text-align: center; width: 100px;" class="">推荐总人数</div>
+                        </th>
+                        <th align="left" abbr="send_type" axis="col4" class="">
+                            <div style="text-align: center; width: 100px;" class="">推荐游客人数</div>
+                        </th>
+                        <th align="left" abbr="send_type" axis="col4" class="">
+                            <div style="text-align: center; width: 100px;" class="">推荐优享会员人数</div>
+                        </th>
+                        <th align="left" abbr="send_type" axis="col4" class="">
+                            <div style="text-align: center; width: 100px;" class="">推荐尊享会员人数</div>
+                        </th>
+                        <th align="left" abbr="send_type" axis="col4" class="">
+                            <div style="text-align: center; width: 100px;" class="">推荐代理商人数</div>
+                        </th>
+                        <th align="left" abbr="coupon_name" axis="col3" class="">
+                            <div style="text-align: center; width: 150px;" class="">服务人用户名</div>
+                        </th>
+                        <th align="left" abbr="coupon_name" axis="col3" class="">
+                            <div style="text-align: center; width: 150px;" class="">服务人真实姓名</div>
+                        </th>
+                        <th align="left" abbr="coupon_name" axis="col3" class="">
+                            <div style="text-align: center; width: 150px;" class="">服务中心用户名</div>
+                        </th>
+                        <th align="left" abbr="coupon_name" axis="col3" class="">
+                            <div style="text-align: center; width: 150px;" class="">服务中心真实姓名</div>
                         </th>
                         <th style="width:100%" axis="col7">
                             <div></div>
@@ -136,7 +169,7 @@
             <div id="flexigrid" cellpadding="0" cellspacing="0" border="0">
                 <table>
                     <tbody>
-                    <foreach name="log" item="vo" key="k" >
+                    <foreach name="list" item="vo" key="k">
                         <tr>
                             <td class="sign">
                                 <div style="width: 24px;"><i class="ico-check"></i></div>
@@ -164,6 +197,11 @@
                                 </div>
                             </td>
                             <td align="left" class="">
+                                <div style="text-align: center; width: 150px;">
+                                    {$vo.add_time|date='Y-m-d H:i:s', ###}
+                                </div>
+                            </td>
+                            <td align="left" class="">
                                 <div style="text-align: center; width: 120px;">{$vo.app_grade_name}</div>
                             </td>
                             <td align="left" class="">
@@ -173,19 +211,47 @@
                                 <div style="text-align: center; width: 120px;">{$vo.svip_level_name}</div>
                             </td>
                             <td align="left" class="">
-                                <div style="text-align: center; width: 120px;">{$vo.course_num}</div>
-                            </td>
-                            <td align="left" class="">
-                                <div style="text-align: center; width: 120px;">{$vo.school_credit}</div>
-                            </td>
-                            <td align="left" class="">
-                                <div style="text-align: center; width: 80px;">
-                                    <if condition="$vo[is_reach] == 1">
-                                        <p style="color: green;">已达标</p>
-                                    <else/>
-                                        <p style="color: red;">未达标</p>
+                                <div style="text-align: center; width: 150px;">
+                                    <if condition="$vo[svip_activate_time] != 0">
+                                        {$vo.svip_activate_time|date='Y-m-d H:i:s', ###}
                                     </if>
                                 </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 150px;">
+                                    <if condition="$vo[svip_upgrade_time] != 0">
+                                        {$vo.svip_upgrade_time|date='Y-m-d H:i:s', ###}
+                                    </if>
+                                </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 100px;">{$vo.svip_referee_number ?? 0}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 100px;">{$vo.grade_referee_num1 ?? 0}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 100px;">{$vo.grade_referee_num2 ?? 0}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 100px;">{$vo.grade_referee_num3 ?? 0}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 100px;">{$vo.grade_referee_num4 ?? 0}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 150px;">{$vo.network_parent_user_name ?? ''}
+                                </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 150px;">{$vo.network_parent_real_name ?? ''}
+                                </div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 150px;">{$vo.customs_user_name ?? ''}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 150px;">{$vo.customs_real_name ?? ''}</div>
                             </td>
                             <td align="" class="" style="width: 100%;">
                                 <div>&nbsp</div>
@@ -197,6 +263,8 @@
             </div>
             <div class="iDiv" style="display: none;"></div>
         </div>
+        <!--分页位置-->
+        {$page->show()}
     </div>
 </div>
 <script>
@@ -208,22 +276,12 @@
 
         // 点击刷新数据
         $('.fa-refresh').click(function () {
-            location.href = "{:U('school.article/userStandardList')}";
+            var article_id = {$article_id};
+            location.href = '/index.php/Admin/school.article/resourceDownloadList/article_id/' + article_id;
         });
     });
 
-    $('select[name="source"]').change(function () {
-        switch (this.value) {
-            case '1':
-                $('.time_').hide();
-                break;
-            case '2':
-                $('.time_').show();
-                break;
-        }
-    });
-
-    function export_list() {
+    function listExport() {
         $('input[name="is_export"]').val('1');
         $('#search-form').submit();
         $('input[name="is_export"]').val('0');
