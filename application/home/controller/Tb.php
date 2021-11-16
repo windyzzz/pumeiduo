@@ -2,6 +2,7 @@
 
 namespace app\home\controller;
 
+use app\admin\model\PromQrcodeLog;
 use app\common\model\DeliveryDoc;
 use app\common\model\HtnsDeliveryLog;
 use app\common\model\GoodsImages;
@@ -841,14 +842,17 @@ class Tb extends Controller
             $logId = Db::name('svip_transfer_log')->add(['type' => 1, 'data' => $data, 'add_time' => NOW_TIME]);
             $data = json_decode($data, true);
             if (empty($data['user_name']) || empty($data['station'])) {
+                M('svip_transfer_log')->where(['id' => $logId])->update(['status' => -1]);
                 return json_encode(['status' => 0, 'msg' => '请传入正确的参数']);
             }
             $svipLevel = M('svip_level')->where(['agent_level' => $data['station']])->find();
             if (empty($svipLevel)) {
+                M('svip_transfer_log')->where(['id' => $logId])->update(['status' => -1]);
                 return json_encode(['status' => 0, 'msg' => '等级ID错误']);
             }
             $user = M('users')->where(['user_name' => $data['user_name']])->find();
             if (empty($user)) {
+                M('svip_transfer_log')->where(['id' => $logId])->update(['status' => -1]);
                 return json_encode(['status' => 0, 'msg' => '用户信息不存在']);
             }
             M('users')->where(['user_name' => $data['user_name']])->update([
@@ -871,10 +875,12 @@ class Tb extends Controller
             $logId = Db::name('svip_transfer_log')->add(['type' => 2, 'data' => $data, 'add_time' => NOW_TIME]);
             $data = json_decode($data, true);
             if (empty($data['user_name']) || empty($data['station'])) {
+                M('svip_transfer_log')->where(['id' => $logId])->update(['status' => -1]);
                 return json_encode(['status' => 0, 'msg' => '请传入正确的参数']);
             }
             $user = M('users')->where(['user_name' => $data['user_name']])->find();
             if (empty($user)) {
+                M('svip_transfer_log')->where(['id' => $logId])->update(['status' => -1]);
                 return json_encode(['status' => 0, 'msg' => '用户信息不存在']);
             }
             M('users')->where(['user_name' => $data['user_name']])->update([
@@ -897,22 +903,48 @@ class Tb extends Controller
             $logId = Db::name('svip_transfer_log')->add(['type' => 3, 'data' => $data, 'add_time' => NOW_TIME]);
             $data = json_decode($data, true);
             if (empty($data['user_name']) || empty($data['info_data'])) {
+                M('svip_transfer_log')->where(['id' => $logId])->update(['status' => -1]);
                 return json_encode(['status' => 0, 'msg' => '请传入正确的参数']);
             }
-            $user = M('users')->where(['user_name' => $data['user_name']])->find();
-            if (empty($user)) {
+            $userId = M('users')->where(['user_name' => $data['user_name']])->value('user_id');
+            if (empty($userId)) {
+                M('svip_transfer_log')->where(['id' => $logId])->update(['status' => -1]);
                 return json_encode(['status' => 0, 'msg' => '用户信息不存在']);
             }
             $infoData = json_decode($data['info_data'], true);
-            M('users')->where(['user_name' => $data['user_name']])->update([
-                'svip_activate_time' => $infoData['activate_time'],
-                'svip_upgrade_time' => $infoData['upgrade_time'],
-                'svip_referee_number' => $infoData['referee_number'],
-                'grade_referee_num1' => $infoData['grade_referee_num1'],
-                'grade_referee_num2' => $infoData['grade_referee_num2'],
-                'grade_referee_num3' => $infoData['grade_referee_num3'],
-                'grade_referee_num4' => $infoData['grade_referee_num4'],
-            ]);
+            if (M('svip_info')->where(['user_id' => $userId, 'user_name' => $data['user_name']])->value('id')) {
+                M('svip_info')->where(['user_id' => $userId, 'user_name' => $data['user_name']])->update([
+                    'real_name' => $infoData['true_name'],
+                    'svip_activate_time' => $infoData['activate_time'],
+                    'svip_upgrade_time' => $infoData['upgrade_time'],
+                    'svip_referee_number' => $infoData['referee_number'],
+                    'grade_referee_num1' => $infoData['grade_referee_num1'],
+                    'grade_referee_num2' => $infoData['grade_referee_num2'],
+                    'grade_referee_num3' => $infoData['grade_referee_num3'],
+                    'grade_referee_num4' => $infoData['grade_referee_num4'],
+                    'network_parent_user_name' => $infoData['network_parent_user_name'],
+                    'network_parent_real_name' => $infoData['network_parent_real_name'],
+                    'customs_user_name' => $infoData['customs_user_name'],
+                    'customs_real_name' => $infoData['customs_real_name'],
+                ]);
+            } else {
+                M('svip_info')->add([
+                    'user_id' => $userId,
+                    'user_name' => $data['user_name'],
+                    'real_name' => $infoData['true_name'],
+                    'svip_activate_time' => $infoData['activate_time'],
+                    'svip_upgrade_time' => $infoData['upgrade_time'],
+                    'svip_referee_number' => $infoData['referee_number'],
+                    'grade_referee_num1' => $infoData['grade_referee_num1'],
+                    'grade_referee_num2' => $infoData['grade_referee_num2'],
+                    'grade_referee_num3' => $infoData['grade_referee_num3'],
+                    'grade_referee_num4' => $infoData['grade_referee_num4'],
+                    'network_parent_user_name' => $infoData['network_parent_user_name'],
+                    'network_parent_real_name' => $infoData['network_parent_true_name'],
+                    'customs_user_name' => $infoData['customs_user_name'],
+                    'customs_real_name' => $infoData['customs_true_name'],
+                ]);
+            }
             M('svip_transfer_log')->where(['id' => $logId])->update(['status' => 1]);
             return json_encode(['status' => 1, 'msg' => '更新成功']);
         }
