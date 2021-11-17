@@ -1989,6 +1989,13 @@ AND log_id NOT IN
                 $query->whereOr($whereOr);
             });
         }
+        $userList = $userList->select();
+        $userIds = [];
+        foreach ($userList as $user) {
+            $userIds[] = $user['user_id'];
+        }
+        // 用户首次进入商学院的时间
+        $firstVisit = M('user_school_config')->where(['type' => 'first_visit', 'user_id' => ['IN', $userIds]])->getField('user_id, add_time');
         // 学习课程id
         $courseIds = M('school_article')->where([
             'learn_type' => ['IN', [1, 2]],
@@ -2022,9 +2029,6 @@ AND log_id NOT IN
             ];
             $res = $this->checkUserCourseNum($userData, $courseIds, false, false, $learnTimeFrom, $learnTimeTo);
             $user['course_num'] = $res['course_num'];
-            // 用户首次进入商学院的时间
-            $firstVisit = M('user_school_config')->where(['type' => 'first_visit', 'user_id' => $user['user_id']])->value('add_time');
-            $user['first_visit'] = $firstVisit ? date('Y-m-d H:i:s', $firstVisit) : '';
             $dataList[] = [
                 $user['user_id'],
                 $user['nickname'],
@@ -2035,7 +2039,7 @@ AND log_id NOT IN
                 $user['svip_level_name'],
                 $user['course_num'],
                 $user['school_credit'],
-                $user['first_visit'],
+                isset($firstVisit[$user['user_id']]) ? date('Y-m-d H:i:s', $firstVisit[$user['user_id']]) : '',
                 $user['svip_activate_time'] != 0 ? date('Y-m-d H:i:s', $user['svip_activate_time']) : '',
                 $user['svip_upgrade_time'] != 0 ? date('Y-m-d H:i:s', $user['svip_upgrade_time']) : '',
                 $user['svip_referee_number'] ?? 0,
@@ -2069,6 +2073,12 @@ AND log_id NOT IN
                 $query->whereOr($whereOr);
             });
         }
+        $userIds = [];
+        foreach ($userList as $user) {
+            $userIds[] = $user['user_id'];
+        }
+        // 用户首次进入商学院的时间
+        $firstVisit = M('user_school_config')->where(['type' => 'first_visit', 'user_id' => ['IN', $userIds]])->getField('user_id, add_time');
         // 学习课程id
         $courseIds = M('school_article')->where([
             'learn_type' => ['IN', [1, 2]],
@@ -2107,9 +2117,6 @@ AND log_id NOT IN
             ];
             $res = $this->checkUserCourseNum($userData, $courseIds);
             $user['course_num'] = $res['course_num'];
-            // 用户首次进入商学院的时间
-            $firstVisit = M('user_school_config')->where(['type' => 'first_visit', 'user_id' => $user['user_id']])->value('add_time');
-            $user['first_visit'] = $firstVisit ? date('Y-m-d H:i:s', $firstVisit) : '';
             // 课程相关信息
             $learnType = '';
             switch ($user['learn_type']) {
@@ -2164,7 +2171,7 @@ AND log_id NOT IN
                 $user['svip_level_name'],
                 $user['course_num'],
                 $user['school_credit'],
-                $user['first_visit'],
+                isset($firstVisit[$user['user_id']]) ? date('Y-m-d H:i:s', $firstVisit[$user['user_id']]) : '',
                 $user['svip_activate_time'] != 0 ? date('Y-m-d H:i:s', $user['svip_activate_time']) : '',
                 $user['svip_upgrade_time'] != 0 ? date('Y-m-d H:i:s', $user['svip_upgrade_time']) : '',
                 $user['svip_referee_number'] ?? 0,
@@ -2510,10 +2517,6 @@ AND log_id NOT IN
 
     private function exportSchoolUserCourseAll($table, $join, $condition, $field, $group, $order, $offset, $length, $ext, $exportFileName, $exportFilePath)
     {
-        // 学习课程列表
-        $courseList = M('school_article sa')->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')
-            ->where(['sa.learn_type' => ['IN', [1, 2]], 'sa.status' => 1,])
-            ->field('s.name module_name, sc.name class_name, sa.id article_id, sa.title')->order('s.id ASC, sc.id ASC')->select();
         // 用户列表
         $usersModel = new UsersModel();
         $userList = $usersModel->alias('u')->join($join)->where($condition)->field($field)->group($group)->order($order)->limit($offset, $length);
@@ -2524,6 +2527,26 @@ AND log_id NOT IN
             });
         }
         $userList = $userList->select();
+        $userIds = [];
+        foreach ($userList as $user) {
+            $userIds[] = $user['user_id'];
+        }
+        // 用户首次进入商学院的时间
+        $firstVisit = M('user_school_config')->where(['type' => 'first_visit', 'user_id' => ['IN', $userIds]])->getField('user_id, add_time');
+        // 学习课程列表
+        $courseList = M('school_article sa')->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')
+            ->where(['sa.learn_type' => ['IN', [1, 2]], 'sa.status' => 1,])
+            ->field('s.name module_name, sc.name class_name, sa.id article_id, sa.title')->order('s.id ASC, sc.id ASC')->select();
+        // 用户参与的课程列表
+        $userArticleList = M('user_school_article')->where(['user_id' => ['IN', $userIds], 'is_learn' => 1])->field('user_id, article_id')->select();
+        $userArticle = [];
+        foreach ($userArticleList as $ua) {
+            if (!isset($userArticle[$ua['user_id']])) {
+                $userArticle[$ua['user_id']] = [$ua['article_id']];
+            } else {
+                $userArticle[$ua['user_id']][] = $ua['article_id'];
+            }
+        }
         // APP等级列表
         $appGrade = M('distribut_level')->getField('level_id, level_name', true);
         // 代理商等级列表
@@ -2554,9 +2577,6 @@ AND log_id NOT IN
             $user['svip_grade_name'] = $user['distribut_level'] == 3 ? $svipGrade[$user['svip_grade']] : '';
             // 代理商等级
             $user['svip_level_name'] = $user['distribut_level'] == 3 ? $svipLevel[$user['svip_level']] : '';
-            // 用户首次进入商学院的时间
-            $firstVisit = M('user_school_config')->where(['type' => 'first_visit', 'user_id' => $user['user_id']])->value('add_time');
-            $user['first_visit'] = $firstVisit ? date('Y-m-d H:i:s', $firstVisit) : '';
             $dataList[$k + 2] = [
                 $user['user_id'],
                 $user['nickname'],
@@ -2566,7 +2586,7 @@ AND log_id NOT IN
                 $user['svip_grade_name'],
                 $user['svip_level_name'],
                 $user['school_credit'],
-                $user['first_visit'],
+                isset($firstVisit[$user['user_id']]) ? date('Y-m-d H:i:s', $firstVisit[$user['user_id']]) : '',
                 $user['svip_activate_time'] != 0 ? date('Y-m-d H:i:s', $user['svip_activate_time']) : '',
                 $user['svip_upgrade_time'] != 0 ? date('Y-m-d H:i:s', $user['svip_upgrade_time']) : '',
                 $user['svip_referee_number'] ?? 0,
@@ -2580,13 +2600,14 @@ AND log_id NOT IN
                 $user['customs_real_name'] ?? '',
             ];
             // 用户参与的学习课程
-            $userArticle = $user->schoolArticle()->select();
             foreach ($courseList as $course) {
                 $isLearn = 0;
-                foreach ($userArticle as $article) {
-                    if ($article['article_id'] == $course['article_id']) {
-                        $isLearn = 1;
-                        break;
+                if (isset($userArticle[$user['user_id']])) {
+                    foreach ($userArticle[$user['user_id']] as $articleId) {
+                        if ($articleId == $course['article_id']) {
+                            $isLearn = 1;
+                            break;
+                        }
                     }
                 }
                 $dataList[$k + 2][] = $isLearn == 1 ? '√' : '';
