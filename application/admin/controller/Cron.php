@@ -17,6 +17,7 @@ use app\common\logic\PushLogic;
 use app\common\logic\SmsLogic;
 use app\common\logic\Token as TokenLogic;
 use app\common\logic\wechat\WechatUtil;
+use app\common\model\Users as UsersModel;
 use think\Controller;
 use think\Db;
 
@@ -1844,6 +1845,9 @@ AND log_id NOT IN
                     case 'school_resource_article':
                         $res = $this->exportSchoolResourceArticle($exportFile['name'], $exportFile['path']);
                         break;
+                    case 'school_user_course_all':
+                        $res = $this->exportSchoolUserCourseAll($table, $join, $condition, $field, $group, $order, $offset, $length, $ext, $exportFile['name'], $exportFile['path']);
+                        break;
                 }
                 if (isset($res) && $res === true) {
                     M('export_file')->where(['id' => $exportFile['id']])->update([
@@ -1999,6 +2003,7 @@ AND log_id NOT IN
         $learnTimeFrom = $ext['learn_time_from'] ?? '';
         $learnTimeTo = $ext['learn_time_to'] ?? '';
         $userList = $userList->select();
+        // 表数据
         $dataList = [];
         foreach ($userList as $user) {
             $user['course_num'] = 0;    // 学习课程数量
@@ -2080,6 +2085,7 @@ AND log_id NOT IN
         $learnTimeFrom = $ext['learn_time_from'] ?? '';
         $learnTimeTo = $ext['learn_time_to'] ?? '';
         $userList = $userList->select();
+        // 表数据
         $dataList = [];
         foreach ($userList as $user) {
             if ($learnTimeFrom && $learnTimeTo && $user['finish_time'] && ($user['finish_time'] < $learnTimeFrom || $user['finish_time'] > $learnTimeTo)) {
@@ -2218,6 +2224,7 @@ AND log_id NOT IN
         $learnTimeFrom = $ext['learn_time_from'] ?? '';
         $learnTimeTo = $ext['learn_time_to'] ?? '';
         $userList = $userList->select();
+        // 表数据
         $dataList = [];
         foreach ($userList as $user) {
             $user['course_num'] = 0;        // 学习课程数量
@@ -2288,6 +2295,7 @@ AND log_id NOT IN
         // 用户数据
         $field = json_decode($field, true);
         $userList = DB::query($field['sql']);
+        // 表数据
         $dataList = [];
         foreach ($userList as $key => $user) {
             $user['course_num'] = 0;        // 学习课程数量
@@ -2371,6 +2379,7 @@ AND log_id NOT IN
         $resourceList = M('school_article_resource')->where(['article_id' => ['IN', $articleIds]])->field('article_id, image, video')->select();
         $markClassIds = [];
         $markArticleIds = [];
+        // 表数据
         $dataList = [];
         foreach ($articleList as $article) {
             // 分类归类
@@ -2495,6 +2504,103 @@ AND log_id NOT IN
         $headList = [
             '模块', '分类', '素材文章ID', '内容', 'APP访问等级', '代理商访问等级', '代理商访问职级', '排序', '状态', '添加时间', '发布时间', '更新时间', '下载需要的积分', '下载人数', '附件', '图片素材', '视频素材'
         ];
+        toCsvExcel($dataList, $headList, $exportFileName, $exportFilePath);
+        return true;
+    }
+
+    private function exportSchoolUserCourseAll($table, $join, $condition, $field, $group, $order, $offset, $length, $ext, $exportFileName, $exportFilePath)
+    {
+        // 学习课程列表
+        $courseList = M('school_article sa')->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')
+            ->where(['sa.learn_type' => ['IN', [1, 2]], 'sa.status' => 1,])
+            ->field('s.name module_name, sc.name class_name, sa.id article_id, sa.title')->order('s.id ASC, sc.id ASC')->select();
+        // 用户列表
+        $usersModel = new UsersModel();
+        $userList = $usersModel->alias('u')->join($join)->where($condition)->field($field)->group($group)->order($order)->limit($offset, $length);
+        $whereOr = $ext['where_or'] ?? [];
+        if (!empty($whereOr)) {
+            $userList = $userList->where(function ($query) use ($whereOr) {
+                $query->whereOr($whereOr);
+            });
+        }
+        $userList = $userList->select();
+        // APP等级列表
+        $appGrade = M('distribut_level')->getField('level_id, level_name', true);
+        // 代理商等级列表
+        $svipGrade = M('svip_grade')->getField('app_level, name', true);
+        // 代理商职级列表
+        $svipLevel = M('svip_level')->getField('app_level, name', true);
+        // 表数据
+        $dataList = [
+            [
+                '', '', '', '', '', '', '', '', '',
+                '', '', '', '', '', '', '',
+                '', '', '', '',
+            ],
+            [
+                '用户ID', '用户昵称', '用户名', '真实姓名', 'APP等级', '代理商等级', '代理商职级', '乐活豆数量', '首次进入商学院',
+                '211系统激活时间', '211系统升级代理商时间', '推荐总人数', '推荐游客人数', '推荐优享会员人数', '推荐尊享会员人数', '推荐代理商人数',
+                '服务人用户名', '服务人真实姓名', '服务中心用户名', '服务中心真实姓名',
+            ]
+        ];
+        foreach ($courseList as $course) {
+            $dataList[0][] = $course['class_name'];
+            $dataList[1][] = $course['title'];
+        }
+        foreach ($userList as $k => $user) {
+            // APP等级
+            $user['app_grade_name'] = $appGrade[$user['distribut_level']];
+            // 代理商等级
+            $user['svip_grade_name'] = $user['distribut_level'] == 3 ? $svipGrade[$user['svip_grade']] : '';
+            // 代理商等级
+            $user['svip_level_name'] = $user['distribut_level'] == 3 ? $svipLevel[$user['svip_level']] : '';
+            // 用户首次进入商学院的时间
+            $firstVisit = M('user_school_config')->where(['type' => 'first_visit', 'user_id' => $user['user_id']])->value('add_time');
+            $user['first_visit'] = $firstVisit ? date('Y-m-d H:i:s', $firstVisit) : '';
+            $dataList[$k + 2] = [
+                $user['user_id'],
+                $user['nickname'],
+                $user['user_name'],
+                $user['svip_real_name'] ?? $user['real_name'],
+                $user['app_grade_name'],
+                $user['svip_grade_name'],
+                $user['svip_level_name'],
+                $user['school_credit'],
+                $user['first_visit'],
+                $user['svip_activate_time'] != 0 ? date('Y-m-d H:i:s', $user['svip_activate_time']) : '',
+                $user['svip_upgrade_time'] != 0 ? date('Y-m-d H:i:s', $user['svip_upgrade_time']) : '',
+                $user['svip_referee_number'] ?? 0,
+                $user['grade_referee_num1'] ?? 0,
+                $user['grade_referee_num2'] ?? 0,
+                $user['grade_referee_num3'] ?? 0,
+                $user['grade_referee_num4'] ?? 0,
+                $user['network_parent_user_name'] ?? '',
+                $user['network_parent_real_name'] ?? '',
+                $user['customs_user_name'] ?? '',
+                $user['customs_real_name'] ?? '',
+            ];
+            // 用户参与的学习课程
+            $userArticle = $user->schoolArticle()->select();
+            foreach ($courseList as $course) {
+                $isLearn = 0;
+                foreach ($userArticle as $article) {
+                    if ($article['article_id'] == $course['article_id']) {
+                        $isLearn = 1;
+                        break;
+                    }
+                }
+                $dataList[$k + 2][] = $isLearn == 1 ? '√' : '';
+            }
+        }
+        // 表头
+        $headList = [
+            '', '', '', '', '', '', '', '', '',
+            '', '', '', '', '', '', '',
+            '', '', '', '',
+        ];
+        foreach ($courseList as $course) {
+            $headList[] = $course['module_name'];
+        }
         toCsvExcel($dataList, $headList, $exportFileName, $exportFilePath);
         return true;
     }

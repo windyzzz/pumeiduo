@@ -2065,4 +2065,42 @@ class Article extends Base
             toCsvExcel($dataList, $headList, 'resource_download_list');
         }
     }
+
+    /**
+     * 用户课程总览导出
+     */
+    public function exportUserCourseAll()
+    {
+        // 基础where
+        $where = $this->articleWhere();
+        // 基础whereOr
+        $whereOr = $this->articleWhereOr();
+        $ext = ['where_or' => $whereOr];
+        // 数据表
+        $table = 'users u';
+        // join连接
+        $join = [
+            ['svip_info si', 'si.user_id = u.user_id', 'LEFT'],
+        ];
+        // 排序
+        $order = ['u.user_id' => 'DESC'];
+        // 字段
+        $field = 'u.*, si.real_name svip_real_name, si.svip_activate_time, si.svip_upgrade_time, si.svip_referee_number, si.grade_referee_num1, si.grade_referee_num2, si.grade_referee_num3, si.grade_referee_num4, si.network_parent_user_name, si.network_parent_real_name, si.customs_user_name, si.customs_real_name';
+        $path = UPLOAD_PATH . 'school/excel/' . date('Y-m-d') . '/';
+        $name = 'userCourseAll_' . date('Y-m-d_H-i-s') . '.csv';
+        // 导出记录
+        M('export_file')->add([
+            'type' => 'school_user_course_all',
+            'path' => $path,
+            'name' => $name,
+            'table' => $table,
+            'join' => json_encode($join),
+            'condition' => json_encode($where),
+            'order' => json_encode($order),
+            'field' => $field,
+            'ext' => json_encode($ext),
+            'add_time' => NOW_TIME
+        ]);
+        $this->ajaxReturn(['status' => 1, 'msg' => '添加导出队列成功，请耐心等待后台导出']);
+    }
 }

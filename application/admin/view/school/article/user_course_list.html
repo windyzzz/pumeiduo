@@ -101,6 +101,12 @@
                 <div class="sDiv2">
                     <input type="button" class="btn" onclick="exportList()" value="后台导出文件列表">
                 </div>
+                <div class="sDiv2">
+                    <input type="button" class="btn" onclick="listExport_all()" value="用户课程总览导出">
+                </div>
+                <div class="sDiv2">
+                    <input type="button" class="btn" onclick="exportList_all()" value="用户课程总览导出列表">
+                </div>
             </div>
         </form>
         <div class="hDiv">
@@ -334,6 +340,38 @@
 
     function exportList() {
         var url = "{:U('Export/fileList', array('type'=>'school_user_course,school_user_course_ext'))}";
+        layer.open({
+            type: 2,
+            title: '导出列表',
+            shadeClose: true,
+            shade: 0.8,
+            area: ['800px', '800px'],
+            content: url
+        });
+    }
+
+    function listExport_all() {
+        layer.confirm('确定导出？', {
+            btn: ['确定', '取消'] //按钮
+        }, function () {
+            $('input[name="is_export"]').val('1');
+            $.ajax({
+                type: "POST",
+                url: "{:U('school.article/exportUserCourseAll')}",
+                data: $('#search-form').serialize(),
+                dataType: 'json',
+                success: function (data) {
+                    layer.alert(data.msg, {icon: 1, time: 2000});
+                }
+            });
+            $('input[name="is_export"]').val('0');
+        }, function () {
+            console.log("取消");
+        });
+    }
+
+    function exportList_all() {
+        var url = "{:U('Export/fileList', array('type'=>'school_user_course_all'))}";
         layer.open({
             type: 2,
             title: '导出列表',

@@ -61,4 +61,18 @@ class Users extends Model
         $source = ['1' => '微信', '2' => 'PC', '3' => 'APP', '4' => '小程序'];
         return $source[$data['last_login_source']];
     }
+
+    /**
+     * 用户商学院文章列表
+     * @param $status
+     * @return \think\model\relation\HasMany
+     */
+    public function schoolArticle($status = -1)
+    {
+        $where = ['is_learn' => 1];
+        if ($status != -1) {
+            $where['status'] = $status;
+        }
+        return $this->hasMany('UserSchoolArticle', 'user_id', 'user_id')->where($where);
+    }
 }
