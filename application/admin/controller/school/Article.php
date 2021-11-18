@@ -152,7 +152,7 @@ class Article extends Base
         // 排序
         $order = ['u.user_id' => 'DESC'];
         // 字段
-        $field = 'u.*, si.real_name svip_real_name, si.svip_activate_time, si.svip_upgrade_time, si.svip_referee_number, si.grade_referee_num1, si.grade_referee_num2, si.grade_referee_num3, si.grade_referee_num4, si.network_parent_user_name, si.network_parent_real_name, si.customs_user_name, si.customs_real_name';
+        $field = 'u.*, si.real_name svip_real_name, si.svip_activate_time, si.svip_upgrade_time, si.svip_referee_number, si.grade_referee_num1, si.grade_referee_num2, si.grade_referee_num3, si.grade_referee_num4, si.referee_user_name, si.referee_real_name, si.network_parent_user_name, si.network_parent_real_name, si.customs_user_name, si.customs_real_name';
         $path = UPLOAD_PATH . 'school/excel/' . date('Y-m-d') . '/';
         $name = 'userCourseList_' . date('Y-m-d_H-i-s') . '.csv';
         // 导出记录
@@ -188,7 +188,7 @@ class Article extends Base
         // 排序
         $order = ['u.user_id' => 'DESC'];
         // 字段
-        $field = 'u.*, si.real_name svip_real_name, si.svip_activate_time, si.svip_upgrade_time, si.svip_referee_number, si.grade_referee_num1, si.grade_referee_num2, si.grade_referee_num3, si.grade_referee_num4, si.network_parent_user_name, si.network_parent_real_name, si.customs_user_name, si.customs_real_name,
+        $field = 'u.*, si.real_name svip_real_name, si.svip_activate_time, si.svip_upgrade_time, si.svip_referee_number, si.grade_referee_num1, si.grade_referee_num2, si.grade_referee_num3, si.grade_referee_num4, si.referee_user_name, si.referee_real_name, si.network_parent_user_name, si.network_parent_real_name, si.customs_user_name, si.customs_real_name,
         usa.article_id, usa.status learn_status, usa.add_time, usa.finish_time, usa.is_questionnaire, sa.class_id, sa.title, sa.learn_type, sa.status, sa.publish_time';
         $path = UPLOAD_PATH . 'school/excel/' . date('Y-m-d') . '/';
         $name = 'userCourseList_ext_' . date('Y-m-d_H-i-s') . '.csv';
@@ -223,7 +223,7 @@ class Article extends Base
         // 排序
         $order = ['u.user_id' => 'DESC'];
         // 字段
-        $field = 'u.*, si.real_name svip_real_name, si.svip_activate_time, si.svip_upgrade_time, si.svip_referee_number, si.grade_referee_num1, si.grade_referee_num2, si.grade_referee_num3, si.grade_referee_num4, si.network_parent_user_name, si.network_parent_real_name, si.customs_user_name, si.customs_real_name';
+        $field = 'u.*, si.real_name svip_real_name, si.svip_activate_time, si.svip_upgrade_time, si.svip_referee_number, si.grade_referee_num1, si.grade_referee_num2, si.grade_referee_num3, si.grade_referee_num4, si.referee_user_name, si.referee_real_name, si.network_parent_user_name, si.network_parent_real_name, si.customs_user_name, si.customs_real_name';
         $path = UPLOAD_PATH . 'school/excel/' . date('Y-m-d') . '/';
         $name = 'userGraduateList_' . date('Y-m-d_H-i-s') . '.csv';
         // 导出记录
@@ -276,7 +276,7 @@ class Article extends Base
         $ext = ['learn_time_from' => strtotime($learnTimeFrom), 'learn_time_to' => strtotime($learnTimeTo), 'where_or' => $whereOr];
         // 列表数据
         $userList = M('users u')->join('svip_info si', 'si.user_id = u.user_id', 'LEFT')->where($where)->order('u.user_id DESC')
-            ->field('u.*, si.real_name svip_real_name, si.svip_activate_time, si.svip_upgrade_time, si.svip_referee_number, si.grade_referee_num1, si.grade_referee_num2, si.grade_referee_num3, si.grade_referee_num4, si.network_parent_user_name, si.network_parent_real_name, si.customs_user_name, si.customs_real_name');
+            ->field('u.*, si.real_name svip_real_name, si.svip_activate_time, si.svip_upgrade_time, si.svip_referee_number, si.grade_referee_num1, si.grade_referee_num2, si.grade_referee_num3, si.grade_referee_num4, si.referee_user_name, si.referee_real_name, si.network_parent_user_name, si.network_parent_real_name, si.customs_user_name, si.customs_real_name');
         if ($isExport) {
             $this->exportUserCourseList($where, $ext);
             $this->exportUserCourseListExt($where, $ext);
@@ -695,7 +695,7 @@ class Article extends Base
         if (strpos($learnTimeTo, '+')) $learnTimeTo = str_replace('+', ' ', $learnTimeTo);
         // 列表数据
         $userList = M('users u')->join('svip_info si', 'si.user_id = u.user_id', 'LEFT')->where($where)->order('u.user_id DESC')
-            ->field('u.*, si.real_name svip_real_name, si.svip_activate_time, si.svip_upgrade_time, si.svip_referee_number, si.grade_referee_num1, si.grade_referee_num2, si.grade_referee_num3, si.grade_referee_num4, si.network_parent_user_name, si.network_parent_real_name, si.customs_user_name, si.customs_real_name');
+            ->field('u.*, si.real_name svip_real_name, si.svip_activate_time, si.svip_upgrade_time, si.svip_referee_number, si.grade_referee_num1, si.grade_referee_num2, si.grade_referee_num3, si.grade_referee_num4, si.referee_user_name, si.referee_real_name, si.network_parent_user_name, si.network_parent_real_name, si.customs_user_name, si.customs_real_name');
         if ($isExport) {
             $ext = ['module_id' => $moduleId, 'class_id' => $classId, 'learn_time_from' => strtotime($learnTimeFrom), 'learn_time_to' => strtotime($learnTimeTo), 'where_or' => $whereOr];
             $this->exportUserGraduateList($where, $ext);
@@ -1982,7 +1982,7 @@ class Article extends Base
             ->join('svip_info si', 'si.user_id = u.user_id', 'LEFT')
             ->where($where)
             ->order('usa.add_time DESC')
-            ->field('u.*, si.real_name svip_real_name, si.svip_activate_time, si.svip_upgrade_time, si.svip_referee_number, si.grade_referee_num1, si.grade_referee_num2, si.grade_referee_num3, si.grade_referee_num4, si.network_parent_user_name, si.network_parent_real_name, si.customs_user_name, si.customs_real_name, usa.add_time');
+            ->field('u.*, si.real_name svip_real_name, si.svip_activate_time, si.svip_upgrade_time, si.svip_referee_number, si.grade_referee_num1, si.grade_referee_num2, si.grade_referee_num3, si.grade_referee_num4, si.referee_user_name, si.referee_real_name, si.network_parent_user_name, si.network_parent_real_name, si.customs_user_name, si.customs_real_name, usa.add_time');
         if (!$isExport) {
             // 用户学习课程记录总数
             $count = M('user_school_article usa')
@@ -2032,6 +2032,8 @@ class Article extends Base
                 $user['grade_referee_num2'] ?? 0,
                 $user['grade_referee_num3'] ?? 0,
                 $user['grade_referee_num4'] ?? 0,
+                $user['referee_user_name'] ?? '',
+                $user['referee_real_name'] ?? '',
                 $user['network_parent_user_name'] ?? '',
                 $user['network_parent_real_name'] ?? '',
                 $user['customs_user_name'] ?? '',
@@ -2060,7 +2062,7 @@ class Article extends Base
                 '素材文章',
                 '用户ID', '用户昵称', '用户名', '真实姓名', '下载时间', 'APP等级', '代理商等级', '代理商职级',
                 '211系统激活时间', '211系统升级代理商时间', '推荐总人数', '推荐游客人数', '推荐优享会员人数', '推荐尊享会员人数', '推荐代理商人数',
-                '服务人用户名', '服务人真实姓名', '服务中心用户名', '服务中心真实姓名',
+                '推荐人用户名', '推荐人真实姓名', '服务人用户名', '服务人真实姓名', '服务中心用户名', '服务中心真实姓名',
             ];
             toCsvExcel($dataList, $headList, 'resource_download_list');
         }
@@ -2090,7 +2092,12 @@ class Article extends Base
         if ($upgradeTimeFrom && $upgradeTimeTo) {
             $where['si.svip_upgrade_time'] = ['BETWEEN', [strtotime($upgradeTimeFrom), strtotime($upgradeTimeTo)]];
         }
-        $ext = ['where_or' => $whereOr];
+        // 学习时间
+        $learnTimeFrom = I('learn_time_from', '') ? htmlspecialchars_decode(I('learn_time_from')) : '';
+        if (strpos($learnTimeFrom, '+')) $learnTimeFrom = str_replace('+', ' ', $learnTimeFrom);
+        $learnTimeTo = I('learn_time_to', '') ? htmlspecialchars_decode(I('learn_time_to')) : '';
+        if (strpos($learnTimeTo, '+')) $learnTimeTo = str_replace('+', ' ', $learnTimeTo);
+        $ext = ['learn_time_from' => strtotime($learnTimeFrom), 'learn_time_to' => strtotime($learnTimeTo), 'where_or' => $whereOr];
         // 数据表
         $table = 'users u';
         // join连接
@@ -2100,7 +2107,7 @@ class Article extends Base
         // 排序
         $order = ['u.user_id' => 'DESC'];
         // 字段
-        $field = 'u.*, si.real_name svip_real_name, si.svip_activate_time, si.svip_upgrade_time, si.svip_referee_number, si.grade_referee_num1, si.grade_referee_num2, si.grade_referee_num3, si.grade_referee_num4, si.network_parent_user_name, si.network_parent_real_name, si.customs_user_name, si.customs_real_name';
+        $field = 'u.*, si.real_name svip_real_name, si.svip_activate_time, si.svip_upgrade_time, si.svip_referee_number, si.grade_referee_num1, si.grade_referee_num2, si.grade_referee_num3, si.grade_referee_num4, si.referee_user_name, si.referee_real_name, si.network_parent_user_name, si.network_parent_real_name, si.customs_user_name, si.customs_real_name';
         $path = UPLOAD_PATH . 'school/excel/' . date('Y-m-d') . '/';
         $name = 'userCourseAll_' . date('Y-m-d_H-i-s') . '.csv';
         // 导出记录

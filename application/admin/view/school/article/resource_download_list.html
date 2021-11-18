@@ -146,6 +146,12 @@
                             <div style="text-align: center; width: 100px;" class="">推荐代理商人数</div>
                         </th>
                         <th align="left" abbr="coupon_name" axis="col3" class="">
+                            <div style="text-align: center; width: 150px;" class="">推荐人用户名</div>
+                        </th>
+                        <th align="left" abbr="coupon_name" axis="col3" class="">
+                            <div style="text-align: center; width: 150px;" class="">推荐人真实姓名</div>
+                        </th>
+                        <th align="left" abbr="coupon_name" axis="col3" class="">
                             <div style="text-align: center; width: 150px;" class="">服务人用户名</div>
                         </th>
                         <th align="left" abbr="coupon_name" axis="col3" class="">
@@ -240,12 +246,16 @@
                                 <div style="text-align: center; width: 100px;">{$vo.grade_referee_num4 ?? 0}</div>
                             </td>
                             <td align="left" class="">
-                                <div style="text-align: center; width: 150px;">{$vo.network_parent_user_name ?? ''}
-                                </div>
+                                <div style="text-align: center; width: 150px;">{$vo.referee_user_name ?? ''}</div>
                             </td>
                             <td align="left" class="">
-                                <div style="text-align: center; width: 150px;">{$vo.network_parent_real_name ?? ''}
-                                </div>
+                                <div style="text-align: center; width: 150px;">{$vo.referee_real_name ?? ''}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 150px;">{$vo.network_parent_user_name ?? ''}</div>
+                            </td>
+                            <td align="left" class="">
+                                <div style="text-align: center; width: 150px;">{$vo.network_parent_real_name ?? ''}</div>
                             </td>
                             <td align="left" class="">
                                 <div style="text-align: center; width: 150px;">{$vo.customs_user_name ?? ''}</div>
