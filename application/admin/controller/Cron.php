@@ -1797,64 +1797,62 @@ AND log_id NOT IN
      */
     public function exportFile()
     {
-        $exportFileList = M('export_file')->where(['status' => 0])->limit(0, 2)->select();
-        if (!empty($exportFileList)) {
-            foreach ($exportFileList as $exportFile) {
-                M('export_file')->where(['id' => $exportFile['id']])->update(['status' => 2]);
-                $table = $exportFile['table'];
-                $join = $exportFile['join'] ? json_decode($exportFile['join'], true) : [];
-                $condition = $exportFile['condition'] ? json_decode($exportFile['condition'], true) : [];
-                $group = $exportFile['group'];
-                $orderArr = $exportFile['order'] ? json_decode($exportFile['order'], true) : [];
-                $order = '';
-                foreach ($orderArr as $k => $v) {
-                    $order .= $k . ' ' . $v . ',';
-                }
-                $order = rtrim($order, ',');
-                $limitArr = $exportFile['limit'] ? json_decode($exportFile['limit'], true) : [];
-                $offset = 0;
-                $length = '';
-                foreach ($limitArr as $k => $v) {
-                    switch ($k) {
-                        case 'offset':
-                            $offset = $v;
-                            break;
-                        case 'length':
-                            $length = $v;
-                            break;
-                    }
-                }
-                $field = $exportFile['field'];
-                $ext = $exportFile['ext'] ? json_decode($exportFile['ext'], true) : [];
-                switch ($exportFile['type']) {
-                    case 'order':
-                        $res = $this->exportOrder($table, $join, $condition, $field, $group, $order, $offset, $length, $exportFile['name'], $exportFile['path']);
+        $exportFile = M('export_file')->where(['status' => 0])->find();
+        if (!empty($exportFile)) {
+            M('export_file')->where(['id' => $exportFile['id']])->update(['status' => 2]);
+            $table = $exportFile['table'];
+            $join = $exportFile['join'] ? json_decode($exportFile['join'], true) : [];
+            $condition = $exportFile['condition'] ? json_decode($exportFile['condition'], true) : [];
+            $group = $exportFile['group'];
+            $orderArr = $exportFile['order'] ? json_decode($exportFile['order'], true) : [];
+            $order = '';
+            foreach ($orderArr as $k => $v) {
+                $order .= $k . ' ' . $v . ',';
+            }
+            $order = rtrim($order, ',');
+            $limitArr = $exportFile['limit'] ? json_decode($exportFile['limit'], true) : [];
+            $offset = 0;
+            $length = '';
+            foreach ($limitArr as $k => $v) {
+                switch ($k) {
+                    case 'offset':
+                        $offset = $v;
                         break;
-                    case 'school_user_course':
-                        $res = $this->exportSchoolUserCourse($table, $join, $condition, $field, $group, $order, $offset, $length, $ext, $exportFile['name'], $exportFile['path']);
-                        break;
-                    case 'school_user_course_ext':
-                        $res = $this->exportSchoolUserCourseExt($table, $join, $condition, $field, $group, $order, $offset, $length, $ext, $exportFile['name'], $exportFile['path']);
-                        break;
-                    case 'school_user_graduate':
-                        $res = $this->exportSchoolUserGraduate($table, $join, $condition, $field, $group, $order, $offset, $length, $ext, $exportFile['name'], $exportFile['path']);
-                        break;
-                    case 'module_user_list':
-                        $res = $this->exportModuleUserList($field, $exportFile['name'], $exportFile['path']);
-                        break;
-                    case 'school_resource_article':
-                        $res = $this->exportSchoolResourceArticle($exportFile['name'], $exportFile['path']);
-                        break;
-                    case 'school_user_course_all':
-                        $res = $this->exportSchoolUserCourseAll($table, $join, $condition, $field, $group, $order, $offset, $length, $ext, $exportFile['name'], $exportFile['path']);
+                    case 'length':
+                        $length = $v;
                         break;
                 }
-                if (isset($res) && $res === true) {
-                    M('export_file')->where(['id' => $exportFile['id']])->update([
-                        'status' => 1,
-                        'url' => SITE_URL . '/' . $exportFile['path'] . $exportFile['name']
-                    ]);
-                }
+            }
+            $field = $exportFile['field'];
+            $ext = $exportFile['ext'] ? json_decode($exportFile['ext'], true) : [];
+            switch ($exportFile['type']) {
+                case 'order':
+                    $res = $this->exportOrder($table, $join, $condition, $field, $group, $order, $offset, $length, $exportFile['name'], $exportFile['path']);
+                    break;
+                case 'school_user_course':
+                    $res = $this->exportSchoolUserCourse($table, $join, $condition, $field, $group, $order, $offset, $length, $ext, $exportFile['name'], $exportFile['path']);
+                    break;
+                case 'school_user_course_ext':
+                    $res = $this->exportSchoolUserCourseExt($table, $join, $condition, $field, $group, $order, $offset, $length, $ext, $exportFile['name'], $exportFile['path']);
+                    break;
+                case 'school_user_graduate':
+                    $res = $this->exportSchoolUserGraduate($table, $join, $condition, $field, $group, $order, $offset, $length, $ext, $exportFile['name'], $exportFile['path']);
+                    break;
+                case 'module_user_list':
+                    $res = $this->exportModuleUserList($field, $exportFile['name'], $exportFile['path']);
+                    break;
+                case 'school_resource_article':
+                    $res = $this->exportSchoolResourceArticle($exportFile['name'], $exportFile['path']);
+                    break;
+                case 'school_user_course_all':
+                    $res = $this->exportSchoolUserCourseAll($table, $join, $condition, $field, $group, $order, $offset, $length, $ext, $exportFile['name'], $exportFile['path']);
+                    break;
+            }
+            if (isset($res) && $res === true) {
+                M('export_file')->where(['id' => $exportFile['id']])->update([
+                    'status' => 1,
+                    'url' => SITE_URL . '/' . $exportFile['path'] . $exportFile['name']
+                ]);
             }
         }
         exit();
@@ -1881,6 +1879,9 @@ AND log_id NOT IN
         ];
         // 表数据
         $dataList = [];
+        $orderStatus = C('ORDER_STATUS');
+        $payStatus = C('PAY_STATUS');
+        $shippingStatus = C('SHIPPING_STATUS');
         foreach ($orderList as $key => $order) {
             // 支付时间
             $payTime = $order['pay_time'] ? date('Y-m-d H:i:s', $order['pay_time']) : '';
@@ -1911,9 +1912,9 @@ AND log_id NOT IN
                 $order['shipping_price'],
                 $order['order_pv'],
                 $order['school_credit'],
-                C('ORDER_STATUS')[$order['order_status']],
-                $this->pay_status[$order['pay_status']],
-                $this->shipping_status[$order['shipping_status']],
+                $orderStatus[$order['order_status']],
+                $payStatus[$order['pay_status']],
+                $shippingStatus[$order['shipping_status']],
                 $orderSource[$order['source']],
                 $order['pay_name'],
             ];
@@ -1990,45 +1991,29 @@ AND log_id NOT IN
             });
         }
         $userList = $userList->select();
-        $userIds = [];
-        foreach ($userList as $user) {
-            $userIds[] = $user['user_id'];
-        }
         // 用户首次进入商学院的时间
-        $firstVisit = M('user_school_config')->where(['type' => 'first_visit', 'user_id' => ['IN', $userIds]])->getField('user_id, add_time');
+        $userFirstVisit = M('user_school_config')->where(['type' => 'first_visit'])->getField('user_id, add_time', true);
         // 学习课程id
-        $courseIds = M('school_article')->where([
-            'learn_type' => ['IN', [1, 2]],
-            'status' => 1,
-        ])->getField('id', true);
+        $courseIds = M('school_article')->where(['learn_type' => ['IN', [1, 2]], 'status' => 1,])->getField('id', true);
+        // 用户学习课程数量
+        $learnTimeFrom = $ext['learn_time_from'] ?? '';
+        $learnTimeTo = $ext['learn_time_to'] ?? '';
+        $userCourseCount = $this->checkUserCourseCount([], $courseIds, false, $learnTimeFrom, $learnTimeTo);
         // APP等级列表
         $appGrade = M('distribut_level')->getField('level_id, level_name', true);
         // 代理商等级列表
         $svipGrade = M('svip_grade')->getField('app_level, name', true);
         // 代理商职级列表
         $svipLevel = M('svip_level')->getField('app_level, name', true);
-        $learnTimeFrom = $ext['learn_time_from'] ?? '';
-        $learnTimeTo = $ext['learn_time_to'] ?? '';
-        $userList = $userList->select();
         // 表数据
         $dataList = [];
         foreach ($userList as $user) {
-            $user['course_num'] = 0;    // 学习课程数量
             // APP等级
             $user['app_grade_name'] = $appGrade[$user['distribut_level']];
             // 代理商等级
             $user['svip_grade_name'] = $user['distribut_level'] == 3 ? $svipGrade[$user['svip_grade']] : '';
             // 代理商等级
             $user['svip_level_name'] = $user['distribut_level'] == 3 ? $svipLevel[$user['svip_level']] : '';
-            // 用户达标课程数量
-            $userData = [
-                'user_id' => $user['user_id'],
-                'app_grade' => $user['distribut_level'],
-                'svip_grade' => $user['svip_grade'],
-                'svip_level' => $user['svip_level'],
-            ];
-            $res = $this->checkUserCourseNum($userData, $courseIds, false, false, $learnTimeFrom, $learnTimeTo);
-            $user['course_num'] = $res['course_num'];
             $dataList[] = [
                 $user['user_id'],
                 $user['nickname'],
@@ -2037,9 +2022,9 @@ AND log_id NOT IN
                 $user['app_grade_name'],
                 $user['svip_grade_name'],
                 $user['svip_level_name'],
-                $user['course_num'],
+                isset($userCourseCount[$user['user_id']]) ? $userCourseCount[$user['user_id']] : 0,
                 $user['school_credit'],
-                isset($firstVisit[$user['user_id']]) ? date('Y-m-d H:i:s', $firstVisit[$user['user_id']]) : '',
+                isset($userFirstVisit[$user['user_id']]) ? date('Y-m-d H:i:s', $userFirstVisit[$user['user_id']]) : '',
                 $user['svip_activate_time'] != 0 ? date('Y-m-d H:i:s', $user['svip_activate_time']) : '',
                 $user['svip_upgrade_time'] != 0 ? date('Y-m-d H:i:s', $user['svip_upgrade_time']) : '',
                 $user['svip_referee_number'] ?? 0,
@@ -2073,17 +2058,13 @@ AND log_id NOT IN
                 $query->whereOr($whereOr);
             });
         }
-        $userIds = [];
-        foreach ($userList as $user) {
-            $userIds[] = $user['user_id'];
-        }
+        $userList = $userList->select();
         // 用户首次进入商学院的时间
-        $firstVisit = M('user_school_config')->where(['type' => 'first_visit', 'user_id' => ['IN', $userIds]])->getField('user_id, add_time');
+        $userFirstVisit = M('user_school_config')->where(['type' => 'first_visit'])->getField('user_id, add_time', true);
         // 学习课程id
-        $courseIds = M('school_article')->where([
-            'learn_type' => ['IN', [1, 2]],
-            'status' => 1,
-        ])->getField('id', true);
+        $courseIds = M('school_article')->where(['learn_type' => ['IN', [1, 2]], 'status' => 1,])->getField('id', true);
+        // 用户学习课程数量
+        $userCourseCount = $this->checkUserCourseCount([], $courseIds);
         // APP等级列表
         $appGrade = M('distribut_level')->getField('level_id, level_name', true);
         // 代理商等级列表
@@ -2094,29 +2075,18 @@ AND log_id NOT IN
         $schoolModuleClass = M('school_class sc')->join('school s', 's.id = sc.module_id')->getField('sc.id, sc.name class_name, s.name module_name', true);
         $learnTimeFrom = $ext['learn_time_from'] ?? '';
         $learnTimeTo = $ext['learn_time_to'] ?? '';
-        $userList = $userList->select();
         // 表数据
         $dataList = [];
         foreach ($userList as $user) {
             if ($learnTimeFrom && $learnTimeTo && $user['finish_time'] && ($user['finish_time'] < $learnTimeFrom || $user['finish_time'] > $learnTimeTo)) {
                 continue;
             }
-            $user['course_num'] = 0;    // 学习课程数量
             // APP等级
             $user['app_grade_name'] = $appGrade[$user['distribut_level']];
             // 代理商等级
             $user['svip_grade_name'] = $user['distribut_level'] == 3 ? $svipGrade[$user['svip_grade']] : '';
             // 代理商等级
             $user['svip_level_name'] = $user['distribut_level'] == 3 ? $svipLevel[$user['svip_level']] : '';
-            // 用户达标课程数量
-            $userData = [
-                'user_id' => $user['user_id'],
-                'app_grade' => $user['distribut_level'],
-                'svip_grade' => $user['svip_grade'],
-                'svip_level' => $user['svip_level'],
-            ];
-            $res = $this->checkUserCourseNum($userData, $courseIds);
-            $user['course_num'] = $res['course_num'];
             // 课程相关信息
             $learnType = '';
             switch ($user['learn_type']) {
@@ -2169,9 +2139,9 @@ AND log_id NOT IN
                 $user['app_grade_name'],
                 $user['svip_grade_name'],
                 $user['svip_level_name'],
-                $user['course_num'],
+                isset($userCourseCount[$user['user_id']]) ? $userCourseCount[$user['user_id']] : 0,
                 $user['school_credit'],
-                isset($firstVisit[$user['user_id']]) ? date('Y-m-d H:i:s', $firstVisit[$user['user_id']]) : '',
+                isset($userFirstVisit[$user['user_id']]) ? date('Y-m-d H:i:s', $userFirstVisit[$user['user_id']]) : '',
                 $user['svip_activate_time'] != 0 ? date('Y-m-d H:i:s', $user['svip_activate_time']) : '',
                 $user['svip_upgrade_time'] != 0 ? date('Y-m-d H:i:s', $user['svip_upgrade_time']) : '',
                 $user['svip_referee_number'] ?? 0,
@@ -2228,33 +2198,21 @@ AND log_id NOT IN
                 $query->whereOr($whereOr);
             });
         }
+        $userList = $userList->select();
+        // 用户学习课程数量
         $learnTimeFrom = $ext['learn_time_from'] ?? '';
         $learnTimeTo = $ext['learn_time_to'] ?? '';
-        $userList = $userList->select();
+        $userCourseCount = $this->checkUserCourseCount([], $courseIds, true, $learnTimeFrom, $learnTimeTo);
         // 表数据
         $dataList = [];
         foreach ($userList as $user) {
-            $user['course_num'] = 0;        // 学习课程数量
-            $user['is_graduate'] = 0;       // 是否已结业
             // APP等级
             $user['app_grade_name'] = $appGrade[$user['distribut_level']];
             // 代理商等级
             $user['svip_grade_name'] = $user['distribut_level'] == 3 ? $svipGrade[$user['svip_grade']] : '';
             // 代理商等级
             $user['svip_level_name'] = $user['distribut_level'] == 3 ? $svipLevel[$user['svip_level']] : '';
-            // 用户已学习完成课程数量
-            $userData = [
-                'user_id' => $user['user_id'],
-                'app_grade' => $user['distribut_level'],
-                'svip_grade' => $user['svip_grade'],
-                'svip_level' => $user['svip_level'],
-            ];
-            $res = $this->checkUserCourseNum($userData, $courseIds, false, true, $learnTimeFrom, $learnTimeTo);
-            $userLearnedCourseNum = $user['course_num'] = $res['course_num'];
-            // 是否已结业
-            if ($userLearnedCourseNum == $totalCourseNum) {
-                $user['is_graduate'] = 1;
-            }
+            $userLearnedCourseNum = isset($userCourseCount[$user['user_id']]) ? $userCourseCount[$user['user_id']] : 0;
             $dataList[] = [
                 $moduleName,
                 $className,
@@ -2265,9 +2223,9 @@ AND log_id NOT IN
                 $user['svip_grade_name'],
                 $user['svip_level_name'],
                 $totalCourseNum,
-                $user['course_num'],
+                $userLearnedCourseNum,
                 $user['school_credit'],
-                $user['is_graduate'] == 0 ? '未结业' : '已结业',
+                $userLearnedCourseNum == $totalCourseNum ? '已结业' : '未结业',
                 $user['svip_activate_time'] != 0 ? date('Y-m-d H:i:s', $user['svip_activate_time']) : '',
                 $user['svip_upgrade_time'] != 0 ? date('Y-m-d H:i:s', $user['svip_upgrade_time']) : '',
                 $user['svip_referee_number'] ?? 0,
@@ -2302,10 +2260,11 @@ AND log_id NOT IN
         // 用户数据
         $field = json_decode($field, true);
         $userList = DB::query($field['sql']);
+        // 用户学习课程数量
+        $userCourseCount = $this->checkUserCourseCount([], $field['course_ids'], true);
         // 表数据
         $dataList = [];
         foreach ($userList as $key => $user) {
-            $user['course_num'] = 0;        // 学习课程数量
             $user['is_graduate'] = 0;       // 是否已结业
             $user['module_num'] = 1;        // 学习模块数量
             // APP等级
@@ -2321,8 +2280,7 @@ AND log_id NOT IN
                 'svip_grade' => $user['svip_grade'],
                 'svip_level' => $user['svip_level'],
             ];
-            $res = $this->checkUserCourseNum($userData, $field['course_ids'], false, true);
-            $userLearnedCourseNum = $user['course_num'] = $res['course_num'];
+            $userLearnedCourseNum = isset($userCourseCount[$user['user_id']]) ? $userCourseCount[$user['user_id']] : 0;
             // 是否已结业
             if ($userLearnedCourseNum == $field['total_course_num']) {
                 $user['is_graduate'] = 1;
@@ -2343,7 +2301,7 @@ AND log_id NOT IN
                 $user['svip_grade_name'],
                 $user['svip_level_name'],
                 $user['school_credit'],
-                $user['course_num']
+                $userLearnedCourseNum
             ];
             if ($field['module_id'] != -1) {
                 $dataList[$key][] = $user['is_graduate'] == 1 ? '已结业' : '未结业';
@@ -2519,7 +2477,8 @@ AND log_id NOT IN
     {
         // 用户列表
         $usersModel = new UsersModel();
-        $userList = $usersModel->alias('u')->join($join)->where($condition)->field($field)->group($group)->order($order)->limit($offset, $length);
+        $userList = $usersModel->alias('u')->join($join)->where($condition)
+            ->field($field)->group($group)->order($order)->limit($offset, $length);
         $whereOr = $ext['where_or'] ?? [];
         if (!empty($whereOr)) {
             $userList = $userList->where(function ($query) use ($whereOr) {
@@ -2527,18 +2486,14 @@ AND log_id NOT IN
             });
         }
         $userList = $userList->select();
-        $userIds = [];
-        foreach ($userList as $user) {
-            $userIds[] = $user['user_id'];
-        }
         // 用户首次进入商学院的时间
-        $firstVisit = M('user_school_config')->where(['type' => 'first_visit', 'user_id' => ['IN', $userIds]])->getField('user_id, add_time');
+        $userFirstVisit = Db::name('user_school_config')->where(['type' => 'first_visit'])->getField('user_id, add_time', true);
         // 学习课程列表
         $courseList = M('school_article sa')->join('school_class sc', 'sc.id = sa.class_id')->join('school s', 's.id = sc.module_id')
-            ->where(['sa.learn_type' => ['IN', [1, 2]], 'sa.status' => 1,])
+            ->where(['sa.learn_type' => ['IN', [1, 2]], 'sa.status' => 1])
             ->field('s.name module_name, sc.name class_name, sa.id article_id, sa.title')->order('s.id ASC, sc.id ASC')->select();
         // 用户参与的课程列表
-        $userArticleList = M('user_school_article')->where(['user_id' => ['IN', $userIds], 'is_learn' => 1])->field('user_id, article_id')->select();
+        $userArticleList = M('user_school_article')->where(['is_learn' => 1])->field('user_id, article_id')->select();
         $userArticle = [];
         foreach ($userArticleList as $ua) {
             if (!isset($userArticle[$ua['user_id']])) {
@@ -2586,7 +2541,7 @@ AND log_id NOT IN
                 $user['svip_grade_name'],
                 $user['svip_level_name'],
                 $user['school_credit'],
-                isset($firstVisit[$user['user_id']]) ? date('Y-m-d H:i:s', $firstVisit[$user['user_id']]) : '',
+                isset($userFirstVisit[$user['user_id']]) ? date('Y-m-d H:i:s', $userFirstVisit[$user['user_id']]) : '',
                 $user['svip_activate_time'] != 0 ? date('Y-m-d H:i:s', $user['svip_activate_time']) : '',
                 $user['svip_upgrade_time'] != 0 ? date('Y-m-d H:i:s', $user['svip_upgrade_time']) : '',
                 $user['svip_referee_number'] ?? 0,
@@ -2599,10 +2554,10 @@ AND log_id NOT IN
                 $user['customs_user_name'] ?? '',
                 $user['customs_real_name'] ?? '',
             ];
-            // 用户参与的学习课程
             foreach ($courseList as $course) {
                 $isLearn = 0;
                 if (isset($userArticle[$user['user_id']])) {
+                    // 用户参与的学习课程
                     foreach ($userArticle[$user['user_id']] as $articleId) {
                         if ($articleId == $course['article_id']) {
                             $isLearn = 1;
@@ -2643,45 +2598,24 @@ AND log_id NOT IN
     }
 
     /**
-     * 检查用户是否满足课程数量达标
-     * @param array $user 用户信息
-     * @param array $courseIds 学习课程IDs
-     * @param bool $isCheck 是否检查达标
-     * @param bool $isLearned 是否已经学习完成
-     * @param string $timeFrom 学习时间开始
-     * @param string $timeTo 学习时间结束
-     * @return array
+     * 查看用户学习课程数量
+     * @param $userIds
+     * @param $courseIds
+     * @param bool $isLearned
+     * @param string $timeFrom
+     * @param string $timeTo
+     * @return mixed
      */
-    private function checkUserCourseNum($user, $courseIds, $isCheck = false, $isLearned = false, $timeFrom = '', $timeTo = '')
+    private function checkUserCourseCount($userIds, $courseIds, $isLearned = false, $timeFrom = '', $timeTo = '')
     {
         $where = [
-            'user_id' => $user['user_id'],
             'article_id' => ['IN', $courseIds],
         ];
-        if ($isCheck) $where['status'] = 1;
+        if (!empty($userIds)) $where['user_id'] = ['IN', $userIds];
         if ($isLearned) $where['status'] = 1;
         if ($timeFrom && $timeTo) $where['finish_time'] = ['BETWEEN', [$timeFrom, $timeTo]];
         // 用户学习课程记录总数
-        $userCourseNum = M('user_school_article')->where($where)->getField('count(article_id) as count');
-        $userCourseNum = $userCourseNum ?? 0;
-        // 学习规则达标设置
-        $return = ['status' => 0, 'course_num' => $userCourseNum];
-        if ($isCheck) {
-            $schoolStandard = cache('school_standard');
-            if ($schoolStandard && is_array($schoolStandard)) {
-                foreach ($schoolStandard as $v) {
-                    if ($v['type'] == 2) {
-                        continue;
-                    }
-                    if ($user['app_grade'] == $v['app_grade'] && $user['svip_grade'] == $v['distribute_grade'] && $user['svip_level'] == $v['distribute_level']) {
-                        if ($userCourseNum >= $v['num']) {
-                            $return['status'] = 1;
-                        }
-                        break;
-                    }
-                }
-            }
-        }
-        return $return;
+        $userCourseCount = M('user_school_article')->where($where)->group('user_id')->getField('user_id, count(article_id) as count', true);
+        return $userCourseCount;
     }
 }

@@ -2075,6 +2075,21 @@ class Article extends Base
         $where = $this->articleWhere();
         // 基础whereOr
         $whereOr = $this->articleWhereOr();
+        // 时间where
+        $activateTimeFrom = I('activate_time_from', '') ? htmlspecialchars_decode(I('activate_time_from')) : '';
+        if (strpos($activateTimeFrom, '+')) $activateTimeFrom = str_replace('+', ' ', $activateTimeFrom);
+        $activateTimeTo = I('activate_time_to', '') ? htmlspecialchars_decode(I('activate_time_to')) : '';
+        if (strpos($activateTimeTo, '+')) $activateTimeTo = str_replace('+', ' ', $activateTimeTo);
+        if ($activateTimeFrom && $activateTimeTo) {
+            $where['si.svip_activate_time'] = ['BETWEEN', [strtotime($activateTimeFrom), strtotime($activateTimeTo)]];
+        }
+        $upgradeTimeFrom = I('upgrade_time_from', '') ? htmlspecialchars_decode(I('upgrade_time_from')) : '';
+        if (strpos($upgradeTimeFrom, '+')) $upgradeTimeFrom = str_replace('+', ' ', $upgradeTimeFrom);
+        $upgradeTimeTo = I('upgrade_time_to', '') ? htmlspecialchars_decode(I('upgrade_time_to')) : '';
+        if (strpos($upgradeTimeTo, '+')) $upgradeTimeTo = str_replace('+', ' ', $upgradeTimeTo);
+        if ($upgradeTimeFrom && $upgradeTimeTo) {
+            $where['si.svip_upgrade_time'] = ['BETWEEN', [strtotime($upgradeTimeFrom), strtotime($upgradeTimeTo)]];
+        }
         $ext = ['where_or' => $whereOr];
         // 数据表
         $table = 'users u';
