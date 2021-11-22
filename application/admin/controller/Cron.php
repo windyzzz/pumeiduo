@@ -1993,12 +1993,10 @@ AND log_id NOT IN
         $userList = $userList->select();
         // 用户首次进入商学院的时间
         $userFirstVisit = M('user_school_config')->where(['type' => 'first_visit'])->getField('user_id, add_time', true);
-        // 学习课程id
-        $courseIds = M('school_article')->where(['learn_type' => ['IN', [1, 2]], 'status' => 1])->getField('id', true);
         // 用户学习课程数量
         $learnTimeFrom = $ext['learn_time_from'] ?? '';
         $learnTimeTo = $ext['learn_time_to'] ?? '';
-        $userCourseCount = $this->checkUserCourseCount([], $courseIds, false, $learnTimeFrom, $learnTimeTo);
+        $userCourseCount = $this->checkUserCourseCount([], false, $learnTimeFrom, $learnTimeTo);
         // APP等级列表
         $appGrade = M('distribut_level')->getField('level_id, level_name', true);
         // 代理商等级列表
@@ -2063,10 +2061,8 @@ AND log_id NOT IN
         $userList = $userList->select();
         // 用户首次进入商学院的时间
         $userFirstVisit = M('user_school_config')->where(['type' => 'first_visit'])->getField('user_id, add_time', true);
-        // 学习课程id
-        $courseIds = M('school_article')->where(['learn_type' => ['IN', [1, 2]], 'status' => 1])->getField('id', true);
         // 用户学习课程数量
-        $userCourseCount = $this->checkUserCourseCount([], $courseIds);
+        $userCourseCount = $this->checkUserCourseCount();
         // APP等级列表
         $appGrade = M('distribut_level')->getField('level_id, level_name', true);
         // 代理商等级列表
@@ -2186,8 +2182,7 @@ AND log_id NOT IN
         $moduleName = M('school')->where(['id' => $ext['module_id']])->value('name');
         $className = M('school_class')->where(['id' => $ext['class_id']])->value('name');
         // 模块分类下的课程列表
-        $courseIds = M('school_article')->where(['class_id' => $ext['class_id'], 'learn_type' => ['IN', [1, 2]], 'status' => 1])->getField('id', true);
-        $totalCourseNum = count($courseIds);
+        $totalCourseNum = M('school_article')->where(['class_id' => $ext['class_id'], 'learn_type' => ['IN', [1, 2]], 'status' => 1])->count('id');
         // APP等级列表
         $appGrade = M('distribut_level')->getField('level_id, level_name', true);
         // 代理商等级列表
@@ -2206,7 +2201,7 @@ AND log_id NOT IN
         // 用户学习课程数量
         $learnTimeFrom = $ext['learn_time_from'] ?? '';
         $learnTimeTo = $ext['learn_time_to'] ?? '';
-        $userCourseCount = $this->checkUserCourseCount([], $courseIds, true, $learnTimeFrom, $learnTimeTo);
+        $userCourseCount = $this->checkUserCourseCount([], true, $learnTimeFrom, $learnTimeTo);
         // 表数据
         $dataList = [];
         foreach ($userList as $user) {
@@ -2267,7 +2262,7 @@ AND log_id NOT IN
         $field = json_decode($field, true);
         $userList = DB::query($field['sql']);
         // 用户学习课程数量
-        $userCourseCount = $this->checkUserCourseCount([], $field['course_ids'], true);
+        $userCourseCount = $this->checkUserCourseCount([], true);
         // 表数据
         $dataList = [];
         foreach ($userList as $key => $user) {
@@ -2527,16 +2522,14 @@ AND log_id NOT IN
                 '推荐人用户名', '推荐人真实姓名', '服务人用户名', '服务人真实姓名', '服务中心用户名', '服务中心真实姓名',
             ]
         ];
-        $courseIds = [];
         foreach ($courseList as $course) {
-            $courseIds = $course['article_id'];
             $dataList[0][] = $course['class_name'];
             $dataList[1][] = $course['title'];
         }
         // 用户学习课程数量
         $learnTimeFrom = $ext['learn_time_from'] ?? '';
         $learnTimeTo = $ext['learn_time_to'] ?? '';
-        $userCourseCount = $this->checkUserCourseCount([], $courseIds, false, $learnTimeFrom, $learnTimeTo);
+        $userCourseCount = $this->checkUserCourseCount([], [], false, $learnTimeFrom, $learnTimeTo);
         foreach ($userList as $k => $user) {
             // APP等级
             $user['app_grade_name'] = $appGrade[$user['distribut_level']];
@@ -2615,22 +2608,21 @@ AND log_id NOT IN
     /**
      * 查看用户学习课程数量
      * @param $userIds
-     * @param $courseIds
      * @param bool $isLearned
      * @param string $timeFrom
      * @param string $timeTo
      * @return mixed
      */
-    private function checkUserCourseCount($userIds, $courseIds, $isLearned = false, $timeFrom = '', $timeTo = '')
+    private function checkUserCourseCount($userIds = [], $isLearned = false, $timeFrom = '', $timeTo = '')
     {
-        $where = [
-            'article_id' => ['IN', $courseIds],
-        ];
-        if (!empty($userIds)) $where['user_id'] = ['IN', $userIds];
-        if ($isLearned) $where['status'] = 1;
-        if ($timeFrom && $timeTo) $where['finish_time'] = ['BETWEEN', [$timeFrom, $timeTo]];
+        $where = ['sa.learn_type' => ['IN', [1, 2]], 'sa.status' => 1];
+        if (!empty($userIds)) $where['usa.user_id'] = ['IN', $userIds];
+        if ($isLearned) $where['usa.status'] = 1;
+        if ($timeFrom && $timeTo) $where['usa.finish_time'] = ['BETWEEN', [$timeFrom, $timeTo]];
         // 用户学习课程记录总数
-        $userCourseCount = M('user_school_article')->where($where)->group('user_id')->getField('user_id, count(article_id) as count', true);
+        $userCourseCount = M('user_school_article usa')->join('school_article sa', 'sa.id = usa.article_id')
+            ->where($where)
+            ->group('usa.user_id')->getField('usa.user_id, count(usa.article_id) as count', true);
         return $userCourseCount;
     }
 }
