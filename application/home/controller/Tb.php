@@ -926,7 +926,7 @@ class Tb extends Controller
                     'network_parent_user_name' => $infoData['network_parent_user_name'],
                     'network_parent_real_name' => $infoData['network_parent_true_name'],
                     'customs_user_name' => $infoData['customs_user_name'],
-                    'customs_real_name' => $infoData['customs_real_name'],
+                    'customs_real_name' => $infoData['customs_true_name'],
                 ]);
             } else {
                 M('svip_info')->add([
