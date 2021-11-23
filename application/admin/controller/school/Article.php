@@ -2109,7 +2109,7 @@ class Article extends Base
         // 字段
         $field = 'u.*, si.real_name svip_real_name, si.svip_activate_time, si.svip_upgrade_time, si.svip_referee_number, si.grade_referee_num1, si.grade_referee_num2, si.grade_referee_num3, si.grade_referee_num4, si.referee_user_name, si.referee_real_name, si.network_parent_user_name, si.network_parent_real_name, si.customs_user_name, si.customs_real_name';
         $path = UPLOAD_PATH . 'school/excel/' . date('Y-m-d') . '/';
-        $name = 'userCourseAll_' . date('Y-m-d_H-i-s') . '.csv';
+        $name = 'userCourseAll_overview_' . date('Y-m-d_H-i-s') . '.csv';
         // 导出记录
         M('export_file')->add([
             'type' => 'school_user_course_all',
