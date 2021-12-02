@@ -137,7 +137,7 @@ class Ad extends Base
             $this->assign('is_exists_api', 1);
         }
 
-        return $this->fetch();
+        return $this->fetch('adList');
     }
 
     public function position()
@@ -164,7 +164,7 @@ class Ad extends Base
         $this->assign('page', $show);
         $this->assign('pager', $Page);
 
-        return $this->fetch();
+        return $this->fetch('positionList');
     }
 
     public function adHandle()
