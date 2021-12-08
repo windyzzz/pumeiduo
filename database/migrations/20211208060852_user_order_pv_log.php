@@ -52,6 +52,5 @@ class UserOrderPvLog extends Migrator
             ->addColumn('day','string',['limit'=>12,'default'=>"",'comment'=>'支付时间：日期'])
             ->addColumn('add_time','integer',['limit'=>11,'comment'=>'添加时间','default'=>0])
             ->create();
-        $table->save();
     }
 }
