@@ -906,11 +906,34 @@ class Tb extends Controller
                 return json_encode(['status' => 0, 'msg' => '请传入正确的参数']);
             }
             $userId = M('users')->where(['user_name' => $data['user_name']])->value('user_id');
-            if (empty($userId)) {
-                M('svip_transfer_log')->where(['id' => $logId])->update(['status' => -1]);
-                return json_encode(['status' => 0, 'msg' => '用户信息不存在']);
-            }
             $infoData = json_decode($data['info_data'], true);
+            if (empty($userId)) {
+//                M('svip_transfer_log')->where(['id' => $logId])->update(['status' => -1]);
+//                return json_encode(['status' => 0, 'msg' => '用户信息不存在']);
+                if (empty($infoData['referee_user_name'])) {
+                    return json_encode(['status' => 0, 'msg' => '请传入推荐信息']);
+                }
+                // 创建账号
+                $referee_users = M('users')->where(['user_name' => $infoData['referee_user_name'], 'is_lock' => 0, 'is_cancel' => 0])->field('user_id,first_leader,second_leader')->find();
+                $newUser = [
+                    'user_name' => $data['user_name'],
+                    'password' => $infoData['password'],
+                    'paypwd' => $infoData['paypwd'],
+                    'real_name' => $infoData['true_name'],
+                    'mobile' => $infoData['mobile'],
+                    'reg_time' => $infoData['reg_time'],
+                    'is_zhixiao' => 1,
+                    'distribut_level' => 3,
+                    'is_distribut' => 1,
+                    'type' => 2,
+                    'first_leader' => $referee_users['user_id'],
+                    'second_leader' => $referee_users['first_leader'],
+                    'third_leader' => $referee_users['second_leader'],
+                    'invite_uid' => $referee_users['user_id'],
+                    'invite_time' => $infoData['reg_time'],
+                ];
+                $userId = M('users')->insertGetId($newUser);
+            }
             if (M('svip_info')->where(['user_id' => $userId, 'user_name' => $data['user_name']])->value('id')) {
                 M('svip_info')->where(['user_id' => $userId, 'user_name' => $data['user_name']])->update([
                     'real_name' => $infoData['true_name'],
@@ -927,6 +950,11 @@ class Tb extends Controller
                     'network_parent_real_name' => $infoData['network_parent_true_name'],
                     'customs_user_name' => $infoData['customs_user_name'],
                     'customs_real_name' => $infoData['customs_true_name'],
+                    'account_money' => $infoData['account_money'],
+                    'customs_money' => $infoData['customs_money'],
+                    'xiaofei_money' => $infoData['xiaofei_money'],
+                    'carroom' => $infoData['carroom'],
+                    'point_money' => $infoData['point_money'],
                 ]);
             } else {
                 M('svip_info')->add([
@@ -946,10 +974,15 @@ class Tb extends Controller
                     'network_parent_real_name' => $infoData['network_parent_true_name'],
                     'customs_user_name' => $infoData['customs_user_name'],
                     'customs_real_name' => $infoData['customs_true_name'],
+                    'account_money' => $infoData['account_money'],
+                    'customs_money' => $infoData['customs_money'],
+                    'xiaofei_money' => $infoData['xiaofei_money'],
+                    'carroom' => $infoData['carroom'],
+                    'point_money' => $infoData['point_money'],
                 ]);
             }
             M('svip_transfer_log')->where(['id' => $logId])->update(['status' => 1]);
-            return json_encode(['status' => 1, 'msg' => '更新成功']);
+            return json_encode(['status' => 1, 'msg' => '']);
         }
         return json_encode(['status' => 0, 'msg' => '参数不能为空']);
     }
