@@ -24,21 +24,26 @@ class UserOrderPvCheck extends Command
         if (!$orderLog){
             return ;
         }
-        foreach ($orderLog as $oderLogItem){
-            if ($oderLogItem['pv_sum'] <= 0){
+        foreach ($orderLog as $orderLogItem){
+            if ($orderLogItem['pv_sum'] <= 0){
                 // 降级处理
+                $this->output->writeln("用户：{$orderLogItem['user_name']}({$orderLogItem['user_id']}) 降级处理");
             }
         }
 
     }
 
     protected function getUserOrderPv($userLevel,$monthNearly = 6,$pvType = 1){
-        $userOrderLog = M('user u')
-            ->join('user_order_pv_log olog','u.user_id=olog.user_id AND olog.chain_user_generation=0','LEFT')
+
+        $subQuery = Db::name('user_order_pv_log')
             ->where('month','>=',date('Y-m',strtotime("-{$monthNearly} month")))
+            ->group('user_id')
+            ->field('*,SUM(pv) as pv_sum')
+            ->buildSql();
+        $userOrderLog = Db::name('users u')->join($subQuery. " olog", 'u.user_id=olog.user_id','LEFT')
             ->where('u.level',$userLevel)
             ->group("u.user_id")
-            ->field("u.user_id,u.level,SUM(olog.pv) as pv_sum")
+            ->field("u.user_id,u.level,u.user_name,SUM(olog.pv) as pv_sum")
             ->select();
         return $userOrderLog;
     }
