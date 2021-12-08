@@ -41,7 +41,7 @@ class UserOrderPvLog extends Migrator
             ->addColumn('chain_user_name','string',['limit'=>60,'comment'=>'订单所属用户关系人会员号','default'=>''])
             ->addColumn('pv','decimal',['precision'=>10,'scale'=>2,'default'=>0.00,'comment'=>'个人PV','null'=>FALSE])
             ->addColumn('team_pv','decimal',['precision'=>10,'scale'=>2,'default'=>0.00,'comment'=>'团队PV','null'=>FALSE])
-            ->addColumn('level_num','integer',['limit'=>2,'default'=>0,'comment'=>'关系人代数'])
+            ->addColumn('chain_user_generation','integer',['limit'=>2,'default'=>0,'comment'=>'关系人代数'])
             ->addColumn('parent_chain','string',['limit'=>2000,'default'=>"",'comment'=>'关系链条'])
             ->addColumn('first_leader','integer',['limit'=>10,'default'=>0,'comment'=>'推荐上级'])
             ->addColumn('second_leader','integer',['limit'=>10,'default'=>0,'comment'=>'推荐上上级'])
