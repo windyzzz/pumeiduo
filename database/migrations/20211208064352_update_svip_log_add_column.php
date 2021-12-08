@@ -34,6 +34,7 @@ class UpdateSvipLogAddColumn extends Migrator
             ->addColumn('xiaofei_money', 'decimal', ['default' => '0', 'precision' => 10, 'scale' => 2, 'comment' => '乐活优选积分'])
             ->addColumn('carroom', 'decimal', ['default' => '0', 'precision' => 10, 'scale' => 2, 'comment' => '旅游账户'])
             ->addColumn('point_money', 'decimal', ['default' => '0', 'precision' => 10, 'scale' => 2, 'comment' => '税费'])
+            ->addColumn('account_sync', 'integer', ['default' => 0, 'limit' => \Phinx\Db\Adapter\MysqlAdapter::INT_TINY, 'comment' => '是否资金同步'])
             ->update();
     }
 }
