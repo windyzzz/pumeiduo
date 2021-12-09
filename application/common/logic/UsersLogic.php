@@ -62,6 +62,22 @@ class UsersLogic extends Model
         return false;
     }
 
+    /**
+     * 获取用户推荐关系链
+     * @param $userId
+     * @return string
+     */
+    public function getInviteChain($userId)
+    {
+        static $inviteChain = '';
+        $inviteUid = M('Users')->where('user_id', $userId)->getField('first_leader');
+        if ($inviteUid) {
+            $inviteChain = $inviteUid . ',' . $inviteChain . ',';
+            return $this->getInviteChain($inviteUid);
+        }
+        return rtrim($inviteChain, ',');
+    }
+
     function apply_customs_cancel($user_id)
     {
         $apply_customs = M('apply_customs')->where(array('user_id' => $user_id))->find();

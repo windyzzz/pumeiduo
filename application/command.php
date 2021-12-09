@@ -12,5 +12,6 @@ return [
     'app\home\command\supplier\Region',     // 匹配保存供应链地区数据
     'app\home\command\supplier\Goods',      // 供应链商品更新价格属性
     "app\home\command\shop\UserOrderPvCheck",       // 每月检查会员个人业绩
+    "app\home\command\shop\CreateUserChain",        // 记录用户推荐链
     "app\home\command\shop\UpdateUserAccount",      // 更新用户代理商资金信息
 ];
