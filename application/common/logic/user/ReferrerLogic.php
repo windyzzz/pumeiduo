@@ -65,12 +65,14 @@ class ReferrerLogic
             ]);
 
             $table = Db::name('users')->getTable();
+            // UPDATE `tp_users` SET `referrer_chain` = REPLACE(referrer_chain,'9,','16,9,') WHERE `referrer_chain` LIKE '%9'
             $updateChildChainRes = Db::execute("UPDATE `{$table}` SET `referrer_chain` = REPLACE(referrer_chain,'{$userInfo['referrer_chain']}{$userInfo['user_id']},','{$newUserInfo['referrer_chain']}{$newUserInfo['user_id']},{$userInfo['user_id']},') WHERE `referrer_chain` LIKE '%{$userInfo['referrer_chain']}{$userInfo['user_id']},'");
 
             if (($updateFirstChildRes || $updateSecondChildRes) && !$updateChildChainRes){
                 throw new \Exception('更新失败');
             }
         });
+
 
     }
 }
