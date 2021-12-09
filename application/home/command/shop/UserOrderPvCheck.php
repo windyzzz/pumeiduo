@@ -1,6 +1,7 @@
 <?php
 namespace app\home\command\shop;
 
+use app\common\logic\user\ReferrerLogic;
 use think\console\Command;
 use think\console\Input;
 use think\console\Output;
@@ -28,6 +29,10 @@ class UserOrderPvCheck extends Command
             if ($orderLogItem['pv_sum'] <= 0){
                 // 降级处理
                 $this->output->writeln("用户：{$orderLogItem['user_name']}({$orderLogItem['user_id']}) 降级处理");
+
+                $userLevelLogic = new ReferrerLogic();
+
+                $userLevelLogic->change($orderLogItem['user_id'],$orderLogItem['first_leader'],$orderLogItem['second_leader']);
             }
         }
 
@@ -43,7 +48,7 @@ class UserOrderPvCheck extends Command
         $userOrderLog = Db::name('users u')->join($subQuery. " olog", 'u.user_id=olog.user_id','LEFT')
             ->where('u.level',$userLevel)
             ->group("u.user_id")
-            ->field("u.user_id,u.level,u.user_name,SUM(olog.pv) as pv_sum")
+            ->field("u.user_id,u.level,u.user_name,u.first_leader,u.second_leader,SUM(olog.pv) as pv_sum")
             ->select();
         return $userOrderLog;
     }
