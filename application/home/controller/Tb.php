@@ -926,11 +926,11 @@ class Tb extends Controller
                     'distribut_level' => 3,
                     'is_distribut' => 1,
                     'type' => 2,
-                    'first_leader' => $referee_users['user_id'],
-                    'second_leader' => $referee_users['first_leader'],
-                    'third_leader' => $referee_users['second_leader'],
-                    'invite_uid' => $referee_users['user_id'],
-                    'invite_time' => $infoData['reg_time'],
+                    'first_leader' => $referee_users ? $referee_users['user_id'] : 0,
+                    'second_leader' => $referee_users ? $referee_users['first_leader'] : 0,
+                    'third_leader' => $referee_users ? $referee_users['second_leader'] : 0,
+                    'invite_uid' => $referee_users ? $referee_users['user_id'] : 0,
+                    'invite_time' => $referee_users ? $infoData['reg_time'] : 0,
                 ];
                 $userId = M('users')->insertGetId($newUser);
             }
