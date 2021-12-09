@@ -22,7 +22,7 @@ class CheckUserReferrerChain extends BaseCommand
         $start = microtime(true);
         $output->writeln('开始处理：' . date('Y-m-d H:i:s'));
         // 更新商品信息（excel文件导入）
-        $memberList = Db::name('member')->field('user_id,referee_ids,first_leader')->select()->toArray();
+        $memberList = Db::name('users')->field('user_id,referee_ids,first_leader')->select();
         $this->formatTree($memberList,['id'=>1,'referee_ids_str'=>','],$return,$return2);
         $output->writeln('程序结束：' . date('Y-m-d H:i:s'));
         $end = microtime(true);
