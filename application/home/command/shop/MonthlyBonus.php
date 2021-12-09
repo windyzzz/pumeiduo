@@ -33,8 +33,8 @@ class MonthlyBonus extends BaseCommand
     {
         $start = microtime(true);
         $output->writeln('开始处理：' . date('Y-m-d H:i:s'));
-        // 更新商品信息（excel文件导入）
         $this->getMonthlyPv();
+        $this->corporateMembershipServiceBonus();
         $output->writeln('程序结束：' . date('Y-m-d H:i:s'));
         $end = microtime(true);
         $output->writeln('所用时间：' . bcsub($end, $start, 5));
@@ -105,7 +105,7 @@ class MonthlyBonus extends BaseCommand
      * 公司会员服务奖金
      * @throws DataNotFoundException
      * @throws DbException
-     * @throws ModelNotFoundException
+     * @throws ModelNotFoundException|Exception
      */
     protected function corporateMembershipServiceBonus(){
         $pvLogic = new UserOrderPvLogic();
