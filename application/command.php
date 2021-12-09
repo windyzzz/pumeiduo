@@ -14,4 +14,5 @@ return [
     "app\home\command\shop\UserOrderPvCheck",       // 每月检查会员个人业绩
     "app\home\command\shop\MonthlyAgentGrade",      // 经销商每月定级
     "app\home\command\shop\UpdateUserAccount",      // 更新用户代理商资金信息
+    "app\home\command\shop\MonthlyBonus",      // 月结奖金
 ];
