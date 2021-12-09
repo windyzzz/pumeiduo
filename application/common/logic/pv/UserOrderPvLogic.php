@@ -54,6 +54,14 @@ class UserOrderPvLogic
             ->select();
     }
 
+    /**
+     * 根据代数获取用户PV
+     * @param $chainNumber
+     * @return bool|false|\PDOStatement|string|Collection
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     */
     public function getPvByUserChainNumber($chainNumber){
         $group = array_merge(['chain_user_id'],$this->group);
 

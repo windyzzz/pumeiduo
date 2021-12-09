@@ -72,6 +72,8 @@ class MonthlyBonus extends BaseCommand
 
     /**
      * 经销商辅导费
+     * @param $userId
+     * @param $secondUserPvLog
      */
     protected function dealerGuidance($userId,$secondUserPvLog){
         foreach ($secondUserPvLog as $item){
