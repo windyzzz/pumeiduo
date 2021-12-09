@@ -14,6 +14,13 @@ class UserOrderPvLogic
 
     protected $group = [];
 
+    /**
+     * 设置查询时间
+     * @param null $year string eg:2021
+     * @param null $month string eg:2021-01
+     * @param null $day string eg:2021-01-02
+     * @return $this
+     */
     public function setDate($year = null,$month = null, $day = null){
         if (!empty($year)){
             $this->group[] = 'year';
@@ -28,6 +35,10 @@ class UserOrderPvLogic
             $this->where['day'] = $day;
         }
         return $this;
+    }
+
+    public function resetWhere(){
+        $this->where = [];
     }
 
     /**
@@ -83,5 +94,25 @@ class UserOrderPvLogic
     public function getUserPv($userId){
         $where = array_merge(['chain_user_id'=>$userId,'chain_user_generation'=>0],$this->where);
         return Db::name('user_order_pv_log')->where($where)->sum('pv');
+    }
+
+    /**
+     * 获取公司用户近两个月的伞下业绩汇总
+     * @param $time
+     * @return bool|false|\PDOStatement|string|Collection
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     */
+    public function getUserNearly2MonthPv($time){
+        $whereIn = [
+            strtotime(date('Y-m',$time).' -1 month'),
+            strtotime(date('Y-m',$time).' -2 month'),
+        ];
+        return Db::name("users u")->join('user_order_pv_log pv','u.user_id=pv.chain_user_id','LEFT')
+            ->group('pv.chain_user_id,pv.month')
+            ->whereIn('month',$whereIn)
+            ->field("u.user_id,pv.year,pv.month,pv.day,SUM(pv.pv) total_pv,SUM(pv.team_pv) total_team_pv")
+            ->select();
     }
 }

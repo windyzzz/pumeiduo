@@ -85,4 +85,12 @@ class MonthlyBonus extends BaseCommand
         }
     }
 
+    /**
+     * 公司会员服务奖金
+     */
+    protected function corporateMembershipServiceBonus(){
+        $pvLogic = new UserOrderPvLogic();
+        $pvLog = $pvLogic->getUserNearly2MonthPv($this->time);
+    }
+
 }
