@@ -21,7 +21,8 @@
         "topthink/framework": "^5.0",
         "topthink/think-migration": "^3.0",
         "predis/predis": "3.*",
-        "aliyuncs/oss-sdk-php": "^2.3"
+        "aliyuncs/oss-sdk-php": "^2.3",
+      "ext-bcmath": "*"
     },
     "extra": {
         "think-path": "thinkphp"
