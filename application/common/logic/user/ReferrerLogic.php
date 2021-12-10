@@ -29,7 +29,10 @@ class ReferrerLogic
         if ($new === $old){
             return ['status' => 0, 'msg' => '变更前后推荐人不能一样！'];
         }
-        $userInfo = Db::name('users')->where('user_id',$userId)->find();
+        $userInfo = Db::name('users u')
+            ->join("user_chain chain",'u.user_id=chain.user_id')
+            ->where('user_id',$userId)
+            ->find();
         if (!$userInfo){
             return ['status' => 0, 'msg' => '用户不存在'];
         }
@@ -70,6 +73,18 @@ class ReferrerLogic
 
             if (($updateFirstChildRes || $updateSecondChildRes) && !$updateChildChainRes){
                 throw new \Exception('更新失败');
+            }
+
+            $logRes = Db::name('user_referrer_log')->insertGetId([
+                'user_id'             => $userInfo['user_id'],
+                'user_level'          => $userInfo['distribut_level'],
+                'user_referrer_chain' => $userInfo['referee_ids'],
+                'old_referrer'        => $userInfo['first_leader'],
+                'new_referrer'        => $newUserInfo['user_id'],
+                'add_time'            => time(),
+            ]);
+            if (!$logRes){
+                throw new \Exception('记录添加失败');
             }
         });
 
