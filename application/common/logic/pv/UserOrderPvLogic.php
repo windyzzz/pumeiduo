@@ -118,11 +118,12 @@ class UserOrderPvLogic
 
     /**
      * 新增业绩记录
-     * @param $userId
-     * @param $pv
-     * @param int $orderPrice
-     * @param int $orderId
-     * @param null $addTime
+     * @param $userId int 订单所属用户
+     * @param $pv string|int|float 业绩
+     * @param int $orderPrice 订单金额
+     * @param int $orderId 订单ID
+     * @param string $orderSn 订单编号
+     * @param null $addTime 指定添加时间，默认为当前时间
      * @return bool|int|string
      * @throws DataNotFoundException
      * @throws DbException
