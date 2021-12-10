@@ -9,6 +9,7 @@
  * with this source code in the file LICENSE.
  */
 return [
+    "app\home\command\shop\Test",                        // 测试
     'app\home\command\supplier\Region',                  // 匹配保存供应链地区数据
     'app\home\command\supplier\Goods',                   // 供应链商品更新价格属性
     "app\home\command\shop\UserOrderPvCheck",            // 每月检查会员个人业绩
