@@ -127,7 +127,7 @@ class MonthlyAgentGrade extends BaseCommand
 
     /**
      * 会员等级：会员/经销商 职级/（会员等级）
-     * 销售定级：经销商 -》 1-6
+     * 销售定级：经销商
      * 根据业绩获取销售等级
      * @param $pv
      * @return bool|int|string

@@ -27,7 +27,6 @@ class CreateUserChain extends Command
         ini_set('memory_limit', '1024M');
         $start = microtime(true);
         $output->writeln('开始处理：' . date('Y-m-d H:i:s'));
-        // 更新商品信息（excel文件导入）
         $this->createUserChain();
         $output->writeln('程序结束：' . date('Y-m-d H:i:s'));
         $end = microtime(true);
