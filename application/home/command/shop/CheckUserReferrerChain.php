@@ -40,9 +40,9 @@ class CheckUserReferrerChain extends BaseCommand
                 $childCount = $this->formatTree($list,$item,$item['child'],$return2);
                 $item['count'] = $childCount + 1;
                 $item['open'] = false;
-                if ( $item['referee_ids'] != $item['referee_ids_str']){
+                if ( trim(trim($item['referee_ids']),',') != trim(trim($item['referee_ids_str']),',') ){
                     $return2[] = $item;
-//                    dump($item);
+                    dump($item);
                 }
                 $return[] = $item;
                 $count += $item['count'];
