@@ -6,6 +6,7 @@ namespace app\common\logic\user;
 use think\Db;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
+use think\Exception;
 use think\exception\DbException;
 
 /**
@@ -31,7 +32,7 @@ class ReferrerLogic
         }
         $userInfo = Db::name('users u')
             ->join("user_chain chain",'u.user_id=chain.user_id')
-            ->where('user_id',$userId)
+            ->where('u.user_id',$userId)
             ->find();
         if (!$userInfo){
             return ['status' => 0, 'msg' => '用户不存在'];
@@ -40,7 +41,9 @@ class ReferrerLogic
             return ['status' => 0, 'msg' => '用户上级信息不一致！'];
         }
 
-        $newUserInfo = Db::name('users')->where('user_id',$new)->find();
+        $newUserInfo = Db::name('users u')
+            ->join('user_chain chain','u.user_id=chain.user_id')
+            ->where('u.user_id',$new)->find();
 
         if (!$newUserInfo){
             return ['status' => 0, 'msg' => '用户不存在'];
@@ -50,11 +53,13 @@ class ReferrerLogic
                 'first_leader'   => $newUserInfo['user_id'],
                 'second_leader'  => $newUserInfo['first_leader'],
                 'third_leader'   => $newUserInfo['second_leader'],
-                'referrer_chain' => $newUserInfo['referrer_chain'] . $newUserInfo['user_id'] . ",",
             ];
             $updateUserRes = Db::name("users")->where('user_id',$userInfo['user_id'])->update($updateData);
+            $updateChainLogRes = Db::name("user_chain")
+                ->where('user_id',$userInfo['user_id'])
+                ->update(['referee_ids'=>$newUserInfo['referrer_chain'] . $newUserInfo['user_id'] . ","]);
 
-            if ($updateUserRes){
+            if (!$updateUserRes || !$updateChainLogRes){
                 throw new \Exception('修改会员信息失败');
             }
 
@@ -67,9 +72,17 @@ class ReferrerLogic
                 'third_leader'  => $newUserInfo['first_leader'],
             ]);
 
-            $table = Db::name('users')->getTable();
+            $table = Db::name('user_chain')->getTable();
             // UPDATE `tp_users` SET `referrer_chain` = REPLACE(referrer_chain,'9,','16,9,') WHERE `referrer_chain` LIKE '%9'
-            $updateChildChainRes = Db::execute("UPDATE `{$table}` SET `referrer_chain` = REPLACE(referrer_chain,'{$userInfo['referrer_chain']}{$userInfo['user_id']},','{$newUserInfo['referrer_chain']}{$newUserInfo['user_id']},{$userInfo['user_id']},') WHERE `referrer_chain` LIKE '%{$userInfo['referrer_chain']}{$userInfo['user_id']},'");
+            $sql = sprintf("UPDATE `%s` SET `%s` = REPLACE(`%s`,'%s','%s') WHERE `referee_ids` LIKE '%s%%'",
+                $table,
+                'referee_ids',
+                'referee_ids',
+                "{$userInfo['referee_ids']}{$userInfo['user_id']},",
+            "{$newUserInfo['referee_ids']}{$newUserInfo['user_id']},{$userInfo['user_id']},",
+            "{$userInfo['referee_ids']}{$userInfo['user_id']},"
+            );
+            $updateChildChainRes = Db::execute($sql);
 
             if (($updateFirstChildRes || $updateSecondChildRes) && !$updateChildChainRes){
                 throw new \Exception('更新失败');
