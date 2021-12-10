@@ -115,4 +115,86 @@ class UserOrderPvLogic
             ->field("u.user_id,pv.year,pv.month,pv.day,SUM(pv.pv) total_pv,SUM(pv.team_pv) total_team_pv")
             ->select();
     }
+
+    /**
+     * 新增业绩记录
+     * @param $userId
+     * @param $pv
+     * @param int $orderPrice
+     * @param int $orderId
+     * @return bool|int|string
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     */
+    public static function addLog($userId,$pv,$orderPrice = 0,$orderId = 0){
+        $time = time();
+        $chain = Db::name('users')->join('user_chain chain','users.user_id=chain.user_id')
+            ->where('users.user_id',$userId)
+            ->field('users.level,users.user_name,users.mobile,users.user_id,chain.referee_ids,users.first_leader,users.second_leader,users.third_leader')
+            ->find();
+        if (!$chain){
+            return false;
+        }
+
+        $insert = [];
+
+        $base = [
+            'oder_id'     => $orderId,
+            'user_id'     => $userId,
+            'user_level'  => $chain['level'],
+            'user_mobile' => $chain['mobile'],
+            'user_name'   => $chain['user_name'],
+            'order_price'  => $orderPrice,
+            'add_time'    => $time,
+            'year'        => date('Y', $time),
+            'month'       => date('Y-m', $time),
+            'day'         => date('Y-m-d', $time),
+        ];
+        $refereeChain = trim(trim($chain['referee_ids']),',');
+
+        $userSelf = [
+            'chain_user_id'         => $userId,
+            'chain_user_level'      => $chain['level'],
+            'chain_user_mobile'     => $chain['mobile'],
+            'chain_user_name'       => $chain['user_name'],
+            'pv'                    => $pv,
+            'team_pv'               => $pv,
+            'chain_user_generation' => 0,
+            'parent_chain'          => $chain['referee_ids'],
+            'first_leader'          => $chain['first_leader'],
+            'second_leader'         => $chain['second_leader'],
+            'third_leader'          => $chain['third_leader'],
+        ];
+
+        $insert[] = array_merge($base,$userSelf);
+
+        if (empty($refereeChain)){
+            return Db::name('user_order_pv_log')->insertAll($insert);
+        }
+        $chainUserData = Db::name('users')
+            ->join('user_chain chain','users.user_id=chain.user_id')
+            ->whereIn('user_id',$refereeChain)
+            ->column(
+                'users.level,users.user_name,users.mobile,users.user_id,chain.referee_ids,users.first_leader,users.second_leader,users.third_leader',
+                'users.user_id'
+            );
+        foreach ($refereeChain as $chainItem){
+            $chainUser = [
+                'chain_user_id'         => $chainItem,
+                'chain_user_level'      => $chainUserData[$chainItem]['level'],
+                'chain_user_mobile'     => $chainUserData[$chainItem]['mobile'],
+                'chain_user_name'       => $chainUserData[$chainItem]['user_name'],
+                'pv'                    => 0,
+                'team_pv'               => $pv,
+                'chain_user_generation' => count($insert),
+                'parent_chain'          => $chainUserData[$chainItem]['referee_ids'],
+                'first_leader'          => $chainUserData[$chainItem]['first_leader'],
+                'second_leader'         => $chainUserData[$chainItem]['second_leader'],
+                'third_leader'          => $chainUserData[$chainItem]['third_leader'],
+            ];
+            $insert[] = array_merge($base,$chainUser);
+        }
+        return Db::name('user_order_pv_log')->insertAll($insert);
+    }
 }
