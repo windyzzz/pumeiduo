@@ -1,0 +1,110 @@
+<include file="public/layout" />
+<body style="background-color: #FFF; overflow: auto;">
+<div id="toolTipLayer" style="position: absolute; z-index: 9999; display: none; visibility: visible; left: 95px; top: 573px;"></div>
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title"><a class="back" href="javascript:history.back();" title="返回列表"><i class="fa fa-arrow-circle-o-left"></i></a>
+            <div class="subject">
+                <h3>会员职级管理 - 编辑会员职级</h3>
+                <h5>网站系统会员职级管理</h5>
+            </div>
+        </div>
+    </div>
+    <form class="form-horizontal" id="handleposition" method="post">
+        <input type="hidden" name="act" value="{$act}">
+        <input type="hidden" name="level_id" value="{$info.level_id}">
+        <div class="ncap-form-default">
+            <dl class="row">
+                <dt class="tit">
+                    <label for="level_name"><em>*</em>职级名称</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="level_name" value="{$info.level_name}" id="level_name" class="input-txt">
+                    <span class="err" id="err_level_name"></span>
+                    <p class="notic">设置会员职级名称</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>月度累计业绩达标资格</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="pv_from" value="{$info.pv_from}" id="pv_from" class="input-txt" onkeyup="this.value=this.value.replace(/[^\d.]/g,'')">
+                    -
+                    <input type="text" name="pv_to" value="{$info.pv_to}" id="pv_to" class="input-txt" onkeyup="this.value=this.value.replace(/[^\d.]/g,'')">
+                    <p class="notic"></p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label for="supply_rate"><em>*</em>供货率</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="supply_rate" value="{$info.supply_rate}" id="supply_rate" class="input-txt" onkeyup="this.value=this.value.replace(/[^\d.]/g,'')">
+                    <span class="err" id="err_supply_rate"></span>
+                    <p class="notic">供货率单位为百分比，如输入90</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label for="purchase_rate"><em>*</em>进货率</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="purchase_rate" value="{$info.purchase_rate}" id="purchase_rate" class="input-txt" onkeyup="this.value=this.value.replace(/[^\d.]/g,'')">
+                    <span class="err" id="err_purchase_rate"></span>
+                    <p class="notic">进货率单位为百分比，如输入90</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label for="retail_rate"><em>*</em>代零售返点</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="retail_rate" value="{$info.retail_rate}" id="retail_rate" class="input-txt" onkeyup="this.value=this.value.replace(/[^\d.]/g,'')">
+                    <span class="err" id="err_retail_rate"></span>
+                    <p class="notic">代零售返点单位为百分比，如输入90</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label for="wholesale_rate"><em>*</em>代批发返点</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="wholesale_rate" value="{$info.wholesale_rate}" id="wholesale_rate" class="input-txt" onkeyup="this.value=this.value.replace(/[^\d.]/g,'')">
+                    <span class="err" id="err_wholesale_rate"></span>
+                    <p class="notic">代批发返点单位为百分比，如输入90</p>
+                </dd>
+            </dl>
+            <div class="bot"><a href="JavaScript:void(0);" onclick="verifyForm()" class="ncap-btn-big ncap-btn-green" id="submitBtn">确认提交</a></div>
+        </div>
+    </form>
+</div>
+<script type="text/javascript">
+    function verifyForm(){
+        $('span.err').show();
+        $.ajax({
+            type: "POST",
+            url: "{:U('Admin/User/gradeHandle')}",
+            data: $('#handleposition').serialize(),
+            dataType: "json",
+            error: function () {
+                layer.alert("服务器繁忙, 请联系管理员!");
+            },
+            success: function (data) {
+                if (data.status == 1) {
+                    layer.msg(data.msg, {icon: 1});
+                    location.href = "{:U('Admin/User/gradeList')}";
+                } else {
+                    layer.msg(data.msg, {icon: 2});
+                    $.each(data.result, function (index, item) {
+                        $('#err_' + index).text(item).show();
+                    });
+                }
+            }
+        });
+    }
+</script>
+</body>
+</html>

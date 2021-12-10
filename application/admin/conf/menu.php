@@ -30,6 +30,7 @@ return [
         ['name' => '会员', 'child' => [
             ['name' => '会员列表', 'act' => 'index', 'op' => 'User'],
             ['name' => '会员等级', 'act' => 'levelList', 'op' => 'User'],
+            ['name' => '会员职级', 'act' => 'gradeList', 'op' => 'User'],
             ['name' => '会员合并', 'act' => 'merge', 'op' => 'User'],
             ['name' => '会员解绑', 'act' => 'unbind', 'op' => 'User'],
             ['name' => '推荐关系查询', 'act' => 'relation', 'op' => 'User'],

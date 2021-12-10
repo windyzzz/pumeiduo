@@ -569,6 +569,18 @@ function getDistributList()
     return $list;
 }
 
+function getGradeList()
+{
+    $list = M('user_grade')->field('level_id,level_name')->select();
+    $data = [
+        'level_id' => 0,
+        'level_name' => '全体',
+    ];
+    array_unshift($list, $data);
+
+    return $list;
+}
+
 function getDistributOption($distribut_list)
 {
     $html = '';

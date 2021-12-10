@@ -1155,79 +1155,188 @@ class User extends Base
         return $this->fetch();
     }
 
-    public function level()
-    {
-        $act = I('get.act', 'add');
-        $this->assign('act', $act);
-        $level_id = I('get.level_id');
-        if ($level_id) {
-            $level_info = D('user_level')->where('level_id=' . $level_id)->find();
-            $this->assign('info', $level_info);
-        }
-
-        return $this->fetch();
-    }
-
+    /**
+     * 用户等级列表
+     * @return mixed
+     */
     public function levelList()
     {
-        $Ad = M('user_level');
-        $p = $this->request->param('p');
-        $res = $Ad->order('level_id')->page($p . ',10')->select();
+        $model = M('distribut_level');
+        $count = $model->count();
+        $Page = new Page($count, 10);
+        $res = $model->order('level_id')->limit($Page->firstRow, $Page->listRows)->select();
+        $list = [];
         if ($res) {
             foreach ($res as $val) {
                 $list[] = $val;
             }
         }
         $this->assign('list', $list);
-        $count = $Ad->count();
-        $Page = new Page($count, 10);
-        $show = $Page->show();
-        $this->assign('page', $show);
-
+        $this->assign('page', $Page->show());
         return $this->fetch();
     }
 
     /**
-     * 会员等级添加编辑删除.
+     * 更改用户等级状态
+     */
+    public function changeLevelStatus()
+    {
+        $levelId = I('level_id');
+        $status = I('status');
+        M('distribut_level')->where(['level_id' => $levelId])->update(['status' => $status]);
+        $this->ajaxReturn(['status' => 1]);
+    }
+
+    /**
+     * 用户等级信息
+     * @return mixed
+     */
+    public function level()
+    {
+        $act = I('get.act', 'add');
+        $this->assign('act', $act);
+        $level_id = I('get.level_id');
+        if ($level_id) {
+            $level_info = D('distribut_level')->where('level_id=' . $level_id)->find();
+            $this->assign('info', $level_info);
+        }
+        return $this->fetch();
+    }
+
+    /**
+     * 用户等级处理
      */
     public function levelHandle()
     {
         $data = I('post.');
         $userLevelValidate = Loader::validate('UserLevel');
-        $return = ['status' => 0, 'msg' => '参数错误', 'result' => '']; //初始化返回信息
-        if ('add' == $data['act']) {
-            if (!$userLevelValidate->batch()->check($data)) {
-                $return = ['status' => 0, 'msg' => '添加失败', 'result' => $userLevelValidate->getError()];
-            } else {
-                $r = D('user_level')->add($data);
-                if (false !== $r) {
-                    $return = ['status' => 1, 'msg' => '添加成功', 'result' => $userLevelValidate->getError()];
+        $return = ['status' => 0, 'msg' => '参数错误', 'result' => ''];
+        switch ($data['act']) {
+            case 'add':
+                if (!$userLevelValidate->batch()->check($data)) {
+                    $return = ['status' => 0, 'msg' => '添加失败', 'result' => $userLevelValidate->getError()];
                 } else {
-                    $return = ['status' => 0, 'msg' => '添加失败，数据库未响应', 'result' => ''];
+                    $r = D('distribut_level')->add($data);
+                    if (false !== $r) {
+                        $return = ['status' => 1, 'msg' => '添加成功', 'result' => $userLevelValidate->getError()];
+                    } else {
+                        $return = ['status' => 0, 'msg' => '添加失败，数据库未响应', 'result' => ''];
+                    }
                 }
+                break;
+            case 'edit':
+                if (!$userLevelValidate->scene('edit')->batch()->check($data)) {
+                    $return = ['status' => 0, 'msg' => '编辑失败', 'result' => $userLevelValidate->getError()];
+                } else {
+                    $r = D('distribut_level')->where('level_id=' . $data['level_id'])->save($data);
+                    if (false !== $r) {
+                        $return = ['status' => 1, 'msg' => '编辑成功', 'result' => $userLevelValidate->getError()];
+                    } else {
+                        $return = ['status' => 0, 'msg' => '编辑失败，数据库未响应', 'result' => ''];
+                    }
+                }
+                break;
+            case 'del':
+                $r = D('distribut_level')->where('level_id=' . $data['level_id'])->delete();
+                if (false !== $r) {
+                    $return = ['status' => 1, 'msg' => '删除成功', 'result' => ''];
+                } else {
+                    $return = ['status' => 0, 'msg' => '删除失败，数据库未响应', 'result' => ''];
+                }
+                break;
+        }
+        $this->ajaxReturn($return);
+    }
+
+    /**
+     * 用户职级列表
+     * @return mixed
+     */
+    public function gradeList()
+    {
+        $model = M('user_grade');
+        $count = $model->count();
+        $Page = new Page($count, 10);
+        $res = $model->order('level_id')->limit($Page->firstRow, $Page->listRows)->select();
+        $list = [];
+        if ($res) {
+            foreach ($res as $val) {
+                $list[] = $val;
             }
         }
-        if ('edit' == $data['act']) {
-            if (!$userLevelValidate->scene('edit')->batch()->check($data)) {
-                $return = ['status' => 0, 'msg' => '编辑失败', 'result' => $userLevelValidate->getError()];
-            } else {
-                $r = D('user_level')->where('level_id=' . $data['level_id'])->save($data);
-                if (false !== $r) {
-                    $discount = $data['discount'] / 100;
-                    D('users')->where(['level' => $data['level_id']])->save(['discount' => $discount]);
-                    $return = ['status' => 1, 'msg' => '编辑成功', 'result' => $userLevelValidate->getError()];
-                } else {
-                    $return = ['status' => 0, 'msg' => '编辑失败，数据库未响应', 'result' => ''];
-                }
-            }
+        $this->assign('list', $list);
+        $this->assign('page', $Page->show());
+        return $this->fetch();
+    }
+
+    /**
+     * 更改用户职级状态
+     */
+    public function changeGradeStatus()
+    {
+        $levelId = I('level_id');
+        $status = I('status');
+        M('user_grade')->where(['level_id' => $levelId])->update(['status' => $status]);
+        $this->ajaxReturn(['status' => 1]);
+    }
+
+    /**
+     * 用户职级信息
+     * @return mixed
+     */
+    public function grade()
+    {
+        $act = I('get.act', 'add');
+        $this->assign('act', $act);
+        $level_id = I('get.level_id');
+        if ($level_id) {
+            $level_info = D('user_grade')->where('level_id=' . $level_id)->find();
+            $this->assign('info', $level_info);
         }
-        if ('del' == $data['act']) {
-            $r = D('user_level')->where('level_id=' . $data['level_id'])->delete();
-            if (false !== $r) {
-                $return = ['status' => 1, 'msg' => '删除成功', 'result' => ''];
-            } else {
-                $return = ['status' => 0, 'msg' => '删除失败，数据库未响应', 'result' => ''];
-            }
+        return $this->fetch();
+    }
+
+    /**
+     * 用户职级处理
+     */
+    public function gradeHandle()
+    {
+        $data = I('post.');
+        $userGradeValidate = Loader::validate('UserGrade');
+        $return = ['status' => 0, 'msg' => '参数错误', 'result' => ''];
+        switch ($data['act']) {
+            case 'add':
+                if (!$userGradeValidate->batch()->check($data)) {
+                    $return = ['status' => 0, 'msg' => '添加失败', 'result' => $userGradeValidate->getError()];
+                } else {
+                    $r = D('user_grade')->add($data);
+                    if (false !== $r) {
+                        $return = ['status' => 1, 'msg' => '添加成功', 'result' => $userGradeValidate->getError()];
+                    } else {
+                        $return = ['status' => 0, 'msg' => '添加失败，数据库未响应', 'result' => ''];
+                    }
+                }
+                break;
+            case 'edit':
+                if (!$userGradeValidate->scene('edit')->batch()->check($data)) {
+                    $return = ['status' => 0, 'msg' => '编辑失败', 'result' => $userGradeValidate->getError()];
+                } else {
+                    $r = D('user_grade')->where('level_id=' . $data['level_id'])->save($data);
+                    if (false !== $r) {
+                        $return = ['status' => 1, 'msg' => '编辑成功', 'result' => $userGradeValidate->getError()];
+                    } else {
+                        $return = ['status' => 0, 'msg' => '编辑失败，数据库未响应', 'result' => ''];
+                    }
+                }
+                break;
+            case 'del':
+                $r = D('user_grade')->where('level_id=' . $data['level_id'])->delete();
+                if (false !== $r) {
+                    $return = ['status' => 1, 'msg' => '删除成功', 'result' => ''];
+                } else {
+                    $return = ['status' => 0, 'msg' => '删除失败，数据库未响应', 'result' => ''];
+                }
+                break;
         }
         $this->ajaxReturn($return);
     }

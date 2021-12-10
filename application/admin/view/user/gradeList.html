@@ -1,0 +1,196 @@
+<include file="public/layout" />
+<body style="background-color: rgb(255, 255, 255); overflow: auto; cursor: default; -moz-user-select: inherit;">
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+<div class="page">
+	<div class="fixed-bar">
+		<div class="item-title">
+			<div class="subject">
+				<h3>会员职级管理</h3>
+				<h5>网站系统会员职级索引与管理</h5>
+			</div>
+		</div>
+	</div>
+	<!-- 操作说明 -->
+	<div id="explanation" class="explanation" style="color: rgb(44, 188, 163); background-color: rgb(237, 251, 248); width: 99%; height: 100%;">
+		<div id="checkZoom" class="title"><i class="fa fa-lightbulb-o"></i>
+			<h4 title="提示相关设置操作时应注意的要点">操作提示</h4>
+			<span title="收起提示" id="explanationZoom" style="display: block;"></span>
+		</div>
+		<ul>
+			<li>会员职级管理</li>
+		</ul>
+	</div>
+	<div class="flexigrid">
+		<div class="mDiv">
+			<div class="ftitle">
+				<h3>会员职级列表</h3>
+				<h5>(共{$list|count}条记录)</h5>
+			</div>
+			<div title="刷新数据" class="pReload"><i class="fa fa-refresh"></i></div>
+		</div>
+		<div class="hDiv">
+			<div class="hDivBox">
+				<table cellspacing="0" cellpadding="0">
+					<thead>
+					<tr>
+						<th class="sign" axis="col0">
+							<div style="width: 24px;"><i class="ico-check"></i></div>
+						</th>
+						<th align="left" abbr="article_title" axis="col3" class="">
+							<div style="text-align: center; width: 50px;" class="">职级</div>
+						</th>
+						<th align="left" abbr="ac_id" axis="col4" class="">
+							<div style="text-align: center; width: 100px;" class="">职级名称</div>
+						</th>
+						<th align="left" abbr="ac_id" axis="col4" class="">
+							<div style="text-align: center; width: 200px;" class="">月度累计业绩达标资格</div>
+						</th>
+						<th align="left" abbr="ac_id" axis="col4" class="">
+							<div style="text-align: center; width: 100px;" class="">供货率%</div>
+						</th>
+						<th align="left" abbr="ac_id" axis="col4" class="">
+							<div style="text-align: center; width: 100px;" class="">进货率%</div>
+						</th>
+						<th align="left" abbr="ac_id" axis="col4" class="">
+							<div style="text-align: center; width: 100px;" class="">代零售返点</div>
+						</th>
+						<th align="left" abbr="ac_id" axis="col4" class="">
+							<div style="text-align: center; width: 100px;" class="">代批发返点</div>
+						</th>
+						<th align="center" abbr="article_show" axis="col5" class="">
+							<div style="text-align: center; width: 100px;" class="">开启状态</div>
+						</th>
+						<th align="center" axis="col1" class="handle">
+							<div style="text-align: center; width: 150px;">操作</div>
+						</th>
+						<th style="width:100%" axis="col7">
+							<div></div>
+						</th>
+					</tr>
+					</thead>
+				</table>
+			</div>
+		</div>
+		<!--<div class="tDiv">-->
+			<!--<div class="tDiv2">-->
+				<!--<div class="fbutton"> <a href="{:U('User/level')}">-->
+					<!--<div class="add" title="新增会员职级">-->
+						<!--<span><i class="fa fa-plus"></i>新增会员职级</span>-->
+					<!--</div>-->
+				<!--</a> </div>-->
+			<!--</div>-->
+			<!--<div style="clear:both"></div>-->
+		<!--</div>-->
+		<div class="bDiv" style="height: auto;">
+			<div id="flexigrid" cellpadding="0" cellspacing="0" border="0">
+				<table>
+					<tbody>
+					<foreach name="list" item="vo" key="k" >
+						<tr>
+							<td class="sign">
+								<div style="width: 24px;"><i class="ico-check"></i></div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 50px;">{$vo.level_id}</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 100px;">{$vo.level_name}</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 200px;">{$vo.pv_from} - {$vo.pv_to}</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 100px;">{$vo.supply_rate}</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 100px;">{$vo.purchase_rate}</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 100px;">{$vo.retail_rate}</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 100px;">{$vo.wholesale_rate}</div>
+							</td>
+							<td align="left" class="">
+								<div style="text-align: center; width: 100px;">
+									<if condition='$vo[status] eq 1'>
+										<span class="yes" onClick="changeStatus(this, '{$vo.level_id}')"><i class="fa fa-check-circle"></i>开启</span>
+									<else/>
+										<span class="no" onClick="changeStatus(this, '{$vo.level_id}')"><i class="fa fa-ban"></i>关闭</span>
+									</if>
+								</div>
+							</td>
+							<td align="center" class="handle">
+								<div style="text-align: center; width: 170px; max-width:170px;">
+									<a href="{:U('User/grade',array('act'=>'edit','level_id'=>$vo['level_id']))}" class="btn blue"><i class="fa fa-pencil-square-o"></i>编辑</a>
+								</div>
+							</td>
+							<td align="" class="" style="width: 100%;">
+								<div>&nbsp;</div>
+							</td>
+						</tr>
+					</foreach>
+					</tbody>
+				</table>
+			</div>
+			<div class="iDiv" style="display: none;"></div>
+		</div>
+		<!--分页位置-->
+		{$page} </div>
+</div>
+<script>
+	$(document).ready(function(){
+		// 表格行点击选中切换
+		$('#flexigrid > table>tbody >tr').click(function(){
+			$(this).toggleClass('trSelected');
+		});
+
+		// 点击刷新数据
+		$('.fa-refresh').click(function(){
+			location.href = location.href;
+		});
+
+	});
+
+	function changeStatus(obj, level_id) {
+		layer.confirm('确认变更状态？', {
+			btn: ['确定', '取消'] //按钮
+		}, function () {
+			var value = 0;
+			if ($(obj).hasClass('no')) {
+				$(obj).removeClass('no').addClass('yes');
+				$(obj).html("<i class='fa fa-check-circle'></i>开启");
+				value = 1;
+			} else if ($(obj).hasClass('yes')) {
+				$(obj).removeClass('yes').addClass('no');
+				$(obj).html("<i class='fa fa-ban'></i>关闭");
+				value = 0;
+			}
+			$.ajax({
+				type: 'POST',
+				url: "{:U('Admin/User/changeGradeStatus')}",
+				data: {level_id: level_id, status : value},
+				dataType: 'json',
+				success: function (data) {
+					if (data.status == 0) {
+						layer.alert(data.msg, {icon: 2});
+						if ($(obj).hasClass('no')) {
+							$(obj).removeClass('no').addClass('yes');
+							$(obj).html("<i class='fa fa-check-circle'></i>开启");
+						} else if ($(obj).hasClass('yes')) {
+							$(obj).removeClass('yes').addClass('no');
+							$(obj).html("<i class='fa fa-ban'></i>关闭");
+						}
+					} else {
+						layer.alert('更改成功', {icon: 1});
+					}
+				}
+			});
+		}, function () {
+			console.log("取消");
+		});
+	}
+</script>
+</body>
+</html>
