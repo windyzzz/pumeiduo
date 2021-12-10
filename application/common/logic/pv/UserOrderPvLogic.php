@@ -122,16 +122,24 @@ class UserOrderPvLogic
      * @param $pv
      * @param int $orderPrice
      * @param int $orderId
+     * @param null $addTime
      * @return bool|int|string
      * @throws DataNotFoundException
      * @throws DbException
      * @throws ModelNotFoundException
      */
-    public static function addLog($userId,$pv,$orderPrice = 0,$orderId = 0){
-        $time = time();
-        $chain = Db::name('users')->join('user_chain chain','users.user_id=chain.user_id')
-            ->where('users.user_id',$userId)
-            ->field('users.level,users.user_name,users.mobile,users.user_id,chain.referee_ids,users.first_leader,users.second_leader,users.third_leader')
+    public static function addLog(
+        $userId,
+        $pv,
+        $orderPrice = 0,
+        $orderId = 0,
+        $orderSn = "",
+        $addTime = null
+    ){
+        $time = $addTime?$addTime:time();
+        $chain = Db::name('users u')->join('user_chain chain','u.user_id=chain.user_id')
+            ->where('u.user_id',$userId)
+            ->field('u.distribut_level,u.user_name,u.mobile,u.user_id,chain.referee_ids,u.first_leader,u.second_leader,u.third_leader')
             ->find();
         if (!$chain){
             return false;
@@ -140,12 +148,13 @@ class UserOrderPvLogic
         $insert = [];
 
         $base = [
-            'oder_id'     => $orderId,
+            'order_id'    => $orderId,
             'user_id'     => $userId,
-            'user_level'  => $chain['level'],
+            'user_level'  => $chain['distribut_level'],
             'user_mobile' => $chain['mobile'],
             'user_name'   => $chain['user_name'],
-            'order_price'  => $orderPrice,
+            'order_price' => $orderPrice,
+            'order_sn'    => $orderSn?$orderSn:'',
             'add_time'    => $time,
             'year'        => date('Y', $time),
             'month'       => date('Y-m', $time),
@@ -155,7 +164,7 @@ class UserOrderPvLogic
 
         $userSelf = [
             'chain_user_id'         => $userId,
-            'chain_user_level'      => $chain['level'],
+            'chain_user_level'      => $chain['distribut_level'],
             'chain_user_mobile'     => $chain['mobile'],
             'chain_user_name'       => $chain['user_name'],
             'pv'                    => $pv,
@@ -172,17 +181,19 @@ class UserOrderPvLogic
         if (empty($refereeChain)){
             return Db::name('user_order_pv_log')->insertAll($insert);
         }
-        $chainUserData = Db::name('users')
-            ->join('user_chain chain','users.user_id=chain.user_id')
-            ->whereIn('user_id',$refereeChain)
+        $refereeChain = array_reverse(explode(',',$refereeChain));
+        $chainUserData = Db::name('users u')
+            ->join('user_chain chain','u.user_id=chain.user_id')
+            ->whereIn('u.user_id',$refereeChain)
             ->column(
-                'users.level,users.user_name,users.mobile,users.user_id,chain.referee_ids,users.first_leader,users.second_leader,users.third_leader',
-                'users.user_id'
+                'u.distribut_level,u.user_name,u.mobile,u.user_id,chain.referee_ids,u.first_leader,u.second_leader,u.third_leader',
+                'u.user_id'
             );
+        dump($refereeChain);
         foreach ($refereeChain as $chainItem){
             $chainUser = [
                 'chain_user_id'         => $chainItem,
-                'chain_user_level'      => $chainUserData[$chainItem]['level'],
+                'chain_user_level'      => $chainUserData[$chainItem]['distribut_level'],
                 'chain_user_mobile'     => $chainUserData[$chainItem]['mobile'],
                 'chain_user_name'       => $chainUserData[$chainItem]['user_name'],
                 'pv'                    => 0,
